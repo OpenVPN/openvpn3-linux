@@ -1,0 +1,6 @@
+[submodule "openvpn3-core"]
+	path = openvpn3-core
+	url = git://github.com/OpenVPN/openvpn3
+[submodule "asio"]
+	path = vendor/asio
+	url = git://github.com/chriskohlhoff/asio
