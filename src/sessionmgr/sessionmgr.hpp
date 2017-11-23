@@ -33,6 +33,12 @@
 
 using namespace openvpn;
 
+/**
+ * Helper class to tackle signals sent by the session manager
+ *
+ * This mostly just wraps the LogSender class and predfines LogGroup to always
+ * be SESSIONMGR.
+ */
 class SessionManagerSignals : public LogSender
 {
 public:
@@ -45,6 +51,14 @@ public:
     {
     }
 
+
+    /**
+     *  Whenever a FATAL error happens, the process is expected to stop.
+     *  The abort() call gets caught by the main loop, which then starts the
+     *  proper shutdown process.
+     *
+     * @param msg  Message to sent to the log subscribers
+     */
     void LogFATAL(std::string msg)
     {
         Log(log_group, LogCategory::FATAL, msg);
@@ -53,11 +67,25 @@ public:
     }
 
 
+    /**
+     *  Sends log messages tagged as debug message
+     *
+     * @param msg  Message to log
+     */
     void Debug(std::string msg)
     {
             LogSender::Debug(msg);
     }
 
+    /**
+     *  An extended debug log function, which adds D-Bus message details
+     *  related to the debug message
+     *
+     * @param busname  D-Bus bus name triggering this log event
+     * @param path     D-Bus path to the object triggering this log event
+     * @param pid      PID of the message sender triggering this log event
+     * @param msg      The log message itself
+     */
     void Debug(std::string busname, std::string path, pid_t pid, std::string msg)
     {
             std::stringstream debug;
@@ -68,12 +96,26 @@ public:
             LogSender::Debug(debug.str());
     }
 
+    /**
+     *  Sends a StatusChange signal with a text message
+     *
+     * @param major  StatusMajor code of the status change
+     * @param minor  StatusMinro code of the status change
+     * @param msg    String containing a description of the reason for this
+     *               status change
+     */
     void StatusChange(const StatusMajor major, const StatusMinor minor, std::string msg)
     {
         GVariant *params = g_variant_new("(uus)", (guint) major, (guint) minor, msg.c_str());
         Send("StatusChange", params);
     }
 
+    /**
+     *  A simpler StatusChange signal sender, without a text message
+     *
+     * @param major  StatusMajor code of the status change
+     * @param minor  StatusMinro code of the status change
+     */
     void StatusChange(const StatusMajor major, const StatusMinor minor)
     {
         GVariant *params = g_variant_new("(uus)", (guint) major, (guint) minor, "");
@@ -82,9 +124,28 @@ public:
 };
 
 
+/**
+ *  Handler for session log events.  This will be enabled when a session
+ *  is configured to proxy log messages from the VPN client backend to a
+ *  front-end.
+ */
 class SessionLogEvent : public LogConsumerProxy
 {
 public:
+    /**
+     *   Constructor for setting up proxying of log events from a backend to
+     *   a front-end.  The interface name of proxied log entries will be
+     *   the session managers interface.
+     *
+     * @param conn               D-Bus connection to use
+     * @param bus_name           Backend D-Bus name which will this object
+     *                           will subscribe to
+     * @param interface          Backend D-Bus interface needed for the
+     *                           subscription
+     * @param be_obj_path        Backend D-Bus object path where the log
+     *                           event signals are sent
+     * @param sigproxy_obj_path  Destinaion D-Bus path for the signal
+     */
     SessionLogEvent(GDBusConnection *conn,
                     std::string bus_name,
                     std::string interface,
@@ -96,6 +157,18 @@ public:
     }
 
 
+    /**
+     *  A callback method used by LogConsumerProxy(), where we can
+     *  intercept log events as they occur.  We use this only to capture
+     *  the log event and save a copy of it.
+     *
+     * @param sender       D-Bus bus name of the sender of the log event
+     * @param interface    D-Bus interface of the sender of the log event
+     * @param object_path  D-Bus object path of the sender of the log event
+     * @param group        LogGroup reference of the log event
+     * @param catg         LogCategory reference of the log event
+     * @param msg          The log message itself
+     */
     void ConsumeLogEvent(const std::string sender,
                          const std::string interface,
                          const std::string object_path,
@@ -108,6 +181,12 @@ public:
     }
 
 
+    /**
+     *  Returns a D-Bus key/value dictionary of the last log message processed
+     *
+     * @return  Returns a new GVariant Glib2 object containing the log event.
+     *          This object needs to be freed when no longer needed.
+     */
     GVariant * GetLastLogEntry()
     {
         if( last_msg.empty() && LogGroup::UNDEFINED == last_group)
@@ -129,17 +208,37 @@ private:
 };
 
 
+
+/**
+ *  Handler for session StatusChange signals.  This essentially proxies
+ *  StatusChange signals from a VPN client backend process to any front-end
+ *  processes subscribed to these signals.
+ */
 class SessionStatusChange : public DBusSignalSubscription,
                             public DBusSignalProducer
 {
 public:
+    /**
+     *  Constructor preparing the proxy of StatusChange events
+     *
+     * @param conn               D-Bus connection to use
+     * @param bus_name           D-Bus bus name to use for the signal
+     *                           subscription
+     * @param interface          D-Bus interface to use for the signal
+     *                           subscription
+     * @param be_obj_path        D-Bus object path of the backend process
+     *                           which sends the signals we want to subscribe
+     *                           to
+     * @param sigproxy_obj_path  D-Bus object path which will be used when
+     *                           the session manager sends the proxied
+     *                           StatusChange signal
+     */
     SessionStatusChange(GDBusConnection *conn,
                         std::string bus_name,
                         std::string interface,
                         std::string be_obj_path,
-                        std::string sigproxy_obj_path,
-                        std::string signal_name)
-        : DBusSignalSubscription(conn, bus_name, interface, be_obj_path, signal_name),
+                        std::string sigproxy_obj_path)
+        : DBusSignalSubscription(conn, bus_name, interface, be_obj_path, "StatusChange"),
           DBusSignalProducer(conn, "", OpenVPN3DBus_interf_sessions, sigproxy_obj_path),
           last_major(0),
           last_minor(0),
@@ -147,6 +246,18 @@ public:
     {
     }
 
+    /**
+     *  Callback function used by the D-Bus library whenever a signal we are
+     *  subscribed to occurs.
+     *
+     * @param connection       D-Bus connection where the signal happened
+     * @param sender_name      D-Bus bus name of the sender of the signal
+     * @param object_path      D-Bus object path where the signal came from
+     * @param interface_name   D-Bus interface of the signal
+     * @param signal_name      The name of the signal which was sent
+     * @param parameters       Pointer to a GVariant GLib2 object containing
+     *                         the variables and values the signal carries
+     */
     void callback_signal_handler(GDBusConnection *connection,
                                  const gchar *sender_name,
                                  const gchar *object_path,
@@ -177,6 +288,12 @@ public:
     }
 
 
+    /**
+     *  Retrieve the last status message processed
+     *
+     * @return  Returns a GVariant Glib2 object containing a key/value
+     *          dictionary of the last signal sent
+     */
     GVariant * GetLastStatusChange()
     {
         if( last_msg.empty() && 0 == last_major && 0 == last_minor)
@@ -198,12 +315,29 @@ private:
 };
 
 
+/**
+ *  A SessionObject contains information about a specific VPN client tunnel.
+ *  Each time a new tunnel is created and initiated via D-Bus, the contents
+ *  of that D-Bus object is contained within a SessionObject.  The session
+ *  manager is be responsible for maintaining the life cycle of these objects.
+ */
 class SessionObject : public DBusObject,
                       public DBusSignalSubscription,
                       public DBusCredentials,
                       public SessionManagerSignals
 {
 public:
+    /**
+     *  Constructor creating a new SessionObject
+     *
+     * @param dbuscon  D-Bus connection this object is tied to
+     * @param owner    An uid reference of the owner of this object.  This is
+     *                 typically the uid of the front-end user initating the
+     *                 creation of a new tunnel session.
+     * @param objpath  D-Bus object path of this object
+     * @param cfg_path D-Bus object path of the VPN profile configuration this
+     *                 session is tied to.
+     */
     SessionObject(GDBusConnection *dbuscon, uid_t owner, std::string objpath, std::string cfg_path)
         : DBusObject(objpath),
           DBusSignalSubscription(dbuscon, "", OpenVPN3DBus_interf_backends, ""),
@@ -266,8 +400,12 @@ public:
                           << "</node>";
         ParseIntrospectionXML(introspection_xml);
 
-        // Create the backend session object, which the management process uses to
-        // control the client session process which will be forked out from here
+        // Start a new backend process via the openvpn3-service-backendstart
+        // (net.openvpn.v3.backends) service.  A random backend token is
+        // created and sent to the backend process.  When the backend process
+        // have initialized, it reports back to the session manager using
+        // this token as a reference.  This is used to tie the backend process
+        // to this specific SessionObject.
         backend_token = generate_path_uuid("", 't');
 
         auto backend_start = new DBusProxy(G_BUS_TYPE_SYSTEM,
@@ -283,6 +421,11 @@ public:
         }
         g_variant_get(res_g, "(u)", &backend_pid);
 
+        // The PID value we get here is just a temporary.  This is the
+        // PID returned by openvpn3-service-backendstart.  This will again
+        // start the openvpn3-service-client process, which will fork() once
+        // to be completely independent.  When this last fork() happens,
+        // the backend will report back its final PID.
         StatusChange(StatusMajor::SESSION, StatusMinor::PROC_STARTED,
                              "session_path=" + GetObjectPath()
                              + ", backend_pid=" + std::to_string(backend_pid));
@@ -313,6 +456,25 @@ public:
     }
 
 
+    /**
+     *  Callback method called each time signals we have subscribed to
+     *  occurs.  For the SessionObject, we care about these signals:
+     *
+     *    - RegistrationRequest:  which the VPN client backend process
+     *                            sends once it has completed the
+     *                            initialization.
+     *    - StatusChange:         whenever the status changes in the backend
+     *    - AttentionRequired:    whenever the backend process needs
+     *                            information from the front-end user.
+     *
+     * @param conn             D-Bus connection where the signal came from
+     * @param sender_name      D-Bus bus name of the sender of the singal
+     * @param object_path      D-Bus object path of the signal
+     * @param interface_name   D-Bus interface of the signal
+     * @param signal_name      The name of the signal itself
+     * @param params           GVariant Glib2 object containing all the
+     *                         variables the signal carries
+     */
     void callback_signal_handler(GDBusConnection *conn,
                                  const gchar *sender_name,
                                  const gchar *object_path,
@@ -387,10 +549,32 @@ public:
         else if ((0 ==  g_strcmp0(signal_name, "AttentionRequired"))
                  && (0 == g_strcmp0(interface_name, OpenVPN3DBus_interf_backends.c_str())))
         {
+                // Proxy this signal directly to the front-end processes
+                // listening
                 Send("AttentionRequired", params);
         }
     }
 
+    /**
+     *  Callback method which is called each time a D-Bus method call occurs
+     *  on this SessionObject.
+     *
+     *  In most cases the method call is just proxied to the client backend
+     *  process after an access control check has been performed.  Many of the
+     *  calls can be accessed by the owner or designated user IDs, and the
+     *  most sensitive methods are only accessible to the owner of this
+     *  session.
+     *
+     * @param conn       D-Bus connection where the method call occurred
+     * @param sender     D-Bus bus name of the sender of the method call
+     * @param obj_path   D-Bus object path of the target object.
+     * @param intf_name  D-Bus interface of the method call
+     * @param meth_name  D-Bus method name to be executed
+     * @param params     GVariant Glib2 object containing the arguments for
+     *                   the method call
+     * @param invoc      GDBusMethodInvocation where the response/result of
+     *                   the method call will be returned.
+     */
     void callback_method_call(GDBusConnection *conn,
                                           const gchar *sender,
                                           const gchar *obj_path,
@@ -586,6 +770,25 @@ public:
     };
 
 
+    /**
+     *   Callback which is used each time a SessionObject D-Bus property is
+     *   being read.
+     *
+     *   Only the 'owner' is accessible by anyone, otherwise it must either
+     *   be the session owner or UIDs granted access to this session.
+     *
+     * @param conn           D-Bus connection this event occurred on
+     * @param sender         D-Bus bus name of the requester
+     * @param obj_path       D-Bus object path to the object being requested
+     * @param intf_name      D-Bus interface of the property being accessed
+     * @param property_name  The property name being accessed
+     * @param error          A GLib2 GError object if an error occurs
+     *
+     * @return  Returns a GVariant Glib2 object containing the value of the
+     *          requested D-Bus object property.  On errors, NULL must be
+     *          returned and the error must be returned via a GError
+     *          object.
+     */
     GVariant * callback_get_property (GDBusConnection *conn,
                                       const gchar *sender,
                                       const gchar *obj_path,
@@ -681,6 +884,23 @@ public:
         return ret;
     };
 
+
+    /**
+     *  Callback method which is used each time a SessionObject property
+     *  is being modified over the D-Bus.
+     *
+     * @param conn           D-Bus connection this event occurred on
+     * @param sender         D-Bus bus name of the requester
+     * @param obj_path       D-Bus object path to the object being requested
+     * @param intf_name      D-Bus interface of the property being accessed
+     * @param property_name  The property name being accessed
+     * @param value          GVariant object containing the value to be stored
+     * @param error          A GLib2 GError object if an error occurs
+     *
+     * @return Returns a GVariantBuilder object which will be used by the
+     *         D-Bus library to issue the required PropertiesChanged signal.
+     *         If an error occurres, the DBusPropertyException is thrown.
+     */
     GVariantBuilder * callback_set_property(GDBusConnection *conn,
                                             const gchar *sender,
                                             const gchar *obj_path,
@@ -751,6 +971,10 @@ public:
     }
 
 
+    /**
+     *  Clean-up function triggered by the D-Bus library when an object
+     *  is removed from the D-Bus
+     */
     void callback_destructor ()
     {
         if( nullptr != sig_statuschg)
@@ -784,6 +1008,12 @@ private:
     std::mutex selfdestruct_guard;
 
 
+    /**
+     *  Ties the VPN client backend process to this SessionObject.  Once that
+     *  is done, it calls the RegistrationConfirmation method in the backend
+     *  process where it confirms the backend token and provides the
+     *  VPN configuration D-Bus object path to the backend.
+     */
     void register_backend()
     {
         try
@@ -804,8 +1034,7 @@ private:
                                                     be_busname,
                                                     OpenVPN3DBus_interf_backends,
                                                     be_path,
-                                                    GetObjectPath(),
-                                                    "StatusChange");
+                                                    GetObjectPath());
 
             GVariant *res_g = be_proxy->Call("RegistrationConfirmation",
                                              g_variant_new("(so)",
@@ -834,6 +1063,14 @@ private:
         }
     }
 
+
+    /**
+     * Simple ping-pong game between this SessionObject and its VPN client
+     * backend.  If the backend does not respond, we treat it as dead and will
+     * start to clean-up this session.
+     *
+     * @return  Returns True if the backend process is alive, otherwise False.
+     */
     bool ping_backend()
     {
         if (nullptr == be_proxy)
@@ -865,6 +1102,12 @@ private:
         return ret;
     }
 
+    /**
+     *  Initiate a shutdown of the VPN client backend process.
+     *
+     * @param forced  If set to True, it will not do a normal disconnect but
+     *                tell the backend process to stop more abrubtly.
+     */
     void shutdown(bool forced)
     {
         be_proxy->Call( (!forced ? "Disconnect" : "ForceShutdown"), true );
@@ -885,6 +1128,17 @@ private:
     }
 
 
+    /**
+     *  This method is dangerous and should only be used by either the
+     *  SessionObject::shutdown() method or exception handlers in the
+     *  SessionObject.
+     *
+     *  This will initiate deleting this SessionObject from the D-Bus and then
+     *  destroy itself.
+     *
+     * @param conn  D-Bus connection to use when removing this object from
+     *              the D-Bus.
+     */
     void selfdestruct(GDBusConnection *conn)
     {
         // Object may still be available via other threads for a short
@@ -911,11 +1165,23 @@ private:
 };
 
 
-
+/**
+ *   A SessionManagerObject is the main entry point when starting new
+ *   VPN tunnels.  It should only exist a single SessionManagerObject during
+ *   the life cycle of the openvpn3-service-sessoinmgr process.
+ */
 class SessionManagerObject : public DBusObject,
                              public SessionManagerSignals
 {
 public:
+    /**
+     *  Constructor initializing the SessionManagerObject to be registered on
+     *  the D-Bus.
+     *
+     * @param dbuscon  D-Bus this object is tied to
+     * @param busname  D-Bus bus name of the owner of this object
+     * @param objpath  D-Bus object path to this object
+     */
     SessionManagerObject(GDBusConnection *dbuscon, const std::string busname, const std::string objpath)
         : DBusObject(objpath),
           SessionManagerSignals(dbuscon, objpath),
@@ -944,11 +1210,30 @@ public:
         RemoveObject(dbuscon);
     }
 
+    /**
+     * Enables logging to file in addition to the D-Bus Log signal events
+     *
+     * @param filename  String containing the name of the log file
+     */
     void OpenLogFile(std::string filename)
     {
         SessionManagerSignals::OpenLogFile(filename);
     }
 
+    /**
+     *  Callback method called each time a method in the SessionManagerObject
+     *  is called over the D-Bus.
+     *
+     * @param conn       D-Bus connection where the method call occurred
+     * @param sender     D-Bus bus name of the sender of the method call
+     * @param obj_path   D-Bus object path of the target object.
+     * @param intf_name  D-Bus interface of the method call
+     * @param meth_name  D-Bus method name to be executed
+     * @param params     GVariant Glib2 object containing the arguments for
+     *                   the method call
+     * @param invoc      GDBusMethodInvocation where the response/result of
+     *                   the method call will be returned.
+     */
     void callback_method_call(GDBusConnection *conn,
                               const gchar *sender,
                               const gchar *obj_path,
@@ -986,6 +1271,24 @@ public:
     };
 
 
+    /**
+     *  Callback which is used each time a SessionManagerObject D-Bus
+     *  property is being read.
+     *
+     *  For the SessionManagerObject, this method will just return NULL
+     *  with an error set in the GError return pointer.  The
+     *  SessionManagerObject does not use properties at all.
+     *
+     * @param conn           D-Bus connection this event occurred on
+     * @param sender         D-Bus bus name of the requester
+     * @param obj_path       D-Bus object path to the object being requested
+     * @param intf_name      D-Bus interface of the property being accessed
+     * @param property_name  The property name being accessed
+     * @param error          A GLib2 GError object if an error occurs
+     *
+     * @return  Returns always NULL, as there are no properties in the
+     *          SessionManagerObject.
+     */
     GVariant * callback_get_property (GDBusConnection *conn,
                                       const gchar *sender,
                                       const gchar *obj_path,
@@ -1008,7 +1311,24 @@ public:
         return NULL;
     };
 
-
+    /**
+     *  Callback method which is used each time a SessionManagerObject
+     *  property is being modified over the D-Bus.
+     *
+     *  This will always fail with an exception, as there exists no properties
+     *  which can be modified in a SessionManagerObject.
+     *
+     * @param conn           D-Bus connection this event occurred on
+     * @param sender         D-Bus bus name of the requester
+     * @param obj_path       D-Bus object path to the object being requested
+     * @param intf_name      D-Bus interface of the property being accessed
+     * @param property_name  The property name being accessed
+     * @param value          GVariant object containing the value to be stored
+     * @param error          A GLib2 GError object if an error occurs
+     *
+     * @return Will always throw an execption as there are no properties to
+     *         modify.
+     */
     GVariantBuilder * callback_set_property(GDBusConnection *conn,
                                                    const gchar *sender,
                                                    const gchar *obj_path,
@@ -1027,9 +1347,18 @@ private:
 };
 
 
+/**
+ * Main D-Bus service implementation of the Session Manager
+ */
 class SessionManagerDBus : public DBus
 {
 public:
+    /**
+     * Constructor creating a D-Bus service for the Session Manager.
+     *
+     * @param bus_type  GBusType, which defines if this service should be
+     *                  registered on the system or session bus.
+     */
     SessionManagerDBus(GBusType bus_type)
         : DBus(bus_type,
                OpenVPN3DBus_name_sessions,
@@ -1049,18 +1378,34 @@ public:
         delete procsig;
     }
 
+
+    /**
+     *  Prepares logging to file.  This happens in parallel with the
+     *  D-Bus Log events which will be sent with Log events.
+     *
+     * @param filename  Filename of the log file to save the log events.
+     */
     void SetLogFile(std::string filename)
     {
         logfile = filename;
     }
 
+
+    /**
+     *  This callback is called when the service was successfully registered
+     *  on the D-Bus.
+     */
     void callback_bus_acquired()
     {
+        // Create a SessionManagerObject which will be the main entrance
+        // point to this service
         managobj = new SessionManagerObject(GetConnection(), GetBusName(), GetRootPath());
         if (!logfile.empty())
         {
             managobj->OpenLogFile(logfile);
         }
+
+        // Register this object to on the D-Bus
         managobj->RegisterObject(GetConnection());
 
         procsig = new ProcessSignalProducer(GetConnection(),
@@ -1074,10 +1419,30 @@ public:
         }
     };
 
+
+    /**
+     *  This is called each time the well-known bus name is successfully
+     *  acquired on the D-Bus.
+     *
+     *  This is not used, as the preparations already happens in
+     *  callback_bus_acquired()
+     *
+     * @param conn     Connection where this event happened
+     * @param busname  A string of the acquired bus name
+     */
     void callback_name_acquired(GDBusConnection *conn, std::string busname)
     {
     };
 
+
+    /**
+     *  This is called each time the well-known bus name is removed from the
+     *  D-Bus.  In our case, we just throw an exception and starts shutting
+     *  down.
+     *
+     * @param conn     Connection where this event happened
+     * @param busname  A string of the lost bus name
+     */
     void callback_name_lost(GDBusConnection *conn, std::string busname)
     {
         THROW_DBUSEXCEPTION("SessionManagerDBus", "Session Manager's D-Bus name not registered: '" + busname + "'");
@@ -1090,4 +1455,3 @@ private:
 };
 
 #endif // OPENVPN3_DBUS_SESSIONMGR_HPP
-
