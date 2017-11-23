@@ -25,49 +25,12 @@
 #include "dbus/core.hpp"
 #include "dbus/path.hpp"
 #include "log/dbus-log.hpp"
+#include "backend-signals.hpp"
+#include "core-client.hpp"
 
 using namespace openvpn;
 
 #define GUI_VERSION_STRING "0.0.1 (Linux)"
-
-class BackendSignals : public LogSender
-{
-public:
-
-    BackendSignals(GDBusConnection *conn, LogGroup lgroup, std::string object_path)
-        : LogSender(conn, lgroup, OpenVPN3DBus_interf_backends, object_path)
-    {
-    }
-
-    void LogFATAL(std::string msg)
-    {
-        Log(log_group, LogCategory::FATAL, msg);
-        kill(getpid(), SIGHUP);
-    }
-
-    void StatusChange(const StatusMajor major, const StatusMinor minor, std::string msg)
-    {
-        GVariant *params = g_variant_new("(uus)", (guint) major, (guint) minor, msg.c_str());
-        Send("StatusChange", params);
-    }
-
-    void StatusChange(const StatusMajor major, const StatusMinor minor)
-    {
-        GVariant *params = g_variant_new("(uus)", (guint) major, (guint) minor, "");
-        Send("StatusChange", params);
-    }
-
-    void AttentionReq(const ClientAttentionType att_type,
-                      const ClientAttentionGroup att_group,
-                      std::string msg)
-    {
-        GVariant *params = g_variant_new("(uus)", (guint) att_type, (guint) att_group, msg.c_str());
-        Send("AttentionRequired", params);
-    }
-};
-
-// FIXME: Cleanup ordering --- core client depends on BackendSignals to be defined
-#include "core-client.hpp"
 
 class BackendServiceObject : public DBusObject,
                              public RC<thread_safe_refcount>

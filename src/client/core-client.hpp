@@ -40,6 +40,7 @@
 #include <openvpn/ssl/peerinfo.hpp>
 
 #include "common/core-extensions.hpp"
+#include "backend-signals.hpp"
 
 using namespace openvpn;
 

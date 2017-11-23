@@ -127,6 +127,7 @@ src_ovpn3cli_openvpn3_SOURCES = \
 src_client_openvpn3_service_client_SOURCES = \
 	src/client/openvpn3-service-client.cpp \
 	src/client/core-client.hpp \
+	src/client/backend-signals.hpp \
 	$(DBUS_SOURCES) \
 	src/common/core-extensions.hpp \
 	src/common/requiresqueue.hpp \
