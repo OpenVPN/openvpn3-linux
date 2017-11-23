@@ -1,6 +1,6 @@
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
-#  Copyright (C) 2017      OpenVPN, Inc. <davids@openvpn.net>
+#  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
 #  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
 #
 #  This program is free software: you can redistribute it and/or modify

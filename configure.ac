@@ -1,6 +1,6 @@
 dnl  OpenVPN 3 Linux client -- Next generation OpenVPN client
 dnl
-dnl  Copyright (C) 2017      OpenVPN, Inc. <sales@openvpn.net>
+dnl  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
 dnl  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
 dnl
 dnl  This program is free software: you can redistribute it and/or modify
