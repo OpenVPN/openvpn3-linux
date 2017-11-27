@@ -259,13 +259,13 @@ public:
      *                         the variables and values the signal carries
      */
     void callback_signal_handler(GDBusConnection *connection,
-                                 const gchar *sender_name,
-                                 const gchar *object_path,
-                                 const gchar *interface_name,
-                                 const gchar *signal_name,
+                                 const std::string sender_name,
+                                 const std::string object_path,
+                                 const std::string interface_name,
+                                 const std::string signal_name,
                                  GVariant *parameters)
     {
-        if( 0 == g_strcmp0(signal_name, "StatusChange"))
+        if (signal_name == "StatusChange")
         {
             gchar *msg;
             g_variant_get (parameters, "(uus)", &last_major, &last_minor, &msg);
@@ -476,14 +476,14 @@ public:
      *                         variables the signal carries
      */
     void callback_signal_handler(GDBusConnection *conn,
-                                 const gchar *sender_name,
-                                 const gchar *object_path,
-                                 const gchar *interface_name,
-                                 const gchar *signal_name,
+                                 const std::string sender_name,
+                                 const std::string object_path,
+                                 const std::string interface_name,
+                                 const std::string signal_name,
                                  GVariant *params)
     {
-        if (0 == g_strcmp0(signal_name, "RegistrationRequest")
-            && (0 == g_strcmp0(interface_name, OpenVPN3DBus_interf_backends.c_str())))
+        if ((signal_name == "RegistrationRequest")
+            && (interface_name == OpenVPN3DBus_interf_backends))
         {
             gchar *busn;
             gchar *sesstoken;
@@ -525,8 +525,8 @@ public:
                 selfdestruct(conn);
             }
         }
-        else if ((0 ==  g_strcmp0(signal_name, "StatusChange"))
-                 && (0 == g_strcmp0(interface_name, OpenVPN3DBus_interf_backends.c_str())))
+        else if ((signal_name == "StatusChange")
+                 && (interface_name == OpenVPN3DBus_interf_backends))
         {
             StatusMajor major;
             StatusMinor minor;
@@ -546,8 +546,8 @@ public:
                 shutdown(true);
             }
         }
-        else if ((0 ==  g_strcmp0(signal_name, "AttentionRequired"))
-                 && (0 == g_strcmp0(interface_name, OpenVPN3DBus_interf_backends.c_str())))
+        else if ((signal_name =="AttentionRequired")
+                 && (interface_name == OpenVPN3DBus_interf_backends))
         {
                 // Proxy this signal directly to the front-end processes
                 // listening

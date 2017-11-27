@@ -224,13 +224,13 @@ namespace openvpn
                                      const LogGroup group, const LogCategory catg, const std::string msg) = 0;
 
         void callback_signal_handler(GDBusConnection *connection,
-                                     const gchar *sender_name,
-                                     const gchar *object_path,
-                                     const gchar *interface_name,
-                                     const gchar *signal_name,
+                                     const std::string sender_name,
+                                     const std::string object_path,
+                                     const std::string interface_name,
+                                     const std::string signal_name,
                                      GVariant *parameters)
         {
-            process_log_event(std::string(sender_name), std::string(interface_name), std::string(object_path), parameters);
+            process_log_event(sender_name, interface_name, object_path, parameters);
         }
 
     protected:

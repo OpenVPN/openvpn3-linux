@@ -47,13 +47,13 @@ public:
 
 
     void callback_signal_handler(GDBusConnection *connection,
-                                 const gchar *sender_name,
-                                 const gchar *object_path,
-                                 const gchar *interface_name,
-                                 const gchar *signal_name,
+                                 const std::string sender_name,
+                                 const std::string object_path,
+                                 const std::string interface_name,
+                                 const std::string signal_name,
                                  GVariant *parameters)
     {
-        if (0 == g_strcmp0(signal_name, "StatusChange"))
+        if (signal_name == "StatusChange")
         {
             guint major, minor;
             gchar *msg = NULL;
@@ -70,7 +70,7 @@ public:
             }
             std::cout << std::endl;
         }
-        else if (0 == g_strcmp0(signal_name, "ProcessChange"))
+        else if (signal_name =="ProcessChange")
         {
             guint minor;
             gchar *procname = NULL;
@@ -85,7 +85,7 @@ public:
                       << " (pid: " << std::to_string(pid) << ")"
                       << std::endl;
         }
-        else if (0 == g_strcmp0(signal_name, "AttentionRequired"))
+        else if (signal_name == "AttentionRequired")
         {
             guint type;
             guint group;

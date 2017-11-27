@@ -47,10 +47,10 @@ public:
 
 
     void callback_signal_handler(GDBusConnection *connection,
-                                 const gchar *sender_name,
-                                 const gchar *object_path,
-                                 const gchar *interface_name,
-                                 const gchar *signal_name,
+                                 const std::string sender_name,
+                                 const std::string object_path,
+                                 const std::string interface_name,
+                                 const std::string signal_name,
                                  GVariant *parameters)
     {
             guint group;

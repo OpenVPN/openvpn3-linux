@@ -124,10 +124,10 @@ namespace openvpn
          *  Called each time the subscribed signal has a match on the D-Bus
          */
         virtual void callback_signal_handler(GDBusConnection *connection,
-                                             const gchar *sender_name,
-                                             const gchar *object_path,
-                                             const gchar *interface_name,
-                                             const gchar *signal_name,
+                                             const std::string sender_name,
+                                             const std::string object_path,
+                                             const std::string interface_name,
+                                             const std::string signal_name,
                                              GVariant *parameters) = 0;
 
 
@@ -217,7 +217,12 @@ namespace openvpn
                                                         gpointer this_ptr)
         {
             class DBusSignalSubscription *obj = (class DBusSignalSubscription *) this_ptr;
-            obj->callback_signal_handler(conn, sender, obj_path, intf_name, sign_name, params);
+            obj->callback_signal_handler(conn,
+                                         std::string(sender),
+                                         std::string(obj_path),
+                                         std::string(intf_name),
+                                         std::string(sign_name),
+                                         params);
         }
 
 

@@ -47,13 +47,13 @@ namespace openvpn
 
 
         void callback_signal_handler(GDBusConnection *connection,
-                                     const gchar *sender_name,
-                                     const gchar *object_path,
-                                     const gchar *interface_name,
-                                     const gchar *signal_name,
+                                     const std::string sender_name,
+                                     const std::string object_path,
+                                     const std::string interface_name,
+                                     const std::string signal_name,
                                      GVariant *parameters)
         {
-            if (0 != g_strcmp0(signal_name, "ProcessChange"))
+            if (signal_name != "ProcessChange")
             {
                 return;
             }
@@ -62,14 +62,15 @@ namespace openvpn
             gchar *procname_p = NULL;
             pid_t pid;
             g_variant_get(parameters, "(usu)", &status, &procname_p, &pid);
+            std::string procname(procname_p);
 
 #if 0
             std::cout << "ProcessChange: status=" << std::to_string((uint8_t) status)
-                      << ", process=" << std::string(procname_p)
+                      << ", process=" << procname
                       << ", pid=" << std::to_string(pid)
                       << std::endl;
 #endif
-            if (!waitfor_process_name.empty() && (0 != g_strcmp0(procname_p, waitfor_process_name.c_str())))
+            if (!waitfor_process_name.empty() && (procname != waitfor_process_name))
             {
                 // Not the process name we're waiting for
                 return;
