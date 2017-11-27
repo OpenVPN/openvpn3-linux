@@ -213,6 +213,12 @@ public:
         g_free(cfgstr);
     }
 
+
+    ~ConfigurationObject()
+    {
+        IdleCheck_RefDec();
+    };
+
     void callback_method_call(GDBusConnection *conn,
                                           const gchar *sender,
                                           const gchar *obj_path,
@@ -595,6 +601,7 @@ public:
 
             auto *cfgobj = new ConfigurationObject(dbuscon, cfgpath, creds.GetUID(sender), params);
             cfgobj->RegisterObject(conn);
+            IdleCheck_RefInc();
 
             signal.Debug(std::string("ConfigurationObject registered on '")
                          + intf_name + "': " + cfgpath
