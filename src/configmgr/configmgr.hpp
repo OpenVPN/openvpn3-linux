@@ -227,6 +227,7 @@ public:
                                           GVariant *params,
                                           GDBusMethodInvocation *invoc)
     {
+        IdleCheck_UpdateTimestamp();
         if (0 == g_strcmp0(meth_name, "Fetch"))
         {
             try
@@ -384,6 +385,7 @@ public:
                 CheckOwnerAccess(sender);
                 RemoveObject(conn);
                 g_dbus_method_invocation_return_value(invoc, NULL);
+                delete this;
                 return;
             }
             catch (DBusCredentialsException& excp)
@@ -402,6 +404,7 @@ public:
                                       const gchar *property_name,
                                       GError **error)
     {
+        IdleCheck_UpdateTimestamp();
         if( 0 == g_strcmp0(property_name, "owner") )
         {
             return GetOwner();
@@ -470,6 +473,7 @@ public:
                                             GVariant *value,
                                             GError **error)
     {
+        IdleCheck_UpdateTimestamp();
         if (readonly)
         {
             throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_READ_ONLY,
@@ -594,14 +598,17 @@ public:
                               GVariant *params,
                               GDBusMethodInvocation *invoc)
     {
+        IdleCheck_UpdateTimestamp();
         if (0 == g_strcmp0(meth_name, "Import"))
         {
             // Import the configuration
             std::string cfgpath = generate_path_uuid(OpenVPN3DBus_rootp_configuration, 'x');
 
             auto *cfgobj = new ConfigurationObject(dbuscon, cfgpath, creds.GetUID(sender), params);
-            cfgobj->RegisterObject(conn);
             IdleCheck_RefInc();
+            cfgobj->IdleCheck_Register(IdleCheck_Get());
+            cfgobj->RegisterObject(conn);
+
 
             signal.Debug(std::string("ConfigurationObject registered on '")
                          + intf_name + "': " + cfgpath
@@ -618,6 +625,7 @@ public:
                                       const gchar *property_name,
                                       GError **error)
     {
+        IdleCheck_UpdateTimestamp();
         GVariant *ret = NULL;
         g_set_error (error,
                      G_IO_ERROR,
@@ -686,6 +694,11 @@ public:
                                             OpenVPN3DBus_interf_configuration,
                                             "ConfigurationManager");
         procsig->ProcessChange(StatusMinor::PROC_STARTED);
+
+        if (nullptr != idle_checker)
+        {
+            cfgmgr->IdleCheck_Register(idle_checker);
+        }
     };
 
     void callback_name_acquired(GDBusConnection *conn, std::string busname)
