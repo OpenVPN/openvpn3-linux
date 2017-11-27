@@ -251,10 +251,14 @@ public:
                                                       g_variant_new("(s)",
                                                                     options.json_export().c_str()));
 
-                if (single_use)
-                {
-                    RemoveObject(conn);
-                }
+                // This is probably a bad idea.  FetchJSON is only used
+                // by front-ends, never backends.  So it still needs to be
+                // available when the backend calls Fetch.
+                //
+                // if (single_use)
+                // {
+                //    RemoveObject(conn);
+                // }
                 return;
             }
             catch (DBusCredentialsException& excp)
