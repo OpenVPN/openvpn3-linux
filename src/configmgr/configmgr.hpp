@@ -231,6 +231,7 @@ public:
                                                                     options.string_export().c_str()));
                 if (single_use)
                 {
+                    LogVerb2("Single-use configuration fetched. Removing configuration");
                     RemoveObject(conn);
                 }
                 return;
@@ -591,9 +592,9 @@ public:
             auto *cfgobj = new ConfigurationObject(dbuscon, cfgpath, creds.GetUID(sender), params);
             cfgobj->RegisterObject(conn);
 
-            signal.LogVerb1(std::string("ConfigurationObject registered on '")
-                            + intf_name + "': " + cfgpath
-                            + " (owner uid " + std::to_string(creds.GetUID(sender)) + ")");
+            signal.Debug(std::string("ConfigurationObject registered on '")
+                         + intf_name + "': " + cfgpath
+                         + " (owner uid " + std::to_string(creds.GetUID(sender)) + ")");
             g_dbus_method_invocation_return_value(invoc, g_variant_new("(o)", cfgpath.c_str()));
         }
     };
