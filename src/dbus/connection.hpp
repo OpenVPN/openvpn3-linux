@@ -98,9 +98,9 @@ namespace openvpn
         }
 
 
-        void EnableIdleCheck(IdleCheck *chk) noexcept
+        void EnableIdleCheck(IdleCheck::Ptr& chk) noexcept
         {
-            idle_checker = chk;
+            idle_checker = chk.get();
         }
 
 

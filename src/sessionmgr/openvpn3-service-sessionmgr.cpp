@@ -32,19 +32,19 @@ int main(int argc, char **argv)
     g_unix_signal_add(SIGINT, stop_handler, main_loop);
     g_unix_signal_add(SIGTERM, stop_handler, main_loop);
 
-    IdleCheck idle_exit(main_loop, std::chrono::minutes(5));
-    idle_exit.SetPollTime(std::chrono::seconds(20));
+    IdleCheck::Ptr idle_exit = new IdleCheck(main_loop, std::chrono::minutes(3));
+    idle_exit->SetPollTime(std::chrono::seconds(30));
 
     SessionManagerDBus sessmgr(G_BUS_TYPE_SYSTEM);
     // sessmgr.SetLogFile("/tmp/openvpn3-service-sessionmgr.log");
-    sessmgr.EnableIdleCheck(&idle_exit);
+    sessmgr.EnableIdleCheck(idle_exit);
     sessmgr.Setup();
 
-    idle_exit.Enable();
+    idle_exit->Enable();
     g_main_loop_run(main_loop);
     g_main_loop_unref(main_loop);
-    idle_exit.Disable();
-    idle_exit.Join();
+    idle_exit->Disable();
+    idle_exit->Join();
 
     return 0;
 }

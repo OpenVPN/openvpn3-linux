@@ -22,9 +22,15 @@
 #include <memory>
 #include <thread>
 
-class IdleCheck
+#include <openvpn/common/rc.hpp>
+
+using namespace openvpn;
+
+class IdleCheck : public RC<thread_safe_refcount>
 {
 public:
+    typedef RCPtr<IdleCheck> Ptr;
+
     IdleCheck(GMainLoop *mainloop, std::chrono::duration<double> idle_time)
         : mainloop(mainloop),
           idle_time(idle_time),
@@ -62,9 +68,9 @@ public:
         }
 
         enabled = true;
-        idle_checker.reset(new std::thread([this]()
+        idle_checker.reset(new std::thread([self=Ptr(this)]()
                            {
-                               _cb_idlechecker__loop();
+                               self->_cb_idlechecker__loop();
                            }));
     }
 
