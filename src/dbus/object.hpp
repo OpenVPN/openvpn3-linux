@@ -167,10 +167,10 @@ namespace openvpn
          *  Called each time a D-Bus client attempts to read a D-Bus object property
          */
         virtual GVariant * callback_get_property(GDBusConnection *conn,
-                                                 const gchar *sender,
-                                                 const gchar *obj_path,
-                                                 const gchar *intf_name,
-                                                 const gchar *property_name,
+                                                 const std::string sender,
+                                                 const std::string obj_path,
+                                                 const std::string intf_name,
+                                                 const std::string property_name,
                                                  GError **error) = 0;
 
 
@@ -182,18 +182,21 @@ namespace openvpn
          *  signal to D-Bus that a propery changed.
          */
         gboolean _dbus_set_property_internal(GDBusConnection *conn,
-                                                const gchar *sender,
-                                                const gchar *obj_path,
-                                                const gchar *intf_name,
-                                                const gchar *property_name,
-                                                GVariant *value,
-                                                GError **error)
+                                             const gchar *sender,
+                                             const gchar *obj_path,
+                                             const gchar *intf_name,
+                                             const gchar *property_name,
+                                             GVariant *value,
+                                             GError **error)
         {
             try
             {
-                GVariantBuilder *ret = callback_set_property(conn, sender,
-                                                             obj_path, intf_name,
-                                                             property_name, value,
+                GVariantBuilder *ret = callback_set_property(conn,
+                                                             std::string(sender),
+                                                             std::string(obj_path),
+                                                             std::string(intf_name),
+                                                             std::string(property_name),
+                                                             value,
                                                              error);
 
                 // If ret != NULL, we have a valid response which contains
@@ -257,10 +260,10 @@ namespace openvpn
          *  Called each time a D-Bus client attempts to modify a D-Bus object property
          */
         virtual GVariantBuilder * callback_set_property(GDBusConnection *conn,
-                                               const gchar *sender,
-                                               const gchar *obj_path,
-                                               const gchar *intf_name,
-                                               const gchar *property_name,
+                                               const std::string sender,
+                                               const std::string obj_path,
+                                               const std::string intf_name,
+                                               const std::string property_name,
                                                GVariant *value,
                                                GError **error) = 0;
 
@@ -466,29 +469,37 @@ namespace openvpn
 
 
         static GVariant * dbusobject_callback_get_property(GDBusConnection *conn,
-                                                            const gchar *sender,
-                                                            const gchar *obj_path,
-                                                            const gchar *intf_name,
-                                                            const gchar *property_name,
-                                                            GError **error,
-                                                            gpointer this_ptr)
+                                                           const gchar *sender,
+                                                           const gchar *obj_path,
+                                                           const gchar *intf_name,
+                                                           const gchar *property_name,
+                                                           GError **error,
+                                                           gpointer this_ptr)
         {
             class DBusObject *obj = (class DBusObject *) this_ptr;
-            return obj->callback_get_property(conn, sender, obj_path, intf_name, property_name, error);
+            return obj->callback_get_property(conn,
+                                              std::string(sender),
+                                              std::string(obj_path),
+                                              std::string(intf_name),
+                                              std::string(property_name),
+                                              error);
         }
 
 
         static gboolean dbusobject_callback_set_property(GDBusConnection *conn,
-                                                          const gchar *sender,
-                                                          const gchar *obj_path,
-                                                          const gchar *intf_name,
-                                                          const gchar *property_name,
-                                                          GVariant *value,
-                                                          GError **error,
-                                                          gpointer this_ptr)
+                                                         const gchar *sender,
+                                                         const gchar *obj_path,
+                                                         const gchar *intf_name,
+                                                         const gchar *property_name,
+                                                         GVariant *value,
+                                                         GError **error,
+                                                         gpointer this_ptr)
         {
             class DBusObject *obj = (class DBusObject *) this_ptr;
-            return obj->_dbus_set_property_internal(conn, sender, obj_path, intf_name, property_name, value, error);
+            return obj->_dbus_set_property_internal(conn, sender,
+                                                    obj_path, intf_name,
+                                                    property_name, value,
+                                                    error);
         }
     };
 };

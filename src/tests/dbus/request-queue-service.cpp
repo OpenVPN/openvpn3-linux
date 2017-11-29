@@ -168,23 +168,22 @@ public:
 
 
     GVariant * callback_get_property(GDBusConnection *conn,
-                                     const gchar *sender,
-                                     const gchar *obj_path,
-                                     const gchar *intf_name,
-                                     const gchar *property_name,
+                                     const std::string sender,
+                                     const std::string obj_path,
+                                     const std::string intf_name,
+                                     const std::string property_name,
                                      GError **error)
     {
         THROW_DBUSEXCEPTION("ReqQueueMain", "get property not implemented");
     }
 
-
     GVariantBuilder * callback_set_property(GDBusConnection *conn,
-                                                   const gchar *sender,
-                                                   const gchar *obj_path,
-                                                   const gchar *intf_name,
-                                                   const gchar *property_name,
-                                                   GVariant *value,
-                                                   GError **error)
+                                            const std::string sender,
+                                            const std::string obj_path,
+                                            const std::string intf_name,
+                                            const std::string property_name,
+                                            GVariant *value,
+                                            GError **error)
     {
         THROW_DBUSEXCEPTION("ReqQueueMain", "set property not implemented");
     }

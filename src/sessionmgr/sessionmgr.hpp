@@ -789,14 +789,14 @@ public:
      *          returned and the error must be returned via a GError
      *          object.
      */
-    GVariant * callback_get_property (GDBusConnection *conn,
-                                      const gchar *sender,
-                                      const gchar *obj_path,
-                                      const gchar *intf_name,
-                                      const gchar *property_name,
-                                      GError **error)
+    GVariant * callback_get_property(GDBusConnection *conn,
+                                     const std::string sender,
+                                     const std::string obj_path,
+                                     const std::string intf_name,
+                                     const std::string property_name,
+                                     GError **error)
     {
-        if( 0 == g_strcmp0(property_name, "owner") )
+        if ("owner" == property_name)
         {
             return GetOwner();
         }
@@ -822,11 +822,11 @@ public:
                   << std::endl;
         */
         GVariant *ret = NULL;
-        if (0 == g_strcmp0(property_name, "receive_log_events") )
+        if ("receive_log_events" == property_name)
         {
             ret = g_variant_new_boolean (recv_log_events);
         }
-        else if (0 == g_strcmp0(property_name, "last_log") )
+        else if ("last_log" == property_name)
         {
             if (nullptr != sig_logevent) {
                 ret = sig_logevent->GetLastLogEntry();
@@ -840,7 +840,7 @@ public:
                             "Logging not enabled");
             }
         }
-        else if (0 == g_strcmp0(property_name, "status") )
+        else if ("status" == property_name)
         {
             ret = NULL;
             if (nullptr != sig_statuschg)
@@ -853,32 +853,32 @@ public:
                             "No status changes have been logged yet");
             }
         }
-        else if (0 == g_strcmp0(property_name, "config_path") )
+        else if ("config_path" == property_name)
         {
             ret = g_variant_new_string (config_path.c_str());
         }
-        else if (0 == g_strcmp0(property_name, "backend_pid") )
+        else if ("backend_pid" == property_name)
         {
             ret = g_variant_new_uint32 (backend_pid);
         }
-        else if (0 == g_strcmp0(property_name, "log_verbosity") )
+        else if ("log_verbosity" == property_name)
         {
             ret = g_variant_new_uint32 ((guint32) log_verb);
         }
-        else if( 0 == g_strcmp0(property_name, "public_access") )
+        else if ("public_access" == property_name)
         {
             ret = GetPublicAccess();
         }
-        else if( 0 == g_strcmp0(property_name, "acl"))
+        else if ("acl" == property_name)
         {
-                ret = GetAccessList();
+            ret = GetAccessList();
         }
         else
         {
-            g_set_error (error,
-                         G_IO_ERROR,
-                         G_IO_ERROR_FAILED,
-                         "Unknown property");
+            g_set_error(error,
+            G_IO_ERROR,
+                        G_IO_ERROR_FAILED,
+                        "Unknown property");
         }
 
         return ret;
@@ -902,10 +902,10 @@ public:
      *         If an error occurres, the DBusPropertyException is thrown.
      */
     GVariantBuilder * callback_set_property(GDBusConnection *conn,
-                                            const gchar *sender,
-                                            const gchar *obj_path,
-                                            const gchar *intf_name,
-                                            const gchar *property_name,
+                                            const std::string sender,
+                                            const std::string obj_path,
+                                            const std::string intf_name,
+                                            const std::string property_name,
                                             GVariant *value,
                                             GError **error)
     {
@@ -929,17 +929,18 @@ public:
                                         excp.getUserError());
         }
 
-        if (0 == g_strcmp0(property_name, "receive_log_events") && be_conn)
+        if (("receive_log_events" == property_name) && be_conn)
         {
-            recv_log_events =  g_variant_get_boolean(value);
+            recv_log_events = g_variant_get_boolean(value);
             if (recv_log_events && nullptr == sig_logevent)
             {
                 // Subscribe to log signals
-                sig_logevent = new SessionLogEvent(be_conn,
-                                                   be_busname,
-                                                   OpenVPN3DBus_interf_backends,
-                                                   be_path,
-                                                   GetObjectPath());
+                sig_logevent = new SessionLogEvent(
+                                be_conn,
+                                be_busname,
+                                OpenVPN3DBus_interf_backends,
+                                be_path,
+                                GetObjectPath());
             }
             else if (!recv_log_events && nullptr != sig_logevent)
             {
@@ -948,20 +949,22 @@ public:
             }
             return build_set_property_response(property_name, recv_log_events);
         }
-        else if (0 == g_strcmp0(property_name, "log_verbosity") && be_conn)
+        else if (("log_verbosity" == property_name) && be_conn)
         {
-            log_verb =  (LogCategory) g_variant_get_uint32(value);
+            log_verb = (LogCategory) g_variant_get_uint32(value);
 
             // FIXME: Proxy log level to the OpenVPN3 Core client
-            return build_set_property_response(property_name, (guint32) log_verb);
+            return build_set_property_response(property_name,
+                                               (guint32) log_verb);
         }
-        else if (0 == g_strcmp0(property_name, "public_access") && conn)
+        else if (("public_access" == property_name) && conn)
         {
             bool acl_public = g_variant_get_boolean(value);
             SetPublicAccess(acl_public);
             LogVerb1("Public access set to "
-                             + (acl_public ? std::string("true") : std::string("false"))
-                             + " by uid " + std::to_string(GetUID(sender)));
+                     + (acl_public ? std::string("true") :
+                                     std::string("false"))
+                     + " by uid " + std::to_string(GetUID(sender)));
             return build_set_property_response(property_name, acl_public);
         }
 
@@ -1289,12 +1292,12 @@ public:
      * @return  Returns always NULL, as there are no properties in the
      *          SessionManagerObject.
      */
-    GVariant * callback_get_property (GDBusConnection *conn,
-                                      const gchar *sender,
-                                      const gchar *obj_path,
-                                      const gchar *intf_name,
-                                      const gchar *property_name,
-                                      GError **error)
+    GVariant * callback_get_property(GDBusConnection *conn,
+                                     const std::string sender,
+                                     const std::string obj_path,
+                                     const std::string intf_name,
+                                     const std::string property_name,
+                                     GError **error)
     {
         /*
         std::cout << "[SessionManagerObject] get_property(): "
@@ -1330,12 +1333,12 @@ public:
      *         modify.
      */
     GVariantBuilder * callback_set_property(GDBusConnection *conn,
-                                                   const gchar *sender,
-                                                   const gchar *obj_path,
-                                                   const gchar *intf_name,
-                                                   const gchar *property_name,
-                                                   GVariant *value,
-                                                   GError **error)
+                                            const std::string sender,
+                                            const std::string obj_path,
+                                            const std::string intf_name,
+                                            const std::string property_name,
+                                            GVariant *value,
+                                            GError **error)
     {
         THROW_DBUSEXCEPTION("SessionManagerObject", "set property not implemented");
     }

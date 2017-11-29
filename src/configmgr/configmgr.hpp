@@ -102,16 +102,16 @@ public:
     }
 
 
-    GVariant * callback_get_property (GDBusConnection *conn,
-                                      const gchar *sender,
-                                      const gchar *obj_path,
-                                      const gchar *intf_name,
-                                      const gchar *property_name,
-                                      GError **error)
+    GVariant * callback_get_property(GDBusConnection *conn,
+                                     const std::string sender,
+                                     const std::string obj_path,
+                                     const std::string intf_name,
+                                     const std::string property_name,
+                                     GError **error)
     {
         GVariant *ret = NULL;
 
-        if( 0 == g_strcmp0(property_name, "config_path") )
+        if ("config_path" == property_name)
         {
             ret = g_variant_new_string (cfgpath.c_str());
         }
@@ -128,12 +128,12 @@ public:
 
 
     GVariantBuilder * callback_set_property(GDBusConnection *conn,
-                                                   const gchar *sender,
-                                                   const gchar *obj_path,
-                                                   const gchar *intf_name,
-                                                   const gchar *property_name,
-                                                   GVariant *value,
-                                                   GError **error)
+                                            const std::string sender,
+                                            const std::string obj_path,
+                                            const std::string intf_name,
+                                            const std::string property_name,
+                                            GVariant *value,
+                                            GError **error)
     {
         THROW_DBUSEXCEPTION("ConfigManagerAlias", "set property not implemented");
     }
@@ -397,15 +397,15 @@ public:
     };
 
 
-    GVariant * callback_get_property (GDBusConnection *conn,
-                                      const gchar *sender,
-                                      const gchar *obj_path,
-                                      const gchar *intf_name,
-                                      const gchar *property_name,
-                                      GError **error)
+    GVariant * callback_get_property(GDBusConnection *conn,
+                                     const std::string sender,
+                                     const std::string obj_path,
+                                     const std::string intf_name,
+                                     const std::string property_name,
+                                     GError **error)
     {
         IdleCheck_UpdateTimestamp();
-        if( 0 == g_strcmp0(property_name, "owner") )
+        if ("owner" == property_name)
         {
             return GetOwner();
         }
@@ -415,35 +415,35 @@ public:
 
             GVariant *ret = NULL;
 
-            if( 0 == g_strcmp0(property_name, "single_use") )
+            if ("single_use" == property_name)
             {
                 ret = g_variant_new_boolean (single_use);
             }
-            else if( 0 == g_strcmp0(property_name, "persistent") )
+            else if ("persistent" == property_name)
             {
                 ret = g_variant_new_boolean (persistent);
             }
-            else if( 0 == g_strcmp0(property_name, "valid") )
+            else if ("valid" == property_name)
             {
                 ret = g_variant_new_boolean (valid);
             }
-            else if( 0 == g_strcmp0(property_name, "readonly") )
+            else if ("readonly" == property_name)
             {
                 ret = g_variant_new_boolean (readonly);
             }
-            else if( 0 == g_strcmp0(property_name, "name") )
+            else if ("name"  == property_name)
             {
                 ret = g_variant_new_string (name.c_str());
             }
-            else if( 0 == g_strcmp0(property_name, "alias") )
+            else if ("alias" == property_name)
             {
                 ret = g_variant_new_string(alias ? alias->GetAlias() : "");
             }
-            else if( 0 == g_strcmp0(property_name, "public_access") )
+            else if ("public_access" == property_name)
             {
                 ret = GetPublicAccess();
             }
-            else if( 0 == g_strcmp0(property_name, "acl"))
+            else if ("acl" == property_name)
             {
                     ret = GetAccessList();
             }
@@ -466,10 +466,10 @@ public:
     };
 
     GVariantBuilder * callback_set_property(GDBusConnection *conn,
-                                            const gchar *sender,
-                                            const gchar *obj_path,
-                                            const gchar *intf_name,
-                                            const gchar *property_name,
+                                            const std::string sender,
+                                            const std::string obj_path,
+                                            const std::string intf_name,
+                                            const std::string property_name,
                                             GVariant *value,
                                             GError **error)
     {
@@ -486,7 +486,7 @@ public:
             CheckOwnerAccess(sender);
 
             GVariantBuilder * ret = NULL;
-            if (0 == g_strcmp0(property_name, "alias") && conn)
+            if (("alias" == property_name) && conn)
             {
                 if (nullptr != alias)
                 {
@@ -513,7 +513,7 @@ public:
                                                 err.getRawError().c_str());
                 }
             }
-            else if (0 == g_strcmp0(property_name, "public_access") && conn)
+            else if (("public_access" == property_name) && conn)
             {
                 bool acl_public = g_variant_get_boolean(value);
                 SetPublicAccess(acl_public);
@@ -618,12 +618,12 @@ public:
     };
 
 
-    GVariant * callback_get_property (GDBusConnection *conn,
-                                      const gchar *sender,
-                                      const gchar *obj_path,
-                                      const gchar *intf_name,
-                                      const gchar *property_name,
-                                      GError **error)
+    GVariant * callback_get_property(GDBusConnection *conn,
+                                     const std::string sender,
+                                     const std::string obj_path,
+                                     const std::string intf_name,
+                                     const std::string property_name,
+                                     GError **error)
     {
         IdleCheck_UpdateTimestamp();
         GVariant *ret = NULL;
@@ -636,12 +636,12 @@ public:
 
 
     GVariantBuilder * callback_set_property(GDBusConnection *conn,
-                                                   const gchar *sender,
-                                                   const gchar *obj_path,
-                                                   const gchar *intf_name,
-                                                   const gchar *property_name,
-                                                   GVariant *value,
-                                                   GError **error)
+                                            const std::string sender,
+                                            const std::string obj_path,
+                                            const std::string intf_name,
+                                            const std::string property_name,
+                                            GVariant *value,
+                                            GError **error)
     {
         THROW_DBUSEXCEPTION("ConfigManagerObject", "get property not implemented");
     }
