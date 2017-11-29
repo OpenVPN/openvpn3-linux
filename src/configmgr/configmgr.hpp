@@ -91,10 +91,10 @@ public:
     }
 
     void callback_method_call(GDBusConnection *conn,
-                              const gchar *sender,
-                              const gchar *obj_path,
-                              const gchar *intf_name,
-                              const gchar *meth_name,
+                              const std::string sender,
+                              const std::string obj_path,
+                              const std::string intf_name,
+                              const std::string method_name,
                               GVariant *params,
                               GDBusMethodInvocation *invoc)
     {
@@ -220,15 +220,15 @@ public:
     };
 
     void callback_method_call(GDBusConnection *conn,
-                                          const gchar *sender,
-                                          const gchar *obj_path,
-                                          const gchar *intf_name,
-                                          const gchar *meth_name,
-                                          GVariant *params,
-                                          GDBusMethodInvocation *invoc)
+                              const std::string sender,
+                              const std::string obj_path,
+                              const std::string intf_name,
+                              const std::string method_name,
+                              GVariant *params,
+                              GDBusMethodInvocation *invoc)
     {
         IdleCheck_UpdateTimestamp();
-        if (0 == g_strcmp0(meth_name, "Fetch"))
+        if ("Fetch" == method_name)
         {
             try
             {
@@ -249,7 +249,7 @@ public:
                 excp.SetDBusError(invoc);
             }
         }
-        else if (0 == g_strcmp0(meth_name, "FetchJSON"))
+        else if ("FetchJSON" == method_name)
         {
             try
             {
@@ -274,7 +274,7 @@ public:
                 excp.SetDBusError(invoc);
             }
         }
-        else if (0 == g_strcmp0(meth_name, "SetOption"))
+        else if ("SetOption" == method_name)
         {
             if (readonly)
             {
@@ -296,7 +296,7 @@ public:
                 excp.SetDBusError(invoc);
             }
         }
-        else if (0 == g_strcmp0(meth_name, "AccessGrant"))
+        else if ("AccessGrant" == method_name)
         {
             if (readonly)
             {
@@ -325,7 +325,7 @@ public:
                 excp.SetDBusError(invoc);
             }
         }
-        else if (0 == g_strcmp0(meth_name, "AccessRevoke"))
+        else if ("AccessRevoke" == method_name)
         {
             if (readonly)
             {
@@ -354,7 +354,7 @@ public:
                 excp.SetDBusError(invoc);
             }
         }
-        else if (0 == g_strcmp0(meth_name, "Seal"))
+        else if ("Seal" == method_name)
         {
             try
             {
@@ -378,7 +378,7 @@ public:
                 excp.SetDBusError(invoc);
             }
         }
-        else if( 0 == g_strcmp0(meth_name, "Remove"))
+        else if ("Remove" == method_name)
         {
             try
             {
@@ -591,15 +591,15 @@ public:
     }
 
     void callback_method_call(GDBusConnection *conn,
-                              const gchar *sender,
-                              const gchar *obj_path,
-                              const gchar *intf_name,
-                              const gchar *meth_name,
+                              const std::string sender,
+                              const std::string obj_path,
+                              const std::string intf_name,
+                              const std::string method_name,
                               GVariant *params,
                               GDBusMethodInvocation *invoc)
     {
         IdleCheck_UpdateTimestamp();
-        if (0 == g_strcmp0(meth_name, "Import"))
+        if ("Import" == method_name)
         {
             // Import the configuration
             std::string cfgpath = generate_path_uuid(OpenVPN3DBus_rootp_configuration, 'x');

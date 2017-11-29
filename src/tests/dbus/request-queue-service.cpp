@@ -76,10 +76,10 @@ public:
 
 
     void callback_method_call(GDBusConnection *conn,
-                              const gchar *sender,
-                              const gchar *object_path,
-                              const gchar *interface,
-                              const gchar *method,
+                              const std::string sender,
+                              const std::string object_path,
+                              const std::string interface,
+                              const std::string method_name,
                               GVariant *params,
                               GDBusMethodInvocation *invocation)
     {
@@ -96,7 +96,7 @@ public:
                        << excp.getRawError();
         }
 
-        if (0 == g_strcmp0(method, "t_QueueCheckTypeGroup"))
+        if ("t_QueueCheckTypeGroup" == method_name)
         {
             try
             {
@@ -108,7 +108,7 @@ public:
             }
             return;
         }
-        else if (0 == g_strcmp0(method, "t_QueueFetch"))
+        else if ("t_QueueFetch" == method_name)
         {
             try
             {
@@ -120,12 +120,12 @@ public:
             }
             return;
         }
-        if (0 == g_strcmp0(method, "t_QueueCheck"))
+        if ("t_QueueCheck" == method_name)
         {
             queue.QueueCheck(invocation, params);
             return;
         }
-        else if (0 == g_strcmp0(method, "t_ProvideResponse"))
+        else if ("t_ProvideResponse" == method_name)
         {
             try
             {
@@ -137,13 +137,13 @@ public:
             }
             return;
         }
-        else if (0 == g_strcmp0(method, "ServerDumpResponse"))
+        else if ("ServerDumpResponse" == method_name)
         {
             queue._DumpStdout();
             g_dbus_method_invocation_return_value(invocation, NULL);
             return;
         }
-        else if (0 == g_strcmp0(method, "Reset"))
+        else if ("Reset" == method_name)
         {
             // WARNING:  This is hacky.  We just quess the elements allocated
             // have these IDs.  They most likely will have, but still no

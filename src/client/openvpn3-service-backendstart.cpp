@@ -114,14 +114,14 @@ public:
 
 
     void callback_method_call(GDBusConnection *conn,
-                              const gchar *sender,
-                              const gchar *obj_path,
-                              const gchar *intf_name,
-                              const gchar *meth_name,
+                              const std::string sender,
+                              const std::string obj_path,
+                              const std::string intf_name,
+                              const std::string method_name,
                               GVariant *params,
                               GDBusMethodInvocation *invoc)
     {
-        if (0 == g_strcmp0(meth_name, "StartClient"))
+        if ("StartClient" == method_name)
         {
             IdleCheck_UpdateTimestamp();
 

@@ -115,10 +115,10 @@ public:
     }
 
     void callback_method_call(GDBusConnection *conn,
-                              const gchar *sender,
-                              const gchar *obj_path,
-                              const gchar *intf_name,
-                              const gchar *meth_name,
+                              const std::string sender,
+                              const std::string obj_path,
+                              const std::string intf_name,
+                              const std::string method_name,
                               GVariant *params,
                               GDBusMethodInvocation *invoc)
     {
@@ -126,7 +126,7 @@ public:
 
         try
         {
-            signal.Debug("callback_method_call: meth_name=" + std::string(meth_name));
+            // signal.Debug("callback_method_call: method_name=" + method_name);
 
             if (vpnclient)
             {
@@ -144,7 +144,7 @@ public:
                 }
             }
 
-            if (0 == g_strcmp0(meth_name, "RegistrationConfirmation"))
+            if ("RegistrationConfirmation" == method_name)
             {
                 if (registered)
                 {
@@ -183,13 +183,13 @@ public:
                 }
                 return;
             }
-            else if (0 == g_strcmp0(meth_name, "Ping"))
+            else if ("Ping" == method_name)
             {
                 // The Ping caller is expected to just return true
                 g_dbus_method_invocation_return_value(invoc, g_variant_new("(b)", (bool) true));
                 return;
             }
-            else if (0 == g_strcmp0(meth_name, "Ready"))
+            else if ("Ready" == method_name)
             {
                 // This method should just exit without any result if everything is okay.
                 // If there are issues, return an error message
@@ -201,7 +201,7 @@ public:
                     g_error_free(err);
                 }
             }
-            else if (0 == g_strcmp0(meth_name, "Connect"))
+            else if ("Connect" == method_name)
             {
                 if( !registered )
                 {
@@ -221,7 +221,7 @@ public:
                 signal.LogInfo("Starting connection: " + to_string(obj_path));
                 connect();
             }
-            else if (0 == g_strcmp0(meth_name, "Disconnect"))
+            else if ("Disconnect" == method_name)
             {
                 if (!registered || !vpnclient)
                 {
@@ -248,7 +248,7 @@ public:
                     kill(getpid(), SIGTERM);
                 }
             }
-            else if (0 == g_strcmp0(meth_name, "UserInputQueueGetTypeGroup"))
+            else if ("UserInputQueueGetTypeGroup"  == method_name)
             {
                 try
                 {
@@ -260,7 +260,7 @@ public:
                 }
                 return; // QueueCheckTypeGroup() have fed invoc with a result already
             }
-            else if (0 == g_strcmp0(meth_name, "UserInputQueueFetch"))
+            else if ("UserInputQueueFetch"  == method_name)
             {
                 try
                 {
@@ -272,12 +272,12 @@ public:
                 }
                 return; // QueueFetch() have fed invoc with a result already
             }
-            else if (0 == g_strcmp0(meth_name, "UserInputQueueCheck"))
+            else if ("UserInputQueueCheck" == method_name)
             {
                 userinputq.QueueCheck(invoc, params);
                 return; // QueueCheck() have fed invoc with a result already
             }
-            else if (0 == g_strcmp0(meth_name, "UserInputProvide"))
+            else if ("UserInputProvide" == method_name)
             {
                 if (!registered)
                 {
@@ -294,7 +294,7 @@ public:
                 }
                 userinputq.UpdateEntry(invoc, params);
             }
-            else if (0 == g_strcmp0(meth_name, "Pause"))
+            else if ("Pause" == method_name)
             {
                 if( !registered || !vpnclient )
                 {
@@ -321,7 +321,7 @@ public:
                 paused = true;
                 signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_PAUSED);
             }
-            else if (0 == g_strcmp0(meth_name, "Resume"))
+            else if ("Resume" == method_name)
             {
                 if( !registered || !vpnclient )
                 {
@@ -342,7 +342,7 @@ public:
                 vpnclient->resume();
                 paused = false;
             }
-            else if (0 == g_strcmp0(meth_name, "Restart"))
+            else if ("Restart" == method_name)
             {
                 if (!registered || !vpnclient)
                 {
@@ -352,7 +352,7 @@ public:
                 signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_RECONNECTING);
                 vpnclient->reconnect(0);
             }
-            else if (0 == g_strcmp0(meth_name, "ForceShutdown"))
+            else if ("ForceShutdown" == method_name)
             {
                 signal.LogInfo("Forcing shutting down backend process: " + to_string(obj_path));
                 signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_DONE);
@@ -376,7 +376,7 @@ public:
         }
         catch (const std::exception& excp)
         {
-            std::string errmsg = "Failed executing D-Bus call '" + std::string(meth_name) + "': " + excp.what();
+            std::string errmsg = "Failed executing D-Bus call '" + method_name + "': " + excp.what();
             GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.backend.error.standard",
                                                           errmsg.c_str());
             g_dbus_method_invocation_return_gerror(invoc, err);

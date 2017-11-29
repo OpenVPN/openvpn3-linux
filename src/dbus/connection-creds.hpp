@@ -226,13 +226,13 @@ private:
                                            "UID is not listed in access list");
         }
 
-        void CheckACL(const gchar *sender, bool allow_root = false)
+        void CheckACL(const std::string sender, bool allow_root = false)
         {
             check_acl(sender, false, allow_root);
         }
 
 
-        void CheckOwnerAccess(const gchar *sender, bool allow_root = false)
+        void CheckOwnerAccess(const std::string sender, bool allow_root = false)
         {
             check_acl(sender, true, allow_root);
         }
@@ -244,14 +244,14 @@ private:
         std::vector<uid_t> acl_list;
 
 
-        void check_acl(const gchar *sender, bool owner_only, bool allow_root)
+        void check_acl(const std::string sender, bool owner_only, bool allow_root)
         {
             if (acl_public && !owner_only)
             {
                 return;
             }
 
-            uid_t sender_uid = GetUID(std::string(sender));
+            uid_t sender_uid = GetUID(sender);
 
             if (sender_uid == owner)
             {

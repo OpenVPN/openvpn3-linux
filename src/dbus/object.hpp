@@ -155,10 +155,10 @@ namespace openvpn
          *  Called each time a D-Bus client calls an object method
          */
         virtual void callback_method_call(GDBusConnection *conn,
-                                          const gchar *sender,
-                                          const gchar *obj_path,
-                                          const gchar *intf_name,
-                                          const gchar *meth_name,
+                                          const std::string sender,
+                                          const std::string obj_path,
+                                          const std::string intf_name,
+                                          const std::string meth_name,
                                           GVariant *params,
                                           GDBusMethodInvocation *invoc) = 0;
 
@@ -456,7 +456,12 @@ namespace openvpn
                                                      gpointer this_ptr)
         {
             class DBusObject *obj = (class DBusObject *) this_ptr;
-            obj->callback_method_call(conn, sender, obj_path, intf_name, meth_name, params, invoc);
+            obj->callback_method_call(conn,
+                                      std::string(sender),
+                                      std::string(obj_path),
+                                      std::string(intf_name),
+                                      std::string(meth_name),
+                                      params, invoc);
         }
 
 

@@ -569,21 +569,21 @@ public:
      * @param sender     D-Bus bus name of the sender of the method call
      * @param obj_path   D-Bus object path of the target object.
      * @param intf_name  D-Bus interface of the method call
-     * @param meth_name  D-Bus method name to be executed
+     * @param method_name D-Bus method name to be executed
      * @param params     GVariant Glib2 object containing the arguments for
      *                   the method call
      * @param invoc      GDBusMethodInvocation where the response/result of
      *                   the method call will be returned.
      */
     void callback_method_call(GDBusConnection *conn,
-                                          const gchar *sender,
-                                          const gchar *obj_path,
-                                          const gchar *intf_name,
-                                          const gchar *meth_name,
-                                          GVariant *params,
-                                          GDBusMethodInvocation *invoc)
+                              const std::string sender,
+                              const std::string obj_path,
+                              const std::string intf_name,
+                              const std::string method_name,
+                              GVariant *params,
+                              GDBusMethodInvocation *invoc)
     {
-        // std::cout << "SessionObject::callback_method_call: " << meth_name << std::endl;
+        // std::cout << "SessionObject::callback_method_call: " << method_name << std::endl;
         bool ping = false;
         try {
             if (!be_proxy)
@@ -606,38 +606,38 @@ public:
                                     + std::string(dbserr.getRawError()));
             }
 
-            if (0 == g_strcmp0(meth_name, "Connect"))
+            if ("Connect" == method_name)
             {
                 CheckACL(sender);
                 be_proxy->Call("Connect");
             }
-            else if (0 == g_strcmp0(meth_name, "Restart"))
+            else if ("Restart" == method_name)
             {
                 CheckACL(sender, true);
                 be_proxy->Call("Restart");
             }
-            else if (0 == g_strcmp0(meth_name, "Pause"))
+            else if ("Pause" == method_name)
             {
                 CheckACL(sender, true);
                 // FIXME: Should check that params contains only the expected formatting
                 be_proxy->Call("Pause", params);
             }
-            else if (0 == g_strcmp0(meth_name, "Resume"))
+            else if ("Resume"  == method_name)
             {
                 CheckACL(sender, true);
                 be_proxy->Call("Resume");
             }
-            else if (0 == g_strcmp0(meth_name, "Disconnect"))
+            else if ("Disconnect" == method_name)
             {
                 CheckACL(sender, true);
                 shutdown(false);
             }
-            else if (0 == g_strcmp0(meth_name ,"Ready"))
+            else if ("Ready" == method_name)
             {
                 CheckACL(sender);
                 be_proxy->Call("Ready");
             }
-            else if (0 == g_strcmp0(meth_name ,"UserInputQueueGetTypeGroup"))
+            else if ("UserInputQueueGetTypeGroup" == method_name)
             {
                 CheckACL(sender);
                 try
@@ -652,7 +652,7 @@ public:
                 }
                 return;
             }
-            else if (0 == g_strcmp0(meth_name ,"UserInputQueueFetch"))
+            else if ("UserInputQueueFetch" == method_name)
             {
                 CheckACL(sender);
                 try
@@ -667,7 +667,7 @@ public:
                 }
                 return;
             }
-            else if (0 == g_strcmp0(meth_name ,"UserInputQueueCheck"))
+            else if ("UserInputQueueCheck" == method_name)
             {
                 CheckACL(sender);
                 GVariant *res = be_proxy->Call("UserInputQueueCheck", params);
@@ -675,7 +675,7 @@ public:
                 g_variant_unref(res);
                 return;
             }
-            else if (0 == g_strcmp0(meth_name ,"UserInputProvide"))
+            else if ("UserInputProvide" == method_name)
             {
                 CheckACL(sender);
                 try
@@ -690,7 +690,7 @@ public:
                 }
                 return;
             }
-            else if (0 == g_strcmp0(meth_name, "AccessGrant"))
+            else if ("AccessGrant" == method_name)
             {
                 CheckOwnerAccess(sender);
 
@@ -702,7 +702,7 @@ public:
                 LogVerb1("Access granted to UID " + std::to_string(uid));
                 return;
             }
-            else if (0 == g_strcmp0(meth_name, "AccessRevoke"))
+            else if ("AccessRevoke" == method_name)
             {
                 CheckOwnerAccess(sender);
 
@@ -716,7 +716,7 @@ public:
             }
             else
             {
-                std::string errmsg = "No method named" + std::string(meth_name) + " is available";
+                std::string errmsg = "No method named" + method_name + " is available";
                 GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.sessions.error",
                                                               errmsg.c_str());
                 g_dbus_method_invocation_return_gerror(invoc, err);
@@ -1228,22 +1228,22 @@ public:
      * @param sender     D-Bus bus name of the sender of the method call
      * @param obj_path   D-Bus object path of the target object.
      * @param intf_name  D-Bus interface of the method call
-     * @param meth_name  D-Bus method name to be executed
+     * @param method_name D-Bus method name to be executed
      * @param params     GVariant Glib2 object containing the arguments for
      *                   the method call
      * @param invoc      GDBusMethodInvocation where the response/result of
      *                   the method call will be returned.
      */
     void callback_method_call(GDBusConnection *conn,
-                              const gchar *sender,
-                              const gchar *obj_path,
-                              const gchar *intf_name,
-                              const gchar *meth_name,
+                              const std::string sender,
+                              const std::string obj_path,
+                              const std::string intf_name,
+                              const std::string method_name,
                               GVariant *params,
                               GDBusMethodInvocation *invoc)
     {
-        // std::cout << "SessionManagerObject::callback_method_call: " << meth_name << std::endl;
-        if (0 == g_strcmp0(meth_name, "NewTunnel"))
+        // std::cout << "SessionManagerObject::callback_method_call: " << method_name << std::endl;
+        if ("NewTunnel" == method_name)
         {
             IdleCheck_UpdateTimestamp();
 
