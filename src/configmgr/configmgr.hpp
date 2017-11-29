@@ -384,6 +384,7 @@ public:
             {
                 CheckOwnerAccess(sender);
                 RemoveObject(conn);
+                LogVerb2("Configuration removed");
                 g_dbus_method_invocation_return_value(invoc, NULL);
                 delete this;
                 return;
