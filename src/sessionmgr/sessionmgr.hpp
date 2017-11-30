@@ -1182,10 +1182,9 @@ public:
      *  the D-Bus.
      *
      * @param dbuscon  D-Bus this object is tied to
-     * @param busname  D-Bus bus name of the owner of this object
      * @param objpath  D-Bus object path to this object
      */
-    SessionManagerObject(GDBusConnection *dbuscon, const std::string busname, const std::string objpath)
+    SessionManagerObject(GDBusConnection *dbuscon, const std::string objpath)
         : DBusObject(objpath),
           SessionManagerSignals(dbuscon, objpath),
           dbuscon(dbuscon),
@@ -1402,7 +1401,7 @@ public:
     {
         // Create a SessionManagerObject which will be the main entrance
         // point to this service
-        managobj = new SessionManagerObject(GetConnection(), GetBusName(), GetRootPath());
+        managobj = new SessionManagerObject(GetConnection(), GetRootPath());
         if (!logfile.empty())
         {
             managobj->OpenLogFile(logfile);
