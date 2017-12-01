@@ -162,8 +162,16 @@ namespace openvpn
         }
 
 
-        ~DBusProxy()
+        virtual ~DBusProxy()
         {
+            // If this object is using an existing connection;
+            // don't trigger a disconnect.  This variable is
+            // defined and set in the DBus class.
+            if (keep_connection)
+            {
+                return;
+            }
+
             if (proxy_init)
             {
                 g_object_unref(proxy);

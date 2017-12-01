@@ -19,6 +19,8 @@
 #ifndef OPENVPN3_DBUS_CONNECTION_HPP
 #define OPENVPN3_DBUS_CONNECTION_HPP
 
+#include <iostream>
+
 namespace openvpn
 {
     /**
@@ -36,7 +38,8 @@ namespace openvpn
     {
     public:
         DBus(GBusType bustype)
-            : bus_type(bustype),
+            : keep_connection(false),
+              bus_type(bustype),
               connected(false),
               connection_only(true),
               setup_complete(false)
@@ -46,7 +49,8 @@ namespace openvpn
 
 
         DBus(GDBusConnection *dbuscon)
-            : connected(false),
+            : keep_connection(true),
+              connected(false),
               connection_only(true),
               setup_complete(true),
               dbuscon(dbuscon)
@@ -57,7 +61,8 @@ namespace openvpn
 
 
         DBus(GBusType bustype, std::string busname, std::string root_path, std::string default_interface )
-            : idle_checker(nullptr),
+            : keep_connection(false),
+              idle_checker(nullptr),
               bus_type(bustype),
               connected(false),
               connection_only(false),
@@ -220,19 +225,38 @@ namespace openvpn
          */
         virtual void callback_name_lost(GDBusConnection *conn, std::string busname)
         {
-            // This cannot be a pure virtual method, as D-Bus clients don't
-            // require to own a bus name
+            // This cannot be a pure virtual method, as D-Bus clients are
+            // not required to own a bus name
         }
 
 
     protected:
+        bool keep_connection;
         IdleCheck *idle_checker;
 
         void close_and_cleanup() noexcept
         {
-            if (!connection_only && busid > 0)
+            // If this object is based on an existing D-Bus connection,
+            // don't disconnect.
+            if (keep_connection)
+            {
+                return;
+            }
+
+            if (!connection_only
+                && (busid > 0)
+                && G_IS_DBUS_CONNECTION(dbuscon))
             {
                 g_bus_unown_name(busid);
+                GError *err = NULL;
+                g_dbus_connection_close_sync(dbuscon, NULL, &err);
+                if (err)
+                {
+                    std::cout << "** ERROR ** D-Bus disconnect failed:"
+                              << err->message
+                              << std::endl;
+                    g_error_free(err);
+                }
             }
             if (G_IS_OBJECT(dbuscon))
             {
