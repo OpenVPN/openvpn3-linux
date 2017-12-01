@@ -43,7 +43,7 @@ int main(int argc, char **argv)
     std::string busname(argv[1]);
     DBus conn(G_BUS_TYPE_SYSTEM);
     conn.Connect();
-    DBusConnectionCreds creds(conn);
+    DBusConnectionCreds creds(conn.GetConnection());
 
     uid_t uid = creds.GetUID(std::string(busname));
     pid_t pid = creds.GetPID(std::string(busname));

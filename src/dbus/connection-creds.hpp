@@ -41,15 +41,6 @@ namespace openvpn
         }
 
 
-        DBusConnectionCreds(DBus& dbusobj)
-            : DBusProxy(dbusobj, "org.freedesktop.DBus", "org.freedesktop.DBus",
-                        "/net/freedesktop/DBus", true)
-        {
-            SetGDBusCallFlags(G_DBUS_CALL_FLAGS_NO_AUTO_START);
-            proxy = SetupProxy();
-        }
-
-
         uid_t GetUID(std::string busname)
         {
             try
@@ -154,13 +145,6 @@ private:
         {
         }
 
-
-        DBusCredentials(DBus& dbusobj, uid_t owner)
-            : DBusConnectionCreds(dbusobj),
-              owner(owner),
-              acl_public(false)
-        {
-        }
 
         GVariant * GetOwner()
         {
