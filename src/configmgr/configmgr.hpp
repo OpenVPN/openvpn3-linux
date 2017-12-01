@@ -30,8 +30,9 @@ using namespace openvpn;
 class ConfigManagerSignals : public LogSender
 {
 public:
-    ConfigManagerSignals(GDBusConnection *conn, LogGroup lgroup, std::string object_path)
-        : LogSender(conn, lgroup, OpenVPN3DBus_interf_configuration, object_path)
+    ConfigManagerSignals(GDBusConnection *conn, std::string object_path)
+        : LogSender(conn, LogGroup::CONFIGMGR,
+                    OpenVPN3DBus_interf_configuration, object_path)
     {
     }
 
@@ -64,7 +65,7 @@ class ConfigurationAlias : public DBusObject,
 public:
     ConfigurationAlias(GDBusConnection *dbuscon, std::string aliasname, std::string cfgpath)
         : DBusObject(OpenVPN3DBus_rootp_configuration + "/aliases/" + aliasname),
-          ConfigManagerSignals(dbuscon, LogGroup::CONFIGMGR, OpenVPN3DBus_rootp_configuration + "/aliases/" + aliasname),
+          ConfigManagerSignals(dbuscon, OpenVPN3DBus_rootp_configuration + "/aliases/" + aliasname),
           cfgpath(cfgpath)
     {
         alias = aliasname;
@@ -149,10 +150,16 @@ class ConfigurationObject : public DBusObject,
                             public DBusCredentials
 {
 public:
-    ConfigurationObject(GDBusConnection *dbuscon, std::string objpath, uid_t creator, GVariant *params)
+    ConfigurationObject(GDBusConnection *dbuscon, std::string objpath,
+                        uid_t creator, GVariant *params)
         : DBusObject(objpath),
-          ConfigManagerSignals(dbuscon, LogGroup::CONFIGMGR, objpath),
+          ConfigManagerSignals(dbuscon, objpath),
           DBusCredentials(dbuscon, creator),
+          name(""),
+          valid(false),
+          readonly(false),
+          single_use(false),
+          persistent(false),
           alias(nullptr)
     {
         gchar *cfgstr;
@@ -161,7 +168,6 @@ public:
                        &cfgname_c, &cfgstr,
                        &single_use, &persistent);
         name = std::string(cfgname_c);
-        readonly = false;
 
         // Parse the options from the imported configuration
         OptionList::Limits limits("profile is too large",
@@ -553,13 +559,14 @@ private:
 };
 
 
-class ConfigManagerObject : public DBusObject
+class ConfigManagerObject : public DBusObject,
+                            public ConfigManagerSignals
 {
 public:
-    ConfigManagerObject(GDBusConnection *dbusc, std::string objpath)
+    ConfigManagerObject(GDBusConnection *dbusc, const std::string objpath)
         : DBusObject(objpath),
+          ConfigManagerSignals(dbusc, objpath),
           dbuscon(dbusc),
-          signal(dbusc, LogGroup::CONFIGMGR, objpath),
           creds(dbusc)
     {
         std::stringstream introspection_xml;
@@ -572,23 +579,23 @@ public:
                           << "          <arg type='b' name='persistent' direction='in'/>"
                           << "          <arg type='o' name='config_path' direction='out'/>"
                           << "        </method>"
-                          << signal.GetLogIntrospection()
+                          << GetLogIntrospection()
                           << "    </interface>"
                           << "</node>";
         ParseIntrospectionXML(introspection_xml);
 
-        signal.Debug("ConfigManagerObject registered on '" + OpenVPN3DBus_interf_configuration + "':" + objpath);
+        Debug("ConfigManagerObject registered on '" + OpenVPN3DBus_interf_configuration + "':" + objpath);
     }
 
     ~ConfigManagerObject()
     {
-        signal.LogInfo("Shutting down");
+        LogInfo("Shutting down");
         RemoveObject(dbuscon);
     }
 
     void OpenLogFile(std::string filename)
     {
-        signal.OpenLogFile(filename);
+        OpenLogFile(filename);
     }
 
     void callback_method_call(GDBusConnection *conn,
@@ -610,8 +617,7 @@ public:
             cfgobj->IdleCheck_Register(IdleCheck_Get());
             cfgobj->RegisterObject(conn);
 
-
-            signal.Debug(std::string("ConfigurationObject registered on '")
+            Debug(std::string("ConfigurationObject registered on '")
                          + intf_name + "': " + cfgpath
                          + " (owner uid " + std::to_string(creds.GetUID(sender)) + ")");
             g_dbus_method_invocation_return_value(invoc, g_variant_new("(o)", cfgpath.c_str()));
@@ -650,7 +656,6 @@ public:
 
 private:
     GDBusConnection *dbuscon;
-    ConfigManagerSignals signal;
     DBusConnectionCreds creds;
 };
 
