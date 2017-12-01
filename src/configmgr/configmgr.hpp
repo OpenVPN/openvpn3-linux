@@ -222,6 +222,7 @@ public:
 
     ~ConfigurationObject()
     {
+        LogVerb2("Configuration removed");
         IdleCheck_RefDec();
     };
 
@@ -244,8 +245,9 @@ public:
                                                                     options.string_export().c_str()));
                 if (single_use)
                 {
-                    LogVerb2("Single-use configuration fetched. Removing configuration");
+                    LogVerb2("Single-use configuration fetched");
                     RemoveObject(conn);
+                    delete this;
                 }
                 return;
             }
@@ -264,14 +266,12 @@ public:
                                                       g_variant_new("(s)",
                                                                     options.json_export().c_str()));
 
-                // This is probably a bad idea.  FetchJSON is only used
-                // by front-ends, never backends.  So it still needs to be
-                // available when the backend calls Fetch.
+                // Do not remove single-use object with this method.
+                // FetchJSON is only used by front-ends, never backends.  So
+                // it still needs to be available when the backend calls Fetch.
                 //
-                // if (single_use)
-                // {
-                //    RemoveObject(conn);
-                // }
+                // single-use configurations are an automation convenience,
+                // not a security feature.  Security is handled via ACLs.
                 return;
             }
             catch (DBusCredentialsException& excp)
@@ -390,7 +390,6 @@ public:
             {
                 CheckOwnerAccess(sender);
                 RemoveObject(conn);
-                LogVerb2("Configuration removed");
                 g_dbus_method_invocation_return_value(invoc, NULL);
                 delete this;
                 return;
