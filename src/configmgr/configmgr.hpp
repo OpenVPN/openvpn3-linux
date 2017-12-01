@@ -27,31 +27,69 @@
 
 using namespace openvpn;
 
+
+/**
+ * Helper class to tackle signals sent by the configuration manager
+ *
+ * This mostly just wraps the LogSender class and predefines LogGroup to always
+ * be CONFIGMGR.
+ */
+
 class ConfigManagerSignals : public LogSender
 {
 public:
+    /**
+     *  Declares the ConfigManagerSignals object
+     *
+     * @param conn        D-Bus connection to use when sending signals
+     * @param object_path D-Bus object to use as sender of signals
+     */
     ConfigManagerSignals(GDBusConnection *conn, std::string object_path)
         : LogSender(conn, LogGroup::CONFIGMGR,
                     OpenVPN3DBus_interf_configuration, object_path)
     {
     }
 
+
     virtual ~ConfigManagerSignals()
     {
     }
 
+
+    /**
+     *  Whenever a FATAL error happens, the process is expected to stop.
+     *  (The exit step is not yet implemented)
+     *
+     * @param msg  Message to sent to the log subscribers
+     */
     void LogFATAL(std::string msg)
     {
         Log(log_group, LogCategory::FATAL, msg);
         // FIXME: throw something here, to start shutdown procedures
     }
 
+
+    /**
+     *  Sends a StatusChange signal with a text message
+     *
+     * @param major  StatusMajor code of the status change
+     * @param minor  StatusMinro code of the status change
+     * @param msg    String containing a description of the reason for this
+     *               status change
+     */
     void StatusChange(const StatusMajor major, const StatusMinor minor, std::string msg)
     {
         GVariant *params = g_variant_new("(uus)", (guint) major, (guint) minor, msg.c_str());
         Send("StatusChange", params);
     }
 
+
+    /**
+     *  A simpler StatusChange signal sender, without a text message
+     *
+     * @param major  StatusMajor code of the status change
+     * @param minor  StatusMinro code of the status change
+     */
     void StatusChange(const StatusMajor major, const StatusMinor minor)
     {
         GVariant *params = g_variant_new("(uus)", (guint) major, (guint) minor, "");
@@ -59,10 +97,25 @@ public:
     }
 };
 
+
+/**
+ *  ConfigurationAlias objects are present under the
+ *  /net/openvpn/v3/configuration/alias/$ALIAS_NAME D-Bus path in the
+ *  configuration manager service.  They are simpler aliases which can be
+ *  used instead of the full D-Bus object path to a single VPN configuration
+ *  profile
+ */
 class ConfigurationAlias : public DBusObject,
                            public ConfigManagerSignals
 {
 public:
+    /**
+     * Initializes a Configuration Alias
+     *
+     * @param dbuscon    D-Bus connection to use for this object
+     * @param aliasname  A string containing the alias name
+     * @param cfgpath    An object path pointing at an existing D-Bus path
+     */
     ConfigurationAlias(GDBusConnection *dbuscon, std::string aliasname, std::string cfgpath)
         : DBusObject(OpenVPN3DBus_rootp_configuration + "/aliases/" + aliasname),
           ConfigManagerSignals(dbuscon, OpenVPN3DBus_rootp_configuration + "/aliases/" + aliasname),
@@ -86,11 +139,35 @@ public:
         ParseIntrospectionXML(introsp_xml);
     }
 
+
+    /**
+     *  Returns a C string (char *) of the configured alias name
+
+     * @return Returns a const char * pointing at the alias name
+     */
     const char * GetAlias()
     {
         return alias.c_str();
     }
 
+
+    /**
+     *  Callback method which is called each time a D-Bus method call occurs
+     *  on this ConfigurationAlias object.
+     *
+     *  This object does not have any methods, so it is not expected that
+     *  this callback will be called.  If it is, throw an exception.
+     *
+     * @param conn       D-Bus connection where the method call occurred
+     * @param sender     D-Bus bus name of the sender of the method call
+     * @param obj_path   D-Bus object path of the target object.
+     * @param intf_name  D-Bus interface of the method call
+     * @param method_name D-Bus method name to be executed
+     * @param params     GVariant Glib2 object containing the arguments for
+     *                   the method call
+     * @param invoc      GDBusMethodInvocation where the response/result of
+     *                   the method call will be returned.
+     */
     void callback_method_call(GDBusConnection *conn,
                               const std::string sender,
                               const std::string obj_path,
@@ -103,6 +180,22 @@ public:
     }
 
 
+    /**
+     *   Callback which is called each time a ConfigurationAlias D-Bus
+     *   property is being read.
+     *
+     * @param conn           D-Bus connection this event occurred on
+     * @param sender         D-Bus bus name of the requester
+     * @param obj_path       D-Bus object path to the object being requested
+     * @param intf_name      D-Bus interface of the property being accessed
+     * @param property_name  The property name being accessed
+     * @param error          A GLib2 GError object if an error occurs
+     *
+     * @return  Returns a GVariant Glib2 object containing the value of the
+     *          requested D-Bus object property.  On errors, NULL must be
+     *          returned and the error must be returned via a GError
+     *          object.
+     */
     GVariant * callback_get_property(GDBusConnection *conn,
                                      const std::string sender,
                                      const std::string obj_path,
@@ -127,7 +220,24 @@ public:
         return ret;
     };
 
-
+    /**
+     *  Callback method which is used each time a ConfigurationAlias
+     *  property is being modified over the D-Bus.
+     *
+     *  This will always fail with an exception, as there exists no properties
+     *  which can be modified in a ConfigurationAlias object.
+     *
+     * @param conn           D-Bus connection this event occurred on
+     * @param sender         D-Bus bus name of the requester
+     * @param obj_path       D-Bus object path to the object being requested
+     * @param intf_name      D-Bus interface of the property being accessed
+     * @param property_name  The property name being accessed
+     * @param value          GVariant object containing the value to be stored
+     * @param error          A GLib2 GError object if an error occurs
+     *
+     * @return Will always throw an exception as there are no properties to
+     *         modify.
+     */
     GVariantBuilder * callback_set_property(GDBusConnection *conn,
                                             const std::string sender,
                                             const std::string obj_path,
@@ -145,11 +255,32 @@ private:
     std::string cfgpath;
 };
 
+
+/**
+ *  A ConfigurationObject contains information about a specific VPN
+ *  configuration profile.  This object is then exposed on the D-Bus through
+ *  its own unique object path.
+ *
+ *  The configuration manager is responsible for maintaining the
+ *  life cycle of these configuration objects.
+ */
 class ConfigurationObject : public DBusObject,
                             public ConfigManagerSignals,
                             public DBusCredentials
 {
 public:
+    /**
+     *  Constructor creating a new ConfigurationObject
+     *
+     * @param dbuscon  D-Bus connection this object is tied to
+     * @param objpath  D-Bus object path of this object
+     * @param creator  An uid reference of the owner of this object.  This is
+     *                 typically the uid of the front-end user importing this
+     *                 VPN configuration profile.
+     * @param params   Pointer to a GLib2 GVariant object containing both
+     *                 meta data as well as the configuration profile itself
+     *                 to use when initializing this object
+     */
     ConfigurationObject(GDBusConnection *dbuscon, std::string objpath,
                         uid_t creator, GVariant *params)
         : DBusObject(objpath),
@@ -226,6 +357,21 @@ public:
         IdleCheck_RefDec();
     };
 
+
+    /**
+     *  Callback method which is called each time a D-Bus method call occurs
+     *  on this ConfigurationObject.
+     *
+     * @param conn        D-Bus connection where the method call occurred
+     * @param sender      D-Bus bus name of the sender of the method call
+     * @param obj_path    D-Bus object path of the target object.
+     * @param intf_name   D-Bus interface of the method call
+     * @param method_name D-Bus method name to be executed
+     * @param params      GVariant Glib2 object containing the arguments for
+     *                    the method call
+     * @param invoc       GDBusMethodInvocation where the response/result of
+     *                    the method call will be returned.
+     */
     void callback_method_call(GDBusConnection *conn,
                               const std::string sender,
                               const std::string obj_path,
@@ -403,6 +549,25 @@ public:
     };
 
 
+    /**
+     *   Callback which is used each time a ConfigurationObject D-Bus
+     *   property is being read.
+     *
+     *   Only the 'owner' is accessible by anyone, otherwise it must either
+     *   be the configuration owner or UIDs granted access to this profile.
+     *
+     * @param conn           D-Bus connection this event occurred on
+     * @param sender         D-Bus bus name of the requester
+     * @param obj_path       D-Bus object path to the object being requested
+     * @param intf_name      D-Bus interface of the property being accessed
+     * @param property_name  The property name being accessed
+     * @param error          A GLib2 GError object if an error occurs
+     *
+     * @return  Returns a GVariant Glib2 object containing the value of the
+     *          requested D-Bus object property.  On errors, NULL must be
+     *          returned and the error must be returned via a GError
+     *          object.
+     */
     GVariant * callback_get_property(GDBusConnection *conn,
                                      const std::string sender,
                                      const std::string obj_path,
@@ -471,6 +636,23 @@ public:
         }
     };
 
+
+    /**
+     *  Callback method which is used each time a ConfigurationObject property
+     *  is being modified over D-Bus.
+     *
+     * @param conn           D-Bus connection this event occurred on
+     * @param sender         D-Bus bus name of the requester
+     * @param obj_path       D-Bus object path to the object being requested
+     * @param intf_name      D-Bus interface of the property being accessed
+     * @param property_name  The property name being accessed
+     * @param value          GVariant object containing the value to be stored
+     * @param error          A GLib2 GError object if an error occurs
+     *
+     * @return Returns a GVariantBuilder object which will be used by the
+     *         D-Bus library to issue the required PropertiesChanged signal.
+     *         If an error occurres, the DBusPropertyException is thrown.
+     */
     GVariantBuilder * callback_set_property(GDBusConnection *conn,
                                             const std::string sender,
                                             const std::string obj_path,
@@ -558,10 +740,29 @@ private:
 };
 
 
+/**
+ *  The ConfigManagerObject is the main object for the Configuration Manager
+ *  D-Bus service.  Whenever any user (D-Bus clients) accesses the main
+ *  object path, this object is invoked.
+ *
+ *  This object basically handles the Import method, which takes a
+ *  configuration profile as input and creates a ConfigurationObject.  There
+ *  will exist a ConfigurationObject for each imported profile, having its
+ *  own unique D-Bus object path.  Whenever a user (D-Bus client) accesses
+ *  an object, the ConfigurationObject is invoked directly by the D-Bus
+ *  implementation.
+ */
 class ConfigManagerObject : public DBusObject,
                             public ConfigManagerSignals
 {
 public:
+    /**
+     *  Constructor initializing the ConfigManagerObject to be registered on
+     *  the D-Bus.
+     *
+     * @param dbuscon  D-Bus this object is tied to
+     * @param objpath  D-Bus object path to this object
+     */
     ConfigManagerObject(GDBusConnection *dbusc, const std::string objpath)
         : DBusObject(objpath),
           ConfigManagerSignals(dbusc, objpath),
@@ -592,11 +793,32 @@ public:
         RemoveObject(dbuscon);
     }
 
+
+    /**
+     * Enables logging to file in addition to the D-Bus Log signal events
+     *
+     * @param filename  String containing the name of the log file
+     */
     void OpenLogFile(std::string filename)
     {
         OpenLogFile(filename);
     }
 
+
+    /**
+     *  Callback method called each time a method in the
+     *  ConfigurationManagerObject is called over the D-Bus.
+     *
+     * @param conn        D-Bus connection where the method call occurred
+     * @param sender      D-Bus bus name of the sender of the method call
+     * @param obj_path    D-Bus object path of the target object.
+     * @param intf_name   D-Bus interface of the method call
+     * @param method_name D-Bus method name to be executed
+     * @param params      GVariant Glib2 object containing the arguments for
+     *                    the method call
+     * @param invoc       GDBusMethodInvocation where the response/result of
+     *                    the method call will be returned.
+     */
     void callback_method_call(GDBusConnection *conn,
                               const std::string sender,
                               const std::string obj_path,
@@ -624,6 +846,24 @@ public:
     };
 
 
+    /**
+     *  Callback which is used each time a ConfigManagerObject D-Bus
+     *  property is being read.
+     *
+     *  For the ConfigManagerObject, this method will just return NULL
+     *  with an error set in the GError return pointer.  The
+     *  ConfiguManagerObject does not use properties at all.
+     *
+     * @param conn           D-Bus connection this event occurred on
+     * @param sender         D-Bus bus name of the requester
+     * @param obj_path       D-Bus object path to the object being requested
+     * @param intf_name      D-Bus interface of the property being accessed
+     * @param property_name  The property name being accessed
+     * @param error          A GLib2 GError object if an error occurs
+     *
+     * @return  Returns always NULL, as there are no properties in the
+     *          ConfigManagerObject.
+     */
     GVariant * callback_get_property(GDBusConnection *conn,
                                      const std::string sender,
                                      const std::string obj_path,
@@ -641,6 +881,24 @@ public:
     };
 
 
+    /**
+     *  Callback method which is used each time a ConfigManagerObject
+     *  property is being modified over the D-Bus.
+     *
+     *  This will always fail with an exception, as there exists no properties
+     *  which can be modified in a ConfigManagerObject.
+     *
+     * @param conn           D-Bus connection this event occurred on
+     * @param sender         D-Bus bus name of the requester
+     * @param obj_path       D-Bus object path to the object being requested
+     * @param intf_name      D-Bus interface of the property being accessed
+     * @param property_name  The property name being accessed
+     * @param value          GVariant object containing the value to be stored
+     * @param error          A GLib2 GError object if an error occurs
+     *
+     * @return Will always throw an exception as there are no properties to
+     *         modify.
+     */
     GVariantBuilder * callback_set_property(GDBusConnection *conn,
                                             const std::string sender,
                                             const std::string obj_path,
@@ -659,9 +917,23 @@ private:
 };
 
 
+/**
+ *  Main D-Bus service implementation of the Configuration Manager.
+ *
+ *  This object will register the configuration manager service (destination)
+ *  on the D-Bus and create a main manager object (ConfigManagerObject)
+ *  which will be invoked whenever a D-Bus client (proxy) accesses this
+ *  service.
+ */
 class ConfigManagerDBus : public DBus
 {
 public:
+    /**
+     * Constructor creating a D-Bus service for the Configuration Manager.
+     *
+     * @param bustype   GBusType, which defines if this service should be
+     *                  registered on the system or session bus.
+     */
     ConfigManagerDBus(GBusType bustype)
         : DBus(bustype,
                OpenVPN3DBus_name_configuration,
@@ -681,11 +953,23 @@ public:
         delete procsig;
     }
 
+
+    /**
+     *  Prepares logging to file.  This happens in parallel with the
+     *  D-Bus Log events which will be sent with Log events.
+     *
+     * @param filename  Filename of the log file to save the log events.
+     */
     void SetLogFile(std::string filename)
     {
         logfile = filename;
     }
 
+
+    /**
+     *  This callback is called when the service was successfully registered
+     *  on the D-Bus.
+     */
     void callback_bus_acquired()
     {
         cfgmgr = new ConfigManagerObject(GetConnection(), GetRootPath());
@@ -706,10 +990,30 @@ public:
         }
     };
 
+
+    /**
+     *  This is called each time the well-known bus name is successfully
+     *  acquired on the D-Bus.
+     *
+     *  This is not used, as the preparations already happens in
+     *  callback_bus_acquired()
+     *
+     * @param conn     Connection where this event happened
+     * @param busname  A string of the acquired bus name
+     */
     void callback_name_acquired(GDBusConnection *conn, std::string busname)
     {
     };
 
+
+    /**
+     *  This is called each time the well-known bus name is removed from the
+     *  D-Bus.  In our case, we just throw an exception and starts shutting
+     *  down.
+     *
+     * @param conn     Connection where this event happened
+     * @param busname  A string of the lost bus name
+     */
     void callback_name_lost(GDBusConnection *conn, std::string busname)
     {
         THROW_DBUSEXCEPTION("ConfigManagerDBus", "Configuration D-Bus name not registered: '" + busname + "'");
