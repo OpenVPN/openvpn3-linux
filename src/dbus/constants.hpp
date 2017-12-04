@@ -61,8 +61,9 @@ const std::string OpenVPN3DBus_rootp_backends_manager = OpenVPN3DBus_rootp_backe
  *  the status code belongs to.
  */
 
-const uint8_t StatusMajorCount = 5;
+const uint8_t StatusMajorCount = 6;
 enum class StatusMajor : std::uint_fast8_t {
+        UNSET,                      /**< Invalid status major code, used for initialization */
         CONFIG,                     /**< Status is related to configuration */
         CONNECTION,                 /**< Status is related to an OpenVPN connection */
         SESSION,                    /**< Status is related to an on-going session */
@@ -71,6 +72,7 @@ enum class StatusMajor : std::uint_fast8_t {
  };
 
 const std::array<const std::string, StatusMajorCount> StatusMajor_str = {
+        "(unset)",
         "Configuration",
         "Connection",
         "Session",
