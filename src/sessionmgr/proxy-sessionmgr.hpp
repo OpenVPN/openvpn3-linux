@@ -40,6 +40,38 @@ struct BackendStatus
     std::string message;
 };
 
+class ReadyException : public DBusException
+{
+public:
+    ReadyException(const std::string& err, const char *filen, const unsigned int linenum, const char *fn) noexcept
+        : DBusException("ReadyException", err, filen, linenum, fn)
+    {
+    }
+
+
+    virtual ~ReadyException() throw()
+    {
+    }
+
+
+    virtual const char* what() const throw()
+    {
+        std::stringstream ret;
+        ret << "[ReadyException: "
+            << filename << ":" << line << ", "
+            << classname << "::" << method << "()] " << errorstr;
+        return ret.str().c_str();
+    }
+
+
+    const std::string& err() const noexcept
+    {
+        std::string ret(errorstr);
+        return std::move(ret);
+    }
+};
+#define THROW_READYEXCEPTION(fault_data) throw ReadyException(fault_data, __FILE__, __LINE__, __FUNCTION__)
+
 
 class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
 {
@@ -114,18 +146,18 @@ public:
     }
 
 
-    bool Ready()
+    void Ready()
     {
         try
         {
             simple_call("Ready", "Connection not ready to connect yet");
-            return true;
         }
         catch (DBusException& excp)
         {
-            return false;
+            THROW_READYEXCEPTION(excp.getRawError());
         }
     }
+
 
     /**
      * Retrieves the last reported status from the VPN backend

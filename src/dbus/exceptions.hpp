@@ -71,7 +71,7 @@ namespace openvpn
         }
 
 
-    private:
+    protected:
         const std::string classname;
         const std::string errorstr;
         const std::string filename;

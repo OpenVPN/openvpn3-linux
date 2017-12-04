@@ -292,35 +292,71 @@ int connect(std::vector<std::string>& args)
         return 1;
     }
 
-    try
+    OpenVPN3SessionProxy sessionmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_sessions);
+    std::string sessionpath = sessionmgr.NewTunnel(args[0]);
+    sleep(1);  // Allow session to be established (FIXME: Signals?)
+    std::cout << "Session path: " << sessionpath << std::endl;
+    OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, sessionpath);
+
+    unsigned int loops = 10;
+    while (loops > 0)
     {
-        OpenVPN3SessionProxy sessionmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_sessions);
-        std::string sessionpath = sessionmgr.NewTunnel(args[0]);
-        sleep(1);
-        std::cout << "Session path: " << sessionpath << std::endl;
-
-        OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, sessionpath);
-
-        unsigned int loops = 5;
-        bool ready = false;
-        while (!(ready = session.Ready()))
+        loops--;
+        try
         {
-            if (0 == loops)
-            {
-                std::cerr << "Failed to satisfy all requirements.  Aborting" << std::endl;
-                session.Disconnect();
-                return 2;
-            }
-            loops--;
+            session.Ready();  // If not, an exception will be thrown
+            session.Connect();
 
-            if (!ready)
+            // Allow approx 30 seconds to establish connection; one loop
+            // will take about 1.3 seconds.
+            unsigned int attempts = 23;
+            BackendStatus s;
+            while (attempts > 0)
             {
-                for (auto& type_group : session.QueueCheckTypeGroup())
+                attempts--;
+                usleep(300000);  // sleep 0.3 seconds - avg setup time
+                s = session.GetLastStatus();
+                if (s.minor == StatusMinor::CONN_CONNECTED)
                 {
-                    ClientAttentionType type;
-                    ClientAttentionGroup group;
-                    std::tie(type, group) = type_group;
+                    std::cout << "Connected" << std::endl;
+                    return 0;
+                }
+                else if (s.minor == StatusMinor::CONN_DISCONNECTED)
+                {
+                    attempts = 0;
+                    break;
+                }
+                sleep(1);  // If not yet connected, wait for 1 second
+            }
 
+            if (attempts < 1)
+            {
+                // FIXME: Look into using exceptions here, catch more
+                // fine grained connection issues from the backend
+                std::cout << "Failed to connect "
+                          << "[" << StatusMajor_str[(unsigned int)s.major]
+                          << " / " << StatusMinor_str[(unsigned int)s.minor]
+                          << "]" << std::endl;
+                if (!s.message.empty())
+                {
+                    std::cout << s.message << std::endl;
+                }
+                session.Disconnect();
+                return 3;
+            }
+        }
+        catch (ReadyException& err)
+        {
+            // If the ReadyException is thrown, it means the backend
+            // needs more from the front-end side
+            for (auto& type_group : session.QueueCheckTypeGroup())
+            {
+                ClientAttentionType type;
+                ClientAttentionGroup group;
+                std::tie(type, group) = type_group;
+
+                if (ClientAttentionType::CREDENTIALS == type)
+                {
                     std::vector<struct RequiresSlot> reqslots;
                     session.QueueFetchAll(reqslots, type, group);
                     for (auto& r : reqslots)
@@ -342,37 +378,14 @@ int connect(std::vector<std::string>& args)
                     }
                 }
             }
-            session.Connect();
-
-            // Allow approx 30 seconds to establish connection; one loop
-            // will take about 1.3 seconds.
-            unsigned int attempts = 23;
-            while (attempts > 0)
-            {
-                attempts--;
-                usleep(300000);  // sleep 0.3 seconds - avg setup time
-                BackendStatus s = session.GetLastStatus();
-                if (s.minor == StatusMinor::CONN_CONNECTED)
-                {
-                    std::cout << "Connected" << std::endl;
-                    return 0;
-                }
-                sleep(1);  // If not yet connected, wait for 1 second
-            }
-            if (attempts < 1)
-            {
-                std::cout << "Failed to connect" << std::endl;
-                session.Disconnect();
-                return 3;
-            }
-        };
-        return 0;
+        }
+        catch (DBusException& err)
+        {
+            std::cout << "Failed to start new session: " << err.getRawError() << std::endl;
+            return 2;
+        }
     }
-    catch (DBusException& err)
-    {
-        std::cout << "Failed to start new session: " << err.getRawError() << std::endl;
-        return 2;
-    }
+    return 1;
 }
 
 int disconnect(std::vector<std::string>& args)
