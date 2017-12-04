@@ -43,6 +43,7 @@ noinst_PROGRAMS = \
 	conncreds \
 	fetch-config \
 	fetch-config2 \
+	getlaststatus \
 	signal-listener \
 	log-listener \
 	log-listener2 \
@@ -60,6 +61,8 @@ conncreds_SOURCES = conncreds.cpp
 fetch_config_SOURCES = fetch-config.cpp
 
 fetch_config2_SOURCES = fetch-config2.cpp
+
+getlaststatus_SOURCES = getlaststatus.cpp
 
 signal_listener_SOURCES = signal-listener.cpp
 

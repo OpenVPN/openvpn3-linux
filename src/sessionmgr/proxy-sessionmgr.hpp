@@ -26,6 +26,21 @@
 
 using namespace openvpn;
 
+struct BackendStatus
+{
+    BackendStatus()
+    {
+        major = StatusMajor::UNSET;
+        minor = StatusMinor::UNSET;
+        message = "";
+    }
+
+    StatusMajor major;
+    StatusMinor minor;
+    std::string message;
+};
+
+
 class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
 {
 public:
@@ -110,6 +125,39 @@ public:
         {
             return false;
         }
+    }
+
+    /**
+     * Retrieves the last reported status from the VPN backend
+     *
+     * @return  Returns a populated struct BackendStatus with the full status.
+     */
+    BackendStatus GetLastStatus()
+    {
+        GVariant *status = GetProperty("status");
+        BackendStatus ret;
+        GVariant *d = nullptr;
+
+        d = g_variant_lookup_value(status, "major", G_VARIANT_TYPE_UINT32);
+        ret.major = (StatusMajor) g_variant_get_uint32(d);
+        g_variant_unref(d);
+
+        d = g_variant_lookup_value(status, "minor", G_VARIANT_TYPE_UINT32);
+        ret.minor = (StatusMinor) g_variant_get_uint32(d);
+        g_variant_unref(d);
+
+        gsize len;
+        d = g_variant_lookup_value(status,
+                                   "status_message", G_VARIANT_TYPE_STRING);
+        ret.message = std::string(g_variant_get_string(d, &len));
+        g_variant_unref(d);
+        if (len != ret.message.size())
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy", "Failed retrieving status message text (inconsisten length)");
+        }
+
+        g_variant_unref(status);
+        return ret;
     }
 
 private:
