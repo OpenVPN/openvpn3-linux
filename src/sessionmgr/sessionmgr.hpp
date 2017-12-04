@@ -528,11 +528,13 @@ public:
         else if ((signal_name == "StatusChange")
                  && (interface_name == OpenVPN3DBus_interf_backends))
         {
-            StatusMajor major;
-            StatusMinor minor;
+            guint32 major_u;
+            guint32 minor_u;
             gchar *msg;
-            g_variant_get (params, "(uus)", &major, &minor, &msg);
+            g_variant_get (params, "(uus)", &major_u, &minor_u, &msg);
 
+            StatusMajor major = (StatusMajor) major_u;
+            StatusMinor minor = (StatusMinor) minor_u;
             if (StatusMajor::CONNECTION == major
                 && StatusMinor::CONN_FAILED == minor)
             {
