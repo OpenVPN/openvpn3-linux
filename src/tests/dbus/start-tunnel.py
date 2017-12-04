@@ -65,7 +65,8 @@ session_object = bus.get_object('net.openvpn.v3.sessions', session_path)
 # Get the proper interface access
 session_interface = dbus.Interface(session_object,
                                    dbus_interface='net.openvpn.v3.sessions')
-
+session_properties = dbus.Interface(session_object,
+                                    dbus_interface='org.freedesktop.DBus.Properties')
 
 #
 # Start the tunnel
@@ -87,13 +88,28 @@ while not done:
                                     # authentication failed, or a dynamic
                                     # challenge is sent, then an exception
                                     # is thrown again
-        print("Connected")
 
-        # Simple blocker.  In real-life, more exiting stuff happens here.
-        try:
-            input("Press enter to disconnect")
-        except:
-            pass
+        # Simple poll to see if we're connected
+        # The 'status' property in a session object contains the last status
+        # update sent by the VPN backend
+        status = session_properties.Get('net.openvpn.v3.sessions','status')
+
+        if status['major'] == 2:        # StatusMajor::CONNECTION
+            if status['minor'] == 7:    # StatusMinor::CONNECTED
+                print("Connected")
+                # Simple blocker.  In real-life, more exiting stuff happens here.
+                # Should listen for various signals, can capture and store/present
+                # Log events, etc.
+                #
+                # Try running the src/tests/dbus/signal-listener and especially
+                # check ProcessChange, StatusChange and Log signals
+                #
+                try:
+                    input("Press enter to disconnect")
+                except:
+                    pass
+            elif status['minor'] == 9:  # StatusMinor:DISCONNECTED
+                print("Connection got disconnected:" + status['status_message'])
 
         session_interface.Disconnect()
         done = True
