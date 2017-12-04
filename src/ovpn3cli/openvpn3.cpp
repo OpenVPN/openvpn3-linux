@@ -343,10 +343,29 @@ int connect(std::vector<std::string>& args)
                 }
             }
             session.Connect();
-            sleep(5); // FIXME: Poll for status changes
-        };
 
-        // FIXME: Print connection status
+            // Allow approx 30 seconds to establish connection; one loop
+            // will take about 1.3 seconds.
+            unsigned int attempts = 23;
+            while (attempts > 0)
+            {
+                attempts--;
+                usleep(300000);  // sleep 0.3 seconds - avg setup time
+                BackendStatus s = session.GetLastStatus();
+                if (s.minor == StatusMinor::CONN_CONNECTED)
+                {
+                    std::cout << "Connected" << std::endl;
+                    return 0;
+                }
+                sleep(1);  // If not yet connected, wait for 1 second
+            }
+            if (attempts < 1)
+            {
+                std::cout << "Failed to connect" << std::endl;
+                session.Disconnect();
+                return 3;
+            }
+        };
         return 0;
     }
     catch (DBusException& err)
