@@ -443,7 +443,7 @@ public:
                              "session_path=" + GetObjectPath()
                              + ", backend_pid=" + std::to_string(backend_pid));
         Debug("SessionObject registered on '" + OpenVPN3DBus_interf_sessions + "': "
-              + objpath);
+              + objpath + " [backend_token=" + backend_token + "]");
     }
 
     ~SessionObject()
