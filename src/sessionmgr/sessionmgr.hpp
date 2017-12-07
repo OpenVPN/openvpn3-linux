@@ -16,6 +16,19 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+/**
+ * @file   sessionmgr.hpp
+ *
+ * @brief  Service side implementation of the Session Manager
+ *         (net.openvpn.v3.sessions).
+ *
+ *         The SessionManagerDBus class establishes the service and registers
+ *         it on the D-Bus.  This service object owns a single
+ *         SessionManagerObject which is the main service object.  This is
+ *         used to establish SessionObjects, one for each VPN tunnel started.
+ */
+
+
 #ifndef OPENVPN3_DBUS_SESSIONMGR_HPP
 #define OPENVPN3_DBUS_SESSIONMGR_HPP
 
