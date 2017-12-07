@@ -159,7 +159,7 @@ namespace openvpn
         void SetDBusError(GError **error)
         {
             g_set_error(error, errordomain, errorcode,
-                        errorstr.c_str());
+                        "%s", errorstr.c_str());
         }
 
 

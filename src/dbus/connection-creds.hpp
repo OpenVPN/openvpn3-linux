@@ -123,7 +123,7 @@ namespace openvpn
 
         void SetDBusError(GError **dbuserror, GQuark domain, gint code)
         {
-            g_set_error (dbuserror, domain, code, error.c_str());
+            g_set_error (dbuserror, domain, code, "%s", error.c_str());
         }
 
 private:
