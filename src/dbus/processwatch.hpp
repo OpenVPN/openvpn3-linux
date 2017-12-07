@@ -64,12 +64,6 @@ namespace openvpn
             g_variant_get(parameters, "(usu)", &status, &procname_p, &pid);
             std::string procname(procname_p);
 
-#if 0
-            std::cout << "ProcessChange: status=" << std::to_string((uint8_t) status)
-                      << ", process=" << procname
-                      << ", pid=" << std::to_string(pid)
-                      << std::endl;
-#endif
             if (!waitfor_process_name.empty() && (procname != waitfor_process_name))
             {
                 // Not the process name we're waiting for

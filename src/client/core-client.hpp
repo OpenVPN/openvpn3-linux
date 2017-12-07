@@ -71,22 +71,6 @@ public:
         return dc_cookie;
     }
 
-#if 0
-    void StatusChange(StatusMajor maj, StatusMinor min, std::string msg)
-    {
-        signal->StatusChange(maj, min, msg);
-    }
-
-    void LogError(std::string msg)
-    {
-        signal->LogError(msg);
-    }
-
-    void Debug(std::string msg)
-    {
-        signal->Debug(msg);
-    }
-#endif
 
     StatusMinor GetRunStatus()
     {
