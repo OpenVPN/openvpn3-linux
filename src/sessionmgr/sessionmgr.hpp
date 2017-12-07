@@ -405,6 +405,7 @@ public:
                           << "        <property type='b' name='public_access' access='readwrite'/>"
                           << "        <property type='s' name='status' access='read'/>"
                           << "        <property type='a{sv}' name='last_log' access='read'/>"
+                          << "        <property type='a{sx}' name='statistics' access='read'/>"
                           << "        <property type='o' name='config_path' access='read'/>"
                           << "        <property type='u' name='backend_pid' access='read'/>"
                           << "        <property type='b' name='receive_log_events' access='readwrite'/>"
@@ -868,6 +869,19 @@ public:
                             "No status changes have been logged yet");
             }
         }
+        else if ("statistics" == property_name)
+        {
+            try
+            {
+                ret = be_proxy->GetProperty("statistics");
+            }
+            catch (DBusException& exp)
+            {
+                g_set_error(error, G_DBUS_ERROR, G_IO_ERROR_FAILED,
+                            "Failed retrieving connection statistics");
+                ret = NULL;
+            }
+        }
         else if ("config_path" == property_name)
         {
             ret = g_variant_new_string (config_path.c_str());
@@ -891,7 +905,7 @@ public:
         else
         {
             g_set_error(error,
-            G_IO_ERROR,
+                        G_IO_ERROR,
                         G_IO_ERROR_FAILED,
                         "Unknown property");
         }

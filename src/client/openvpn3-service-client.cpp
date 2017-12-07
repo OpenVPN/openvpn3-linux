@@ -89,6 +89,7 @@ public:
                           << "            <arg type='s' name='busname' direction='out'/>"
                           << "            <arg type='s' name='token' direction='out'/>"
                           << "        </signal>"
+                          << "        <property type='a{sx}' name='statistics' access='read'/>"
                           <<  "    </interface>"
                           <<  "</node>";
         ParseIntrospectionXML(introspection_xml);
@@ -399,7 +400,19 @@ public:
                                      const std::string property_name,
                                      GError **error)
     {
-        g_set_error(error, G_IO_ERROR, G_IO_ERROR_FAILED, "(not implemented");
+        if ("statistics" == property_name)
+        {
+            GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sx}"));
+            for (auto& sd : vpnclient->GetStats())
+            {
+                g_variant_builder_add (b, "{sx}",
+                                       sd.key.c_str(), sd.value);
+            }
+            GVariant *ret = g_variant_builder_end(b);
+            g_variant_builder_unref(b);
+            return ret;
+        }
+        g_set_error(error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, "Unknown property");
         return NULL;
     }
 

@@ -41,8 +41,10 @@
 
 #include "common/core-extensions.hpp"
 #include "backend-signals.hpp"
+#include "statistics.hpp"
 
 using namespace openvpn;
+
 
 class CoreVPNClient : public ClientAPI::OpenVPNClient,
                       public RC<thread_safe_refcount>
@@ -75,6 +77,31 @@ public:
     StatusMinor GetRunStatus()
     {
         return run_status;
+    }
+
+
+    /**
+     *  Retrieves the connection statistics of a running tunnel
+     *
+     * @return Returns a ConnectionStats (std::vector<ConnectionStatDetails>)
+     *         blob which contains all the connection statistics.
+     */
+    ConnectionStats GetStats()
+    {
+        const int n = stats_n();
+        std::vector<long long> bundle = stats_bundle();
+
+        ConnectionStats stats;
+        for (int i = 0; i < n; ++i)
+        {
+            const long long value = bundle[i];
+            if (value)
+            {
+                ConnectionStatDetails s(stats_name(i), value);
+                stats.push_back(s);
+            }
+        }
+        return stats;
     }
 
 private:

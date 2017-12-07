@@ -190,6 +190,10 @@
     <allow send_interface="net.openvpn.v3.backends"
            send_type="method_call"
            send_member="UserInputProvide"/>
+
+    <allow send_interface="org.freedesktop.DBus.Properties"
+           send_type="method_call"
+           send_member="Get"/>
   </policy>
 
   <policy user="root">

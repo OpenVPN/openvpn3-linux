@@ -32,6 +32,7 @@
 
 #include "dbus/core.hpp"
 #include "dbus/requiresqueue-proxy.hpp"
+#include "client/statistics.hpp"
 
 using namespace openvpn;
 
@@ -270,6 +271,34 @@ public:
         g_variant_unref(status);
         return ret;
     }
+
+
+    /**
+     * Retrieves statistics of a running VPN tunnel.  It is gathered by
+     * retrieving the 'statistics' session object property.
+     *
+     * @return Returns a ConnectionStats (std::vector<ConnectionStatDetails>)
+     *         array of all gathered statistics.
+     */
+    ConnectionStats GetConnectionStats()
+    {
+        GVariant * statsprops = GetProperty("statistics");
+        GVariantIter * stats_ar = nullptr;
+        g_variant_get(statsprops, "a{sx}", &stats_ar);
+
+        ConnectionStats ret;
+        GVariant * r = nullptr;
+        while ((r = g_variant_iter_next_value(stats_ar)))
+        {
+            gchar *key = nullptr;
+            gint64 val;
+            g_variant_get(r, "{sx}", &key, &val);
+            ret.push_back(ConnectionStatDetails(std::string(key), val));
+            g_variant_unref(r);
+        }
+        return ret;
+    }
+
 
 private:
     /**

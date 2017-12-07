@@ -228,6 +228,27 @@ std::tuple<commandPtr, std::vector<std::string>> process_command_line(int argc, 
 }
 
 
+void print_statistics(ConnectionStats& stats)
+{
+    if (stats.size() < 1)
+    {
+        return;
+    }
+
+    std::cout << std::endl << "Connection statistics:" << std::endl;
+    for (auto& sd : stats)
+    {
+        std::cout << "     "
+                  << sd.key
+                  << std::setw(20-sd.key.size()) << std::setfill('.') << "."
+                  << std::setw(12) << std::setfill('.')
+                  << sd.value
+                  << std::endl;
+    }
+    std::cout << std::endl;
+}
+
+
 /**
  *  Parses and imports an OpenVPN configuration file and saves it
  *  within the OpenVPN 3 Configuration Manager service.
@@ -388,6 +409,36 @@ int connect(std::vector<std::string>& args)
     return 1;
 }
 
+
+int dump_stats(std::vector<std::string>& args)
+{
+    if (args.size() != 1)
+    {
+        std::cout << "** ERROR **  Disconnecting a connection requires only 1 argument" << std::endl;
+        return 1;
+    }
+
+    try
+    {
+        OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, args[0]);
+        ConnectionStats stats = session.GetConnectionStats();
+
+        if (stats.size() == 0)
+        {
+            std::cout << "No connection statistics available" << std::endl;
+            return 0;
+        }
+        print_statistics(stats);
+        return 0;
+    }
+    catch (DBusException& err)
+    {
+        std::cout << "Failed to fetch statistics: " << err.getRawError() << std::endl;
+        return 2;
+    }
+}
+
+
 int disconnect(std::vector<std::string>& args)
 {
     if (args.size() != 1)
@@ -399,8 +450,10 @@ int disconnect(std::vector<std::string>& args)
     try
     {
         OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, args[0]);
+        ConnectionStats stats = session.GetConnectionStats();
         session.Disconnect();
-        std::cout << "Initiated session shutdown: " << args[0] << std::endl;
+        std::cout << "Initiated session shutdown." << std::endl;
+        print_statistics(stats);
 
         return 0;
     }
@@ -598,6 +651,11 @@ int main(int argc, char **argv)
                 required_argument, "config path|alias",
                 "Connect to a preloaded configuration",
                 connect});
+
+    ovpn_options.push_back({"stats",     'T',
+                required_argument, "session path",
+                "Shows current connection statistics",
+                dump_stats});
 
     ovpn_options.push_back({"pause",     'P',
                 required_argument, "session path",
