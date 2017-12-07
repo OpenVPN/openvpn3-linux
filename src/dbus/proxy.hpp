@@ -237,7 +237,7 @@ namespace openvpn
         }
 
 
-        GVariant * GetProperty(std::string property, bool allow_null)
+        GVariant * GetProperty(std::string property)
         {
             if (property.empty())
             {
@@ -276,12 +276,6 @@ namespace openvpn
             g_variant_get(response, "(v)", &ret);
             g_variant_unref(response);
             return ret;
-        }
-
-
-        GVariant * GetProperty(std::string property)
-        {
-            return GetProperty(property, false);
         }
 
 
