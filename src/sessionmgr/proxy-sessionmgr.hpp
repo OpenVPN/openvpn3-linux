@@ -16,6 +16,15 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+/**
+ * @file   proxy-sessionmgr.hpp
+ *
+ * @brief  Provides a C++ object implementation of a D-Bus session manger
+ *         and session object.  This proxy class will perform the D-Bus
+ *         calls and provide the results as native C++ data types.
+ */
+
+
 #ifndef OPENVPN3_DBUS_PROXY_SESSION_HPP
 #define OPENVPN3_DBUS_PROXY_SESSION_HPP
 
@@ -26,6 +35,10 @@
 
 using namespace openvpn;
 
+
+/**
+ * Carries a status record as reported by a VPN backend client
+ */
 struct BackendStatus
 {
     BackendStatus()
@@ -40,10 +53,17 @@ struct BackendStatus
     std::string message;
 };
 
+
+/**
+ * This exception is thrown when the OpenVPN3SessionProxy::Ready() call
+ * indicates the VPN backend client needs more information from the
+ * frontend process.
+ */
 class ReadyException : public DBusException
 {
 public:
-    ReadyException(const std::string& err, const char *filen, const unsigned int linenum, const char *fn) noexcept
+    ReadyException(const std::string& err, const char *filen,
+                   const unsigned int linenum, const char *fn) noexcept
         : DBusException("ReadyException", err, filen, linenum, fn)
     {
     }
@@ -73,9 +93,21 @@ public:
 #define THROW_READYEXCEPTION(fault_data) throw ReadyException(fault_data, __FILE__, __LINE__, __FUNCTION__)
 
 
+/**
+ *  Client proxy implementation interacting with a
+ *  SessionObject in the session manager over D-Bus
+ */
 class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
 {
 public:
+    /**
+     * Initilizes the D-Bus client proxy.  This constructor will establish
+     * the D-Bus connection by itself.
+     *
+     * @param bus_type   Defines if the connection is on the system or session
+     *                   bus.
+     * @param objpath    D-Bus object path to the SessionObjectes
+     */
     OpenVPN3SessionProxy(GBusType bus_type, std::string objpath)
         : DBusRequiresQueueProxy(bus_type,
                                  OpenVPN3DBus_name_sessions,
@@ -88,6 +120,13 @@ public:
     {
     }
 
+    /**
+     * Initilizes the D-Bus client proxy.  This constructor will use an
+     * existing D-Bus connection object for all D-Bus calls
+     *
+     * @param dbusobj    DBus connection object
+     * @param objpath    D-Bus object path to the SessionObject
+     */
     OpenVPN3SessionProxy(DBus & dbusobj, const std::string objpath)
         : DBusRequiresQueueProxy(dbusobj,
                                  OpenVPN3DBus_name_sessions,
@@ -100,6 +139,17 @@ public:
     {
     }
 
+
+    /**
+     *  Only valid if the session object path points at the main session
+     *  manager object.  This starts a new VPN backend client process, running
+     *  with the needed privileges.
+     *
+     * @param cfgpath  VPN profile configuration D-Bus path to use for the
+     *                 backend client
+     * @return Returns a D-Bus object path string to the session object
+     *         created
+     */
     std::string NewTunnel(std::string cfgpath)
     {
         GVariant *res = Call("NewTunnel",
@@ -119,16 +169,36 @@ public:
         return ret;
     }
 
+
+    /**
+     *  Makes the VPN backend client process start the connecting to the
+     *  VPN server
+     */
     void Connect()
     {
         simple_call("Connect", "Failed to start a new tunnel");
     }
 
+
+    /**
+     *  Disconnects and shuts down the VPN backend process.  This call
+     *  will invalidate the current session object.  This can also be used
+     *  to shutdown a backend process before doing a Connect() call.
+     */
     void Disconnect()
     {
         simple_call("Disconnect", "Failed to disconnect tunnel");
     }
 
+
+    /**
+     *  Pause an on-going VPN tunnel.  Pausing and Resuming an existing VPN
+     *  tunnel is generally much faster than doing a full Disconnect() and
+     *  Connect() cycle.
+     *
+     * @param reason  A string provided to the VPN backend process why the
+     *                tunnel was suspended.  Primarily used for logging.
+     */
     void Pause(std::string reason)
     {
         GVariant *res = Call("Pause",
@@ -140,12 +210,21 @@ public:
         }
     }
 
+
+    /**
+     *   Resumes a paused VPN tunnel
+     */
     void Resume()
     {
         simple_call("Resume", "Failed to resume tunnel");
     }
 
 
+    /**
+     *  Checks if the VPN backend process has all it needs to start connecting
+     *  to a VPN server.  If it needs more information from the front-end, a
+     *  ReadyException will be thrown with more details.
+     */
     void Ready()
     {
         try
@@ -193,6 +272,13 @@ public:
     }
 
 private:
+    /**
+     * Simple wrapper for simple D-Bus method calls not requiring much
+     * input.  Will also throw a DBusException in case of errors.
+     *
+     * @param method  D-Bus method to call
+     * @param errstr  Error string to provide to the user in case of failures
+     */
     void simple_call(std::string method, std::string errstr)
     {
         GVariant *res = Call(method);
