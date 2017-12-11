@@ -26,15 +26,15 @@
 
 using namespace openvpn;
 
-class BackendManagerSignals : public LogSender
+class BackendStarterSignals : public LogSender
 {
 public:
-    BackendManagerSignals(GDBusConnection *conn, LogGroup lgroup, std::string object_path)
+    BackendStarterSignals(GDBusConnection *conn, LogGroup lgroup, std::string object_path)
             : LogSender(conn, lgroup, OpenVPN3DBus_interf_backends, object_path)
     {
     }
 
-    virtual ~BackendManagerSignals()
+    virtual ~BackendStarterSignals()
     {
     }
 
@@ -75,16 +75,15 @@ public:
 };
 
 
-class BackendManagerObject : public DBusObject
+class BackendStarterObject : public DBusObject,
+                             public BackendStarterSignals
 {
 public:
-    BackendManagerObject(GDBusConnection *dbuscon, const std::string busname, const std::string objpath)
+    BackendStarterObject(GDBusConnection *dbuscon, const std::string busname, const std::string objpath)
         : DBusObject(objpath),
-          dbuscon(dbuscon),
-          signal(nullptr)
+          BackendStarterSignals(dbuscon, LogGroup::BACKENDSTART, objpath),
+          dbuscon(dbuscon)
     {
-        signal = new BackendManagerSignals(dbuscon, LogGroup::BACKENDSTART, objpath);
-
         std::stringstream introspection_xml;
         introspection_xml << "<node name='" << objpath << "'>"
                           << "    <interface name='" << OpenVPN3DBus_interf_backends << "'>"
@@ -92,25 +91,24 @@ public:
                           << "          <arg type='s' name='token' direction='in'/>"
                           << "          <arg type='u' name='pid' direction='out'/>"
                           << "        </method>"
-                          << signal->GetLogIntrospection()
+                          << GetLogIntrospection()
                           << "    </interface>"
                           << "</node>";
         ParseIntrospectionXML(introspection_xml);
 
-        signal->Debug("BackendManagerObject registered on '" + OpenVPN3DBus_interf_backends + "': "
-                      + objpath);
+        Debug("BackendStarterObject registered on '" + OpenVPN3DBus_interf_backends + "': "
+              + objpath);
     }
 
-    ~BackendManagerObject()
+    ~BackendStarterObject()
     {
-        signal->LogInfo("Shutting down");
-        delete signal;
+        LogInfo("Shutting down");
         RemoveObject(dbuscon);
     }
 
     void OpenLogFile(std::string filename)
     {
-        signal->OpenLogFile(filename);
+        OpenLogFile(filename);
     }
 
 
@@ -152,7 +150,7 @@ public:
                                      GError **error)
     {
         /*
-        std::cout << "[BackendManagerObject] get_property(): "
+        std::cout << "[BackendStarterObject] get_property(): "
                   << "sender=" << sender
                   << ", object_path=" << obj_path
                   << ", interface=" << intf_name
@@ -175,13 +173,13 @@ public:
                                             GVariant *value,
                                             GError **error)
     {
-        THROW_DBUSEXCEPTION("BackendManagerObject", "set property not implemented");
+        THROW_DBUSEXCEPTION("BackendStarterObject",
+                            "set property not implemented");
     }
 
 
 private:
     GDBusConnection *dbuscon;
-    BackendManagerSignals *signal;
 
     pid_t start_backend_process(char * token)
     {
@@ -217,7 +215,7 @@ private:
                     << ") - pid " << backend_pid
                     << " failed to start as expected (exit code: "
                     << std::to_string(rc) << ")";
-                signal->LogError(msg.str());
+                LogError(msg.str());
                 return -1;
             }
             return backend_pid;
@@ -227,23 +225,23 @@ private:
 };
 
 
-class BackendManagerDBus : public DBus
+class BackendStarterDBus : public DBus
 {
 public:
-    BackendManagerDBus(GBusType bus_type)
+    BackendStarterDBus(GBusType bus_type)
         : DBus(bus_type,
                OpenVPN3DBus_name_backends,
                OpenVPN3DBus_rootp_backends,
                OpenVPN3DBus_interf_backends),
-          managobj(nullptr),
+          mainobj(nullptr),
           procsig(nullptr),
           logfile("")
     {
     };
 
-    ~BackendManagerDBus()
+    ~BackendStarterDBus()
     {
-        delete managobj;
+        delete mainobj;
 
         procsig->ProcessChange(StatusMinor::PROC_STOPPED);
         delete procsig;
@@ -256,21 +254,22 @@ public:
 
     void callback_bus_acquired()
     {
-        managobj = new BackendManagerObject(GetConnection(), GetBusName(), GetRootPath());
+        mainobj = new BackendStarterObject(GetConnection(), GetBusName(),
+                                            GetRootPath());
         if (!logfile.empty())
         {
-            managobj->OpenLogFile(logfile);
+            mainobj->OpenLogFile(logfile);
         }
-        managobj->RegisterObject(GetConnection());
+        mainobj->RegisterObject(GetConnection());
 
         procsig = new ProcessSignalProducer(GetConnection(),
                                             OpenVPN3DBus_interf_backends,
-                                            "BackendManager");
+                                            "BackendStarter");
         procsig->ProcessChange(StatusMinor::PROC_STARTED);
 
         if (idle_checker)
         {
-            managobj->IdleCheck_Register(idle_checker);
+            mainobj->IdleCheck_Register(idle_checker);
         }
     };
 
@@ -280,11 +279,13 @@ public:
 
     void callback_name_lost(GDBusConnection *conn, std::string busname)
     {
-        THROW_DBUSEXCEPTION("BackendManagerDBus", "Backend Manager's D-Bus name not registered: '" + busname + "'");
+        THROW_DBUSEXCEPTION("BackendStarterDBus",
+                            "Backend Starter's D-Bus name not registered: '"
+                            + busname + "'");
     };
 
 private:
-    BackendManagerObject * managobj;
+    BackendStarterObject * mainobj;
     ProcessSignalProducer * procsig;
     std::string logfile;
 };
@@ -297,12 +298,13 @@ int main(int argc, char **argv)
     g_unix_signal_add(SIGINT, stop_handler, main_loop);
     g_unix_signal_add(SIGTERM, stop_handler, main_loop);
 
-    IdleCheck::Ptr idle_exit = new IdleCheck(main_loop, std::chrono::minutes(1));
+    IdleCheck::Ptr idle_exit = new IdleCheck(main_loop,
+                                             std::chrono::minutes(1));
     idle_exit->SetPollTime(std::chrono::seconds(10));
 
-    BackendManagerDBus backendmgr(G_BUS_TYPE_SYSTEM);
-    backendmgr.EnableIdleCheck(idle_exit);
-    backendmgr.Setup();
+    BackendStarterDBus backstart(G_BUS_TYPE_SYSTEM);
+    backstart.EnableIdleCheck(idle_exit);
+    backstart.Setup();
 
     idle_exit->Enable();
     g_main_loop_run(main_loop);
