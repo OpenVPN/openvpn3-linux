@@ -62,12 +62,6 @@ public:
         GVariant *params = g_variant_new("(uus)", (guint) major, (guint) minor, msg.c_str());
         Send("StatusChange", params);
     }
-
-    void StatusChange(const StatusMajor major, const StatusMinor minor)
-    {
-        GVariant *params = g_variant_new("(uus)", (guint) major, (guint) minor, "");
-        Send("StatusChange", params);
-    }
 };
 
 
