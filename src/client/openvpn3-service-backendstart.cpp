@@ -17,6 +17,20 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
+/**
+ * @file   openvpn3-service-backendstart.cpp
+ *
+ * @brief  Service side implementation of the Backend Starter service
+ *         (net.openvpn.v3.backends).
+ *
+ *         This service starts openvpn3-service-client processes with a
+ *         token provided via the StartClient D-Bus method call.  This
+ *         service is supposed to be automatically started by D-Bus, with
+ *         root privileges.  This ensures the client process this service
+ *         starts also runs with the appropriate privileges.
+ */
+
+
 #include <iostream>
 
 #include "config.h"
@@ -26,9 +40,23 @@
 
 using namespace openvpn;
 
+
+/**
+ * Helper class to tackle signals sent by the backend starter process
+ *
+ * This mostly just wraps the LogSender class and predfines LogGroup to always
+ * be BACKENDSTART.
+ */
 class BackendStarterSignals : public LogSender
 {
 public:
+    /**
+     *  Initializes the signaling component
+     *
+     * @param conn        Existing D-Bus connection to use for sending signals
+     * @param object_path A string with the D-Bus object path signals sent
+     *                    should be attached to
+     */
     BackendStarterSignals(GDBusConnection *conn, std::string object_path)
             : LogSender(conn, LogGroup::BACKENDSTART,
                         OpenVPN3DBus_interf_backends, object_path)
@@ -39,6 +67,14 @@ public:
     {
     }
 
+
+    /**
+     *  Whenever a FATAL error happens, the process is expected to stop.
+     *  The abort() call gets caught by the main loop, which then starts the
+     *  proper shutdown process.
+     *
+     * @param msg  Message to sent to the log subscribers
+     */
     void LogFATAL(std::string msg)
     {
         Log(log_group, LogCategory::FATAL, msg);
@@ -47,6 +83,14 @@ public:
     }
 
 
+    /**
+     *  Sends Debug log messages which adds D-Bus message details
+     *  related to the message
+     *
+     * @param busname  D-Bus bus name triggering this log event
+     * @param path     D-Bus path to the object triggering this log event
+     * @param msg      The log message itself
+     */
     void Debug(std::string busname, std::string path, std::string msg)
     {
             std::stringstream debug;
@@ -57,6 +101,15 @@ public:
             LogSender::Debug(debug.str());
     }
 
+
+    /**
+     *  Sends a StatusChange signal with a text message
+     *
+     * @param major  StatusMajor code of the status change
+     * @param minor  StatusMinor code of the status change
+     * @param msg    String containing a description of the reason for this
+     *               status change
+     */
     void StatusChange(const StatusMajor major, const StatusMinor minor, std::string msg)
     {
         GVariant *params = g_variant_new("(uus)", (guint) major, (guint) minor, msg.c_str());
@@ -65,10 +118,21 @@ public:
 };
 
 
+/**
+ * Main service object for starting VPN client processes
+ */
 class BackendStarterObject : public DBusObject,
                              public BackendStarterSignals
 {
 public:
+    /**
+     *  Constructor initializing the Backend Starter to be registered on
+     *  the D-Bus.
+     *
+     * @param dbuscon  D-Bus this object is tied to
+     * @param busname  D-Bus bus name this service is registered on
+     * @param objpath  D-Bus object path to this object
+     */
     BackendStarterObject(GDBusConnection *dbuscon, const std::string busname, const std::string objpath)
         : DBusObject(objpath),
           BackendStarterSignals(dbuscon, objpath),
@@ -95,12 +159,32 @@ public:
         RemoveObject(dbuscon);
     }
 
+
+    /**
+     * Enables logging to file in addition to the D-Bus Log signal events
+     *
+     * @param filename  String containing the name of the log file
+     */
     void OpenLogFile(std::string filename)
     {
         OpenLogFile(filename);
     }
 
 
+    /**
+     *  Callback method called each time a method in the Backend Starter
+     *  service is called over the D-Bus.
+     *
+     * @param conn       D-Bus connection where the method call occurred
+     * @param sender     D-Bus bus name of the sender of the method call
+     * @param obj_path   D-Bus object path of the target object.
+     * @param intf_name  D-Bus interface of the method call
+     * @param method_name D-Bus method name to be executed
+     * @param params     GVariant Glib2 object containing the arguments for
+     *                   the method call
+     * @param invoc      GDBusMethodInvocation where the response/result of
+     *                   the method call will be returned.
+     */
     void callback_method_call(GDBusConnection *conn,
                               const std::string sender,
                               const std::string obj_path,
@@ -131,6 +215,24 @@ public:
     };
 
 
+    /**
+     *  Callback which is used each time a Backend Starter object's D-Bus
+     *  property is being read.
+     *
+     *  For the , this method will just return NULL
+     *  with an error set in the GError return pointer.  The
+     *  BackendStarterObject does not use properties at all.
+     *
+     * @param conn           D-Bus connection this event occurred on
+     * @param sender         D-Bus bus name of the requester
+     * @param obj_path       D-Bus object path to the object being requested
+     * @param intf_name      D-Bus interface of the property being accessed
+     * @param property_name  The property name being accessed
+     * @param error          A GLib2 GError object if an error occurs
+     *
+     * @return  Returns always NULL, as there are no properties in the
+     *          BackendStarterObject.
+     */
     GVariant * callback_get_property(GDBusConnection *conn,
                                      const std::string sender,
                                      const std::string obj_path,
@@ -154,6 +256,24 @@ public:
     };
 
 
+    /**
+     *  Callback method which is used each time the Backend Starter service
+     *  D-Bus object property is being modified.
+     *
+     *  This will always fail with an exception, as there exists no properties
+     *  which can be modified in a BackendStarterObject.
+     *
+     * @param conn           D-Bus connection this event occurred on
+     * @param sender         D-Bus bus name of the requester
+     * @param obj_path       D-Bus object path to the object being requested
+     * @param intf_name      D-Bus interface of the property being accessed
+     * @param property_name  The property name being accessed
+     * @param value          GVariant object containing the value to be stored
+     * @param error          A GLib2 GError object if an error occurs
+     *
+     * @return Will always throw an exception as there are no properties to
+     *         modify.
+     */
     GVariantBuilder * callback_set_property(GDBusConnection *conn,
                                             const std::string sender,
                                             const std::string obj_path,
@@ -170,6 +290,15 @@ public:
 private:
     GDBusConnection *dbuscon;
 
+
+    /**
+     * Forks out a child thread which starts the openvpn3-service-client
+     * process with the provided backend start token.
+     *
+     * @param token  String containing the start token identifying the session
+     *               object this process is tied to.
+     * @return Returns the process ID (pid) of the child process.
+     */
     pid_t start_backend_process(char * token)
     {
         pid_t backend_pid = fork();
@@ -214,9 +343,19 @@ private:
 };
 
 
+/**
+ * Main D-Bus service implementation of the Backend Starter service
+ */
 class BackendStarterDBus : public DBus
 {
 public:
+    /**
+     * Constructor creating a D-Bus service for the Backend Starter service.
+     *
+     * @param bus_type  GBusType, which defines if this service should be
+     *                  registered on the system or session bus.
+     */
+
     BackendStarterDBus(GBusType bus_type)
         : DBus(bus_type,
                OpenVPN3DBus_name_backends,
@@ -228,6 +367,7 @@ public:
     {
     };
 
+
     ~BackendStarterDBus()
     {
         delete mainobj;
@@ -236,11 +376,23 @@ public:
         delete procsig;
     }
 
+
+    /**
+     *  Prepares logging to file.  This happens in parallel with the
+     *  D-Bus Log events which will be sent with Log events.
+     *
+     * @param filename  Filename of the log file to save the log events.
+     */
     void SetLogFile(std::string filename)
     {
         logfile = filename;
     }
 
+
+    /**
+     *  This callback is called when the service was successfully registered
+     *  on the D-Bus.
+     */
     void callback_bus_acquired()
     {
         mainobj = new BackendStarterObject(GetConnection(), GetBusName(),
@@ -262,10 +414,30 @@ public:
         }
     };
 
+
+    /**
+     *  This is called each time the well-known bus name is successfully
+     *  acquired on the D-Bus.
+     *
+     *  This is not used, as the preparations already happens in
+     *  callback_bus_acquired()
+     *
+     * @param conn     Connection where this event happened
+     * @param busname  A string of the acquired bus name
+     */
     void callback_name_acquired(GDBusConnection *conn, std::string busname)
     {
     };
 
+
+    /**
+     *  This is called each time the well-known bus name is removed from the
+     *  D-Bus.  In our case, we just throw an exception and starts shutting
+     *  down.
+     *
+     * @param conn     Connection where this event happened
+     * @param busname  A string of the lost bus name
+     */
     void callback_name_lost(GDBusConnection *conn, std::string busname)
     {
         THROW_DBUSEXCEPTION("BackendStarterDBus",
