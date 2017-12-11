@@ -29,8 +29,9 @@ using namespace openvpn;
 class BackendStarterSignals : public LogSender
 {
 public:
-    BackendStarterSignals(GDBusConnection *conn, LogGroup lgroup, std::string object_path)
-            : LogSender(conn, lgroup, OpenVPN3DBus_interf_backends, object_path)
+    BackendStarterSignals(GDBusConnection *conn, std::string object_path)
+            : LogSender(conn, LogGroup::BACKENDSTART,
+                        OpenVPN3DBus_interf_backends, object_path)
     {
     }
 
@@ -46,15 +47,10 @@ public:
     }
 
 
-    void Debug(std::string msg)
-    {
-            LogSender::Debug(msg);
-    }
-
-    void Debug(std::string busname, std::string path, pid_t pid, std::string msg)
+    void Debug(std::string busname, std::string path, std::string msg)
     {
             std::stringstream debug;
-            debug << "pid=" << std::to_string(pid)
+            debug << "pid=" << std::to_string(getpid())
                   << ", busname=" << busname
                   << ", path=" << path
                   << ", message=" << msg;
@@ -81,7 +77,7 @@ class BackendStarterObject : public DBusObject,
 public:
     BackendStarterObject(GDBusConnection *dbuscon, const std::string busname, const std::string objpath)
         : DBusObject(objpath),
-          BackendStarterSignals(dbuscon, LogGroup::BACKENDSTART, objpath),
+          BackendStarterSignals(dbuscon, objpath),
           dbuscon(dbuscon)
     {
         std::stringstream introspection_xml;
@@ -96,8 +92,7 @@ public:
                           << "</node>";
         ParseIntrospectionXML(introspection_xml);
 
-        Debug("BackendStarterObject registered on '" + OpenVPN3DBus_interf_backends + "': "
-              + objpath);
+        Debug(busname, objpath, "BackendStarterObject registered");
     }
 
     ~BackendStarterObject()
