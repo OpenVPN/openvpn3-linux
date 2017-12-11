@@ -17,6 +17,15 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
+/**
+ * @file   requiresqueue-proxy.hpp
+ *
+ * @brief  A class which implements just the D-Bus client/proxy side of
+ *         the RequiresQueue.  This provides a C++ API which will perform the
+ *         appropriate D-Bus method calls against a service implementing
+ *         a RequiresQueue.
+ */
+
 #ifndef OPENVPN3_DBUS_PROXY_REQUIRESQUEUE_HPP
 #define OPENVPN3_DBUS_PROXY_REQUIRESQUEUE_HPP
 
@@ -25,9 +34,39 @@
 
 using namespace openvpn;
 
+
+/**
+ *  Main RequiresQueue proxy class, which implements the C++ API used to
+ *  access a RequiresQueue API on a D-Bus service also implementing the
+ *  RequiresQueue.
+ */
 class DBusRequiresQueueProxy : public DBusProxy
 {
 public:
+    /**
+     *  Initialize the D-Bus proxy for RequiresQueue.  This constructor
+     *  will setup its own connection object.
+     *
+     * @param bus_type                 Defines if the connection is against
+     *                                 the system or session bus.
+     * @param destination              String containing the service
+     *                                 destination to connect against
+     * @param interface                String containing the D-Bus object's
+     *                                 interface to use
+     * @param objpath                  String containing the D-Bus object
+     *                                 path to operate on
+     * @param method_quechktypegroup   String containing the name of the
+     *                                 QueueCheckTypeGroup method
+     * @param method_queuefetch        String containing the name of the
+     *                                 QueueFetch method
+     * @param method_queuecheck        String containing the name of the
+     *                                 QueueCheck method
+     * @param method_providereponse    String containing the name of the
+     *                                 QueueProvideResponse method
+     *
+     * The method names must match the defined introspection of the service
+     * side.
+     */
     DBusRequiresQueueProxy(GBusType bus_type, std::string destination , std::string interface, std::string objpath,
                            std::string method_quechktypegroup, std::string method_queuefetch, std::string method_queuecheck, std::string method_providereponse)
         : DBusProxy(bus_type, destination, interface, objpath),
@@ -37,6 +76,31 @@ public:
           method_provideresponse(method_providereponse)
     {
     }
+
+
+    /**
+     *  Initialize the D-Bus proxy for RequiresQueue.  This constructor
+     *  will re-use an established connection in a DBus object.
+     *
+     * @param dbusobj
+     * @param destination              String containing the service
+     *                                 destination to connect against
+     * @param interface                String containing the D-Bus object's
+     *                                 interface to use
+     * @param objpath                  String containing the D-Bus object
+     *                                 path to operate on
+     * @param method_quechktypegroup   String containing the name of the
+     *                                 QueueCheckTypeGroup method
+     * @param method_queuefetch        String containing the name of the
+     *                                 QueueFetch method
+     * @param method_queuecheck        String containing the name of the
+     *                                 QueueCheck method
+     * @param method_providereponse    String containing the name of the
+     *                                 QueueProvideResponse method
+     *
+     * The method names must match the defined introspection of the service
+     * side.
+     */
     DBusRequiresQueueProxy(DBus & dbusobj, std::string destination , std::string interface, std::string objpath,
                            std::string method_quechktypegroup, std::string method_queuefetch, std::string method_queuecheck, std::string method_providereponse)
         : DBusProxy(dbusobj, destination, interface, objpath),
@@ -47,6 +111,17 @@ public:
     {
     }
 
+
+    /**
+     *  C++ method to use to fetch a specific RequiresQueue slot.
+     *
+     * @param destslot   The return buffer where the retrieved information
+     *                   will be saved.  Must be pre-allocated before calling
+     *                   this method.
+     * @param type       ClientAttentionType of the slot to retrieve
+     * @param group      ClientAttentionGroup of the slot to retrieve
+     * @param id         Unsigned int of the slot ID to retrieve
+     */
     void QueueFetch(struct RequiresSlot& destslot, ClientAttentionType type, ClientAttentionGroup group, unsigned int id)
     {
         GVariant *slot = Call(method_queuefetch, g_variant_new("(uuu)", type, group, id));
@@ -59,6 +134,16 @@ public:
         g_variant_unref(slot);
     }
 
+
+    /**
+     *  C++ method used to retrieve all unresolved RequiresSlot records of a
+     *  specific ClientAttentionType and ClientAttentionGroup.
+     *
+     * @param slots  std::vector<RequiresSlot> return buffer.  The initial
+     *               vector must be pre-allocated.
+     * @param type   ClientAttentionType to retrieve
+     * @param group  ClientAttentionGroup to retrieve
+     */
     void QueueFetchAll(std::vector<struct RequiresSlot>& slots, ClientAttentionType type, ClientAttentionGroup group)
     {
         std::vector<unsigned int> reqids = QueueCheck(type, group);
@@ -71,6 +156,13 @@ public:
     }
 
 
+    /**
+     *  Retrieves a RequiresQueue::ClientAttTypeGroup tuple containing all
+     *  unresolved ClientAttentionTypes and ClientAttentionGroups.
+     *
+     * @return  Returns a std::vector<RequiresQueue::ClientAttTypeGroup> of
+     *          unresolved types/groups.
+     */
     std::vector<RequiresQueue::ClientAttTypeGroup> QueueCheckTypeGroup()
     {
         GVariant *res = Call(method_quechktypegroup);
@@ -98,6 +190,17 @@ public:
         return ret;
     }
 
+
+    /**
+     *  Retrieves an array of slot IDs of unresolved items for a specific
+     *  ClientAttentionType and ClientAttentionGroup.  An unresolved item
+     *  is an item where the front-end has not provided any information yet.
+     *
+     * @param type    ClientAttentionType to retrieve items for
+     * @param group   ClientAttentionGroup to retrieve items for
+     * @return  Returns a std::vector<unsigned int> with slot ID references
+     *          to unresolved RequiresSlot items.
+     */
     std::vector<unsigned int> QueueCheck(ClientAttentionType type, ClientAttentionGroup group)
     {
         GVariant *res = Call(method_queuecheck, g_variant_new("(uu)", type, group));
@@ -121,6 +224,12 @@ public:
         return ret;
     }
 
+
+    /**
+     *  Provides a response from the front-end to a specific RequiresSlot.
+     *
+     * @param slot  A RequiresSlot item containing the needed information.
+     */
     void ProvideResponse(struct RequiresSlot& slot)
     {
         GVariant *res = Call(method_provideresponse, g_variant_new("(uuus)",
@@ -139,6 +248,17 @@ private:
     std::string method_queuecheck;
     std::string method_provideresponse;
 
+
+    /**
+     *  Converts a D-Bus response for a RequiresSlot to a struct RequiresSlot
+     *  item.
+     *
+     * @param result  The destination RequiresSlot where the data is to be put
+     * @param indata  A GVariant object containing the response from a D-Bus
+     *                call.  The type string is strict and needs to match
+     *                between the sender (D-Bus service) and the receiver
+     *                (this class).
+     */
     void deserialize(struct RequiresSlot& result, GVariant *indata)
     {
         if (!indata)

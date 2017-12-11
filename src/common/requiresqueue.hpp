@@ -17,6 +17,17 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
+/**
+ * @file   requiresqueue.hpp
+ *
+ * @brief  A class which implements just the D-Bus server/service side of
+ *         the RequiresQueue.  This provides a C++ API which will implements
+ *         the introspection snippet generation, the D-Bus service methods
+ *         in addition to the methods the service needs to prepare the
+ *         RequiresQueue and retrieve the user responses sent from a
+ *         front-end.
+ */
+
 #ifndef OPENVPN3_DBUS_REQUIRESQUEUE_HPP
 #define OPENVPN3_DBUS_REQUIRESQUEUE_HPP
 
@@ -31,27 +42,52 @@
 #include "dbus/core.hpp"
 
 
+/**
+ *   A single slot which keeps a single requirement the a front-end
+ *   must provide back.
+ */
 struct RequiresSlot
 {
-    unsigned int id;
-    ClientAttentionType type;
-    ClientAttentionGroup group;
-    std::string name;
-    std::string value;
-    std::string user_description;
-    bool hidden_input;
-    bool provided;
+    unsigned int id;               ///< Unique ID per type/group
+    ClientAttentionType type;      ///< Type categorization of the requirement
+    ClientAttentionGroup group;    ///< Group categorization of the
+                                   ///< requirement
+    std::string name;              ///< Variable name of the requirement, used
+                                   ///< by the service backend to more easily
+                                   ///< retrieve a specific slot
+    std::string value;             ///< Value provided by the front-end
+    std::string user_description;  ///< Description the front-end can show
+                                   ///< to a user
+    bool hidden_input;             ///< Should user's input be masked?
+    bool provided;                 ///< Have the front-end already provided
+                                   ///< the requested information?
 };
 
 
+/**
+ *  Special exception class used to signal the various stages
+ *  of the requires queue and its slots.  Can be thrown both when
+ *  all work has been completed, if an error occurred, etc.
+ */
 class RequiresQueueException : public std::exception
 {
 public:
+    /**
+     *  Used for errors which is not classified.
+     *
+     * @param err   A string containing the error message
+     */
     RequiresQueueException(std::string err)
         : error(err)
     {
     }
 
+    /**
+     *  Used for both state signalling and errors
+     *
+     * @param errname  A string containing a "tag name" of the state/error
+     * @param errmsg   A string describing the event
+     */
     RequiresQueueException(std::string errname, std::string errmsg)
         : error(errmsg),
           errorname(errname)
@@ -74,6 +110,14 @@ public:
         return std::move(ret);
     }
 
+
+    /**
+     *  Sets the state/error in a D-Bus response which will be sent to
+     *  the front-end caller
+     *
+     * @param invocation  Pointer to an active GDBusMethodInvocation object
+     *                    belonging to an on-going D-Bus method call.
+     */
     void GenerateDBusError(GDBusMethodInvocation *invocation)
     {
         std::string errnam = (!errorname.empty() ? errorname : "net.openvpn.v3.error.undefined");
@@ -87,6 +131,9 @@ private:
 };
 
 
+/**
+ *  Implements the service/server side of the RequiresQueue
+ */
 class RequiresQueue
 {
 public:
@@ -321,7 +368,8 @@ public:
 
 
     /**
-     * Resets the value and the provided flag of an item already provided element
+     * Resets the value and the provided flag of an item already provided
+     * element
      *
      * @param type   ClientAttentionType which the value is categorised under
      * @param group  ClientAttentionGroup which the value is categorised under
@@ -345,7 +393,8 @@ public:
     }
 
     /**
-     * Retrieve the value provided by a user
+     * Retrieve the value provided by a user, using the RequiresSlot ID as
+     * the lookup approach.
      *
      * @param type   ClientAttentionType which the value is categorised under
      * @param group  ClientAttentionGroup which the value is categorised under
@@ -370,13 +419,14 @@ public:
     }
 
     /**
+     * Retrieve a front-end response, using a RequiresSlot name as the lookup
+     * approach.
      *
      * @param type   ClientAttentionType which the value is categorised under
      * @param group  ClientAttentionGroup which the value is categorised under
      * @param name   A string containing the variable name of the value
      * @return Returns a string with the value if the value was found and
      *         provided by the user, otherwise an exception is thrown.
-     * @return
      */
     std::string GetResponse(ClientAttentionType type, ClientAttentionGroup group, std::string name)
     {
@@ -622,12 +672,21 @@ public:
     }
 
 #ifdef DEBUG_REQUIRESQUEUE
+    /**
+     *  Dumps the current active queue to stdout
+     */
     void _DumpStdout()
     {
          _DumpQueue(std::cout);
     }
 
 
+    /**
+     *  Dumps all the RequiresSlot items of a current RequiresQueue to the
+     *  provided output stream
+     *
+     *  @param logdst   Output stream where to put the dump
+     */
     void _DumpQueue(std::ostream& logdst)
     {
         for (auto& e : slots)
@@ -674,4 +733,3 @@ private:
 };
 
 #endif // OPENVPN3_DBUS_REQUIRESQUEUE_HPP
-
