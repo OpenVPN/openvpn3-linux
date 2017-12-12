@@ -669,6 +669,13 @@ public:
         }
     }
 
+
+    void LogFile(std::string logfile)
+    {
+        signal->OpenLogFile(logfile);
+    }
+
+
     void callback_bus_acquired()
     {
         // Create a new OpenVPN3 client session object
@@ -688,10 +695,6 @@ public:
         procsig->ProcessChange(StatusMinor::PROC_STARTED);
     }
 
-    void LogFile(std::string logfile)
-    {
-        signal->OpenLogFile(logfile);
-    }
 
     void callback_name_acquired(GDBusConnection *conn, std::string busname)
     {
