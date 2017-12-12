@@ -33,13 +33,12 @@ using namespace openvpn;
 
 #define GUI_VERSION_STRING "0.0.1 (Linux)"
 
-class BackendServiceObject : public DBusObject,
-                             public RC<thread_safe_refcount>
+class BackendClientObject : public DBusObject,
+                            public RC<thread_safe_refcount>
 {
 public:
-    typedef RCPtr<BackendServiceObject> Ptr;
-
-    BackendServiceObject(GDBusConnection *conn, std::string bus_name,
+    typedef RCPtr<BackendClientObject> Ptr;
+    BackendClientObject(GDBusConnection *conn, std::string bus_name,
                          std::string objpath, std::string session_token)
         : DBusObject(objpath),
           dbusconn(conn),
@@ -106,7 +105,8 @@ public:
                     g_variant_new("(ss)", bus_name.c_str(), session_token.c_str()));
     }
 
-    ~BackendServiceObject()
+
+    ~BackendClientObject()
     {
         CoreVPNClient::uninit_process();
     }
@@ -632,10 +632,11 @@ private:
 };
 
 
-class BackendServiceDBus : public DBus
+
+class BackendClientDBus : public DBus
 {
 public:
-    BackendServiceDBus(pid_t start_pid, GBusType bus_type, std::string sesstoken)
+    BackendClientDBus(pid_t start_pid, GBusType bus_type, std::string sesstoken)
         : DBus(bus_type,
                OpenVPN3DBus_name_backends_be + to_string(getpid()),
                OpenVPN3DBus_rootp_sessions,
@@ -648,7 +649,7 @@ public:
     {
     };
 
-    ~BackendServiceDBus()
+    ~BackendClientDBus()
     {
         procsig->ProcessChange(StatusMinor::PROC_STOPPED);
         delete procsig;
@@ -667,14 +668,14 @@ public:
     {
         // Create a new OpenVPN3 client session object
         object_path = generate_path_uuid(OpenVPN3DBus_rootp_backends_sessions, 'z');
-        be_obj.reset(new BackendServiceObject(GetConnection(), GetBusName(), object_path, session_token));
+        be_obj.reset(new BackendClientObject(GetConnection(), GetBusName(), object_path, session_token));
         be_obj->RegisterObject(GetConnection());
 
         // Setup a signal object of the backend
         signal = new BackendSignals(GetConnection(), LogGroup::BACKENDPROC, object_path);
         signal->LogVerb1("Backend client process started as pid " + std::to_string(start_pid)
                          + " re-initiated as pid " + std::to_string(getpid()));
-        signal->LogVerb2("BackendServiceDBus registered on '" + GetBusName()
+        signal->LogVerb2("BackendClientDBus registered on '" + GetBusName()
                        + "': " + object_path);
 
         procsig = new ProcessSignalProducer(GetConnection(), OpenVPN3DBus_interf_backends,
@@ -693,7 +694,7 @@ public:
 
     void callback_name_lost(GDBusConnection *conn, std::string busname)
     {
-        THROW_DBUSEXCEPTION("BackendServiceDBus", "Configuration D-Bus name not registered: '" + busname + "'");
+        THROW_DBUSEXCEPTION("BackendClientDBus", "Configuration D-Bus name not registered: '" + busname + "'");
     };
 
 
@@ -702,7 +703,7 @@ private:
     std::string session_token;
     std::string object_path;
     ProcessSignalProducer * procsig;
-    BackendServiceObject::Ptr be_obj;
+    BackendClientObject::Ptr be_obj;
     BackendSignals *signal;
 };
 
@@ -728,7 +729,7 @@ int main(int argc, char **argv)
     pid_t real_pid = fork();
     if (real_pid == 0)
     {
-        BackendServiceDBus backend_service(start_pid, G_BUS_TYPE_SYSTEM, std::string(argv[1]));
+        BackendClientDBus backend_service(start_pid, G_BUS_TYPE_SYSTEM, std::string(argv[1]));
         backend_service.Setup();
 
         // Main loop
