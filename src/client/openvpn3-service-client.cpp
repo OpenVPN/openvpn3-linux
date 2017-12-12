@@ -128,8 +128,6 @@ public:
 
         try
         {
-            // signal.Debug("callback_method_call: method_name=" + method_name);
-
             if (vpnclient)
             {
                 switch(vpnclient->GetRunStatus())
@@ -356,7 +354,7 @@ public:
             }
             else if ("ForceShutdown" == method_name)
             {
-                signal.LogInfo("Forcing shutting down backend process: " + to_string(obj_path));
+                signal.LogInfo("Forcing shutdown of backend process: " + to_string(obj_path));
                 signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_DONE);
 
                 // Shutting down our selves.
@@ -532,10 +530,17 @@ private:
                     THROW_DBUSEXCEPTION("BackendServiceObject",
                                         "Credentials error: " + cred_res.message);
                 }
-                signal.LogVerb1("Username/password provided successfully {'" + creds.username + "', '" + creds.password + "'}");
+
+                std::stringstream msg;
+                msg << "Username/password provided successfully"
+                    << " for '" << creds.username << "'";
+                signal.LogVerb1(msg.str());
                 if (!creds.response.empty())
                 {
-                    signal.LogVerb1("Dynamic challenge provided successfully {'" + creds.dynamicChallengeCookie + "', '" + creds.response + "'}");
+                    std::stringstream dmsg;
+                    dmsg << "Dynamic challenge provided successfully"
+                         << " for '" << creds.username << "'";
+                    signal.LogVerb1(dmsg.str());
                 }
             }
 
