@@ -33,11 +33,31 @@ using namespace openvpn;
 
 #define GUI_VERSION_STRING "0.0.1 (Linux)"
 
+
+/**
+ *  Class managing a specific VPN client tunnel.  This object has its own
+ *  unique D-Bus bus name and object path and is designed to only be
+ *  accessible by the user running the openvpn3-service-sessiongmr process.
+ *  This session manager is the front-end users access point to this object.
+ */
 class BackendClientObject : public DBusObject,
                             public RC<thread_safe_refcount>
 {
 public:
     typedef RCPtr<BackendClientObject> Ptr;
+
+    /**
+     *  Initialize the BackendClientObject.  The bus name this object is
+     *  tied to is based on the PID value of this client process.
+     *
+     * @param conn           D-Bus connection this object is tied to
+     * @param bus_name       Unique D-Bus bus name
+     * @param objpath        D-Bus object path where to reach this instance
+     * @param session_token  String based token which is used to register
+     *                       itself with the session manager.  This token
+     *                       is provided on the command line when starting
+     *                       this openvpn3-service-client process.
+     */
     BackendClientObject(GDBusConnection *conn, std::string bus_name,
                          std::string objpath, std::string session_token)
         : DBusObject(objpath),
@@ -111,11 +131,34 @@ public:
         CoreVPNClient::uninit_process();
     }
 
+
+    /**
+     *  Provides a reference to the Glib2 main loop object.  This is used
+     *  to cleanly shutdown this process when the session manager wants to
+     *  shutdown this process via D-Bus.
+     *
+     * @param ml   GMainLoop pointer to the current main loop thread
+     */
     void SetMainLoop(GMainLoop *ml)
     {
         mainloop = ml;
     }
 
+
+    /**
+     *  Callback method which is called each time a D-Bus method call occurs
+     *  on this BackendClientObject.
+     *
+     * @param conn        D-Bus connection where the method call occurred
+     * @param sender      D-Bus bus name of the sender of the method call
+     * @param obj_path    D-Bus object path of the target object.
+     * @param intf_name   D-Bus interface of the method call
+     * @param method_name D-Bus method name to be executed
+     * @param params      GVariant Glib2 object containing the arguments for
+     *                    the method call
+     * @param invoc       GDBusMethodInvocation where the response/result of
+     *                    the method call will be returned.
+     */
     void callback_method_call(GDBusConnection *conn,
                               const std::string sender,
                               const std::string obj_path,
@@ -124,15 +167,18 @@ public:
                               GVariant *params,
                               GDBusMethodInvocation *invoc)
     {
+        // Ensure D-Bus method calls are serialized
         std::lock_guard<std::mutex> lg(guard);
 
         try
         {
+            // Ensure a vpnclient object is present only when we are
+            // expected to be in an active connection.
             if (vpnclient)
             {
                 switch(vpnclient->GetRunStatus())
                 {
-                case StatusMinor::CFG_REQUIRE_USER:
+                case StatusMinor::CFG_REQUIRE_USER: // Requires reconnect
                 case StatusMinor::CONN_DISCONNECTED:
                 case StatusMinor::CONN_FAILED:
                     // When a connection have been torn down,
@@ -146,6 +192,16 @@ public:
 
             if ("RegistrationConfirmation" == method_name)
             {
+                // This is called by the session manager only, as an
+                // acknowledgement from the session manager that it has
+                // linked this client process to a valid session object which
+                // will be accessible for front-end users.
+                //
+                // With this call, we also get the D-Bus object path for the
+                // the VPN configuration profile to use.  This is used when
+                // retrieve the configuration profile from the configuration
+                // manager service through the fetch_configuration() call.
+                //
                 if (registered)
                 {
                     THROW_DBUSEXCEPTION("BackendServiceObject",
@@ -172,6 +228,10 @@ public:
                     // Since the configuration may be set up for single-use
                     // only, we must keep this config as long as we're running
                     fetch_configuration();
+
+                    // Sets initial state, which also allows us to early
+                    // report back back if more data is required to be
+                    // sent by the front-end interface.
                     initialize_client();
                 }
                 else
@@ -185,7 +245,11 @@ public:
             }
             else if ("Ping" == method_name)
             {
-                // The Ping caller is expected to just return true
+                // This is a more narrow Ping test than what the D-Bus
+                // infrastructure provides.  This is a ping response from this
+                // specific object.
+                //
+                // The Ping caller is expected to just receive true.
                 g_dbus_method_invocation_return_value(invoc, g_variant_new("(b)", (bool) true));
                 return;
             }
@@ -203,12 +267,18 @@ public:
             }
             else if ("Connect" == method_name)
             {
+                // This starts the connection against a VPN server
+
                 if( !registered )
                 {
                     THROW_DBUSEXCEPTION("BackendServiceObject", "Backend service is not initialized");
                 }
 
-                initialize_client(); // This re-initializes the client object
+                // This re-initializes the client object.  If we have already
+                // tried to connectbut got an AUTH_FAILED, either due to wrong
+                // credentials or a dynamic challenge from the server, we
+                // need to re-establish the vpnclient object.
+                initialize_client();
 
                 if (!userinputq.QueueAllDone())
                 {
@@ -223,6 +293,9 @@ public:
             }
             else if ("Disconnect" == method_name)
             {
+                // Disconnect from the server.  This will also shutdown this
+                // process.
+
                 if (!registered || !vpnclient)
                 {
                     THROW_DBUSEXCEPTION("BackendServiceObject", "Backend service is not initialized");
@@ -250,6 +323,11 @@ public:
             }
             else if ("UserInputQueueGetTypeGroup"  == method_name)
             {
+                // Return an array of tuples of ClientAttentionTypes and
+                // ClientAttentionGroups which needs to be satisfied before
+                // we can attempt another reconnect.  This is all handled
+                // by the RequiresQueue.
+
                 try
                 {
                     userinputq.QueueCheckTypeGroup(invoc);
@@ -262,6 +340,9 @@ public:
             }
             else if ("UserInputQueueFetch"  == method_name)
             {
+                // Retrieves a specific RequiresQueue item which the front-end
+                // needs to satisfy.
+
                 try
                 {
                     userinputq.QueueFetch(invoc, params);
@@ -274,11 +355,18 @@ public:
             }
             else if ("UserInputQueueCheck" == method_name)
             {
+                // Retrieve the RequiresSlot IDs for a specific
+                // ClientAttentionType/ClientAttentionGroup which needs to be
+                // satisfied by the front-end.
+
                 userinputq.QueueCheck(invoc, params);
                 return; // QueueCheck() have fed invoc with a result already
             }
             else if ("UserInputProvide" == method_name)
             {
+                // This is called each time a RequiresSlot gets an update
+                // with data from the front-end.
+
                 if (!registered)
                 {
                     THROW_DBUSEXCEPTION("BackendServiceObject", "Backend service is not initialized");
@@ -296,6 +384,10 @@ public:
             }
             else if ("Pause" == method_name)
             {
+                // Pauses and suspends an on-going and connected VPN tunnel.
+                // The reason message provided with this call is sent to the
+                // log.
+
                 if( !registered || !vpnclient )
                 {
                     THROW_DBUSEXCEPTION("BackendServiceObject", "Backend service is not initialized");
@@ -323,6 +415,8 @@ public:
             }
             else if ("Resume" == method_name)
             {
+                // Resumes an already paused VPN session
+
                 if( !registered || !vpnclient )
                 {
                     THROW_DBUSEXCEPTION("BackendServiceObject", "Backend service is not initialized");
@@ -344,6 +438,10 @@ public:
             }
             else if ("Restart" == method_name)
             {
+                // Does a complete re-connect for an already running VPN
+                // session.  This will reuse all the credentials already
+                // gathered.
+
                 if (!registered || !vpnclient)
                 {
                     THROW_DBUSEXCEPTION("BackendServiceObject", "Backend service is not initialized");
@@ -354,6 +452,12 @@ public:
             }
             else if ("ForceShutdown" == method_name)
             {
+                // This is an emergency break for this process.  This
+                // kills this process without considering if we are in
+                // an already running state.  This is primarily used to
+                // clean-up stray session objects which is considered dead
+                // by the session manager.
+
                 signal.LogInfo("Forcing shutdown of backend process: " + to_string(obj_path));
                 signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_DONE);
 
@@ -391,7 +495,25 @@ public:
         }
     }
 
-
+    /**
+     *   Callback which is used each time a BackendClientObject D-Bus property
+     *   is being read.
+     *
+     *   Only the session manager instance should be allowed to read
+     *   the properties this D-Bus object provides.
+     *
+     * @param conn           D-Bus connection this event occurred on
+     * @param sender         D-Bus bus name of the requester
+     * @param obj_path       D-Bus object path to the object being requested
+     * @param intf_name      D-Bus interface of the property being accessed
+     * @param property_name  The property name being accessed
+     * @param error          A GLib2 GError object if an error occurs
+     *
+     * @return  Returns a GVariant Glib2 object containing the value of the
+     *          requested D-Bus object property.  On errors, NULL must be
+     *          returned and the error must be returned via a GError
+     *          object.
+     */
     GVariant * callback_get_property(GDBusConnection *conn,
                                      const std::string sender,
                                      const std::string obj_path,
@@ -401,6 +523,11 @@ public:
     {
         if ("statistics" == property_name)
         {
+            // Returns the current statistics for a running and connected
+            // VPN session
+
+            // Returns an array of a string (description) and an int64
+            // containing the statistics value.
             GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sx}"));
             for (auto& sd : vpnclient->GetStats())
             {
@@ -415,6 +542,24 @@ public:
         return NULL;
     }
 
+    /**
+     *  Callback method which is used each time a BackendClientObject
+     *  property is being modified over the D-Bus.
+     *
+     *  This will always fail with an exception, as there exists no properties
+     *  which can be modified in a BackendClientObject object.
+     *
+     * @param conn           D-Bus connection this event occurred on
+     * @param sender         D-Bus bus name of the requester
+     * @param obj_path       D-Bus object path to the object being requested
+     * @param intf_name      D-Bus interface of the property being accessed
+     * @param property_name  The property name being accessed
+     * @param value          GVariant object containing the value to be stored
+     * @param error          A GLib2 GError object if an error occurs
+     *
+     * @return Will always throw an exception as there are no properties to
+     *         modify.
+     */
     GVariantBuilder * callback_set_property(GDBusConnection *conn,
                                             const std::string sender,
                                             const std::string obj_path,
@@ -444,6 +589,9 @@ private:
     std::mutex guard;
 
 
+    /**
+     *  This implements the POSIX thread running the CoreVPNClient session
+     */
     void run_connection_thread()
     {
         asio::detail::signal_blocker sigblock; // Block signals in client thread
@@ -474,6 +622,10 @@ private:
    }
 
 
+    /**
+     *  Starts a new POSIX thread which will run the
+     *  VPN client (CoreVPNClient)
+     */
     void connect()
     {
         try
@@ -562,6 +714,9 @@ private:
     }
 
 
+    /**
+     *   Initializes a new CoreVPNClient object
+     */
     void initialize_client()
     {
         // Create a new VPN client object, which is handling the
@@ -608,6 +763,15 @@ private:
                             "config_path=" + configpath);
     }
 
+
+    /**
+     *  Retrieves the VPN configuration profile from the configuration
+     *  manager.
+     *
+     *  The configuration is cached in this object as the configuration might
+     *  have the 'single_use' attribute set, which means we can only retrieve
+     *  it once from the configuration manager.
+     */
     void fetch_configuration()
     {
         // Retrieve confniguration
@@ -638,9 +802,23 @@ private:
 
 
 
+/**
+ *  Main Backend Client D-Bus service.  This registers this client process
+ *  as a separate and unique D-Bus service
+ */
 class BackendClientDBus : public DBus
 {
 public:
+    /**
+     *  Initializes the BackendClientDBus object
+     *
+     * @param start_pid  The PID value we were started with, used for logging
+     * @param bus_type   GBusType, which defines if this service should be
+     *                   registered on the system or session bus.
+     * @param sesstoken  String containing the session token provided via the
+     *                   command line.  This is used when signalling back
+     *                   to the session manager.
+     */
     BackendClientDBus(pid_t start_pid, GBusType bus_type, std::string sesstoken)
         : DBus(bus_type,
                OpenVPN3DBus_name_backends_be + to_string(getpid()),
@@ -661,6 +839,14 @@ public:
         //delete be_obj;
     }
 
+
+    /**
+     *  Provides a reference to the Glib2 main loop object.  This is used
+     *  to cleanly shutdown this process when the session manager wants to
+     *  shutdown this process via D-Bus.
+     *
+     * @param ml   GMainLoop pointer to the current main loop thread
+     */
     void SetMainLoop(GMainLoop *ml)
     {
         if (be_obj)
@@ -670,12 +856,22 @@ public:
     }
 
 
+    /**
+     *  Prepares logging to file.  This happens in parallel with the
+     *  D-Bus Log events which will be sent with Log events.
+     *
+     * @param filename  Filename of the log file to save the log events.
+     */
     void LogFile(std::string logfile)
     {
         signal->OpenLogFile(logfile);
     }
 
 
+    /**
+     *  This callback is called when the service was successfully registered
+     *  on the D-Bus.
+     */
     void callback_bus_acquired()
     {
         // Create a new OpenVPN3 client session object
@@ -696,10 +892,29 @@ public:
     }
 
 
+    /**
+     *  This is called each time the well-known bus name is successfully
+     *  acquired on the D-Bus.
+     *
+     *  This is not used, as the preparations already happens in
+     *  callback_bus_acquired()
+     *
+     * @param conn     Connection where this event happened
+     * @param busname  A string of the acquired bus name
+     */
     void callback_name_acquired(GDBusConnection *conn, std::string busname)
     {
     };
 
+
+    /**
+     *  This is called each time the well-known bus name is removed from the
+     *  D-Bus.  In our case, we just throw an exception and starts shutting
+     *  down.
+     *
+     * @param conn     Connection where this event happened
+     * @param busname  A string of the lost bus name
+     */
     void callback_name_lost(GDBusConnection *conn, std::string busname)
     {
         THROW_DBUSEXCEPTION("BackendClientDBus", "Configuration D-Bus name not registered: '" + busname + "'");
@@ -727,7 +942,7 @@ int main(int argc, char **argv)
     }
 
     // Set a new process session ID, and  do a fork again
-    pid_t start_pid = getpid();
+    pid_t start_pid = getpid();  // Save the current pid, for logging later on
     if (-1 == setsid())
     {
         std::cerr << "** ERROR ** Failed getting a new process session ID:" << strerror(errno) << std::endl;
