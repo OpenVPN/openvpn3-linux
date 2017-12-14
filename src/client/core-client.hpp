@@ -17,6 +17,15 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
+/**
+ * @file   core-client.hpp
+ *
+ * @brief  This implements the OpenVPN 3 Core library's VPN client object.
+ *
+ *         It builds upon the ClientAPI::OpenVPNClient class and provides
+ *         the glue between the client D-Bus service and the library API.
+ */
+
 #ifndef OPENVPN3_CORE_CLIENT
 #define OPENVPN3_CORE_CLIENT
 
@@ -47,12 +56,26 @@
 using namespace openvpn;
 
 
+/**
+ *  Core VPN Client implementation of ClientAPI::OpenVPNClient
+ */
 class CoreVPNClient : public ClientAPI::OpenVPNClient,
                       public RC<thread_safe_refcount>
 {
 public:
     typedef RCPtr<CoreVPNClient> Ptr;
 
+    /**
+     *  Constructs the CoreVPNClient object
+     *
+     * @param signal      Pointer to an existing BackendsSignals object,
+     *                    which is used to both logging and sending signals
+     *                    to the session manager when this objects needs
+     *                    some attention.
+     * @param userinputq  Pointer to an existing RequiresQueue object which
+     *                    will be used to process dynamic challenge
+     *                    interactions and more.
+     */
     CoreVPNClient(BackendSignals *signal, RequiresQueue *userinputq)
             : OpenVPNClient::OpenVPNClient(),
               signal(signal),
@@ -63,18 +86,36 @@ public:
     }
 
 
+    /**
+     *  Do we have a dynamic challenge?
+     *
+     * @return  Returns true if we have a dynamic challenge cookie present
+     */
     bool is_dynamic_challenge() const
     {
         return !dc_cookie.empty();
     }
 
 
+    /**
+     *   Provides the dynamic challenge cookie which can be decoded and sent
+     *   to the front-end user to get even more authentication credentials
+     *
+     * @return  Returns a string containing the dynamic challenge cookie
+     */
     std::string dynamic_challenge_cookie()
     {
         return dc_cookie;
     }
 
 
+    /**
+     *   Retrieve the current status of this object.  Will typically return
+     *   StatusMinor::CFG_REQUIRE_USER if more input is needed by the
+     *   front-end user or various StatusMinor::CONN_* statuses.
+     *
+     * @return  Returns a StatusMinor code representing the current state
+     */
     StatusMinor GetRunStatus()
     {
         return run_status;
@@ -121,6 +162,14 @@ private:
     }
 
 
+    /**
+     *  Whenever an event occurs within the core library, this method is
+     *  invoked as a kind of callback.  The provided information will be
+     *  evaluated and sent further as D-Bus signals to the session manager
+     *  whenever appropriate.
+     *
+     * @param ev  A ClientAPI::Event object with the current event.
+     */
     virtual void event(const ClientAPI::Event& ev) override
     {
         //std::lock_guard<std::mutex> lock(event_mutex);
@@ -186,6 +235,13 @@ private:
     }
 
 
+    /**
+     *  Whenever the core library wants to provide log information, it will
+     *  send a ClientAPI::LogInfo object to this method.  This will
+     *  essentially just proxy this message to D-Bus as a Log signal.
+     *
+     * @param log  The ClientAPI::LogInfo object to act upon
+     */
     virtual void log(const ClientAPI::LogInfo& log)
     {
         signal->LogVerb1(log.text);
