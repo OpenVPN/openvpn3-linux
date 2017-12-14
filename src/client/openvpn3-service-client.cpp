@@ -17,6 +17,22 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
+/**
+ * @file   openvpn3-service-client.cpp
+ *
+ * @brief  Service side implementation the OpenVPN 3 based VPN client
+ *
+ *         This service is supposed to be started by the
+ *         openvpn3-service-backendstart service.  One client service
+ *         represents a single VPN tunnel and is managed only by the session
+ *         manager service.  When starting, this service will signal the
+ *         session manager about its presence and the session manager will
+ *         respond with which configuration profile to use.  Once that is done
+ *         the front-end instance (communicating with the session manager)
+ *         can continue with providing credentials and start the tunnel
+ *         connection.
+ */
+
 #include <sstream>
 
 #include "common/core-extensions.hpp"
