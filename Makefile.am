@@ -97,7 +97,7 @@ DBUS_SOURCES = \
 #  User binaries
 #
 bin_PROGRAMS = src/ovpn3cli/openvpn3
-bin_SCRIPTS =  src/ovpn3cli/openvpn2
+dist_bin_SCRIPTS =  src/ovpn3cli/openvpn2
 
 
 #
@@ -121,7 +121,6 @@ src_ovpn3cli_openvpn3_SOURCES = \
 	src/dbus/requiresqueue-proxy.hpp \
 	src/common/requiresqueue.hpp \
 	src/common/utils.hpp
-
 
 #
 #  openvpn3-service-client: The VPN client process
