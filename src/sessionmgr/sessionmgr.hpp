@@ -281,9 +281,20 @@ public:
     {
         if (signal_name == "StatusChange")
         {
+            guint32 maj = 0;
+            guint32 min = 0;
             gchar *msg;
-            g_variant_get (parameters, "(uus)", &last_major, &last_minor, &msg);
-            last_msg = std::string(msg);
+            g_variant_get (parameters, "(uus)", &maj, &min, &msg);
+
+            // If the last status received was CONNECTION:CONN_AUTH_FAILED,
+            // preserve this status message
+            if (!(StatusMajor::CONNECTION == (StatusMajor) last_major
+                && StatusMinor::CONN_AUTH_FAILED == (StatusMinor) last_minor))
+            {
+                last_major = maj;
+                last_minor = min;
+                last_msg = std::string(msg);
+            }
 
             /*
               std::cout << "** SessionStatusChange:"
@@ -314,6 +325,7 @@ public:
         {
             return NULL;  // Nothing have been logged, nothing to report
         }
+
         GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
         g_variant_builder_add (b, "{sv}", "major", g_variant_new_uint32(last_major));
         g_variant_builder_add (b, "{sv}", "minor", g_variant_new_uint32(last_minor));
@@ -551,16 +563,17 @@ public:
             StatusMajor major = (StatusMajor) major_u;
             StatusMinor minor = (StatusMinor) minor_u;
             if (StatusMajor::CONNECTION == major
-                && StatusMinor::CONN_FAILED == minor)
+                && (StatusMinor::CONN_FAILED == minor
+                    || StatusMinor::CONN_AUTH_FAILED == minor))
             {
                 // When the backend client signals connection failure
                 // force it to shutdown and close this session object
                 //
                 // FIXME: Consider if we need to split CONN_FAILED into
                 //        a fatal error (as now) and "Connection failed, but session may resume"
-                //        This link is between here and openvpn-core-client.hpp:78
+                //        This link is between here and client/core-client.hpp:173
                 //
-                shutdown(true);
+                shutdown(true, (StatusMinor::CONN_FAILED == minor));
             }
         }
         else if ((signal_name =="AttentionRequired")
@@ -647,7 +660,7 @@ public:
             else if ("Disconnect" == method_name)
             {
                 CheckACL(sender, true);
-                shutdown(false);
+                shutdown(false, true);
             }
             else if ("Ready" == method_name)
             {
@@ -751,7 +764,7 @@ public:
             {
                 try
                 {
-                    shutdown(true); // Ensure the backend client process have stopped
+                    shutdown(true, true); // Ensure the backend client process have stopped
                 }
                 catch (DBusException& dberr)
                 {
@@ -1138,10 +1151,16 @@ private:
     /**
      *  Initiate a shutdown of the VPN client backend process.
      *
-     * @param forced  If set to True, it will not do a normal disconnect but
-     *                tell the backend process to stop more abrubtly.
+     * @param forced             If set to True, it will not do a normal
+     *                           disconnect but tell the backend process
+     *                           to stop more abruptly.
+     * @param selfdestruct_flag  If set to True, this D-Bus session object
+     *                           will be destroyed.  If not, it needs to
+     *                           be removed later on independently.  Used to
+     *                           allow front-ends to retrieve the last sent
+     *                           status message, which can be AUTH_FAILED.
      */
-    void shutdown(bool forced)
+    void shutdown(bool forced, bool selfdestruct_flag)
     {
         be_proxy->Call( (!forced ? "Disconnect" : "ForceShutdown"), true );
         // Wait for child to exit
@@ -1157,7 +1176,10 @@ private:
             StatusChange(StatusMajor::SESSION, StatusMinor::PROC_KILLED, "Session closed, killed backend client");
         }
 
-        selfdestruct(DBusSignalSubscription::GetConnection());
+        if (selfdestruct_flag)
+        {
+            selfdestruct(DBusSignalSubscription::GetConnection());
+        }
     }
 
 
