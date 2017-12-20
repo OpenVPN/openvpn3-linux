@@ -227,10 +227,20 @@ private:
             signal->StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_CONNECTED);
             run_status = StatusMinor::CONN_CONNECTED;
         }
+        else if ("AUTH_FAILED" == ev.name)
+        {
+            signal->StatusChange(StatusMajor::CONNECTION,
+                                 StatusMinor::CONN_AUTH_FAILED,
+                                 "Authentication failed");
+            run_status = StatusMinor::CONN_AUTH_FAILED;
+        }
         else if (!failed_signal_sent && "DISCONNECTED" == ev.name)
         {
-            signal->StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_DISCONNECTED);
-            run_status = StatusMinor::CONN_DISCONNECTED;
+            if (run_status != StatusMinor::CONN_AUTH_FAILED)
+            {
+                signal->StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_DISCONNECTED);
+                run_status = StatusMinor::CONN_DISCONNECTED;
+            }
         }
     }
 

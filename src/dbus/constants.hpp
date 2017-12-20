@@ -81,7 +81,7 @@ const std::array<const std::string, StatusMajorCount> StatusMajor_str = {
         "Process"
 };
 
-const uint8_t StatusMinorCount = 29;
+const uint8_t StatusMinorCount = 30;
 enum class  StatusMinor : std::uint_fast16_t {
         UNSET,                       /**< An invalid result code, used for initialization */
 
@@ -96,6 +96,7 @@ enum class  StatusMinor : std::uint_fast16_t {
         CONN_DISCONNECTING,          /**< Client started disconnect process */
         CONN_DISCONNECTED,           /**< Client completed disconnecting */
         CONN_FAILED,                 /**< Client failed to get a connection */
+        CONN_AUTH_FAILED,            /**< Client failed to get a connection */
         CONN_RECONNECTING,           /**< Client needed to reconnect */
         CONN_PAUSING,                /**< Client started to pause the connection */
         CONN_PAUSED,                 /**< Client connection is paused */
@@ -133,6 +134,7 @@ const std::array<const std::string, StatusMinorCount> StatusMinor_str = {
         "Client disconnecting",
         "Client disconnected",
         "Client connection failed",
+        "Client authentication failed",
         "Client reconnect",
         "Client pausing connection",
         "Client connection paused",
