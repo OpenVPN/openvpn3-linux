@@ -52,5 +52,6 @@ src/tests/dbus/request-queue-client2
 src/tests/dbus/request-queue-service
 src/tests/dbus/set-alias
 src/tests/dbus/signal-listener
+src/utils/gen-python-constants
 src/policy/net.openvpn.v3.conf
 src/service-autostart/net.openvpn*.service
