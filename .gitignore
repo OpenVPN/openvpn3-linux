@@ -21,6 +21,10 @@ configure.h
 depcomp
 .deps
 .dirstamp
+doxygen/openvpn3-linux.doxy
+doxygen/doxy-warnings.log
+doxygen/html
+doxygen/latex
 stamp-h1
 install-sh
 missing

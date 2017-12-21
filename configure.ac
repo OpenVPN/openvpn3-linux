@@ -267,6 +267,8 @@ dnl
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
         Makefile \
+        doxygen/Makefile \
+        doxygen/openvpn3-linux.doxy \
         src/policy/Makefile \
         src/service-autostart/Makefile \
         src/tests/Makefile \
