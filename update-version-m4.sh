@@ -26,7 +26,7 @@ set -eu
 #  is used.  Otherwise compose a version string based on branch name
 #  and commit reference
 VERSION="$(git describe --always --tags)"
-if [ "${VERSION:0:1}" != "v" ]; then
+if [ "$(echo ${VERSION} | cut -b-1)" != "v" ]; then
 	# Presume not a version tag, so use commit reference
 	VERSION="$(git rev-parse --symbolic-full-name HEAD | cut -d/ -f3-)_$(git rev-parse --short=16 HEAD)"
 else
