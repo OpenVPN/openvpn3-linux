@@ -968,6 +968,8 @@ int main(int argc, char **argv)
     pid_t real_pid = fork();
     if (real_pid == 0)
     {
+        std::cout << get_version(argv[0]) << std::endl;
+
         BackendClientDBus backend_service(start_pid, G_BUS_TYPE_SYSTEM, std::string(argv[1]));
         backend_service.Setup();
 

@@ -15,6 +15,7 @@ config.h.in
 config.log
 config.status
 config.sub
+config-version.h
 configure
 configure.h
 depcomp

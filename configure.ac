@@ -220,7 +220,7 @@ dnl
 dnl  These services are most commonly not accessed directly by any end-users
 dnl  but will be auto-started by the D-Bus daemon
 dnl
-AC_DEFINE_UNQUOTED([LIBEXEC_PATH], [LIBEXECDIR "/${PACKAGE_NAME}"], [Path where openvpn-service-* binaries resides])
+AC_DEFINE_UNQUOTED([LIBEXEC_PATH], [LIBEXECDIR "/${PACKAGE}"], [Path where openvpn-service-* binaries resides])
 
 
 dnl
@@ -245,6 +245,20 @@ if test -z "${OPENVPN_GROUP}"; then
 fi
 AC_SUBST([OPENVPN_GROUP])
 AC_DEFINE_UNQUOTED([OPENVPN_GROUP], ["${OPENVPN_GROUP}"], [User group name for unprivileged operations])
+
+
+dnl
+dnl  Various developer tools
+dnl
+AC_ARG_VAR([GIT], [path to git utility])
+AC_CHECK_PROGS([GIT], [git]) # optional
+GIT_CHECKOUT="no"
+if test -n "${GIT}" -a -d "${srcdir}/.git"; then
+        AC_DEFINE([HAVE_CONFIG_VERSION_H], [1], [extra version available in config-version.h])
+        GIT_CHECKOUT="yes"
+fi
+AC_MSG_RESULT([checking if this is a git checkout ... ${GIT_CHECKOUT}])
+AM_CONDITIONAL([GIT_CHECKOUT], [test "${GIT_CHECKOUT}" = "yes"])
 
 
 dnl

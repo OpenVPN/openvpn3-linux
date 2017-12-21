@@ -28,6 +28,7 @@
 
 #include "dbus/core.hpp"
 #include "common/requiresqueue.hpp"
+#include "common/utils.hpp"
 #include "configmgr/proxy-configmgr.hpp"
 #include "sessionmgr/proxy-sessionmgr.hpp"
 
@@ -228,6 +229,12 @@ std::tuple<commandPtr, std::vector<std::string>> process_command_line(int argc, 
     exit(1);
 }
 
+
+int show_version(std::vector<std::string>& args)
+{
+    std::cout << get_version("/openvpn3") << std::endl;
+    return 0;
+}
 
 void print_statistics(ConnectionStats& stats)
 {
@@ -628,6 +635,11 @@ int show_config(std::vector<std::string>& args)
 int main(int argc, char **argv)
 {
     std::vector<struct OpenVPN_option_list> ovpn_options;
+    ovpn_options.push_back({"version",      'V',
+                no_argument, "",
+                "Show version information",
+                show_version});
+
     ovpn_options.push_back({"config",      'c',
                 required_argument, "config file|alias",
                 "Connect to a VPN server with provided configuration file",

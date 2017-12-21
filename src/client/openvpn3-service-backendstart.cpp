@@ -455,6 +455,8 @@ private:
 
 int main(int argc, char **argv)
 {
+    std::cout << get_version(argv[0]) << std::endl;
+
     GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
     g_unix_signal_add(SIGINT, stop_handler, main_loop);
     g_unix_signal_add(SIGTERM, stop_handler, main_loop);

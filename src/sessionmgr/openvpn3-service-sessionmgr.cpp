@@ -25,6 +25,8 @@ using namespace openvpn;
 
 int main(int argc, char **argv)
 {
+    std::cout << get_version(argv[0]) << std::endl;
+
     // This program does not require root privileges,
     // so if used - drop those privileges
     drop_root();

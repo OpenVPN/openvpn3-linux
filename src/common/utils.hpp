@@ -21,6 +21,7 @@
 #define OPENVPN3_UTILS_HPP
 
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <cstring>
 #include <exception>
@@ -33,7 +34,12 @@
 #include <glib.h>
 #include <glib-unix.h>
 
+#include <openvpn/legal/copyright.hpp>
+
 #include "config.h"
+#ifdef HAVE_CONFIG_VERSION_H
+#include "config-version.h"
+#endif
 
 
 void drop_root()
@@ -87,6 +93,36 @@ void drop_root()
     }
 }
 
+/**
+ *  Returns a string containing a version reference of the build.
+ *  If a git checkout is discovered, flags identifying if there are
+ *  uncommitted changes will be present too.
+ *
+ * @param component  An additional string identifying which component this
+ *                   version reference belongs to.  Normally argv[0].
+ *
+ * @return A pre-formatted std::string containing the version references
+ */
+std::string get_version(std::string component)
+{
+    std::stringstream ver;
+
+#ifndef CONFIGURE_GIT_REVISION
+    ver << PACKAGE_STRING;
+#else
+    ver << PACKAGE_NAME << " "
+        << "git:" << CONFIGURE_GIT_REVISION << CONFIGURE_GIT_FLAGS;
+#endif
+
+    //  Simplistic basename() approach, extracting just the filename
+    //  of the binary from argv[0]
+    ver << " (" << component.substr(component.rfind('/')+1) << ")"
+        << std::endl;
+
+    ver << openvpn_copyright;
+
+    return ver.str();
+}
 
 
 int stop_handler(void *loop)
