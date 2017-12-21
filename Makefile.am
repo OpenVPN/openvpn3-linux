@@ -38,6 +38,7 @@ MAINTAINERCLEANFILES = \
 
 maintainer-clean-local:
 	-git submodule deinit --all
+	-rm version.m4
 
 CLEANFILES = \
         config-version.h *~

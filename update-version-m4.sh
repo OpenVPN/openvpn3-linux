@@ -19,15 +19,27 @@
 
 set -eu
 
-echo "** Initializing git submodules ..."
-git submodule init
-git submodule update
-echo
+#
+#  Retrieve the version based on the git tree
+#
+#  If a version tag is found (always prefixed with 'v'), this value
+#  is used.  Otherwise compose a version string based on branch name
+#  and commit reference
+VERSION="$(git describe --always --tags)"
+if [ "${VERSION:0:1}" != "v" ]; then
+	# Presume not a version tag, so use commit reference
+	VERSION="$(git rev-parse --symbolic-full-name HEAD | cut -d/ -f3-)_$(git rev-parse --short=16 HEAD)"
+else
+	VERSION="${VERSION:1}"
+fi
+echo "Version: $VERSION"
 
-echo "** Updating version.m4 ..."
-./update-version-m4.sh
-echo
-
-echo "** Running autoreconf ..."
-autoreconf -vi
-echo
+# Generate version.m4
+{
+    cat <<EOF
+define([PRODUCT_NAME], [OpenVPN 3 (Linux)])
+define([PRODUCT_VERSION], [${VERSION}])
+define([PRODUCT_TARNAME], [openvpn3-linux])
+define([PRODUCT_BUGREPORT], [openvpn-devel@lists.sourceforge.net])
+EOF
+} > version.m4

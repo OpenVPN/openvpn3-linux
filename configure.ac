@@ -19,8 +19,9 @@ dnl
 dnl  Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.69)
-AC_INIT([openvpn3-linux], [0.1], [openvpn-devel@lists.sourceforge.net])
-AM_INIT_AUTOMAKE([no-dist-gzip dist-xz foreign -Wall -Wportability subdir-objects])
+m4_include([version.m4])
+AC_INIT([PRODUCT_NAME], [PRODUCT_VERSION], [PRODUCT_BUGREPORT], [PRODUCT_TARNAME])
+AM_INIT_AUTOMAKE([no-dist-gzip dist-xz tar-pax foreign -Wall -Wportability subdir-objects])
 AM_SILENT_RULES([yes])
 AC_PROG_CXX
 AC_PROG_CC
