@@ -614,7 +614,7 @@ int seal_config(std::vector<std::string>& args)
     }
     catch (DBusException& err)
     {
-        std::cout << "Failed to import configuration: " << err.getRawError() << std::endl;
+        std::cout << "Failed to seal configuration: " << err.getRawError() << std::endl;
         return 2;
     }
 
