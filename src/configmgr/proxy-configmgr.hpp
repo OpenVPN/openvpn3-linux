@@ -115,6 +115,16 @@ public:
         return ret;
     }
 
+    void Remove()
+    {
+        GVariant *res = Call("Remove");
+        if (NULL == res)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
+                                "Failed to delete the configuration");
+        }
+    }
+
     void SetAlias(std::string aliasname)
     {
         SetProperty("alias", aliasname);

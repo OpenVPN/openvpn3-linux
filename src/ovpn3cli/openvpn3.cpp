@@ -572,6 +572,31 @@ int set_alias(std::vector<std::string>& args)
     }
 }
 
+
+int remove_config(std::vector<std::string>& args)
+{
+    if (args.size() != 1)
+    {
+        std::cout << "** ERROR **  Deleting a OpenVPN configuration file requires 1 argument" << std::endl;
+        return 1;
+    }
+
+    try
+    {
+        OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, args[0]);
+        conf.Remove();
+        std::cout << "Configuration removed." << std::endl;
+        return 0;
+    }
+    catch (DBusException& err)
+    {
+        std::cout << "Failed to delete configuration: " << err.getRawError() << std::endl;
+        return 2;
+    }
+
+}
+
+
 int seal_config(std::vector<std::string>& args)
 {
     if (args.size() != 1)
@@ -659,6 +684,11 @@ int main(int argc, char **argv)
                 required_argument, "config path",
                 "Seals a configuration against further modifications",
                 seal_config});
+
+    ovpn_options.push_back({"remove-config",       'X',
+                required_argument, "config path",
+                "Deletes a configuration from the configuration manager",
+                remove_config});
 
     ovpn_options.push_back({"connect",     'r',
                 required_argument, "config path|alias",
