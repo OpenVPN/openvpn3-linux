@@ -20,6 +20,7 @@ node /net/openvpn/v3/configuration {
              in  b single_use,
              in  b persistent,
              out o config_path);
+      FetchAvailableConfigs(out ao paths);
     signals:
       Log(u group,
           u level,
@@ -42,6 +43,17 @@ represented as a string blob containing everything.
 | In        | single_use  | boolean     | If set to true, it will be removed from memory on first use           |
 | In        | persistent  | boolean     | If set to true, the configuration will be saved to disk               |
 | Out       | config_path | object path | A unique D-Bus object path for the imported VPN configuration profile |
+
+
+### Method: `net.openvpn.v3.configuration.FetchAvailableConfigs`
+
+This method will return an array of object paths to configuration objects the
+caller is granted access to.
+
+#### Arguments
+| Direction | Name        | Type         | Description                                                           |
+|-----------|-------------|--------------|-----------------------------------------------------------------------|
+| Out       | paths       | object paths | An array of object paths to accessbile configuration objects          |
 
 
 ### Signal: `net.openvpn.v3.configuration.Log`

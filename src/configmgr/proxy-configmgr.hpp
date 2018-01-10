@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2018  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2018  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -19,6 +19,8 @@
 
 #ifndef OPENVPN3_DBUS_PROXY_CONFIG_HPP
 #define OPENVPN3_DBUS_PROXY_CONFIG_HPP
+
+#include <vector>
 
 #include "dbus/core.hpp"
 
@@ -79,6 +81,38 @@ public:
 
         return ret;
     }
+
+
+    /**
+     * Retrieves a string array of configuration paths which are available
+     * to the calling user
+     *
+     * @return A std::vector<std::string> of configuration paths
+     */
+    std::vector<std::string> FetchAvailableConfigs()
+    {
+        GVariant *res = Call("FetchAvailableConfigs");
+        if (NULL == res)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
+                                "Failed to retrieve available configurations");
+        }
+        GVariantIter *cfgpaths = NULL;
+        g_variant_get(res, "(ao)", &cfgpaths);
+
+        GVariant *path = NULL;
+        std::vector<std::string> ret;
+        while ((path = g_variant_iter_next_value(cfgpaths)))
+        {
+            gsize len;
+            ret.push_back(std::string(g_variant_get_string(path, &len)));
+            g_variant_unref(path);
+        }
+        g_variant_unref(res);
+        g_variant_iter_free(cfgpaths);
+        return ret;
+    }
+
 
     std::string GetJSONConfig()
     {

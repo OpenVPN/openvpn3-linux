@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2018  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2018  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -19,6 +19,9 @@
 
 #ifndef OPENVPN3_DBUS_CONFIGMGR_HPP
 #define OPENVPN3_DBUS_CONFIGMGR_HPP
+
+#include <functional>
+#include <map>
 
 #include "common/core-extensions.hpp"
 #include "dbus/core.hpp"
@@ -282,11 +285,14 @@ public:
      *                 meta data as well as the configuration profile itself
      *                 to use when initializing this object
      */
-    ConfigurationObject(GDBusConnection *dbuscon, std::string objpath,
+    ConfigurationObject(GDBusConnection *dbuscon,
+                        std::function<void()> remove_callback,
+                        std::string objpath,
                         uid_t creator, GVariant *params)
         : DBusObject(objpath),
           ConfigManagerSignals(dbuscon, objpath),
           DBusCredentials(dbuscon, creator),
+          remove_callback(remove_callback),
           name(""),
           valid(false),
           readonly(false),
@@ -354,6 +360,7 @@ public:
 
     ~ConfigurationObject()
     {
+        remove_callback();
         LogVerb2("Configuration removed");
         IdleCheck_RefDec();
     };
@@ -731,6 +738,7 @@ public:
 
 
 private:
+    std::function<void()> remove_callback;
     std::string name;
     bool valid;
     bool readonly;
@@ -754,9 +762,12 @@ private:
  *  implementation.
  */
 class ConfigManagerObject : public DBusObject,
-                            public ConfigManagerSignals
+                            public ConfigManagerSignals,
+                            public RC<thread_safe_refcount>
 {
 public:
+    typedef  RCPtr<ConfigManagerObject> Ptr;
+
     /**
      *  Constructor initializing the ConfigManagerObject to be registered on
      *  the D-Bus.
@@ -779,6 +790,9 @@ public:
                           << "          <arg type='b' name='single_use' direction='in'/>"
                           << "          <arg type='b' name='persistent' direction='in'/>"
                           << "          <arg type='o' name='config_path' direction='out'/>"
+                          << "        </method>"
+                          << "        <method name='FetchAvailableConfigs'>"
+                          << "          <arg type='ao' name='paths' direction='out'/>"
                           << "        </method>"
                           << GetLogIntrospection()
                           << "    </interface>"
@@ -834,15 +848,54 @@ public:
             // Import the configuration
             std::string cfgpath = generate_path_uuid(OpenVPN3DBus_rootp_configuration, 'x');
 
-            auto *cfgobj = new ConfigurationObject(dbuscon, cfgpath, creds.GetUID(sender), params);
+            auto *cfgobj = new ConfigurationObject(dbuscon,
+                                                   [self=Ptr(this), cfgpath]()
+                                                   {
+                                                       self->remove_config_object(cfgpath);
+                                                   },
+                                                   cfgpath,
+                                                   creds.GetUID(sender),
+                                                   params);
             IdleCheck_RefInc();
             cfgobj->IdleCheck_Register(IdleCheck_Get());
             cfgobj->RegisterObject(conn);
+            config_objects[cfgpath] = cfgobj;
 
             Debug(std::string("ConfigurationObject registered on '")
                          + intf_name + "': " + cfgpath
                          + " (owner uid " + std::to_string(creds.GetUID(sender)) + ")");
             g_dbus_method_invocation_return_value(invoc, g_variant_new("(o)", cfgpath.c_str()));
+        }
+        else if ("FetchAvailableConfigs" == method_name)
+        {
+            // Build up an array of object paths to available config objects
+            GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("ao"));
+            for (auto& item : config_objects)
+            {
+                try {
+                    // We check if the caller is allowed to access this
+                    // configuration object.  If not, an exception is thrown
+                    // and we will just ignore that exception and continue
+                    item.second->CheckACL(sender);
+                    g_variant_builder_add(bld, "o", item.first.c_str());
+                }
+                catch (DBusCredentialsException& excp)
+                {
+                    // Ignore credentials exceptions.  It means the
+                    // caller does not have access this configuration object
+                }
+            }
+
+            // Wrap up the result into a tuple, which GDBus expects and
+            // put it into the invocation response
+            GVariantBuilder *ret = g_variant_builder_new(G_VARIANT_TYPE_TUPLE);
+            g_variant_builder_add_value(ret, g_variant_builder_end(bld));
+            g_dbus_method_invocation_return_value(invoc,
+                                                  g_variant_builder_end(ret));
+
+            // Clean-up
+            g_variant_builder_unref(bld);
+            g_variant_builder_unref(ret);
         }
     };
 
@@ -853,7 +906,7 @@ public:
      *
      *  For the ConfigManagerObject, this method will just return NULL
      *  with an error set in the GError return pointer.  The
-     *  ConfiguManagerObject does not use properties at all.
+     *  ConfigManagerObject does not use properties at all.
      *
      * @param conn           D-Bus connection this event occurred on
      * @param sender         D-Bus bus name of the requester
@@ -915,6 +968,20 @@ public:
 private:
     GDBusConnection *dbuscon;
     DBusConnectionCreds creds;
+    std::map<std::string, ConfigurationObject *> config_objects;
+
+    /**
+     * Callback function used by ConfigurationObject instances to remove
+     * its object path from the main registry of configuration objects
+     *
+     * @param cfgpath  std::string containing the object path to the object
+     *                 to remove
+     *
+     */
+    void remove_config_object(const std::string cfgpath)
+    {
+        config_objects.erase(cfgpath);
+    }
 };
 
 
@@ -948,8 +1015,6 @@ public:
 
     ~ConfigManagerDBus()
     {
-        delete cfgmgr;
-
         procsig->ProcessChange(StatusMinor::PROC_STOPPED);
         delete procsig;
     }
@@ -973,7 +1038,7 @@ public:
      */
     void callback_bus_acquired()
     {
-        cfgmgr = new ConfigManagerObject(GetConnection(), GetRootPath());
+        cfgmgr.reset(new ConfigManagerObject(GetConnection(), GetRootPath()));
         if (!logfile.empty())
         {
             cfgmgr->OpenLogFile(logfile);
@@ -1021,7 +1086,7 @@ public:
     };
 
 private:
-    ConfigManagerObject * cfgmgr;
+    ConfigManagerObject::Ptr cfgmgr;
     ProcessSignalProducer * procsig;
     std::string logfile;
 };
