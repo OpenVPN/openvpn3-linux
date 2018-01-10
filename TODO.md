@@ -32,7 +32,7 @@ taken care of.
 - [ ] Implement Access Control List management in ``openvpn3`` for
   configuration and session objects
 
-- [ ] Implement listing of configuration available in the configuration manager
+- [x] Implement listing of configuration available in the configuration manager
 
 - [ ] Implement listing of available sessions in the session manager
 

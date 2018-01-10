@@ -620,10 +620,71 @@ int seal_config(std::vector<std::string>& args)
 
 }
 
+
+std::string lookup_username(uid_t uid)
+{
+    struct passwd pwrec;
+    struct passwd *result = nullptr;
+    size_t buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
+    char *buf = nullptr;
+
+    buf = (char *) malloc(buflen);
+    memset(buf, 0, buflen);
+    std::string ret;
+    if (getpwuid_r(uid, &pwrec, buf, buflen, &result) == 0)
+    {
+
+        ret = std::string(pwrec.pw_name);
+    }
+    else
+    {
+        ret = "(" + std::to_string(uid) + ")";
+    }
+    free(buf);
+    return ret;
+}
+
+
 int list_configs(std::vector<std::string>& args)
 {
-    return 3;
+    OpenVPN3ConfigurationProxy confmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration );
+
+    std::cout << "Configuration path" << std::endl;
+    std::cout << "Name" << std::setw(32-4) << " "
+              << "Alias" << std::setw(16-5) << " "
+              << "Owner" << std::setw(16-5)
+              << std::endl;
+    std::cout << std::setw(32+16+16+2) << std::setfill('-') << "-" << std::endl;
+
+    bool first = true;
+    for (auto& cfg : confmgr.FetchAvailableConfigs())
+    {
+        if (cfg.empty())
+        {
+            continue;
+        }
+        OpenVPN3ConfigurationProxy cprx(G_BUS_TYPE_SYSTEM, cfg);
+
+        if (!first)
+        {
+            std::cout << std::endl;
+        }
+        first = false;
+
+        std::string name = cprx.GetStringProperty("name");
+        std::string alias = cprx.GetStringProperty("alias");
+        std::string user = lookup_username(cprx.GetUIntProperty("owner"));
+
+        std::cout << cfg << std::endl;
+        std::cout << name << std::setw(32 - name.size()) << std::setfill(' ') << " "
+                  << alias << std::setw(16 - alias.size()) << " "
+                  << user << std::setw(16)
+                  << std::endl;
+    }
+    std::cout << std::setw(32+16+16+3-1) << std::setfill('-') << "-" << std::endl;
+    return 0;
 }
+
 
 int show_config(std::vector<std::string>& args)
 {
