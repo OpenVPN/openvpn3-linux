@@ -821,12 +821,18 @@ class OpenVPNconfigParser():
 
         def __call__(self, parser, namespace, values, option_string=None):
             """Loads the given file and generates an embedded option of it"""
-            fp = open(values, 'r')
-            ret = '<%s>\n' % self.__tag
-            ret += '\n'.join([l.strip() for l in fp.readlines()])
-            ret += '\n</%s>' % self.__tag
-            fp.close()
-            setattr(namespace, self.dest, ret)
+
+            try:
+                fp = open(values, 'r')
+                ret = '<%s>\n' % self.__tag
+                ret += '\n'.join([l.strip() for l in fp.readlines()])
+                ret += '\n</%s>' % self.__tag
+                fp.close()
+                setattr(namespace, self.dest, ret)
+            except IOError, e:
+                err = str(e.strerror) + " '" + values + "'"
+                raise argparse.ArgumentError(self, err)
+
     # ENDCLASS: EmbedFile
 
 
