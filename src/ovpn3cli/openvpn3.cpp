@@ -686,6 +686,59 @@ int list_configs(std::vector<std::string>& args)
 }
 
 
+int list_sessions(std::vector<std::string>& args)
+{
+    OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_sessions );
+
+    bool first = true;
+    for (auto& sessp : sessmgr.FetchAvailableSessions())
+    {
+        if (sessp.empty())
+        {
+            continue;
+        }
+        OpenVPN3SessionProxy sprx(G_BUS_TYPE_SYSTEM, sessp);
+
+        if (first)
+        {
+            std::cout << std::setw(77) << std::setfill('-') << "-" << std::endl;
+        }
+        else
+        {
+            std::cout << std::endl;
+        }
+        first = false;
+
+        std::string owner = lookup_username(sprx.GetUIntProperty("owner"));
+        pid_t be_pid = sprx.GetUIntProperty("backend_pid");
+
+        BackendStatus status = sprx.GetLastStatus();
+        std::string status_str = "[" + std::to_string((unsigned int) status.major) + ","
+                        + std::to_string((unsigned int) status.minor) + "] "
+                        + status.major_str + ", " + status.minor_str;
+
+        std::cout << "   Path: " << sessp << std::endl;
+        std::cout << "  Owner: " << owner << std::setw(48 - owner.size())
+                  << std::setfill(' ') << " "
+                  << "PID: " << std::to_string(be_pid) << std::endl;
+        std::cout << " Status: " << status_str << std::endl;
+        std::cout << "         "
+                  << (status.message.empty() ? "(no status message)" : status.message)
+                  << std::endl;
+    }
+    if (first)
+    {
+        std::cout << "No sessions available" << std::endl;
+    }
+    else
+    {
+        std::cout << std::setw(77) << std::setfill('-') << "-" << std::endl;
+    }
+
+    return 0;
+}
+
+
 int show_config(std::vector<std::string>& args)
 {
     if (args.size() != 1)
@@ -780,6 +833,12 @@ int main(int argc, char **argv)
                 no_argument,       "",
                 "Lists all loaded configurations",
                 list_configs
+                });
+
+    ovpn_options.push_back({"sessions",    'e',
+                no_argument, "",
+                "Lists all active sessions",
+                list_sessions
                 });
 
     ovpn_options.push_back({"show-config", 's',
