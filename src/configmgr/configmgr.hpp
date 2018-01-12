@@ -277,6 +277,8 @@ public:
      *  Constructor creating a new ConfigurationObject
      *
      * @param dbuscon  D-Bus connection this object is tied to
+     * @param remove_callback  Callback function which must be called when
+     *                 destroying this configuration object.
      * @param objpath  D-Bus object path of this object
      * @param creator  An uid reference of the owner of this object.  This is
      *                 typically the uid of the front-end user importing this
