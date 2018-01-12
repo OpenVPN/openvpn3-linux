@@ -34,6 +34,7 @@
 #define OPENVPN3_DBUS_SESSIONMGR_HPP
 
 #include <cstring>
+#include <functional>
 
 #include "openvpn/common/likely.hpp"
 
@@ -364,11 +365,15 @@ public:
      * @param cfg_path D-Bus object path of the VPN profile configuration this
      *                 session is tied to.
      */
-    SessionObject(GDBusConnection *dbuscon, uid_t owner, std::string objpath, std::string cfg_path)
+    SessionObject(GDBusConnection *dbuscon,
+                  std::function<void()> remove_callback,
+                  uid_t owner,
+                  std::string objpath, std::string cfg_path)
         : DBusObject(objpath),
           DBusSignalSubscription(dbuscon, "", OpenVPN3DBus_interf_backends, ""),
           DBusCredentials(dbuscon, owner),
           SessionManagerSignals(dbuscon, objpath),
+          remove_callback(remove_callback),
           be_proxy(nullptr),
           recv_log_events(false),
           config_path(cfg_path),
@@ -478,7 +483,7 @@ public:
         }
         LogVerb2("Session is closing");
         StatusChange(StatusMajor::SESSION, StatusMinor::SESS_REMOVED);
-
+        remove_callback();
         IdleCheck_RefDec();
     }
 
@@ -1038,6 +1043,7 @@ public:
 
 
 private:
+    std::function<void()> remove_callback;
     DBusProxy *be_proxy;
     bool recv_log_events;
     std::string config_path;
@@ -1226,9 +1232,12 @@ private:
  *   the life cycle of the openvpn3-service-sessoinmgr process.
  */
 class SessionManagerObject : public DBusObject,
-                             public SessionManagerSignals
+                             public SessionManagerSignals,
+                             public RC<thread_safe_refcount>
 {
 public:
+    typedef RCPtr<SessionManagerObject> Ptr;
+
     /**
      *  Constructor initializing the SessionManagerObject to be registered on
      *  the D-Bus.
@@ -1248,6 +1257,9 @@ public:
                           << "        <method name='NewTunnel'>"
                           << "          <arg type='o' name='config_path' direction='in'/>"
                           << "          <arg type='o' name='session_path' direction='out'/>"
+                          << "        </method>"
+                          << "        <method name='FetchAvailableSessions'>"
+                          << "          <arg type='ao' name='paths' direction='out'/>"
                           << "        </method>"
                           << GetLogIntrospection()
                           << "    </interface>"
@@ -1313,14 +1325,54 @@ public:
             std::string sesspath = generate_path_uuid(OpenVPN3DBus_rootp_sessions, 's');
 
             // Create the new object and register it in D-Bus
-            SessionObject *session = new SessionObject(conn, creds.GetUID(sender), sesspath, config_path);
+            auto callback = [self=Ptr(this), sesspath](void)
+                            {
+                                self->remove_session_object(sesspath);
+                            };
+            SessionObject *session = new SessionObject(conn,
+                                                       callback,
+                                                       creds.GetUID(sender),
+                                                       sesspath,
+                                                       config_path);
             IdleCheck_RefInc();
             session->IdleCheck_Register(IdleCheck_Get());
             session->RegisterObject(conn);
+            session_objects[sesspath] = session;
 
             // Return the path to the new session object object to the caller
             // The backend object will remind "hidden" for the end-user
             g_dbus_method_invocation_return_value(invoc, g_variant_new("(o)", sesspath.c_str()));
+        }
+        else if ("FetchAvailableSessions" == method_name)
+        {
+            // Build up an array of object paths to available session objects
+            GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("ao"));
+            for (auto& item : session_objects)
+            {
+                try {
+                    // We check if the caller is allowed to access this
+                    // session object.  If not, an exception is thrown
+                    // and we will just ignore that exception and continue
+                    item.second->CheckACL(sender);
+                    g_variant_builder_add(bld, "o", item.first.c_str());
+                }
+                catch (DBusCredentialsException& excp)
+                {
+                    // Ignore credentials exceptions.  It means the
+                    // caller does not have access this session object
+                }
+            }
+
+            // Wrap up the result into a tuple, which GDBus expects and
+            // put it into the invocation response
+            GVariantBuilder *ret = g_variant_builder_new(G_VARIANT_TYPE_TUPLE);
+            g_variant_builder_add_value(ret, g_variant_builder_end(bld));
+            g_dbus_method_invocation_return_value(invoc,
+                                                  g_variant_builder_end(ret));
+
+            // Clean-up
+            g_variant_builder_unref(bld);
+            g_variant_builder_unref(ret);
         }
     };
 
@@ -1398,6 +1450,12 @@ public:
 private:
     GDBusConnection *dbuscon;
     DBusConnectionCreds creds;
+    std::map<std::string, SessionObject *> session_objects;
+
+    void remove_session_object(const std::string sesspath)
+    {
+        session_objects.erase(sesspath);
+    }
 };
 
 
@@ -1426,8 +1484,6 @@ public:
 
     ~SessionManagerDBus()
     {
-        delete managobj;
-
         procsig->ProcessChange(StatusMinor::PROC_STOPPED);
         delete procsig;
     }
@@ -1453,7 +1509,7 @@ public:
     {
         // Create a SessionManagerObject which will be the main entrance
         // point to this service
-        managobj = new SessionManagerObject(GetConnection(), GetRootPath());
+        managobj.reset(new SessionManagerObject(GetConnection(), GetRootPath()));
         if (!logfile.empty())
         {
             managobj->OpenLogFile(logfile);
@@ -1503,7 +1559,7 @@ public:
     };
 
 private:
-    SessionManagerObject * managobj;
+    SessionManagerObject::Ptr managobj;
     ProcessSignalProducer * procsig;
     std::string logfile;
 };

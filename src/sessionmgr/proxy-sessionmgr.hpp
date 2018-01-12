@@ -173,6 +173,37 @@ public:
 
 
     /**
+     * Retrieves an array of strings with session paths which are available
+     * to the calling user
+     *
+     * @return A std::vector<std::string> of session paths
+     */
+    std::vector<std::string> FetchAvailableSessions()
+    {
+        GVariant *res = Call("FetchAvailableSessions");
+        if (NULL == res)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
+                                "Failed to retrieve available sessions");
+        }
+        GVariantIter *sesspaths = NULL;
+        g_variant_get(res, "(ao)", &sesspaths);
+
+        GVariant *path = NULL;
+        std::vector<std::string> ret;
+        while ((path = g_variant_iter_next_value(sesspaths)))
+        {
+            gsize len;
+            ret.push_back(std::string(g_variant_get_string(path, &len)));
+            g_variant_unref(path);
+        }
+        g_variant_unref(res);
+        g_variant_iter_free(sesspaths);
+        return ret;
+    }
+
+
+    /**
      *  Makes the VPN backend client process start the connecting to the
      *  VPN server
      */

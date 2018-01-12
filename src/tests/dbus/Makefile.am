@@ -43,6 +43,7 @@ AM_LDFLAGS = \
 noinst_PROGRAMS = \
 	conncreds \
 	fetch-avail-config-paths \
+	fetch-avail-session-paths \
 	fetch-config \
 	fetch-config2 \
 	getlaststatus \
@@ -62,6 +63,8 @@ noinst_PROGRAMS = \
 conncreds_SOURCES = conncreds.cpp
 
 fetch_avail_config_paths_SOURCES = fetch-avail-config-paths.cpp
+
+fetch_avail_session_paths_SOURCES = fetch-avail-session-paths.cpp
 
 fetch_config_SOURCES = fetch-config.cpp
 

@@ -45,6 +45,7 @@ src/sessionmgr/openvpn3-service-sessionmgr
 src/tests/dbus/conncreds
 src/tests/dbus/enable-logging
 src/tests/dbus/fetch-avail-config-paths
+src/tests/dbus/fetch-avail-session-paths
 src/tests/dbus/fetch-config
 src/tests/dbus/fetch-config2
 src/tests/dbus/getlaststatus

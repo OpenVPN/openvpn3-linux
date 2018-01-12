@@ -17,6 +17,7 @@ node /net/openvpn/v3/sessions {
     methods:
       NewTunnel(in  o config_path,
                 out o session_path);
+      FetchAvailableSessions(out ao paths);
     signals:
       Log(u group,
           u level,
@@ -34,13 +35,24 @@ starts a privileged client process and awaits further
 instructions. When this method call returns with a session path, it
 means the backend process have started.
 
-
 #### Arguments
 
 | Direction | Name         | Type        | Description                                                               |
 |-----------|--------------|-------------|---------------------------------------------------------------------------|
 | In        | config_path  | object path | A string containing the D-Bus object path of the VPN profile              |
 | Out       | session_path | object path | A string containing a unique D-Bus object path to the created VPN session |
+
+
+### Method: `net.openvpn3.v3.sessions.FetchAvailableSessions`
+
+This method will return an array of object paths to session objects the
+caller is granted access to.
+
+#### Arguments
+| Direction | Name        | Type         | Description                                            |
+| Out       | paths       | object paths | An array of object paths to accessible session objects |
+
+
 
 ### Signal: `net.openvpn.v3.sessions.Log`
 
