@@ -34,7 +34,7 @@ taken care of.
 
 - [x] Implement listing of configuration available in the configuration manager
 
-- [ ] Implement listing of available sessions in the session manager
+- [x] Implement listing of available sessions in the session manager
 
 - [ ] Implment persistent storage of VPN profiles
 
