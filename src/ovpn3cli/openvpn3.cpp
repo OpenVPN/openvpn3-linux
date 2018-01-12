@@ -458,7 +458,16 @@ int disconnect(std::vector<std::string>& args)
     try
     {
         OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, args[0]);
-        ConnectionStats stats = session.GetConnectionStats();
+
+        ConnectionStats stats;
+        try
+        {
+            stats = session.GetConnectionStats();
+        }
+        catch (...)
+        {
+            std::cout << "Connection statistics is not available" << std::endl;
+        }
         session.Disconnect();
         std::cout << "Initiated session shutdown." << std::endl;
         print_statistics(stats);
