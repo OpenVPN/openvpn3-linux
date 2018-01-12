@@ -42,10 +42,10 @@ int main(int argc, char **argv)
         BackendStatus status = session.GetLastStatus();
 
         std::cout << "  Status major: [" << std::to_string((unsigned int) status.major)
-                  << "] " << StatusMajor_str[(unsigned int) status.major]
+                  << "] " << status.major_str
                   << std::endl;
         std::cout << "  Status minor: [" << std::to_string((unsigned int) status.minor)
-                      << "] " << StatusMinor_str[(unsigned int) status.minor]
+                      << "] " << status.minor_str
                       << std::endl;
         std::cout << "Status message: " << "[len: " << status.message.size()
                   << "] " << status.message
