@@ -88,7 +88,8 @@ node /net/openvpn/v3/configuration/${UNIQUE_ID} {
       readonly b readonly;
       readonly b single_use;
       readonly b persistent;
-      readwrite b public_access = false;
+      readwrite b locked_down;
+      readwrite b public_access;
       readwrite s alias;
   };
 };
@@ -195,6 +196,7 @@ success. If an error occurs, a D-Bus error is returned.
 | name          | string           | Read-only  | Contains the user friendly name of the configuration profile |
 | readonly      | boolean          | Read-only  | If set to true, the configuration have been sealed and can no longer be modified |
 | single_use    | boolean          | Read-only  | If set to true, this configuration profile will be automatically removed after the first `Fetch` call. This is intended to be used by command line clients providing a similar user experience as the OpenVPN 2.x versions provides. |
-| peristent     | boolean          | Read-only  | If set to true, this configuration will be saved to disk by the configuration manager. The location of the file storage is managed by the configuration manager itself and the configuration manager will load persistent profiles each time it starts |
+| persistent    | boolean          | Read-only  | If set to true, this configuration will be saved to disk by the configuration manager. The location of the file storage is managed by the configuration manager itself and the configuration manager will load persistent profiles each time it starts |
+| locked_down   | boolean          | Read/Write | If set to true, only the owner and root user can retrieve the configuration file.  Other users granted access can only use this profile to start a new tunnel |
 | public_access | boolean          | Read/Write | If set to true, access control is disabled. But only owner may change this property, modify the ACL or delete the configuration |
 | alias         | string           | Read/Write | This can be used to have a more user friendly reference to a VPN profile than the D-Bus object path. This is primarily intended for command line interfaces where this alias name can be used instead of the full unique D-Bus object path to this VPN profile |

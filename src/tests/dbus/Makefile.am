@@ -41,6 +41,7 @@ AM_LDFLAGS = \
 	$(LIBUUID_LIBS)
 
 noinst_PROGRAMS = \
+	config-lock-down \
 	conncreds \
 	fetch-avail-config-paths \
 	fetch-avail-session-paths \
@@ -59,6 +60,8 @@ noinst_PROGRAMS = \
 	request-queue-client \
 	request-queue-client2 \
 	request-queue-service
+
+config_lock_down_SOURCES = config-lock-down.cpp
 
 conncreds_SOURCES = conncreds.cpp
 

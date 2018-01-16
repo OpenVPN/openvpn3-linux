@@ -164,6 +164,34 @@ public:
         SetProperty("alias", aliasname);
     }
 
+
+    /**
+     *  Lock down the configuration profile.  This removes the possibility
+     *  for other users than the owner to retrieve the configuration profile
+     *  in clear-text or JSON.  The exception is the root user account,
+     *  which the openvpn3-service-client process runs as and needs to
+     *  be able to retrieve the configuration for the VPN connection.
+     *
+     * @param lockdown  Boolean flag, if set to true the configuration is
+     *                  locked down
+     */
+    void SetLockedDown(bool lockdown)
+    {
+        SetProperty("locked_down", lockdown);
+    }
+
+
+    /**
+     *  Retrieves the locked-down flag for the configuration profile
+     *
+     *  @return Returns true if the configuration is locked down.
+     */
+    bool GetLockedDown()
+    {
+        return GetBoolProperty("locked_down");
+    }
+
+
     void Seal()
     {
         GVariant *res = Call("Seal");

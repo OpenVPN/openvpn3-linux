@@ -349,6 +349,7 @@ public:
             "        <property type='b' name='readonly' access='read'/>"
             "        <property type='b' name='single_use' access='read'/>"
             "        <property type='b' name='persistent' access='read'/>"
+            "        <property type='b' name='locked_down' access='readwrite'/>"
             "        <property type='b' name='public_access' access='readwrite'/>"
             "        <property type='s' name='alias' access='readwrite'/>"
             "    </interface>"
@@ -395,7 +396,17 @@ public:
         {
             try
             {
-                CheckACL(sender, true);
+                if (!locked_down)
+                {
+                    CheckACL(sender, true);
+                }
+                else
+                {
+                    // If the configuration is locked down, restrict any
+                    // read-operations to anyone except the backend VPN client
+                    // process (root user) or the configuration profile owner
+                    CheckOwnerAccess(sender, true);
+                }
                 g_dbus_method_invocation_return_value(invoc,
                                                       g_variant_new("(s)",
                                                                     options.string_export().c_str()));
@@ -417,7 +428,16 @@ public:
         {
             try
             {
-                CheckACL(sender);
+                if (!locked_down)
+                {
+                    CheckACL(sender);
+                }
+                else
+                {
+                    // If the configuration is locked down, restrict any
+                    // read-operations to the configuration profile owner
+                    CheckOwnerAccess(sender);
+                }
                 g_dbus_method_invocation_return_value(invoc,
                                                       g_variant_new("(s)",
                                                                     options.json_export().c_str()));
@@ -620,6 +640,10 @@ public:
             {
                 ret = g_variant_new_string(alias ? alias->GetAlias() : "");
             }
+            else if ("locked_down" == property_name)
+            {
+                ret = g_variant_new_boolean (locked_down);
+            }
             else if ("public_access" == property_name)
             {
                 ret = GetPublicAccess();
@@ -711,6 +735,14 @@ public:
                                                 err.getRawError().c_str());
                 }
             }
+            else if (("locked_down" == property_name) && conn)
+            {
+                locked_down = g_variant_get_boolean(value);
+                ret = build_set_property_response(property_name, locked_down);
+                LogVerb1("Configuration lock-down flag set to "
+                         + (locked_down ? std::string("true") : std::string("false"))
+                         + " by UID " + std::to_string(GetUID(sender)));
+            }
             else if (("public_access" == property_name) && conn)
             {
                 bool acl_public = g_variant_get_boolean(value);
@@ -746,6 +778,7 @@ private:
     bool readonly;
     bool single_use;
     bool persistent;
+    bool locked_down;
     ConfigurationAlias *alias;
     OptionListJSON options;
 };

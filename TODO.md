@@ -38,7 +38,7 @@ taken care of.
 
 - [ ] Implment persistent storage of VPN profiles
 
-- [ ] Provide a possibility to restrict  end-users from retrieving VPN
+- [x] Provide a possibility to restrict  end-users from retrieving VPN
   configuration profiles, only allow the openvpn3-service-client process
   to access that information.  End-users should be able to get some core
   identification variables, just not the complete configuration.
