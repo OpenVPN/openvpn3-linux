@@ -410,7 +410,11 @@ public:
                 g_dbus_method_invocation_return_value(invoc,
                                                       g_variant_new("(s)",
                                                                     options.string_export().c_str()));
-                if (single_use)
+
+                // If this config is tagged as single-use only and the
+                // user fetching this config is root, then we delete this
+                // config from memory.
+                if (single_use && (GetUID(sender) == 0))
                 {
                     LogVerb2("Single-use configuration fetched");
                     RemoveObject(conn);
