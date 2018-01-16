@@ -629,6 +629,39 @@ int seal_config(std::vector<std::string>& args)
 
 }
 
+int lock_down(std::vector<std::string>& args)
+{
+    if (args.size() < 1 && args.size() > 2)
+    {
+        std::cout << "** ERROR **  Locking down a OpenVPN configuration file requires 1 or 2 arguments" << std::endl;
+        return 1;
+    }
+
+    try
+    {
+        OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, args[0]);
+
+        if (args.size() == 2)
+        {
+            if ("true" != args[1] && "false" != args[1])
+            {
+                std::cout << "Invalid value for setting locked-down flag: "
+                          << args[1] << std::endl;
+                return 2;
+            }
+            conf.SetLockedDown(("true" == args[1]));
+        }
+        std::cout << "Configuration locked-down flag "
+                  << (conf.GetLockedDown() ? "set" : "unset")
+                  << std::endl;
+        return 0;
+    }
+    catch (DBusException& err)
+    {
+        std::cout << "Failed to seal configuration: " << err.getRawError() << std::endl;
+        return 2;
+    }
+}
 
 std::string lookup_username(uid_t uid)
 {
@@ -807,6 +840,11 @@ int main(int argc, char **argv)
                 required_argument, "config path",
                 "Seals a configuration against further modifications",
                 seal_config});
+
+    ovpn_options.push_back({"lock-down",  'q',
+                required_argument, "config path|alias [true|false]",
+                "Retrieves or sets the locked-down flag on a configuration",
+                lock_down});
 
     ovpn_options.push_back({"remove-config",       'X',
                 required_argument, "config path",
