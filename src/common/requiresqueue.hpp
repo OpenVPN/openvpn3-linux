@@ -48,6 +48,15 @@
  */
 struct RequiresSlot
 {
+    RequiresSlot()
+        : id(0),
+          type(ClientAttentionType::UNSET),
+          group(ClientAttentionGroup::UNSET),
+          name(""), value(""), user_description(""),
+          hidden_input(false), provided(false)
+    {
+    }
+
     unsigned int id;               ///< Unique ID per type/group
     ClientAttentionType type;      ///< Type categorization of the requirement
     ClientAttentionGroup group;    ///< Group categorization of the
@@ -219,7 +228,7 @@ public:
                     std::string descr,
                     bool hidden_input)
     {
-        struct RequiresSlot elmt = {0};
+        struct RequiresSlot elmt;
         elmt.id = reqids[get_reqid_index(type, group)]++;
         elmt.type = type;
         elmt.group = group;

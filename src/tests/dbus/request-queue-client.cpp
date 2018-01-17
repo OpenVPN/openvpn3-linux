@@ -83,8 +83,8 @@ int main()
             {
                 try
                 {
-                    struct RequiresSlot reqdata = {0};
-                    queue.QueueFetch(reqdata, type, group, id);
+                    struct RequiresSlot reqdata;
+                    reqdata = queue.QueueFetch(type, group, id);
 
                     dump_requires_slot(reqdata, id);
 

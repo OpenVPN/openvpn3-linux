@@ -122,7 +122,7 @@ public:
      * @param group      ClientAttentionGroup of the slot to retrieve
      * @param id         Unsigned int of the slot ID to retrieve
      */
-    void QueueFetch(struct RequiresSlot& destslot, ClientAttentionType type, ClientAttentionGroup group, unsigned int id)
+    struct RequiresSlot QueueFetch(ClientAttentionType type, ClientAttentionGroup group, unsigned int id)
     {
         GVariant *slot = Call(method_queuefetch, g_variant_new("(uuu)", type, group, id));
         if (NULL == slot)
@@ -130,8 +130,9 @@ public:
             THROW_DBUSEXCEPTION("DBusRequiresQueueProxy", "Failed during call to QueueFetch()");
         }
 
-        deserialize(destslot, slot);
+        struct RequiresSlot ret = deserialize(slot);
         g_variant_unref(slot);
+        return ret;
     }
 
 
@@ -149,9 +150,7 @@ public:
         std::vector<unsigned int> reqids = QueueCheck(type, group);
         for (auto& id : reqids)
         {
-            struct RequiresSlot slot = {0};
-            QueueFetch(slot, type, group, id);
-            slots.push_back(std::move(slot));
+            slots.push_back(QueueFetch(type, group, id));
         }
     }
 
@@ -259,8 +258,10 @@ private:
      *                between the sender (D-Bus service) and the receiver
      *                (this class).
      */
-    void deserialize(struct RequiresSlot& result, GVariant *indata)
+    struct RequiresSlot deserialize(GVariant *indata)
     {
+        struct RequiresSlot result;
+
         if (!indata)
         {
             throw RequiresQueueException("indata GVariant pointer is NULL");
@@ -269,41 +270,37 @@ private:
         std::string data_type = std::string(g_variant_get_type_string(indata));
         if ("(uuussb)" == data_type)
         {
-            //
-            // Typically used by the function popping elements from the RequiresQueue,
-            // usually a user-frontend application
-            //
-            if (result.provided || !result.value.empty())
-            {
-                throw RequiresQueueException("RequiresSlot destination is not empty/unused");
-            }
-
-            gchar *name = nullptr;
-            gchar *descr = nullptr;
+            guint32 type = 0;
+            guint32 group;
+            guint32 id;
+            gchar *name = NULL;
+            gchar *descr = NULL;
+            gboolean hidden_input;
             g_variant_get(indata, "(uuussb)",
-                          &result.type,
-                          &result.group,
-                          &result.id,
+                          &type,
+                          &group,
+                          &id,
                           &name,
                           &descr,
-                          &result.hidden_input);
+                          &hidden_input);
+
+            result.type = (ClientAttentionType) type;
+            result.group = (ClientAttentionGroup) group;
+            result.id = id;
             if (name)
             {
-                std::string name_s(name);
-                result.name = name_s;
+                result.name = std::string(name);
                 g_free(name);
             }
             if (descr)
             {
-                std::string descr_s(descr);
-                result.user_description = descr_s;
+                result.user_description = std::string(descr);
                 g_free(descr);
             }
+            result.hidden_input = hidden_input;
+            return result;
         }
-        else
-        {
-            throw RequiresQueueException("Unknown input data formatting ");
-        }
+        throw RequiresQueueException("Failed parsing the requires queue result");
     }
 };
 
