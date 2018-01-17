@@ -754,10 +754,19 @@ int list_sessions(std::vector<std::string>& args)
         std::string owner = lookup_username(sprx.GetUIntProperty("owner"));
         pid_t be_pid = sprx.GetUIntProperty("backend_pid");
 
-        BackendStatus status = sprx.GetLastStatus();
-        std::string status_str = "[" + std::to_string((unsigned int) status.major) + ","
-                        + std::to_string((unsigned int) status.minor) + "] "
-                        + status.major_str + ", " + status.minor_str;
+        std::string status_str;
+        BackendStatus status;
+        try
+        {
+            status = sprx.GetLastStatus();
+            status_str = "[" + std::to_string((unsigned int) status.major) + ","
+                            + std::to_string((unsigned int) status.minor) + "] "
+                            + status.major_str + ", " + status.minor_str;
+        }
+        catch (DBusException &excp)
+        {
+            status_str = "(No status information available)";
+        }
 
         std::cout << "   Path: " << sessp << std::endl;
         std::cout << "  Owner: " << owner << std::setw(48 - owner.size())
