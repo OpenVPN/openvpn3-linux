@@ -735,6 +735,12 @@ private:
      */
     void initialize_client()
     {
+        if (vpnconfig.content.empty())
+        {
+            THROW_DBUSEXCEPTION("BackendServiceObject",
+                                "No configuration profile has been parsed");
+        }
+
         // Create a new VPN client object, which is handling the
         // tunnel itself.
         vpnclient.reset(new CoreVPNClient(&signal, &userinputq));
