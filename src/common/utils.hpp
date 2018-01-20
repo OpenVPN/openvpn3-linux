@@ -24,7 +24,7 @@
 #include <sstream>
 #include <string>
 #include <cstring>
-#include <exception>
+#include <stdexcept>
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -93,6 +93,12 @@ void drop_root()
     }
 }
 
+
+std::string simple_basename(const std::string filename)
+{
+    return filename.substr(filename.rfind('/')+1);
+}
+
 /**
  *  Returns a string containing a version reference of the build.
  *  If a git checkout is discovered, flags identifying if there are
@@ -116,7 +122,7 @@ std::string get_version(std::string component)
 
     //  Simplistic basename() approach, extracting just the filename
     //  of the binary from argv[0]
-    ver << " (" << component.substr(component.rfind('/')+1) << ")"
+    ver << " (" << simple_basename(component) << ")"
         << std::endl;
 
     ver << openvpn_copyright;
