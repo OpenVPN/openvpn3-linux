@@ -25,3 +25,20 @@ MAINTAINERCLEANFILES = \
 CLEANFILES = \
         *~
 
+#
+# Compiler flags
+#
+AM_CXXFLAGS = \
+	$(OPENVPN3_CORE_CXXFLAGS) \
+	$(LIBGLIBGIO_CFLAGS) \
+	-I$(top_srcdir)/src
+
+AM_LDFLAGS = \
+	$(LIBGLIBGIO_LIBS)
+
+
+noinst_PROGRAMS = \
+	command-parser/cmdparser
+
+command_parser_cmdparser_SOURCES = \
+	command-parser/cmdparser.cpp

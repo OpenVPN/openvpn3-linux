@@ -42,6 +42,7 @@ src/configmgr/openvpn3-service-configmgr
 src/log/openvpn3-service-logger
 src/ovpn3cli/openvpn3
 src/sessionmgr/openvpn3-service-sessionmgr
+src/tests/command-parser/cmdparser
 src/tests/dbus/config-lock-down
 src/tests/dbus/conncreds
 src/tests/dbus/enable-logging
