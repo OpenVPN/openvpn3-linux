@@ -125,6 +125,9 @@ std::string get_version(std::string component)
     ver << " (" << simple_basename(component) << ")"
         << std::endl;
 
+#ifdef OPENVPN_TUN_BUILDER_BASE_H
+    ver << ClientAPI::OpenVPNClient::platform() << std::endl;
+#endif
     ver << openvpn_copyright;
 
     return ver.str();
