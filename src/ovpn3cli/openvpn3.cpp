@@ -33,6 +33,7 @@
 #include "sessionmgr/proxy-sessionmgr.hpp"
 
 using namespace openvpn;
+#include "lookup.hpp"
 
 using commandPtr = int (*)(std::vector<std::string>&);
 
@@ -661,29 +662,6 @@ int lock_down(std::vector<std::string>& args)
         std::cout << "Failed to seal configuration: " << err.getRawError() << std::endl;
         return 2;
     }
-}
-
-std::string lookup_username(uid_t uid)
-{
-    struct passwd pwrec;
-    struct passwd *result = nullptr;
-    size_t buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
-    char *buf = nullptr;
-
-    buf = (char *) malloc(buflen);
-    memset(buf, 0, buflen);
-    std::string ret;
-    if (getpwuid_r(uid, &pwrec, buf, buflen, &result) == 0)
-    {
-
-        ret = std::string(pwrec.pw_name);
-    }
-    else
-    {
-        ret = "(" + std::to_string(uid) + ")";
-    }
-    free(buf);
-    return ret;
 }
 
 

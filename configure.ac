@@ -273,6 +273,7 @@ AC_CONFIG_FILES([
         src/service-autostart/Makefile \
         src/tests/Makefile \
         src/tests/dbus/Makefile \
+        src/tests/misc/Makefile \
         src/utils/Makefile \
 ])
 

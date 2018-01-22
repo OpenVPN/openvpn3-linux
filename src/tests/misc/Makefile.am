@@ -1,7 +1,7 @@
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
-#  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-#  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2018         OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -17,28 +17,23 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-SUBDIRS = dbus misc
-
 MAINTAINERCLEANFILES = \
 	Makefile.in
 
 CLEANFILES = \
         *~
 
-#
-# Compiler flags
-#
 AM_CXXFLAGS = \
 	$(OPENVPN3_CORE_CXXFLAGS) \
 	$(LIBGLIBGIO_CFLAGS) \
-	-I$(top_srcdir)/src
+	-I $(top_srcdir)/src
 
 AM_LDFLAGS = \
 	$(LIBGLIBGIO_LIBS)
 
 
 noinst_PROGRAMS = \
-	command-parser/cmdparser
+	lookup-tests
 
-command_parser_cmdparser_SOURCES = \
-	command-parser/cmdparser.cpp
+lookup_tests_SOURCES = lookup-tests.cpp
+
