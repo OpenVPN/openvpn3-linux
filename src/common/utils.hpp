@@ -25,6 +25,7 @@
 #include <string>
 #include <cstring>
 #include <stdexcept>
+#include <algorithm>
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -98,6 +99,21 @@ std::string simple_basename(const std::string filename)
 {
     return filename.substr(filename.rfind('/')+1);
 }
+
+
+
+/**
+ *  Checks if the input string is a number or a string
+ *
+ * @param data  std::string of the data to classify
+ * @return Returns true if the input string is a plain, positive integer
+ *         number, otherwise false.
+ */
+bool isanum_string(const std::string& data)
+{
+    return std::all_of(data.begin(), data.end(), ::isdigit);
+}
+
 
 /**
  *  Returns a string containing a version reference of the build.
