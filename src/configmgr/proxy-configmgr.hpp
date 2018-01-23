@@ -192,6 +192,31 @@ public:
     }
 
 
+    /**
+     *  Manipulate the public-access flag.  When public-access is set to
+     *  true, everyone have read access to this configuration profile
+     *  regardless of how the access list is configured.
+     *
+     *  @param public_access Boolean flag.  If set to true, everyone is
+     *                       granted read access to the configuration.
+     */
+    void SetPublicAccess(bool public_access)
+    {
+        SetProperty("public_access", public_access);
+    }
+
+
+    /**
+     *  Retrieve the public-access flag for the configuration profile
+     *
+     * @return Returns true if public-access is granted
+     */
+    bool GetPublicAccess()
+    {
+        return GetBoolProperty("public_access");
+    }
+
+
     void Seal()
     {
         GVariant *res = Call("Seal");
