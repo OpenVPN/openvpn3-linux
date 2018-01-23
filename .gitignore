@@ -51,6 +51,7 @@ src/tests/dbus/fetch-avail-session-paths
 src/tests/dbus/fetch-config
 src/tests/dbus/fetch-config2
 src/tests/dbus/getlaststatus
+src/tests/dbus/getconfig-acl
 src/tests/dbus/getconnectionstats
 src/tests/dbus/log-listener
 src/tests/dbus/log-listener2
