@@ -26,7 +26,7 @@ taken care of.
       only.
     - [ ] ...
 
-- [ ] Rewrite argument parser in ``openvpn3``
+- [x] Rewrite argument parser in ``openvpn3``
   Make it more similar to the "git" approach.
 
 - [ ] Implement Access Control List management in ``openvpn3`` for
