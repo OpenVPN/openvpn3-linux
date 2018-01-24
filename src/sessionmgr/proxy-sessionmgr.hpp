@@ -358,6 +358,80 @@ public:
     }
 
 
+    /**
+     * Grant a user ID (uid) access to this session
+     *
+     * @param uid  uid_t value of the user which will be granted access
+     */
+    void AccessGrant(uid_t uid)
+    {
+        GVariant *res = Call("AccessGrant", g_variant_new("(u)", uid));
+        if (NULL == res)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
+                                "AccessGrant() call failed");
+        }
+    }
+
+
+    /**
+     * Revoke the access from a user ID (uid) for this session
+     *
+     * @param uid  uid_t value of the user which will get access revoked
+     */
+    void AccessRevoke(uid_t uid)
+    {
+        GVariant *res = Call("AccessRevoke", g_variant_new("(u)", uid));
+        if (NULL == res)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
+                                "AccessRevoke() call failed");
+        }
+    }
+
+
+    /**
+     *  Retrieve the owner UID of this session object
+     *
+     * @return Returns uid_t of the session object owner
+     */
+    uid_t GetOwner()
+    {
+        return GetUIntProperty("owner");
+    }
+
+
+    /**
+     *  Retrieve the complete access control list (acl) for this object.
+     *  The acl is essentially just an array of user ids (uid)
+     *
+     * @return Returns an array if uid_t references for each user granted
+     *         access.
+     */
+    std::vector<uid_t> GetAccessList()
+    {
+        GVariant *res = GetProperty("acl");
+        if (NULL == res)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
+                                "GetAccessList() call failed");
+        }
+        GVariantIter *acl = NULL;
+        g_variant_get(res, "au", &acl);
+
+        GVariant *uid = NULL;
+        std::vector<uid_t> ret;
+        while ((uid = g_variant_iter_next_value(acl)))
+        {
+            ret.push_back(g_variant_get_uint32(uid));
+            g_variant_unref(uid);
+        }
+        g_variant_unref(res);
+        g_variant_iter_free(acl);
+        return ret;
+    }
+
+
 private:
     /**
      * Simple wrapper for simple D-Bus method calls not requiring much
