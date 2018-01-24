@@ -120,6 +120,10 @@ pkglibexec_PROGRAMS = \
 #
 src_ovpn3cli_openvpn3_SOURCES = \
 	src/ovpn3cli/openvpn3.cpp \
+	src/ovpn3cli/cmdargparser.hpp \ 
+	src/ovpn3cli/lookup.hpp \
+	src/ovpn3cli/commands/config.hpp \
+	src/ovpn3cli/commands/session.hpp \
 	$(DBUS_SOURCES) \
 	src/configmgr/proxy-configmgr.hpp \
 	src/sessionmgr/proxy-sessionmgr.hpp \

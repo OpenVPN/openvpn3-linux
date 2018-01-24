@@ -35,7 +35,7 @@
 
 #include "lookup.hpp"
 #include "commands/config.hpp"
-#include "commands/sessions.hpp"
+#include "commands/session.hpp"
 
 
 /**
