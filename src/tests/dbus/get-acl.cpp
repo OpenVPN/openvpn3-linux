@@ -145,7 +145,7 @@ int main(int argc, char **argv)
             std::cerr << "Missing UID to grant access to" << std::endl;
             return 1;
         }
-        proxy.AccessGrant(std::stoi(argv[3]));
+        proxy.AccessGrant(get_userid(argv[3]));
         std::cout << "Access granted" << std::endl;
     }
     else if ("revoke" == mode)
@@ -156,7 +156,7 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        proxy.AccessRevoke(std::stoi(argv[3]));
+        proxy.AccessRevoke(get_userid(argv[3]));
         std::cout << "Access revoked" << std::endl;
     }
     else

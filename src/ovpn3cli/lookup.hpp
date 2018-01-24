@@ -30,6 +30,8 @@
 #include <sys/types.h>
 #include <pwd.h>
 
+#include "common/utils.hpp"
+
 /**
  *  Looks up the uid of a user account to extract its username
  *
@@ -90,6 +92,31 @@ uid_t lookup_uid(std::string username)
     }
     free(buf);
     return ret;
+}
+
+
+/**
+ *  Simple helper function which returns the uid_t value of the input
+ *  whether the input string is an numeric value (uid) or a username which
+ *  goes through a uid lookup.
+ *
+ * @param input  std::string containing a username or a uid
+
+ * @return Returns a uid_t representation of the username or uid.  If username
+ *         lookup fails, it will return -1;
+ */
+static uid_t get_userid(const std::string input)
+{
+    // If the argument is not a number, we consider it
+    // a username.  Lookup the UID for this username
+    if (!isanum_string(input))
+    {
+        return lookup_uid(input);
+    }
+    else
+    {
+        return std::stoi(input);
+    }
 }
 
 
