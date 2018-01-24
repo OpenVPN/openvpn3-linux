@@ -64,23 +64,26 @@ int main(int argc, char **argv)
         std::cout << "** Result: FAIL" << std::endl;
         return 1;
     }
-    else {
-        if (isanum_string(argv[1]))
-        {
-            std::string username = lookup_username(std::stoi(argv[1]));
-            std::cout << "UID " << argv[1]
-                      << " maps to '" << username << "'" << std::endl;
+    else
+    {
+        uid_t uid = get_userid(argv[1]);
+
+        if (-1 != uid) {
+            std::string username = lookup_username(uid);
+
+            if ('(' != username[0])
+            {
+                std::cout << "Username '" << username << "'  <==>  uid " << uid
+                          << std::endl;
+            }
+            else
+            {
+                std::cout << "UID " << uid << " was not found" << std::endl;
+            }
         }
         else
         {
-            uid_t uid = lookup_uid(argv[1]);
-            if (-1 != uid) {
-                std::cout << "Username '" << argv[1] << "'"
-                          << " maps to UID " << std::to_string(uid) << std::endl;
-            }
-            else {
                 std::cout << "Username '" << argv[1] << "' not found" << std::endl;
-            }
         }
     }
     return 0;
