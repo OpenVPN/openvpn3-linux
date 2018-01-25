@@ -137,6 +137,18 @@ public:
 
 
     /**
+     *  Check if the command line parser completed parsing all options and
+     *  arguments.
+     *
+     * @return Boolean value.  If true, the parser completed and the callback
+     *         function may be called.
+     */
+    bool GetCompleted()
+    {
+        return completed;
+    }
+
+    /**
      *  Checks if a specific option name has been parsed.  This is
      *  useful for options which does not take any additional argument.  This
      *  is typically used when setting various flags from the command line
@@ -232,6 +244,7 @@ protected:
     std::map<std::string, std::vector<std::string>> key_value;
     std::vector<std::string> present;
     std::vector<std::string> extra_args;
+    bool completed = false;
 };
 
 /**
@@ -288,6 +301,16 @@ public:
     void register_extra_args(const char * e)
     {
         extra_args.push_back(std::string(e));
+    }
+
+
+    /**
+     *  Indicates that the command line parsing completed and the designated
+     *  callback function may be run.
+     */
+    void set_completed()
+    {
+        completed = true;
     }
 };
 
@@ -707,14 +730,45 @@ public:
      *
      * @return  Returns the same exit code as the callback function returned.
      */
-    int RunCommand(const std::string arg0, int argc, char **argv)
+    virtual int RunCommand(const std::string arg0, int argc, char **argv)
+    {
+        try {
+            ParsedArgs cmd_args = parse_commandline(arg0, argc, argv);
+
+            // Run the callback function.
+            return cmd_args.GetCompleted() ? command_func(cmd_args) : 0;
+        }
+        catch (...)
+        {
+            throw;
+        }
+    }
+
+
+protected:
+    /**
+     *  Parse the command line arguments the program was started with, with
+     *  some minor tweaks (see ProcessCommandLine() for details)
+     *
+     * @param arg0  std::string containing the program name itself
+     * @param argc   int value containing number of arguments in argv; this
+     *               mimics the standard C/C++ way of argument passing
+     * @param argv   char ** string array with all the privded arguments.
+     *
+     * @return Returns a ParsedArgs object with all the various parsed options
+     *         accessible in a structured way.  Always check the result of
+     *         the GetCompleted() method in this object.  If this does not
+     *         return true, the execution should stop as the command line
+     *         parsing did not complete properly; most likely due to
+     *         -h or --help.
+     */
+    ParsedArgs parse_commandline(const std::string arg0, int argc, char **argv)
     {
         struct option *long_opts;
         init_getopt(&long_opts);
 
         RegisterParsedArgs cmd_args;
         int c;
-        int ret = 0;
         optind = 2; // Skip argv[0] which contains this command name
         try
         {
@@ -731,7 +785,6 @@ public:
                 if ('h' == c)
                 {
                     std::cout << gen_help(arg0) << std::endl;
-                    ret = 0;
                     goto exit;
                 }
 
@@ -745,7 +798,7 @@ public:
                 if (0 == c)
                 {
                     // No match on short option ... search on long option,
-                    // based on optind
+                    // based on optidx
                     for (auto& o : options)
                     {
                         if (o->check_long_option(long_opts[optidx].name))
@@ -777,20 +830,15 @@ public:
                     cmd_args.register_extra_args(argv[optind++]);
                 }
             }
-
-            // Run the callback function.
-            ret = command_func(cmd_args);
+            cmd_args.set_completed();
         }
         catch (...)
         {
-            // Clean-up before exiting
-            free(long_opts);
             throw;
         }
-
     exit:
         free(long_opts); long_opts = nullptr;
-        return ret;
+        return cmd_args;
     }
 
 
