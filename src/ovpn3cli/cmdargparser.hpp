@@ -248,9 +248,10 @@ protected:
 };
 
 /**
- *  Simplistic internal specification of the callback function API
+ *  Simplistic internal specification of callback function APIs
  */
 using commandPtr = int (*)(ParsedArgs);
+using argHelperFunc = std::string (*)();
 
 
 /**
@@ -341,7 +342,8 @@ public:
     SingleCommandOption(const std::string longopt,
                         const char shrtopt,
                         const std::string help_text)
-        : longopt(longopt), shortopt(shrtopt), metavar(""),
+        : longopt(longopt), shortopt(shrtopt),
+          metavar(""), arg_helper_func(nullptr),
           help_text(help_text)
     {
         update_getopt(longopt, shortopt, no_argument);
@@ -368,12 +370,57 @@ public:
                         const char shrtopt,
                         const std::string metavar,
                         const bool required,
-                        const std::string help_text)
-        : longopt(longopt), shortopt(shrtopt), metavar(metavar),
+                        const std::string help_text,
+                        const argHelperFunc arg_helper_func = nullptr)
+        : longopt(longopt), shortopt(shrtopt),
+          metavar(metavar),  arg_helper_func(arg_helper_func),
           help_text(help_text)
     {
         update_getopt(longopt, shortopt,
                       (required ? required_argument : optional_argument));
+    }
+
+
+    /**
+     *  Returns a string containing the registered option, formatted
+     *  to be used by shell completion scripts
+     *
+     * @return std::string containing the shell completion string for
+     *         this option
+     */
+    std::string get_option_list_prefixed()
+    {
+        std::stringstream r;
+
+        if (0 != shortopt)
+        {
+            r << "-" << shortopt;
+
+        }
+        if (!longopt.empty())
+        {
+            if (0 != shortopt)
+            {
+                r << " ";
+            }
+            r << "--" << longopt;
+        }
+        return r.str();
+    }
+
+
+    /**
+     *  For the shell completion of option arguments, some data is runtime
+     *  depended and must be retrieved with live data.  Options arguments
+     *  which provided a function pointer to a argument-helper-callback will
+     *  call this function to get the needed data.
+     *
+     * @return Must return a string of possible values where each value is
+     *         separated by space
+     */
+    std::string call_argument_helper_callback()
+    {
+            return (nullptr != arg_helper_func ? arg_helper_func() : "");
     }
 
 
@@ -538,6 +585,7 @@ private:
     const std::string longopt;
     const char shortopt;
     const std::string metavar;
+    const argHelperFunc arg_helper_func;
     const std::string help_text;
     struct option getopt_option;
 
@@ -636,13 +684,15 @@ public:
                    const char shortopt,
                    const std::string metavar,
                    const bool required,
-                   const std::string help_text)
+                   const std::string help_text,
+                   const argHelperFunc arg_helper = nullptr)
     {
         SingleCommandOption::Ptr opt = new SingleCommandOption(longopt,
                                                                shortopt,
                                                                metavar,
                                                                required,
-                                                               help_text);
+                                                               help_text,
+                                                               arg_helper);
         options.push_back(opt);
     }
 
@@ -679,9 +729,11 @@ public:
     void AddOption(const std::string longopt,
                    const std::string metavar,
                    const bool required,
-                   const std::string help_text)
+                   const std::string help_text,
+                   const argHelperFunc arg_helper = nullptr
+                   )
     {
-        AddOption(longopt, 0, metavar, required, help_text);
+        AddOption(longopt, 0, metavar, required, help_text, arg_helper);
     }
 
 
@@ -700,6 +752,64 @@ public:
         ret << command << std::setw(width - command.size())
             << " - " << description << std::endl;
         return ret.str();
+    }
+
+
+    /**
+     *  Generate a list of all options for this command.  This is used
+     *  by shell completion scripts to provide hints to the user with
+     *  possible options.
+     *
+     * @return Returns a string with all registered options, prefixed with
+     *         '-' or '--' and each option is separated by space.
+     */
+    std::string GetOptionsList()
+    {
+        std::stringstream r;
+        for (auto const& opt : options)
+        {
+            r << opt->get_option_list_prefixed() << " ";
+        }
+        return r.str();
+    }
+
+
+    /**
+     *  Request calling the argument helper function for a specific option.
+     *  This is used by shell completion scripts to provide value hints for a
+     *  specific option.
+     *
+     * @param option_name  std::string containing the option to get
+     *                     value hints for
+     * @return  Returns a string with possible values for the provided option.
+     *          Each value is separated by a space.
+     */
+    std::string CallArgumentHelper(const std::string option_name)
+    {
+        for (auto const& opt : options)
+        {
+            if (1 == option_name.size()
+                && opt->check_short_option(option_name[0]))
+            {
+                return opt->call_argument_helper_callback();
+            }
+            else if (opt->check_long_option(option_name.c_str()))
+            {
+                return opt->call_argument_helper_callback();
+            }
+        }
+        return "";
+    }
+
+
+    /**
+     *  Get the registered command name for this object
+     *
+     * @return std::string containing the command name
+     */
+    std::string GetCommand()
+    {
+        return command;
     }
 
 
@@ -933,6 +1043,11 @@ public:
     Commands(const std::string progname, const std::string description)
         : progname(progname), description(description)
     {
+        // Register a new ShellCompletion helper object.  This
+        // will automatically build up the 'shell-completion' command,
+        // based on the commands and options being added.
+        shellcompl.reset(new ShellCompletion());
+        commands.push_back(shellcompl);
     }
 
     /**
@@ -984,6 +1099,12 @@ public:
             print_generic_help(baseprog);
             return 0;
         }
+
+        // Link the ShellCompletion helper object with this Commands object
+        // The ShellCompletion sub-class needs access to the commands
+        // std::vector to be able to generate the needed strings to be used
+        // by the shell completion functions outside of the program itself
+        shellcompl->SetMainCommands(this);
 
         // Find the proper registered command and let that object
         // continue the command line parsing and run the callback function
@@ -1043,11 +1164,214 @@ public:
         return 1;
     }
 
-private:
-    const std::string progname;
-    const std::string description;
-    std::vector<SingleCommand::Ptr> commands;
 
+    /**
+     *  Primarily to be used by the ShellCompletion object.  It will return
+     *  a std::vector with pointers to all the registered SingleCommand
+     *  objects
+     *
+     * @return  std::vector<SingleCommand::Ptr>, which represents
+     *          smart-pointers to all the registered single command objects.
+     */
+    std::vector<SingleCommand::Ptr> GetAllCommandObjects()
+    {
+        return commands;
+    }
+
+
+private:
+    /**
+     *  Subclass of Commands, which builds the shell-completion command
+     *  automatically based on all the registered commands.  The output this
+     *  class produces is to be used by various shell completion scripts
+     */
+    class ShellCompletion : public SingleCommand
+    {
+    public:
+        typedef RCPtr<ShellCompletion> Ptr;
+
+        ShellCompletion()
+            : SingleCommand("shell-completion",
+                            "Helper function to provide shell completion data",
+                            nullptr)
+        {
+            AddOption("list-commands",
+                      "List all available commands");
+            AddOption("list-options", "COMMAND", true,
+                      "List all available options for a specific command");
+            AddOption("arg-helper", "OPTION", true,
+                      "Used together with --list-options, lists value hint to an option");
+        }
+
+        /**
+         *  Provide a "back-pointer" to the parent Commands objects.  This
+         *  is needed to be able to extract all the various commands,
+         *  options and the argument helper function in each of the registered
+         *  commands.
+         *
+         * @param cmds  Commands * to the parent Commands object.
+         */
+        void SetMainCommands(Commands * cmds)
+        {
+            commands = cmds;
+        }
+
+
+        /**
+         *   Since this class inherits the SingleCommand class, we implement
+         *   the argument parsing for the shell completion command here.
+         *
+         * @param arg0   std::string containing the basic name of the current
+         *               binary
+         * @param argc   int value containing number of arguments in argv;
+         *               this mimics the standard C/C++ way of argument
+         *               passing
+         * @param argv   char ** string array with all the privded arguments.
+         *
+         * @return  Will always return 0, as we do not depend on exit codes
+         *          when generating shell completion strings.
+         */
+        int RunCommand(const std::string arg0, int argc, char **argv)
+        {
+            try {
+                ParsedArgs args = parse_commandline(arg0, argc, argv);
+
+                if (!args.GetCompleted())
+                {
+                    return 0;
+                }
+
+                if (args.Present("list-commands")
+                    && args.Present("list-options"))
+                {
+                    throw CommandException("shell-completion",
+                                           "Cannot combine --list-commands and --list-options");
+                }
+
+                if (args.Present("list-options") && args.GetValueLen("list-options") > 1)
+                {
+                    throw CommandException("shell-completion",
+                                           "Can only use --list-options once");
+                }
+
+
+                if (args.Present("arg-helper")
+                    && !args.Present("list-options"))
+                {
+                    throw CommandException("shell-completion",
+                                           "--arg-helper requires --list-options");
+                }
+
+                if (args.Present("list-commands"))
+                {
+                    list_commands();
+                    return 0;
+                }
+
+                if (args.Present("list-options"))
+                {
+                    if (!args.Present("arg-helper"))
+                    {
+                        list_options(args.GetValue("list-options", 0));
+                    }
+                    else
+                    {
+                        call_arg_helper(args.GetValue("list-options", 0),
+                                        args.GetValue("arg-helper", 0));
+                    }
+                }
+            }
+            catch (...)
+            {
+                throw;
+            }
+            return 3;
+        }
+
+    private:
+        Commands * commands;
+
+        /**
+         *  Helper command to be used by various command completion
+         *  capable shells.  It lists just all the various available commands.
+         *  The result is written straight to stdout.
+         */
+        void list_commands()
+        {
+            bool first = true;
+            for (auto &cmd : commands->GetAllCommandObjects())
+            {
+                if (cmd->GetCommand() == GetCommand())
+                {
+                    // Skip myself
+                    continue;
+                }
+                if (!first)
+                {
+                    std::cout << " ";
+                }
+                first = false;
+                std::cout << cmd->GetCommand();
+            }
+            std::cout << std::endl;
+        }
+
+
+        /**
+         *  Generate the list of options for a specific command.  This
+         *  job is done by the SingleCommand object itself, through the
+         *  SingleCommand::GetOpttionList() method.  The result is written
+         *  straight to stdout.
+         *
+         * @param cmd  std::string containing the command to query for
+         *             available options.
+         */
+        void list_options(const std::string cmd)
+        {
+            for (auto const& c : commands->GetAllCommandObjects())
+            {
+                if (c->GetCommand() == cmd )
+                {
+                    std::cout << c->GetOptionsList() << std::endl;
+                    return;
+                }
+            }
+        }
+
+
+        /**
+         *  The argument helper callback function generates a list of possible
+         *  values to use for a specific option in a specific command.
+         *  Similar to list_options(), just more specific.  When this is
+         *  triggered, the output generated by the argHelperFunc function
+         *  is written directly to stdout.
+         *
+         * @param cmd     std::string containing the command to query
+         * @param option  std::string containing the option to query for
+         *                possible values.
+         */
+        void call_arg_helper(const std::string cmd, const std::string option)
+        {
+            for (auto const& c : commands->GetAllCommandObjects())
+            {
+                if (c->GetCommand() == cmd )
+                {
+                    unsigned int skip = 0;
+                    if ('-' == option[0])
+                    {
+                        skip++;
+                    }
+                    if ('-' == option[1])
+                    {
+                        skip++;
+                    }
+                    std::cout << c->CallArgumentHelper(option.substr(skip))
+                              << std::endl;
+                    return;
+                }
+            }
+        }
+    };
 
     /**
      *   Print an initial help screen, providing an overview of all
@@ -1080,6 +1404,12 @@ private:
                   << std::endl;
         std::cout << std::endl;
     }
+
+
+    const std::string progname;
+    const std::string description;
+    std::vector<SingleCommand::Ptr> commands;
+    ShellCompletion::Ptr shellcompl;
 };
 
 #endif // OPENVPN3_CMDARGPARSER_HPP

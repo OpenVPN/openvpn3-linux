@@ -26,6 +26,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <random>
 
 #include "../../ovpn3cli/cmdargparser.hpp"
 
@@ -81,6 +82,28 @@ int cmd_multiply(ParsedArgs args)
 }
 
 
+std::string arghelper_mandatory_arg()
+{
+    return "'mandatory_string'";
+}
+
+
+std::string arghelper_random_numbers()
+{
+    std::random_device rd;
+    std::mt19937_64 gen(rd());
+
+    std::uniform_int_distribution<unsigned short> distrib;
+
+    std::stringstream res;
+    for (int i = 0; i < 5; i++)
+    {
+        res << std::to_string(distrib(gen)) << " ";
+    }
+    return res.str();
+}
+
+
 int main(int argc, char **argv)
 {
     Commands cmds("Command line parser test",
@@ -91,10 +114,12 @@ int main(int argc, char **argv)
                          "key", true, "Set a variable");
     test1_cmd->AddOption("test-func1", "Just testing more options");
     test1_cmd->AddOption("test-func2", 'f', "string", false, "Just another test");
-    test1_cmd->AddOption("mandatory-arg", "string", true, "Test mandatory option argument");
+    test1_cmd->AddOption("mandatory-arg", "string", true, "Test mandatory option argument",
+                         arghelper_mandatory_arg);
 
     auto test2_cmd = cmds.AddCommand("test2", "Test command two", cmd_multiply);
-    test2_cmd->AddOption("multiply", 'm', "values" , true, "Multiply two numbers");
+    test2_cmd->AddOption("multiply", 'm', "values" , true, "Multiply two numbers",
+                         arghelper_random_numbers);
 
     auto test3_cmd = cmds.AddCommand("test3", "Test command 3", cmd_dump_arg_test);
     test3_cmd->AddOption("opt-string", 'o',
