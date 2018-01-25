@@ -545,6 +545,23 @@ static int cmd_config_remove(ParsedArgs args)
 }
 
 
+std::string arghelper_config_paths()
+{
+    OpenVPN3ConfigurationProxy confmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration);
+
+    std::stringstream res;
+    for (auto& cfg : confmgr.FetchAvailableConfigs())
+    {
+        if (cfg.empty())
+        {
+            continue;
+        }
+        res << cfg << " ";
+    }
+    return res.str();
+}
+
+
 /**
  *  Declare all the supported commands and their options and arguments.
  *
@@ -581,7 +598,8 @@ void RegisterCommands_config(Commands& ovpn3)
                            "Manage configuration aliases",
                            cmd_config_alias);
     cmd->AddOption("path", 'o', "OBJ-PATH", true,
-                   "Path to the configuration in the configuration manager");
+                   "Path to the configuration in the configuration manager",
+                    arghelper_config_paths);
     cmd->AddOption("name", 'n', "ALIAS-NAME", true,
                    "Alias name to use for this configuration");
     cmd->AddOption("delete", 'D',
@@ -594,7 +612,8 @@ void RegisterCommands_config(Commands& ovpn3)
                            "Manage access control lists for configurations",
                            cmd_config_acl);
     cmd->AddOption("path", 'o', "OBJ-PATH", true,
-                   "Path to the configuration in the configuration manager");
+                   "Path to the configuration in the configuration manager",
+                   arghelper_config_paths);
     cmd->AddOption("show", 's',
                    "Show the current access control lists");
     cmd->AddOption("grant", 'G', "<UID | username>", true,
@@ -614,7 +633,8 @@ void RegisterCommands_config(Commands& ovpn3)
                            "Show/dump a configuration profile",
                            cmd_config_show);
     cmd->AddOption("path", 'o', "OBJ-PATH", true,
-                   "Path to the configuration in the configuration manager");
+                   "Path to the configuration in the configuration manager",
+                   arghelper_config_paths);
     cmd->AddOption("json", 'j', "Dump the configuration in JSON format");
 
     //
@@ -624,5 +644,6 @@ void RegisterCommands_config(Commands& ovpn3)
                            "Remove an available configuration profile",
                            cmd_config_remove);
     cmd->AddOption("path", 'o', "OBJ-PATH", true,
-                   "Path to the configuration in the configuration manager");
+                   "Path to the configuration in the configuration manager",
+                   arghelper_config_paths);
 }

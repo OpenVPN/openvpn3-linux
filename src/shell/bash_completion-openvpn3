@@ -1,0 +1,54 @@
+#  OpenVPN 3 Linux client -- Next generation OpenVPN client
+#
+#  Copyright (C) 2018         OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, version 3 of the
+#  License.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
+##
+# @file  bash_completion_openvpn3.sh
+#
+# @brief  A bash_completion helper script for the openvpn3 program.
+#         This script makes use of the openvpn3 shell-completion command
+#         which provides up-to-date insight on the various commands, options
+#         and arguments.
+
+_openvpn3_completion()
+{
+	local first cur prev opts base
+	COMPREPLY=()
+	first=${COMP_WORDS[1]}
+	cur="${COMP_WORDS[COMP_CWORD]}"
+	prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+	if [ $COMP_CWORD -eq 1 ]; then
+		# The first argument is always an openvpn3 command
+		commands="$(openvpn3 shell-completion --list-commands)"
+		COMPREPLY=( $( compgen -W "$commands" $cur ) )
+	elif [ $COMP_CWORD -gt 1 ]; then
+		selection=""
+		if [ "${cur:0:2}" == "--" -o "${cur:0:1}" == "-" ]; then
+			# If the argument starts with '-' or '--' provide list of options
+			selection="$(openvpn3 shell-completion --list-options $first)"
+		else
+			# Otherwise try to fill out with possible argument values for the
+			# provided option
+			selection="$(openvpn3 shell-completion --list-options $first --arg-help $prev)"
+		fi
+		COMPREPLY=( $( compgen -W "${selection}" -- $cur ) )
+	fi
+}
+
+complete -F _openvpn3_completion openvpn3

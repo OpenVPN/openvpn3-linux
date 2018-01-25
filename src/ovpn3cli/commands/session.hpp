@@ -616,6 +616,23 @@ static int cmd_session_acl(ParsedArgs args)
 }
 
 
+std::string arghelper_session_paths()
+{
+    OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_sessions);
+
+    std::stringstream res;
+    for (auto& session : sessmgr.FetchAvailableSessions())
+    {
+        if (session.empty())
+        {
+            continue;
+        }
+        res << session << " ";
+    }
+    return res.str();
+}
+
+
 void RegisterCommands_session(Commands& ovpn3)
 {
     //
@@ -627,7 +644,8 @@ void RegisterCommands_session(Commands& ovpn3)
     cmd->AddOption("config", 'c', "CONFIG-FILE", true,
                    "Configuration file to start directly");
     cmd->AddOption("config-path", 'p', "CONFIG-PATH", true,
-                   "Configuration path to an already imported configuration");
+                   "Configuration path to an already imported configuration",
+                   arghelper_config_paths);
 
     //
     //  session-manage command
@@ -636,7 +654,8 @@ void RegisterCommands_session(Commands& ovpn3)
                            "Manage VPN sessions",
                            cmd_session_manage);
     cmd->AddOption("path", 'o', "SESSION-PATH", true,
-                   "Path to the session in the session manager");
+                   "Path to the session in the session manager",
+                   arghelper_session_paths);
     cmd->AddOption("pause", 'P', "Pauses the VPN session");
     cmd->AddOption("resume", 'R', "Resumes a paused VPN session");
     cmd->AddOption("disconnect", 'D', "Disconnects a VPN session");
@@ -648,7 +667,8 @@ void RegisterCommands_session(Commands& ovpn3)
                            "Manage access control lists for sessions",
                            cmd_session_acl);
     cmd->AddOption("path", 'o', "SESSION-PATH", true,
-                   "Path to the session in the session manager");
+                   "Path to the session in the session manager",
+                   arghelper_session_paths);
     cmd->AddOption("show", 's',
                    "Show the current access control lists");
     cmd->AddOption("grant", 'G', "<UID | username>", true,
@@ -665,7 +685,8 @@ void RegisterCommands_session(Commands& ovpn3)
                            "Show session statistics",
                            cmd_session_stats);
     cmd->AddOption("path", 'o', "SESSION-PATH", true,
-                   "Path to the configuration in the configuration manager");
+                   "Path to the configuration in the configuration manager",
+                   arghelper_session_paths);
     cmd->AddOption("json", 'j', "Dump the configuration in JSON format");
 
 

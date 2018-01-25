@@ -43,6 +43,7 @@ CLEANFILES = \
         config-version.h *~
 
 EXTRA_DIST = \
+	src/shell/bash_completion-openvpn3 \
 	openvpn3-core \
 	vendor
 
@@ -120,7 +121,7 @@ pkglibexec_PROGRAMS = \
 #
 src_ovpn3cli_openvpn3_SOURCES = \
 	src/ovpn3cli/openvpn3.cpp \
-	src/ovpn3cli/cmdargparser.hpp \ 
+	src/ovpn3cli/cmdargparser.hpp \
 	src/ovpn3cli/lookup.hpp \
 	src/ovpn3cli/commands/config.hpp \
 	src/ovpn3cli/commands/session.hpp \
