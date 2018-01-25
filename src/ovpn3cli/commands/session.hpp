@@ -18,9 +18,9 @@
 //
 
 /**
- * @file   sessions.hpp
+ * @file   session.hpp
  *
- * @brief  [enter description of what this file contains]
+ * @brief  Commands to start and manage VPN sessions
  */
 
 #include <json/json.h>
@@ -624,25 +624,18 @@ void RegisterCommands_session(Commands& ovpn3)
     auto cmd = ovpn3.AddCommand("session-start",
                                 "Start a new VPN session",
                                 cmd_session_start);
-    cmd->AddOption("config", 'c', "CFG-FILE", true,
+    cmd->AddOption("config", 'c', "CONFIG-FILE", true,
                    "Configuration file to start directly");
-    cmd->AddOption("path", 'p', "CFG-PATH", true,
+    cmd->AddOption("config-path", 'p', "CONFIG-PATH", true,
                    "Configuration path to an already imported configuration");
 
-
-    //
-    //  session-list command
-    //
-    cmd = ovpn3.AddCommand("session-list",
-                           "List available VPN sessions",
-                           cmd_session_list);
     //
     //  session-manage command
     //
     cmd = ovpn3.AddCommand("session-manage",
                            "Manage VPN sessions",
                            cmd_session_manage);
-    cmd->AddOption("path", 'o', "OBJ-PATH", true,
+    cmd->AddOption("path", 'o', "SESSION-PATH", true,
                    "Path to the session in the session manager");
     cmd->AddOption("pause", 'P', "Pauses the VPN session");
     cmd->AddOption("resume", 'R', "Resumes a paused VPN session");
@@ -654,7 +647,7 @@ void RegisterCommands_session(Commands& ovpn3)
     cmd = ovpn3.AddCommand("session-acl",
                            "Manage access control lists for sessions",
                            cmd_session_acl);
-    cmd->AddOption("path", 'o', "OBJ-PATH", true,
+    cmd->AddOption("path", 'o', "SESSION-PATH", true,
                    "Path to the session in the session manager");
     cmd->AddOption("show", 's',
                    "Show the current access control lists");
@@ -671,8 +664,15 @@ void RegisterCommands_session(Commands& ovpn3)
     cmd = ovpn3.AddCommand("session-stats",
                            "Show session statistics",
                            cmd_session_stats);
-    cmd->AddOption("path", 'o', "OBJ-PATH", true,
+    cmd->AddOption("path", 'o', "SESSION-PATH", true,
                    "Path to the configuration in the configuration manager");
     cmd->AddOption("json", 'j', "Dump the configuration in JSON format");
 
+
+    //
+    //  sessions-list command
+    //
+    cmd = ovpn3.AddCommand("sessions-list",
+                           "List available VPN sessions",
+                           cmd_session_list);
 }
