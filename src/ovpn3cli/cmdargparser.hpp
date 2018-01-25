@@ -470,7 +470,7 @@ public:
         {
             r << "-" << shortopt << " | ";
         }
-        r << "--" << longopt << " ";
+        r << "--" << longopt;
 
         // If this option can process a provided value ...
         if (!metavar.empty())
@@ -479,7 +479,7 @@ public:
             // the argument value.
             if (required_argument == getopt_option.has_arg)
             {
-                r << " " << metavar << " ";
+                r << " " << metavar;
             }
             else
             {
@@ -492,7 +492,7 @@ public:
         // Ensure the description is aligned with the rest of the lines
         size_t l = r.str().size();
 
-        if (width < l)
+        if ((width - 3) < l)
         {
             // If this first line with the long/short option listing gets too
             // long, then split it up into several lines.
@@ -1015,9 +1015,15 @@ private:
         std::cout << std::endl << std::endl;
 
         std::cout << "  Available commands: " << std::endl;
+
+        unsigned int width = 20;
+        std::cout << "    help" << std::setw(width - 7) << " "
+                  << " - This help screen"
+                  << std::endl;
+
         for (auto &cmd :commands)
         {
-            std::cout << "    " << cmd->GetCommandHelp();
+            std::cout << "    " << cmd->GetCommandHelp(width);
         }
         std::cout << std::endl;
 
