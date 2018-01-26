@@ -25,7 +25,7 @@
 
 #include "../cmdargparser.hpp"
 #include "../lookup.hpp"
-
+#include "../arghelpers.hpp"
 
 /**
  *  Parses and imports an OpenVPN configuration file and saves it
@@ -542,23 +542,6 @@ static int cmd_config_remove(ParsedArgs args)
     {
         throw;
     }
-}
-
-
-std::string arghelper_config_paths()
-{
-    OpenVPN3ConfigurationProxy confmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration);
-
-    std::stringstream res;
-    for (auto& cfg : confmgr.FetchAvailableConfigs())
-    {
-        if (cfg.empty())
-        {
-            continue;
-        }
-        res << cfg << " ";
-    }
-    return res.str();
 }
 
 

@@ -121,6 +121,7 @@ pkglibexec_PROGRAMS = \
 #
 src_ovpn3cli_openvpn3_SOURCES = \
 	src/ovpn3cli/openvpn3.cpp \
+	src/ovpn3cli/arghelpers.hpp \
 	src/ovpn3cli/cmdargparser.hpp \
 	src/ovpn3cli/lookup.hpp \
 	src/ovpn3cli/commands/config.hpp \

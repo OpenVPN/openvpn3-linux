@@ -27,7 +27,7 @@
 
 #include "../cmdargparser.hpp"
 #include "../lookup.hpp"
-
+#include "../arghelpers.hpp"
 
 /**
  *  Fetches all the gathered statistics for a specific session
@@ -613,23 +613,6 @@ static int cmd_session_acl(ParsedArgs args)
     {
         throw;
     }
-}
-
-
-std::string arghelper_session_paths()
-{
-    OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_sessions);
-
-    std::stringstream res;
-    for (auto& session : sessmgr.FetchAvailableSessions())
-    {
-        if (session.empty())
-        {
-            continue;
-        }
-        res << session << " ";
-    }
-    return res.str();
 }
 
 
