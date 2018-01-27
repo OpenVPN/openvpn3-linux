@@ -381,6 +381,15 @@ public:
     }
 
 
+    ~SingleCommandOption()
+    {
+        // We need to override this, as we're allocating this
+        // const char * struct member dynamically while
+        // getopt typically expects this to be static.  This
+        // is allocated in init_getopt()
+        free((char *)getopt_option.name);
+    }
+
     /**
      *  Returns a string containing the registered option, formatted
      *  to be used by shell completion scripts
@@ -501,17 +510,13 @@ public:
 
 
     /**
-     *  Fills out a provided getopt_long() related struct option with values
-     *  representing this specific option.
+     *  Returns the prepared struct option member which is prepared
      *
-     * @param dest  A pointer to a struct option element to fill out
+     * @return A pointer to a prepared struct option element
      */
-    void populate_struct_option(struct option *dest)
+    struct option *get_struct_option()
     {
-        dest->name = getopt_option.name;
-        dest->has_arg = getopt_option.has_arg;
-        dest->flag = getopt_option.flag;
-        dest->val = getopt_option.val;
+        return &getopt_option;
     }
 
 
@@ -609,7 +614,10 @@ private:
     void update_getopt(const std::string longopt, const char  shortopt,
                        const int has_args)
     {
-        getopt_option.name = longopt.c_str();
+        // We need a strdup() as the pointer longopt.c_str() returns on
+        // some systems gets destroyed - rendering garbage in this
+        // struct.  In the destructor, this is free()d again.
+        getopt_option.name = strdup(longopt.c_str());
         getopt_option.flag = NULL;
         getopt_option.has_arg =  has_args;
         getopt_option.val = shortopt;
@@ -874,8 +882,7 @@ protected:
      */
     ParsedArgs parse_commandline(const std::string arg0, int argc, char **argv)
     {
-        struct option *long_opts;
-        init_getopt(&long_opts);
+        struct option *long_opts = init_getopt();
 
         RegisterParsedArgs cmd_args;
         int c;
@@ -969,22 +976,23 @@ private:
      * @param result  A struct option pointer to where to save all this
      * information.
      */
-    void init_getopt(struct option *result[])
+    struct option *init_getopt()
     {
         unsigned int idx = 0;
         shortopts = "";
-        *result = (struct option *) calloc(options.size() + 2, sizeof(struct option));
-        if (*result == NULL)
+        struct option *result = (struct option *) calloc(options.size() + 2,
+                                                         sizeof(struct option));
+        if (result == NULL)
         {
             throw CommandException(command, "Failed to allocate memory for option parsing");
         }
 
         // Parse through all registered options
-        for (auto& opt : options)
+        for (auto const& opt : options)
         {
             // Apply the option definition into the pre-defined designated
             // slot
-            opt->populate_struct_option(&(*result)[idx]);
+            memcpy(&result[idx], opt->get_struct_option(), sizeof(struct option));
             idx++;
 
             // Collect all we need for the short flags too
@@ -993,7 +1001,8 @@ private:
 
         // getopt_long() expects the last record in the struct option array
         // to be an empty/zeroed struct option element
-        (*result)[idx] = {0};
+        result[idx] = {0};
+        return result;
     }
 
 
