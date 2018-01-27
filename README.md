@@ -15,23 +15,27 @@ also stop automatically.
 There are five services which is good to beware of:
 
 * openvpn3-service-configmgr
+
   This is the configuration manager.  All configurations will be uploaded to
   this service before a tunnel is started.  This process is started as the
   openvpn user.
 
 * openvpn3-service-sessionmgr
+
   This manages all VPN tunnels which is about to start or has started.  It
   takes care of communicating with the backend tunnel processes and ensures
   only users with the right access levels can manage the various tunnels.
   This service is started as the openvpn user.
 
 * openvpn3-service-backend
+
   This is more or less a helper service.  This gets started with root
   privileges, and only the session manager is by default allowed to use
   this service.  The only task this service has is to start a new VPN
   client backend processes (the tunnel instances)
 
 * openvpn3-service-client
+
   This is to be started by the openvpn3-service-backend only.  And one such
   process is started per VPN client.  Once it has started, it registers itself
   with the session manager and the session manager provides it with the needed
@@ -39,6 +43,7 @@ There are five services which is good to beware of:
   manager.  This process will also have root privileges (currently).
 
 * openvpn3-service-logger
+
   This service will listen for log events happening from all the various
   backend services.  Currently log data is only sent to stdout.
 
@@ -46,20 +51,15 @@ There are five services which is good to beware of:
 To interact with these services, there are two tools provided:
 
 * openvpn3
+
   This is a brand new command line interface which does not look like
-  OpenVPN 2.x at all.  Currently it lacks a lot of features, but can be
-  used to start, stop, pause and resume tunnels - as well as dumping
-  configurations stored in the configuration manager and retrieve tunnel
-  statistics for running tunnels.
-
-  This tool needs to grow a lot of features, like access control list
-  management, listing of available configurations and running sessions -
-  and probably a lot of more smaller features.
-
-  This command line interface will change dramatically as this is being
-  improved.
+  OpenVPN 2.x at all.  It can be used to start, stop, pause, resume tunnels
+  and retrieve tunnel statistics. It can also be used as import, retrieve
+  and manage configurations stored in the configuration manager and retrieve
+  tunnel statistics for running tunnels.
 
 * openvpn2
+
   This is a simpler interface which tries to look and behave a quite more
   like the classic OpenVPN 2.x versions.  This interface is written in
   Python.  It does only allow options which are supported by the OpenVPN 3
@@ -112,9 +112,29 @@ In addition, this git repository will pull in two git submodules:
   The OpenVPN 3 Core library depends on some bleeding edge features
   in ASIO, so we need to do a build against the ASIO git repository.
 
-Build steps:
+First install the package dependencies needed to run the build.
 
-- Clone this git repository
+#### Debian/Ubuntu:
+  ``# apt-get install pkg-config autoconf libglib2.0-dev libjsoncpp-dev uuid-dev
+libmbedtls-dev liblz4-dev``
+
+  You might also need ``build-essential`` and ``git`.
+
+#### Fedora:
+  ``# dnf install mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel``
+
+  You might also need ``gcc-c++ git autoconf automake make pkgconfig``
+
+#### Red Hat Enterprise Linux / CentOS / Scientific Linux
+  First install the ``epel-release`` repository if that is not yet installed.  Then you can run:
+
+  ``# yum install mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel lz4-devel``
+
+  You might also need ``gcc-c++ git autoconf automake make pkgconfig``
+
+### Building OpenVPN 3 Linux client
+- Clone this git repository: ``git clone git://github.com/OpenVPN/openvpn3-linux``
+- Enter the ``openvpn3-linux`` directory: ``cd openvpn3-linux``
 - Run: ``./bootstrap.sh``
 - Run: ``./configure --prefix=/usr --sysconfdir=/etc``
 - Run: ``make``
@@ -143,7 +163,7 @@ started.
 
 Debugging
 ---------
-To debug what is happening, ``gdbus`` and ``dbus-send`` utilities are useful.
+To debug what is happening, ``busctl``, ``gdbus`` and ``dbus-send`` utilities are useful.
 The service destinations these tools need to move forward are:
 
 - net.openvpn.v3.configuration (Configuration manager)
