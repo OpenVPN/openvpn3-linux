@@ -142,15 +142,15 @@ static int cmd_session_stats(ParsedArgs args)
  */
 static int cmd_session_start(ParsedArgs args)
 {
-    if (!args.Present("path") && !args.Present("config"))
+    if (!args.Present("config-path") && !args.Present("config"))
     {
         throw CommandException("session-start",
-                               "Either --config or --path must be provided");
+                               "Either --config or --config-path must be provided");
     }
-    if (args.Present("path") && args.Present("config"))
+    if (args.Present("config-path") && args.Present("config"))
     {
         throw CommandException("session-start",
-                               "--config and --path cannot be used together");
+                               "--config and --config-path cannot be used together");
     }
 
     try
@@ -167,7 +167,7 @@ static int cmd_session_start(ParsedArgs args)
         }
         else
         {
-            cfgpath = args.GetValue("path", 0);
+            cfgpath = args.GetValue("config-path", 0);
         }
 
 
