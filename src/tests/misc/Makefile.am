@@ -26,14 +26,21 @@ CLEANFILES = \
 AM_CXXFLAGS = \
 	$(OPENVPN3_CORE_CXXFLAGS) \
 	$(LIBGLIBGIO_CFLAGS) \
+	$(LIBJSONCPP_CFLAGS) -DOPENVPN_NO_IO \
 	-I $(top_srcdir)/src
 
 AM_LDFLAGS = \
-	$(LIBGLIBGIO_LIBS)
+	$(LIBGLIBGIO_LIBS) \
+	$(LIBJSONCPP_LIBS)
 
 
 noinst_PROGRAMS = \
+	config-export-json-test \
+	json-config-import-test \
 	lookup-tests
 
-lookup_tests_SOURCES = lookup-tests.cpp
+config_export_json_test_SOURCES = config-export-json-test.cpp
 
+json_config_import_test_SOURCES = json-config-import-test.cpp
+
+lookup_tests_SOURCES = lookup-tests.cpp

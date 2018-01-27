@@ -123,19 +123,24 @@ namespace openvpn {
     public:
         ProfileMergeJSON(const std::string json_str)
         {
+            // Read the JSON formatted input string
+            // and parse it into a JSON::Value object.
+            // This has to go through a std::stringstream, as
+            // the JSON parser is stream based.
+            std::stringstream json_stream;
+            json_stream << json_str;  // Convert std::string to std::stringstream
             Json::Value data;
-            Json::Reader json_reader;
+            json_stream >> data;      // Parse into JSON::Value
 
-            // FIXME: Need better error handling
-            json_reader.parse(json_str, data, true);
 
+            // Parse the JSON input into a plain/text config file which
+            // is then parsed/imported into the OpenVPN option storage.
             std::stringstream config_str;
             for( Json::ValueIterator it = data.begin();
                  it != data.end(); ++it) {
                 std::string name = it.name();
                 config_str << optparser_mkline(name, data[name].asString());
             }
-
             expand_profile(config_str.str(), "", openvpn::ProfileMerge::FOLLOW_NONE,
                            openvpn::ProfileParseLimits::MAX_LINE_SIZE,
                            openvpn::ProfileParseLimits::MAX_PROFILE_SIZE,
