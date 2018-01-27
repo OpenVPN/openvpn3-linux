@@ -114,7 +114,7 @@ static int cmd_config_import(ParsedArgs args)
  * @return Returns the exit code which will be returned to the calling shell
  *
  */
-static int cmd_config_list(ParsedArgs args)
+static int cmd_configs_list(ParsedArgs args)
 {
     OpenVPN3ConfigurationProxy confmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration );
 
@@ -571,12 +571,7 @@ void RegisterCommands_config(Commands& ovpn3)
                    "Make the configuration file persistent through boots");
 
     //
-    //  config-list command
-    //
-    cmd = ovpn3.AddCommand("config-list",
-                           "List all available configuration profiles",
-                           cmd_config_list);
-
+    //  config-alias command
     cmd = ovpn3.AddCommand("config-alias",
                            "Manage configuration aliases",
                            cmd_config_alias);
@@ -609,6 +604,7 @@ void RegisterCommands_config(Commands& ovpn3)
                    "Set/unset the lock-down flag.  Will disable config retrieval for users");
     cmd->AddOption("seal", 'S',
                    "Make the configuration profile permanently read-only");
+
     //
     //  config-show command
     //
@@ -629,4 +625,11 @@ void RegisterCommands_config(Commands& ovpn3)
     cmd->AddOption("path", 'o', "OBJ-PATH", true,
                    "Path to the configuration in the configuration manager",
                    arghelper_config_paths);
+
+    //
+    //  config-list command
+    //
+    cmd = ovpn3.AddCommand("configs-list",
+                           "List all available configuration profiles",
+                           cmd_configs_list);
 }
