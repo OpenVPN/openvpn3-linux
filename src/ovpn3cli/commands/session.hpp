@@ -93,7 +93,7 @@ static std::string statistics_json(ConnectionStats& stats)
 
     for (auto& sd : stats)
     {
-        outdata[sd.key] = sd.value;
+        outdata[sd.key] = (Json::Value::Int64) sd.value;
     }
     std::stringstream res;
     res << outdata;
