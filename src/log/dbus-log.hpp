@@ -158,10 +158,9 @@ namespace openvpn
             {
                 LogWrite("", group, catg, msg);
             }
-            Send("Log", g_variant_new("(uus)",
-                                      (guint) group,
-                                      (guint) catg,
-                                      msg.c_str()));
+            guint gr = (guint) group;
+            guint cg = (guint) catg;
+            Send("Log", g_variant_new("(uus)", gr, cg, msg.c_str()));
         }
 
         virtual void Debug(std::string msg)
