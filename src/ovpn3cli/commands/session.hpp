@@ -316,23 +316,39 @@ static int cmd_session_list(ParsedArgs args)
 
         std::string status_str;
         BackendStatus status;
+        std::string cfgname = "";
         try
         {
             status = sprx.GetLastStatus();
             status_str = "[" + std::to_string((unsigned int) status.major) + ","
                             + std::to_string((unsigned int) status.minor) + "] "
                             + status.major_str + ", " + status.minor_str;
+
+            std::string config_path = sprx.GetStringProperty("config_path");
+            try
+            {
+                OpenVPN3ConfigurationProxy cprx(G_BUS_TYPE_SYSTEM, config_path);
+                cfgname = cprx.GetStringProperty("name");
+            }
+            catch (...)
+            {
+                // Failure is okay here, the profile may be deleted.
+            }
         }
         catch (DBusException &excp)
         {
             status_str = "(No status information available)";
         }
 
-        std::cout << "   Path: " << sessp << std::endl;
-        std::cout << "  Owner: " << owner << std::setw(48 - owner.size())
+        std::cout << "        Path: " << sessp << std::endl;
+        std::cout << "       Owner: " << owner << std::setw(43 - owner.size())
                   << std::setfill(' ') << " "
                   << "PID: " << std::to_string(be_pid) << std::endl;
-        std::cout << " Status: " << status_str << std::endl;
+        if (!cfgname.empty())
+        {
+            std::cout << " Config name: " << cfgname << std::endl;
+        }
+        std::cout << "      Status: " << status_str << std::endl;
         std::cout << "         "
                   << (status.message.empty() ? "(no status message)" : status.message)
                   << std::endl;
