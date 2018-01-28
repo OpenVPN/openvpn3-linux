@@ -34,6 +34,7 @@
 #include "dbus/core.hpp"
 #include "dbus/requiresqueue-proxy.hpp"
 #include "client/statistics.hpp"
+#include "log/log-helpers.hpp"
 
 using namespace openvpn;
 
@@ -98,6 +99,76 @@ struct BackendStatus
     std::string major_str;
     StatusMinor minor;
     std::string minor_str;
+    std::string message;
+};
+
+
+/**
+ * Carries a log event record as reported by a VPN backend client
+ */
+struct LogEvent
+{
+    LogEvent()
+    {
+        reset();
+    }
+
+
+    LogEvent(GVariant *status)
+    {
+        reset();
+        Parse(status);
+    }
+
+    void reset()
+    {
+        group = LogGroup::UNDEFINED;
+        group_str = "";
+        category = LogCategory::UNDEFINED;
+        category_str = "";
+        message = "";
+    }
+
+    void Parse(GVariant *logevent)
+    {
+        GVariant *d = nullptr;
+        unsigned int v = 0;
+
+        d = g_variant_lookup_value(logevent, "log_group", G_VARIANT_TYPE_UINT32);
+        v = g_variant_get_uint32(d);
+        if (v > 0 && v < LogGroup_str.size())
+        {
+            group = (LogGroup) v;
+            group_str = std::string(LogGroup_str[v]);
+        }
+        g_variant_unref(d);
+
+        d = g_variant_lookup_value(logevent, "log_category", G_VARIANT_TYPE_UINT32);
+        v = g_variant_get_uint32(d);
+        if (v > 0 && v < LogCategory_str.size())
+        {
+            category = (LogCategory) v;
+            category_str = std::string(LogCategory_str[v]);
+        }
+        g_variant_unref(d);
+
+        gsize len;
+        d = g_variant_lookup_value(logevent,
+                                   "log_message", G_VARIANT_TYPE_STRING);
+        message = std::string(g_variant_get_string(d, &len));
+        g_variant_unref(d);
+        if (len != message.size())
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
+                                "Failed retrieving log event message text "
+                                "(inconsistent length)");
+        }
+    }
+
+    LogGroup group;
+    std::string group_str;
+    LogCategory category;
+    std::string category_str;
     std::string message;
 };
 
@@ -339,6 +410,20 @@ public:
         return ret;
     }
 
+
+    /**
+     * Retrieve the last log event which has been saved
+     *
+     * @return Returns a populated struct LogEvent with the the complete log
+     *         event.
+     */
+    LogEvent GetLastLogEvent()
+    {
+        GVariant *logev = GetProperty("last_log");
+        LogEvent ret(logev);
+        g_variant_unref(logev);
+        return ret;
+    }
 
     /**
      * Retrieves statistics of a running VPN tunnel.  It is gathered by

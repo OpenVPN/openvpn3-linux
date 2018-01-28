@@ -48,6 +48,7 @@ noinst_PROGRAMS = \
 	fetch-config \
 	fetch-config2 \
 	get-acl \
+	getlastlogevent \
 	getlaststatus \
 	getconnectionstats \
 	signal-listener \
@@ -75,6 +76,8 @@ fetch_config_SOURCES = fetch-config.cpp
 fetch_config2_SOURCES = fetch-config2.cpp
 
 get_acl_SOURCES = get-acl.cpp
+
+getlastlogevent_SOURCES = getlastlogevent.cpp
 
 getlaststatus_SOURCES = getlaststatus.cpp
 
