@@ -94,6 +94,7 @@ const std::array<const std::string, LogGroupCount> LogGroup_str = {
 };
 
 enum class LogCategory : uint_fast8_t {
+        UNDEFINED,              /**< Undefined/not set */
         DEBUG,                  /**< Debug messages */
         VERB2,                  /**< Even more details */
         VERB1,                  /**< More details */
@@ -104,7 +105,8 @@ enum class LogCategory : uint_fast8_t {
         FATAL                   /**< Fatal errors - The current operation is going to stop */
 };
 
-const std::array<const std::string, 8> LogCategory_str = {
+const std::array<const std::string, 9> LogCategory_str = {
+        "[[UNDEFINED]]",        // LogCategory::UNDEFINED
         "DEBUG",                // LogFlags::DEBUG
         "VERB2",                // LogFlags::VERB2
         "VERB1",                // LogFlags::VERB1
