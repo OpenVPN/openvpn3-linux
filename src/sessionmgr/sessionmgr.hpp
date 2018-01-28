@@ -421,7 +421,7 @@ public:
                           << "        <property type='u' name='owner' access='read'/>"
                           << "        <property type='au' name='acl' access='read'/>"
                           << "        <property type='b' name='public_access' access='readwrite'/>"
-                          << "        <property type='s' name='status' access='read'/>"
+                          << "        <property type='a{sv}' name='status' access='read'/>"
                           << "        <property type='a{sv}' name='last_log' access='read'/>"
                           << "        <property type='a{sx}' name='statistics' access='read'/>"
                           << "        <property type='o' name='config_path' access='read'/>"
