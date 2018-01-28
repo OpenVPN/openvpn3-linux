@@ -258,6 +258,15 @@ public:
         simple_call("Connect", "Failed to start a new tunnel");
     }
 
+    /**
+     *  Makes the VPN backend client process disconnect and then
+     *  instantly reconnect to the VPN server
+     */
+    void Restart()
+    {
+        simple_call("Restart", "Failed to restart tunnel");
+    }
+
 
     /**
      *  Disconnects and shuts down the VPN backend process.  This call

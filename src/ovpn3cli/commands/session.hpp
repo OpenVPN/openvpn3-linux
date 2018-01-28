@@ -379,7 +379,8 @@ static int cmd_session_manage(ParsedArgs args)
 {
     const unsigned int mode_pause      = 1 << 1;
     const unsigned int mode_resume     = 1 << 2;
-    const unsigned int mode_disconnect = 1 << 3;
+    const unsigned int mode_restart    = 1 << 3;
+    const unsigned int mode_disconnect = 1 << 4;
     unsigned int mode = 0;
     unsigned int mode_count = 0;
     if (args.Present("pause"))
@@ -392,6 +393,11 @@ static int cmd_session_manage(ParsedArgs args)
         mode |= mode_resume;
         mode_count++;
     }
+    if (args.Present("restart"))
+    {
+        mode |= mode_restart;
+        mode_count++;
+    }
     if (args.Present("disconnect"))
     {
         mode |= mode_disconnect;
@@ -401,13 +407,13 @@ static int cmd_session_manage(ParsedArgs args)
     if (0 == mode_count)
     {
         throw CommandException("session-manage",
-                               "One of --pause, --resume or --disconnect "
+                               "One of --pause, --resume, --restart or --disconnect "
                                "must be present");
     }
     if (1 < mode_count)
     {
         throw CommandException("session-manage",
-                               "--pause, --resume or --disconnect "
+                               "--pause, --resume, --restart or --disconnect "
                                "cannot be used together");
     }
 
@@ -434,6 +440,12 @@ static int cmd_session_manage(ParsedArgs args)
         case mode_resume:
             session.Resume();
             std::cout << "Initiated session resume: " << sesspath
+                      << std::endl;
+            return 0;
+
+        case mode_restart:
+            session.Restart();
+            std::cout << "Initiated session restart: " << sesspath
                       << std::endl;
             return 0;
 
@@ -657,6 +669,7 @@ void RegisterCommands_session(Commands& ovpn3)
                    arghelper_session_paths);
     cmd->AddOption("pause", 'P', "Pauses the VPN session");
     cmd->AddOption("resume", 'R', "Resumes a paused VPN session");
+    cmd->AddOption("restart", "Disconnect and reconnect a running VPN session");
     cmd->AddOption("disconnect", 'D', "Disconnects a VPN session");
 
     //
