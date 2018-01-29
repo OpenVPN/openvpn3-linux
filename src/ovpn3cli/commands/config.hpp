@@ -512,15 +512,19 @@ static int cmd_config_remove(ParsedArgs args)
 
     try
     {
-        std::cout << "This operation CANNOT be undone and removes this"
-                  << "configuration profile completely."
-                  << std::endl;
-        std::cout << "Are you sure you want to do this? "
-                  << "(enter yes in upper case) ";
-
         std::string response;
-        std::cin >> response;
-        if ("YES" == response)
+        if (!args.Present("force"))
+        {
+            std::cout << "This operation CANNOT be undone and removes this"
+                      << "configuration profile completely."
+                      << std::endl;
+            std::cout << "Are you sure you want to do this? "
+                      << "(enter yes in upper case) ";
+
+            std::cin >> response;
+        }
+
+        if ("YES" == response || args.Present("force"))
         {
             OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM,
                                             args.GetValue("path", 0));
@@ -625,6 +629,8 @@ void RegisterCommands_config(Commands& ovpn3)
     cmd->AddOption("path", 'o', "OBJ-PATH", true,
                    "Path to the configuration in the configuration manager",
                    arghelper_config_paths);
+    cmd->AddOption("force",
+                   "Force the deletion process without asking for confirmation");
 
     //
     //  config-list command
