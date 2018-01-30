@@ -69,4 +69,13 @@ std::string arghelper_session_paths()
     }
     return res.str();
 }
+
+
+/**
+ *  Provides true/false suggestions for command line completion
+ */
+std::string arghelper_boolean()
+{
+    return "false true";
+}
 #endif // OPENVPN3_ARGHELPERS_HPP

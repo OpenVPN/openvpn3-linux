@@ -603,9 +603,11 @@ void RegisterCommands_config(Commands& ovpn3)
     cmd->AddOption("revoke", 'R', "<UID | username>", true,
                    "Revoke this user access from this configuration profile");
     cmd->AddOption("public-access", "<true|false>", true,
-                   "Set/unset the public access flag");
+                   "Set/unset the public access flag",
+                   arghelper_boolean);
     cmd->AddOption("lock-down", "<true|false>", true,
-                   "Set/unset the lock-down flag.  Will disable config retrieval for users");
+                   "Set/unset the lock-down flag.  Will disable config retrieval for users",
+                   arghelper_boolean);
     cmd->AddOption("seal", 'S',
                    "Make the configuration profile permanently read-only");
 

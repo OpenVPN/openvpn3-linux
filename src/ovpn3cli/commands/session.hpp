@@ -688,7 +688,8 @@ void RegisterCommands_session(Commands& ovpn3)
     cmd->AddOption("revoke", 'R', "<UID | username>", true,
                    "Revoke this user access from this session");
     cmd->AddOption("public-access", "<true|false>", true,
-                   "Set/unset the public access flag");
+                   "Set/unset the public access flag",
+                   arghelper_boolean);
 
     //
     //  session-stats command
