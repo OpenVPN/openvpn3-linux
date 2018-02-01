@@ -159,6 +159,12 @@ public:
         }
     }
 
+    void SetName(std::string name)
+    {
+        SetProperty("name", name);
+    }
+
+
     void SetAlias(std::string aliasname)
     {
         SetProperty("alias", aliasname);

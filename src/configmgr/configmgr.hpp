@@ -344,7 +344,7 @@ public:
             "        <method name='Remove'/>"
             "        <property type='u' name='owner' access='read'/>"
             "        <property type='au' name='acl' access='read'/>"
-            "        <property type='s' name='name' access='read'/>"
+            "        <property type='s' name='name' access='readwrite'/>"
             "        <property type='b' name='valid' access='read'/>"
             "        <property type='b' name='readonly' access='read'/>"
             "        <property type='b' name='single_use' access='read'/>"
@@ -738,6 +738,12 @@ public:
                                                 obj_path, intf_name, property_name,
                                                 err.getRawError().c_str());
                 }
+            }
+            else if (("name" == property_name) && conn)
+            {
+                gsize len = 0;
+                name = std::string(g_variant_get_string(value, &len));
+                ret = build_set_property_response(property_name, name);
             }
             else if (("locked_down" == property_name) && conn)
             {
