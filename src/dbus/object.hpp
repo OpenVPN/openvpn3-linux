@@ -231,7 +231,7 @@ namespace openvpn
                 }
                 else
                 {
-                    if (NULL != error)
+                    if (NULL != *error)
                     {
                         // FIXME: Consider if these errors should just go to
                         //        the client or if we should send and empty
