@@ -156,30 +156,31 @@ static int cmd_configs_list(ParsedArgs args)
 
 
 /**
- *  openvpn3 config-alias command
+ *  openvpn3 config-manage command
  *
- *  Manages configuration profile aliases.  An alias can be used instead of
- *  the full D-Bus object path.
+ *  Manages configuration profile properties.
  *
  * @param args  ParsedArgs object containing all related options and arguments
  * @return Returns the exit code which will be returned to the calling shell
  *
  */
-static int cmd_config_alias(ParsedArgs args)
+static int cmd_config_manage(ParsedArgs args)
 {
     if (!args.Present("path"))
     {
-        throw CommandException("config-alias", "No configuration path provided");
+        throw CommandException("config-manage", "No configuration path provided");
     }
 
-    if (!args.Present("name") && !args.Present("delete"))
+    if (!args.Present("alias") && !args.Present("alias-delete"))
     {
-        throw CommandException("config-alias", "Alias --name or --delete argument provided");
+        throw CommandException("config-manage",
+                               "An operation argument is required (--alias or --alias-delete");
     }
 
-    if (args.Present("name") && args.Present("delete"))
+    if (args.Present("alias") && args.Present("alias-delete"))
     {
-        throw CommandException("Cannot provide both --name and --delete at the same time");
+        throw CommandException("config-manage",
+                               "Cannot provide both --alias and --alias-delete at the same time");
     }
 
     try
@@ -187,28 +188,31 @@ static int cmd_config_alias(ParsedArgs args)
         std::string path = args.GetValue("path", 0);
         OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path);
 
-        if (args.Present("name"))
+        if (args.Present("alias"))
         {
-            std::string alias = args.GetValue("name", 0);
+            std::string alias = args.GetValue("alias", 0);
             conf.SetAlias(alias);
             std::cout << "Alias set to '" << alias << "' " << std::endl;
+            return 0;
         }
-        else if (args.Present("delete"))
+
+        if (args.Present("alias-delete"))
         {
-            throw CommandException("config-alias",
+            throw CommandException("config-manage",
                                    "Deleting configuration aliases is not yet implemented");
             conf.SetAlias("");
             std::cout << "Alias is deleted" << std::endl;
+            return 0;
         }
-        return 0;
+        throw CommandException("config-manage", "No operation option recognised");
     }
     catch (DBusPropertyException& err)
     {
-        throw CommandException("config-alias", err.getRawError());
+        throw CommandException("config-manage", err.getRawError());
     }
     catch (DBusException& err)
     {
-        throw CommandException("config-alias", err.getRawError());
+        throw CommandException("config-manage", err.getRawError());
     }
     catch (...)
     {
@@ -575,16 +579,16 @@ void RegisterCommands_config(Commands& ovpn3)
                    "Make the configuration file persistent through boots");
 
     //
-    //  config-alias command
-    cmd = ovpn3.AddCommand("config-alias",
-                           "Manage configuration aliases",
-                           cmd_config_alias);
-    cmd->AddOption("path", 'o', "OBJ-PATH", true,
+    //  config-manage command
+    cmd = ovpn3.AddCommand("config-manage",
+                           "Manage configuration properties",
+                           cmd_config_manage);
+    cmd->AddOption("path", 'o', "CONFIG-PATH", true,
                    "Path to the configuration in the configuration manager",
                     arghelper_config_paths);
-    cmd->AddOption("name", 'n', "ALIAS-NAME", true,
-                   "Alias name to use for this configuration");
-    cmd->AddOption("delete", 'D',
+    cmd->AddOption("alias", 'n', "ALIAS-NAME", true,
+                   "Set an alias name to use for this configuration");
+    cmd->AddOption("alias-delete", 'D',
                    "Delete this alias");
 
     //
