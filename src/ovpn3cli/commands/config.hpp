@@ -171,10 +171,11 @@ static int cmd_config_manage(ParsedArgs args)
         throw CommandException("config-manage", "No configuration path provided");
     }
 
-    if (!args.Present("alias") && !args.Present("alias-delete"))
+    if (!args.Present("alias") && !args.Present("alias-delete")
+        && !args.Present("rename"))
     {
         throw CommandException("config-manage",
-                               "An operation argument is required (--alias or --alias-delete");
+                               "An operation argument is required (--alias, --alias-delete or --rename");
     }
 
     if (args.Present("alias") && args.Present("alias-delete"))
@@ -202,6 +203,13 @@ static int cmd_config_manage(ParsedArgs args)
                                    "Deleting configuration aliases is not yet implemented");
             conf.SetAlias("");
             std::cout << "Alias is deleted" << std::endl;
+            return 0;
+        }
+
+        if (args.Present("rename"))
+        {
+            conf.SetName(args.GetValue("rename", 0));
+            std::cout << "Configuration renamed" << std::endl;
             return 0;
         }
         throw CommandException("config-manage", "No operation option recognised");
@@ -590,6 +598,8 @@ void RegisterCommands_config(Commands& ovpn3)
                    "Set an alias name to use for this configuration");
     cmd->AddOption("alias-delete", 'D',
                    "Delete this alias");
+    cmd->AddOption("rename", 'r', "NEW-CONFIG-NAME", true,
+                   "Renames the configuration");
 
     //
     //  config-acl command
