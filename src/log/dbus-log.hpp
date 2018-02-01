@@ -215,7 +215,7 @@ namespace openvpn
     {
     public:
         LogConsumer(GDBusConnection * dbuscon, std::string interf, std::string objpath)
-            : DBusSignalSubscription(dbuscon, "", interf, "", "Log"),
+            : DBusSignalSubscription(dbuscon, "", interf, objpath, "Log"),
               FileLog()
         {
         }
