@@ -55,7 +55,7 @@ PKG_CHECK_MODULES(
         [LIBLZ4],
         [liblz4],
         [have_lz4="yes"],
-        []
+        [AC_MSG_ERROR([lz4 package not found. Is the development package installed?])]
 )
 
 dnl
@@ -65,7 +65,7 @@ PKG_CHECK_MODULES(
         [LIBJSONCPP],
         [jsoncpp],
         [have_jsoncpp="yes"],
-        []
+        [AC_MSG_ERROR([jsoncpp package not found. Is the development package installed?])]
 )
 
 dnl
@@ -75,7 +75,7 @@ PKG_CHECK_MODULES(
         [LIBGLIBGIO],
         [gio-2.0],
         [have_glibgio="yes"],
-        []
+        [AC_MSG_ERROR([glib2/gio package not found. Is the glib2 development package installed?])]
 )
 
 dnl
@@ -85,7 +85,7 @@ PKG_CHECK_MODULES(
         [LIBUUID],
         [uuid],
         [have_uuid="yes"],
-        []
+        [AC_MSG_ERROR([libuuid package not found. Is the development package installed?])]
 )
 
 
