@@ -47,9 +47,6 @@
 
 using namespace openvpn;
 
-#define GUI_VERSION_STRING "0.0.1 (Linux)"
-
-
 /**
  *  Class managing a specific VPN client tunnel.  This object has its own
  *  unique D-Bus bus name and object path and is designed to only be
@@ -816,7 +813,11 @@ private:
                                   ProfileMerge::FOLLOW_NONE,
                                   ProfileParseLimits::MAX_LINE_SIZE,
                                   ProfileParseLimits::MAX_PROFILE_SIZE);
-        vpnconfig.guiVersion = openvpn::platform_string("oepnvpn3-service-client", GUI_VERSION_STRING);
+#ifdef CONFIGURE_GIT_REVISION
+        vpnconfig.guiVersion = openvpn::platform_string(PACKAGE_NAME, "git:" CONFIGURE_GIT_REVISION CONFIGURE_GIT_FLAGS);
+#else
+        vpnconfig.guiVersion = openvpn::platform_string(PACKAGE_NAME, PACKAGE_GUIVERSION);
+#endif
         vpnconfig.info = true;
         vpnconfig.content = pm.profile_content();
     }

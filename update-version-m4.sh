@@ -29,16 +29,19 @@ VERSION="$(git describe --always --tags)"
 if [ "$(echo ${VERSION} | cut -b-1)" != "v" ]; then
 	# Presume not a version tag, so use commit reference
 	VERSION="$(git rev-parse --symbolic-full-name HEAD | cut -d/ -f3-)_$(git rev-parse --short=16 HEAD)"
+	GUIVERSION="$(echo $VERSION | sed 's/_/:/')"
 else
 	VERSION="${VERSION:1}"
+	GUIVERSION="${VERSION}"
 fi
 echo "Version: $VERSION"
 
 # Generate version.m4
 {
     cat <<EOF
-define([PRODUCT_NAME], [OpenVPN 3 (Linux)])
+define([PRODUCT_NAME], [OpenVPN 3/Linux])
 define([PRODUCT_VERSION], [${VERSION}])
+define([PRODUCT_GUIVERSION], [${GUIVERSION}])
 define([PRODUCT_TARNAME], [openvpn3-linux])
 define([PRODUCT_BUGREPORT], [openvpn-devel@lists.sourceforge.net])
 EOF

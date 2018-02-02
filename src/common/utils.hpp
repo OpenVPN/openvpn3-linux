@@ -130,7 +130,7 @@ std::string get_version(std::string component)
     std::stringstream ver;
 
 #ifndef CONFIGURE_GIT_REVISION
-    ver << PACKAGE_STRING;
+    ver << PACKAGE_NAME << " " << PACKAGE_GUIVERSION;
 #else
     ver << PACKAGE_NAME << " "
         << "git:" << CONFIGURE_GIT_REVISION << CONFIGURE_GIT_FLAGS;
