@@ -36,6 +36,7 @@
 #include "lookup.hpp"
 #include "commands/config.hpp"
 #include "commands/session.hpp"
+#include "commands/log.hpp"
 
 
 /**
@@ -65,6 +66,7 @@ int main(int argc, char **argv)
     //  Register commands found in ./commands/*.hpp
     RegisterCommands_config(openvpn3);
     RegisterCommands_session(openvpn3);
+    RegisterCommands_log(openvpn3);
 
     try
     {
