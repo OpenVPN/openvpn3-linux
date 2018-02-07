@@ -67,6 +67,12 @@ void drop_root()
             throw std::runtime_error("Could not set the new group ID (" + std::to_string(gid) + ") "
                                      + "for the user " + std::string(OPENVPN_GROUP));
         }
+
+        // Remove any potential supplementary groups
+        if (-1 == setgroups(0, NULL))
+        {
+            throw std::runtime_error("Could not remove supplementary groups");
+        }
     }
 
     if (geteuid() == 0)
