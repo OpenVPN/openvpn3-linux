@@ -23,7 +23,10 @@ ACLOCAL_AMFLAGS = -I m4
 # Keep these environment variables when running 'make distcheck'
 AM_DISTCHECK_CONFIGURE_FLAGS = OPENVPN3_CORE_SOURCEDIR="${OPENVPN3_CORE_SOURCEDIR}" ASIO_SOURCEDIR="${ASIO_SOURCEDIR}" CXXFLAGS="${CXXFLAGS}"
 
-SUBDIRS = src/service-autostart src/policy src/tests src/utils doxygen
+SUBDIRS = src/service-autostart src/policy src/utils doxygen
+if BUILD_TESTS
+SUBDIRS += src/tests
+endif
 
 MAINTAINERCLEANFILES = \
         config.log config.status \

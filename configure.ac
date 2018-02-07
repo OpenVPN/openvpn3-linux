@@ -1,7 +1,7 @@
 dnl  OpenVPN 3 Linux client -- Next generation OpenVPN client
 dnl
-dnl  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-dnl  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+dnl  Copyright (C) 2017-2018 OpenVPN Inc. <sales@openvpn.net>
+dnl  Copyright (C) 2017-2018 David Sommerseth <davids@openvpn.net>
 dnl
 dnl  This program is free software: you can redistribute it and/or modify
 dnl  it under the terms of the GNU General Public License as published by
@@ -261,6 +261,17 @@ fi
 AC_MSG_RESULT([checking if this is a git checkout ... ${GIT_CHECKOUT}])
 AM_CONDITIONAL([GIT_CHECKOUT], [test "${GIT_CHECKOUT}" = "yes"])
 
+dnl
+dnl   Make it possible to not build the various test programs by default
+dnl
+AC_ARG_ENABLE(
+    [build-test-progs],
+    [AS_HELP_STRING([--disable-build-test-progs],
+                    [disable building various test programs by default])],
+    ,
+    [enable_build_test_progs="yes"]
+)
+AM_CONDITIONAL([BUILD_TESTS], [test "${enable_build_test_progs}" = "yes"])
 
 dnl
 dnl  Configuring common default autoconf/automake files
