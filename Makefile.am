@@ -1,7 +1,7 @@
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
-#  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-#  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2017-2018 OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2017-2018 David Sommerseth <davids@openvpn.net>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -43,6 +43,8 @@ CLEANFILES = \
         config-version.h *~
 
 EXTRA_DIST = \
+	COPYRIGHT.md \
+	README.md \
 	src/shell/bash_completion-openvpn3 \
 	openvpn3-core \
 	vendor
