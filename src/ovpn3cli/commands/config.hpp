@@ -431,6 +431,10 @@ static int cmd_config_acl(ParsedArgs args)
                       << (conf.GetBoolProperty("readonly") ? "yes" : "no")
                       << std::endl;
 
+            std::cout << "           Locked down: "
+                      << (conf.GetLockedDown() ? "yes" : "no")
+                      << std::endl;
+
             std::cout << "         Public access: "
                       << (conf.GetPublicAccess() ? "yes" : "no")
                       << std::endl;
