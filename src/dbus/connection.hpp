@@ -17,6 +17,12 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
+/**
+ * @file   connection.hpp
+ *
+ * @brief  Main D-Bus connection handling
+ *
+ */
 #ifndef OPENVPN3_DBUS_CONNECTION_HPP
 #define OPENVPN3_DBUS_CONNECTION_HPP
 
@@ -81,6 +87,9 @@ namespace openvpn
         }
 
 
+        /**
+         *  Open a connection to the D-Bus infrastructure
+         */
         void Connect()
         {
             if (connected)
@@ -104,12 +113,23 @@ namespace openvpn
         }
 
 
+        /**
+         *  Enables signalling which will shutdown the connection and the
+         *  program if it has been idling too long.  It is the IdleCheck
+         *  object which decides what is idle.
+         *
+         * @param chk  Smart pointer to an IdleCheck object which tracks the
+         *             idle state
+         */
         void EnableIdleCheck(IdleCheck::Ptr& chk) noexcept
         {
             idle_checker = chk.get();
         }
 
 
+        /**
+         *  Configures and prepares to connect to the D-Bus infrastructure
+         */
         void Setup()
         {
             if (!connected)
@@ -144,12 +164,24 @@ namespace openvpn
         }
 
 
+        /**
+         *  Get the D-Bus bus type this connection object is configured for
+         *
+         * @return GBusType of the configured bus type.
+         */
         GBusType GetBusType() noexcept
         {
             return bus_type;
         }
 
 
+        /**
+         *  Get a glib2/gio GDBusConnection pointer to the established
+         *  connection.
+         *
+         * @return  GDBUsConnection pointer to the currently extablished
+         *          D-Bus.  In case of errors, an exception will be thrown.
+         */
         GDBusConnection * GetConnection()
         {
             if (!connected)
@@ -160,6 +192,12 @@ namespace openvpn
         }
 
 
+        /**
+         *   Return the numeric bus identification for this connection
+         *
+         * @return  Returns an unsigned integer referencing the current bus ID.
+         *          In case of errors, an exception is thrown.
+         */
         guint GetBusID()
         {
             if (!connected)
@@ -170,6 +208,14 @@ namespace openvpn
         }
 
 
+        /**
+         *   Retrieve the configured busname for this connection.  This can
+         *   only be called on connections which is configured with a bus name.
+         *   For connections-only setups, calling this method is an error.
+         *
+         * @return  Returns a std::string containing the configured D-Bus
+         *          bus name.  In case of errors an exception is thrown.
+         */
         std::string GetBusName()
         {
             if (connection_only)
@@ -180,6 +226,16 @@ namespace openvpn
         }
 
 
+        /**
+         *   Retrieve the configured root object path for this connection.
+         *   This can only be called on connections which is configured with a
+         *   bus name. For connections-only setups, calling this method is an
+         *   error.
+         *
+         * @return  Returns a std::string containing the configured D-Bus
+         *          root object path.  In case of errors an exception is
+         *          thrown.
+         */
         std::string GetRootPath()
         {
             if (connection_only)
@@ -190,6 +246,18 @@ namespace openvpn
         }
 
 
+        /**
+         *   Retrieve the configured default interface to use for this
+         *   connection and D-Bus object.
+         *
+         *   This can only be called on connections which is configured with a
+         *   bus name. For connections-only setups, calling this method is an
+         *   error.
+         *
+         * @return  Returns a std::string containing the configured default
+         *          D-Bus interface for this connection.  In case of errors an
+         *          exception is thrown.
+         */
         std::string GetDefaultInterface()
         {
             if (connection_only)
@@ -232,7 +300,7 @@ namespace openvpn
 
 
     protected:
-        bool keep_connection;
+        bool keep_connection;  /**< Do not disconnect when DBus connection object is removed */
         IdleCheck *idle_checker;
 
         void close_and_cleanup() noexcept
@@ -277,6 +345,17 @@ namespace openvpn
         guint busid;
         guint object_cb_id;
 
+
+        /**
+         *  C wrapper function for the GDBus g_bus_own_name_on_connection()
+         *  callback function.  This is called once the D-Bus library managed
+         *  to retrieve the requested bus name.
+         *
+         * @param conn      D-Bus connection pointer calling this function
+         * @param name      char * containing the bus name aqcuired
+         * @param this_ptr  void * to the current object.  This *must* point
+         *                  at a valid DBus object which handles this bus-name.
+         */
         static void int_callback_name_acquired(GDBusConnection *conn, const gchar *name, gpointer this_ptr)
         {
             class openvpn::DBus *obj = (class DBus *) this_ptr;
@@ -284,6 +363,16 @@ namespace openvpn
         }
 
 
+        /**
+         *  C wrapper function for the GDBus g_bus_own_name_on_connection()
+         *  callback function.  This is called once the D-Bus library managed
+         *  to retrieve the requested bus name.
+         *
+         * @param conn      D-Bus connection pointer calling this function
+         * @param name      char * containing the bus name aqcuired
+         * @param this_ptr  void * to the current object.  This *must* point
+         *                  at a valid DBus object which handles this bus-name.
+         */
         static void int_callback_name_lost(GDBusConnection *conn, const gchar *name, gpointer this_ptr)
         {
             class DBus *obj = (class DBus *) this_ptr;
