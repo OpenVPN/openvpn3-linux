@@ -308,6 +308,15 @@ namespace openvpn
         }
 
 
+        guint64 GetUInt64Property(std::string property)
+        {
+            GVariant *res = GetProperty(property);
+            guint64 ret = g_variant_get_uint64(res);
+            g_variant_unref(res);
+            return ret;
+        }
+
+
         void SetProperty(std::string property, GVariant *value)
         {
             if (property.empty())
