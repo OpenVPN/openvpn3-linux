@@ -44,7 +44,6 @@ represented as a string blob containing everything.
 | In        | persistent  | boolean     | If set to true, the configuration will be saved to disk               |
 | Out       | config_path | object path | A unique D-Bus object path for the imported VPN configuration profile |
 
-
 ### Method: `net.openvpn.v3.configuration.FetchAvailableConfigs`
 
 This method will return an array of object paths to configuration objects the
@@ -84,6 +83,9 @@ node /net/openvpn/v3/configuration/${UNIQUE_ID} {
       readonly u owner = 2001;
       readonly au acl = [];
       readonly s name;
+      readonly t import_timestamp;
+      readonly t last_used_timestamp;
+      readonly u used_count;
       readonly b valid;
       readonly b readonly;
       readonly b single_use;
@@ -194,9 +196,14 @@ success. If an error occurs, a D-Bus error is returned.
 | owner         | unsigned integer | Read-only  | The UID value of the user which did the import      |
 | acl           | array(integer)   | Read-only  | An array of UID values granted access               |
 | name          | string           | Read-only  | Contains the user friendly name of the configuration profile |
+| import_timestamp | uint64        | Read-only  | Unix Epoch timestamp of the import time             |
+| last_used_timestamp | uint64     | Read-only  | Unix Epoch timestamp of the last time it Fetch was called [1] |
+| used_count    | unsigned integer | Read-only  | Number of times Fetch has been called [1]           |
 | readonly      | boolean          | Read-only  | If set to true, the configuration have been sealed and can no longer be modified |
 | single_use    | boolean          | Read-only  | If set to true, this configuration profile will be automatically removed after the first `Fetch` call. This is intended to be used by command line clients providing a similar user experience as the OpenVPN 2.x versions provides. |
 | persistent    | boolean          | Read-only  | If set to true, this configuration will be saved to disk by the configuration manager. The location of the file storage is managed by the configuration manager itself and the configuration manager will load persistent profiles each time it starts |
 | locked_down   | boolean          | Read/Write | If set to true, only the owner and root user can retrieve the configuration file.  Other users granted access can only use this profile to start a new tunnel |
 | public_access | boolean          | Read/Write | If set to true, access control is disabled. But only owner may change this property, modify the ACL or delete the configuration |
 | alias         | string           | Read/Write | This can be used to have a more user friendly reference to a VPN profile than the D-Bus object path. This is primarily intended for command line interfaces where this alias name can be used instead of the full unique D-Bus object path to this VPN profile |
+
+  [1] It will track/count of ``Fetch`` usage only if the calling user is root

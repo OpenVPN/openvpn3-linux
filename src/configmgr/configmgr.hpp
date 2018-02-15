@@ -22,6 +22,7 @@
 
 #include <functional>
 #include <map>
+#include <ctime>
 
 #include "common/core-extensions.hpp"
 #include "dbus/core.hpp"
@@ -296,6 +297,9 @@ public:
           DBusCredentials(dbuscon, creator),
           remove_callback(remove_callback),
           name(""),
+          import_tstamp(std::time(nullptr)),
+          last_use_tstamp(0),
+          used_count(0),
           valid(false),
           readonly(false),
           single_use(false),
@@ -345,6 +349,9 @@ public:
             "        <property type='u' name='owner' access='read'/>"
             "        <property type='au' name='acl' access='read'/>"
             "        <property type='s' name='name' access='readwrite'/>"
+            "        <property type='t' name='import_timestamp' access='read' />"
+            "        <property type='t' name='last_used_timestamp' access='read' />"
+            "        <property type='u' name='used_count' access='read' />"
             "        <property type='b' name='valid' access='read'/>"
             "        <property type='b' name='readonly' access='read'/>"
             "        <property type='b' name='single_use' access='read'/>"
@@ -411,14 +418,21 @@ public:
                                                       g_variant_new("(s)",
                                                                     options.string_export().c_str()));
 
-                // If this config is tagged as single-use only and the
-                // user fetching this config is root, then we delete this
-                // config from memory.
-                if (single_use && (GetUID(sender) == 0))
+                // If the fetching user is root, we consider this
+                // configuration to be "used"
+                if (GetUID(sender) == 0)
                 {
-                    LogVerb2("Single-use configuration fetched");
-                    RemoveObject(conn);
-                    delete this;
+                    // If this config is tagged as single-use only then we delete this
+                    // config from memory.
+                    if (single_use)
+                    {
+                        LogVerb2("Single-use configuration fetched");
+                        RemoveObject(conn);
+                        delete this;
+                        return;
+                    }
+                    used_count++;
+                    last_use_tstamp = std::time(nullptr);
                 }
                 return;
             }
@@ -610,11 +624,14 @@ public:
                                      GError **error)
     {
         IdleCheck_UpdateTimestamp();
+
+        // Properties available for everyone
         if ("owner" == property_name)
         {
             return GetOwner();
         }
 
+        // Properties only available for approved users
         try {
             CheckACL(sender);
 
@@ -639,6 +656,18 @@ public:
             else if ("name"  == property_name)
             {
                 ret = g_variant_new_string (name.c_str());
+            }
+            else if( "import_timestamp" == property_name)
+            {
+                return g_variant_new_uint64 (import_tstamp);
+            }
+            else if( "last_used_timestamp" == property_name)
+            {
+                return g_variant_new_uint64 (last_use_tstamp);
+            }
+            else if( "used_count" == property_name)
+            {
+                return g_variant_new_uint32 (used_count);
             }
             else if ("alias" == property_name)
             {
@@ -784,6 +813,9 @@ public:
 private:
     std::function<void()> remove_callback;
     std::string name;
+    std::time_t import_tstamp;
+    std::time_t last_use_tstamp;
+    unsigned int used_count;
     bool valid;
     bool readonly;
     bool single_use;
