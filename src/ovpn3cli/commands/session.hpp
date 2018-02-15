@@ -341,6 +341,10 @@ static int cmd_session_list(ParsedArgs args)
         }
 
         std::cout << "        Path: " << sessp << std::endl;
+
+        std::time_t sess_created = sprx.GetUInt64Property("session_created");
+        std::cout << "     Created: " << std::asctime(std::localtime(&sess_created));
+
         std::cout << "       Owner: " << owner << std::setw(43 - owner.size())
                   << std::setfill(' ') << " "
                   << "PID: " << std::to_string(be_pid) << std::endl;
