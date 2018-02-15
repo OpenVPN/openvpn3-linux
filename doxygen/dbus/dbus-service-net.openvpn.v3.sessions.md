@@ -106,6 +106,7 @@ node /net/openvpn/v3/sessions/${UNIQUE_ID} {
           s message);
     properties:
       readonly u owner;
+      readonly t session_created;
       readonly au acl;
       readwrite b public_access;
       readonly s status;
@@ -280,6 +281,7 @@ documentation](dbus-logging.md) for details on this signal.
 | Name          | Type             | Read/Write | Description                                         |
 |---------------|------------------|:----------:|-----------------------------------------------------|
 | owner         | unsigned integer | Read-only  | The UID value of the user which did the import      |
+| session_created| uint64          | Read-only  | Unix Epoc timestamp of when the session was created |
 | acl           | array(integer)   | Read-only  | An array of UID values granted access               |
 | public_access | boolean          | Read/Write | If set to true, access control is disabled. But only owner may change this property, modify the ACL or delete the configuration |
 | status        | dictionary       | Read-only  | Contains the last processed StatusChange signal |

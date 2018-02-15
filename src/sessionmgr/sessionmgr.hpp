@@ -35,6 +35,7 @@
 
 #include <cstring>
 #include <functional>
+#include <ctime>
 
 #include "openvpn/common/likely.hpp"
 
@@ -376,6 +377,7 @@ public:
           remove_callback(remove_callback),
           be_proxy(nullptr),
           recv_log_events(false),
+          session_created(std::time(nullptr)),
           config_path(cfg_path),
           sig_statuschg(nullptr),
           sig_logevent(nullptr),
@@ -419,6 +421,7 @@ public:
                           << GetStatusChangeIntrospection()
                           << GetLogIntrospection()
                           << "        <property type='u' name='owner' access='read'/>"
+                          << "        <property type='t' name='session_created' access='read'/>"
                           << "        <property type='au' name='acl' access='read'/>"
                           << "        <property type='b' name='public_access' access='readwrite'/>"
                           << "        <property type='a{sv}' name='status' access='read'/>"
@@ -875,6 +878,10 @@ public:
                             "Logging not enabled");
             }
         }
+        else if ("session_created" == property_name)
+        {
+            ret = g_variant_new_uint64(session_created);
+        }
         else if ("status" == property_name)
         {
             ret = NULL;
@@ -1046,6 +1053,7 @@ private:
     std::function<void()> remove_callback;
     DBusProxy *be_proxy;
     bool recv_log_events;
+    std::time_t session_created;
     std::string config_path;
     SessionStatusChange *sig_statuschg;
     SessionLogEvent *sig_logevent;
