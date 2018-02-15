@@ -153,8 +153,12 @@ static int cmd_configs_list(ParsedArgs args)
         imported.erase(imported.find_last_not_of(" \n")+1); // rtrim
 
         std::time_t last_u_tstamp = cprx.GetUInt64Property("last_used_timestamp");
-        std::string last_used(std::asctime(std::localtime(&last_u_tstamp)));
-        last_used.erase(last_used.find_last_not_of(" \n")+1);  // rtrim
+        std::string last_used;
+        if (last_u_tstamp > 0)
+        {
+            last_used = std::asctime(std::localtime(&last_u_tstamp));
+            last_used.erase(last_used.find_last_not_of(" \n")+1);  // rtrim
+        }
         unsigned int used_count = cprx.GetUIntProperty("used_count");
 
         std::cout << cfg << std::endl;
