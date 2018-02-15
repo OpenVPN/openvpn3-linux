@@ -119,11 +119,15 @@ static int cmd_configs_list(ParsedArgs args)
     OpenVPN3ConfigurationProxy confmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration );
 
     std::cout << "Configuration path" << std::endl;
-    std::cout << "Name" << std::setw(32-4) << " "
-              << "Alias" << std::setw(16-5) << " "
-              << "Owner" << std::setw(16-5)
+    std::cout << "Imported" << std::setw(32-8) << std::setfill(' ') << " "
+              << "Last used" << std::setw(26-9) << " "
+              << "Used"
               << std::endl;
-    std::cout << std::setw(32+16+16+2) << std::setfill('-') << "-" << std::endl;
+    std::cout << "Name" << std::setw(32-4) << " "
+              << "Alias" << std::setw(26-5) << " "
+              << "Owner"
+              << std::endl;
+    std::cout << std::setw(32+26+18+2) << std::setfill('-') << "-" << std::endl;
 
     bool first = true;
     for (auto& cfg : confmgr.FetchAvailableConfigs())
@@ -144,13 +148,26 @@ static int cmd_configs_list(ParsedArgs args)
         std::string alias = cprx.GetStringProperty("alias");
         std::string user = lookup_username(cprx.GetUIntProperty("owner"));
 
+        std::time_t imp_tstamp = cprx.GetUInt64Property("import_timestamp");
+        std::string imported(std::asctime(std::localtime(&imp_tstamp)));
+        imported.erase(imported.find_last_not_of(" \n")+1); // rtrim
+
+        std::time_t last_u_tstamp = cprx.GetUInt64Property("last_used_timestamp");
+        std::string last_used(std::asctime(std::localtime(&last_u_tstamp)));
+        last_used.erase(last_used.find_last_not_of(" \n")+1);  // rtrim
+        unsigned int used_count = cprx.GetUIntProperty("used_count");
+
         std::cout << cfg << std::endl;
-        std::cout << name << std::setw(32 - name.size()) << std::setfill(' ') << " "
-                  << alias << std::setw(16 - alias.size()) << " "
-                  << user << std::setw(16)
+        std::cout << imported << std::setw(32 - imported.size()) << std::setfill(' ') << " "
+                  << last_used <<  std::setw(26 - last_used.size()) << " "
+                  << std::to_string(used_count)
+                  << std::endl;
+        std::cout << name << std::setw(32 - name.size()) << " "
+                  << alias << std::setw(26 - alias.size()) << " "
+                  << user
                   << std::endl;
     }
-    std::cout << std::setw(32+16+16+3-1) << std::setfill('-') << "-" << std::endl;
+    std::cout << std::setw(32+26+18+2) << std::setfill('-') << "-" << std::endl;
     return 0;
 }
 
