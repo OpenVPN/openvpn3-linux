@@ -260,7 +260,8 @@ private:
      */
     virtual void log(const ClientAPI::LogInfo& log)
     {
-        signal->LogVerb1(log.text);
+        // Log events going via log() are to be considered debug information
+        signal->Debug(log.text);
     }
 
 
