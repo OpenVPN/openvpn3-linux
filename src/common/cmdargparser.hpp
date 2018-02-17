@@ -950,6 +950,40 @@ public:
      *  information (stored in a ParsedArgs object) is sent to the callback
      *  function of this object.
      *
+     *  This variant allows defining how many arguments/options should be
+     *  skipped before the argument parser starts the processing.
+     *
+     * @param arg0   std::string containing the basic name of the current
+     *               binary
+     * @param skip   Number of argument elements to skip
+     * @param argc   int value containing number of arguments in argv; this
+     *               mimics the standard C/C++ way of argument passing
+     * @param argv   char ** string array with all the privded arguments.
+     *
+     * @return  Returns the same exit code as the callback function returned.
+     */
+    virtual int RunCommand(const std::string arg0, unsigned int skip,
+                           int argc, char **argv)
+    {
+        try {
+            ParsedArgs cmd_args = parse_commandline(arg0, skip, argc, argv);
+
+            // Run the callback function.
+            return cmd_args.GetCompleted() ? command_func(cmd_args) : 0;
+        }
+        catch (...)
+        {
+            throw;
+        }
+    }
+
+
+    /**
+     *  This starts the command line parsing for this specific command.
+     *  Once the command line argument parsing has succeeded the gathered
+     *  information (stored in a ParsedArgs object) is sent to the callback
+     *  function of this object.
+     *
      * @param arg0   std::string containing the basic name of the current
      *               binary
      * @param argc   int value containing number of arguments in argv; this
@@ -960,16 +994,7 @@ public:
      */
     virtual int RunCommand(const std::string arg0, int argc, char **argv)
     {
-        try {
-            ParsedArgs cmd_args = parse_commandline(arg0, argc, argv);
-
-            // Run the callback function.
-            return cmd_args.GetCompleted() ? command_func(cmd_args) : 0;
-        }
-        catch (...)
-        {
-            throw;
-        }
+        return RunCommand(arg0, 0, argc, argv);
     }
 
 
@@ -990,13 +1015,14 @@ protected:
      *         parsing did not complete properly; most likely due to
      *         -h or --help.
      */
-    ParsedArgs parse_commandline(const std::string arg0, int argc, char **argv)
+    ParsedArgs parse_commandline(const std::string arg0, unsigned int skip,
+                                 int argc, char **argv)
     {
         struct option *long_opts = init_getopt();
 
         RegisterParsedArgs cmd_args;
         int c;
-        optind = 2; // Skip argv[0] which contains this command name
+        optind = 1 + skip; // Skip argv[0] which contains this command name
         try
         {
             while (1)
@@ -1261,7 +1287,7 @@ public:
                 int ec = 1;
                 try
                 {
-                    ec = c->RunCommand(argv[0], cmdargc, cmdargv);
+                    ec = c->RunCommand(argv[0], 1, cmdargc, cmdargv);
                 }
                 catch (...)
                 {
@@ -1342,6 +1368,8 @@ private:
          *
          * @param arg0   std::string containing the basic name of the current
          *               binary
+         * @param ignored_skip  This argument will be ignored; it is here
+         *               purely for API compatibility
          * @param argc   int value containing number of arguments in argv;
          *               this mimics the standard C/C++ way of argument
          *               passing
@@ -1350,10 +1378,11 @@ private:
          * @return  Will always return 0, as we do not depend on exit codes
          *          when generating shell completion strings.
          */
-        int RunCommand(const std::string arg0, int argc, char **argv)
+        int RunCommand(const std::string arg0, unsigned int ignored_skip,
+                       int argc, char **argv)
         {
             try {
-                ParsedArgs args = parse_commandline(arg0, argc, argv);
+                ParsedArgs args = parse_commandline(arg0, 1, argc, argv);
 
                 if (!args.GetCompleted())
                 {
@@ -1406,6 +1435,7 @@ private:
             }
             return 3;
         }
+
 
     private:
         Commands * commands;
