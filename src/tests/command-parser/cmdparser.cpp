@@ -28,7 +28,7 @@
 #include <sstream>
 #include <random>
 
-#include "../../ovpn3cli/cmdargparser.hpp"
+#include "common/cmdargparser.hpp"
 
 int cmd_dump_arg_test(ParsedArgs args)
 {

@@ -23,7 +23,7 @@
  * @brief  Implementation of all the various openvpn3 config-* commands
  */
 
-#include "../cmdargparser.hpp"
+#include "common/cmdargparser.hpp"
 #include "../lookup.hpp"
 #include "../arghelpers.hpp"
 

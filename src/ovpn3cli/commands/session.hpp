@@ -25,7 +25,7 @@
 
 #include <json/json.h>
 
-#include "../cmdargparser.hpp"
+#include "common/cmdargparser.hpp"
 #include "../lookup.hpp"
 #include "../arghelpers.hpp"
 

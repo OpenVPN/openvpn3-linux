@@ -26,8 +26,8 @@
 
 #include <client/ovpncli.cpp>
 
-#include "cmdargparser.hpp"
 #include "dbus/core.hpp"
+#include "common/cmdargparser.hpp"
 #include "common/requiresqueue.hpp"
 #include "common/utils.hpp"
 #include "configmgr/proxy-configmgr.hpp"
