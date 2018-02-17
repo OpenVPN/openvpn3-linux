@@ -44,6 +44,111 @@ namespace openvpn
         return ret.str();
     }
 
+
+    /**
+     *  Helper class to LogConsumer and LogSender which implements
+     *  filtering of log messages.
+     */
+    class LogFilter
+    {
+    public:
+        /**
+         *  Prepares the log filter
+         *
+         * @param log_level unsigned int of the default log level
+         */
+        LogFilter(unsigned int log_level)
+            : log_level(log_level)
+        {
+        }
+
+
+        /**
+         *  Sets the log level.  This filters which log messages will
+         *  be processed or not.  Valid values are 0-6.
+         *
+         *  Log level 0 - Only FATAL and Critical messages are logged
+         *  Log level 1 - includes log level 0 + Error messages
+         *  Log level 2 - includes log level 1 + Warning messages
+         *  Log level 3 - includes log level 2 + informational messages
+         *  Log level 4 - includes log level 3 + Verb 1 messages
+         *  Log level 5 - includes log level 4 + Verb 2 messages
+         *  Log level 6 - includes log level 5 + Debug messages (everything)
+         *
+         * @param loglev  unsigned int with the log level to use
+         */
+        void SetLogLevel(unsigned int loglev)
+        {
+            if (loglev > 6)
+            {
+                THROW_DBUSEXCEPTION("LogSender", "Invalid log level");
+            }
+            log_level = loglev;
+        }
+
+
+        /**
+         * Retrieves the log level in use
+         *
+         * @return unsigned int, with values between 0-6
+         *
+         */
+        unsigned int GetLogLevel()
+        {
+            return log_level;
+        }
+
+
+    protected:
+        /**
+         * Checks if the LogCategory matches a log level where
+         * logging should happen
+         *
+         * @param catg  LogCategory value to check against the set log level
+         *
+         * @return  Returns true if this Log Category should be logged
+         */
+        bool LogFilterAllow(LogCategory catg)
+        {
+            switch(catg)
+            {
+            case LogCategory::DEBUG:
+                return log_level >= 6;
+            case LogCategory::VERB2:
+                return log_level >= 5;
+            case LogCategory::VERB1:
+                return log_level >= 4;
+            case LogCategory::INFO:
+                return log_level >= 3;
+            case LogCategory::WARN:
+                return log_level >= 2;
+            case LogCategory::ERROR:
+                return log_level >= 1;
+            default:
+                return true;
+            }
+        }
+
+
+        /**
+         * Checks if the LogCategory matches a log level where
+         * logging should happen
+         *
+         * @param catg  Unsigned integer representation of the LogCategory
+         *              value to check against the set log level
+         *
+         * @return  Returns true if this LogCategory should be logged
+         */
+        bool LogFilterAllow(guint catg)
+        {
+            return LogFilterAllow((LogCategory) catg);
+        }
+
+    private:
+        unsigned int log_level;
+};
+
+
     class FileLog
     {
     public:
@@ -113,12 +218,14 @@ namespace openvpn
 
 
     class LogSender : public DBusSignalProducer,
-                      public FileLog
+                      public FileLog,
+                      public LogFilter
     {
     public:
         LogSender(GDBusConnection * dbuscon, const LogGroup lgroup, std::string interf, std::string objpath)
             : DBusSignalProducer(dbuscon, "", interf, objpath),
               FileLog(),
+              LogFilter(2),
               log_group(lgroup)
         {
         }
@@ -149,11 +256,29 @@ namespace openvpn
 
         void ProxyLog(GVariant *values)
         {
-            Send("Log", values);
+            // Don't proxy this log message unless the log level filtering
+            // allows it.  The filtering is done against the LogCategory of
+            // the message, so we need to extract the LogCategory first
+
+            guint group = 0;
+            guint catg = 0;
+            g_variant_get(values, "(uus)", &group, &catg, NULL);
+
+            if (LogFilterAllow(catg))
+            {
+                Send("Log", values);
+            }
         }
 
         void Log(const LogGroup group, const LogCategory catg, const std::string msg)
         {
+            // Don't log unless the log level filtering allows it
+            // The filtering is done against the LogCategory of the message
+            if (!LogFilterAllow(catg))
+            {
+                return;
+            }
+
             if( GetLogActive() )
             {
                 LogWrite("", group, catg, msg);
@@ -195,28 +320,32 @@ namespace openvpn
 
         virtual void LogCritical(std::string msg)
         {
+            // Critical log messages will always be sent
             Log(log_group, LogCategory::CRIT, msg);
         }
 
         virtual void LogFATAL(std::string msg)
         {
+            // Fatal log messages will always be sent
             Log(log_group, LogCategory::FATAL, msg);
             // FIXME: throw something here, to start shutdown procedures
         }
 
+
     protected:
         LogGroup log_group;
-
     };
 
 
     class LogConsumer : public DBusSignalSubscription,
-                        public FileLog
+                        public FileLog,
+                        public LogFilter
     {
     public:
         LogConsumer(GDBusConnection * dbuscon, std::string interf, std::string objpath)
             : DBusSignalSubscription(dbuscon, "", interf, objpath, "Log"),
-              FileLog()
+              FileLog(),
+              LogFilter(6)  // By design, accept all kinds of log messages when receiving
         {
         }
 
@@ -244,11 +373,18 @@ namespace openvpn
             gchar *msg;
             g_variant_get (params, "(uus)", &group, &catg, &msg);
 
+            if (!LogFilterAllow(catg))
+            {
+                goto exit;
+            }
+
             if (GetLogActive())
             {
                 LogWrite(sender, group, catg, msg);
             }
             ConsumeLogEvent(sender, interface, object_path, (LogGroup) group, (LogCategory) catg, std::string(msg));
+
+        exit:
             g_free(msg);
         }
     };
