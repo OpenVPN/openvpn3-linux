@@ -25,102 +25,9 @@
 #include "dbus/core.hpp"
 #include "dbus-log.hpp"
 #include "common/utils.hpp"
-
+#include "common/cmdargparser.hpp"
 
 using namespace openvpn;
-
-
-class ArgumentException : public std::exception
-{
-public:
-    ArgumentException(int exitcode, const char * argv0, const std::string& message) noexcept
-        : argv0(argv0),
-          exitcode(exitcode),
-          message(message)
-    {
-        fullmsg = std::string(argv0) + ": " + message;
-    }
-
-
-    ArgumentException(int exitcode, const char * argv0, const std::string&& message) noexcept
-        : argv0(argv0),
-          exitcode(exitcode),
-          message(std::move(message))
-    {
-        fullmsg = std::string(argv0) + ": " + message;
-    }
-
-
-    virtual ~ArgumentException() throw()
-    {
-    }
-
-
-    virtual const char* what() const throw()
-    {
-        return fullmsg.c_str();
-    }
-
-
-    std::string err() const noexcept
-    {
-        return fullmsg;
-    }
-
-    int get_exit_code() const noexcept
-    {
-        return exitcode;
-    }
-
-protected:
-    const char * argv0;
-    std::string fullmsg;
-
-private:
-    int exitcode;
-    std::string message;
-};
-
-
-class UsageException : public ArgumentException
-{
-public:
-    UsageException(int exitcode, const char * argv0) noexcept
-        : ArgumentException(exitcode, argv0, std::string(""))
-    {
-        std::stringstream usage;
-        usage << "Usage: " << argv0 << " "
-              << "[--timestamp] "
-              << "[--colour] "
-              << "[--config-manager] "
-              << "[--session-manager] "
-              << "[--vpn-backend] "
-              << "[-h | --help]"
-              << std::endl << std::endl;
-
-        usage << std::setw(20) << "--timestamp"
-              << "  Print timestamps on each log entry"
-              << std::endl;
-
-        usage << std::setw(20) << "--colour"
-              << "  Use colours to categorize log events"
-              << std::endl;
-
-        usage << std::setw(20) << "--config-manager"
-              << "  Subscribe to configuration manager log entries"
-              << std::endl;
-
-        usage << std::setw(20) << "--session-manager"
-              << "  Subscribe to session manager log entries"
-              << std::endl;
-
-        usage << std::setw(20) << "--vpn-backend"
-              << "  Subscribe to VPN client log entries"
-              << std::endl;
-
-        fullmsg = std::move(usage.str());
-    }
-};
 
 
 class Logger : public LogConsumer
@@ -139,7 +46,7 @@ public:
 
 
     Logger(GDBusConnection *dbuscon, std::string tag, std::string interf,
-           bool timestamp = false)
+           unsigned int log_level = 3, bool timestamp = false)
         : LogConsumer(dbuscon, interf, ""),
           log_tag(tag),
           timestamp(timestamp),
@@ -147,6 +54,7 @@ public:
           timestampcolour(""),
           colourreset("")
     {
+        SetLogLevel(log_level);
     }
 
     void SetColourScheme(LogColour foreground, LogColour background)
@@ -281,78 +189,63 @@ private:
     std::string colourreset;
 };
 
-
-
-int main(int argc, char **argv)
+static int logger(ParsedArgs args)
 {
-    std::cout << get_version(argv[0]) << std::endl;
-
-    // This program does not require root privileges,
-    // so if used - drop those privileges
-    drop_root();
-
     int ret = 0;
-    bool timestamp = false;
-    bool colour = false;
-    Logger * be_subscription = nullptr;
-    Logger * session_subscr = nullptr;
-    Logger * config_subscr = nullptr;
+    bool timestamp = args.Present("timestamp");
+    bool colour = args.Present("colour");
+
+    unsigned int log_level = 3;
+    if (args.Present("log-level"))
+    {
+        log_level = std::atoi(args.GetValue("log-level", 0).c_str());
+    }
 
     DBus dbus(G_BUS_TYPE_SYSTEM);
     dbus.Connect();
 
+    Logger * be_subscription = nullptr;
+    Logger * session_subscr = nullptr;
+    Logger * config_subscr = nullptr;
     try
     {
-        for (int i = 1; i < argc; i++)
+        if (args.Present("vpn-backend"))
         {
-            auto arg = std::string(argv[i]);
+            be_subscription = new Logger(dbus.GetConnection(), "[B]",
+                                         OpenVPN3DBus_interf_backends,
+                                         log_level, timestamp);
+            if (colour)
+            {
+                be_subscription->SetColourScheme(Logger::LogColour::BRIGHT_BLUE, Logger::LogColour::BLACK);
+            }
+        }
 
-            if ("--timestamp" == arg)
+        if (args.Present("session-manager"))
+        {
+            session_subscr = new Logger(dbus.GetConnection(), "[S]",
+                                        OpenVPN3DBus_interf_sessions,
+                                        log_level, timestamp);
+            if (colour)
             {
-                timestamp = true;
+                session_subscr->SetColourScheme(Logger::LogColour::BRIGHT_WHITE, Logger::LogColour::BLUE);
             }
-            else if ("--colour" == arg)
-            {
-                colour = true;
-            }
+        }
 
-            else if ("--vpn-backend" == arg)
+        if (args.Present("config-manager"))
+        {
+            config_subscr = new Logger(dbus.GetConnection(), "[C]",
+                                       OpenVPN3DBus_interf_configuration,
+                                       log_level, timestamp);
+            if (colour)
             {
-                be_subscription = new Logger(dbus.GetConnection(), "[B]", OpenVPN3DBus_interf_backends, timestamp);
-                if (colour)
-                {
-                    be_subscription->SetColourScheme(Logger::LogColour::BRIGHT_BLUE, Logger::LogColour::BLACK);
-                }
-            }
-            else if ("--session-manager" == arg)
-            {
-                session_subscr = new Logger(dbus.GetConnection(), "[S]", OpenVPN3DBus_interf_sessions, timestamp);
-                if (colour)
-                {
-                    session_subscr->SetColourScheme(Logger::LogColour::BRIGHT_WHITE, Logger::LogColour::BLUE);
-                }
-            }
-            else if ("--config-manager" == arg)
-            {
-                config_subscr = new Logger(dbus.GetConnection(), "[C]", OpenVPN3DBus_interf_configuration, timestamp);
-                if (colour)
-                {
-                    config_subscr->SetColourScheme(Logger::LogColour::WHITE, Logger::LogColour::GREEN);
-                }
-            }
-            else if ("--help" == arg || ("-h" == arg))
-            {
-                throw UsageException(1, argv[0]);
-            }
-            else
-            {
-                throw ArgumentException(2, argv[0], "Unknown argument: " + arg);
+                config_subscr->SetColourScheme(Logger::LogColour::WHITE, Logger::LogColour::GREEN);
             }
         }
 
         if( !be_subscription && !session_subscr && !config_subscr)
         {
-            throw ArgumentException(3, argv[0], "No logging enabled. Aborting.");
+            throw CommandException("openvpn3-service-logger",
+                                   "No logging enabled. Aborting.");
         }
 
         ProcessSignalProducer procsig(dbus.GetConnection(), OpenVPN3DBus_interf_logger, "Logger");
@@ -364,11 +257,11 @@ int main(int argc, char **argv)
         g_main_loop_run(main_loop);
         procsig.ProcessChange(StatusMinor::PROC_STOPPED);
         g_main_loop_unref(main_loop);
+        ret = 0;
     }
-    catch (ArgumentException& excp)
+    catch (CommandException& excp)
     {
-        std::cout << excp.err() << std::endl;
-        ret = excp.get_exit_code();
+        throw;
     }
 
 
@@ -387,4 +280,37 @@ int main(int argc, char **argv)
     }
 
     return ret;
+}
+
+int main(int argc, char **argv)
+{
+    std::cout << get_version(argv[0]) << std::endl;
+
+    // This program does not require root privileges,
+    // so if used - drop those privileges
+    drop_root();
+
+    SingleCommand argparser(argv[0], "OpenVPN 3 Logger", logger);
+    argparser.AddOption("timestamp", 0,
+                        "Print timestamps on each log entry");
+    argparser.AddOption("colour", 0,
+                        "Use colours to categorize log events");
+    argparser.AddOption("config-manager", 0,
+                        "Subscribe to configuration manager log entries");
+    argparser.AddOption("session-manager", 0,
+                        "Subscribe to session manager log entries");
+    argparser.AddOption("vpn-backend", 0,
+                        "Subscribe to VPN client log entries");
+    argparser.AddOption("log-level", 0, "LEVEL", true,
+                        "Set the log verbosity level (default 3)");
+
+    try
+    {
+        return argparser.RunCommand(simple_basename(argv[0]), argc, argv);
+    }
+    catch (CommandException& excp)
+    {
+        std::cout << excp.what() << std::endl;
+        return 2;
+    }
 }
