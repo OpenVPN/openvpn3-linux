@@ -809,6 +809,7 @@ private:
 #endif
         vpnconfig.info = true;
         vpnconfig.content = pm.profile_content();
+        vpnconfig.tunPersist = cfg_proxy->GetPersistTun();
     }
 };
 
