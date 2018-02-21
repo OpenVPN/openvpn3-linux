@@ -58,7 +58,7 @@ void drop_root()
             {
                 throw std::runtime_error("Could not find the group ID for " + std::string(OPENVPN_GROUP));
             }
-            throw std::runtime_error("An error occured while calling getgrnam():"
+            throw std::runtime_error("An error occurred while calling getgrnam():"
                                      + std::string(strerror(errno)));
         }
         gid_t gid = groupinfo->gr_gid;
@@ -87,7 +87,7 @@ void drop_root()
             {
                 throw std::runtime_error("Could not find the User ID for " + std::string(OPENVPN_USERNAME));
             }
-            throw std::runtime_error("An error occured while calling getgrnam():"
+            throw std::runtime_error("An error occurred while calling getgrnam():"
                                      + std::string(strerror(errno)));
         }
 

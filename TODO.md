@@ -42,13 +42,13 @@ taken care of.
   configuration profiles, only allow the openvpn3-service-client process
   to access that information.  End-users should be able to get some core
   identification variables, just not the complete configuration.
-    
+
 - [ ] Write a new NetworkManager plug-in for OpenVPN 3, which should essentially
   just be a D-Bus client interacting with the configuration and session
   managers.
 
 - [ ] Write a GUI tool which can run in the background and can pop-up
-  appropriate dialoge boxes whenever the front-end user needs to provide
+  appropriate dialogue boxes whenever the front-end user needs to provide
   user credentials.
 
 - [ ] Implement PKCS#11 support
@@ -60,4 +60,3 @@ taken care of.
 
 - [ ] Look into SELinux policies, with the goal that all backend services should
   run with restricted possibilities and their own process context types.
-

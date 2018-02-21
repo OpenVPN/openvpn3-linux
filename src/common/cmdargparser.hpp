@@ -131,7 +131,7 @@ public:
 
 
     /**
-     *  Retrieves the command name where this issue occured.  This is always
+     *  Retrieves the command name where this issue occurred.  This is always
      *  available in this type of exceptions.
      *
      * @return Returns a const char * containing the name of the command

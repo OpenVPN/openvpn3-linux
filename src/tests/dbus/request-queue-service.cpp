@@ -308,7 +308,7 @@ void selftest()
         }
         catch (RequiresQueueException& excp)
         {
-            std::cout << "Passed GetResponse(CREDENTIALS, USER_PASSWORD, 99) out-of-bondary check" << std::endl;
+            std::cout << "Passed GetResponse(CREDENTIALS, USER_PASSWORD, 99) out-of-boundary check" << std::endl;
             std::cout << "     Exception caught: " << excp.what() << std::endl;
         }
 
@@ -349,4 +349,3 @@ int main()
     g_main_loop_unref(main_loop);
     return 0;
 }
-
