@@ -304,6 +304,7 @@ public:
           readonly(false),
           single_use(false),
           persistent(false),
+          persist_tun(false),
           alias(nullptr)
     {
         gchar *cfgstr;
@@ -358,6 +359,7 @@ public:
             "        <property type='b' name='persistent' access='read'/>"
             "        <property type='b' name='locked_down' access='readwrite'/>"
             "        <property type='b' name='public_access' access='readwrite'/>"
+            "        <property type='b' name='persist_tun' access='readwrite' />"
             "        <property type='s' name='alias' access='readwrite'/>"
             "    </interface>"
             "</node>";
@@ -631,9 +633,17 @@ public:
             return GetOwner();
         }
 
+        // Properties available for root
+        bool allow_root = false;
+        if ("persist_tun" == property_name)
+        {
+            allow_root = true;
+        }
+
+
         // Properties only available for approved users
         try {
-            CheckACL(sender);
+            CheckACL(sender, allow_root);
 
             GVariant *ret = NULL;
 
@@ -680,6 +690,10 @@ public:
             else if ("public_access" == property_name)
             {
                 ret = GetPublicAccess();
+            }
+            else if ("persist_tun" == property_name)
+            {
+                ret = g_variant_new_boolean (persist_tun);
             }
             else if ("acl" == property_name)
             {
@@ -791,6 +805,11 @@ public:
                          + (acl_public ? std::string("true") : std::string("false"))
                          + " by UID " + std::to_string(GetUID(sender)));
             }
+            else if (("persist_tun" == property_name) && conn)
+            {
+                persist_tun = g_variant_get_boolean(value);
+                ret = build_set_property_response(property_name, persist_tun);
+            }
             else
             {
                 throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
@@ -821,6 +840,7 @@ private:
     bool single_use;
     bool persistent;
     bool locked_down;
+    bool persist_tun;
     ConfigurationAlias *alias;
     OptionListJSON options;
 };
