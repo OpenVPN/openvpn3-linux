@@ -42,37 +42,22 @@ using namespace openvpn;
  *  Exception class which is thrown whenever any of the command parsing
  *  and related objects have issues.
  */
-class CommandException : public std::exception
+class CommandArgBaseException : public std::exception
 {
 public:
     /**
-     *  Most simple exception, only indicates the command which failed.
-     *  This is used if an error message is strictly not needed, often
-     *  printed to the console or log right before this event occurres.
+     *  Base exception class which only needs a message to present to the
+     *  user
      *
-     * @param command  std::string containing the name of the current command
-     */
-    CommandException(const std::string command) noexcept
-        : command(command), message()
-    {
-    }
-
-
-    /**
-     *  Similar to the simpler CommandException class, but this one
-     *  allows adding a simple message providing more details about the
-     *  failure.
-     *
-     * @param command  std::string containing the name of the current command
      * @param msg      std::string containing the message to present to the user
      */
-    CommandException(const std::string command, const std::string msg) noexcept
-        : command(command), message(msg)
+    CommandArgBaseException(const std::string msg) noexcept
+        : message(msg)
     {
     }
 
 
-    virtual ~CommandException()
+    virtual ~CommandArgBaseException()
     {
     }
 
@@ -99,6 +84,44 @@ public:
     {
         return !message.empty();
     }
+
+
+protected:
+    const std::string message;
+};
+
+
+class CommandException : public CommandArgBaseException
+{
+public:
+    /**
+     *  Most simple exception, only indicates the command which failed.
+     *  This is used if an error message is strictly not needed, often
+     *  printed to the console or log right before this event occurres.
+     *
+     * @param command  std::string containing the name of the current command
+     */
+    CommandException(const std::string command) noexcept
+        : CommandArgBaseException(""),
+          command(command)
+    {
+    }
+
+
+    /**
+     *  Similar to the simpler CommandException class, but this one
+     *  allows adding a simple message providing more details about the
+     *  failure.
+     *
+     * @param command  std::string containing the name of the current command
+     * @param msg      std::string containing the message to present to the user
+     */
+    CommandException(const std::string command,
+                     const std::string msg) noexcept
+        : CommandArgBaseException(msg),
+          command(command)
+      {
+      }
 
 
     /**
