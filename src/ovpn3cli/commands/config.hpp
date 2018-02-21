@@ -360,57 +360,37 @@ static int cmd_config_acl(ParsedArgs args)
 
         if (args.Present("lock-down"))
         {
-            std::string ld = args.GetValue("lock-down", 0);
-            if (("false" == ld) || ("true" == ld ))
+            bool ld = args.GetBoolValue("lock-down", 0);
+            conf.SetLockedDown(ld);
+            if (ld)
             {
-                conf.SetLockedDown("true" == ld);
-                if ("true" == ld)
-                {
-                    std::cout << "Configuration has been locked down"
-                              << std::endl;
-                }
-                else
-                {
-                    std::cout << "Configuration has been opened up"
-                              << std::endl;
-
-                }
+                std::cout << "Configuration has been locked down"
+                          << std::endl;
             }
             else
             {
-                std::cerr << "** ERROR ** --lock-down argument must be "
-                          << "'true' or 'false'"
+                std::cout << "Configuration has been opened up"
                           << std::endl;
-                ret = 3;
+
             }
         }
 
 
         if (args.Present("public-access"))
         {
-            std::string ld = args.GetValue("public-access", 0);
-            if (("false" == ld) || ("true" == ld ))
+            bool ld = args.GetBoolValue("public-access", 0);
+            conf.SetPublicAccess(ld);
+            if (ld)
             {
-                conf.SetPublicAccess("true" == ld);
-                if ("true" == ld)
-                {
-                    std::cout << "Configuration is now readable to everyone"
-                              << std::endl;
-                }
-                else
-                {
-                    std::cout << "Configuration is now readable to only "
-                              << "specific users"
-                              << std::endl;
-
-                }
+                std::cout << "Configuration is now readable to everyone"
+                          << std::endl;
             }
             else
             {
-                std::cerr << "** ERROR ** --public-access argument must be "
-                          << "'true' or 'false'"
+                std::cout << "Configuration is now readable to only "
+                          << "specific users"
                           << std::endl;
-                ret = 3;
+
             }
         }
 
