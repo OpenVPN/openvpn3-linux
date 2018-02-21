@@ -796,20 +796,9 @@ private:
         // Retrieve confniguration
         signal.LogVerb2("Retrieving configuration from " + configpath);
 
-        auto cfg_proxy = new DBusProxy(G_BUS_TYPE_SYSTEM,
-                                       OpenVPN3DBus_name_configuration,
-                                       OpenVPN3DBus_interf_configuration,
-                                       configpath);
-        GVariant *res_g = cfg_proxy->Call("Fetch");
-        if (NULL == res_g) {
-            THROW_DBUSEXCEPTION("BackendServiceObject",
-                                "Failed to retrieve the VPN configuration file");
-        }
-        gchar *cfg = NULL;
-        g_variant_get(res_g, "(s)", &cfg);
-
-        auto vpncfgstr = std::string(cfg);
-        ProfileMergeFromString pm(vpncfgstr, "",
+        auto cfg_proxy = new OpenVPN3ConfigurationProxy(G_BUS_TYPE_SYSTEM,
+                                                        configpath);
+        ProfileMergeFromString pm(cfg_proxy->GetConfig(), "",
                                   ProfileMerge::FOLLOW_NONE,
                                   ProfileParseLimits::MAX_LINE_SIZE,
                                   ProfileParseLimits::MAX_PROFILE_SIZE);
