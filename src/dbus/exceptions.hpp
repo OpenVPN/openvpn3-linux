@@ -32,14 +32,16 @@ namespace openvpn
     {
     public:
         DBusException(const std::string classn, const std::string& err, const char *filen, const unsigned int linenum, const char *fn) noexcept
-        : classname(classn), errorstr(err), filename(std::string(filen)), line(linenum), method(std::string(fn))
+        : errorstr(err)
         {
+            prepare_sourceref(classn, filen, linenum, fn);
         }
 
 
         DBusException(const std::string classn, std::string&& err, const char *filen, const unsigned int linenum, const char *fn) noexcept
-        : classname(classn), errorstr(std::move(err)) , filename(std::string(filen)), line(linenum), method(std::string(fn))
+        : errorstr(std::move(err))
         {
+            prepare_sourceref(classn, filen, linenum, fn);
         }
 
 
@@ -48,21 +50,13 @@ namespace openvpn
 
         virtual const char* what() const throw()
         {
-            std::stringstream ret;
-            ret << "[DBusException: "
-                << filename << ":" << line << ", "
-                << classname << "::" << method << "()] " << errorstr;
-            return ret.str().c_str();
+            return std::string("[DBusException]" + sourceref + errorstr).c_str();
         }
 
 
         const std::string& err() const noexcept
         {
-            std::stringstream ret;
-            ret << "[" << filename << ":" << line << ", "
-                << classname << "::" << method << "()] "
-                << errorstr;
-            return std::move(ret.str());
+            return std::move(std::string(sourceref + errorstr));
         }
 
 
@@ -73,11 +67,17 @@ namespace openvpn
 
 
     protected:
-        const std::string classname;
+        std::string sourceref;
         const std::string errorstr;
-        const std::string filename;
-        const unsigned int line;
-        const std::string method;
+
+    private:
+        void prepare_sourceref(const std::string classn,
+                               const char *filen, const unsigned int linenum,
+                               const char *fn) noexcept
+        {
+            sourceref = "{" + std::string(filen) + ":" + std::to_string(linenum)
+                      + ", " + classn + "::" + std::string(fn) + "()} ";
+        }
 
     };
 

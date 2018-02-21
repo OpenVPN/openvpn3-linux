@@ -195,19 +195,9 @@ public:
 
     virtual const char* what() const throw()
     {
-        std::stringstream ret;
-        ret << "[ReadyException: "
-            << filename << ":" << line << ", "
-            << classname << "::" << method << "()] " << errorstr;
-        return ret.str().c_str();
+        return std::string("[ReadyException]" + errorstr).c_str();
     }
 
-
-    const std::string& err() const noexcept
-    {
-        std::string ret(errorstr);
-        return std::move(ret);
-    }
 };
 #define THROW_READYEXCEPTION(fault_data) throw ReadyException(fault_data, __FILE__, __LINE__, __FUNCTION__)
 
