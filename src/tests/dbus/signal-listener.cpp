@@ -106,7 +106,7 @@ public:
         }
         else
         {
-            std::cout << "** Signal recieved: "
+            std::cout << "** Signal received: "
                       << ": sender=" << sender_name
                       << ", path=" << object_path
                       << ", interface=" << interface_name

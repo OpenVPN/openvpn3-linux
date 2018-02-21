@@ -172,7 +172,7 @@ The service destinations these tools need to move forward are:
 Both of these services allows introspection.
 
 There exists also a net.openvpn.v3.backends service, but that is restricted
-to be accessible only by the openpn user - and even that users access is 
+to be accessible only by the openpn user - and even that users access is
 locked-down by default and introspection is not possible without modifying
 the D-Bus policy.
 
@@ -201,7 +201,7 @@ Contribution
   encounter.
 
 * Packagers
-  We are not targetting packaging in Linux distributions just yet.  This will
+  We are not targeting packaging in Linux distributions just yet.  This will
   however come in not too far future when the code begins to mature and
   stabilize.
 
@@ -218,4 +218,3 @@ The OpenVPN 3 Core library is also used by the OpenVPN Connect and
 PrivateTunnel clients, so the pure VPN tunnel implementation should be fairly
 safe and good to use.  However, the Linux implementation with the D-Bus
 integration is brand new code.
-
