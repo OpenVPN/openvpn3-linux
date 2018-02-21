@@ -193,10 +193,10 @@ static int cmd_config_manage(ParsedArgs args)
     }
 
     if (!args.Present("alias") && !args.Present("alias-delete")
-        && !args.Present("rename"))
+        && !args.Present("rename") && !args.Present("persist-tun"))
     {
         throw CommandException("config-manage",
-                               "An operation argument is required (--alias, --alias-delete or --rename");
+                               "An operation argument is required (--alias, --alias-delete, --rename or --persist-tun");
     }
 
     if (args.Present("alias") && args.Present("alias-delete"))
@@ -233,6 +233,24 @@ static int cmd_config_manage(ParsedArgs args)
             std::cout << "Configuration renamed" << std::endl;
             return 0;
         }
+
+        if (args.Present("persist-tun"))
+        {
+            bool persist = args.GetBoolValue("persist-tun", 0);
+            conf.SetPersistTun(persist);
+            if (persist)
+            {
+                std::cout << "Persistent (seamless) tunnel is enabled"
+                          << std::endl;
+            }
+            else
+            {
+                std::cout << "Persistent (seamless) tunnel is disabled"
+                          << std::endl;
+            }
+            return 0;
+        }
+
         throw CommandException("config-manage", "No operation option recognised");
     }
     catch (DBusPropertyException& err)
@@ -490,9 +508,10 @@ static int cmd_config_show(ParsedArgs args)
         if (!args.Present("json"))
         {
             std::cout << "Configuration: " << std::endl
-                      << "  - Name:       " << conf.GetStringProperty("name") << std::endl
-                      << "  - Read only:  " << (conf.GetBoolProperty("readonly") ? "Yes" : "No") << std::endl
-                      << "  - Persistent: " << (conf.GetBoolProperty("persistent") ? "Yes" : "No") << std::endl
+                      << "                Name:       " << conf.GetStringProperty("name") << std::endl
+                      << "           Read only:  " << (conf.GetBoolProperty("readonly") ? "Yes" : "No") << std::endl
+                      << "   Persistent config: " << (conf.GetBoolProperty("persistent") ? "Yes" : "No") << std::endl
+                      << "   Persistent tunnel: " << (conf.GetPersistTun() ? "Yes" : "No") << std::endl
                       << "--------------------------------------------------" << std::endl
                       << conf.GetConfig() << std::endl
                       << "--------------------------------------------------" << std::endl;
@@ -605,6 +624,9 @@ void RegisterCommands_config(Commands& ovpn3)
                    "Delete this alias");
     cmd->AddOption("rename", 'r', "NEW-CONFIG-NAME", true,
                    "Renames the configuration");
+    cmd->AddOption("persist-tun", "<true|false>", true,
+                   "Set/unset the persisten tun/seamless tunnel flag",
+                   arghelper_boolean);
 
     //
     //  config-acl command
