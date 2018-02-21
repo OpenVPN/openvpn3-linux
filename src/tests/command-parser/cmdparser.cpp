@@ -61,6 +61,13 @@ int cmd_multiply(ParsedArgs args)
 {
     std::cout << "===> cmd_multiply() test" << std::endl << std::endl;
 
+    if (args.Present("bool-test"))
+    {
+        std::cout << "Boolean test: "
+                  << (args.GetBoolValue("bool-test", 0) ? "true" : "false")
+                  << std::endl;
+    };
+
     unsigned long long res = 0;
     std::cout << "Multiplying ... ";
     for (auto const& v : args.GetAllValues("multiply"))
@@ -104,6 +111,12 @@ std::string arghelper_random_numbers()
 }
 
 
+std::string arghelp_boolean()
+{
+    return "false true";
+}
+
+
 int main(int argc, char **argv)
 {
     Commands cmds("Command line parser test",
@@ -120,6 +133,9 @@ int main(int argc, char **argv)
     auto test2_cmd = cmds.AddCommand("test2", "Test command two", cmd_multiply);
     test2_cmd->AddOption("multiply", 'm', "values" , true, "Multiply two numbers",
                          arghelper_random_numbers);
+    test2_cmd->AddOption("bool-test", 'b',
+                         "<true|false>", true, "Test of a boolean option",
+                         arghelp_boolean);
 
     auto test3_cmd = cmds.AddCommand("test3", "Test command 3", cmd_dump_arg_test);
     test3_cmd->AddOption("opt-string", 'o',

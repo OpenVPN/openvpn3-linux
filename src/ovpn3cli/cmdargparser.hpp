@@ -39,7 +39,7 @@ using namespace openvpn;
 
 
 /**
- *  Exception class which is thrown whenever any of the command parsing
+ *  Basic exception class which is thrown whenever any of the command parsing
  *  and related objects have issues.
  */
 class CommandArgBaseException : public std::exception
@@ -91,6 +91,12 @@ protected:
 };
 
 
+/**
+ *  Exception class which is thrown whenever any of the command parsing
+ *  and related objects have issues.  This is expected to be thrown when there
+ *  is an issue with a single command within the main program.
+ */
+
 class CommandException : public CommandArgBaseException
 {
 public:
@@ -138,7 +144,69 @@ public:
 
 private:
     const std::string command;
-    const std::string message;
+};
+
+
+/**
+ *  Exception class which is thrown whenever any of the command parsing
+ *  and related objects have issues with a specific option.
+ */
+class OptionException : public CommandArgBaseException
+{
+public:
+    /**
+     *  Most simple exception, only indicates the option which failed.
+     *  This is used if an error message is strictly not needed, often
+     *  printed to the console or log right before this event occurres.
+     *
+     * @param option  std::string containing the name of the current option
+     */
+    OptionException(const std::string option) noexcept
+        : CommandArgBaseException("--" + option),
+          option(option)
+    {
+    }
+
+
+    /**
+     *  Similar to the simpler OptionException class, but this one
+     *  allows adding a simple message providing more details about the
+     *  failure.
+     *
+     * @param option  std::string containing the name of the current option
+     * @param msg     std::string containing the message to present to the user
+     */
+    OptionException(const std::string option, const std::string msg) noexcept
+                    : CommandArgBaseException("--" + option + ": " + msg),
+                      option(option)
+    {
+    }
+
+
+    virtual ~OptionException()
+    {
+    }
+
+
+    virtual const char * what() const noexcept
+    {
+        return message.c_str();
+    }
+
+    /**
+     *  Retrieves the option name where this issue occured.  This is always
+     *  available in this type of exceptions.
+     *
+     * @return Returns a const char * containing the name of the option
+     */
+    virtual const char * getOption() const noexcept
+    {
+        return option.c_str();
+    }
+
+
+private:
+    const std::string option;
 };
 
 
@@ -234,6 +302,25 @@ public:
     std::string GetValue(const std::string k, const unsigned int idx)
     {
         return key_value[k][idx];
+    }
+
+
+    /**
+     *  Retrieve a specific boolean option, based on option name and value
+     *  index
+     *
+     * @param k    std::string containing the option name to look-up
+     * @param idx  unsigned int of the value element to retrieve
+     * @return  Returns a bool with the collected value
+     */
+    bool GetBoolValue(const std::string k, const unsigned int idx)
+    {
+        std::string value = key_value[k][idx];
+        if (("false" != value) && ("true" != value ))
+        {
+            throw OptionException(k, "Boolean options must be either 'false' or 'true'");
+        }
+        return "true" == value;
     }
 
 
