@@ -171,6 +171,13 @@ class OpenVPNconfigParser():
         return self.__opts['daemon']
 
 
+    def GetPersistTun(self):
+        try:
+            return self.__opts['persist_tun']
+        except AttributeError:
+            return False
+
+
     ##
     #  Checks if we have at least the pure minimum of options and arguments
     #  to establish a connection.
@@ -936,7 +943,7 @@ class OpenVPNconfigParser():
 
 
 
-def import_config(bus, cfgname, config):
+def import_config(bus, opts):
     # Retrieve the main configuration manager object
     manager_object = bus.get_object('net.openvpn.v3.configuration',
                                     '/net/openvpn/v3/configuration')
@@ -950,10 +957,18 @@ def import_config(bus, cfgname, config):
     if 'OPENVPN3_DEBUG' in os.environ:
         single_use = False
 
+    cfgname = opts.GetConfigName();
     path = config_interface.Import(cfgname and cfgname or '(command line)', #name
-                                      config,      # config_str
-                                      single_use,  # single_use
-                                      False)       # persistent
+                                   opts.GenerateConfig(),     # config_str
+                                   single_use,                # single_use
+                                   False)                     # persistent
+
+    if opts.GetPersistTun() is True:
+        # If --persist-tun was provided, set the persist_tun property
+        # in the imported configuration
+        cfg_object = bus.get_object('net.openvpn.v3.configuration', path)
+        cfg_interf = dbus.Interface(cfg_object, 'org.freedesktop.DBus.Properties')
+        cfg_interf.Set('net.openvpn.v3.configuration', 'persist_tun', True)
 
     if not single_use:
         print('Configuration path: %s' % path)
@@ -1165,7 +1180,7 @@ def openvpn2_main(args):
     bus = dbus.SystemBus()
 
     # Import the configuration, which is stored in the configuration manager
-    cfgpath = import_config(bus, opts.GetConfigName(), opts.GenerateConfig())
+    cfgpath = import_config(bus, opts)
 
     # Start the tunnel, which his managed by the session manager
     ret = start_tunnel(bus, cfgpath, opts.GetDaemon())
