@@ -31,6 +31,9 @@ CLEANFILES = \
 AM_CXXFLAGS = \
 	$(OPENVPN3_CORE_CXXFLAGS) \
 	$(LIBGLIBGIO_CFLAGS) \
+	$(OPENVPN3_CORE_CXXFLAGS) \
+	$(ASIO_CXXFLAGS) \
+	$(CRYPTO_CFLAGS) \
 	-I$(top_srcdir)/src
 
 AM_LDFLAGS = \
@@ -38,7 +41,11 @@ AM_LDFLAGS = \
 
 
 noinst_PROGRAMS = \
-	command-parser/cmdparser
+	command-parser/cmdparser \
+	ovpn3-core/profilemerge-optionlist
 
 command_parser_cmdparser_SOURCES = \
 	command-parser/cmdparser.cpp
+
+ovpn3_core_profilemerge_optionlist_SOURCES = \
+	ovpn3-core/profilemerge-optionlist.cpp

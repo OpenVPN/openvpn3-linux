@@ -59,9 +59,50 @@ std::string import_config(const std::string filename,
                     ProfileParseLimits::MAX_LINE_SIZE,
                     ProfileParseLimits::MAX_PROFILE_SIZE);
 
-    // Import the configuration file
+    // Basic profile limits
+    OptionList::Limits limits("profile is too large",
+                              ProfileParseLimits::MAX_PROFILE_SIZE,
+                              ProfileParseLimits::OPT_OVERHEAD,
+                              ProfileParseLimits::TERM_OVERHEAD,
+                              ProfileParseLimits::MAX_LINE_SIZE,
+                              ProfileParseLimits::MAX_DIRECTIVE_SIZE);
+
+    // Try to find persist-tun, which we will process further once imported
+    bool persist_tun = false;
+    try
+    {
+        OptionList opts;
+        opts.parse_from_config(pm.profile_content(), &limits);
+        opts.update_map();
+
+        Option pt = opts.get("persist-tun");
+        persist_tun = true;
+    }
+    catch (...)
+    {
+        // We ignore errors here - it means the option is not found
+    }
+
+    // Import the configuration fileh
     OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration);
-    return conf.Import(cfgname, pm.profile_content(), single_use, persistent);
+    std::string  cfgpath = conf.Import(cfgname, pm.profile_content(),
+                                       single_use, persistent);
+
+    // If the configuration profile contained --persist-tun,
+    // set the related property in the D-Bus configuration object.
+    //
+    // The --persist-tun option in the configuration file is not processed
+    // by the core OpenVPN 3 client itself, it needs to be set outside of
+    // the configuration profile.  This is by design, mandated by
+    // OpenVPN 3 Core library.
+    if (persist_tun)
+    {
+        OpenVPN3ConfigurationProxy cfgprx(G_BUS_TYPE_SYSTEM, cfgpath);
+        cfgprx.SetPersistTun(persist_tun);
+    }
+
+    // Return the object path to this configuration profile
+    return cfgpath;
 }
 
 
