@@ -59,6 +59,11 @@ std::string import_config(const std::string filename,
                     ProfileParseLimits::MAX_LINE_SIZE,
                     ProfileParseLimits::MAX_PROFILE_SIZE);
 
+    if (pm.status() != ProfileMerge::MERGE_SUCCESS)
+    {
+        throw CommandException("config-import", pm.error());
+    }
+
     // Basic profile limits
     OptionList::Limits limits("profile is too large",
                               ProfileParseLimits::MAX_PROFILE_SIZE,
@@ -136,7 +141,7 @@ static int cmd_config_import(ParsedArgs args)
                   << std::endl;
         return 0;
     }
-    catch (std::exception e)
+    catch (std::exception& e)
     {
         throw CommandException("config-import", e.what());
     }
