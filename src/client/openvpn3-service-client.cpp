@@ -798,6 +798,14 @@ private:
 
         auto cfg_proxy = new OpenVPN3ConfigurationProxy(G_BUS_TYPE_SYSTEM,
                                                         configpath);
+
+        // We need to extract the persist_tun property *before* calling
+        // GetConfig().  If the configuration is tagged as a single-shot
+        // config, we cannot query it for more details after the first
+        // GetConfig() call.
+        bool tunPersist = cfg_proxy->GetPersistTun();
+
+        // Parse the configuration
         ProfileMergeFromString pm(cfg_proxy->GetConfig(), "",
                                   ProfileMerge::FOLLOW_NONE,
                                   ProfileParseLimits::MAX_LINE_SIZE,
@@ -809,7 +817,7 @@ private:
 #endif
         vpnconfig.info = true;
         vpnconfig.content = pm.profile_content();
-        vpnconfig.tunPersist = cfg_proxy->GetPersistTun();
+        vpnconfig.tunPersist = tunPersist;
     }
 };
 
