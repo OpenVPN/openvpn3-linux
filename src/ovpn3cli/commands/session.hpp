@@ -40,6 +40,7 @@ static ConnectionStats fetch_stats(std::string session_path)
     try
     {
         OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, session_path);
+        session.Ping();
         return session.GetConnectionStats();
     }
     catch (DBusException& err)
@@ -162,6 +163,7 @@ static int cmd_session_start(ParsedArgs args)
     {
         OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
                                      OpenVPN3DBus_rootp_sessions);
+        sessmgr.Ping();
 
         std::string cfgpath;
         if (args.Present("config"))
@@ -304,6 +306,7 @@ static int cmd_session_list(ParsedArgs args)
 {
     OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
                                  OpenVPN3DBus_rootp_sessions);
+    sessmgr.Ping();
 
     bool first = true;
     for (auto& sessp : sessmgr.FetchAvailableSessions())
@@ -444,6 +447,8 @@ static int cmd_session_manage(ParsedArgs args)
     try
     {
         OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, sesspath);
+        session.Ping();
+
         ConnectionStats stats;
 
         switch (mode)
@@ -528,6 +533,8 @@ static int cmd_session_acl(ParsedArgs args)
     {
         OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM,
                                      args.GetValue("path", 0));
+        session.Ping();
+
         if (args.Present("grant"))
         {
             for (auto const& user : args.GetAllValues("grant"))

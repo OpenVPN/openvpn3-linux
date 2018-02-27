@@ -109,6 +109,8 @@ static int cmd_log_listen(ParsedArgs args)
         // session.  If not, we must enable it - and if we do this, we
         // track that we modified this setting.
         OpenVPN3SessionProxy sesprx(G_BUS_TYPE_SYSTEM, session_path);
+        sesprx.Ping();
+
         if (!sesprx.GetBoolProperty("receive_log_events"))
         {
             sesprx.SetProperty("receive_log_events", true);

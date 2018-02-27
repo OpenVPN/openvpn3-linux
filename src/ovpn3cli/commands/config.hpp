@@ -90,6 +90,7 @@ std::string import_config(const std::string filename,
 
     // Import the configuration fileh
     OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration);
+    conf.Ping();
     std::string  cfgpath = conf.Import(cfgname, pm.profile_content(),
                                        single_use, persistent);
 
@@ -163,6 +164,7 @@ static int cmd_config_import(ParsedArgs args)
 static int cmd_configs_list(ParsedArgs args)
 {
     OpenVPN3ConfigurationProxy confmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration );
+    confmgr.Ping();
 
     std::cout << "Configuration path" << std::endl;
     std::cout << "Imported" << std::setw(32-8) << std::setfill(' ') << " "
@@ -255,6 +257,7 @@ static int cmd_config_manage(ParsedArgs args)
     {
         std::string path = args.GetValue("path", 0);
         OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path);
+        conf.Ping();
 
         if (args.Present("alias"))
         {
@@ -352,6 +355,8 @@ static int cmd_config_acl(ParsedArgs args)
     {
         OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM,
                                         args.GetValue("path", 0));
+        conf.Ping();
+
         if (args.Present("grant"))
         {
             for (auto const& user : args.GetAllValues("grant"))
@@ -550,6 +555,7 @@ static int cmd_config_show(ParsedArgs args)
     {
         OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM,
                                         args.GetValue("path", 0));
+        conf.Ping();
 
         if (!args.Present("json"))
         {
@@ -610,6 +616,7 @@ static int cmd_config_remove(ParsedArgs args)
         {
             OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM,
                                             args.GetValue("path", 0));
+            conf.Ping();
             conf.Remove();
             std::cout << "Configuration removed." << std::endl;
         }
