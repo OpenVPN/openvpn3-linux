@@ -796,28 +796,37 @@ private:
         // Retrieve confniguration
         signal.LogVerb2("Retrieving configuration from " + configpath);
 
-        auto cfg_proxy = new OpenVPN3ConfigurationProxy(G_BUS_TYPE_SYSTEM,
-                                                        configpath);
+        try
+        {
+            auto cfg_proxy = new OpenVPN3ConfigurationProxy(G_BUS_TYPE_SYSTEM,
+                                                            configpath);
 
-        // We need to extract the persist_tun property *before* calling
-        // GetConfig().  If the configuration is tagged as a single-shot
-        // config, we cannot query it for more details after the first
-        // GetConfig() call.
-        bool tunPersist = cfg_proxy->GetPersistTun();
+            // We need to extract the persist_tun property *before* calling
+            // GetConfig().  If the configuration is tagged as a single-shot
+            // config, we cannot query it for more details after the first
+            // GetConfig() call.
+            bool tunPersist = cfg_proxy->GetPersistTun();
 
-        // Parse the configuration
-        ProfileMergeFromString pm(cfg_proxy->GetConfig(), "",
-                                  ProfileMerge::FOLLOW_NONE,
-                                  ProfileParseLimits::MAX_LINE_SIZE,
-                                  ProfileParseLimits::MAX_PROFILE_SIZE);
+            // Parse the configuration
+            ProfileMergeFromString pm(cfg_proxy->GetConfig(), "",
+                                      ProfileMerge::FOLLOW_NONE,
+                                      ProfileParseLimits::MAX_LINE_SIZE,
+                                      ProfileParseLimits::MAX_PROFILE_SIZE);
 #ifdef CONFIGURE_GIT_REVISION
-        vpnconfig.guiVersion = openvpn::platform_string(PACKAGE_NAME, "git:" CONFIGURE_GIT_REVISION CONFIGURE_GIT_FLAGS);
+            vpnconfig.guiVersion = openvpn::platform_string(PACKAGE_NAME, "git:" CONFIGURE_GIT_REVISION CONFIGURE_GIT_FLAGS);
 #else
-        vpnconfig.guiVersion = openvpn::platform_string(PACKAGE_NAME, PACKAGE_GUIVERSION);
+            vpnconfig.guiVersion = openvpn::platform_string(PACKAGE_NAME, PACKAGE_GUIVERSION);
 #endif
-        vpnconfig.info = true;
-        vpnconfig.content = pm.profile_content();
-        vpnconfig.tunPersist = tunPersist;
+            vpnconfig.info = true;
+            vpnconfig.content = pm.profile_content();
+            vpnconfig.tunPersist = tunPersist;
+        }
+        catch (std::exception& e)
+        {
+            // This should normally not happen
+            signal.LogFATAL("** EXCEPTION ** openvpn3-service-client/fetch_config():"
+                            + std::string(e.what()));
+        }
     }
 };
 
