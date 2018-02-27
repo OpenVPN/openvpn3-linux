@@ -152,6 +152,11 @@ static int cmd_session_start(ParsedArgs args)
         throw CommandException("session-start",
                                "--config and --config-path cannot be used together");
     }
+    if (args.Present("persist-tun") && !args.Present("config"))
+    {
+        throw CommandException("session-start",
+                               "--persist-tun can only be used with --config");
+    }
 
     try
     {
@@ -170,6 +175,14 @@ static int cmd_session_start(ParsedArgs args)
             cfgpath = args.GetValue("config-path", 0);
         }
 
+        // If --persist-tun is given on the command line, enforce this
+        // feature on this connection.  This can only be provided when using
+        // --config, not --config-path.
+        if (args.Present("persist-tun"))
+        {
+            OpenVPN3ConfigurationProxy cfgprx(G_BUS_TYPE_SYSTEM, cfgpath);
+            cfgprx.SetPersistTun(true);
+        }
 
         std::string sessionpath = sessmgr.NewTunnel(cfgpath);
 
@@ -661,6 +674,8 @@ void RegisterCommands_session(Commands& ovpn3)
     cmd->AddOption("config-path", 'p', "CONFIG-PATH", true,
                    "Configuration path to an already imported configuration",
                    arghelper_config_paths);
+    cmd->AddOption("persist-tun", 0,
+                   "Enforces persistent tun/seamless tunnel (requires --config)");
 
     //
     //  session-manage command
