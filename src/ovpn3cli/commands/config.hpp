@@ -671,7 +671,7 @@ void RegisterCommands_config(Commands& ovpn3)
     cmd->AddOption("rename", 'r', "NEW-CONFIG-NAME", true,
                    "Renames the configuration");
     cmd->AddOption("persist-tun", "<true|false>", true,
-                   "Set/unset the persisten tun/seamless tunnel flag",
+                   "Set/unset the persistent tun/seamless tunnel flag",
                    arghelper_boolean);
 
     //
