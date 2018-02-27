@@ -191,50 +191,54 @@ namespace openvpn
         }
 
 
+        /**
+         *  Tries to ping a the destination service.  This is used to
+         *  activate auto-start of services and give it time to settle.
+         *  It will try 3 times with a sleep of 1 second in between.
+         *
+         *  If it does not repsond after three attempts, it will
+         *  throw a DBusException.
+         */
+        void Ping()
+        {
+            GDBusProxy *peer_proxy = SetupProxy(bus_name,
+                                               "org.freedesktop.DBus.Peer",
+                                               "/");
+
+            for (int i=0; i < 3; i++)
+            {
+                try
+                {
+                    dbus_proxy_call(peer_proxy, "Ping", NULL,
+                                    false, call_flags);
+                    usleep(250);
+                    return;
+                }
+                catch (DBusException& excp)
+                {
+                    if (2 == i)
+                    {
+                        THROW_DBUSEXCEPTION("DBusProxy",
+                                            "D-Bus service '"
+                                            + bus_name + "' did not respond");
+                    }
+                    sleep(1);
+                }
+            }
+        }
+
+
         GVariant * Call(std::string method, GVariant *params, bool noresponse = false)
         {
-            if (method.empty())
-            {
-                THROW_DBUSEXCEPTION("DBusProxy", "Method cannot be empty");
-            }
-
-            GError *error = NULL;
-            if (!noresponse)
-            {
-                // Where we care about the response, we use a synchronous call
-                // and wait for the response
-                GVariant *ret = g_dbus_proxy_call_sync(proxy,
-                                                       method.c_str(),
-                                                       params,      // parameters to method
-                                                       call_flags,
-                                                       -1,          // timeout, -1 == default
-                                                       NULL,        // GCancellable
-                                                       &error);
-                if (!ret || error)
-                {
-                    std::stringstream errmsg;
-                    errmsg << "Failed calling D-Bus method " << method << ": "
-                           << error->message;
-                    THROW_DBUSEXCEPTION("DBusProxy", errmsg.str());
-                }
-                return ret;
-            }
-            else
-            {
-                g_dbus_proxy_call(proxy, method.c_str(), params,
-                                  call_flags,
-                                  -1,       // timeout, -1 == default
-                                  NULL,     // GCancellable
-                                  NULL,     // Response callback, not needed here
-                                  NULL);    // user_data, not needed due to no callback
-                return NULL;
-            }
+            return dbus_proxy_call(proxy, method, params, noresponse,
+                                   call_flags);
         }
 
 
         GVariant * Call(std::string method, bool noresponse = false)
         {
-            return Call(method, NULL, noresponse);
+            return dbus_proxy_call(proxy, method, NULL, noresponse,
+                                   call_flags);
         }
 
 
@@ -450,6 +454,48 @@ namespace openvpn
         GDBusCallFlags call_flags;
         bool proxy_init;
         bool property_proxy_init;
+
+        GVariant * dbus_proxy_call(GDBusProxy *prx, std::string method,
+                                   GVariant *params, bool noresponse,
+                                   GDBusCallFlags flags)
+        {
+            if (method.empty())
+            {
+                THROW_DBUSEXCEPTION("DBusProxy", "Method cannot be empty");
+            }
+
+            GError *error = NULL;
+            if (!noresponse)
+            {
+                // Where we care about the response, we use a synchronous call
+                // and wait for the response
+                GVariant *ret = g_dbus_proxy_call_sync(prx,
+                                                       method.c_str(),
+                                                       params,      // parameters to method
+                                                       flags,
+                                                       -1,          // timeout, -1 == default
+                                                       NULL,        // GCancellable
+                                                       &error);
+                if (!ret || error)
+                {
+                    std::stringstream errmsg;
+                    errmsg << "Failed calling D-Bus method " << method << ": "
+                           << error->message;
+                    THROW_DBUSEXCEPTION("DBusProxy", errmsg.str());
+                }
+                return ret;
+            }
+            else
+            {
+                g_dbus_proxy_call(prx, method.c_str(), params,
+                                  flags,
+                                  -1,       // timeout, -1 == default
+                                  NULL,     // GCancellable
+                                  NULL,     // Response callback, not needed here
+                                  NULL);    // user_data, not needed due to no callback
+                return NULL;
+            }
+        }
     };
 };
 #endif // OPENVPN3_DBUS_PROXY_HPP
