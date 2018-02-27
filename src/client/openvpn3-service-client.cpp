@@ -947,7 +947,9 @@ public:
      */
     void callback_name_lost(GDBusConnection *conn, std::string busname)
     {
-        THROW_DBUSEXCEPTION("BackendClientDBus", "Configuration D-Bus name not registered: '" + busname + "'");
+        THROW_DBUSEXCEPTION("BackendClientDBus",
+                            "openvpn3-service-client could not register '"
+                            + busname + "' on the D-Bus");
     };
 
 
