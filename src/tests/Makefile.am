@@ -37,7 +37,8 @@ AM_CXXFLAGS = \
 	-I$(top_srcdir)/src
 
 AM_LDFLAGS = \
-	$(LIBGLIBGIO_LIBS)
+	$(LIBGLIBGIO_LIBS) \
+	$(CRYPTO_LIBS)
 
 
 noinst_PROGRAMS = \
