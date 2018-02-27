@@ -262,6 +262,22 @@ AC_MSG_RESULT([checking if this is a git checkout ... ${GIT_CHECKOUT}])
 AM_CONDITIONAL([GIT_CHECKOUT], [test "${GIT_CHECKOUT}" = "yes"])
 
 dnl
+dnl   opt-in debug mode, will print more details when DBusExceptions happens
+dnl   This used to be the default behaviour, but is now optional
+dnl
+AC_ARG_ENABLE(
+    [debug-exceptions],
+    [AS_HELP_STRING([--enable-debug-exceptions],
+                    [enables more detailed DBusException messages])],
+    [enable_debug_exceptions="yes"],
+    [],
+)
+AC_SUBST([DEBUG_EXCEPTIONS])
+if test "${enable_debug_exceptions}" = "yes"; then
+   AC_DEFINE([DEBUG_EXCEPTIONS], [1], [add more details when throwing DBusExceptions])
+fi
+
+dnl
 dnl   Make it possible to not build the various test programs by default
 dnl
 AC_ARG_ENABLE(

@@ -23,6 +23,8 @@
 #include <exception>
 #include <sstream>
 
+#include "config.h"
+
 namespace openvpn
 {
     /**
@@ -34,14 +36,14 @@ namespace openvpn
         DBusException(const std::string classn, const std::string& err, const char *filen, const unsigned int linenum, const char *fn) noexcept
         : errorstr(err)
         {
-            prepare_sourceref(classn, filen, linenum, fn);
+            prepare_sourceref(classn, filen, linenum, fn, errorstr);
         }
 
 
         DBusException(const std::string classn, std::string&& err, const char *filen, const unsigned int linenum, const char *fn) noexcept
         : errorstr(std::move(err))
         {
-            prepare_sourceref(classn, filen, linenum, fn);
+            prepare_sourceref(classn, filen, linenum, fn, errorstr);
         }
 
 
@@ -50,7 +52,11 @@ namespace openvpn
 
         virtual const char* what() const throw()
         {
-            return std::string("[DBusException]" + sourceref + errorstr).c_str();
+#ifdef DEBUG_EXCEPTIONS
+	    return sourceref.c_str();
+#else
+	    return errorstr.c_str();
+#endif
         }
 
 
@@ -73,10 +79,10 @@ namespace openvpn
     private:
         void prepare_sourceref(const std::string classn,
                                const char *filen, const unsigned int linenum,
-                               const char *fn) noexcept
+                               const char *fn, const std::string err) noexcept
         {
             sourceref = "{" + std::string(filen) + ":" + std::to_string(linenum)
-                      + ", " + classn + "::" + std::string(fn) + "()} ";
+                      + ", " + classn + "::" + std::string(fn) + "()} " + err;
         }
 
     };
