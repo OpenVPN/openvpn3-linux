@@ -31,6 +31,7 @@
 
 #include "dbus/core.hpp"
 #include "common/utils.hpp"
+#include "log/log-helpers.hpp"
 
 using namespace openvpn;
 
@@ -101,6 +102,24 @@ public:
                       << std::to_string(group) << "] "
                       << "-- type=" << ClientAttentionType_str[type] << ", "
                       << "group=" << ClientAttentionGroup_str[group] << ", "
+                      << " message='" << std::string(message) << "'"
+                      << std::endl;
+        }
+        else if (signal_name == "Log")
+        {
+            guint group = 0;
+            guint catg = 0;
+            gchar *message = NULL;
+            g_variant_get (parameters, "(uus)", &group, &catg, &message);
+
+            std::cout << "-- Log: "
+                      << "sender=" << sender_name
+                      << ", interface=" << interface_name
+                      << ", path=" << object_path
+                      << ": [" << std::to_string(group) << ", "
+                      << std::to_string(catg) << "] "
+                      << "-- type=" << LogGroup_str[group] << ", "
+                      << "group=" << LogCategory_str[catg] << ", "
                       << " message='" << std::string(message) << "'"
                       << std::endl;
         }
