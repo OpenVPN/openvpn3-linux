@@ -94,6 +94,7 @@ DBUS_SOURCES = \
 	src/dbus/exceptions.hpp \
 	src/dbus/idlecheck.hpp \
 	src/dbus/object.hpp \
+	src/dbus/object-property.hpp \
 	src/dbus/path.hpp \
 	src/dbus/processwatch.hpp \
 	src/dbus/proxy.hpp \
