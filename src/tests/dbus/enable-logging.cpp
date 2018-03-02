@@ -84,11 +84,11 @@ int main(int argc, char **argv)
                         std::cout << "Changed to: " << (setting ? "enabled" : "disabled") << std::endl;
 
                         if( argc > 3) {
-                                unsigned loglev = proxy.GetUIntProperty("log_level");
-                                std::cout << "Current log level: " << std::to_string(loglev) << ::std::endl;
-                                proxy.SetProperty("log_level", (unsigned int) atoi(argv[3]));
-                                loglev = proxy.GetUIntProperty("log_level");
-                                std::cout << "New log level: " << loglev << ::std::endl;
+                                unsigned loglev = proxy.GetUIntProperty("log_verbosity");
+                                std::cout << "Current log verbosity: " << std::to_string(loglev) << ::std::endl;
+                                proxy.SetProperty("log_verbosity", (unsigned int) atoi(argv[3]));
+                                loglev = proxy.GetUIntProperty("log_verbosity");
+                                std::cout << "New log_verbosity: " << loglev << ::std::endl;
                         }
 
                 } catch (DBusException& err) {
