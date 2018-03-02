@@ -29,6 +29,7 @@
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
 #include "dbus/exceptions.hpp"
+#include "dbus/object-property.hpp"
 #include "log/dbus-log.hpp"
 #include "ovpn3cli/lookup.hpp"
 
@@ -314,7 +315,8 @@ public:
           single_use(false),
           persistent(false),
           persist_tun(false),
-          alias(nullptr)
+          alias(nullptr),
+          properties(this)
     {
         gchar *cfgstr;
         gchar *cfgname_c;
@@ -379,6 +381,7 @@ public:
             "        <property type='b' name='public_access' access='readwrite'/>"
             "        <property type='b' name='persist_tun' access='readwrite' />"
             "        <property type='s' name='alias' access='readwrite'/>"
+            + properties.GetIntrospectionXML() +
             "    </interface>"
             "</node>";
         ParseIntrospectionXML(introsp_xml);
@@ -660,7 +663,10 @@ public:
         {
             allow_root = true;
         }
-
+        else if (properties.Exists(property_name))
+        {
+            allow_root = properties.GetRootAllowed(property_name);
+        }
 
         // Properties only available for approved users
         try {
@@ -719,6 +725,10 @@ public:
             else if ("acl" == property_name)
             {
                     ret = GetAccessList();
+            }
+            else if (properties.Exists(property_name))
+            {
+                ret = properties.GetValue(property_name);
             }
             else
             {
@@ -827,10 +837,9 @@ public:
                          + (acl_public ? std::string("true") : std::string("false"))
                          + " by UID " + std::to_string(GetUID(sender)));
             }
-            else if (("persist_tun" == property_name) && conn)
+            else if (conn && properties.Exists(property_name))
             {
-                persist_tun = g_variant_get_boolean(value);
-                ret = build_set_property_response(property_name, persist_tun);
+                ret = properties.SetValue(property_name, value);
             }
             else
             {
@@ -864,6 +873,7 @@ private:
     bool locked_down;
     bool persist_tun;
     ConfigurationAlias *alias;
+    PropertyCollection properties;
     OptionListJSON options;
 };
 
