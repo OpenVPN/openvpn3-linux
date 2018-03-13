@@ -37,7 +37,8 @@
 #include <functional>
 #include <ctime>
 
-#include "openvpn/common/likely.hpp"
+#include <openvpn/common/likely.hpp>
+#include <openvpn/log/logsimple.hpp>
 
 #include "common/core-extensions.hpp"
 #include "common/requiresqueue.hpp"

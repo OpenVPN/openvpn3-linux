@@ -35,7 +35,6 @@
 
 #include <sstream>
 
-#include "common/core-extensions.hpp"
 #include "common/requiresqueue.hpp"
 #include "common/utils.hpp"
 #include "configmgr/proxy-configmgr.hpp"

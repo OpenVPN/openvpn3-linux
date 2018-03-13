@@ -24,6 +24,7 @@
 #include <map>
 #include <ctime>
 
+#include <openvpn/log/logsimple.hpp>
 #include "common/core-extensions.hpp"
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"

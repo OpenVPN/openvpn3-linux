@@ -27,6 +27,8 @@
 
 #include <iostream>
 #include <sstream>
+
+#include <openvpn/log/logsimple.hpp>
 #include "common/core-extensions.hpp"
 
 using namespace openvpn;
