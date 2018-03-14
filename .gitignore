@@ -9,6 +9,7 @@ Makefile.in
 aclocal.m4
 autodefs.h
 autom4te.cache
+compile
 config.guess
 config.h
 config.h.in
@@ -67,6 +68,7 @@ src/tests/dbus/signal-listener
 src/tests/misc/config-export-json-test
 src/tests/misc/json-config-import-test
 src/tests/misc/lookup-tests
+src/tests/ovpn3-core/profilemerge-optionlist
 src/utils/gen-python-constants
 src/policy/net.openvpn.v3.conf
 src/service-autostart/net.openvpn*.service
