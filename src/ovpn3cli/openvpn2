@@ -541,6 +541,13 @@ class OpenVPNconfigParser():
                                    help='Set a custom environmental variable '
                                    + 'to pass to script.')
 
+        self.__parser.add_argument('--static-challenge', metavar='MSG ECHO',
+                                   action=OpenVPNconfigParser.OpenVPNvarArgs,
+                                   min_args=2,
+                                   help='Enable static challenge/response '
+                                   + 'protocol using challenge text MSG, with '
+                                   + 'ECHO indicating echo flag (0|1)')
+
         self.__parser.add_argument('--tcp-queue-limit', metavar='NUM',
                                    action='store',
                                    nargs=1,
