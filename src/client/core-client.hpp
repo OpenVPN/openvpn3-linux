@@ -236,9 +236,11 @@ private:
         }
         else if (!failed_signal_sent && "DISCONNECTED" == ev.name)
         {
-            if (run_status != StatusMinor::CONN_AUTH_FAILED)
+            if (StatusMinor::CONN_AUTH_FAILED != run_status
+                && StatusMinor::CFG_REQUIRE_USER != run_status)
             {
-                signal->StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_DISCONNECTED);
+                signal->StatusChange(StatusMajor::CONNECTION,
+                                     StatusMinor::CONN_DISCONNECTED);
                 run_status = StatusMinor::CONN_DISCONNECTED;
             }
         }
