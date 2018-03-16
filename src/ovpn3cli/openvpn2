@@ -571,6 +571,12 @@ class OpenVPNconfigParser():
                                    + 'Valid profiles: '
                                    + ', '.join(cert_profiles))
 
+        self.__parser.add_argument('--tls-client',
+                                   action='store_true',
+                                   help='Enable TLS and assume client role '
+                                   + 'during TLS handshake. Implicitly added '
+                                   + 'when using --client')
+
         self.__parser.add_argument('--tls-crypt', metavar='FILE',
                                    action=OpenVPNconfigParser.EmbedFile,
                                    help='Encrypts the TLS control channel '
