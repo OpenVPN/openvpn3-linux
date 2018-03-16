@@ -676,6 +676,14 @@ class OpenVPNconfigParser():
                              help='Set the TCP/UDP receive buffer size. Not '
                              + 'supported in OpenVPN 3')
 
+        ignored.add_argument('--resolv-retry',
+                             metavar='SECS',
+                             action=OpenVPNconfigParser.IgnoreArg,
+                             nargs=1,
+                             help='If hostname resolve fails for --remote, '
+                             + 'retry resolve for n seconds before failing. '
+                             + 'Not supported by OpenVPN 3')
+
         ignored.add_argument('--sndbuf',
                              metavar='SIZE',
                              action=OpenVPNconfigParser.IgnoreArg,
