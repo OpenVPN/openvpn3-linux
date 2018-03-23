@@ -47,6 +47,7 @@
 #include "dbus/connection-creds.hpp"
 #include "dbus/path.hpp"
 #include "log/dbus-log.hpp"
+#include "client/backendstatus.hpp"
 
 using namespace openvpn;
 
@@ -284,37 +285,54 @@ public:
     {
         if (signal_name == "StatusChange")
         {
-            guint32 maj = 0;
-            guint32 min = 0;
-            gchar *msg;
-            g_variant_get (parameters, "(uus)", &maj, &min, &msg);
-
-            // If the last status received was CONNECTION:CONN_AUTH_FAILED,
-            // preserve this status message
-            if (!(StatusMajor::CONNECTION == (StatusMajor) last_major
-                && StatusMinor::CONN_AUTH_FAILED == (StatusMinor) last_minor))
-            {
-                last_major = maj;
-                last_minor = min;
-                last_msg = std::string(msg);
-            }
-
-            /*
-              std::cout << "** SessionStatusChange:"
-                      << "  sender=" << sender_name
-                      << ", path=" << object_path
-                      << ", interface=" << interface_name
-                      << ", signal=" << signal_name
-                      << std::endl
-                      << "                      : "
-                      << "[" << major << ", " << minor << "] "
-                      << msg << std::endl;
-            */
-            // Proxy this mesage via DBusSignalProducer
-            Send("StatusChange", parameters);
+            ProxyStatus(parameters);
         }
     }
 
+
+    void ProxyStatus(GVariant *status)
+    {
+        guint32 maj = 0;
+        guint32 min = 0;
+        gchar *msg;
+        g_variant_get (status, "(uus)", &maj, &min, &msg);
+
+        // If the last status received was CONNECTION:CONN_AUTH_FAILED,
+        // preserve this status message
+        if (!(StatusMajor::CONNECTION == (StatusMajor) last_major
+            && StatusMinor::CONN_AUTH_FAILED == (StatusMinor) last_minor))
+        {
+            last_major = maj;
+            last_minor = min;
+            last_msg = std::string(msg);
+        }
+
+        // Proxy this mesage via DBusSignalProducer
+        Send("StatusChange", status);
+    }
+
+
+    void ProxyStatusDict(GVariant *status)
+    {
+        BackendStatus be_status(status);
+
+        // If the last status received was CONNECTION:CONN_AUTH_FAILED,
+        // preserve this status message
+        if (!(StatusMajor::CONNECTION == (StatusMajor) last_major
+            && StatusMinor::CONN_AUTH_FAILED == (StatusMinor) last_minor))
+        {
+            last_major = (guint32) be_status.major;
+            last_minor = (guint32) be_status.minor;
+            last_msg = be_status.message;
+        }
+
+        // Proxy this mesage via DBusSignalProducer
+        GVariant *sig = g_variant_new("(uus)",
+                                      (guint32) be_status.major,
+                                      (guint32) be_status.minor,
+                                      be_status.message.c_str());
+        Send("StatusChange", sig);
+    }
 
     /**
      *  Retrieve the last status message processed
@@ -337,10 +355,34 @@ public:
     }
 
 
+    /**
+     *  Compares the provided status with what our latest registered status
+     *  is.
+     * @param status_chk  GVariant object containing a status dict
+     * @return Returns True if the provided status is identical with the last
+     *         reigstered status.
+     */
+    bool CompareStatus(GVariant *status_chk)
+    {
+        if ( last_msg.empty() && 0 == last_major && 0 == last_minor)
+        {
+            // No status logged, so it is not possible to compare it.
+            // Return false, as uncomparable statuses means we need to handle
+            // this situation in the caller.
+            return false;
+        }
+
+        BackendStatus chk(status_chk);
+        return (chk.major == (StatusMajor) last_major)
+               && (chk.minor == (StatusMinor) last_minor)
+               && (last_msg.compare(chk.message));
+    }
+
 private:
     guint32 last_major;
     guint32 last_minor;
     std::string last_msg;
+
 };
 
 
@@ -641,7 +683,7 @@ public:
             {
                 ping = false;
                 THROW_DBUSEXCEPTION("SessionObject",
-                                    "Backend did not respond to Ping: "
+                                    "Backend did not respond: "
                                     + std::string(dbserr.getRawError()));
             }
 
@@ -888,6 +930,7 @@ public:
             ret = NULL;
             if (nullptr != sig_statuschg)
             {
+                update_last_status();
                 ret = sig_statuschg->GetLastStatusChange();
             }
             if (NULL == ret)
@@ -1162,6 +1205,28 @@ private:
         g_variant_unref(res_g);
         return ret;
     }
+
+
+    /**
+     * Fetches the last backend status and compares to what we have
+     * registered.  If there is a mismatch, we might have missed a signal -
+     * so register it and send it again.
+     */
+    void update_last_status()
+    {
+        if (!sig_statuschg)
+        {
+            return;
+        }
+
+        GVariant *be_status = nullptr;
+        be_status = be_proxy->GetProperty("status");
+        if (!sig_statuschg->CompareStatus(be_status))
+        {
+            sig_statuschg->ProxyStatusDict(be_status);
+        }
+    }
+
 
     /**
      *  Initiate a shutdown of the VPN client backend process.
