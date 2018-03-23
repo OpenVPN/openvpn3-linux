@@ -1085,6 +1085,9 @@ def start_tunnel(bus, cfgpath, daemon):
                         print('\nConnection got disconnected: ' + s)
                         done = True
 
+                    elif StatusMinor.CFG_REQUIRE_USER == status_min:
+                        connected = False
+
                     elif StatusMinor.CONN_AUTH_FAILED == status_min:  # StatusMinor:CONN_AUTH_FAILED
                         print(' Authentication failed')
                         done = True
