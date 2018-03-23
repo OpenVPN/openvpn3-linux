@@ -210,6 +210,9 @@ private:
                 signal->AttentionReq(ClientAttentionType::CREDENTIALS,
                                      ClientAttentionGroup::CHALLENGE_DYNAMIC,
                                      dc.challenge);
+                signal->StatusChange(StatusMajor::CONNECTION,
+                                     StatusMinor::CFG_REQUIRE_USER,
+                                     "Dynamic Challenge");
                 run_status = StatusMinor::CFG_REQUIRE_USER;
             }
         }
@@ -233,6 +236,7 @@ private:
                                  StatusMinor::CONN_AUTH_FAILED,
                                  "Authentication failed");
             run_status = StatusMinor::CONN_AUTH_FAILED;
+            failed_signal_sent = true;
         }
         else if (!failed_signal_sent && "DISCONNECTED" == ev.name)
         {
