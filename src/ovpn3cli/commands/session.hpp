@@ -198,15 +198,15 @@ static int cmd_session_start(ParsedArgs args)
             loops--;
             try
             {
+                session.Ready();  // If not, an exception will be thrown
+                session.Connect();
+
                 // Allow approx 30 seconds to establish connection; one loop
                 // will take about 1.3 seconds.
                 unsigned int attempts = 23;
                 BackendStatus s;
                 while (attempts > 0)
                 {
-                    session.Ready();  // If not, an exception will be thrown
-                    session.Connect();
-
                     attempts--;
                     usleep(300000);  // sleep 0.3 seconds - avg setup time
                     s = session.GetLastStatus();
