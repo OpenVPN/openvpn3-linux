@@ -56,7 +56,12 @@ public:
      */
     void StatusChange(const StatusMajor major, const StatusMinor minor, std::string msg)
     {
-        GVariant *params = g_variant_new("(uus)", (guint) major, (guint) minor, msg.c_str());
+        last_major = (guint) major;
+        last_minor = (guint) minor;
+        last_msg = msg;
+        GVariant *params = g_variant_new("(uus)",
+                                         last_major, last_minor,
+                                         last_msg.c_str());
         Send("StatusChange", params);
     }
 
@@ -68,8 +73,7 @@ public:
      */
     void StatusChange(const StatusMajor major, const StatusMinor minor)
     {
-        GVariant *params = g_variant_new("(uus)", (guint) major, (guint) minor, "");
-        Send("StatusChange", params);
+        StatusChange(major, minor, "");
     }
 
     /**
@@ -87,6 +91,32 @@ public:
         GVariant *params = g_variant_new("(uus)", (guint) att_type, (guint) att_group, msg.c_str());
         Send("AttentionRequired", params);
     }
+
+    /**
+     *  Retrieve the last status message processed
+     *
+     * @return  Returns a GVariant Glib2 object containing a key/value
+     *          dictionary of the last signal sent
+     */
+    GVariant * GetLastStatusChange()
+    {
+        if( last_msg.empty() && 0 == last_major && 0 == last_minor)
+        {
+            return NULL;  // Nothing have been logged, nothing to report
+        }
+
+        GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
+        g_variant_builder_add (b, "{sv}", "major", g_variant_new_uint32(last_major));
+        g_variant_builder_add (b, "{sv}", "minor", g_variant_new_uint32(last_minor));
+        g_variant_builder_add (b, "{sv}", "status_message", g_variant_new_string(last_msg.c_str()));
+        return g_variant_builder_end(b);
+    }
+
+
+private:
+    guint32 last_major;
+    guint32 last_minor;
+    std::string last_msg;
 };
 
 #endif  // OPENVPN3_DBUS_CLIENT_BACKENDSIGNALS_HPP

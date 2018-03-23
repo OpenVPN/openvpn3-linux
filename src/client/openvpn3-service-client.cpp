@@ -122,6 +122,7 @@ public:
                           << "            <arg type='s' name='token' direction='out'/>"
                           << "        </signal>"
                           << "        <property type='a{sx}' name='statistics' access='read'/>"
+                          << "        <property type='a{sv}' name='status' access='read'/>"
                           <<  "    </interface>"
                           <<  "</node>";
         ParseIntrospectionXML(introspection_xml);
@@ -549,6 +550,10 @@ public:
             GVariant *ret = g_variant_builder_end(b);
             g_variant_builder_unref(b);
             return ret;
+        }
+        else if ("status" == property_name)
+        {
+            return signal.GetLastStatusChange();
         }
         g_set_error(error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, "Unknown property");
         return NULL;
