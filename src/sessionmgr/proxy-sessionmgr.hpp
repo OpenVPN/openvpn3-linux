@@ -34,73 +34,10 @@
 #include "dbus/core.hpp"
 #include "dbus/requiresqueue-proxy.hpp"
 #include "client/statistics.hpp"
+#include "client/backendstatus.hpp"
 #include "log/log-helpers.hpp"
 
 using namespace openvpn;
-
-
-/**
- * Carries a status record as reported by a VPN backend client
- */
-struct BackendStatus
-{
-    BackendStatus()
-    {
-        reset();
-    }
-
-
-    BackendStatus(GVariant *status)
-    {
-        reset();
-        Parse(status);
-    }
-
-    void reset()
-    {
-        major = StatusMajor::UNSET;
-        major_str = "";
-        minor = StatusMinor::UNSET;
-        minor_str = "";
-        message = "";
-    }
-
-    void Parse(GVariant *status)
-    {
-        GVariant *d = nullptr;
-        unsigned int v = 0;
-
-        d = g_variant_lookup_value(status, "major", G_VARIANT_TYPE_UINT32);
-        v = g_variant_get_uint32(d);
-        major = (StatusMajor) v;
-        major_str = std::string(StatusMajor_str[v]);
-        g_variant_unref(d);
-
-        d = g_variant_lookup_value(status, "minor", G_VARIANT_TYPE_UINT32);
-        v = g_variant_get_uint32(d);
-        minor = (StatusMinor) v;
-        minor_str = std::string(StatusMinor_str[v]);
-        g_variant_unref(d);
-
-        gsize len;
-        d = g_variant_lookup_value(status,
-                                   "status_message", G_VARIANT_TYPE_STRING);
-        message = std::string(g_variant_get_string(d, &len));
-        g_variant_unref(d);
-        if (len != message.size())
-        {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                "Failed retrieving status message text "
-                                "(inconsistent length)");
-        }
-    }
-
-    StatusMajor major;
-    std::string major_str;
-    StatusMinor minor;
-    std::string minor_str;
-    std::string message;
-};
 
 
 /**
