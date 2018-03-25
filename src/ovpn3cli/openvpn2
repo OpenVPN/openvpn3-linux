@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
 #  Copyright (C) 2017 - 2018  OpenVPN Inc. <sales@openvpn.net>
@@ -52,7 +52,6 @@ except ImportError:
 # This will allow dumping of tracebacks when exceptions happens
 if 'OPENVPN3_DEBUG' in os.environ:
     import traceback
-
 
 ##
 #  StatusMajor constants
@@ -137,7 +136,7 @@ class OpenVPNconfigParser():
 
     def GenerateConfig(self):
         cfg = []
-        for opt_key, opt_val in self.__opts.iteritems():
+        for opt_key, opt_val in self.__opts.items():
             if 'daemon' == opt_key:
                 # Don't put 'daemon' into the generated config,
                 # that is not a useful option for the OpenVPN 3 backend and we
@@ -188,7 +187,7 @@ class OpenVPNconfigParser():
         missing = []
         required = ('client', 'remote', 'ca')
         for req in required:
-            if self.__opts.has_key(req):
+            if req in self.__opts:
                 val = self.__opts[req]
                 if val is None or val is False:
                     missing.append('--%s' % req)
@@ -770,11 +769,11 @@ class OpenVPNconfigParser():
             # already parsed argument
             args = vars(parser.parse_args(shlex.split('\n'.join(cfg),
                                                       posix=False)))
-            for (k,v) in args.iteritems():
+            for (k,v) in args.items():
                 setattr(namespace, k, v)
 
             # Merge in embedded blobs, without further parsing
-            for (k,v) in embedded.iteritems():
+            for (k,v) in embedded.items():
                 setattr(namespace, k, v)
 
             # Remove the option triggering this call from the namespace.
@@ -857,7 +856,7 @@ class OpenVPNconfigParser():
                 ret += '\n</%s>' % self.__tag
                 fp.close()
                 setattr(namespace, self.dest, ret)
-            except IOError, e:
+            except IOError as e:
                 err = str(e.strerror) + " '" + values + "'"
                 raise argparse.ArgumentError(self, err)
 
@@ -918,7 +917,7 @@ class OpenVPNconfigParser():
             # First try without password
             try:
                 p12 = crypto.load_pkcs12(p12bin)
-            except crypto.Error, e:
+            except crypto.Error as e:
                 if 'PKCS12_parse' == e.message[0][1] and \
                    'mac verify failure' == e.message[0][2]:
                     # Password is needed.  Query the user for it
@@ -1002,7 +1001,7 @@ def print_statistics(session_properties):
                                         'statistics')
     if len(statistics) > 0:
         print('Connection statistics:')
-        for (key, val) in statistics.iteritems():
+        for (key, val) in statistics.items():
             print('    %25s: %i' % (key, val))
 
 
@@ -1125,7 +1124,7 @@ def start_tunnel(bus, cfgpath, daemon):
                     print('>>> Session path: ' + session_path)
             done = True
 
-        except dbus.exceptions.DBusException, excep:
+        except dbus.exceptions.DBusException as excep:
             # Do we need provide user credentials?
             if str(excep).find(' Missing user credentials') > 0:
                 print('Credentials needed')
@@ -1220,8 +1219,8 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print("")
         ret = 8
-    except Exception, e:
-        print ('\n** ERROR ** %s' % str(e.message))
+    except Exception as e:
+        print ('\n** ERROR ** %s' % str(e))
         ret = 2
 
         if 'OPENVPN3_DEBUG' in os.environ:
