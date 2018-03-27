@@ -71,7 +71,6 @@ public:
                          const std::string msg)
     {
         std::cout << GetTimestamp()
-                  << "[path=" << object_path << "] "
                   << LogPrefix(group, catg) << msg
                   << std::endl;
     }
