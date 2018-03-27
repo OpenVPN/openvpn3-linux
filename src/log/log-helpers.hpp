@@ -123,7 +123,7 @@ const std::string LogPrefix(LogGroup group, LogCategory catg)
             THROW_LOGEXCEPTION("Invalid Log Group value");
         }
 
-        if ((uint8_t) catg < 0 || (uint8_t) catg > 7) {
+        if ((uint8_t) catg < 0 || (uint8_t) catg > 8) {
             THROW_LOGEXCEPTION("Invalid category in log flags");
         }
 
@@ -134,4 +134,3 @@ const std::string LogPrefix(LogGroup group, LogCategory catg)
 }
 
 #endif // OPENVPN3_LOG_HELPERS_HPP
-
