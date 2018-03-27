@@ -962,6 +962,17 @@ class OpenVPNconfigParser():
 # ENDCLASS: OpenVPNconfigParser
 
 
+##
+#  Simple wrapper to handle the raw_input() vs input() differences
+#  between Python 2 and Python 3
+def get_input_wrapper(prompt):
+    if sys.version_info[0] < 3:
+        # Python 2.x
+        return raw_input(prompt)
+    else:
+        return input(prompt)
+
+
 
 def import_config(bus, opts):
     # Retrieve the main configuration manager object
@@ -1145,7 +1156,7 @@ def start_tunnel(bus, cfgpath, daemon):
                         # Field 4 contains the string to be presented to the user
                         try:
                             if False == req[5]:
-                                response = raw_input(req[4] + ': ')
+                                response = get_input_wrapper(req[4] + ': ')
                             else:
                                 response = getpass(req[4] + ': ')
                         except KeyboardInterrupt:
