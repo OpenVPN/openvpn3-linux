@@ -172,7 +172,6 @@ private:
      */
     virtual void event(const ClientAPI::Event& ev) override
     {
-        //std::lock_guard<std::mutex> lock(event_mutex);
         evntcount++;
 
         std::stringstream entry;
@@ -216,27 +215,121 @@ private:
                 run_status = StatusMinor::CFG_REQUIRE_USER;
             }
         }
+        else if ("WARN" == ev.name)
+        {
+            signal->LogWarn(ev.info);
+        }
+        else if ("INFO" == ev.name)
+        {
+            signal->LogInfo(ev.info);
+        }
         else if ("GET_CONFIG" == ev.name)
         {
+            signal->LogVerb2("Retrieving configuration from server");
         }
-        else if ("TUN_SETUP_FAILED" == ev.name)
+        else if ("TUN_SETUP_FAILED" == ev.name
+                 && "TUN_IFACE_CREATE" == ev.name
+                 && "TUN_IFACE_DISABLED" == ev.name)
         {
             failed_signal_sent = true;
             signal->StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_FAILED);
             run_status = StatusMinor::CONN_FAILED;
+            signal->LogCritical("Failed configuring TUN device (" + ev.name + ")");
+        }
+        else if ("CONNECTING" == ev.name)
+        {
+            // Don't log "Connecting" if we're in reconnect mode
+            if (StatusMinor::CONN_RECONNECTING != run_status)
+            {
+                signal->LogInfo("Connecting");
+                signal->StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_CONNECTING);
+                run_status = StatusMinor::CONN_CONNECTING;
+            }
+        }
+        else if ("WAIT" == ev.name)
+        {
+            signal->LogVerb1("Waiting for server response");
+        }
+        else if ("WAIT_PROXY" == ev.name)
+        {
+            signal->LogVerb1("Waiting for proxy server response");
         }
         else if ("CONNECTED" == ev.name)
         {
+            signal->LogInfo("Connected: " + ev.info);
             signal->StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_CONNECTED);
             run_status = StatusMinor::CONN_CONNECTED;
         }
+        else if ("RECONNECTING" == ev.name)
+        {
+            signal->LogInfo("Reconnecting");
+            signal->StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_RECONNECTING);
+            run_status = StatusMinor::CONN_RECONNECTING;
+        }
+        else if ("RESOLVE" == ev.name)
+        {
+            signal->LogVerb2("Resolving");
+        }
         else if ("AUTH_FAILED" == ev.name)
         {
+            signal->LogVerb1("Authentication failed");
             signal->StatusChange(StatusMajor::CONNECTION,
                                  StatusMinor::CONN_AUTH_FAILED,
                                  "Authentication failed");
             run_status = StatusMinor::CONN_AUTH_FAILED;
             failed_signal_sent = true;
+        }
+        else if ("CERT_VERIFY_FAIL" == ev.name)
+        {
+            signal->LogCritical("Certificate verification failed:" + ev.info);
+            signal->StatusChange(StatusMajor::CONNECTION,
+                                 StatusMinor::CONN_FAILED,
+                                 "Certificate verification failed");
+            run_status = StatusMinor::CONN_FAILED;
+            failed_signal_sent = true;
+        }
+        else if ("TLS_VERSION_MIN" == ev.name)
+        {
+            signal->LogCritical("TLS version is requested by server is too low:" + ev.info);
+            signal->StatusChange(StatusMajor::CONNECTION,
+                                 StatusMinor::CONN_FAILED,
+                                 "TLS version too low");
+            run_status = StatusMinor::CONN_FAILED;
+            failed_signal_sent = true;
+        }
+        else if ("CONNECTION_TIMEOUT" == ev.name)
+        {
+            signal->LogInfo("Connection timeout");
+            signal->StatusChange(StatusMajor::CONNECTION,
+                                 StatusMinor::CONN_DISCONNECTING,
+                                 "Connection timeout");
+            run_status = StatusMinor::CONN_DISCONNECTING;
+        }
+        else if ("INACTIVE_TIMEOUT" == ev.name)
+        {
+            signal->LogInfo("Connection closing due to inactivity");
+            signal->StatusChange(StatusMajor::CONNECTION,
+                                 StatusMinor::CONN_DISCONNECTING,
+                                 "Connection inactivity");
+            run_status = StatusMinor::CONN_DISCONNECTING;
+        }
+        else if ("PROXY_ERROR" == ev.name)
+        {
+            signal->LogCritical("Proxy connection error:" + ev.info);
+            signal->StatusChange(StatusMajor::CONNECTION,
+                                 StatusMinor::CONN_FAILED,
+                                 "Proxy connection error");
+            run_status = StatusMinor::CONN_FAILED;
+            failed_signal_sent = true;
+        }
+        else if ("PROXY_NEED_CREDS" == ev.name)
+        {
+            signal->StatusChange(StatusMajor::CONNECTION,
+                                 StatusMinor::CONN_FAILED,
+                                 "Proxy connection error");
+            run_status = StatusMinor::CONN_FAILED;
+            failed_signal_sent = true;
+            signal->LogCritical("Proxy " + ev.info);
         }
         else if (!failed_signal_sent && "DISCONNECTED" == ev.name)
         {
@@ -246,7 +339,13 @@ private:
                 signal->StatusChange(StatusMajor::CONNECTION,
                                      StatusMinor::CONN_DISCONNECTED);
                 run_status = StatusMinor::CONN_DISCONNECTED;
+                signal->LogInfo("Disconnected");
             }
+        }
+        else if (ev.fatal)
+        {
+            std::string msgtag = "[" + ev.name + "] ";
+            signal->LogFATAL(msgtag + ev.info);
         }
     }
 
