@@ -278,6 +278,22 @@ if test "${enable_debug_exceptions}" = "yes"; then
 fi
 
 dnl
+dnl   opt-in debug mode, will log all OpenVPN 3 Core library events
+dnl   happening in openvpn3-service-client as Debug log messages
+dnl
+AC_ARG_ENABLE(
+    [debug-core-events],
+    [AS_HELP_STRING([--enable-debug-core-events],
+                    [enables debug logging of OpenVPN 3 Core library events])],
+    [enable_debug_core_events="yes"],
+    [],
+)
+AC_SUBST([DEBUG_CORE_EVENTS])
+if test "${enable_debug_core_events}" = "yes"; then
+   AC_DEFINE([DEBUG_CORE_EVENTS], [1], [Debug logging of OpenVPN 3 Core library events])
+fi
+
+dnl
 dnl   Make it possible to not build the various test programs by default
 dnl
 AC_ARG_ENABLE(

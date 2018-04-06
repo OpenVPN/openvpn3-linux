@@ -174,12 +174,11 @@ private:
     {
         evntcount++;
 
+#ifdef DEBUG_CORE_EVENTS
         std::stringstream entry;
         entry << " EVENT [" << evntcount << "][name=" << ev.name << "]: " << ev.info;
         signal->Debug(entry.str());
-
-        // FIXME: Need to evaluate which other ev.name values should trigger
-        //        status change messages
+#endif
 
         if ("DYNAMIC_CHALLENGE" == ev.name)
         {
