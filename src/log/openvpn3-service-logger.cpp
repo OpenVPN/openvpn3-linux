@@ -163,12 +163,30 @@ public:
     }
 
 
+    /**
+     *  Adds a LogGroup to be excluded when consuming log events
+     * @param exclgrp LogGroup to exclude
+     */
+    void AddExcludeFilter(LogGroup exclgrp)
+    {
+        exclude_loggroup.push_back(exclgrp);
+    }
+
+
     void ConsumeLogEvent(const std::string sender,
                          const std::string interface,
                          const std::string object_path,
                          const LogGroup group, const LogCategory catg,
                          const std::string msg)
     {
+        for (const auto& e : exclude_loggroup)
+        {
+            if (e == group)
+            {
+                return;  // Don't do anything if this LogGroup is filtered
+            }
+        }
+
         std::cout << timestampcolour << (timestamp ? GetTimestamp() : "")
                   << colourscheme
                   << log_tag << ":: sender=" << sender
@@ -187,6 +205,7 @@ private:
     std::string colourscheme;
     std::string timestampcolour;
     std::string colourreset;
+    std::vector<LogGroup> exclude_loggroup;
 };
 
 static int logger(ParsedArgs args)
@@ -220,14 +239,28 @@ static int logger(ParsedArgs args)
             }
         }
 
-        if (args.Present("session-manager"))
+        if (args.Present("session-manager")
+            || args.Present("session-manager-client-proxy"))
         {
             session_subscr = new Logger(dbus.GetConnection(), "[S]",
                                         OpenVPN3DBus_interf_sessions,
                                         log_level, timestamp);
+
+            if (!args.Present("session-manager-client-proxy"))
+            {
+                // Don't forward log messages from the backend client which
+                // are proxied by the session manager.  Unless the
+                // --session-manager-client-proxy is used.  These log messages
+                // are also available via --vpn-backend, so this is more
+                // useful for debug reasons
+                session_subscr->AddExcludeFilter(LogGroup::CLIENT);
+            }
+
             if (colour)
             {
-                session_subscr->SetColourScheme(Logger::LogColour::BRIGHT_WHITE, Logger::LogColour::BLUE);
+                session_subscr->SetColourScheme(
+                                Logger::LogColour::BRIGHT_WHITE,
+                                Logger::LogColour::BLUE);
             }
         }
 
@@ -299,6 +332,8 @@ int main(int argc, char **argv)
                         "Subscribe to configuration manager log entries");
     argparser.AddOption("session-manager", 0,
                         "Subscribe to session manager log entries");
+    argparser.AddOption("session-manager-client-proxy", 0,
+                        "Also include backend client messages proxied by the session manager");
     argparser.AddOption("vpn-backend", 0,
                         "Subscribe to VPN client log entries");
     argparser.AddOption("log-level", 0, "LEVEL", true,
