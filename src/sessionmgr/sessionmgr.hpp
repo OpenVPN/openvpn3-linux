@@ -218,6 +218,11 @@ public:
         return g_variant_builder_end(b);
     }
 
+    void SetLogLevel(unsigned int loglev)
+    {
+        LogConsumer::SetLogLevel(loglev);
+        LogSender::SetLogLevel(loglev);
+    }
 
 private:
     LogGroup last_group;
@@ -427,10 +432,10 @@ public:
           backend_token(""),
           backend_pid(0),
           be_conn(nullptr),
-          log_verb(LogCategory::INFO),
           registered(false),
           selfdestruct_complete(false)
     {
+        SetLogLevel(default_log_level);
         Subscribe("RegistrationRequest");
         RequiresQueue dummyqueue;  // Only used to get introspection data
 
@@ -962,7 +967,7 @@ public:
         }
         else if ("log_verbosity" == property_name)
         {
-            ret = g_variant_new_uint32 ((guint32) log_verb);
+            ret = g_variant_new_uint32 (GetLogLevel());
         }
         else if ("public_access" == property_name)
         {
@@ -1040,6 +1045,7 @@ public:
                                 OpenVPN3DBus_interf_backends,
                                 be_path,
                                 GetObjectPath());
+                sig_logevent->SetLogLevel(default_log_level);
             }
             else if (!recv_log_events && nullptr != sig_logevent)
             {
@@ -1048,9 +1054,11 @@ public:
             }
             return build_set_property_response(property_name, recv_log_events);
         }
-        else if (("log_verbosity" == property_name) && be_conn)
+        else if (("log_verbosity" == property_name) && be_conn && sig_logevent)
         {
-            log_verb = (LogCategory) g_variant_get_uint32(value);
+            unsigned int log_verb = g_variant_get_uint32(value);
+            sig_logevent->SetLogLevel(log_verb);
+            SetLogLevel(log_verb);
 
             // FIXME: Proxy log level to the OpenVPN3 Core client
             return build_set_property_response(property_name,
@@ -1094,6 +1102,7 @@ public:
 
 
 private:
+    const unsigned int default_log_level = 4; // LogCategory::INFO messages
     std::function<void()> remove_callback;
     DBusProxy *be_proxy;
     bool recv_log_events;
@@ -1106,7 +1115,6 @@ private:
     GDBusConnection *be_conn;
     std::string be_busname;
     std::string be_path;
-    LogCategory log_verb;
     bool registered;
     bool selfdestruct_complete;
     std::mutex selfdestruct_guard;
