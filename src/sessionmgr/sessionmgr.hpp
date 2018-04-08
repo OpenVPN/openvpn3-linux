@@ -1219,11 +1219,23 @@ private:
             return;
         }
 
-        GVariant *be_status = nullptr;
-        be_status = be_proxy->GetProperty("status");
-        if (!sig_statuschg->CompareStatus(be_status))
+        try
         {
-            sig_statuschg->ProxyStatusDict(be_status);
+            GVariant *be_status = nullptr;
+            be_status = be_proxy->GetProperty("status");
+            if (!sig_statuschg->CompareStatus(be_status))
+            {
+                sig_statuschg->ProxyStatusDict(be_status);
+            }
+        }
+        catch (DBusException& excp)
+        {
+            // Ignore these failures for now.  It most commonly means
+            // the backend process has closed/shut-down - this is scenario
+            // is handled elsewhere in the call chain.
+
+            // TODO: Consider to set the local status to PROC_KILLED or
+            // something similar.
         }
     }
 
