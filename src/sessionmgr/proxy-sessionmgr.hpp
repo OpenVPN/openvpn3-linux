@@ -339,6 +339,56 @@ public:
 
 
     /**
+     *  Will the VPN client backend send log messages via
+     *  the session manager?
+     *
+     * @return  Returns true if session manager will proxy log events from
+     *          the VPN client backend
+     */
+    bool GetReceiveLogEvents()
+    {
+        return GetBoolProperty("receive_log_events");
+
+    }
+
+
+    /**
+     *  Change the session manager log event proxy
+     *
+     * @param enable  If true, the session manager will proxy log events
+     */
+    void SetReceiveLogEvents(bool enable)
+    {
+        SetProperty("receive_log_events", enable);
+    }
+
+
+    /**
+     *  Get the log verbosity of the log messages being proxied
+     *
+     * @return  Returns an integer between 0 and 6,
+     *          where 6 is the most verbose.  With 0 only fatal and critical
+     *          errors will be provided
+     */
+    unsigned int GetLogVerbosity()
+    {
+        return GetUIntProperty("log_verbosity");
+    }
+
+
+    /**
+     *  Sets the log verbosity level of proxied log events
+     *
+     * @param loglevel  An integer between 0 and 6, where 6 is the most
+     *                  verbose and 0 the least.
+     */
+    void SetLogVerbosity(unsigned int loglevel)
+    {
+        SetProperty("log_verbosity", loglevel);
+    }
+
+
+    /**
      * Retrieve the last log event which has been saved
      *
      * @return Returns a populated struct LogEvent with the the complete log
