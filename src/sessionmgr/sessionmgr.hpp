@@ -1033,48 +1033,56 @@ public:
                                         excp.getUserError());
         }
 
-        if (("receive_log_events" == property_name) && be_conn)
+        try
         {
-            recv_log_events = g_variant_get_boolean(value);
-            if (recv_log_events && nullptr == sig_logevent)
+            if (("receive_log_events" == property_name) && be_conn)
             {
-                // Subscribe to log signals
-                sig_logevent = new SessionLogEvent(
-                                be_conn,
-                                be_busname,
-                                OpenVPN3DBus_interf_backends,
-                                be_path,
-                                GetObjectPath());
-                sig_logevent->SetLogLevel(default_log_level);
+                recv_log_events = g_variant_get_boolean(value);
+                if (recv_log_events && nullptr == sig_logevent)
+                {
+                    // Subscribe to log signals
+                    sig_logevent = new SessionLogEvent(
+                                    be_conn,
+                                    be_busname,
+                                    OpenVPN3DBus_interf_backends,
+                                    be_path,
+                                    GetObjectPath());
+                    sig_logevent->SetLogLevel(default_log_level);
+                }
+                else if (!recv_log_events && nullptr != sig_logevent)
+                {
+                    delete sig_logevent;
+                    sig_logevent = nullptr;
+                }
+                return build_set_property_response(property_name, recv_log_events);
             }
-            else if (!recv_log_events && nullptr != sig_logevent)
+            else if (("log_verbosity" == property_name) && be_conn && sig_logevent)
             {
-                delete sig_logevent;
-                sig_logevent = nullptr;
+                unsigned int log_verb = g_variant_get_uint32(value);
+                sig_logevent->SetLogLevel(log_verb);
+                SetLogLevel(log_verb);
+
+                // FIXME: Proxy log level to the OpenVPN3 Core client
+                return build_set_property_response(property_name,
+                                                   (guint32) log_verb);
             }
-            return build_set_property_response(property_name, recv_log_events);
+            else if (("public_access" == property_name) && conn)
+            {
+                bool acl_public = g_variant_get_boolean(value);
+                SetPublicAccess(acl_public);
+                LogVerb1("Public access set to "
+                         + (acl_public ? std::string("true") :
+                                         std::string("false"))
+                         + " by uid " + std::to_string(GetUID(sender)));
+                return build_set_property_response(property_name, acl_public);
+            }
         }
-        else if (("log_verbosity" == property_name) && be_conn && sig_logevent)
+        catch (DBusException& excp)
         {
-            unsigned int log_verb = g_variant_get_uint32(value);
-            sig_logevent->SetLogLevel(log_verb);
-            SetLogLevel(log_verb);
-
-            // FIXME: Proxy log level to the OpenVPN3 Core client
-            return build_set_property_response(property_name,
-                                               (guint32) log_verb);
+            throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
+                                        obj_path, intf_name, property_name,
+                                        excp.what());
         }
-        else if (("public_access" == property_name) && conn)
-        {
-            bool acl_public = g_variant_get_boolean(value);
-            SetPublicAccess(acl_public);
-            LogVerb1("Public access set to "
-                     + (acl_public ? std::string("true") :
-                                     std::string("false"))
-                     + " by uid " + std::to_string(GetUID(sender)));
-            return build_set_property_response(property_name, acl_public);
-        }
-
         throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
                                     obj_path, intf_name, property_name,
                                     "Invalid property");
