@@ -85,6 +85,8 @@ public:
         // Initialize the VPN Core
         CoreVPNClient::init_process();
 
+        signal.SetLogLevel(default_log_level);
+
         std::stringstream introspection_xml;
         introspection_xml << "<node name='" << objpath << "'>"
                           << "    <interface name='" << OpenVPN3DBus_interf_backends << "'>"
@@ -590,6 +592,7 @@ public:
 
 
 private:
+    const unsigned int default_log_level = 6; // LogCategory::DEBUG messages
     GDBusConnection *dbusconn;
     GMainLoop *mainloop;
     BackendSignals signal;
@@ -915,9 +918,10 @@ public:
 
         // Setup a signal object of the backend
         signal = new BackendSignals(GetConnection(), LogGroup::BACKENDPROC, object_path);
-        signal->LogVerb1("Backend client process started as pid " + std::to_string(start_pid)
+        signal->SetLogLevel(default_log_level);
+        signal->LogVerb2("Backend client process started as pid " + std::to_string(start_pid)
                          + " re-initiated as pid " + std::to_string(getpid()));
-        signal->LogVerb2("BackendClientDBus registered on '" + GetBusName()
+        signal->Debug("BackendClientDBus registered on '" + GetBusName()
                        + "': " + object_path);
 
         procsig = new ProcessSignalProducer(GetConnection(), OpenVPN3DBus_interf_backends,
@@ -958,6 +962,7 @@ public:
 
 
 private:
+    const unsigned int default_log_level = 6; // LogCategory::DEBUG messages
     pid_t start_pid;
     std::string session_token;
     std::string object_path;

@@ -33,6 +33,7 @@ public:
     BackendSignals(GDBusConnection *conn, LogGroup lgroup, std::string object_path)
         : LogSender(conn, lgroup, OpenVPN3DBus_interf_backends, object_path)
     {
+        SetLogLevel(default_log_level);
     }
 
     /**
@@ -114,6 +115,7 @@ public:
 
 
 private:
+    const unsigned int default_log_level = 6; // LogCategory::DEBUG
     guint32 last_major;
     guint32 last_minor;
     std::string last_msg;
