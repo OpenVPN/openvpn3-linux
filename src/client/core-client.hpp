@@ -356,7 +356,7 @@ private:
      *
      * @param log  The ClientAPI::LogInfo object to act upon
      */
-    virtual void log(const ClientAPI::LogInfo& log)
+    virtual void log(const ClientAPI::LogInfo& log) override
     {
         // Log events going via log() are to be considered debug information
         signal->Debug(log.text);
