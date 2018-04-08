@@ -110,15 +110,31 @@ static int cmd_log_listen(ParsedArgs args)
         OpenVPN3SessionProxy sesprx(G_BUS_TYPE_SYSTEM, session_path);
         sesprx.Ping();
 
-        if (!sesprx.GetBoolProperty("receive_log_events"))
+        if (!sesprx.GetReceiveLogEvents())
         {
-            sesprx.SetProperty("receive_log_events", true);
+            sesprx.SetReceiveLogEvents(true);
             log_flag_reset = true;
         }
         // Setup a Logger object for the provided session path
         session_log.reset(new Logger(dbuscon.GetConnection(),
                                      OpenVPN3DBus_interf_sessions,
                                      session_path));
+
+        if (args.Present("log-level"))
+        {
+            try
+            {
+                int loglev = std::stoi(args.GetValue("log-level", 0));
+                session_log->SetLogLevel(loglev);
+                sesprx.SetLogVerbosity(loglev);
+            }
+            catch (std::exception& e)
+            {
+                throw CommandException("log",
+                                       "Invalid --log-level argument: "
+                                       + std::string(e.what()));
+            }
+        }
     }
 
     if (args.Present("config-events"))
@@ -144,7 +160,7 @@ static int cmd_log_listen(ParsedArgs args)
     if (!session_path.empty() && log_flag_reset)
     {
         OpenVPN3SessionProxy sesprx(G_BUS_TYPE_SYSTEM, session_path);
-        sesprx.SetProperty("receive_log_events", false);
+        sesprx.SetReceiveLogEvents(false);
     }
 
     // Clean-up and shut down.
@@ -175,6 +191,9 @@ void RegisterCommands_log(Commands& ovpn3)
     cmd->AddOption("session-path", "SESSION-PATH", true,
                    "Receive log events for a specific session",
                    arghelper_session_paths);
+    cmd->AddOption("log-level", "LOG-LEVEL", true,
+                   "Set the log verbosity level of messages to be shown (default: 4)",
+                   arghelper_log_levels);
     cmd->AddOption("config-events",
                    "Receive log events issued by the configuration manager");
 }

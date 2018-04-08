@@ -78,4 +78,37 @@ std::string arghelper_boolean()
 {
     return "false true";
 }
+
+
+/**
+ *  Generates a list of integers, based on the given start and end values
+ *
+ * @param start   Start number of the range
+ * @param end     End number of the range
+ *
+ * @return std::string with all the numbers on a single line
+ */
+static std::string intern_arghelper_integer_range(int start, int end)
+{
+    std::stringstream out;
+    for (int i = start; i <= end; i++)
+    {
+        out << std::to_string(i) << " ";
+    }
+    return out.str();
+}
+
+
+/**
+ *  Returns a list of valid log level values
+ *
+ * @return  std::string with all valid log levels
+ */
+std::string arghelper_log_levels()
+{
+    // See dbus-log.hpp - LogFilter::SetLogLevel() and
+    // LogFilter::_LogFilterAllow() for details
+    return intern_arghelper_integer_range(0, 6);
+}
+
 #endif // OPENVPN3_ARGHELPERS_HPP
