@@ -20,34 +20,83 @@
 #include "dbus/core.hpp"
 #include "sessionmgr.hpp"
 #include "log/dbus-log.hpp"
+#include "common/cmdargparser.hpp"
 
 using namespace openvpn;
 
-int main(int argc, char **argv)
+static int session_manager(ParsedArgs args)
 {
-    std::cout << get_version(argv[0]) << std::endl;
-
-    // This program does not require root privileges,
-    // so if used - drop those privileges
-    drop_root();
-
     GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
     g_unix_signal_add(SIGINT, stop_handler, main_loop);
     g_unix_signal_add(SIGTERM, stop_handler, main_loop);
 
-    IdleCheck::Ptr idle_exit = new IdleCheck(main_loop, std::chrono::minutes(3));
-    idle_exit->SetPollTime(std::chrono::seconds(30));
-
+    // Enable automatic shutdown if the config manager is
+    // idling for 1 minute or more.  By idling, it means
+    // no VPN sessions are registered.
+    unsigned int idle_wait_min = 3;
+    if (args.Present("idle-exit"))
+    {
+        idle_wait_min = std::atoi(args.GetValue("idle-exit", 0).c_str());
+    }
     SessionManagerDBus sessmgr(G_BUS_TYPE_SYSTEM);
-    // sessmgr.SetLogFile("/tmp/openvpn3-service-sessionmgr.log");
-    sessmgr.EnableIdleCheck(idle_exit);
+
+    unsigned int log_level = 3;
+    if (args.Present("log-level"))
+    {
+        log_level = std::atoi(args.GetValue("log-level", 0).c_str());
+    }
+    sessmgr.SetManagerLogLevel(log_level);
+
+    IdleCheck::Ptr idle_exit;
+    if (idle_wait_min > 0)
+    {
+        idle_exit.reset(new IdleCheck(main_loop,
+                                      std::chrono::minutes(idle_wait_min)));
+        idle_exit->SetPollTime(std::chrono::seconds(30));
+        sessmgr.EnableIdleCheck(idle_exit);
+    }
     sessmgr.Setup();
 
-    idle_exit->Enable();
+    if (idle_wait_min > 0)
+    {
+        idle_exit->Enable();
+    }
     g_main_loop_run(main_loop);
     g_main_loop_unref(main_loop);
-    idle_exit->Disable();
-    idle_exit->Join();
+
+    if (idle_wait_min > 0)
+    {
+        idle_exit->Disable();
+        idle_exit->Join();
+    }
 
     return 0;
+}
+
+
+int main(int argc, char **argv)
+{
+    SingleCommand argparser(argv[0], "OpenVPN 3 Session Manager",
+                            session_manager);
+    argparser.AddOption("log-level", "LOG-LEVEL", true,
+                        "Log verbosity level (valid values 0-6, default 3)");
+    argparser.AddOption("idle-exit", "MINUTES", true,
+                        "How long to wait before exiting if being idle. "
+                        "0 disables it (Default: 3 minutes)");
+
+    try
+    {
+        std::cout << get_version(argv[0]) << std::endl;
+
+        // This program does not require root privileges,
+        // so if used - drop those privileges
+        drop_root();
+
+        return argparser.RunCommand(simple_basename(argv[0]), argc, argv);
+    }
+    catch (CommandException& excp)
+    {
+        std::cout << excp.what() << std::endl;
+        return 2;
+    }
 }
