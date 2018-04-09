@@ -391,7 +391,7 @@ public:
     ~ConfigurationObject()
     {
         remove_callback();
-        LogVerb2("Configuration removed");
+        Debug("Configuration removed");
         IdleCheck_RefDec();
     };
 
@@ -535,7 +535,7 @@ public:
                 GrantAccess(uid);
                 g_dbus_method_invocation_return_value(invoc, NULL);
 
-                LogVerb1("Access granted to UID " + std::to_string(uid)
+                LogInfo("Access granted to UID " + std::to_string(uid)
                          + " by UID " + std::to_string(GetUID(sender)));
                 return;
             }
@@ -564,7 +564,7 @@ public:
                 RevokeAccess(uid);
                 g_dbus_method_invocation_return_value(invoc, NULL);
 
-                LogVerb1("Access revoked for UID " + std::to_string(uid)
+                LogInfo("Access revoked for UID " + std::to_string(uid)
                          + " by UID " + std::to_string(GetUID(sender)));
                 return;
             }
@@ -603,6 +603,9 @@ public:
             try
             {
                 CheckOwnerAccess(sender);
+                std::string sender_name = lookup_username(GetUID(sender));
+                LogInfo("Configuration '" + name + "' was removed by "
+                        + sender_name);
                 RemoveObject(conn);
                 g_dbus_method_invocation_return_value(invoc, NULL);
                 delete this;
@@ -811,7 +814,7 @@ public:
             {
                 locked_down = g_variant_get_boolean(value);
                 ret = build_set_property_response(property_name, locked_down);
-                LogVerb1("Configuration lock-down flag set to "
+                LogInfo("Configuration lock-down flag set to "
                          + (locked_down ? std::string("true") : std::string("false"))
                          + " by UID " + std::to_string(GetUID(sender)));
             }
@@ -820,7 +823,7 @@ public:
                 bool acl_public = g_variant_get_boolean(value);
                 SetPublicAccess(acl_public);
                 ret = build_set_property_response(property_name, acl_public);
-                LogVerb1("Public access set to "
+                LogInfo("Public access set to "
                          + (acl_public ? std::string("true") : std::string("false"))
                          + " by UID " + std::to_string(GetUID(sender)));
             }
@@ -922,7 +925,7 @@ public:
 
     ~ConfigManagerObject()
     {
-        LogInfo("Shutting down");
+        LogVerb2("Shutting down");
         RemoveObject(dbuscon);
     }
 
