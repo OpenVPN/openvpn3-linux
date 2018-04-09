@@ -48,6 +48,7 @@
 #include "dbus/path.hpp"
 #include "log/dbus-log.hpp"
 #include "client/backendstatus.hpp"
+#include "ovpn3cli/lookup.hpp"
 
 using namespace openvpn;
 
@@ -60,9 +61,11 @@ using namespace openvpn;
 class SessionManagerSignals : public LogSender
 {
 public:
-    SessionManagerSignals(GDBusConnection *conn, std::string object_path)
+    SessionManagerSignals(GDBusConnection *conn, std::string object_path,
+                          unsigned int log_level)
             : LogSender(conn, LogGroup::SESSIONMGR, OpenVPN3DBus_interf_sessions, object_path)
     {
+        SetLogLevel(log_level);
     }
 
     virtual ~SessionManagerSignals()
@@ -417,11 +420,12 @@ public:
     SessionObject(GDBusConnection *dbuscon,
                   std::function<void()> remove_callback,
                   uid_t owner,
-                  std::string objpath, std::string cfg_path)
+                  std::string objpath, std::string cfg_path,
+                  unsigned int manager_log_level)
         : DBusObject(objpath),
           DBusSignalSubscription(dbuscon, "", OpenVPN3DBus_interf_backends, ""),
           DBusCredentials(dbuscon, owner),
-          SessionManagerSignals(dbuscon, objpath),
+          SessionManagerSignals(dbuscon, objpath, manager_log_level),
           remove_callback(remove_callback),
           be_proxy(nullptr),
           recv_log_events(false),
@@ -435,7 +439,10 @@ public:
           registered(false),
           selfdestruct_complete(false)
     {
-        SetLogLevel(default_log_level);
+        // Only for the initialization of this object, use the manager's
+        // log level.  Once the object is registered with a backend, it
+        // will switch to the default session log level.
+        SetLogLevel(manager_log_level);
         Subscribe("RegistrationRequest");
         RequiresQueue dummyqueue;  // Only used to get introspection data
 
@@ -514,6 +521,11 @@ public:
                              + ", backend_pid=" + std::to_string(backend_pid));
         Debug("SessionObject registered on '" + OpenVPN3DBus_interf_sessions + "': "
               + objpath + " [backend_token=" + backend_token + "]");
+
+        std::stringstream msg;
+        msg << "Session starting, configuration path: " << cfg_path
+            << ", owner: " << lookup_username(owner);
+        LogVerb1(msg.str());
     }
 
     ~SessionObject()
@@ -599,6 +611,8 @@ public:
                 Subscribe(sender_name, be_path, "StatusChange");
                 register_backend();
                 Unsubscribe("RegistrationRequest");
+                SetLogLevel(default_session_log_level);
+                LogVerb2("Backend VPN client process registered");
             }
             catch (DBusException& err)
             {
@@ -669,8 +683,9 @@ public:
                               GVariant *params,
                               GDBusMethodInvocation *invoc)
     {
-        // std::cout << "SessionObject::callback_method_call: " << method_name << std::endl;
         bool ping = false;
+        bool disable_critical_log = false;
+
         try {
             if (!be_proxy)
             {
@@ -692,34 +707,50 @@ public:
                                     + std::string(dbserr.getRawError()));
             }
 
+
+            std::stringstream msg;
+            msg << "Session operation: " << method_name
+                << ", requester:  " << lookup_username(GetUID(sender));
+            Debug(msg.str());
+
             if ("Connect" == method_name)
             {
                 CheckACL(sender);
                 be_proxy->Call("Connect");
+                LogVerb2("Starting connection");
             }
             else if ("Restart" == method_name)
             {
                 CheckACL(sender, true);
                 be_proxy->Call("Restart");
+                LogVerb2("Restarting connection");
             }
             else if ("Pause" == method_name)
             {
                 CheckACL(sender, true);
                 // FIXME: Should check that params contains only the expected formatting
                 be_proxy->Call("Pause", params);
+                LogVerb2("Pausing connection");
             }
             else if ("Resume"  == method_name)
             {
                 CheckACL(sender, true);
                 be_proxy->Call("Resume");
+                LogVerb2("Resuming connection");
             }
             else if ("Disconnect" == method_name)
             {
                 CheckACL(sender, true);
+                LogVerb2("Disconnecting connection");
                 shutdown(false, true);
             }
             else if ("Ready" == method_name)
             {
+                // We disable logging critical exceptions in this case because
+                // the Ready method is expected to throw an exception with a
+                // reason if the backend isn't ready.  This is not a session
+                // critical scenario.
+                disable_critical_log = true;
                 CheckACL(sender);
                 be_proxy->Call("Ready");
             }
@@ -772,6 +803,8 @@ public:
                 }
                 catch (RequiresQueueException& excp)
                 {
+                    // Convert this exception into an error sent back
+                    // to the requester as a D-Bus error instead.
                     excp.GenerateDBusError(invoc);
                 }
                 return;
@@ -836,6 +869,11 @@ public:
             else
             {
                 errmsg = "Failed communicating with VPN backend: " + dberr.getRawError();
+            }
+
+            if (!disable_critical_log)
+            {
+                LogCritical(errmsg);
             }
 
             GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.sessions.error",
@@ -1047,7 +1085,7 @@ public:
                                     OpenVPN3DBus_interf_backends,
                                     be_path,
                                     GetObjectPath());
-                    sig_logevent->SetLogLevel(default_log_level);
+                    sig_logevent->SetLogLevel(default_session_log_level);
                 }
                 else if (!recv_log_events && nullptr != sig_logevent)
                 {
@@ -1110,7 +1148,7 @@ public:
 
 
 private:
-    const unsigned int default_log_level = 4; // LogCategory::INFO messages
+    unsigned int default_session_log_level = 4; // LogCategory::INFO messages
     std::function<void()> remove_callback;
     DBusProxy *be_proxy;
     bool recv_log_events;
@@ -1347,9 +1385,10 @@ public:
      * @param dbuscon  D-Bus this object is tied to
      * @param objpath  D-Bus object path to this object
      */
-    SessionManagerObject(GDBusConnection *dbuscon, const std::string objpath)
+    SessionManagerObject(GDBusConnection *dbuscon, const std::string objpath,
+                         unsigned int manager_log_level)
         : DBusObject(objpath),
-          SessionManagerSignals(dbuscon, objpath),
+          SessionManagerSignals(dbuscon, objpath, manager_log_level),
           dbuscon(dbuscon),
           creds(dbuscon)
     {
@@ -1435,7 +1474,8 @@ public:
                                                        callback,
                                                        creds.GetUID(sender),
                                                        sesspath,
-                                                       config_path);
+                                                       config_path,
+                                                       GetLogLevel());
             IdleCheck_RefInc();
             session->IdleCheck_Register(IdleCheck_Get());
             session->RegisterObject(conn);
@@ -1604,6 +1644,24 @@ public:
 
 
     /**
+     *  Sets the log level to use for the session manager main object
+     *  and individual session objects.  This is essentially just an
+     *  inherited value from the main program.  The SessionManagerObject
+     *  should not adjust this for itself.
+     *
+     *  This does not change the default log level for session objects
+     *  themselves, they have a fixed default log level which can be
+     *  changed on a per-object basis via a log level property in the object.
+     *
+     * @param loglvl  Log level to use
+     */
+    void SetManagerLogLevel(unsigned int loglvl)
+    {
+        manager_log_level = loglvl;
+    }
+
+
+    /**
      *  This callback is called when the service was successfully registered
      *  on the D-Bus.
      */
@@ -1611,7 +1669,8 @@ public:
     {
         // Create a SessionManagerObject which will be the main entrance
         // point to this service
-        managobj.reset(new SessionManagerObject(GetConnection(), GetRootPath()));
+        managobj.reset(new SessionManagerObject(GetConnection(), GetRootPath(),
+                                                manager_log_level));
         if (!logfile.empty())
         {
             managobj->OpenLogFile(logfile);
@@ -1663,6 +1722,7 @@ public:
     };
 
 private:
+    unsigned int manager_log_level = 6; // LogCategory::DEBUG
     SessionManagerObject::Ptr managobj;
     ProcessSignalProducer * procsig;
     std::string logfile;
