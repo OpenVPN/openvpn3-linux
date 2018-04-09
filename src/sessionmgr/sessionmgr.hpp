@@ -532,7 +532,7 @@ public:
         {
             delete be_proxy;
         }
-        LogVerb2("Session is closing");
+        LogVerb1("Session is closing");
         StatusChange(StatusMajor::SESSION, StatusMinor::SESS_REMOVED);
         remove_callback();
         IdleCheck_RefDec();
@@ -785,7 +785,7 @@ public:
                 GrantAccess(uid);
                 g_dbus_method_invocation_return_value(invoc, NULL);
 
-                LogVerb1("Access granted to UID " + std::to_string(uid));
+                LogInfo("Access granted to UID " + std::to_string(uid));
                 return;
             }
             else if ("AccessRevoke" == method_name)
@@ -797,7 +797,7 @@ public:
                 RevokeAccess(uid);
                 g_dbus_method_invocation_return_value(invoc, NULL);
 
-                LogVerb1("Access revoked for UID " + std::to_string(uid));
+                LogInfo("Access revoked for UID " + std::to_string(uid));
                 return;
             }
             else
@@ -1070,7 +1070,7 @@ public:
             {
                 bool acl_public = g_variant_get_boolean(value);
                 SetPublicAccess(acl_public);
-                LogVerb1("Public access set to "
+                LogInfo("Public access set to "
                          + (acl_public ? std::string("true") :
                                          std::string("false"))
                          + " by uid " + std::to_string(GetUID(sender)));
@@ -1171,7 +1171,7 @@ private:
                 // FIXME: Find a way to gracefully handle failed registration
                 return;
             }
-            LogVerb1("New session registered: " + GetObjectPath());
+            Debug("New session registered: " + GetObjectPath());
             StatusChange(StatusMajor::SESSION, StatusMinor::SESS_NEW,
                          "session_path=" + GetObjectPath()
                          + " backend_busname=" + be_busname
