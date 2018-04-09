@@ -71,6 +71,70 @@ To interact with these services, there are two tools provided:
   manage this session.
 
 
+Using openvpn3
+--------------
+
+The `openvpn3` program is the main and preferred command line user interface.
+
+* Starting a VPN session: Single-shot approach
+
+      $ openvpn3 session-start --config my-vpn-config.conf
+
+  This will import the configuration and start a new session directly
+
+* Starting a VPN session: Multi-step approach
+
+  1. Import the configuration file:
+
+         $ openvpn3 config-import --config my-vpn-config.conf
+
+      This will return a configuration path.  This is needed to interact
+      with thisconfiguration later on.
+
+  2. Start a new VPN session
+
+         $ openvpn3 session-start --config-path /net/openvpn/v3/configuration/d45d4263x42b8x4669xa8b2x583bcac770b2
+
+* Getting tunnel statistics
+  For already running tunnels, it is possible to extract live statistics
+  of each VPN session individually
+
+      $ openvpn3 session-stats --path /net/openvpn/v3/sessions/46fff369sd155s41e5sb97fsbb9d54738124
+
+* Managing VPN sessions
+  For running VPN sessions, you manage them using the
+  `openvpn3 session-manage` command, again by providing the session path.  For
+  example, to restart a connection:
+
+      $ openvpn3 session-manage --path /net/openvpn/v3/sessions/46fff369sd155s41e5sb97fsbb9d54738124 --restart
+
+  Other actions can be `--pause`, `--resume`, and `--disconnect`.
+
+All the `openvpn3` operations are also described via the `--help` option.
+
+       $ openvpn3 --help
+       $ openvpn3 session-start --help
+
+
+Using openvpn2
+--------------
+
+The `openvpn2` front-end is a simpler interface which tries to be somewhat
+similar to the old and classic openvpn-2.x generation.  It supports most of
+the options used by clients, but not everything.  This might also be a
+limitation of the OpenVPN 3 Core library this openvpn3-linux client builds
+on.
+
+* Starting a VPN session:
+
+      $ openvpn2 --config my-vpn-config.conf
+
+If the provided configuration contains the `--daemon` option, it will
+provide the session path related to this session and return to the command
+line again.  From this point of, this session is now to be managed via the
+`openvpn3` front-end.
+
+
 How to build it
 ---------------
 
@@ -115,22 +179,16 @@ In addition, this git repository will pull in two git submodules:
 First install the package dependencies needed to run the build.
 
 #### Debian/Ubuntu:
-  ``# apt-get install pkg-config autoconf libglib2.0-dev libjsoncpp-dev uuid-dev
+  ``# apt-get install build-essential git pkg-config autoconf libglib2.0-dev libjsoncpp-dev uuid-dev
 libmbedtls-dev liblz4-dev``
 
-  You might also need ``build-essential`` and ``git`.
-
 #### Fedora:
-  ``# dnf install mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel``
-
-  You might also need ``gcc-c++ git autoconf automake make pkgconfig``
+  ``# dnf install gcc-c++ git autoconf automake make pkgconfig mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel``
 
 #### Red Hat Enterprise Linux / CentOS / Scientific Linux
   First install the ``epel-release`` repository if that is not yet installed.  Then you can run:
 
-  ``# yum install mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel lz4-devel``
-
-  You might also need ``gcc-c++ git autoconf automake make pkgconfig``
+  ``# yum install gcc-c++ git autoconf automake make pkgconfig mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel lz4-devel``
 
 ### Building OpenVPN 3 Linux client
 - Clone this git repository: ``git clone git://github.com/OpenVPN/openvpn3-linux``
