@@ -156,13 +156,23 @@ std::string get_version(std::string component)
 }
 
 
+/**
+ *  GLib2 interrupt/signal handler.  This is used to gracefully shutdown
+ *  the GLib main loop.  This is called via the g_unix_signal_add() or
+ *  similar interfaces which has access to the GMainLoop object.
+ *
+ * @param loop  GMainLoop object which is to be shut down.
+ * @return See @GSourceFunc() declaration in glib2.  We return
+ *         G_SOURCE_CONTINUE as we do not want to remove/disable the
+ *         signal processing.
+ */
 int stop_handler(void *loop)
 {
 #if 1
     std::cout << "** Shutting down (pid: " << std::to_string(getpid()) << ")" << std::endl;
 #endif
     g_main_loop_quit((GMainLoop *)loop);
-    return true;
+    return G_SOURCE_CONTINUE;
 }
 
 #endif // OPENVPN3_UTILS_HPP
