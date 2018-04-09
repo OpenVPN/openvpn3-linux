@@ -225,7 +225,7 @@ namespace openvpn
         LogSender(GDBusConnection * dbuscon, const LogGroup lgroup, std::string interf, std::string objpath)
             : DBusSignalProducer(dbuscon, "", interf, objpath),
               FileLog(),
-              LogFilter(2),
+              LogFilter(3),
               log_group(lgroup)
         {
         }
