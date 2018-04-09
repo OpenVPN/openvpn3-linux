@@ -168,8 +168,10 @@ std::string get_version(std::string component)
  */
 int stop_handler(void *loop)
 {
-#if 1
-    std::cout << "** Shutting down (pid: " << std::to_string(getpid()) << ")" << std::endl;
+#ifdef SHUTDOWN_NOTIF_PROCESS_NAME
+    std::cout << "** Shutting down ";
+    std::cout << SHUTDOWN_NOTIF_PROCESS_NAME << " ";
+    std::cout << "(pid: " << std::to_string(getpid()) << ")" << std::endl;
 #endif
     g_main_loop_quit((GMainLoop *)loop);
     return G_SOURCE_CONTINUE;

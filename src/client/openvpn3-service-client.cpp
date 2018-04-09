@@ -35,6 +35,7 @@
 
 #include <sstream>
 
+#define SHUTDOWN_NOTIF_PROCESS_NAME "openvpn3-service-client"
 #include "common/requiresqueue.hpp"
 #include "common/utils.hpp"
 #include "configmgr/proxy-configmgr.hpp"

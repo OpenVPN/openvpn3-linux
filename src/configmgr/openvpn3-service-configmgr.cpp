@@ -17,6 +17,8 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
+
+#define SHUTDOWN_NOTIF_PROCESS_NAME "openvpn3-service-configmgr"
 #include "dbus/core.hpp"
 #include "dbus/path.hpp"
 #include "configmgr.hpp"

@@ -20,6 +20,7 @@
 #ifndef OPENVPN3_DBUS_IDLECHECK_HPP
 #define OPENVPN3_DBUS_IDLECHECK_HPP
 
+#include <iostream>
 #include <memory>
 #include <thread>
 
@@ -113,6 +114,12 @@ public:
             if (0 == refcount && (last_operation + idle_time) < now)
             {
                 // We timed out, start the main loop shutdown
+#ifdef SHUTDOWN_NOTIF_PROCESS_NAME
+            std::cout << SHUTDOWN_NOTIF_PROCESS_NAME
+                      << " starting idle shutdown "
+                      << "(pid: " << std::to_string(getpid()) << ")"
+                      << std::endl;
+#endif
                 g_main_loop_quit(mainloop);
                 enabled = false;
             }
