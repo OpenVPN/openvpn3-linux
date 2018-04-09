@@ -30,6 +30,7 @@
 #include "dbus/connection-creds.hpp"
 #include "dbus/exceptions.hpp"
 #include "log/dbus-log.hpp"
+#include "ovpn3cli/lookup.hpp"
 
 using namespace openvpn;
 
@@ -49,11 +50,14 @@ public:
      *
      * @param conn        D-Bus connection to use when sending signals
      * @param object_path D-Bus object to use as sender of signals
+     * @param default_log_level  Unsigned integer defining the initial log level
      */
-    ConfigManagerSignals(GDBusConnection *conn, std::string object_path)
+    ConfigManagerSignals(GDBusConnection *conn, std::string object_path,
+                         unsigned int default_log_level)
         : LogSender(conn, LogGroup::CONFIGMGR,
                     OpenVPN3DBus_interf_configuration, object_path)
     {
+        SetLogLevel(default_log_level);
     }
 
 
@@ -121,10 +125,13 @@ public:
      * @param dbuscon    D-Bus connection to use for this object
      * @param aliasname  A string containing the alias name
      * @param cfgpath    An object path pointing at an existing D-Bus path
+     * @param default_log_level  Unsigned integer defining the initial log level
      */
-    ConfigurationAlias(GDBusConnection *dbuscon, std::string aliasname, std::string cfgpath)
+    ConfigurationAlias(GDBusConnection *dbuscon,
+                       std::string aliasname, std::string cfgpath,
+                       unsigned int default_log_level)
         : DBusObject(OpenVPN3DBus_rootp_configuration + "/aliases/" + aliasname),
-          ConfigManagerSignals(dbuscon, OpenVPN3DBus_rootp_configuration + "/aliases/" + aliasname),
+          ConfigManagerSignals(dbuscon, OpenVPN3DBus_rootp_configuration + "/aliases/" + aliasname, default_log_level),
           cfgpath(cfgpath)
     {
         alias = aliasname;
@@ -282,6 +289,7 @@ public:
      * @param remove_callback  Callback function which must be called when
      *                 destroying this configuration object.
      * @param objpath  D-Bus object path of this object
+     * @param default_log_level  Unsigned integer defining the initial log level
      * @param creator  An uid reference of the owner of this object.  This is
      *                 typically the uid of the front-end user importing this
      *                 VPN configuration profile.
@@ -291,10 +299,10 @@ public:
      */
     ConfigurationObject(GDBusConnection *dbuscon,
                         std::function<void()> remove_callback,
-                        std::string objpath,
+                        std::string objpath, unsigned int default_log_level,
                         uid_t creator, GVariant *params)
         : DBusObject(objpath),
-          ConfigManagerSignals(dbuscon, objpath),
+          ConfigManagerSignals(dbuscon, objpath, default_log_level),
           DBusCredentials(dbuscon, creator),
           remove_callback(remove_callback),
           name(""),
@@ -323,6 +331,15 @@ public:
 				  ProfileParseLimits::MAX_LINE_SIZE,
 				  ProfileParseLimits::MAX_DIRECTIVE_SIZE);
         options.parse_from_config(cfgstr, &limits);
+
+        std::stringstream msg;
+        msg << "Parsed "
+            << (persistent ? "persistent" : "")
+            << (persistent && single_use ? ", " : "")
+            << (single_use ? "single-use" : "")
+            << " configuration '" << name << "'"
+            << ", owner: " << lookup_username(creator);
+        LogInfo(msg.str());
 
         // FIXME:  Validate the configuration file, ensure --ca/--key/--cert/--dh/--pkcs12
         //         contains files
@@ -770,7 +787,8 @@ public:
                     gsize len = 0;
                     alias =  new ConfigurationAlias(conn,
                                                     std::string(g_variant_get_string(value, &len)),
-                                                    GetObjectPath());
+                                                    GetObjectPath(),
+                                                    GetLogLevel());
                     alias->RegisterObject(conn);
                     ret = build_set_property_response(property_name, alias->GetAlias());
                 }
@@ -872,10 +890,12 @@ public:
      *
      * @param dbuscon  D-Bus this object is tied to
      * @param objpath  D-Bus object path to this object
+     * @param default_log_level  Unsigned integer defining the initial log level
      */
-    ConfigManagerObject(GDBusConnection *dbusc, const std::string objpath)
+    ConfigManagerObject(GDBusConnection *dbusc, const std::string objpath,
+                        unsigned int default_log_level)
         : DBusObject(objpath),
-          ConfigManagerSignals(dbusc, objpath),
+          ConfigManagerSignals(dbusc, objpath, default_log_level),
           dbuscon(dbusc),
           creds(dbusc)
     {
@@ -952,6 +972,7 @@ public:
                                                        self->remove_config_object(cfgpath);
                                                    },
                                                    cfgpath,
+                                                   GetLogLevel(),
                                                    creds.GetUID(sender),
                                                    params);
             IdleCheck_RefInc();
@@ -1131,12 +1152,27 @@ public:
 
 
     /**
+     *  Sets the log level to use for the configuration manager main object
+     *  and individual configuration objects.  This is essentially just an
+     *  inherited value from the main program but is not something which
+     *  should be changed on a per-object instance.
+     *
+     * @param loglvl  Log level to use
+     */
+    void SetLogLevel(unsigned int loglvl)
+    {
+        default_log_level = loglvl;
+    }
+
+
+    /**
      *  This callback is called when the service was successfully registered
      *  on the D-Bus.
      */
     void callback_bus_acquired()
     {
-        cfgmgr.reset(new ConfigManagerObject(GetConnection(), GetRootPath()));
+        cfgmgr.reset(new ConfigManagerObject(GetConnection(), GetRootPath(),
+                                             default_log_level));
         if (!logfile.empty())
         {
             cfgmgr->OpenLogFile(logfile);
@@ -1186,6 +1222,7 @@ public:
     };
 
 private:
+    unsigned int default_log_level = 6; // LogCategory::DEBUG
     ConfigManagerObject::Ptr cfgmgr;
     ProcessSignalProducer * procsig;
     std::string logfile;
