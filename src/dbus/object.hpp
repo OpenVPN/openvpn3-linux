@@ -395,11 +395,10 @@ namespace openvpn
          */
         void IdleCheck_UpdateTimestamp()
         {
-            if( nullptr == idle_checker )
+            if( idle_checker )
             {
-                THROW_DBUSEXCEPTION("DBusObject", "IdleChecker not registered");
+                idle_checker->UpdateTimestamp();
             }
-            idle_checker->UpdateTimestamp();
         }
 
         /**
@@ -415,21 +414,19 @@ namespace openvpn
 
         void IdleCheck_RefInc()
         {
-            if (nullptr == idle_checker)
+            if (idle_checker)
             {
-                THROW_DBUSEXCEPTION("DBusObject", "IdleChecker not registered");
+                idle_checker->RefCountInc();
             }
-            idle_checker->RefCountInc();
         }
 
 
         void IdleCheck_RefDec()
         {
-            if (nullptr == idle_checker)
+            if (idle_checker)
             {
-                THROW_DBUSEXCEPTION("DBusObject", "IdleChecker not registered");
+                idle_checker->RefCountDec();
             }
-            idle_checker->RefCountDec();
         }
 
 
