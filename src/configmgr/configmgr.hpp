@@ -937,7 +937,7 @@ public:
      */
     void OpenLogFile(std::string filename)
     {
-        OpenLogFile(filename);
+        ConfigManagerSignals::OpenLogFile(filename);
     }
 
 
