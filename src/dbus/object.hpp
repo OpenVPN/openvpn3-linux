@@ -346,6 +346,51 @@ namespace openvpn
 
 
         /**
+         *  Simple helper wrapper preparing the signal response needed by call_set_property()
+         *  This prepares the response packet which is sent as a signal to D-Bus about which
+         *  property was changed.
+         *
+         *  This is the uint64 value variant
+         *
+         *  @param property  String containing the changed property
+         *  @param value     unit64 containing the new value
+         *
+         *  @return Returns a GVariantBuilder pointer which is to be consumed by
+         *          _dbus_set_property_internal()
+         *
+         */
+        GVariantBuilder * build_set_property_response(std::string property, const uint64_t value)
+        {
+            GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE_ARRAY);
+            g_variant_builder_add(builder,
+                                  "{sv}",
+                                  property.c_str(),
+                                  g_variant_new_uint64(value));
+            return builder;
+        }
+
+
+        /**
+         *  Simple helper wrapper preparing the signal response needed by call_set_property()
+         *  This prepares the response packet which is sent as a signal to D-Bus about which
+         *  property was changed.
+         *
+         *  This is a std::time_t to uint64_t value wrapper
+         *
+         *  @param property  String containing the changed property
+         *  @param value     std::time_t containing the new value
+         *
+         *  @return Returns a GVariantBuilder pointer which is to be consumed by
+         *          _dbus_set_property_internal()
+         *
+         */
+        GVariantBuilder * build_set_property_response(std::string property, const std::time_t value)
+        {
+            return build_set_property_response(property, (uint64_t) value);
+        }
+
+
+        /**
          *  This destructor is optional and may be used by implementors to clean up
          *  before this object is deleted from both the D-Bus bus and memory.  This
          *  function is called from RemoveObject() right after the object is unregistered
