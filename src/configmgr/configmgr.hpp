@@ -347,6 +347,16 @@ public:
         //         contains files
         valid = true;
 
+        properties.AddBinding(new PropertyType<std::time_t>(this, "import_timestamp", "t", "read", false, &import_tstamp));
+        properties.AddBinding(new PropertyType<std::time_t>(this, "last_used_timestamp", "t", "read", false, &last_use_tstamp));
+        properties.AddBinding(new PropertyType<bool>(this, "locked_down", "b", "readwrite", false, &locked_down));
+        properties.AddBinding(new PropertyType<bool>(this, "persistent", "b", "read", false, &persistent));
+        properties.AddBinding(new PropertyType<bool>(this, "persist_tun", "b", "readwrite", true, &persist_tun));
+        properties.AddBinding(new PropertyType<bool>(this, "readonly", "b", "read", false, &readonly));
+        properties.AddBinding(new PropertyType<bool>(this, "single_use", "b", "read", false, &single_use));
+        properties.AddBinding(new PropertyType<unsigned int>(this, "used_count", "u", "read", false, &used_count));
+        properties.AddBinding(new PropertyType<bool>(this, "valid", "b", "read", false, &valid));
+
         std::string introsp_xml ="<node name='" + objpath + "'>"
             "    <interface name='net.openvpn.v3.configuration'>"
             "        <method name='Fetch'>"
@@ -370,16 +380,7 @@ public:
             "        <property type='u' name='owner' access='read'/>"
             "        <property type='au' name='acl' access='read'/>"
             "        <property type='s' name='name' access='readwrite'/>"
-            "        <property type='t' name='import_timestamp' access='read' />"
-            "        <property type='t' name='last_used_timestamp' access='read' />"
-            "        <property type='u' name='used_count' access='read' />"
-            "        <property type='b' name='valid' access='read'/>"
-            "        <property type='b' name='readonly' access='read'/>"
-            "        <property type='b' name='single_use' access='read'/>"
-            "        <property type='b' name='persistent' access='read'/>"
-            "        <property type='b' name='locked_down' access='readwrite'/>"
             "        <property type='b' name='public_access' access='readwrite'/>"
-            "        <property type='b' name='persist_tun' access='readwrite' />"
             "        <property type='s' name='alias' access='readwrite'/>"
             + properties.GetIntrospectionXML() +
             "    </interface>"
@@ -659,11 +660,7 @@ public:
 
         // Properties available for root
         bool allow_root = false;
-        if ("persist_tun" == property_name)
-        {
-            allow_root = true;
-        }
-        else if (properties.Exists(property_name))
+        if (properties.Exists(property_name))
         {
             allow_root = properties.GetRootAllowed(property_name);
         }
@@ -674,53 +671,17 @@ public:
 
             GVariant *ret = NULL;
 
-            if ("single_use" == property_name)
-            {
-                ret = g_variant_new_boolean (single_use);
-            }
-            else if ("persistent" == property_name)
-            {
-                ret = g_variant_new_boolean (persistent);
-            }
-            else if ("valid" == property_name)
-            {
-                ret = g_variant_new_boolean (valid);
-            }
-            else if ("readonly" == property_name)
-            {
-                ret = g_variant_new_boolean (readonly);
-            }
-            else if ("name"  == property_name)
+            if ("name"  == property_name)
             {
                 ret = g_variant_new_string (name.c_str());
-            }
-            else if( "import_timestamp" == property_name)
-            {
-                return g_variant_new_uint64 (import_tstamp);
-            }
-            else if( "last_used_timestamp" == property_name)
-            {
-                return g_variant_new_uint64 (last_use_tstamp);
-            }
-            else if( "used_count" == property_name)
-            {
-                return g_variant_new_uint32 (used_count);
             }
             else if ("alias" == property_name)
             {
                 ret = g_variant_new_string(alias ? alias->GetAlias() : "");
             }
-            else if ("locked_down" == property_name)
-            {
-                ret = g_variant_new_boolean (locked_down);
-            }
             else if ("public_access" == property_name)
             {
                 ret = GetPublicAccess();
-            }
-            else if ("persist_tun" == property_name)
-            {
-                ret = g_variant_new_boolean (persist_tun);
             }
             else if ("acl" == property_name)
             {
@@ -822,8 +783,7 @@ public:
             }
             else if (("locked_down" == property_name) && conn)
             {
-                locked_down = g_variant_get_boolean(value);
-                ret = build_set_property_response(property_name, locked_down);
+                ret = properties.SetValue(property_name, value);
                 LogInfo("Configuration lock-down flag set to "
                          + (locked_down ? std::string("true") : std::string("false"))
                          + " by UID " + std::to_string(GetUID(sender)));
