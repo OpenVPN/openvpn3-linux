@@ -217,6 +217,8 @@ namespace openvpn
                                                                   ret,
                                                                   NULL),
                                                    &local_err);
+                    g_variant_builder_unref(ret);
+
                     if (local_err)
                     {
                         std::stringstream err;
