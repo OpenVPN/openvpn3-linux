@@ -33,19 +33,23 @@ AC_PROG_SED
 AC_PROG_MAKE_SET
 AC_DEFINE_UNQUOTED([PACKAGE_GUIVERSION], ["PRODUCT_GUIVERSION"], [Version string to be presented to users/logs])
 
+dnl  This project has C++11 as the minimum C++ standard and C++14 as
+dnl  recommend standard as is not expected to work with any older
+dnl  standards.
+
+AX_CXX_COMPILE_STDCXX(11, noext, [mandatory])
+AX_CXX_COMPILE_STDCXX(14, noext, [optional])
+
 dnl
 dnl  Minor Default CXXFLAGS
 dnl
 CXXFLAGS="${CXXFLAGS} -Wall -Wl,--no-as-needed -Wno-unused-local-typedefs -fwhole-program -Wno-sign-compare -Wno-unused-parameter"
 
-dnl  Ensure we default to C++11 unless otherwise overridden.
-dnl  This project has C++11 as the minimum C++ standard and is not expected
-dnl  to work with any older standards.
 
-case "${CXXFLAGS}" in
-  *-std=*) ;;
-  *)       CXXFLAGS="${CXXFLAGS} -std=c++11" ;;
-esac
+dnl case "${CXXFLAGS}" in
+dnl   *-std=*) ;;
+dnl  *)       CXXFLAGS="${CXXFLAGS} -std=c++14" ;;
+dnl esac
 
 
 dnl
