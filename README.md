@@ -12,6 +12,22 @@ All of the backend services will normally start automatically.  And when they
 are running idle for a little while with no data to maintain, they should
 also stop automatically.
 
+The default configuration for the services assumes a service account
+`openvpn` to be present. If it does not exist you should add one, e.g. by:
+
+    # groupadd -r openvpn
+    # useradd -r -s /bin/nologin -g openvpn openvpn
+
+You will probably also need to reload D-Bus configuration to make
+D-Bus aware of the newly installed service:
+
+    # systemctl reload dbus
+
+or by triggering the configuration reload by contacting the D-Bus daemon
+directly, over D-Bus
+
+    $ gdbus call --system --dest org.freedesktop.DBus --object-path / --method org.freedesktop.DBus.ReloadConfig
+
 There are five services which is good to beware of:
 
 * openvpn3-service-configmgr
@@ -91,9 +107,17 @@ The `openvpn3` program is the main and preferred command line user interface.
       This will return a configuration path.  This is needed to interact
       with thisconfiguration later on.
 
-  2. Start a new VPN session
+  2. (Optional) Display all imported configs
+
+         $ openvpn3 configs-list
+
+  3. Start a new VPN session
 
          $ openvpn3 session-start --config-path /net/openvpn/v3/configuration/d45d4263x42b8x4669xa8b2x583bcac770b2
+
+* Listing established sessions
+
+         $ openvpn3 sessions-list
 
 * Getting tunnel statistics
   For already running tunnels, it is possible to extract live statistics
@@ -243,6 +267,10 @@ There exists also a net.openvpn.v3.backends service, but that is restricted
 to be accessible only by the openpn user - and even that users access is
 locked-down by default and introspection is not possible without modifying
 the D-Bus policy.
+
+Looking at the D-Bus log messages can be also helpful, for example with:
+
+    $ journalctl --since today -u dbus
 
 Further tools in the source tree which can be helpful:
 
