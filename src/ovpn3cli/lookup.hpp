@@ -39,7 +39,7 @@
  * @return      Returns a std::string containing the username on success,
  *              otherwise the uid is returned as a string, encapsulated by ().
  */
-std::string lookup_username(uid_t uid)
+static std::string lookup_username(uid_t uid)
 {
     struct passwd pwrec;
     struct passwd *result = nullptr;
@@ -70,7 +70,7 @@ std::string lookup_username(uid_t uid)
  * @param username  std::string containing the usrename to lookup
  * @return An uid_t integer is returned on success.
  */
-uid_t lookup_uid(std::string username)
+static uid_t lookup_uid(std::string username)
 {
     struct passwd pwrec;
     struct passwd *result = nullptr;
@@ -105,7 +105,7 @@ uid_t lookup_uid(std::string username)
  * @return Returns a uid_t representation of the username or uid.  If username
  *         lookup fails, it will return -1;
  */
-static uid_t get_userid(const std::string input)
+inline static uid_t get_userid(const std::string input)
 {
     // If the argument is not a number, we consider it
     // a username.  Lookup the UID for this username
