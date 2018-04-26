@@ -24,6 +24,8 @@
 #         This script makes use of the openvpn3 shell-completion command
 #         which provides up-to-date insight on the various commands, options
 #         and arguments.
+#         Also works with zsh after loading bascomphinit
+#         (autoload -U +X bashcompinit && bashcompinit)
 
 _openvpn3_completion()
 {
@@ -35,8 +37,8 @@ _openvpn3_completion()
 
 	if [ $COMP_CWORD -eq 1 ]; then
 		# The first argument is always an openvpn3 command
-		commands="$(openvpn3 shell-completion --list-commands)"
-		COMPREPLY=( $( compgen -W "$commands" $cur ) )
+		o3cmds="$(openvpn3 shell-completion --list-commands)"
+		COMPREPLY=( $( compgen -W "$o3cmds" $cur ) )
 	elif [ $COMP_CWORD -gt 1 ]; then
 		selection=""
 		if [ "${cur:0:2}" == "--" -o "${cur:0:1}" == "-" ]; then
