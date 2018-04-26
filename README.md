@@ -164,41 +164,50 @@ How to build it
 
 The following dependencies are needed:
 
-* A C++ compiler capable of at least ``-std=c++11``.  The ./configure
+* A C++ compiler capable of at least ``-std=c++11``.  The ``./configure``
   script will try to detect if ``-std=c++14`` is available and switch to
   that if possible, otherwise it will test for ``-std=c++11``.  If support
   for neither is found, it will fail.
 
 * mbedTLS 2.4 or newer
+
   https://tls.mbed.org/
 
 * GLib2 2.50 or newer
+
   http://www.gtk.org
   This dependency is due to the GDBus library, which is the D-Bus
   implementation being used.
 
 * jsoncpp 0.10.5 or newer
+
   https://github.com/open-source-parsers/jsoncpp
 
 * liblz4 1.7.3 or newer
+
   https://lz4.github.io/lz4
 
 * libuuid 2.23.2 or newer
+
   https://en.wikipedia.org/wiki/Util-linux
 
 The oldest supported Linux distribution is Red Hat Enterprise Linux 7.
 
 In addition, this git repository will pull in two git submodules:
 
+
 * openvpn3
+
   https://github.com/OpenVPN/openvpn3
   This is the OpenVPN 3 Core library.  This is where the core
   VPN implementation is done.
 
 * ASIO
+
   https://github.com/chriskohlhoff/asio
   The OpenVPN 3 Core library depends on some bleeding edge features
   in ASIO, so we need to do a build against the ASIO git repository.
+
 
 First install the package dependencies needed to run the build.
 
