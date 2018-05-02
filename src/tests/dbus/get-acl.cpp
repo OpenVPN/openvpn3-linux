@@ -53,6 +53,18 @@ public:
         }
     }
 
+    ~ProxyWrangler()
+    {
+        if (nullptr != cfgprx)
+        {
+            delete cfgprx;
+        }
+        if (nullptr != sessprx)
+        {
+            delete sessprx;
+        }
+    }
+
     uid_t GetOwner()
     {
         if (nullptr != cfgprx)

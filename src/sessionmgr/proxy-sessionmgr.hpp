@@ -294,6 +294,7 @@ public:
             THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
                                 "Failed to pause tunnel");
         }
+        g_variant_unref(res);
     }
 
 
@@ -467,6 +468,7 @@ public:
             THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
                                 "AccessGrant() call failed");
         }
+        g_variant_unref(res);
     }
 
 
@@ -483,6 +485,7 @@ public:
             THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
                                 "AccessRevoke() call failed");
         }
+        g_variant_unref(res);
     }
 
 
@@ -544,6 +547,7 @@ private:
             THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
                                 errstr);
         }
+        g_variant_unref(res);
     }
 
 };

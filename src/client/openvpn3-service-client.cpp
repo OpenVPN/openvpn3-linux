@@ -806,17 +806,17 @@ private:
 
         try
         {
-            auto cfg_proxy = new OpenVPN3ConfigurationProxy(G_BUS_TYPE_SYSTEM,
-                                                            configpath);
+            auto cfg_proxy = OpenVPN3ConfigurationProxy(G_BUS_TYPE_SYSTEM,
+                                                        configpath);
 
             // We need to extract the persist_tun property *before* calling
             // GetConfig().  If the configuration is tagged as a single-shot
             // config, we cannot query it for more details after the first
             // GetConfig() call.
-            bool tunPersist = cfg_proxy->GetPersistTun();
+            bool tunPersist = cfg_proxy.GetPersistTun();
 
             // Parse the configuration
-            ProfileMergeFromString pm(cfg_proxy->GetConfig(), "",
+            ProfileMergeFromString pm(cfg_proxy.GetConfig(), "",
                                       ProfileMerge::FOLLOW_NONE,
                                       ProfileParseLimits::MAX_LINE_SIZE,
                                       ProfileParseLimits::MAX_PROFILE_SIZE);

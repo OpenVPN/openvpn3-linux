@@ -157,6 +157,7 @@ public:
             THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
                                 "Failed to delete the configuration");
         }
+        g_variant_unref(res);
     }
 
     void SetName(std::string name)
@@ -256,6 +257,7 @@ public:
             THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
                                 "Failed to seal the configuration");
         }
+        g_variant_unref(res);
     }
 
 
@@ -272,6 +274,7 @@ public:
             THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
                                 "AccessGrant() call failed");
         }
+        g_variant_unref(res);
     }
 
 
@@ -288,6 +291,7 @@ public:
             THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
                                 "AccessRevoke() call failed");
         }
+        g_variant_unref(res);
     }
 
 

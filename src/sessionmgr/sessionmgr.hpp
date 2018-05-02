@@ -498,11 +498,11 @@ public:
         // to this specific SessionObject.
         backend_token = generate_path_uuid("", 't');
 
-        auto backend_start = new DBusProxy(G_BUS_TYPE_SYSTEM,
-                                           OpenVPN3DBus_name_backends,
-                                           OpenVPN3DBus_interf_backends,
-                                           OpenVPN3DBus_rootp_backends);
-        GVariant *res_g = backend_start->Call("StartClient",
+        auto backend_start = DBusProxy(G_BUS_TYPE_SYSTEM,
+                                       OpenVPN3DBus_name_backends,
+                                       OpenVPN3DBus_interf_backends,
+                                       OpenVPN3DBus_rootp_backends);
+        GVariant *res_g = backend_start.Call("StartClient",
                                               g_variant_new("(s)", backend_token.c_str()));
         if (NULL == res_g) {
                 THROW_DBUSEXCEPTION("SessionObject",
