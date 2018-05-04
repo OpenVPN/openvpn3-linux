@@ -27,41 +27,49 @@
 class LogException : public std::exception
     {
     public:
-        LogException(const std::string& err, const char *filen, const unsigned int linenum, const char *fn) noexcept
-        : errorstr(err), filename(std::string(filen)), line(linenum), method(std::string(fn))
+
+    LogException(const std::string& err, const char *filen, const unsigned int linenum, const char *fn) noexcept
+        : errorstr(err)
         {
+#ifdef DEBUG_EXCEPTIONS
+            details = std::string("[LogException: ")
+                    + std::string(filen)
+                    + std::string(":") + std::to_string(linenum)
+                    + std::string(", ") + std::string(fn)
+                    + std::string("()] ") + errorstr;
+#else
+            details = errorstr;
+#endif
         }
 
         LogException(std::string&& err, const char *filen, const unsigned int linenum, const char *fn) noexcept
-        : errorstr(std::move(err)) , filename(std::string(filen)), line(linenum), method(std::string(fn))
+        : errorstr(std::move(err))
         {
+#ifdef DEBUG_EXCEPTIONS
+            details = std::string("[LogException: ")
+                    + std::string(filen)
+                    + std::string(":") + std::to_string(linenum)
+                    + std::string(", ") + std::string(fn)
+                    + std::string("()] ") + errorstr;
+#else
+            details = errorstr;
+#endif
         }
 
         virtual ~LogException() throw() {}
 
         virtual const char* what() const throw()
         {
-            std::stringstream ret;
-            ret << "[LogException: "
-                << filename << ":" << line << ", "
-                << method << "()] " << errorstr;
-            return ret.str().c_str();
+            return details.c_str();
         }
         const std::string& err() const noexcept
         {
-            std::stringstream ret;
-            ret << "[" << filename << ":" << line << ", "
-                << method << "()] "
-                << errorstr;
-            return std::move(ret.str());
+            return std::move(details);
         }
 
     private:
         std::string errorstr;
-        std::string filename;
-        const unsigned int line;
-        std::string method;
-
+        std::string details;
     };
 
 #define THROW_LOGEXCEPTION(fault_data) throw LogException(fault_data, __FILE__, __LINE__, __FUNCTION__)
