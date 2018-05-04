@@ -145,10 +145,7 @@ namespace openvpn
 
         virtual const char* what() const throw()
         {
-            std::stringstream ret;
-            ret << "[DBusCredentialsException"
-                << "] " << error;
-            return ret.str().c_str();
+            return error.c_str();
         }
 
         const std::string& err() const noexcept

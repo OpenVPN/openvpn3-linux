@@ -106,11 +106,14 @@ namespace openvpn
                               const std::string& err) noexcept
         : errordomain(domain),
             errorcode(code),
-            interface(interf),
-            object_path(objp),
-            property(prop),
-            errorstr(err)
+            errorstr(err),
+            detailed("")
         {
+            detailed = std::string("[interface=") + interf
+                        + std::string(", path=") + objp
+                        + std::string(", property=") + prop
+                        + std::string("] ")
+                        + errorstr;
         }
 
 
@@ -122,11 +125,14 @@ namespace openvpn
                               const std::string&& err) noexcept
         : errordomain(domain),
             errorcode(code),
-            interface(interf),
-            object_path(objp),
-            property(prop),
-            errorstr(err)
+            errorstr(err),
+            detailed("")
         {
+            detailed = std::string("[interface=") + interf
+                        + std::string(", path=") + objp
+                        + std::string(", property=") + prop
+                        + std::string("] ")
+                        + errorstr;
         }
 
 
@@ -135,25 +141,13 @@ namespace openvpn
 
         virtual const char* what() const throw()
         {
-            std::stringstream ret;
-            ret << "[DBusPropertyException: "
-                << "interface=" << interface
-                << ", path=" << object_path
-                << ", property=" << property
-                << "] " << errorstr;
-            return ret.str().c_str();
+            return detailed.c_str();
         }
 
 
         const std::string& err() const noexcept
         {
-            std::stringstream ret;
-            ret << "["
-                << "interface=" << interface
-                << ", path=" << object_path
-                << ", property=" << property
-                << "] " << errorstr;
-            return std::move(ret.str());
+            return std::move(detailed);
         }
 
 
@@ -173,10 +167,8 @@ namespace openvpn
     private:
         GQuark errordomain;
         guint errorcode;
-        std::string interface;
-        std::string object_path;
-        std::string property;
         std::string errorstr;
+        std::string detailed;
     };
 };
 #endif // OPENVPN3_DBUS_EXCEPTIONS_HPP
