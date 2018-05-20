@@ -39,9 +39,8 @@ import time
 # Make all defined constants and classes part if this main module
 from openvpn3 import StatusMajor, StatusMinor
 from openvpn3 import ConfigParser
-from openvpn3 import ParseStatus
-from openvpn3 import PrintSessionStatistics
 from openvpn3 import ConfigurationManager, Configuration
+from openvpn3 import SessionManager, Session
 
 # Add the traceback module if we're in debugging mode.
 # This will allow dumping of tracebacks when exceptions happens
@@ -83,30 +82,15 @@ def import_config(bus, opts):
     if not single_use:
         print('Configuration path: %s' % cfg.GetPath())
 
-    return cfg.GetPath()
+    return cfg
 
 
-def start_tunnel(bus, cfgpath, daemon):
-    # Retrieve the main session manager object
-    manager_object = bus.get_object('net.openvpn.v3.sessions',
-                                    '/net/openvpn/v3/sessions')
+def start_tunnel(bus, cfgobj, daemon):
+    # Main session manager object
+    sessmgr = SessionManager(bus)
 
-    # Retireve access to the proper interface in the object
-    sessmgr_interface = dbus.Interface(manager_object,
-                                       dbus_interface='net.openvpn.v3.sessions')
-
-    # Prepare the tunnel (type casting string to D-Bus objet path variable)
-    session_path = sessmgr_interface.NewTunnel(cfgpath)
-
-    # Get access to the session object
-    session_object = bus.get_object('net.openvpn.v3.sessions', session_path)
-
-    # Get the proper interface access, both to manage the session
-    # and to retrieve properties from the session object
-    session_interface = dbus.Interface(session_object,
-                                       dbus_interface='net.openvpn.v3.sessions')
-    session_properties = dbus.Interface(session_object,
-                                        dbus_interface='org.freedesktop.DBus.Properties')
+    # Prepare the tunnel
+    sessionobj = sessmgr.NewTunnel(cfgobj)
 
     #
     #  Starting the tunnel ...
@@ -119,8 +103,8 @@ def start_tunnel(bus, cfgpath, daemon):
             time.sleep(1) # FIXME: Catch a signal when backend is ready
 
             # Check if the backend needs something more from us ...
-            session_interface.Ready()   # This throws an exception if not ready
-            session_interface.Connect() # Start the connection
+            sessionobj.Ready()   # This throws an exception if not ready
+            sessionobj.Connect() # Start the connection
 
             # Simple poll routine to catch the situation of the tunnel
             # The 'status' property in a session object contains the last status
@@ -130,9 +114,7 @@ def start_tunnel(bus, cfgpath, daemon):
             while done is False and connected is False:
                 time.sleep(1)  # Don't race too quickly forward
 
-                status = session_properties.Get('net.openvpn.v3.sessions',
-                                                'status')
-                (status_maj, status_min, status_msg) = ParseStatus(status)
+                (status_maj, status_min, status_msg) = sessionobj.GetStatus()
 
                 if StatusMajor.CONNECTION == status_maj:
                     if StatusMinor.CONN_CONNECTING == status_min:
@@ -182,7 +164,7 @@ def start_tunnel(bus, cfgpath, daemon):
                     # Check if everything is okay.  If authentication
                     # failed, or a dynamic challenge is sent, then an
                     # exception is thrown again
-                    session_interface.Ready()
+                    sessionobj.Ready()
 
 
             # If we're not running in the background
@@ -190,9 +172,10 @@ def start_tunnel(bus, cfgpath, daemon):
                 if connected is True:
                     # If connected, retrieve and dump the last connection
                     # statistics
-                    PrintSessionStatistics(session_properties)
+                    print(sessionobj.GetFormattedStatistics())
+
                 # ... and complete the disconnect, which shuts down the backend
-                session_interface.Disconnect()
+                sessionobj.Disconnect()
                 print('Disconnected')
 
             else:  # If we are running in the background ...
@@ -202,7 +185,7 @@ def start_tunnel(bus, cfgpath, daemon):
                           + 'this connection, use')
                     print('the openvpn3 command line tool with the session '
                           +'path below:')
-                    print('>>> Session path: ' + session_path)
+                    print('>>> Session path: ' + sessionobj.GetPath())
             done = True
 
         except dbus.exceptions.DBusException as excep:
@@ -212,15 +195,15 @@ def start_tunnel(bus, cfgpath, daemon):
 
                 # User credentials comes in tuples of (type, group).
                 # Type should always be 1 - that is the type for user credentials.
-                for (qtype, qgroup) in session_interface.UserInputQueueGetTypeGroup():
+                for (qtype, qgroup) in sessionobj.UserInputQueueGetTypeGroup():
                     # Skip non-user credentials requests
                     if 1 != qtype:
                         continue
 
                     # Print the request to the console and send the response back
                     # to the VPN backend
-                    for qid in session_interface.UserInputQueueCheck(qtype, qgroup):
-                        req = session_interface.UserInputQueueFetch(qtype, qgroup, qid)
+                    for qid in sessionobj.UserInputQueueCheck(qtype, qgroup):
+                        req = sessionobj.UserInputQueueFetch(qtype, qgroup, qid)
 
                         # Field 5 in the request defines if input should be masked or not
                         # Field 4 contains the string to be presented to the user
@@ -232,9 +215,9 @@ def start_tunnel(bus, cfgpath, daemon):
                         except KeyboardInterrupt:
                             # Shutdown the backend client
                             print("\nAborting")
-                            session_interface.Disconnect()
+                            sessionobj.Disconnect()
                             return 8
-                        session_interface.UserInputProvide(qtype, qgroup, qid,
+                        sessionobj.UserInputProvide(qtype, qgroup, qid,
                                                            response)
 
             elif str(excep).find(' Backend VPN process have died'):
@@ -255,9 +238,9 @@ def start_tunnel(bus, cfgpath, daemon):
             if connected is True:
                 # If connected, retrieve and dump the last connection
                 # statistics
-                print_statistics(session_properties)
+                print(sessionobj.GetFormattedStatistics())
             print("\nClosing session")
-            session_interface.Disconnect()
+            sessionobj.Disconnect()
 
     return exit_code
 
@@ -286,10 +269,10 @@ def openvpn2_main(args):
         bus = dbus.SystemBus()
 
         # Import the configuration, which is stored in the configuration manager
-        cfgpath = import_config(bus, opts)
+        cfgobj = import_config(bus, opts)
 
         # Start the tunnel, which his managed by the session manager
-        ret = start_tunnel(bus, cfgpath, opts.GetDaemon())
+        ret = start_tunnel(bus, cfgobj, opts.GetDaemon())
 
     except KeyboardInterrupt:
         print("")
