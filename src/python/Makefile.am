@@ -1,7 +1,7 @@
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
-#  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-#  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2017-2018 OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2017-2018 David Sommerseth <davids@openvpn.net>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -17,18 +17,20 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-MAINTAINERCLEANFILES = \
-	Makefile.in
+AM_CXXFLAGS = \
+	-I$(top_srcdir)/src
 
 CLEANFILES = \
-        *~ *.o
+	openvpn3/constants.py
 
-AM_CXXFLAGS = \
-	-I $(top_srcdir)/src
-
-AM_LDFLAGS = 
+.PHONY: openvpn3_constants.py
 
 noinst_PROGRAMS = \
-	gen-python-constants
+	openvpn3/gen-python-constants
 
-gen_python_constants_SOURCES = gen-python-constants.cpp
+BUILT_SOURCES = openvpn3/constants.py
+
+openvpn3_gen_python_constants_SOURCES = openvpn3/gen-python-constants.cpp
+
+openvpn3/constants.py : openvpn3/gen-python-constants
+	 $(AM_V_GEN)openvpn3/gen-python-constants > openvpn3/constants.py

@@ -41,6 +41,14 @@ AX_CXX_COMPILE_STDCXX(11, noext, [mandatory])
 AX_CXX_COMPILE_STDCXX(14, noext, [optional])
 
 dnl
+dnl  This projects provide some Python based utilities, check if the
+dnl  right Python version is available.  For now enforce Python 3.4 or newer.
+dnl  If Python is not found, the Python modules will not be installed
+dnl
+AM_PATH_PYTHON([3.4],, [:])
+AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != :])
+
+dnl
 dnl  Minor Default CXXFLAGS
 dnl
 CXXFLAGS="${CXXFLAGS} -Wall -Wl,--no-as-needed -Wno-unused-local-typedefs -fwhole-program -Wno-sign-compare -Wno-unused-parameter"
@@ -318,11 +326,11 @@ AC_CONFIG_FILES([
         doxygen/Makefile \
         doxygen/openvpn3-linux.doxy \
         src/policy/Makefile \
+        src/python/Makefile \
         src/service-autostart/Makefile \
         src/tests/Makefile \
         src/tests/dbus/Makefile \
         src/tests/misc/Makefile \
-        src/utils/Makefile \
 ])
 
 AC_OUTPUT

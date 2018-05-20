@@ -191,6 +191,8 @@ The following dependencies are needed:
 
   https://en.wikipedia.org/wiki/Util-linux
 
+* Python 3.4 or newer (optional)
+
 The oldest supported Linux distribution is Red Hat Enterprise Linux 7.
 
 In addition, this git repository will pull in two git submodules:

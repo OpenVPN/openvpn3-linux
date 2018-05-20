@@ -10,6 +10,7 @@ aclocal.m4
 autodefs.h
 autom4te.cache
 compile
+py-compile
 config.guess
 config.h
 config.h.in
@@ -70,6 +71,7 @@ src/tests/misc/config-export-json-test
 src/tests/misc/json-config-import-test
 src/tests/misc/lookup-tests
 src/tests/ovpn3-core/profilemerge-optionlist
-src/utils/gen-python-constants
 src/policy/net.openvpn.v3.conf
+src/python/openvpn3/constants.py
+src/python/openvpn3/gen-python-constants
 src/service-autostart/net.openvpn*.service
