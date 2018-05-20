@@ -114,7 +114,6 @@ endif
 #  User binaries
 #
 bin_PROGRAMS = src/ovpn3cli/openvpn3
-dist_bin_SCRIPTS =  src/python/openvpn2
 
 #
 #  System binaries

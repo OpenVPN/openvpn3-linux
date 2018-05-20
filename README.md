@@ -193,6 +193,9 @@ The following dependencies are needed:
 
 * Python 3.4 or newer (optional)
 
+  If Python 3.4 or newer is found, the openvpn2 utility and an openvpn3
+  Python module will be built and installed.
+
 The oldest supported Linux distribution is Red Hat Enterprise Linux 7.
 
 In addition, this git repository will pull in two git submodules:

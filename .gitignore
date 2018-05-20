@@ -74,4 +74,6 @@ src/tests/ovpn3-core/profilemerge-optionlist
 src/policy/net.openvpn.v3.conf
 src/python/openvpn3/constants.py
 src/python/openvpn3/gen-python-constants
+src/python/openvpn3/__pycache__/
+src/python/openvpn3/*.pyc
 src/service-autostart/net.openvpn*.service

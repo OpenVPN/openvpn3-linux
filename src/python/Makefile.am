@@ -21,16 +21,31 @@ AM_CXXFLAGS = \
 	-I$(top_srcdir)/src
 
 CLEANFILES = \
+	openvpn3/*.pyc        \
 	openvpn3/constants.py
 
-.PHONY: openvpn3_constants.py
 
 noinst_PROGRAMS = \
 	openvpn3/gen-python-constants
 
 BUILT_SOURCES = openvpn3/constants.py
 
+pkgopenvpn3dir = $(pythondir)/openvpn3
+pkgopenvpn3_PYTHON = \
+	openvpn3/configparser.py \
+	openvpn3/__init__.py     \
+	openvpn3/session.py      \
+	openvpn3/status.py
+
+nodist_pkgopenvpn3_PYTHON = \
+	openvpn3/constants.py
+
+dist_bin_SCRIPTS = openvpn2
+
 openvpn3_gen_python_constants_SOURCES = openvpn3/gen-python-constants.cpp
 
 openvpn3/constants.py : openvpn3/gen-python-constants
 	 $(AM_V_GEN)openvpn3/gen-python-constants > openvpn3/constants.py
+
+pkgopenvpn3 : openvpn3/constants.py
+
