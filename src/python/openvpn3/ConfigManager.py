@@ -1,0 +1,237 @@
+#  OpenVPN 3 Linux client -- Next generation OpenVPN client
+#
+#  Copyright (C) 2018         OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, version 3 of the
+#  License.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
+##
+# @file  ConfigManager.py
+#
+# @brief  Provides a Python class to communicate with the OpenVPN 3
+#         configuration manager service over D-Bus
+#
+
+import dbus
+import json
+
+
+##
+#  The Configuration object represents a single configuration profile as
+#  presented via the OpenVPN 3 configuration manager D-Bus service.
+class Configuration(object):
+    ##
+    #  Initialize the Configuration object.  It requires a D-Bus connection
+    #  object and the D-Bus object path to the configuration profile
+    #
+    #  @param dbuscon  D-Bus connection object
+    #  @param objpath  D-Bus object path to the configuration profile
+    #
+    def __init__(self, dbuscon, objpath):
+        self.__deleted = False
+        self.__dbuscon = dbuscon
+
+        # Retrieve access to the configuration object
+        self.__config = self.__dbuscon.get_object('net.openvpn.v3.configuration',
+                                                  objpath)
+
+        # Retrive access to the configuration interface in the object
+        self.__config_intf = dbus.Interface(self.__config,
+                                            dbus_interface="net.openvpn.v3.configuration")
+
+        # Retrive access to the property interface in the object
+        self.__prop_intf = dbus.Interface(self.__config,
+                                          dbus_interface="org.freedesktop.DBus.Properties")
+
+        self.__cfg_path = objpath
+
+
+    ##
+    #  Returns the D-Bus configuration object path
+    #
+    #  @return String containing the D-Bus object path
+    #
+    def GetPath(self):
+        if self.__deleted is True:
+            raise RuntimeError("This configuration object is unavailable")
+
+        return self.__cfg_path
+
+
+    ##
+    #  Sets a specific property in the configuration profile
+    #
+    #  @param propname   String containing the property name to modify
+    #  @param propvalue  The new value the property should have. The data
+    #                    type ov the value must match the data type of the
+    #                    property in the D-Bus object
+    #
+    def SetProperty(self, propname, propvalue):
+        if self.__deleted is True:
+            raise RuntimeError("This configuration object is unavailable")
+
+        self.__prop_intf.Set('net.openvpn.v3.configuration',
+                             propname, propvalue)
+
+
+    ##
+    #  Retrieve the value of a property in a configuration profile
+    #
+    #   @param propname  String containing the property name to query
+    #
+    def GetProperty(self, propname):
+        if self.__deleted is True:
+            raise RuntimeError("This configuration object is unavailable")
+
+        return self.__prop_intf.Get('net.openvpn.v3.configuration', propname)
+
+
+    ##
+    #  Remove the configuration from the configuration manager service
+    #
+    def Remove(self):
+        if self.__deleted is True:
+            raise RuntimeError("This configuration object is unavailable")
+
+        self.__config_intf.Remove()
+        self.__deleted = True
+
+
+    ##
+    #  Seal the configuration, which makes it impossible to modify it later
+    #  on.  This CANNOT be undone.
+    #
+    def Seal(self):
+        if self.__deleted is True:
+            raise RuntimeError("This configuration object is unavailable")
+
+        self.__config_intf.Seal()
+
+
+    ##
+    #  Grant access to this configuration object for a specific user ID
+    #
+    #  @param  uid   Numeric user ID (uid) to be given access to this object
+    #
+    def AccessGrant(self, uid):
+        if self.__deleted is True:
+            raise RuntimeError("This configuration object is unavailable")
+
+        self.__config_intf.AccessGrant(uid)
+
+
+    ##
+    #  Revoke access from this configuration object for a specific user ID
+    #
+    #  @param  uid   Numeric user ID (uid) to be given access to this object
+    #
+    def AccessRevoke(self, uid):
+        if self.__deleted is True:
+            raise RuntimeError("This configuration object is unavailable")
+
+        self.__config_intf.AccessRevoke(uid)
+
+
+    ##
+    #  Fetch the configuration profile contents as a text/plain string
+    #
+    def Fetch(self):
+        if self.__deleted is True:
+            raise RuntimeError("This configuration object is unavailable")
+
+        return self.__config_intf.Fetch()
+
+
+    ##
+    #  Fetch the configuration profile contents as JSON
+    #
+    def FetchJSON(self):
+        if self.__deleted is True:
+            raise RuntimeError("This configuration object is unavailable")
+
+        return json.loads(self.__config_intf.FetchJSON())
+
+
+##
+#  The ConfigurationManager object provides access to the main object in
+#  the configuration manager D-Bus service.  This is primarily used to import
+#  new configuration object, but can also be used to retrieve specific objects
+#  when the configuration D-Bus object path is known.
+#
+class ConfigurationManager(object):
+    ##
+    #  Initialize the ConfigurationManager object
+    #
+    #  @param  dbuscon   D-Bus connection object to use
+    #
+    def __init__(self, dbuscon):
+        self.__dbuscon = dbuscon
+        
+        # Retrieve the main configuration manager object
+        self.__manager_object = dbuscon.get_object('net.openvpn.v3.configuration',
+                                                   '/net/openvpn/v3/configuration')
+
+        # Retireve access to the configuration interface in the object
+        self.__manager_intf = dbus.Interface(self.__manager_object,
+                                          dbus_interface='net.openvpn.v3.configuration')
+
+
+    ##
+    #  Import a new configuration profile into the configuration manager D-Bus
+    #  service.
+    #
+    #  @param cfgname     String containing a human readable profile name
+    #  @param cfg         String containing the complete configuration profile
+    #                     itself.  Remember that all external files MUST be
+    #                     inlined.
+    #  @param single_use  Boolean, is this configuration profile intended to
+    #                     only be used once?  If True, this configuration will
+    #                     be removed automatically upon the first connection
+    #                     attempt.
+    #  @param persistent  Boolean, should the configuration be saved to disk on
+    #                     the system as a persistent configuration profile?
+    #
+    #  @return Returns a Configuration object of the imported configuration
+    #
+    def Import(self, cfgname, cfg, single_use, persistent):
+            path = self.__manager_intf.Import(cfgname,    #  config name
+                                             cfg,        # config profile str  
+                                             single_use, # Single-use config
+                                             persistent) # Persistent config?
+            return Configuration(self.__dbuscon, path)
+
+
+    ##
+    #  Retrieve a single Configuration object for a specific configuration path
+    #
+    #  @param objpath   D-Bus object path to the configuration profile to
+    #                   retrieve.
+    #
+    #  @return Returns a Configuration object of the requested configuration
+    #          profile
+    #
+    def Retrieve(self, objpath):
+        return Configuration(self.__dbuscon, objpath)
+
+
+    ##
+    #  Retrieve a list of all available configuration profiles in the
+    #  configuration manager
+    #
+    def FetchAvailableConfigs(self):
+        ret = []
+        for p in self.__manager_intf.FetchAvailableConfigs():
+            ret.append(Configuration(self.__dbuscon, p))
+        return ret

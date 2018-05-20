@@ -33,3 +33,4 @@ from .constants import *
 from .configparser import ConfigParser
 from .status import ParseStatus
 from .session import PrintSessionStatistics
+from .ConfigManager import ConfigurationManager, Configuration

@@ -41,6 +41,7 @@ from openvpn3 import StatusMajor, StatusMinor
 from openvpn3 import ConfigParser
 from openvpn3 import ParseStatus
 from openvpn3 import PrintSessionStatistics
+from openvpn3 import ConfigurationManager, Configuration
 
 # Add the traceback module if we're in debugging mode.
 # This will allow dumping of tracebacks when exceptions happens
@@ -61,13 +62,7 @@ def get_input_wrapper(prompt):
 
 
 def import_config(bus, opts):
-    # Retrieve the main configuration manager object
-    manager_object = bus.get_object('net.openvpn.v3.configuration',
-                                    '/net/openvpn/v3/configuration')
-
-    # Retireve access to the proper interface in the object
-    config_interface = dbus.Interface(manager_object,
-                                      dbus_interface='net.openvpn.v3.configuration')
+    cfgmgr = ConfigurationManager(bus)
 
     # Only preserver the imported configuration if we're debugging
     single_use = True
@@ -75,7 +70,7 @@ def import_config(bus, opts):
         single_use = False
 
     cfgname = opts.GetConfigName();
-    path = config_interface.Import(cfgname and cfgname or '(command line)', #name
+    cfg = cfgmgr.Import(cfgname and cfgname or '(command line)', #name
                                    opts.GenerateConfig(),     # config_str
                                    single_use,                # single_use
                                    False)                     # persistent
@@ -83,14 +78,12 @@ def import_config(bus, opts):
     if opts.GetPersistTun() is True:
         # If --persist-tun was provided, set the persist_tun property
         # in the imported configuration
-        cfg_object = bus.get_object('net.openvpn.v3.configuration', path)
-        cfg_interf = dbus.Interface(cfg_object, 'org.freedesktop.DBus.Properties')
-        cfg_interf.Set('net.openvpn.v3.configuration', 'persist_tun', True)
+        cfg.SetProperty('persist_tun', True)
 
     if not single_use:
-        print('Configuration path: %s' % path)
+        print('Configuration path: %s' % cfg.GetPath())
 
-    return path
+    return cfg.GetPath()
 
 
 def start_tunnel(bus, cfgpath, daemon):
