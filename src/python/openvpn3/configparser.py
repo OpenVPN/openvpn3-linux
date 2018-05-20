@@ -24,6 +24,7 @@
 #
 
 import argparse
+import os
 import shlex
 
 # Detect if pyOpenSSL is available or not.
@@ -143,6 +144,11 @@ class ConfigParser():
                                    action=ConfigParser.EmbedFile,
                                    help='Certificate authority file in '
                                    + '.pem format containing root certificate')
+
+        self.__parser.add_argument('--cd', metavar='DIR',
+                                   action=ConfigParser.ChangeDir,
+                                   help='Change working directory to the given '
+                                   + 'directory')
 
         self.__parser.add_argument('--cert', metavar='FILE',
                                    action=ConfigParser.EmbedFile,
@@ -751,6 +757,17 @@ class ConfigParser():
 
                 setattr(namespace, self.dest, dst)
 
+
+    class ChangeDir(argparse.Action):
+        def __init__(self, option_strings, dest, nargs=None, **kwargs):
+            super(ConfigParser.ChangeDir, self).__init__(option_strings, dest, '+', **kwargs)
+
+        def __call__(self, parser, namespace, values, option_string=None):
+            """Changes the current working directory to the provided one
+            """
+
+            os.chdir(values[0])
+            setattr(namespace, self.dest, values[0])
 
     ##
     #  Options related to keying material needs to be embedded in an
