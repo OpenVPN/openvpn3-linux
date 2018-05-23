@@ -264,7 +264,7 @@ dnl
 dnl  Various developer tools
 dnl
 AC_ARG_VAR([GIT], [path to git utility])
-AC_CHECK_PROGS([GIT], [git]) # optional
+AC_CHECK_PROGS([GIT], [git], []) # optional
 GIT_CHECKOUT="no"
 if test -n "${GIT}" -a -d "${srcdir}/.git"; then
         AC_DEFINE([HAVE_CONFIG_VERSION_H], [1], [extra version available in config-version.h])
@@ -282,7 +282,7 @@ AC_ARG_ENABLE(
     [AS_HELP_STRING([--enable-debug-exceptions],
                     [enables more detailed DBusException messages])],
     [enable_debug_exceptions="yes"],
-    [],
+    []
 )
 AC_SUBST([DEBUG_EXCEPTIONS])
 if test "${enable_debug_exceptions}" = "yes"; then
@@ -298,7 +298,7 @@ AC_ARG_ENABLE(
     [AS_HELP_STRING([--enable-debug-core-events],
                     [enables debug logging of OpenVPN 3 Core library events])],
     [enable_debug_core_events="yes"],
-    [],
+    []
 )
 AC_SUBST([DEBUG_CORE_EVENTS])
 if test "${enable_debug_core_events}" = "yes"; then
