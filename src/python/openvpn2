@@ -38,6 +38,7 @@ import time
 
 # Make all defined constants and classes part if this main module
 from openvpn3 import StatusMajor, StatusMinor
+from openvpn3 import ClientAttentionType, ClientAttentionGroup
 from openvpn3 import ConfigParser
 from openvpn3 import ConfigurationManager, Configuration
 from openvpn3 import SessionManager, Session
@@ -195,30 +196,24 @@ def start_tunnel(bus, cfgobj, daemon):
 
                 # User credentials comes in tuples of (type, group).
                 # Type should always be 1 - that is the type for user credentials.
-                for (qtype, qgroup) in sessionobj.UserInputQueueGetTypeGroup():
+                for input_slot in sessionobj.FetchUserInputSlots():
+
                     # Skip non-user credentials requests
-                    if 1 != qtype:
+                    if input_slot.GetTypeGroup()[0] != ClientAttentionType.CREDENTIALS:
                         continue
 
-                    # Print the request to the console and send the response back
-                    # to the VPN backend
-                    for qid in sessionobj.UserInputQueueCheck(qtype, qgroup):
-                        req = sessionobj.UserInputQueueFetch(qtype, qgroup, qid)
+                    try:
+                        if False == input_slot.GetInputMask():
+                            response = get_input_wrapper(input_slot.GetLabel() + ': ')
+                        else:
+                            response = getpass(input_slot.GetLabel() + ': ')
+                    except KeyboardInterrupt:
+                        # Shutdown the backend client
+                        print("\nAborting")
+                        sessionobj.Disconnect()
+                        return 8
 
-                        # Field 5 in the request defines if input should be masked or not
-                        # Field 4 contains the string to be presented to the user
-                        try:
-                            if False == req[5]:
-                                response = get_input_wrapper(req[4] + ': ')
-                            else:
-                                response = getpass(req[4] + ': ')
-                        except KeyboardInterrupt:
-                            # Shutdown the backend client
-                            print("\nAborting")
-                            sessionobj.Disconnect()
-                            return 8
-                        sessionobj.UserInputProvide(qtype, qgroup, qid,
-                                                           response)
+                    input_slot.ProvideInput(response)
 
             elif str(excep).find(' Backend VPN process have died'):
                 if 3 == exit_code:  # Authentication failed, this is expected
