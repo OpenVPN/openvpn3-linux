@@ -123,5 +123,22 @@ int main(int argc, char **argv)
     MAP(StatusMinor, min, "PROC_KILLED", PROC_KILLED);
     Generator("StatusMinor", min);
 
+    vector<ConstantMapping<ClientAttentionType>> client_att_type;
+    MAP(ClientAttentionType, client_att_type, "UNSET", UNSET);
+    MAP(ClientAttentionType, client_att_type, "CREDENTIALS", CREDENTIALS);
+    MAP(ClientAttentionType, client_att_type, "PKCS11", PKCS11);
+    MAP(ClientAttentionType, client_att_type, "ACCESS_PERM", ACCESS_PERM);
+    Generator("ClientAttentionType", client_att_type);
+
+    vector<ConstantMapping<ClientAttentionGroup>> client_att_group;
+    MAP(ClientAttentionGroup, client_att_group, "UNSET", UNSET);
+    MAP(ClientAttentionGroup, client_att_group, "USER_PASSWORD", USER_PASSWORD);
+    MAP(ClientAttentionGroup, client_att_group, "CHALLENGE_STATIC", CHALLENGE_STATIC);
+    MAP(ClientAttentionGroup, client_att_group, "CHALLENGE_DYNAMIC", CHALLENGE_DYNAMIC);
+    MAP(ClientAttentionGroup, client_att_group, "PKCS11_SIGN", PKCS11_SIGN);
+    MAP(ClientAttentionGroup, client_att_group, "PKCS11_DECRYPT", PKCS11_DECRYPT);
+    Generator("ClientAttentionGroup", client_att_group);
+
+
     return 0;
 }
