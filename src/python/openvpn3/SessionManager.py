@@ -26,6 +26,72 @@
 
 import dbus
 from openvpn3.constants import StatusMajor, StatusMinor
+from openvpn3.constants import ClientAttentionType, ClientAttentionGroup
+
+##
+#  The UserInputSlot object represents a single request for user input
+#  by the backend VPN process
+#
+class UserInputSlot(object):
+    ##
+    #  Initialize a singe UserInputSlot object
+    #
+    #  @param session_intf   A session interface object to the related VPN session
+    #  @param qtype          ClientAttentionType of the request
+    #  @param qgroup         ClientAttentionGroup of the request
+    #  @param qid            Unique request ID for this (type, group)
+    #
+    def __init__(self, session_intf, qtype, qgroup, qid):
+        self.__session_interf = session_intf
+
+        #  Retrieve the request slot
+        qslot = self.__session_interf.UserInputQueueFetch(qtype.value,
+                                                          qgroup.value,
+                                                          qid)
+
+        #  Sanity check - ensure we got what we requested
+        if qtype != ClientAttentionType(qslot[0])       \
+            or qgroup != ClientAttentionGroup(qslot[1]) \
+            or qid != qslot[2]:
+            raise RuntimeError('Mismatch in the UserInput queue slot')
+
+        # Parse and save the request information
+        self.__qtype = qslot[0]
+        self.__qgroup = qslot[1]
+        self.__qid = qslot[2]
+        self.__varname = qslot[3]
+        self.__label = qslot[4]
+        self.__mask = qslot[5]
+
+
+    def __repr__(self):
+        return '<UserInputSlot queue_type=%s, queue_group=%s, queue_id=%s, varname="%s", label="%s", masked_input=%s>' % (
+            str(ClientAttentionType(self.__qtype)),
+            str(ClientAttentionGroup(self.__qgroup)),
+            str(self.__qid), self.__varname, self.__label,
+            self.__mask and 'True' or 'False')
+
+
+    def GetTypeGroup(self):
+        return (ClientAttentionType(self.__qtype),
+                ClientAttentionGroup(self.__qgroup))
+
+    def GetVariableName(self):
+        return self.__varname
+
+    def GetLabel(self):
+        return self.__label
+
+    def GetInputMask(self):
+        return self.__mask
+
+    def ProvideInput(self, value):
+        self.__session_interf.UserInputProvide(self.__qtype,
+                                               self.__qgroup,
+                                               self.__qid,
+                                               value)
+
+
 
 ##
 #  The Session object represents a single OpenVPN VPN session as
@@ -157,7 +223,10 @@ class Session(object):
     #          to be satisfied
     #
     def UserInputQueueGetTypeGroup(self):
-        return self.__session_intf.UserInputQueueGetTypeGroup()
+        ret = []
+        for (qt, qg) in self.__session_intf.UserInputQueueGetTypeGroup():
+            ret.append((ClientAttentionType(qt), ClientAttentionGroup(qg)))
+        return ret
 
 
     ##
@@ -170,7 +239,8 @@ class Session(object):
     #  @returns a list of unique ID references to slots needing to be satisfied
     #
     def UserInputQueueCheck(self, qtype, qgroup):
-        return self.__session_intf.UserInputQueueCheck(qtype, qgroup)
+        return self.__session_intf.UserInputQueueCheck(qtype.value,
+                                                       qgroup.value)
 
 
     ##
@@ -185,24 +255,24 @@ class Session(object):
     #  @return Returns a list containing all the details needing to be
     #          satisfied
     #
-    #  FIXME: Return an UserInput object instead
-    #
     def UserInputQueueFetch(self, qtype, qgroup, qid):
-        return self.__session_intf.UserInputQueueFetch(qtype, qgroup, qid)
+        return UserInputSlot(self.__session_intf, qtype, qgroup, qid)
 
 
     ##
-    # Provide user's input to a specific user input slot
+    #  Simpler Python approach to retrieve all required user inputs.
+    #  This method will return a list of UserInputSlot objects which can
+    #  be used to extract information to present to the user and provide the
+    #  user input back to the backend VPN process
     #
-    #  @param  qtype     Queue type of the user input slot
-    #  @param  qgroup    Queue group of the user input slot
-    #  @param  qid       Queue ID of the user inout slot
-    #  @param  response  String containing the users response
+    #  @return Returns a list of UserInputSlot objects which must be processed
     #
-    #  FIXME:  Move into the UserInput object instead
-    #
-    def UserInputProvide(self, qtype, qgroup, qid, response):
-        self.__session_intf.UserInputProvide(qtype, qgroup, qid, response)
+    def FetchUserInputSlots(self):
+        ret = []
+        for (qt, qg) in self.UserInputQueueGetTypeGroup():
+            for qid in self.UserInputQueueCheck(qt, qg):
+                ret.append(UserInputSlot(self.__session_intf, qt, qg, qid))
+        return ret
 
 
 

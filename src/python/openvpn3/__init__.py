@@ -24,6 +24,7 @@
 #
 
 __all__ = ['StatusMajor', 'StatusMinor',
+           'ClientAttentionType', 'ClientAttentionGroup',
            'ConfigParser',
            'PrintSessionStatistics']
 
