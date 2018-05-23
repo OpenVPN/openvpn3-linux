@@ -26,6 +26,7 @@
 
 import dbus
 import json
+from functools import wraps
 
 
 ##
@@ -59,14 +60,27 @@ class Configuration(object):
 
 
     ##
+    #  Internal decorator, checkes whether the object has been deleted or not.
+    #  If the object has been deleted, throw an exception instead.
+    #
+    #  For details, lookup how Python decorators work
+    #
+    def __delete_check(func):
+        @wraps(func)
+        def __delete_checker(self, *args, **kwargs):
+            if self.__deleted is True:
+                raise RuntimeError("This configuration object is unavailable")
+            return func(self, *args, **kwargs)
+        return __delete_checker
+
+
+    ##
     #  Returns the D-Bus configuration object path
     #
     #  @return String containing the D-Bus object path
     #
+    @__delete_check
     def GetPath(self):
-        if self.__deleted is True:
-            raise RuntimeError("This configuration object is unavailable")
-
         return self.__cfg_path
 
 
@@ -78,10 +92,8 @@ class Configuration(object):
     #                    type ov the value must match the data type of the
     #                    property in the D-Bus object
     #
+    @__delete_check
     def SetProperty(self, propname, propvalue):
-        if self.__deleted is True:
-            raise RuntimeError("This configuration object is unavailable")
-
         self.__prop_intf.Set('net.openvpn.v3.configuration',
                              propname, propvalue)
 
@@ -91,20 +103,16 @@ class Configuration(object):
     #
     #   @param propname  String containing the property name to query
     #
+    @__delete_check
     def GetProperty(self, propname):
-        if self.__deleted is True:
-            raise RuntimeError("This configuration object is unavailable")
-
         return self.__prop_intf.Get('net.openvpn.v3.configuration', propname)
 
 
     ##
     #  Remove the configuration from the configuration manager service
     #
+    @__delete_check
     def Remove(self):
-        if self.__deleted is True:
-            raise RuntimeError("This configuration object is unavailable")
-
         self.__config_intf.Remove()
         self.__deleted = True
 
@@ -113,10 +121,8 @@ class Configuration(object):
     #  Seal the configuration, which makes it impossible to modify it later
     #  on.  This CANNOT be undone.
     #
+    @__delete_check
     def Seal(self):
-        if self.__deleted is True:
-            raise RuntimeError("This configuration object is unavailable")
-
         self.__config_intf.Seal()
 
 
@@ -125,10 +131,8 @@ class Configuration(object):
     #
     #  @param  uid   Numeric user ID (uid) to be given access to this object
     #
+    @__delete_check
     def AccessGrant(self, uid):
-        if self.__deleted is True:
-            raise RuntimeError("This configuration object is unavailable")
-
         self.__config_intf.AccessGrant(uid)
 
 
@@ -137,30 +141,24 @@ class Configuration(object):
     #
     #  @param  uid   Numeric user ID (uid) to be given access to this object
     #
+    @__delete_check
     def AccessRevoke(self, uid):
-        if self.__deleted is True:
-            raise RuntimeError("This configuration object is unavailable")
-
         self.__config_intf.AccessRevoke(uid)
 
 
     ##
     #  Fetch the configuration profile contents as a text/plain string
     #
+    @__delete_check
     def Fetch(self):
-        if self.__deleted is True:
-            raise RuntimeError("This configuration object is unavailable")
-
         return self.__config_intf.Fetch()
 
 
     ##
     #  Fetch the configuration profile contents as JSON
     #
+    @__delete_check
     def FetchJSON(self):
-        if self.__deleted is True:
-            raise RuntimeError("This configuration object is unavailable")
-
         return json.loads(self.__config_intf.FetchJSON())
 
 

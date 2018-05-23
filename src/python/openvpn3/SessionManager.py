@@ -25,6 +25,7 @@
 #
 
 import dbus
+from functools import wraps
 from openvpn3.constants import StatusMajor, StatusMinor
 from openvpn3.constants import ClientAttentionType, ClientAttentionGroup
 
@@ -120,13 +121,28 @@ class Session(object):
                                           dbus_interface="org.freedesktop.DBus.Properties")
 
         self.__session_path = objpath
+        self.__deleted = False
 
+    ##
+    #  Internal decorator, checkes whether the object has been deleted or not.
+    #  If the object has been deleted, throw an exception instead.
+    #
+    #  For details, lookup how Python decorators work
+    #
+    def __delete_check(func):
+        @wraps(func)
+        def __delete_checker(self, *args, **kwargs):
+            if self.__deleted is True:
+                raise RuntimeError("This session object is unavailable")
+            return func(self, *args, **kwargs)
+        return __delete_checker
 
     ##
     #  Returns the D-Bus configuration object path
     #
     #  @return String containing the D-Bus object path
     #
+    @__delete_check
     def GetPath(self):
         return self.__session_path
 
@@ -139,6 +155,7 @@ class Session(object):
     #                    type ov the value must match the data type of the
     #                    property in the D-Bus object
     #
+    @__delete_check
     def SetProperty(self, propname, propvalue):
         self.__prop_intf.Set('net.openvpn.v3.sessions',
                              propname, propvalue)
@@ -149,6 +166,7 @@ class Session(object):
     #
     #   @param propname  String containing the property name to query
     #
+    @__delete_check
     def GetProperty(self, propname):
         return self.__prop_intf.Get('net.openvpn.v3.sessions', propname)
 
@@ -156,20 +174,53 @@ class Session(object):
     ##
     #  Checks if the VPN backend process is ready to start connecting
     #
+    @__delete_check
     def Ready(self):
         self.__session_intf.Ready()
 
 
     ##
     #  Tells the VPN backend process to start the connection
+    #
+    @__delete_check
     def Connect(self):
         self.__session_intf.Connect()
 
 
     ##
+    #  Tells the VPN backend process to pause the connection
+    #
+    #  @param reason  String containing a reason why the session was paused.
+    #                 This is used primarily for logging purposes and defaults
+    #                 to 'User request'
+    #
+    @__delete_check
+    def Pause(self, reason='User request'):
+        self.__session_intf.Pause(reason)
+
+
+    ##
+    #  Tells the VPN backend process to resume a paused connection
+    #
+    @__delete_check
+    def Resume(self):
+        self.__session_intf.Resume()
+
+
+    ##
+    #  Tells the VPN backend process to restart the connection
+    #
+    @__delete_check
+    def Restart(self):
+        self.__session_intf.Restart()
+
+
+    ##
     #  Tells the VPN backend to disconnect and shutdown the connection
     #
+    @__delete_check
     def Disconnect(self):
+        self.__deleted = True
         self.__session_intf.Disconnect()
 
 
@@ -178,6 +229,7 @@ class Session(object):
     #
     #  @return  Returns a type of (StatusMajor, StatusMinor, Status message)
     #           The Status message is a plain string.
+    @__delete_check
     def GetStatus(self):
         status = self.__prop_intf.Get('net.openvpn.v3.sessions',
                                       'status')
@@ -191,6 +243,7 @@ class Session(object):
     #
     #  @return Returns a formatted string containing the statistics
     #
+    @__delete_check
     def GetStatistics(self):
         return self.__prop_intf.Get('net.openvpn.v3.sessions',
                                         'statistics')
@@ -205,6 +258,7 @@ class Session(object):
     #                     Defaults to: '    %25s: %i\n'
     #  @return Returns a formatted string containing the statistics
     #
+    @__delete_check
     def GetFormattedStatistics(self, prefix='Connection statistics:\n', format_str='    %25s: %i\n'):
         statistics = self.GetStatistics()
         ret = ""
@@ -216,12 +270,14 @@ class Session(object):
         return ret
 
 
+
     ##
     #  Queries the VPN backend if the user needs to be queried for information
     #
     #  @return Returns a list of tuples of Queue types and groups which needs
     #          to be satisfied
     #
+    @__delete_check
     def UserInputQueueGetTypeGroup(self):
         ret = []
         for (qt, qg) in self.__session_intf.UserInputQueueGetTypeGroup():
@@ -238,6 +294,7 @@ class Session(object):
     #
     #  @returns a list of unique ID references to slots needing to be satisfied
     #
+    @__delete_check
     def UserInputQueueCheck(self, qtype, qgroup):
         return self.__session_intf.UserInputQueueCheck(qtype.value,
                                                        qgroup.value)
@@ -255,6 +312,7 @@ class Session(object):
     #  @return Returns a list containing all the details needing to be
     #          satisfied
     #
+    @__delete_check
     def UserInputQueueFetch(self, qtype, qgroup, qid):
         return UserInputSlot(self.__session_intf, qtype, qgroup, qid)
 
@@ -267,6 +325,7 @@ class Session(object):
     #
     #  @return Returns a list of UserInputSlot objects which must be processed
     #
+    @__delete_check
     def FetchUserInputSlots(self):
         ret = []
         for (qt, qg) in self.UserInputQueueGetTypeGroup():
