@@ -50,10 +50,21 @@ except ImportError:
 #
 #
 class ConfigParser():
+
+    ##
+    #  Wrapper around argparse.ArgumentParser to avoid sys.exit() being called
+    #  on parsing errors.  Rather throw a generic Exception if needed, which
+    #  needs to be handled elsewhere
+    #
+    class __ovpnArgParser(argparse.ArgumentParser):
+        def error(self, message):
+            raise Exception("%s: error: %s"  % (self.prog, message))
+
+
     def __init__(self, args, descr):
         self.__args = args[1:]
-        self.__parser = argparse.ArgumentParser(prog=args[0],
-                                                description=descr)
+        self.__parser = ConfigParser.__ovpnArgParser(prog=args[0],
+                                                     description=descr)
         self.__init_arguments()
         self.__opts = vars(self.__parser.parse_args(self.__args))
 

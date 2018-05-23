@@ -32,10 +32,10 @@ BUILT_SOURCES = openvpn3/constants.py
 
 pkgopenvpn3dir = $(pythondir)/openvpn3
 pkgopenvpn3_PYTHON = \
-	openvpn3/configparser.py \
 	openvpn3/__init__.py     \
-	openvpn3/session.py      \
-	openvpn3/status.py
+	openvpn3/ConfigParser.py \
+	openvpn3/ConfigManager.py \
+	openvpn3/SessionManager.py
 
 nodist_pkgopenvpn3_PYTHON = \
 	openvpn3/constants.py

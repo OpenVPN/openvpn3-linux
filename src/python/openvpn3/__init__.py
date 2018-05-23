@@ -30,6 +30,6 @@ __all__ = ['StatusMajor', 'StatusMinor',
 
 # Make all defined constants and classes part if this main module
 from .constants import *
-from .configparser import ConfigParser
+from .ConfigParser import ConfigParser
 from .ConfigManager import ConfigurationManager, Configuration
 from .SessionManager import SessionManager, Session
