@@ -41,6 +41,7 @@ nodist_pkgopenvpn3_PYTHON = \
 	openvpn3/constants.py
 
 dist_bin_SCRIPTS = openvpn2
+dist_sbin_SCRIPTS = openvpn3-autoload
 
 openvpn3_gen_python_constants_SOURCES = openvpn3/gen-python-constants.cpp
 

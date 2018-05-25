@@ -1,0 +1,274 @@
+#!/usr/bin/python3
+#  OpenVPN 3 Linux client -- Next generation OpenVPN client
+#
+#  Copyright (C) 2017 - 2018  OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2017 - 2018  David Sommerseth <davids@openvpn.net>
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, version 3 of the
+#  License.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
+##
+# @file  openvpn3-autoload
+#
+# @brief  This will load all configuration files (.ovpn/.conf) found under a
+#         predefined directory.  It is a requirement that the configuration file
+#         is accompanied by an .autoload file with the same basename to be
+#         processed
+
+
+import sys
+import os
+import argparse
+import json
+import dbus
+import time
+from pathlib import Path
+import openvpn3
+from openvpn3 import StatusMajor, StatusMinor
+
+# Add the traceback module if we're in debugging mode.
+# This will allow dumping of tracebacks when exceptions happens
+if 'OPENVPN3_DEBUG' in os.environ:
+    import traceback
+
+
+##
+#  Parses all .ovpn/.conf files in the provided directory which also
+#  has a corresponding .autload file present.  The result is loaded and parsed
+#  and returned in a dictionary, indexed by the base filename processed.
+#
+def find_autoload_configs(srcdir):
+    # File extensions we support for autoloading
+    extensions = ('.ovpn', '.conf')
+
+    # Get a list of all files with the provided extensions
+    # in the source directory
+    path = Path(srcdir)
+    files = []
+    for ext in extensions:
+        files += list(path.glob('*' + ext))
+
+    # Parse the list of files and check that a corresponding .autoload
+    # file exists with a valid JSON format
+    autoload_cfgs = {}
+    for cfg in sorted([f for f in files if f.exists() and f.is_file()]):
+        # Extract the base filename without the .conf/.ovpn extension
+        cfgnam = str(cfg)
+        for ext in extensions:
+            # Find the base name without extention
+            pos = cfgnam.rfind(ext)
+            if pos < 1:
+                continue
+
+            alfilen = Path(cfgnam[:pos] + '.autoload')
+            if alfilen.exists():
+                # Only continue processing if a corresponding .autoload file
+                # exists
+                try:
+                    # Parse the .autoload file - JSON formatted
+                    autoload = json.load(open(str(alfilen.resolve())))
+
+                    # Load the OpenVPN configuration
+                    opts = openvpn3.ConfigParser(['openvpn3-autoload',
+                                                  '--cd',
+                                                  os.path.dirname(cfgnam),
+                                                  '--config',
+                                                  os.path.basename(cfgnam)],
+                                                  'OpenVPN 3 autoloader')
+                    opts.SanityCheck()
+
+                    # Save all parsed/loaded data into a dictionary
+                    autoload_cfgs[os.path.basename(cfgnam)] = {
+                        'config': opts.GenerateConfig(),
+                        'autoload': autoload
+                    }
+                except TypeError as e:
+                    print ('Could not parse "%s": %s' % (cfgnam, str(e)))
+                except ValueError as e:
+                    print ('Invalid JSON data in "%s": %s' % (cfgnam, str(e)))
+                except Exception as e:
+                    print ('Error: ' + str(e))
+
+    return autoload_cfgs
+
+
+##
+#  Imports a parsed configuration file to the OpenVPN 3 Configuration Manager
+#  This will return with the D-Bus path for the imported configuration on
+#  success
+#
+def import_configuration(cfgmgr, cfgname, flags, cfg):
+    cfgobj = cfgmgr.Import(cfgname,  # human readable config name
+                           cfg,  # configuration profile as a string
+                           False,  # Single-use config?  No.
+                           False)  # Persistent config?  No.
+
+    # If we have a list of flags, set these flags in the configuration object
+    if flags and len(flags) > 0:
+        # Enable the provided flags.  These flags are only boolean flags
+        for flag in flags:
+            cfgobj.SetProperty(flag, True)
+
+    return cfgobj
+
+
+##
+#  Converts various .autoload flags into flags the property values to be
+#  set in the OpenVPN 3 Configuration Manager for a specific config
+#
+def parse_autoload_config_flags(autoload):
+    cfgflags = []
+    if 'acl' in autoload:
+        for (k, v) in autoload['acl'].items():
+            if False == v:
+                continue
+
+            if 'public' == k:
+                cfgflags.append('public_access')
+            if 'locked-down' == k:
+                cfgflags.append('locked_down')
+
+    if 'tunnel' in autoload:
+        for (k, v) in autoload['tunnel'].items():
+            if False == v:
+                continue
+
+            if 'persist' == k:
+                cfgflags.append('persist_tun')
+
+    return cfgflags
+
+
+##
+#  Starts a new VPN tunnel based on the already imported configuration object
+#
+def start_tunnel(sessmgr, cfgobj, autoload):
+    cfgn = cfgobj.GetProperty('name')
+    sess = sessmgr.NewTunnel(cfgobj);
+
+    ready = False
+    attempts = 0
+    conn_started = False
+    while ready == False:
+        try:
+            # See of the backend process is ready to start a connection
+            sess.Ready()
+
+            # Only try to call the Connect() method
+            # if it hasn't been done yet
+            if False == conn_started:
+                sess.Connect()
+                conn_started = True
+
+            # Check the session status and only report unexpected statuses
+            status = sess.GetStatus()
+            if StatusMajor.CONNECTION != status[0] and (StatusMinor.CONNECTING != status[1] or StatusMinor.CONNECTED == status[1]):
+                print('[%s] Status: %s/%s' % (cfgn, str(status[0]), str(status[1])))
+            ready = True
+
+        except dbus.exceptions.DBusException as excep:
+            err = str(excep)
+
+            # If the VPN backend needs user credentials, retrieve that
+            # from the autoload configuration for this VPN configuration
+            if err.find(' Missing user credentials') > 0:
+                conn_started = False
+                if 'user-auth' not in autoload:
+                    sess.Disconnect()
+                    raise Exception('Configuration "%s" requires user/password authentication, but .autoload is not configured with credentials. Auto-start ignored.' % cfgn)
+
+                userauth = autoload['user-auth']
+                for ui in sess.FetchUserInputSlots():
+                    varn = ui.GetVariableName()
+                    if varn not in userauth:
+                        sess.Disconnect()
+                        raise Exception('The .autoload config for "%s" is lacking details for "%s".  Auto-start ignored.' % (cfgn, varn))
+                    ui.ProvideInput(userauth[varn])
+
+            # If the VPN backend doesn't reply soon enough, try again in a bit
+            elif err.find('org.freedesktop.DBus.Error.NoReply') > -1:
+                attempts += 1
+                if attempts > 15:
+                    raise Exception('Failed to successfully start a VPN backend process')
+                time.sleep(1)
+
+            # All other exceptions are re-thrown
+            else:
+                raise excep
+
+
+
+##
+#  The real main function for the autoloader
+#
+def autoload_main(cmdargs):
+    argp = argparse.ArgumentParser(prog=cmdargs[0],
+                                   description='OpenVPN 3 Configuration Loader')
+    argp.add_argument('--directory', metavar='DIR', action='store',
+                      help='Directory to process')
+    argp.add_argument('--ignore-autostart', action='store_true',
+                      help='Do not automatically start configurations')
+
+    opts = argp.parse_args(cmdargs[1:])
+
+    # Get a connection to the D-Bus' system bus and connect to the
+    # OpenVPN 3 manager services
+    bus = dbus.SystemBus()
+    sessionmgr = openvpn3.SessionManager(bus)
+    configmgr = openvpn3.ConfigurationManager(bus)
+
+    # Process the autoload configuration directory
+    for (cfgname, autocfg) in find_autoload_configs(opts.directory).items():
+        # Extract a list of properties with flags to set
+        cfgflags = parse_autoload_config_flags(autocfg['autoload'])
+
+        # Import the configuration to the configuration manager, the
+        # result value is the D-Bus path to the imported config
+        cfgobj = import_configuration(configmgr,
+                                      cfgname,
+                                      cfgflags,
+                                      autocfg['config'])
+        print ('Configuration "%s" imported: %s [%s]' % (cfgname,
+                                                         cfgobj.GetPath(),
+                                                         ", ".join(cfgflags)))
+
+        # Should this configuration be automatically started too?
+        if 'autostart' in autocfg['autoload'] and True == autocfg['autoload']['autostart']:
+            print('Auto-starting %s%s' % (cfgname,
+                                          True == opts.ignore_autostart and 'is ignored' or ''))
+            if False == opts.ignore_autostart:
+                try:
+                    start_tunnel(sessionmgr, cfgobj, autocfg['autoload'])
+                except Exception as excp:
+                    print('WARNING: ' + str(excp))
+                    print('WARNING: This configuration may not have been auto-started.')
+
+
+
+if __name__ == '__main__':
+    ret = 9;
+    try:
+        ret = autoload_main(sys.argv)
+    except KeyboardInterrupt:
+        print('')
+        ret = 8
+    except Exception as e:
+        print ('\n** ERROR ** %s' % str(e))
+        ret = 2
+
+        if 'OPENVPN3_DEBUG' in os.environ:
+            print ('\nmain traceback:')
+            print (traceback.format_exc())
+
+    sys.exit(ret)
