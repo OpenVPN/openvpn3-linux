@@ -101,8 +101,6 @@ def start_tunnel(bus, cfgobj, daemon):
     exit_code = 0
     while done is False:
         try:
-            time.sleep(1) # FIXME: Catch a signal when backend is ready
-
             # Check if the backend needs something more from us ...
             sessionobj.Ready()   # This throws an exception if not ready
             sessionobj.Connect() # Start the connection
@@ -215,14 +213,17 @@ def start_tunnel(bus, cfgobj, daemon):
 
                     input_slot.ProvideInput(response)
 
-            elif str(excep).find(' Backend VPN process have died'):
+            elif str(excep).find(' Backend VPN process have died') > 1:
                 if 3 == exit_code:  # Authentication failed, this is expected
                     break
                 if 'OPENVPN3_DEBUG' in os.environ:
                     print ('\nstart_tunnel() [1] traceback:\n')
                     print (traceback.format_exc())
                 raise Exception('VPN backend process stopped unexpectedly. '
-                                +'Session has closed.')
+                                +'Session has closed. :: ' + str(excep))
+            elif str(excep).find('Backend VPN process is starting') > 1:
+                # Wait for the backend to settle
+                time.sleep(0.5)
             else:
                 if 'OPENVPN3_DEBUG' in os.environ:
                     print ('\nstart_tunnel() [2] traceback:\n')
