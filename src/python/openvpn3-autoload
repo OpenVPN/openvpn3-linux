@@ -197,7 +197,8 @@ def start_tunnel(sessmgr, cfgobj, autoload):
                     ui.ProvideInput(userauth[varn])
 
             # If the VPN backend doesn't reply soon enough, try again in a bit
-            elif err.find('org.freedesktop.DBus.Error.NoReply') > -1:
+            elif err.find('org.freedesktop.DBus.Error.NoReply') > -1 \
+                or err.find('Backend VPN process is starting') > -1:
                 attempts += 1
                 if attempts > 15:
                     raise Exception('Failed to successfully start a VPN backend process')

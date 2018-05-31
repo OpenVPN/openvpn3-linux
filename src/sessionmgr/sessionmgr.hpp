@@ -684,7 +684,6 @@ public:
                               GDBusMethodInvocation *invoc)
     {
         bool ping = false;
-        bool disable_critical_log = false;
 
         try {
             if (!be_proxy)
@@ -707,6 +706,11 @@ public:
                                     + std::string(dbserr.getRawError()));
             }
 
+            if (!registered)
+            {
+                THROW_DBUSEXCEPTION("SessionObject",
+                                    "Session registration not completed");
+            }
 
             std::stringstream msg;
             msg << "Session operation: " << method_name
@@ -746,13 +750,19 @@ public:
             }
             else if ("Ready" == method_name)
             {
-                // We disable logging critical exceptions in this case because
-                // the Ready method is expected to throw an exception with a
-                // reason if the backend isn't ready.  This is not a session
-                // critical scenario.
-                disable_critical_log = true;
-                CheckACL(sender);
-                be_proxy->Call("Ready");
+                try
+                {
+                    CheckACL(sender);
+                    be_proxy->Call("Ready");
+                }
+                catch (DBusException& dberr)
+                {
+                    GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.sessions.error",
+                                                                  dberr.what());
+                    g_dbus_method_invocation_return_gerror(invoc, err);
+                    g_error_free(err);
+                    return;
+                }
             }
             else if ("UserInputQueueGetTypeGroup" == method_name)
             {
@@ -849,7 +859,11 @@ public:
             bool do_selfdestruct = false;
             std::string errmsg;
 
-            if (!ping)
+            if (!registered)
+            {
+                errmsg = "Backend VPN process is starting";
+            }
+            else if (!ping)
             {
                 try
                 {
@@ -871,7 +885,7 @@ public:
                 errmsg = "Failed communicating with VPN backend: " + dberr.getRawError();
             }
 
-            if (!disable_critical_log)
+            if (registered)
             {
                 LogCritical(errmsg);
             }
@@ -1214,6 +1228,7 @@ private:
                          "session_path=" + GetObjectPath()
                          + " backend_busname=" + be_busname
                          + " backend_path=" + be_path);
+            registered = true;
         }
         catch (DBusException& err)
         {
