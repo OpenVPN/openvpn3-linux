@@ -207,6 +207,7 @@ def start_tunnel(sessmgr, cfgobj, autoload):
             else:
                 raise excep
 
+    return sess.GetPath()
 
 
 ##
@@ -245,15 +246,16 @@ def autoload_main(cmdargs):
 
         # Should this configuration be automatically started too?
         if 'autostart' in autocfg['autoload'] and True == autocfg['autoload']['autostart']:
-            print('Auto-starting %s%s' % (cfgname,
-                                          True == opts.ignore_autostart and 'is ignored' or ''))
             if False == opts.ignore_autostart:
                 try:
-                    start_tunnel(sessionmgr, cfgobj, autocfg['autoload'])
+                    p = start_tunnel(sessionmgr, cfgobj, autocfg['autoload'])
+                    print('Auto-started "%s": %s' % (cfgname, p))
+
                 except Exception as excp:
                     print('WARNING: ' + str(excp))
                     print('WARNING: This configuration may not have been auto-started.')
-
+            else:
+                print('Auto-start of "%s" was ignored.' % cfgname)
 
 
 if __name__ == '__main__':
