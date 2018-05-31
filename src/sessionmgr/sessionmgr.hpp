@@ -894,7 +894,7 @@ public:
                 errmsg = "Failed communicating with VPN backend: " + dberr.getRawError();
             }
 
-            if (registered)
+            if (registered && !selfdestruct_complete && !do_selfdestruct)
             {
                 LogCritical(errmsg);
             }
