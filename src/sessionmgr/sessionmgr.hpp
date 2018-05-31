@@ -218,7 +218,9 @@ public:
         g_variant_builder_add (b, "{sv}", "log_group", g_variant_new_uint32((guint32) last_group));
         g_variant_builder_add (b, "{sv}", "log_category", g_variant_new_uint32((guint32) last_logcateg));
         g_variant_builder_add (b, "{sv}", "log_message", g_variant_new_string(last_msg.c_str()));
-        return g_variant_builder_end(b);
+        GVariant *ret = g_variant_builder_end(b);
+        g_variant_builder_unref(b);
+        return ret;
     }
 
     void SetLogLevel(unsigned int loglev)
@@ -314,6 +316,7 @@ public:
             last_minor = min;
             last_msg = std::string(msg);
         }
+        g_free(msg);
 
         // Proxy this mesage via DBusSignalProducer
         Send("StatusChange", status);
@@ -359,7 +362,9 @@ public:
         g_variant_builder_add (b, "{sv}", "major", g_variant_new_uint32(last_major));
         g_variant_builder_add (b, "{sv}", "minor", g_variant_new_uint32(last_minor));
         g_variant_builder_add (b, "{sv}", "status_message", g_variant_new_string(last_msg.c_str()));
-        return g_variant_builder_end(b);
+        GVariant *ret = g_variant_builder_end(b);
+        g_variant_builder_unref(b);
+        return ret;
     }
 
 
@@ -581,13 +586,15 @@ public:
             && (interface_name == OpenVPN3DBus_interf_backends))
         {
             gchar *busn;
-            gchar *sesstoken;
-            g_variant_get (params, "(ss)", &busn, &sesstoken);
+            gchar *sesstoken_c;
+            g_variant_get (params, "(ss)", &busn, &sesstoken_c);
 
             be_conn = conn;
             be_busname = std::string(busn);
-            be_path = std::string(object_path);
             g_free(busn);
+            std::string sesstoken(sesstoken_c);
+            g_free(sesstoken_c);
+            be_path = std::string(object_path);
 
             if (std::string(sesstoken) != backend_token)
             {
@@ -632,6 +639,8 @@ public:
 
             StatusMajor major = (StatusMajor) major_u;
             StatusMinor minor = (StatusMinor) minor_u;
+            g_free(msg);
+
             if (StatusMajor::CONNECTION == major
                 && (StatusMinor::CONN_FAILED == minor
                     || StatusMinor::CONN_AUTH_FAILED == minor))
