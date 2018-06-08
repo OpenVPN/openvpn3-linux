@@ -678,7 +678,7 @@ class ConfigParser():
             embedded = {}
             tmp = None
             embedded_key = None
-            for opt in [l.strip() for l in fp.readlines() if 0 < len(l.split('#')[0])]:
+            for opt in [l.split('#')[0].strip() for l in fp.readlines() if 0 < len(l.split('#')[0])]:
                 if len(opt) == 0:
                     # Skip empty lines
                     continue
