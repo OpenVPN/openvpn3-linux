@@ -835,7 +835,8 @@ class ConfigParser():
             # If values is a list, we have filename and key-direction
             filename = values
             if isinstance(values, list):
-                setattr(namespace, 'key-direction', values[1])
+                if len(values) > 1:
+                    setattr(namespace, 'key-direction', values[1])
                 filename = values[0]
 
             fp = open(filename, 'r')
