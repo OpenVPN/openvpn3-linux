@@ -31,10 +31,13 @@
 from enum import Enum
 from getpass import getpass
 
+import datetime
 import dbus
 import os
 import sys
 import time
+from dbus.mainloop.glib import DBusGMainLoop
+from gi.repository import GLib
 
 # Make all defined constants and classes part if this main module
 from openvpn3 import StatusMajor, StatusMinor
@@ -43,10 +46,15 @@ from openvpn3 import ConfigParser
 from openvpn3 import ConfigurationManager, Configuration
 from openvpn3 import SessionManager, Session
 
+
 # Add the traceback module if we're in debugging mode.
 # This will allow dumping of tracebacks when exceptions happens
 if 'OPENVPN3_DEBUG' in os.environ:
     import traceback
+
+
+# Global variables
+mainloop = GLib.MainLoop()
 
 
 ##
@@ -86,7 +94,71 @@ def import_config(bus, opts):
     return cfg
 
 
-def start_tunnel(bus, cfgobj, daemon):
+##
+#  Simple Log signal callback function.  Called each time a Log event
+#  happens on this session.
+#
+def LogHandler(group, catg, msg):
+    loglines = [l for l in msg.split('\n') if len(l) > 0]
+    if len(loglines) < 1:
+        return
+
+    print('%s [LOG] %s' % (datetime.datetime.now(), loglines[0]))
+    for line in loglines[1:]:
+        print('%s%s' % (' '*33, line))
+
+
+
+##
+#  Simple StatusChange callback function.  Called each time a StatusChange
+#  event happens on this session.
+#
+#  This handler will also shutdown this currently running session if
+#  the session is disconnected outside of this program
+#
+def StatusHandler(major, minor, msg):
+    maj = StatusMajor(major)
+    min = StatusMinor(minor)
+    print('%s [STATUS] (%s, %s) %s' % (datetime.datetime.now(),
+                                    maj, min, msg))
+
+    # Session got most likely disconnected outside of this program
+    if StatusMajor.SESSION == maj and StatusMinor.PROC_STOPPED:
+        mainloop.quit()
+
+
+##
+#  Main function for the foreground run mode of openvpn2.  Log and StatusChange
+#  events will be printed to the terminal as they occur until CTRL-C or
+#  the session is closed outside of this program
+#
+def fetch_logs_loop(sessobj, verb):
+    print(verb)
+    sessobj.LogCallback(LogHandler)
+    sessobj.StatusChangeCallback(StatusHandler)
+    sessobj.SetProperty('log_verbosity', dbus.UInt32(verb))
+
+    print("Press CTRL-C to stop the connection\n")
+    try:
+        mainloop.run()
+        print("\nSession manager initiated disconnect")
+    except KeyboardInterrupt:
+        print("\nDisconnecting...")
+        print(sessobj.GetFormattedStatistics())
+        sessobj.Disconnect()
+
+    print('Disconnected')
+    return 0
+
+
+
+##
+#  Starts a new VPN session for a specific configuration
+#
+#  This is the main entry point for establishing new tunnels and it
+#  handles both background and forground run modes
+#
+def start_tunnel(bus, cfgobj, background_mode, verb):
     # Main session manager object
     sessmgr = SessionManager(bus)
 
@@ -104,6 +176,19 @@ def start_tunnel(bus, cfgobj, daemon):
             # Check if the backend needs something more from us ...
             sessionobj.Ready()   # This throws an exception if not ready
             sessionobj.Connect() # Start the connection
+
+            # If not running in the background, print the log events
+            # to the terminal.  When the fetch_logs_loop() function returns,
+            # the connection is already disconnecte and we can just return
+            #
+            # This approach will start a GLib main loop which takes care of
+            # the main programs execution
+            #
+            if background_mode is False:
+                return fetch_logs_loop(sessionobj, verb)
+
+            # ... and if this session is to be run in the
+            # background when connected ...
 
             # Simple poll routine to catch the situation of the tunnel
             # The 'status' property in a session object contains the last status
@@ -128,16 +213,6 @@ def start_tunnel(bus, cfgobj, daemon):
                     elif StatusMinor.CONN_CONNECTED == status_min:
                         print('\nConnected')
                         connected = True
-                        if daemon is False:
-                            try:
-                                # FIXME: Dump log entries and wait for CTRL-C or other signals
-                                #   + listen for other signals from the session,
-                                #   in case being disconnected/paused/resumed from a different user
-                                input('Press enter to disconnect')
-                                done = True
-                            except:
-                                print('\nDisconnecting ...')
-                                done = True
 
                     elif status_min in (StatusMinor.CONN_DISCONNECTED,
                                         StatusMinor.CONN_DONE):
@@ -165,21 +240,8 @@ def start_tunnel(bus, cfgobj, daemon):
                     # exception is thrown again
                     sessionobj.Ready()
 
-
-            # If we're not running in the background
-            if daemon is False:
-                if connected is True:
-                    # If connected, retrieve and dump the last connection
-                    # statistics
-                    print(sessionobj.GetFormattedStatistics())
-
-                # ... and complete the disconnect, which shuts down the backend
-                sessionobj.Disconnect()
-                print('Disconnected')
-
-            else:  # If we are running in the background ...
                 if connected:
-                    # ... and we're connected, print important details
+                    # Print important details to the terminal ...
                     print('Running connection in the background.  To manage '
                           + 'this connection, use')
                     print('the openvpn3 command line tool with the session '
@@ -262,13 +324,14 @@ def openvpn2_main(args):
             return 0
 
         # Get a connection to the D-Bus' system bus
-        bus = dbus.SystemBus()
+        dbusloop = DBusGMainLoop(set_as_default=True)
+        bus = dbus.SystemBus(mainloop=dbusloop)
 
         # Import the configuration, which is stored in the configuration manager
         cfgobj = import_config(bus, opts)
 
         # Start the tunnel, which his managed by the session manager
-        ret = start_tunnel(bus, cfgobj, opts.GetDaemon())
+        ret = start_tunnel(bus, cfgobj, opts.GetDaemon(), opts.GetLogVerbosity())
 
     except KeyboardInterrupt:
         print("")
