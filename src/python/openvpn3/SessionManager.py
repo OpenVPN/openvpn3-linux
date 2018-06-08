@@ -270,6 +270,39 @@ class Session(object):
         return ret
 
 
+    ##
+    #  Subscribes to the Log signals for this session, enables the log
+    #  forwarding and register a callback function which called on each event
+    #
+    #  The callback function needs to accept 3 arguments:
+    #     (integer) LogGroup, (integer) LogCategory, (string) message
+    #
+    def LogCallback(self, cbfnc):
+        self.__session_intf.connect_to_signal('Log', cbfnc)
+        self.SetProperty('receive_log_events', True)
+
+
+    ##
+    #  Subscribes to the StatusChange signals for this session and register
+    #  a callback function which is being called on each event
+    #
+    #  The callback function needs to accept 3 arguments:
+    #     (integer) StatusMajor, (integer) StatusMinor, (string) message
+    #
+    def StatusChangeCallback(self, cbfnc):
+        self.__session_intf.connect_to_signal('StatusChange', cbfnc)
+
+
+    ##
+    #  Subscribes to the AttentionRequired signals for this session and register
+    #  a callback function which is being called on each event
+    #
+    # The callback function needs to accept 3 arguments:
+    #     (integer) AttentionType, (integer) AttentionGroup, (string) message
+    #
+    def AttentionRequiredCallback(self, cbfnc):
+        self.__session_intf.connect_to_signal('AttentionRequired', cbfnc)
+
 
     ##
     #  Queries the VPN backend if the user needs to be queried for information
