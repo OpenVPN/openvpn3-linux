@@ -304,7 +304,7 @@ class ConfigParser():
 
         self.__parser.add_argument('--mode', metavar='MODE',
                                    action='store',
-                                   choices=['client'],
+                                   choices=['client', 'p2p'],
                                    nargs=1,
                                    help='Operational mode. Only "client" is'
                                    + 'accepted')
@@ -357,7 +357,7 @@ class ConfigParser():
 
         self.__parser.add_argument('--proto', metavar='PROTO',
                                    action='store',
-                                   choices=['udp', 'tcp'],
+                                   choices=['udp', 'tcp', 'tcp-client'],
                                    nargs=1,
                                    help='Use protocol PROTO for communicating '
                                    +'with peer. Valid values: udp, tcp')
@@ -518,6 +518,7 @@ class ConfigParser():
 
         self.__parser.add_argument('--tls-crypt', metavar='FILE',
                                    action=ConfigParser.EmbedFile,
+                                   dest='tls-crypt', embed_tag = 'tls-crypt',
                                    help='Encrypts the TLS control channel '
                                    + 'with a shared secret key (FILE).  This'
                                    + 'CANNOT be combined with --tls-auth')
@@ -576,7 +577,7 @@ class ConfigParser():
         ignored.add_argument('--explicit-exit-notify',
                              metavar='[ATTEMPTS]',
                              action=ConfigParser.IgnoreArg,
-                             nargs='+',
+                             nargs='*',
                              help='On exit/restart, send exit signal to remote '
                              + 'end. Automatically configured with OpenVPN 3')
 
