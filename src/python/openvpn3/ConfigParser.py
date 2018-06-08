@@ -105,6 +105,10 @@ class ConfigParser():
         return self.__opts['daemon']
 
 
+    def GetLogVerbosity(self):
+        return self.__opts['verb'][0]
+
+
     def GetPersistTun(self):
         try:
             return self.__opts['persist_tun']
@@ -556,9 +560,11 @@ class ConfigParser():
         self.__parser.add_argument('--verb',
                                    metavar= 'LEVEL',
                                    action='store',
+                                   type=int,
+                                   choices=[1, 2, 3, 4, 5, 6],
                                    nargs=1,
                                    help='Set log verbosity level.  Log levels '
-                                   +'are NOT compatible with OpenVPN 2 --verb ')
+                                   +'are NOT compatible with OpenVPN 2 --verb')
 
 
         descr = 'The following options are ignored and not processed.  These ' \
