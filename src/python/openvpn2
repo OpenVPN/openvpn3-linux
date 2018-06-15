@@ -140,8 +140,9 @@ def fetch_logs_loop(sessobj, verb):
 
     print("Press CTRL-C to stop the connection\n")
     try:
-        mainloop.run()
-        print("\nSession manager initiated disconnect")
+        sessobj.Connect()  # Start the connection
+        mainloop.run()     # Start listening for signals
+        print("\nSession manager initiated disconnect...")
     except KeyboardInterrupt:
         print("\nDisconnecting...")
         print(sessobj.GetFormattedStatistics())
@@ -175,7 +176,6 @@ def start_tunnel(bus, cfgobj, background_mode, verb):
         try:
             # Check if the backend needs something more from us ...
             sessionobj.Ready()   # This throws an exception if not ready
-            sessionobj.Connect() # Start the connection
 
             # If not running in the background, print the log events
             # to the terminal.  When the fetch_logs_loop() function returns,
@@ -189,6 +189,9 @@ def start_tunnel(bus, cfgobj, background_mode, verb):
 
             # ... and if this session is to be run in the
             # background when connected ...
+
+            # Start the VPN connection
+            sessionobj.Connect()
 
             # Simple poll routine to catch the situation of the tunnel
             # The 'status' property in a session object contains the last status
