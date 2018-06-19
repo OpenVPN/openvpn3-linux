@@ -64,7 +64,8 @@ class ConfigParser():
     def __init__(self, args, descr):
         self.__args = args[1:]
         self.__parser = ConfigParser.__ovpnArgParser(prog=args[0],
-                                                     description=descr)
+                                                     description=descr,
+                                                     usage="%s [options]" % args[0])
         self.__init_arguments()
         self.__opts = vars(self.__parser.parse_args(self.__args))
 
