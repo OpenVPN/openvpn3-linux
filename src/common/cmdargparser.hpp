@@ -222,7 +222,8 @@ private:
 class ParsedArgs
 {
 public:
-    ParsedArgs()
+    ParsedArgs(const std::string argv0)
+        : argv0(argv0)
     {
     }
 
@@ -239,6 +240,14 @@ public:
         return completed;
     }
 
+    /**
+     *  Get the program name (argv[0])
+     * @return
+     */
+    std::string GetArgv0()
+    {
+        return argv0;
+    }
     /**
      *  Checks if a specific option name has been parsed.  This is
      *  useful for options which does not take any additional argument.  This
@@ -351,6 +360,7 @@ public:
     }
 
 protected:
+    std::string argv0;
     std::map<std::string, std::vector<std::string>> key_value;
     std::vector<std::string> present;
     std::vector<std::string> extra_args;
@@ -373,7 +383,7 @@ using argHelperFunc = std::string (*)();
 class RegisterParsedArgs : public ParsedArgs
 {
 public:
-    RegisterParsedArgs() : ParsedArgs()
+    RegisterParsedArgs(const std::string arg0) : ParsedArgs(arg0)
     {
     }
 
@@ -764,6 +774,7 @@ public:
                                                   "This help screen"));
     }
 
+
     /**
      * Adds a new option to the current command.  This takes both a
      * long and short option without any additional value arguments.
@@ -1033,7 +1044,7 @@ protected:
     {
         struct option *long_opts = init_getopt();
 
-        RegisterParsedArgs cmd_args;
+        RegisterParsedArgs cmd_args(arg0);
         int c;
         optind = 1 + skip; // Skip argv[0] which contains this command name
         try
