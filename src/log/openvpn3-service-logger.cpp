@@ -210,6 +210,8 @@ private:
 
 static int logger(ParsedArgs args)
 {
+    std::cout << get_version(args.GetArgv0()) << std::endl;
+
     int ret = 0;
     bool timestamp = args.Present("timestamp");
     bool colour = args.Present("colour");
@@ -317,13 +319,12 @@ static int logger(ParsedArgs args)
 
 int main(int argc, char **argv)
 {
-    std::cout << get_version(argv[0]) << std::endl;
-
     // This program does not require root privileges,
     // so if used - drop those privileges
     drop_root();
 
     SingleCommand argparser(argv[0], "OpenVPN 3 Logger", logger);
+    argparser.AddVersionOption();
     argparser.AddOption("timestamp", 0,
                         "Print timestamps on each log entry");
     argparser.AddOption("colour", 0,

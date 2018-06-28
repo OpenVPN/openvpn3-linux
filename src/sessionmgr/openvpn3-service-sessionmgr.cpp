@@ -27,6 +27,8 @@ using namespace openvpn;
 
 static int session_manager(ParsedArgs args)
 {
+    std::cout << get_version(args.GetArgv0()) << std::endl;
+
     GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
     g_unix_signal_add(SIGINT, stop_handler, main_loop);
     g_unix_signal_add(SIGTERM, stop_handler, main_loop);
@@ -79,6 +81,7 @@ int main(int argc, char **argv)
 {
     SingleCommand argparser(argv[0], "OpenVPN 3 Session Manager",
                             session_manager);
+    argparser.AddVersionOption();
     argparser.AddOption("log-level", "LOG-LEVEL", true,
                         "Log verbosity level (valid values 0-6, default 3)");
     argparser.AddOption("idle-exit", "MINUTES", true,
@@ -87,8 +90,6 @@ int main(int argc, char **argv)
 
     try
     {
-        std::cout << get_version(argv[0]) << std::endl;
-
         // This program does not require root privileges,
         // so if used - drop those privileges
         drop_root();
