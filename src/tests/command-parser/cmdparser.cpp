@@ -49,6 +49,9 @@ int cmd_dump_arg_test(ParsedArgs args)
         }
         std::cout << "]" << std::endl;
     }
+    auto extra = args.GetAllExtraArgs();
+    std::cout << "[cmd_test1] Extra argument counts: "
+              << extra.size() << std::endl;
     for (auto const& a : args.GetAllExtraArgs())
     {
         std::cout << "[cmd_test1] Extra: " << a << std::endl;
@@ -129,6 +132,7 @@ int main(int argc, char **argv)
     test1_cmd->AddOption("test-func2", 'f', "string", false, "Just another test");
     test1_cmd->AddOption("mandatory-arg", "string", true, "Test mandatory option argument",
                          arghelper_mandatory_arg);
+    test1_cmd->AddVersionOption();
 
     auto test2_cmd = cmds.AddCommand("test2", "Test command two", cmd_multiply);
     test2_cmd->AddOption("multiply", 'm', "values" , true, "Multiply two numbers",

@@ -757,7 +757,8 @@ public:
     SingleCommand(const std::string command,
                   const std::string description,
                   const commandPtr cmdfunc)
-        : command(command), description(description), command_func(cmdfunc)
+        : command(command), description(description), command_func(cmdfunc),
+          opt_version_added(false)
     {
         options.push_back(new SingleCommandOption("help", 'h',
                                                   "This help screen"));
@@ -852,6 +853,18 @@ public:
                    )
     {
         AddOption(longopt, 0, metavar, required, help_text, arg_helper);
+    }
+
+
+    /**
+     *  Adds a default --version option, which will be handled internally
+     *  by this class
+     *
+     */
+    void AddVersionOption(const char shortopt = 0)
+    {
+        AddOption("version", shortopt, "Show version information");
+        opt_version_added = true;
     }
 
 
@@ -1052,6 +1065,14 @@ protected:
                 {
                     // No match on short option ... search on long option,
                     // based on optidx
+
+                    if (opt_version_added
+                        && (0 == strncmp("version", long_opts[optidx].name, 7)))
+                    {
+                        std::cout << get_version(arg0) << std::endl;
+                        goto exit;
+                    }
+
                     for (auto& o : options)
                     {
                         if (o->check_long_option(long_opts[optidx].name))
@@ -1101,6 +1122,7 @@ private:
     const commandPtr command_func;
     std::vector<SingleCommandOption::Ptr> options;
     std::string shortopts;
+    bool opt_version_added;
 
 
     /**
