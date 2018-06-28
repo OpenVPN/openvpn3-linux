@@ -36,6 +36,7 @@
 #include <glib-unix.h>
 
 #include <openvpn/legal/copyright.hpp>
+#include <openvpn/common/platform_string.hpp>
 
 #include "config.h"
 #ifdef HAVE_CONFIG_VERSION_H
@@ -149,6 +150,8 @@ std::string get_version(std::string component)
 
 #ifdef OPENVPN_TUN_BUILDER_BASE_H
     ver << ClientAPI::OpenVPNClient::platform() << std::endl;
+#else
+    ver << openvpn::platform_string() << std::endl;
 #endif
     ver << openvpn_copyright;
 
