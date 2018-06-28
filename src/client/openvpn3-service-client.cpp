@@ -38,6 +38,7 @@
 #define SHUTDOWN_NOTIF_PROCESS_NAME "openvpn3-service-client"
 #include "common/requiresqueue.hpp"
 #include "common/utils.hpp"
+#include "common/cmdargparser.hpp"
 #include "configmgr/proxy-configmgr.hpp"
 #include "dbus/core.hpp"
 #include "dbus/path.hpp"
@@ -973,11 +974,13 @@ private:
 };
 
 
-int main(int argc, char **argv)
+int client_service(ParsedArgs args)
 {
-    if (argc !=2)
+    auto extra = args.GetAllExtraArgs();
+    if (extra.size() != 1)
     {
-        std::cout << "** ERROR ** Invalid usage: " << argv[0] << " <session registration token>" << std::endl;
+        std::cout << "** ERROR ** Invalid usage: " << args.GetArgv0()
+                  << " <session registration token>" << std::endl;
         std::cout << std::endl;
         std::cout << "            This program is not intended to be called manually from the command line" << std::endl;
         return 1;
@@ -994,9 +997,9 @@ int main(int argc, char **argv)
     pid_t real_pid = fork();
     if (real_pid == 0)
     {
-        std::cout << get_version(argv[0]) << std::endl;
+        std::cout << get_version(args.GetArgv0()) << std::endl;
 
-        BackendClientDBus backend_service(start_pid, G_BUS_TYPE_SYSTEM, std::string(argv[1]));
+        BackendClientDBus backend_service(start_pid, G_BUS_TYPE_SYSTEM, std::string(extra[0]));
         backend_service.Setup();
 
         // Main loop
@@ -1020,4 +1023,22 @@ int main(int argc, char **argv)
 
     std::cerr << "** ERROR ** Failed forking out backend process child" << std::endl;
     return 3;
+}
+
+
+int main(int argc, char **argv)
+{
+    SingleCommand argparser(argv[0], "OpenVPN 3 VPN Client backend service",
+                            client_service);
+    argparser.AddVersionOption();
+
+    try
+    {
+        return argparser.RunCommand(simple_basename(argv[0]), argc, argv);
+    }
+    catch (CommandException& excp)
+    {
+        std::cout << excp.what() << std::endl;
+        return 2;
+    }
 }
