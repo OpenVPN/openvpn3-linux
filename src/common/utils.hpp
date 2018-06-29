@@ -20,6 +20,11 @@
 #ifndef OPENVPN3_UTILS_HPP
 #define OPENVPN3_UTILS_HPP
 
+#include "config.h"
+#ifdef HAVE_CONFIG_VERSION_H
+#include "config-version.h"
+#endif
+
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -37,11 +42,6 @@
 
 #include <openvpn/legal/copyright.hpp>
 #include <openvpn/common/platform_string.hpp>
-
-#include "config.h"
-#ifdef HAVE_CONFIG_VERSION_H
-#include "config-version.h"
-#endif
 
 
 void drop_root()

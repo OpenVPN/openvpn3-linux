@@ -24,6 +24,11 @@
  *         and querying it for specific options
  */
 
+#include "config.h"
+#ifdef HAVE_CONFIG_VERSION_H
+#include "config-version.h"
+#endif
+
 #include <iostream>
 
 #include <client/ovpncli.cpp>

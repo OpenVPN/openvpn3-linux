@@ -17,6 +17,11 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
+#include "config.h"
+#ifdef HAVE_CONFIG_VERSION_H
+#include "config-version.h"
+#endif
+
 #include <iostream>
 #include <sstream>
 #include <vector>
