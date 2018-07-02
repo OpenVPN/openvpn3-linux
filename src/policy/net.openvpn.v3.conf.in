@@ -219,9 +219,17 @@
            receive_type="signal"
            receive_member="StatusChange"/>
 
+    <!--
+         The "@OPENVPN_USERNAME@" needs these privileges to get/set properties
+         in the backend VPN client objects.  Only this user needs these
+         privileges
+    -->
     <allow send_interface="org.freedesktop.DBus.Properties"
            send_type="method_call"
            send_member="Get"/>
+    <allow send_interface="org.freedesktop.DBus.Properties"
+           send_type="method_call"
+           send_member="Set"/>
   </policy>
 
   <policy user="root">

@@ -73,7 +73,8 @@ public:
      *                       this openvpn3-service-client process.
      */
     BackendClientObject(GDBusConnection *conn, std::string bus_name,
-                         std::string objpath, std::string session_token)
+                         std::string objpath, std::string session_token,
+                         unsigned int default_log_level)
         : DBusObject(objpath),
           dbusconn(conn),
           mainloop(nullptr),
@@ -538,6 +539,9 @@ public:
                                      const std::string property_name,
                                      GError **error)
     {
+        // Access to properties are controled by the D-Bus policy.
+        // Normally only the session manager should have access to
+        // to these properties.
         if ("statistics" == property_name)
         {
             // Returns the current statistics for a running and connected
@@ -558,6 +562,10 @@ public:
         else if ("status" == property_name)
         {
             return signal.GetLastStatusChange();
+        }
+        else if ("log_level" == property_name)
+        {
+            return g_variant_new_uint32(signal.GetLogLevel());
         }
         g_set_error(error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, "Unknown property");
         return NULL;
@@ -589,12 +597,32 @@ public:
                                             GVariant *value,
                                             GError **error)
     {
-        THROW_DBUSEXCEPTION("BackendServiceObject", "set property not implemented");
+        try
+        {
+            // Access to properties are controled by the D-Bus policy.
+            // Normally only the session manager should have access to
+            // to these properties.
+            if ("log_level" == property_name)
+            {
+                unsigned int log_verb = g_variant_get_uint32(value);
+                signal.SetLogLevel(log_verb);
+                return build_set_property_response(property_name,
+                                                   (guint32) log_verb);
+            }
+        }
+        catch (DBusException& excp)
+        {
+            throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
+                                        obj_path, intf_name, property_name,
+                                        excp.what());
+        }
+        throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
+                                    obj_path, intf_name, property_name,
+                                    "Invalid property");
     }
 
 
 private:
-    const unsigned int default_log_level = 6; // LogCategory::DEBUG messages
     GDBusConnection *dbusconn;
     GMainLoop *mainloop;
     BackendSignals signal;
@@ -894,6 +922,18 @@ public:
         }
     }
 
+    /**
+     *  Sets the default log level when the backend client starts.  This
+     *  can later on be adjusted by modifying the log_level D-Bus object
+     *  property.  When not being changed, the default log level is 6.
+     *
+     * @param lvl  Unsigned integer of the default log level.
+     */
+    void SetDefaultLogLevel(unsigned int lvl)
+    {
+        default_log_level = lvl;
+    }
+
 
     /**
      *  Prepares logging to file.  This happens in parallel with the
@@ -915,7 +955,10 @@ public:
     {
         // Create a new OpenVPN3 client session object
         object_path = generate_path_uuid(OpenVPN3DBus_rootp_backends_sessions, 'z');
-        be_obj.reset(new BackendClientObject(GetConnection(), GetBusName(), object_path, session_token));
+        be_obj.reset(new BackendClientObject(GetConnection(), GetBusName(),
+                                             object_path,
+                                             session_token,
+                                             default_log_level));
         be_obj->RegisterObject(GetConnection());
 
         // Setup a signal object of the backend
@@ -964,7 +1007,7 @@ public:
 
 
 private:
-    const unsigned int default_log_level = 6; // LogCategory::DEBUG messages
+    unsigned int default_log_level = 6; // LogCategory::DEBUG messages
     pid_t start_pid;
     std::string session_token;
     std::string object_path;
@@ -1000,6 +1043,10 @@ int client_service(ParsedArgs args)
         std::cout << get_version(args.GetArgv0()) << std::endl;
 
         BackendClientDBus backend_service(start_pid, G_BUS_TYPE_SYSTEM, std::string(extra[0]));
+        if (args.Present("log-level"))
+        {
+            backend_service.SetDefaultLogLevel(std::atoi(args.GetValue("log-level", 0).c_str()));
+        }
         backend_service.Setup();
 
         // Main loop
@@ -1031,6 +1078,8 @@ int main(int argc, char **argv)
     SingleCommand argparser(argv[0], "OpenVPN 3 VPN Client backend service",
                             client_service);
     argparser.AddVersionOption();
+    argparser.AddOption("log-level", "LOG-LEVEL", true,
+                        "Sets the default log verbosity level (valid values 0-6, default 4)");
 
     try
     {
