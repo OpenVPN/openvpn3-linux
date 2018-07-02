@@ -142,6 +142,12 @@
            send_type="method_call"
            send_member="Ping"/>
 
+    <!--
+         Only the "@OPENVPN_USERNAME@" user is allowed to
+         receive backend signals
+    -->
+    <deny receive_interface="net.openvpn.v3.backends"
+          receive_type="signal"/>
   </policy>
 
   <policy user="@OPENVPN_USERNAME@">
@@ -192,6 +198,26 @@
     <allow send_interface="net.openvpn.v3.backends"
            send_type="method_call"
            send_member="UserInputProvide"/>
+
+    <!--
+         Signals sent by backends are allowed for
+         the "@OPENVPN_USERNAME@" user.  This is needed
+         to be able to manage and react to VPN client backend
+         events.  The session manager (running as "@OPENVPN_USERNAME@")
+         will proxy these signals to the proper receiver(s).
+     -->
+    <allow receive_interface="net.openvpn.v3.backends"
+           receive_type="signal"
+           receive_member="AttentionRequired"/>
+    <allow receive_interface="net.openvpn.v3.backends"
+           receive_type="signal"
+           receive_member="Log"/>
+    <allow receive_interface="net.openvpn.v3.backends"
+           receive_type="signal"
+           receive_member="RegistrationRequest"/>
+    <allow receive_interface="net.openvpn.v3.backends"
+           receive_type="signal"
+           receive_member="StatusChange"/>
 
     <allow send_interface="org.freedesktop.DBus.Properties"
            send_type="method_call"
