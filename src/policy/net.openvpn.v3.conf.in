@@ -142,22 +142,6 @@
            send_type="method_call"
            send_member="Ping"/>
 
-    <allow send_destination="net.openvpn.v3.backends"
-           send_interface="org.freedesktop.DBus.Properties"
-           send_type="method_call"
-           send_member="Get"/>
-    <allow send_destination="net.openvpn.v3.backends"
-           send_interface="org.freedesktop.DBus.Properties"
-           send_type="method_call"
-           send_member="GetAll"/>
-    <allow send_destination="net.openvpn.v3.backends"
-           send_interface="org.freedesktop.DBus.Properties"
-           send_type="method_call"
-           send_member="Set"/>
-    <allow send_destination="net.openvpn.v3.backends"
-           send_interface="org.freedesktop.DBus.Introspectable"
-           send_type="method_call"
-           send_member="Introspect"/>
   </policy>
 
   <policy user="@OPENVPN_USERNAME@">
