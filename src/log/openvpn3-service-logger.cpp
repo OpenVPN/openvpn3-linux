@@ -179,6 +179,12 @@ public:
                          const LogGroup group, const LogCategory catg,
                          const std::string msg)
     {
+        // If file log is active, skip logging to console
+        if (GetLogActive())
+        {
+            return;
+        }
+
         for (const auto& e : exclude_loggroup)
         {
             if (e == group)
@@ -196,7 +202,6 @@ public:
                   << (timestamp ? "                    " : "       ")
                   << LogPrefix(group, catg) << msg
                   << std::endl << colourreset;
-
     }
 
 private:
@@ -210,8 +215,6 @@ private:
 
 static int logger(ParsedArgs args)
 {
-    std::cout << get_version(args.GetArgv0()) << std::endl;
-
     int ret = 0;
     bool timestamp = args.Present("timestamp");
     bool colour = args.Present("colour");
@@ -222,6 +225,12 @@ static int logger(ParsedArgs args)
         log_level = std::atoi(args.GetValue("log-level", 0).c_str());
     }
 
+    std::string logfile = "";
+    if (args.Present("log-file"))
+    {
+        logfile = args.GetValue("log-file", 0);
+    }
+
     DBus dbus(G_BUS_TYPE_SYSTEM);
     dbus.Connect();
 
@@ -230,11 +239,21 @@ static int logger(ParsedArgs args)
     Logger * config_subscr = nullptr;
     try
     {
+        if (logfile.empty())
+        {
+            std::cout << get_version(args.GetArgv0()) << std::endl;
+        }
+
         if (args.Present("vpn-backend"))
         {
             be_subscription = new Logger(dbus.GetConnection(), "[B]",
                                          OpenVPN3DBus_interf_backends,
                                          log_level, timestamp);
+            if (!logfile.empty())
+            {
+                be_subscription->OpenLogFile(logfile);
+            }
+
             if (colour)
             {
                 be_subscription->SetColourScheme(Logger::LogColour::BRIGHT_BLUE, Logger::LogColour::BLACK);
@@ -247,6 +266,11 @@ static int logger(ParsedArgs args)
             session_subscr = new Logger(dbus.GetConnection(), "[S]",
                                         OpenVPN3DBus_interf_sessions,
                                         log_level, timestamp);
+
+            if (!logfile.empty())
+            {
+                session_subscr->OpenLogFile(logfile);
+            }
 
             if (!args.Present("session-manager-client-proxy"))
             {
@@ -271,6 +295,11 @@ static int logger(ParsedArgs args)
             config_subscr = new Logger(dbus.GetConnection(), "[C]",
                                        OpenVPN3DBus_interf_configuration,
                                        log_level, timestamp);
+            if (!logfile.empty())
+            {
+                config_subscr->OpenLogFile(logfile);
+            }
+
             if (colour)
             {
                 config_subscr->SetColourScheme(Logger::LogColour::WHITE, Logger::LogColour::GREEN);
@@ -339,6 +368,8 @@ int main(int argc, char **argv)
                         "Subscribe to VPN client log entries");
     argparser.AddOption("log-level", 0, "LEVEL", true,
                         "Set the log verbosity level (default 3)");
+    argparser.AddOption("log-file", 0, "FILE", true,
+                        "Log events to file");
 
     try
     {
