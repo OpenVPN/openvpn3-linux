@@ -48,12 +48,15 @@ int main(int argc, char **argv)
 
     uid_t uid = creds.GetUID(std::string(busname));
     pid_t pid = creds.GetPID(std::string(busname));
+    std::string busid = creds.GetUniqueBusID(std::string(busname));
 
     std::cout << "Querying credential information for bus name '"
               << busname << "' ... " << std::endl
               << "      User ID: " << std::to_string(uid)
               << std::endl
               << "   Process ID: " << std::to_string(pid)
+              << std::endl
+              << "Unique Bus ID: " << busid
               << std::endl;
     return 0;
 }

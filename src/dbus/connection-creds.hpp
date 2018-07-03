@@ -116,6 +116,37 @@ namespace openvpn
                                     + busname + "': " + excp.getRawError());
             }
         }
+
+
+        /**
+         *  Looks up the unique D-Bus bus name for a given D-Bus service,
+         *  based on a well-known bus name.
+         *
+         * @param busname A string containing the well known bus name.
+         *
+         * @return Returns a string containing the unique bus name if found,
+         *         otherwise a DBusException is thrown.
+         */
+        std::string GetUniqueBusID(std::string busname)
+        {
+            try
+            {
+                GVariant *result = Call("GetNameOwner",
+                                      g_variant_new("(s)", busname.c_str()));
+                gchar *res = nullptr;
+                g_variant_get(result, "(s)", &res);
+                g_variant_unref(result);
+                auto ret = std::string(res);
+                g_free(res);
+                return ret;
+            }
+            catch (DBusException& excp)
+            {
+                THROW_DBUSEXCEPTION("DBusConnectionCreds",
+                                    "Failed to retrieve unique bus ID for bus name '"
+                                    + busname + "': " + excp.getRawError());
+            }
+        }
     };
 
 
