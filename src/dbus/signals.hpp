@@ -21,6 +21,7 @@
 #define OPENVPN3_DBUS_SIGNALS_HPP
 
 #include <map>
+#include <vector>
 
 namespace openvpn
 {
@@ -246,10 +247,13 @@ namespace openvpn
                            std::string interf,
                            std::string objpath) :
             conn(dbuscon.GetConnection()),
-            bus_name(busname),
             interface(interf),
             object_path(objpath)
         {
+            if (!busname.empty())
+            {
+                target_bus_names.push_back(busname);
+            }
             validate_params();
         }
 
@@ -259,22 +263,107 @@ namespace openvpn
                            std::string interf,
                            std::string objpath) :
             conn(con),
-            bus_name(busname),
             interface(interf),
             object_path(objpath)
         {
+            if (!busname.empty())
+            {
+                target_bus_names.push_back(busname);
+            }
             validate_params();
         }
 
 
+        void AddTargetBusName(const std::string busn)
+        {
+            target_bus_names.push_back(busn);
+        }
+
+
+        void Send(const std::string busn,
+                         const std::string interf,
+                         const std::string objpath,
+                         const std::string signal_name,
+                         GVariant *params)
+        {
+            if (!busn.empty() || 0 == target_bus_names.size())
+            {
+                send_signal(busn, interf, objpath, signal_name, params);
+            }
+
+            for (const auto& target : target_bus_names)
+            {
+                send_signal(target, interf, objpath, signal_name, params);
+            }
+        }
+
         void Send(const std::string busn,
                   const std::string interf,
-                  const std::string objpath,
                   const std::string signal_name,
                   GVariant *params)
         {
+            Send(busn, interf, object_path, signal_name, params);
+        }
+
+
+        void Send(const std::string busn, const std::string interf, const std::string signal_name)
+        {
+            Send(busn, interf, object_path, signal_name, NULL);
+        }
+
+
+        void Send(const std::string interf, const std::string signal_name, GVariant *params)
+        {
+            Send("", interf, object_path, signal_name, params);
+        }
+
+
+        void Send(const std::string interf, const std::string signal_name)
+        {
+            Send("", interf, object_path, signal_name, NULL);
+        }
+
+
+        void Send(const std::string signal_name, GVariant *params)
+        {
+            Send("", interface, object_path, signal_name, params);
+        }
+
+
+        void Send(const std::string signal_name)
+        {
+            Send("", interface, object_path, signal_name, NULL);
+        }
+
+
+    protected:
+        void validate_params()
+        {
+            if (interface.empty()) {
+                THROW_DBUSEXCEPTION("DBusSignalProducer", "Interface cannot be empty");
+            }
+
+            if (object_path.empty()) {
+                THROW_DBUSEXCEPTION("DBusSignalProducer", "Object path cannot be empty");
+            }
+        }
+
+
+    private:
+        GDBusConnection *conn;
+        std::vector<std::string> target_bus_names;
+        std::string interface;
+        std::string object_path;
+        std::string signal_name;
+
+        void send_signal(const std::string busn,
+                         const std::string interf,
+                         const std::string objpath,
+                         const std::string signal_name,
+                         GVariant *params)
+        {
             /*
-              std::cout << "Signal Send: bus=" << (!bus_name.empty() ? bus_name : "(not set)")
+              std::cout << "Signal Send: bus=" << (!target_bus_names.empty() ? target_bus_names : "(not set)")
                       << ", interface=" << (!interface.empty() ? interface : "(not set)")
                       << ", object_path=" << (!object_path.empty() ? object_path : "(not set)")
                       << ", signal_name=" << signal_name
@@ -301,65 +390,6 @@ namespace openvpn
             }
         }
 
-
-        void Send(const std::string busn,
-                  const std::string interf,
-                  const std::string signal_name,
-                  GVariant *params)
-        {
-            Send(busn, interf, object_path, signal_name, params);
-        }
-
-
-        void Send(const std::string busn, const std::string interf, const std::string signal_name)
-        {
-            Send(busn, interf, object_path, signal_name, NULL);
-        }
-
-
-        void Send(const std::string interf, const std::string signal_name, GVariant *params)
-        {
-            Send(bus_name, interf, object_path, signal_name, params);
-        }
-
-
-        void Send(const std::string interf, const std::string signal_name)
-        {
-            Send(bus_name, interf, object_path, signal_name, NULL);
-        }
-
-
-        void Send(const std::string signal_name, GVariant *params)
-        {
-            Send(bus_name, interface, object_path, signal_name, params);
-        }
-
-
-        void Send(const std::string signal_name)
-        {
-            Send(bus_name, interface, object_path, signal_name, NULL);
-        }
-
-
-    protected:
-        void validate_params()
-        {
-            if (interface.empty()) {
-                THROW_DBUSEXCEPTION("DBusSignalProducer", "Interface cannot be empty");
-            }
-
-            if (object_path.empty()) {
-                THROW_DBUSEXCEPTION("DBusSignalProducer", "Object path cannot be empty");
-            }
-        }
-
-
-    private:
-        GDBusConnection *conn;
-        std::string bus_name;
-        std::string interface;
-        std::string object_path;
-        std::string signal_name;
     };
 };
 #endif // OPENVPN3_DBUS_SIGNALS_HPP
