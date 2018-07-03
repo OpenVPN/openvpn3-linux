@@ -190,7 +190,7 @@ namespace openvpn
             logfs << GetTimestamp();
             if (!sender.empty())
             {
-                  logfs << "[" << sender << "]";
+                  logfs << "[" << sender << "] ";
             }
             logfs << LogPrefix(lgroup, catg)
                   << msg
