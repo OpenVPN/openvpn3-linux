@@ -49,7 +49,8 @@ namespace openvpn
               bus_type(bustype),
               connected(false),
               connection_only(true),
-              setup_complete(false)
+              setup_complete(false),
+              dbuscon(nullptr)
         {
             idle_checker = nullptr;
         }
@@ -76,7 +77,8 @@ namespace openvpn
               setup_complete(false),
               busname(busname),
               root_path(root_path),
-              default_interface(default_interface)
+              default_interface(default_interface),
+              dbuscon(nullptr)
         {
         }
 
@@ -314,6 +316,7 @@ namespace openvpn
 
             if (!connection_only
                 && (busid > 0)
+                && dbuscon
                 && G_IS_DBUS_CONNECTION(dbuscon))
             {
                 g_bus_unown_name(busid);
@@ -327,7 +330,7 @@ namespace openvpn
                     g_error_free(err);
                 }
             }
-            if (G_IS_OBJECT(dbuscon))
+            if (dbuscon && G_IS_OBJECT(dbuscon))
             {
                 g_object_unref(dbuscon);
             }
