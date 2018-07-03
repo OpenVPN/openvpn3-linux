@@ -41,6 +41,7 @@
 #include "common/cmdargparser.hpp"
 #include "configmgr/proxy-configmgr.hpp"
 #include "dbus/core.hpp"
+#include "dbus/connection-creds.hpp"
 #include "dbus/path.hpp"
 #include "log/dbus-log.hpp"
 #include "backend-signals.hpp"
@@ -55,6 +56,7 @@ using namespace openvpn;
  *  This session manager is the front-end users access point to this object.
  */
 class BackendClientObject : public DBusObject,
+                            public DBusConnectionCreds,
                             public RC<thread_safe_refcount>
 {
 public:
@@ -76,6 +78,7 @@ public:
                          std::string objpath, std::string session_token,
                          unsigned int default_log_level)
         : DBusObject(objpath),
+          DBusConnectionCreds(conn),
           dbusconn(conn),
           mainloop(nullptr),
           signal(conn, LogGroup::CLIENT, objpath),
@@ -190,6 +193,9 @@ public:
 
         try
         {
+            // Only the session manager is allowed to call methods
+            validate_sender(sender);
+
             // Ensure a vpnclient object is present only when we are
             // expected to be in an active connection.
             if (vpnclient)
@@ -496,6 +502,11 @@ public:
             }
             g_dbus_method_invocation_return_value(invoc, NULL);
         }
+        catch (DBusCredentialsException& excp)
+        {
+            signal.LogCritical(excp.err());
+            excp.SetDBusError(invoc);
+        }
         catch (const std::exception& excp)
         {
             std::string errmsg = "Failed executing D-Bus call '" + method_name + "': " + excp.what();
@@ -539,33 +550,48 @@ public:
                                      const std::string property_name,
                                      GError **error)
     {
-        // Access to properties are controled by the D-Bus policy.
-        // Normally only the session manager should have access to
-        // to these properties.
-        if ("statistics" == property_name)
-        {
-            // Returns the current statistics for a running and connected
-            // VPN session
+        try {
+            // Only the session manager is allowed to get properties
+            validate_sender(sender);
 
-            // Returns an array of a string (description) and an int64
-            // containing the statistics value.
-            GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sx}"));
-            for (auto& sd : vpnclient->GetStats())
+            // Access to properties are controled by the D-Bus policy.
+            // Normally only the session manager should have access to
+            // to these properties.
+            if ("statistics" == property_name)
             {
-                g_variant_builder_add (b, "{sx}",
-                                       sd.key.c_str(), sd.value);
+                // Returns the current statistics for a running and connected
+                // VPN session
+
+                // Returns an array of a string (description) and an int64
+                // containing the statistics value.
+                GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sx}"));
+                for (auto& sd : vpnclient->GetStats())
+                {
+                    g_variant_builder_add (b, "{sx}",
+                                           sd.key.c_str(), sd.value);
+                }
+                GVariant *ret = g_variant_builder_end(b);
+                g_variant_builder_unref(b);
+                return ret;
             }
-            GVariant *ret = g_variant_builder_end(b);
-            g_variant_builder_unref(b);
-            return ret;
+            else if ("status" == property_name)
+            {
+                return signal.GetLastStatusChange();
+            }
+            else if ("log_level" == property_name)
+            {
+                return g_variant_new_uint32(signal.GetLogLevel());
+            }
         }
-        else if ("status" == property_name)
+        catch (DBusCredentialsException& excp)
         {
-            return signal.GetLastStatusChange();
+            signal.LogCritical(excp.err());
+            excp.SetDBusError(error, G_IO_ERROR, G_IO_ERROR_FAILED);
         }
-        else if ("log_level" == property_name)
+        catch (...)
         {
-            return g_variant_new_uint32(signal.GetLogLevel());
+            g_set_error(error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                        "Unknown error");
         }
         g_set_error(error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, "Unknown property");
         return NULL;
@@ -599,9 +625,9 @@ public:
     {
         try
         {
-            // Access to properties are controled by the D-Bus policy.
-            // Normally only the session manager should have access to
-            // to these properties.
+            // Only the session manager is allowed to set properties
+            validate_sender(sender);
+
             if ("log_level" == property_name)
             {
                 unsigned int log_verb = g_variant_get_uint32(value);
@@ -610,12 +636,18 @@ public:
                                                    (guint32) log_verb);
             }
         }
+        catch (DBusCredentialsException& excp)
+        {
+            signal.LogCritical(excp.err());
+            excp.SetDBusError(error, G_IO_ERROR, G_IO_ERROR_FAILED);
+        }
         catch (DBusException& excp)
         {
             throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
                                         obj_path, intf_name, property_name,
                                         excp.what());
         }
+
         throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
                                     obj_path, intf_name, property_name,
                                     "Invalid property");
@@ -639,6 +671,25 @@ private:
     std::mutex guard;
 
 
+    /**
+     *  Validate that the sender is the session manager.  If the sender
+     *  is not the session manager, a DBusCredentialsException is thrown.
+     *
+     * @param sender  String containing the unique bus ID of the sender
+     */
+
+    void validate_sender(std::string sender)
+    {
+        // Only the session manager is susposed to talk to the
+        // the backend VPN client service
+        if (GetUniqueBusID(OpenVPN3DBus_name_sessions) != sender)
+        {
+            throw DBusCredentialsException(GetUID(sender),
+                                           "net.openvpn.v3.error.acl.denied",
+                                           "You are not a session manager"
+                                           );
+        }
+    }
     /**
      *  This implements the POSIX thread running the CoreVPNClient session
      */
