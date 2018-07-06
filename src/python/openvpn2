@@ -286,7 +286,7 @@ def start_tunnel(bus, cfgobj, background_mode, verb):
                     print (traceback.format_exc())
                 raise Exception('VPN backend process stopped unexpectedly. '
                                 +'Session has closed. :: ' + str(excep))
-            elif str(excep).find('Backend VPN process is starting') > 1:
+            elif str(excep).find('Backend VPN process is not ready') > 1:
                 # Wait for the backend to settle
                 time.sleep(0.5)
             else:

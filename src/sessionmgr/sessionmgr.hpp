@@ -870,7 +870,7 @@ public:
 
             if (!registered)
             {
-                errmsg = "Backend VPN process is starting";
+                errmsg = "Backend VPN process is not ready";
             }
             else if (!ping)
             {
