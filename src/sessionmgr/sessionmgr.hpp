@@ -495,26 +495,35 @@ public:
                           << "</node>";
         ParseIntrospectionXML(introspection_xml);
 
-        // Start a new backend process via the openvpn3-service-backendstart
-        // (net.openvpn.v3.backends) service.  A random backend token is
-        // created and sent to the backend process.  When the backend process
-        // have initialized, it reports back to the session manager using
-        // this token as a reference.  This is used to tie the backend process
-        // to this specific SessionObject.
-        backend_token = generate_path_uuid("", 't');
+        try
+        {
+                // Start a new backend process via the openvpn3-service-backendstart
+                // (net.openvpn.v3.backends) service.  A random backend token is
+                // created and sent to the backend process.  When the backend process
+                // have initialized, it reports back to the session manager using
+                // this token as a reference.  This is used to tie the backend process
+                // to this specific SessionObject.
+                backend_token = generate_path_uuid("", 't');
 
-        auto backend_start = DBusProxy(G_BUS_TYPE_SYSTEM,
-                                       OpenVPN3DBus_name_backends,
-                                       OpenVPN3DBus_interf_backends,
-                                       OpenVPN3DBus_rootp_backends);
-        GVariant *res_g = backend_start.Call("StartClient",
-                                              g_variant_new("(s)", backend_token.c_str()));
-        if (NULL == res_g) {
-                THROW_DBUSEXCEPTION("SessionObject",
-                                    "Failed to extract the result of the "
-                                    "StartClient request");
+                auto backend_start = DBusProxy(G_BUS_TYPE_SYSTEM,
+                                               OpenVPN3DBus_name_backends,
+                                               OpenVPN3DBus_interf_backends,
+                                               OpenVPN3DBus_rootp_backends);
+                GVariant *res_g = backend_start.Call("StartClient",
+                                                      g_variant_new("(s)", backend_token.c_str()));
+                if (NULL == res_g) {
+                        THROW_DBUSEXCEPTION("SessionObject",
+                                            "Failed to extract the result of the "
+                                            "StartClient request");
+                }
+                g_variant_get(res_g, "(u)", &backend_pid);
         }
-        g_variant_get(res_g, "(u)", &backend_pid);
+        catch (DBusException& excp)
+        {
+            StatusChange(StatusMajor::SESSION, StatusMinor::PROC_STOPPED);
+            LogCritical(excp.what());
+            return;
+        }
 
         // The PID value we get here is just a temporary.  This is the
         // PID returned by openvpn3-service-backendstart.  This will again
