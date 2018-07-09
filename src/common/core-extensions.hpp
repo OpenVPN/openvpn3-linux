@@ -31,7 +31,6 @@ namespace openvpn {
     {
         return ((optname == "ca")
                 || (optname == "key")
-                || (optname == "ca")
                 || (optname == "extra-certs")
                 || (optname == "cert")
                 || (optname == "dh")
