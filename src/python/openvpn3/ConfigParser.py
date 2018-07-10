@@ -748,7 +748,7 @@ class ConfigParser():
                 try:
                     self.__min_args = kwargs.pop('min_args')
                 except KeyError:
-                    self.__min_Args = 0
+                    self.__min_args = 0
                 super(ConfigParser.OpenVPNvarArgs, self).__init__(option_strings, dest, '*', **kwargs)
 
             def __call__(self, parser, namespace, values, option_string=None):
