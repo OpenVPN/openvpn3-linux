@@ -26,6 +26,7 @@
 import argparse
 import os
 import shlex
+from getpass import getpass
 
 # Detect if pyOpenSSL is available or not.
 # This module is used to parse PKCS#12 files only
@@ -878,25 +879,28 @@ class ConfigParser():
             try:
                 p12 = crypto.load_pkcs12(p12bin)
             except crypto.Error as e:
-                if 'PKCS12_parse' == e.message[0][1] and \
-                   'mac verify failure' == e.message[0][2]:
+                errargs  = e.args[0][0]
+                if 'PKCS12_parse' == errargs[1] and \
+                   'mac verify failure' == errargs[2]:
                     # Password is needed.  Query the user for it
                     p12 = crypto.load_pkcs12(p12bin,
                                              getpass('PKCS12 passphrase: '))
 
             # Extract CA, certificate and private key
-            d = '<key>\n%s</key>' % (crypto.dump_privatekey(crypto.FILETYPE_PEM,
-                                                          p12.get_privatekey()))
+            key = crypto.dump_privatekey(crypto.FILETYPE_PEM,
+                                         p12.get_privatekey())
+            d = '<key>\n%s</key>' % (str(key.decode('UTF-8')),)
             setattr(namespace, 'key', d)
 
-            d = '<cert>\n%s</cert>' % (crypto.dump_certificate(crypto.FILETYPE_PEM,
-                                                          p12.get_certificate()))
+            crt = crypto.dump_certificate(crypto.FILETYPE_PEM,
+                                          p12.get_certificate())
+            d = '<cert>\n%s</cert>' % (str(crt.decode('UTF-8')),)
             setattr(namespace, 'cert', d)
 
             cacerts = []
             for c in p12.get_ca_certificates():
-                cacerts.append(crypto.dump_certificate(crypto.FILETYPE_PEM,
-                                                       c))
+                crt = crypto.dump_certificate(crypto.FILETYPE_PEM, c)
+                cacerts.append(str(crt.decode('UTF-8')))
             if 0 < len(cacerts):
                 d = '<ca>\n%s</ca>' % (''.join(cacerts),)
                 setattr(namespace, 'ca', d)
