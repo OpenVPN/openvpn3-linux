@@ -28,16 +28,18 @@
 #        Only client side options are supported, and only the features which
 #        have been made available in the OpenVPN 3 Core library.
 
-from enum import Enum
-from getpass import getpass
+import sys
+if sys.version_info[0] < 3:
+    print("Python 3.x is required")
+    sys.exit(1)
 
 import datetime
 import dbus
 import os
-import sys
 import time
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
+from getpass import getpass
 
 # Make all defined constants and classes part if this main module
 from openvpn3 import StatusMajor, StatusMinor
@@ -55,18 +57,6 @@ if 'OPENVPN3_DEBUG' in os.environ:
 
 # Global variables
 mainloop = GLib.MainLoop()
-
-
-##
-#  Simple wrapper to handle the raw_input() vs input() differences
-#  between Python 2 and Python 3
-def get_input_wrapper(prompt):
-    if sys.version_info[0] < 3:
-        # Python 2.x
-        return raw_input(prompt)
-    else:
-        return input(prompt)
-
 
 
 def import_config(bus, opts):
@@ -267,7 +257,7 @@ def start_tunnel(bus, cfgobj, background_mode, verb):
 
                     try:
                         if False == input_slot.GetInputMask():
-                            response = get_input_wrapper(input_slot.GetLabel() + ': ')
+                            response = input(input_slot.GetLabel() + ': ')
                         else:
                             response = getpass(input_slot.GetLabel() + ': ')
                     except KeyboardInterrupt:
