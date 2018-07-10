@@ -55,7 +55,26 @@ public:
                                  const std::string signal_name,
                                  GVariant *parameters)
     {
-        if (signal_name == "StatusChange")
+        // Filter out NetworkManager related signals - they happen often
+        // and can be a bit too disturbing
+        if (object_path.find("/org/freedesktop/NetworkManager/") != std::string::npos)
+        {
+            //std::cout << "NM signal ignored" << std::endl;
+            return;
+        }
+
+        // Filter out systemd related signals as well
+        if (interface_name.find("org.freedesktop.systemd1") != std::string::npos)
+        {
+            return;
+        }
+
+        if ((signal_name == "NameOwnerChanged")
+            || (signal_name == "PropertiesChanged"))
+        {
+            // Ignore these signals.  We don't need them and they're noise for us
+        }
+        else if (signal_name == "StatusChange")
         {
             guint major, minor;
             gchar *msg = NULL;
