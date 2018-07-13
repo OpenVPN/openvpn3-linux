@@ -243,6 +243,9 @@ public:
                              + std::string(token) + " == "
                              + std::string(session_token) + " => "
                              + (registered ? "true" : "false"));
+                g_free(cfgpath);
+                g_free(token);
+
                 if (registered)
                 {
                     g_dbus_method_invocation_return_value(invoc,
