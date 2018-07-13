@@ -479,8 +479,31 @@ int backend_starter(ParsedArgs args)
 
 
     std::vector<std::string> client_args;
+#ifdef DEBUG_OPTIONS
+    if (args.Present("run-via"))
+    {
+        client_args.push_back(args.GetValue("run-via", 0));
+    }
+    if (args.Present("debugger-arg"))
+    {
+        for (const auto& a : args.GetAllValues("debugger-arg"))
+        {
+            client_args.push_back(a);
+        }
+    }
+#endif
 
     client_args.push_back(std::string(LIBEXEC_PATH) + "/openvpn3-service-client");
+#ifdef DEBUG_OPTIONS
+    if (args.Present("client-no-fork"))
+    {
+        client_args.push_back("--no-fork");
+    }
+    if (args.Present("client-no-setsid"))
+    {
+        client_args.push_back("--no-setsid");
+    }
+#endif
 
     unsigned int idle_wait_sec = 3;
     if (args.Present("idle-exit"))
@@ -497,6 +520,16 @@ int backend_starter(ParsedArgs args)
         idle_exit->SetPollTime(std::chrono::seconds(10));
         backstart.EnableIdleCheck(idle_exit);
     }
+#ifdef DEBUG_OPTIONS
+    if (idle_wait_sec > 0)
+    {
+        std::cout << "Idle exit set to " << idle_wait_sec << " seconds" << std::endl;
+    }
+    else
+    {
+        std::cout << "Idle exit is disabled" << std::endl;
+    }
+#endif
     backstart.Setup();
 
 
@@ -522,6 +555,16 @@ int main(int argc, char **argv)
     SingleCommand cmd(argv[0], "OpenVPN 3 VPN Client starter",
                              backend_starter);
     cmd.AddVersionOption();
+#ifdef DEBUG_OPTIONS
+    cmd.AddOption("run-via", 0, "DEBUG_PROGAM", true,
+                  "Debug option: Run openvpn3-service-client via provided executable (full path required)");
+    cmd.AddOption("debugger-arg", 0, "ARG", true,
+                  "Debug option: Argument to pass to the DEBUG_PROGAM");
+    cmd.AddOption("client-no-fork", 0,
+                  "Debug option: Adds the --no-fork argument to openvpn3-service-client");
+    cmd.AddOption("client-no-setsid", 0,
+                  "Debug option: Adds the --no-setsid argument to openvpn3-service-client");
+#endif
     cmd.AddOption("idle-exit", "SECONDS", true,
                   "How long to wait before exiting if being idle. "
                   "0 disables it (Default: 10 seconds)");
