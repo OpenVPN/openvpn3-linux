@@ -30,10 +30,10 @@
  *         starts also runs with the appropriate privileges.
  */
 
-
 #include <iostream>
 
 #include "config.h"
+#include "common/cmdargparser.hpp"
 #include "dbus/core.hpp"
 #include "log/dbus-log.hpp"
 #include "common/utils.hpp"
@@ -133,10 +133,13 @@ public:
      * @param busname  D-Bus bus name this service is registered on
      * @param objpath  D-Bus object path to this object
      */
-    BackendStarterObject(GDBusConnection *dbuscon, const std::string busname, const std::string objpath)
+    BackendStarterObject(GDBusConnection *dbuscon, const std::string busname,
+                         const std::string objpath,
+                         const std::vector<std::string> client_args)
         : DBusObject(objpath),
           BackendStarterSignals(dbuscon, objpath),
-          dbuscon(dbuscon)
+          dbuscon(dbuscon),
+          client_args(client_args)
     {
         std::stringstream introspection_xml;
         introspection_xml << "<node name='" << objpath << "'>"
@@ -289,7 +292,7 @@ public:
 
 private:
     GDBusConnection *dbuscon;
-
+    const std::vector<std::string> client_args;
 
     /**
      * Forks out a child thread which starts the openvpn3-service-client
@@ -305,19 +308,30 @@ private:
         if (0 == backend_pid)
         {
             // Child
-            char * const client_args[] = {
-#ifdef DEBUG_VALGRIND
-                (char *) "/usr/bin/valgrind",
-                (char *) "--log-file=/tmp/valgrind.log",
+            char *args[client_args.size()+2];
+            unsigned int i = 0;
+
+            for (const auto& arg : client_args)
+            {
+                args[i++] = (char *) strdup(arg.c_str());
+            }
+            args[i++] = token;
+            args[i++] = nullptr;
+
+#ifdef DEBUG_OPTIONS
+            std::cout << "[openvpn3-service-backend] Command line to be started: ";
+            for (unsigned int j = 0; j < i; j++)
+            {
+                std::cout << args[j] << " ";
+            }
+            std::cout << std::endl << std::endl;
 #endif
-                (char *) LIBEXEC_PATH "/openvpn3-service-client",
-                token,
-                NULL };
-            execve(client_args[0], client_args, NULL);
+
+            execve(args[0], args, NULL);
 
             // If execve() succeedes, the line below will not be executed at all.
             // So if we come here, there must be an error.
-            std::cerr << "** Error starting " << client_args[0] << ": " << strerror(errno) << std::endl;
+            std::cerr << "** Error starting " << args[0] << ": " << strerror(errno) << std::endl;
         }
         else if( backend_pid > 0)
         {
@@ -356,13 +370,14 @@ public:
      *                  registered on the system or session bus.
      */
 
-    BackendStarterDBus(GBusType bus_type)
+    BackendStarterDBus(GBusType bus_type, const std::vector<std::string> cliargs)
         : DBus(bus_type,
                OpenVPN3DBus_name_backends,
                OpenVPN3DBus_rootp_backends,
                OpenVPN3DBus_interf_backends),
           mainobj(nullptr),
           procsig(nullptr),
+          client_args(cliargs),
           logfile("")
     {
     };
@@ -396,7 +411,7 @@ public:
     void callback_bus_acquired()
     {
         mainobj = new BackendStarterObject(GetConnection(), GetBusName(),
-                                            GetRootPath());
+                                            GetRootPath(), client_args);
         if (!logfile.empty())
         {
             mainobj->OpenLogFile(logfile);
@@ -448,32 +463,77 @@ public:
 private:
     BackendStarterObject * mainobj;
     ProcessSignalProducer * procsig;
+    std::vector<std::string> client_args;
     std::string logfile;
 };
 
 
 
-int main(int argc, char **argv)
+int backend_starter(ParsedArgs args)
 {
-    std::cout << get_version(argv[0]) << std::endl;
+    std::cout << get_version(args.GetArgv0()) << std::endl;
 
     GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
     g_unix_signal_add(SIGINT, stop_handler, main_loop);
     g_unix_signal_add(SIGTERM, stop_handler, main_loop);
 
-    IdleCheck::Ptr idle_exit = new IdleCheck(main_loop,
-                                             std::chrono::minutes(1));
-    idle_exit->SetPollTime(std::chrono::seconds(10));
 
-    BackendStarterDBus backstart(G_BUS_TYPE_SYSTEM);
-    backstart.EnableIdleCheck(idle_exit);
+    std::vector<std::string> client_args;
+
+    client_args.push_back(std::string(LIBEXEC_PATH) + "/openvpn3-service-client");
+
+    unsigned int idle_wait_sec = 3;
+    if (args.Present("idle-exit"))
+    {
+        idle_wait_sec = std::atoi(args.GetValue("idle-exit", 0).c_str());
+    }
+
+    BackendStarterDBus backstart(G_BUS_TYPE_SYSTEM, client_args);
+    IdleCheck::Ptr idle_exit;
+    if (idle_wait_sec > 0)
+    {
+        idle_exit.reset(new IdleCheck(main_loop,
+                                      std::chrono::seconds(idle_wait_sec)));
+        idle_exit->SetPollTime(std::chrono::seconds(10));
+        backstart.EnableIdleCheck(idle_exit);
+    }
     backstart.Setup();
 
-    idle_exit->Enable();
+
+    if (idle_wait_sec > 0)
+    {
+        idle_exit->Enable();
+    }
     g_main_loop_run(main_loop);
     g_main_loop_unref(main_loop);
-    idle_exit->Disable();
-    idle_exit->Join();
+
+    if (idle_wait_sec > 0)
+    {
+        idle_exit->Disable();
+        idle_exit->Join();
+    }
 
     return 0;
+}
+
+
+int main(int argc, char **argv)
+{
+    SingleCommand cmd(argv[0], "OpenVPN 3 VPN Client starter",
+                             backend_starter);
+    cmd.AddVersionOption();
+    cmd.AddOption("idle-exit", "SECONDS", true,
+                  "How long to wait before exiting if being idle. "
+                  "0 disables it (Default: 10 seconds)");
+
+
+    try
+    {
+        return cmd.RunCommand(simple_basename(argv[0]), argc, argv);
+    }
+    catch (CommandException& excp)
+    {
+        std::cout << excp.what() << std::endl;
+        return 2;
+    }
 }
