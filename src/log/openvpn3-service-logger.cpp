@@ -28,6 +28,7 @@
 #include "common/utils.hpp"
 #include "common/cmdargparser.hpp"
 #include "logger.hpp"
+#include "service.hpp"
 
 using namespace openvpn;
 
@@ -50,12 +51,26 @@ static int logger(ParsedArgs args)
         logfile = args.GetValue("log-file", 0);
     }
 
+    if (args.Present("system")
+        && (args.Present("vpn-backend")
+            || args.Present("session-manager")
+            || args.Present("session-manager-client-proxy")
+            || args.Present("config-manager")))
+    {
+        std::stringstream err;
+        err << "--system cannot be combined with --config-manager, "
+            << "--session-manager, --session-manager-client-proxy or"
+            << "--vpn-backend";
+        throw CommandException("openvpn3-service-logger", err.str());
+    }
+
     DBus dbus(G_BUS_TYPE_SYSTEM);
     dbus.Connect();
     GDBusConnection *dbusconn = dbus.GetConnection();
     Logger * be_subscription = nullptr;
     Logger * session_subscr = nullptr;
     Logger * config_subscr = nullptr;
+    LogService::Ptr logsrv = nullptr;
 
     try
     {
@@ -64,77 +79,85 @@ static int logger(ParsedArgs args)
             std::cout << get_version(args.GetArgv0()) << std::endl;
         }
 
-        if (args.Present("vpn-backend"))
+        if (args.Present("service"))
         {
-            be_subscription = new Logger(dbusconn, "[B]", "",
-                                         OpenVPN3DBus_interf_backends,
-                                         log_level, timestamp);
-            if (!logfile.empty())
+            logsrv.reset(new LogService(dbusconn));
+            logsrv->Setup();
+        }
+        else
+        {
+            if (args.Present("vpn-backend"))
             {
-                be_subscription->OpenLogFile(logfile);
+                be_subscription = new Logger(dbusconn, "[B]", "",
+                                             OpenVPN3DBus_interf_backends,
+                                             log_level, timestamp);
+                if (!logfile.empty())
+                {
+                    be_subscription->OpenLogFile(logfile);
+                }
+
+                if (colour)
+                {
+                    be_subscription->SetColourScheme(
+                                    Logger::LogColour::BRIGHT_BLUE,
+                                    Logger::LogColour::BLACK);
+                }
             }
 
-            if (colour)
+            if (args.Present("session-manager")
+                || args.Present("session-manager-client-proxy"))
             {
-                be_subscription->SetColourScheme(
-                                Logger::LogColour::BRIGHT_BLUE,
-                                Logger::LogColour::BLACK);
+                session_subscr = new Logger(dbusconn, "[S]", "",
+                                            OpenVPN3DBus_interf_sessions,
+                                            log_level, timestamp);
+
+                if (!logfile.empty())
+                {
+                    session_subscr->OpenLogFile(logfile);
+                }
+
+                if (!args.Present("session-manager-client-proxy"))
+                {
+                    // Don't forward log messages from the backend client which
+                    // are proxied by the session manager.  Unless the
+                    // --session-manager-client-proxy is used.  These log messages
+                    // are also available via --vpn-backend, so this is more
+                    // useful for debug reasons
+                    session_subscr->AddExcludeFilter(LogGroup::CLIENT);
+                }
+
+                if (colour)
+                {
+                    session_subscr->SetColourScheme(
+                                    Logger::LogColour::BRIGHT_WHITE,
+                                    Logger::LogColour::BLUE);
+                }
+            }
+
+            if (args.Present("config-manager"))
+            {
+                config_subscr = new Logger(dbusconn, "[C]", "",
+                                           OpenVPN3DBus_interf_configuration,
+                                           log_level, timestamp);
+                if (!logfile.empty())
+                {
+                    config_subscr->OpenLogFile(logfile);
+                }
+
+                if (colour)
+                {
+                    config_subscr->SetColourScheme(Logger::LogColour::WHITE, Logger::LogColour::GREEN);
+                }
             }
         }
 
-        if (args.Present("session-manager")
-            || args.Present("session-manager-client-proxy"))
-        {
-            session_subscr = new Logger(dbusconn, "[S]", "",
-                                        OpenVPN3DBus_interf_sessions,
-                                        log_level, timestamp);
-
-            if (!logfile.empty())
-            {
-                session_subscr->OpenLogFile(logfile);
-            }
-
-            if (!args.Present("session-manager-client-proxy"))
-            {
-                // Don't forward log messages from the backend client which
-                // are proxied by the session manager.  Unless the
-                // --session-manager-client-proxy is used.  These log messages
-                // are also available via --vpn-backend, so this is more
-                // useful for debug reasons
-                session_subscr->AddExcludeFilter(LogGroup::CLIENT);
-            }
-
-            if (colour)
-            {
-                session_subscr->SetColourScheme(
-                                Logger::LogColour::BRIGHT_WHITE,
-                                Logger::LogColour::BLUE);
-            }
-        }
-
-        if (args.Present("config-manager"))
-        {
-            config_subscr = new Logger(dbusconn, "[C]", "",
-                                       OpenVPN3DBus_interf_configuration,
-                                       log_level, timestamp);
-            if (!logfile.empty())
-            {
-                config_subscr->OpenLogFile(logfile);
-            }
-
-            if (colour)
-            {
-                config_subscr->SetColourScheme(Logger::LogColour::WHITE, Logger::LogColour::GREEN);
-            }
-        }
-
-        if( !be_subscription && !session_subscr && !config_subscr)
+        if( !be_subscription && !session_subscr && !config_subscr && !logsrv)
         {
             throw CommandException("openvpn3-service-logger",
                                    "No logging enabled. Aborting.");
         }
 
-        ProcessSignalProducer procsig(dbusconn, OpenVPN3DBus_interf_logger, "Logger");
+        ProcessSignalProducer procsig(dbusconn, OpenVPN3DBus_interf_log, "Logger");
 
         GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
         g_unix_signal_add(SIGINT, stop_handler, main_loop);
@@ -192,6 +215,8 @@ int main(int argc, char **argv)
                         "Set the log verbosity level (default 3)");
     argparser.AddOption("log-file", 0, "FILE", true,
                         "Log events to file");
+    argparser.AddOption("service", 0,
+                        "Run as a background D-Bus service");
 
     try
     {

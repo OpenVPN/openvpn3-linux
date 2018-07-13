@@ -201,6 +201,7 @@ src_log_openvpn3_service_logger_SOURCES = \
 	src/log/dbus-log.hpp \
 	src/log/log-helpers.hpp \
 	src/log/logger.hpp \
+	src/log/service.hpp \
 	$(DBUS_SOURCES) \
 	src/common/utils.hpp
 

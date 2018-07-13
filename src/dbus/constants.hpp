@@ -30,7 +30,10 @@
  */
 
 /* Logger service */
-const std::string OpenVPN3DBus_interf_logger = "net.openvpn.v3.logger";
+const std::string OpenVPN3DBus_name_log = "net.openvpn.v3.log";
+const std::string OpenVPN3DBus_rootp_log = "/net/openvpn/v3/log";
+const std::string OpenVPN3DBus_interf_log = "net.openvpn.v3.log";
+
 
 /* Configuration Manager */
 const std::string OpenVPN3DBus_name_configuration = "net.openvpn.v3.configuration";
