@@ -23,11 +23,16 @@
 #include <mutex>
 #include <condition_variable>
 
+#include <openvpn/common/rc.hpp>
+
 namespace openvpn
 {
-    class ProcessSignalWatcher : public DBusSignalSubscription
+    class ProcessSignalWatcher : public DBusSignalSubscription,
+                                 public RC<thread_unsafe_refcount>
     {
     public:
+        typedef RCPtr<ProcessSignalWatcher> Ptr;
+
         ProcessSignalWatcher(GDBusConnection *dbuscon)
             : DBusSignalSubscription(dbuscon, "", "", "/", "ProcessChange"),
               waitfor_inuse(false)
@@ -136,9 +141,12 @@ namespace openvpn
 
 
 
-    class ProcessSignalProducer : public DBusSignalProducer
+    class ProcessSignalProducer : public DBusSignalProducer,
+                                  public RC<thread_unsafe_refcount>
     {
     public:
+        typedef RCPtr<ProcessSignalProducer> Ptr;
+
         ProcessSignalProducer(GDBusConnection *dbuscon, std::string interface, std::string procname)
             : DBusSignalProducer(dbuscon, "", interface, "/"),
               processname(procname)
