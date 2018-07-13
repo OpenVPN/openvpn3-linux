@@ -67,12 +67,18 @@ namespace openvpn
             object_path(obj_path),
             object_id(0),
             idle_checker(nullptr),
-            introspection(NULL)
+            introspection(nullptr)
         {
         }
 
 
-        virtual ~DBusObject() {}
+        virtual ~DBusObject()
+        {
+            if (introspection)
+            {
+                g_dbus_node_info_unref(introspection);
+            }
+        }
 
 
         guint GetObjectId()
@@ -97,7 +103,7 @@ namespace openvpn
             {
                 THROW_DBUSEXCEPTION("DBusObject", "Object is already registered in D-Bus");
             }
-            if (NULL == introspection)
+            if (nullptr == introspection)
             {
                 THROW_DBUSEXCEPTION("DBusObject", "No introspection document parsed");
             }
