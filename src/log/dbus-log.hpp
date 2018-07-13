@@ -342,8 +342,9 @@ namespace openvpn
                         public LogFilter
     {
     public:
-        LogConsumer(GDBusConnection * dbuscon, std::string interf, std::string objpath)
-            : DBusSignalSubscription(dbuscon, "", interf, objpath, "Log"),
+        LogConsumer(GDBusConnection * dbuscon, std::string interf,
+                    std::string objpath, std::string busn = "")
+            : DBusSignalSubscription(dbuscon, busn, interf, objpath, "Log"),
               FileLog(),
               LogFilter(6)  // By design, accept all kinds of log messages when receiving
         {
