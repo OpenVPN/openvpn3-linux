@@ -52,10 +52,11 @@ static int logger(ParsedArgs args)
 
     DBus dbus(G_BUS_TYPE_SYSTEM);
     dbus.Connect();
-
+    GDBusConnection *dbusconn = dbus.GetConnection();
     Logger * be_subscription = nullptr;
     Logger * session_subscr = nullptr;
     Logger * config_subscr = nullptr;
+
     try
     {
         if (logfile.empty())
@@ -65,7 +66,7 @@ static int logger(ParsedArgs args)
 
         if (args.Present("vpn-backend"))
         {
-            be_subscription = new Logger(dbus.GetConnection(), "[B]",
+            be_subscription = new Logger(dbusconn, "[B]", "",
                                          OpenVPN3DBus_interf_backends,
                                          log_level, timestamp);
             if (!logfile.empty())
@@ -75,14 +76,16 @@ static int logger(ParsedArgs args)
 
             if (colour)
             {
-                be_subscription->SetColourScheme(Logger::LogColour::BRIGHT_BLUE, Logger::LogColour::BLACK);
+                be_subscription->SetColourScheme(
+                                Logger::LogColour::BRIGHT_BLUE,
+                                Logger::LogColour::BLACK);
             }
         }
 
         if (args.Present("session-manager")
             || args.Present("session-manager-client-proxy"))
         {
-            session_subscr = new Logger(dbus.GetConnection(), "[S]",
+            session_subscr = new Logger(dbusconn, "[S]", "",
                                         OpenVPN3DBus_interf_sessions,
                                         log_level, timestamp);
 
@@ -111,7 +114,7 @@ static int logger(ParsedArgs args)
 
         if (args.Present("config-manager"))
         {
-            config_subscr = new Logger(dbus.GetConnection(), "[C]",
+            config_subscr = new Logger(dbusconn, "[C]", "",
                                        OpenVPN3DBus_interf_configuration,
                                        log_level, timestamp);
             if (!logfile.empty())
@@ -131,7 +134,7 @@ static int logger(ParsedArgs args)
                                    "No logging enabled. Aborting.");
         }
 
-        ProcessSignalProducer procsig(dbus.GetConnection(), OpenVPN3DBus_interf_logger, "Logger");
+        ProcessSignalProducer procsig(dbusconn, OpenVPN3DBus_interf_logger, "Logger");
 
         GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
         g_unix_signal_add(SIGINT, stop_handler, main_loop);
