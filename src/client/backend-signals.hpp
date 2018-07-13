@@ -27,9 +27,14 @@
 #ifndef OPENVPN3_DBUS_CLIENT_BACKENDSIGNALS_HPP
 #define OPENVPN3_DBUS_CLIENT_BACKENDSIGNALS_HPP
 
-class BackendSignals : public LogSender
+#include <openvpn/common/rc.hpp>
+
+
+class BackendSignals : public LogSender,
+                       public RC<thread_unsafe_refcount>
 {
 public:
+    typedef RCPtr<BackendSignals> Ptr;
     BackendSignals(GDBusConnection *conn, LogGroup lgroup, std::string object_path)
         : LogSender(conn, lgroup, OpenVPN3DBus_interf_backends, object_path)
     {
