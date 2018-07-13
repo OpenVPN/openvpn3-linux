@@ -82,6 +82,20 @@ namespace openvpn
         {
         }
 
+        DBus(GDBusConnection *dbuscon, std::string busname, std::string root_path, std::string default_interface )
+            : keep_connection(true),
+              idle_checker(nullptr),
+              connected(false),
+              connection_only(false),
+              setup_complete(false),
+              busname(busname),
+              root_path(root_path),
+              default_interface(default_interface),
+              dbuscon(dbuscon)
+        {
+            idle_checker = nullptr;
+            connected = g_dbus_connection_is_closed(dbuscon) == 0;
+        }
 
         virtual ~DBus()
         {
