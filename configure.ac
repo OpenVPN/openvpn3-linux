@@ -274,6 +274,22 @@ AC_MSG_RESULT([checking if this is a git checkout ... ${GIT_CHECKOUT}])
 AM_CONDITIONAL([GIT_CHECKOUT], [test "${GIT_CHECKOUT}" = "yes"])
 
 dnl
+dnl  opt-in debug mode, adds arguments to some D-Bus service programs
+dnl  which simplifies use of valgrind or gdb
+dnl
+AC_ARG_ENABLE(
+     [debug-options],
+     [AS_HELP_STRING([--enable-debug-options],
+                     [enables debug command line options in some of the D-Bus services])],
+     [enable_debug_options="yes"],
+     []
+)
+AC_SUBST([DEBUG_OPTIONS])
+if test "${enable_debug_options}" = "yes"; then
+   AC_DEFINE([DEBUG_OPTIONS], [1], [add debug command line options to some D-Bus services])
+fi
+
+dnl
 dnl   opt-in debug mode, will print more details when DBusExceptions happens
 dnl   This used to be the default behaviour, but is now optional
 dnl
