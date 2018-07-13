@@ -286,6 +286,7 @@ namespace openvpn
                          const std::string signal_name,
                          GVariant *params)
         {
+            g_variant_ref_sink(params);  // This method must own this object
             if (!busn.empty() || 0 == target_bus_names.size())
             {
                 send_signal(busn, interf, objpath, signal_name, params);
@@ -295,6 +296,7 @@ namespace openvpn
             {
                 send_signal(target, interf, objpath, signal_name, params);
             }
+            g_variant_unref(params);  // Now params can be released and freed
         }
 
         void Send(const std::string busn,
