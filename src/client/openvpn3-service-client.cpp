@@ -1073,6 +1073,30 @@ private:
 };
 
 
+void start_client_thread(pid_t start_pid, const std::string argv0,
+                        const std::string sesstoken, int log_level)
+{
+    std::cout << get_version(argv0) << std::endl;
+
+    BackendClientDBus backend_service(start_pid, G_BUS_TYPE_SYSTEM, sesstoken);
+    if (log_level > 0)
+    {
+        backend_service.SetDefaultLogLevel(log_level);
+    }
+    backend_service.Setup();
+
+    // Main loop
+    GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
+    g_unix_signal_add(SIGINT, stop_handler, main_loop);
+    g_unix_signal_add(SIGTERM, stop_handler, main_loop);
+    g_unix_signal_add(SIGHUP, stop_handler, main_loop);
+    backend_service.SetMainLoop(main_loop);
+    g_main_loop_run(main_loop);
+    usleep(500);
+    g_main_loop_unref(main_loop);
+}
+
+
 int client_service(ParsedArgs args)
 {
     auto extra = args.GetAllExtraArgs();
@@ -1085,36 +1109,62 @@ int client_service(ParsedArgs args)
         return 1;
     }
 
-    // Set a new process session ID, and  do a fork again
-    pid_t start_pid = getpid();  // Save the current pid, for logging later on
-    if (-1 == setsid())
+    // Save the current pid, for logging later on
+    pid_t start_pid = getpid();
+
+    // Get a new process session ID, unless we're debugging
+    // and --no-setsid is used.  This can make gdb debugging simpler.
+    if (!args.Present("no-setsid") && (-1 == setsid()))
     {
         std::cerr << "** ERROR ** Failed getting a new process session ID:" << strerror(errno) << std::endl;
         return 3;
     }
 
+    int log_level = -1;
+    if (args.Present("log-level"))
+    {
+        log_level = std::atoi(args.GetValue("log-level", 0).c_str());
+    }
+
+#ifdef DEBUG_OPTIONS
+    // When debugging, we might not want to do a fork.
+    if (args.Present("no-fork"))
+    {
+        try
+        {
+            start_client_thread(getpid(), args.GetArgv0(), extra[0],
+                                log_level);
+            return 0;
+        }
+        catch (std::exception& excp)
+        {
+            std::cout << "FATAL ERROR: " << excp.what() << std::endl;
+            return 3;
+        }
+        // This should really not happen, but if it does - lets log it
+        std::cout << "FATAL ERROR: Unexpected error event in no-fork branch"
+                  << std::endl;
+        return 8;
+    }
+#endif
+
+    //
+    // This is the normal production code branch
+    //
     pid_t real_pid = fork();
     if (real_pid == 0)
     {
-        std::cout << get_version(args.GetArgv0()) << std::endl;
-
-        BackendClientDBus backend_service(start_pid, G_BUS_TYPE_SYSTEM, std::string(extra[0]));
-        if (args.Present("log-level"))
+        try
         {
-            backend_service.SetDefaultLogLevel(std::atoi(args.GetValue("log-level", 0).c_str()));
+            start_client_thread(getpid(), args.GetArgv0(), extra[0],
+                                log_level);
+            return 0;
         }
-        backend_service.Setup();
-
-        // Main loop
-        GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
-        g_unix_signal_add(SIGINT, stop_handler, main_loop);
-        g_unix_signal_add(SIGTERM, stop_handler, main_loop);
-        g_unix_signal_add(SIGHUP, stop_handler, main_loop);
-        backend_service.SetMainLoop(main_loop);
-        g_main_loop_run(main_loop);
-        usleep(500);
-        g_main_loop_unref(main_loop);
-        return 0;
+        catch (std::exception& excp)
+        {
+            std::cout << "FATAL ERROR: " << excp.what() << std::endl;
+            return 3;
+        }
     }
     else if (real_pid > 0)
     {
@@ -1136,6 +1186,12 @@ int main(int argc, char **argv)
     argparser.AddVersionOption();
     argparser.AddOption("log-level", "LOG-LEVEL", true,
                         "Sets the default log verbosity level (valid values 0-6, default 4)");
+#if DEBUG_OPTIONS
+    argparser.AddOption("no-fork", 0,
+                        "Debug option: Do not fork a child to be run in the background.");
+    argparser.AddOption("no-setsid", 0,
+                        "Debug option: Do not not call setsid(3) when forking process.");
+#endif
 
     try
     {
