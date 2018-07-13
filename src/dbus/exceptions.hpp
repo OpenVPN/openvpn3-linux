@@ -72,6 +72,43 @@ namespace openvpn
         }
 
 
+        /**
+         *  Wrapper for more easily returning a DBusException exception
+         *  back to an on going D-Bus method call.  This will transport the
+         *  error back to the D-Bus caller.
+         *
+         * @param invocation Pointer to a invocation object of the on-going
+         *                   method call
+         */
+        virtual void SetDBusError(GDBusMethodInvocation *invocation,
+                                  std::string errdomain)
+        {
+            std::string qdom = (!errdomain.empty() ? errdomain : "net.openvpn.v3.error.undefined");
+            GError *dbuserr = g_dbus_error_new_for_dbus_error(qdom.c_str(), errorstr.c_str());
+            g_dbus_method_invocation_return_gerror(invocation, dbuserr);
+            g_error_free(dbuserr);
+        }
+
+
+        /**
+         *  Wrapper for more easily returning a DBusException back
+         *  to an on going D-Bus set/get property call.  This will transport
+         *  the error back to the D-Bus caller
+         *
+         * @param dbuserror  Pointer to a GError pointer where the error will
+         *                   be saved
+         * @param domain     Error Quark domain used to classify the
+         *                   authentication failure
+         * @param code       A GIO error code, used for further error
+         *                   error classification.  Look up G_IO_ERROR_*
+         *                   entries in glib-2.0/gio/gioenums.h for details.
+         */
+        virtual void SetDBusError(GError **dbuserror, GQuark domain, gint code)
+        {
+            g_set_error (dbuserror, domain, code, "%s", errorstr.c_str());
+        }
+
+
     protected:
         std::string sourceref;
         const std::string errorstr;
