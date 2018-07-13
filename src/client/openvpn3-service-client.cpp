@@ -663,7 +663,7 @@ private:
     bool paused;
     std::string configpath;
     CoreVPNClient::Ptr vpnclient;
-    std::thread * client_thread;
+    std::unique_ptr<std::thread> client_thread;
     ClientAPI::Config vpnconfig;
     ClientAPI::EvalConfig cfgeval;
     ClientAPI::ProvideCreds creds;
@@ -690,6 +690,8 @@ private:
                                            );
         }
     }
+
+
     /**
      *  This implements the POSIX thread running the CoreVPNClient session
      */
@@ -798,11 +800,11 @@ private:
             }
 
             // Start client thread
-            client_thread = new std::thread([self=Ptr(this)]()
+            client_thread.reset(new std::thread([self=Ptr(this)]()
                                                 {
                                                     self->run_connection_thread();
                                                 }
-                                               );
+                                               ));
         }
         catch(const DBusException& err)
         {
