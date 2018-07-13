@@ -103,7 +103,7 @@ public:
      */
     DBusRequiresQueueProxy(DBus & dbusobj, std::string destination , std::string interface, std::string objpath,
                            std::string method_quechktypegroup, std::string method_queuefetch, std::string method_queuecheck, std::string method_providereponse)
-        : DBusProxy(dbusobj, destination, interface, objpath),
+        : DBusProxy(dbusobj.GetConnection(), destination, interface, objpath),
           method_quechktypegroup(method_quechktypegroup),
           method_queuefetch(method_queuefetch),
           method_queuecheck(method_queuecheck),

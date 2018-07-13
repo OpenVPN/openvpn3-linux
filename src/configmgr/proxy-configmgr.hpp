@@ -43,8 +43,8 @@ public:
                                     object_path);
     }
 
-    OpenVPN3ConfigurationProxy(DBus const & dbusobj, std::string target)
-        : DBusProxy(dbusobj,
+    OpenVPN3ConfigurationProxy(DBus& dbusobj, std::string target)
+        : DBusProxy(dbusobj.GetConnection(),
                     OpenVPN3DBus_name_configuration,
                     OpenVPN3DBus_interf_configuration,
                     "", true)
