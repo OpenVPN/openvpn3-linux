@@ -110,7 +110,10 @@ public:
         g_variant_builder_add (b, "{sv}", "major", g_variant_new_uint32(last_major));
         g_variant_builder_add (b, "{sv}", "minor", g_variant_new_uint32(last_minor));
         g_variant_builder_add (b, "{sv}", "status_message", g_variant_new_string(last_msg.c_str()));
-        return g_variant_builder_end(b);
+
+        GVariant *res = g_variant_builder_end(b);
+        g_variant_builder_unref(b);
+        return res;
     }
 
 
