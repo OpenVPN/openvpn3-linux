@@ -370,9 +370,15 @@ namespace openvpn
                       << ", object_path=" << (!object_path.empty() ? object_path : "(not set)")
                       << ", signal_name=" << signal_name
                       << std::endl;
-            */
-            GError *error = NULL;
+             */
 
+            if (NULL == g_dbus_connection_get_unique_name(conn))
+            {
+                THROW_DBUSEXCEPTION("DBusSignalProducer",
+                                    "D-Bus connection invalid");
+            }
+
+            GError *error = NULL;
             if( !g_dbus_connection_emit_signal(conn,
                                                string2C_char(busn),
                                                string2C_char(objpath),
@@ -391,7 +397,6 @@ namespace openvpn
                 THROW_DBUSEXCEPTION("DBusSignalProducer", errmsg.str());
             }
         }
-
     };
 };
 #endif // OPENVPN3_DBUS_SIGNALS_HPP
