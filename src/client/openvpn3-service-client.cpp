@@ -958,7 +958,6 @@ public:
     ~BackendClientDBus()
     {
         procsig->ProcessChange(StatusMinor::PROC_STOPPED);
-        delete procsig;
         //delete be_obj;
     }
 
@@ -1018,15 +1017,15 @@ public:
         be_obj->RegisterObject(GetConnection());
 
         // Setup a signal object of the backend
-        signal = new BackendSignals(GetConnection(), LogGroup::BACKENDPROC, object_path);
+        signal.reset(new BackendSignals(GetConnection(), LogGroup::BACKENDPROC, object_path));
         signal->SetLogLevel(default_log_level);
         signal->LogVerb2("Backend client process started as pid " + std::to_string(start_pid)
                          + " re-initiated as pid " + std::to_string(getpid()));
         signal->Debug("BackendClientDBus registered on '" + GetBusName()
                        + "': " + object_path);
 
-        procsig = new ProcessSignalProducer(GetConnection(), OpenVPN3DBus_interf_backends,
-                                            object_path, "VPN-Client");
+        procsig.reset(new ProcessSignalProducer(GetConnection(), OpenVPN3DBus_interf_backends,
+                                            object_path, "VPN-Client"));
         procsig->ProcessChange(StatusMinor::PROC_STARTED);
     }
 
@@ -1067,9 +1066,9 @@ private:
     pid_t start_pid;
     std::string session_token;
     std::string object_path;
-    ProcessSignalProducer * procsig;
+    ProcessSignalProducer::Ptr procsig;
     BackendClientObject::Ptr be_obj;
-    BackendSignals *signal;
+    BackendSignals::Ptr signal;
 };
 
 
