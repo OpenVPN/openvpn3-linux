@@ -159,7 +159,7 @@ namespace openvpn
                                                  NULL);
             if (busid < 1)
             {
-                THROW_DBUSEXCEPTION("DBus", "Could not own bus name for" + busname);
+                THROW_DBUSEXCEPTION("DBus", "Could not own bus name for " + busname);
             }
             setup_complete = true;
             callback_bus_acquired();
