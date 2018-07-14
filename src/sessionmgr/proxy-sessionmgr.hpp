@@ -320,7 +320,14 @@ public:
         }
         catch (DBusException& excp)
         {
-            THROW_READYEXCEPTION(excp.getRawError());
+            // Throw D-Bus errors related to "Ready" errors as ReadyExceptions
+            std::string e = excp.getRawError();
+            if (e.find("net.openvpn.v3.error.ready") != std::string::npos)
+            {
+                THROW_READYEXCEPTION(excp.getRawError());
+            }
+            // Otherwise, just rethrow the DBusException
+            throw;
         }
     }
 
