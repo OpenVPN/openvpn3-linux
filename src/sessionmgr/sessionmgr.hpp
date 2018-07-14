@@ -703,7 +703,8 @@ public:
     {
         bool ping = false;
 
-        try {
+        try
+        {
             if (!be_proxy)
             {
                 THROW_DBUSEXCEPTION("SessionObject", "No backend proxy connection available. Backend died?");
@@ -868,6 +869,7 @@ public:
                                                               errmsg.c_str());
                 g_dbus_method_invocation_return_gerror(invoc, err);
                 g_error_free(err);
+                LogWarn(errmsg);
                 return;
             }
             g_dbus_method_invocation_return_value(invoc, NULL);
@@ -1339,6 +1341,8 @@ private:
 
         GVariant *res_g = NULL;
         try {
+            // This Ping() is the BackendClientObject responding,
+            // which ensures the VPN client process is initialized
             res_g = be_proxy->Call("Ping");
         }
         catch (DBusException &dbserr)
@@ -1350,7 +1354,7 @@ private:
         {
             THROW_DBUSEXCEPTION("SessionObject",
                                 "VPN backend process unavailable, "
-                                "cannot register session");
+                                "does not respond to internal Ping()");
         }
 
         bool ret = false;
