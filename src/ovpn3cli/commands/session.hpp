@@ -331,8 +331,18 @@ static int cmd_session_list(ParsedArgs args)
         }
         first = false;
 
-        std::string owner = lookup_username(sprx.GetUIntProperty("owner"));
-        pid_t be_pid = sprx.GetUIntProperty("backend_pid");
+        std::string owner;
+        pid_t be_pid;
+        try
+        {
+            owner = lookup_username(sprx.GetUIntProperty("owner"));
+            be_pid = sprx.GetUIntProperty("backend_pid");
+        }
+        catch (DBusException)
+        {
+            owner = "(not available)";
+            be_pid = -1;
+        }
 
         std::string status_str;
         BackendStatus status;
@@ -362,18 +372,27 @@ static int cmd_session_list(ParsedArgs args)
 
         std::cout << "        Path: " << sessp << std::endl;
 
-        std::time_t sess_created = sprx.GetUInt64Property("session_created");
-        std::cout << "     Created: " << std::asctime(std::localtime(&sess_created));
+        std::cout << "     Created: ";
+        try
+        {
+            std::time_t sess_created = sprx.GetUInt64Property("session_created");
+            std::cout << std::asctime(std::localtime(&sess_created));
+        }
+        catch (DBusException)
+        {
+            std::cout << "(Not available)" << std::endl;
+        }
 
         std::cout << "       Owner: " << owner << std::setw(43 - owner.size())
-                  << std::setfill(' ') << " "
-                  << "PID: " << std::to_string(be_pid) << std::endl;
+                  << std::setfill(' ') << " PID: "
+                  << (be_pid > 0 ? std::to_string(be_pid) : "(not available)")
+                  << std::endl;
         if (!cfgname.empty())
         {
             std::cout << " Config name: " << cfgname << std::endl;
         }
         std::cout << "      Status: " << status_str << std::endl;
-        std::cout << "         "
+        std::cout << "              "
                   << (status.message.empty() ? "(no status message)" : status.message)
                   << std::endl;
     }
