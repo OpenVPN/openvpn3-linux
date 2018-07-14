@@ -877,7 +877,42 @@ public:
             bool do_selfdestruct = false;
             std::string errmsg;
 
-            if (!registered)
+            Debug("Exception [callback_method_call("+ method_name + ")]: "
+                  + dberr.getRawError());
+
+            if (!registered && "Disconnect" == method_name)
+            {
+                //
+                // This is a special case handling.  If a backend VPN client
+                // process has not registered and a front-end wants to
+                // shutdown this session, this needs to be handled specially.
+                //
+                // This can happen if the VPN client process dies before
+                // starting the registration process.  In this case, we
+                // will not have a valid be_proxy object to the backend,
+                // so any kind of attempt to communicate with the (possibly
+                // dead) backend will just completely fail.  So we just aim
+                // for the selfdestruct.
+                //
+                // In regards to the front-end caller, this is also not
+                // strictly an error. The caller wants to get rid of this
+                // lingering session object by calling the Disconnect method.
+                // So we do not return any error, but just ensure this
+                // session is cleaned up properly.
+                //
+                try
+                {
+                    LogCritical("Forced session shutdown before backend registration");
+                    do_selfdestruct = true;
+                }
+                catch (DBusException& dberr)
+                {
+                }
+                StatusChange(StatusMajor::SESSION, StatusMinor::PROC_KILLED,
+                             "Backend process did not complete registration");
+                g_dbus_method_invocation_return_value(invoc, NULL);
+            }
+            else if (!registered)
             {
                 errmsg = "Backend VPN process is not ready";
             }
@@ -908,10 +943,13 @@ public:
                 LogCritical(errmsg);
             }
 
-            GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.sessions.error",
+            if (!errmsg.empty())
+            {
+                GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.sessions.error",
                                                           errmsg.c_str());
-            g_dbus_method_invocation_return_gerror(invoc, err);
-            g_error_free(err);
+                g_dbus_method_invocation_return_gerror(invoc, err);
+                g_error_free(err);
+            }
 
             if (do_selfdestruct)
             {
@@ -952,6 +990,14 @@ public:
                                      const std::string property_name,
                                      GError **error)
     {
+        if (!registered)
+        {
+            g_set_error(error,
+                        G_IO_ERROR,
+                        G_IO_ERROR_PENDING,
+                        "Session not active");
+            return NULL;
+        }
         if ("owner" == property_name)
         {
             return GetOwner();
@@ -1002,22 +1048,33 @@ public:
         }
         else if ("status" == property_name)
         {
-            ret = NULL;
-            if (nullptr != sig_statuschg)
+            try
             {
-                update_last_status();
-                ret = sig_statuschg->GetLastStatusChange();
+                be_proxy->Ping();
+                ret = NULL;
+                if (nullptr != sig_statuschg)
+                {
+                    update_last_status();
+                    ret = sig_statuschg->GetLastStatusChange();
+                }
+                if (NULL == ret)
+                {
+                    g_set_error(error, G_DBUS_ERROR, G_DBUS_ERROR_NO_REPLY,
+                                "No status changes have been logged yet");
+                }
             }
-            if (NULL == ret)
+            catch (DBusException& excp)
             {
-                g_set_error(error, G_DBUS_ERROR, G_DBUS_ERROR_NO_REPLY,
-                            "No status changes have been logged yet");
+                g_set_error(error, G_DBUS_ERROR, G_IO_ERROR_FAILED,
+                            "Failed retrieving connection status");
+                ret = NULL;
             }
         }
         else if ("statistics" == property_name)
         {
             try
             {
+                be_proxy->Ping();
                 ret = be_proxy->GetProperty("statistics");
             }
             catch (DBusException& exp)
@@ -1091,6 +1148,15 @@ public:
                   << ", property=" << property_name
                   << std::endl;
         */
+        if (!registered)
+        {
+            g_set_error(error,
+                        G_IO_ERROR,
+                        G_IO_ERROR_PENDING,
+                        "Session not active");
+            return NULL;
+        }
+
         try
         {
             CheckOwnerAccess(sender);
@@ -1341,9 +1407,18 @@ private:
      */
     void shutdown(bool forced, bool selfdestruct_flag)
     {
-        be_proxy->Call( (!forced ? "Disconnect" : "ForceShutdown"), true );
-        // Wait for child to exit
-        sleep(2); // FIXME: Catch the ProcessChange StatusMinor::PROC_STOPPED signal from backend
+        try
+        {
+            be_proxy->Call( (!forced ? "Disconnect" : "ForceShutdown"), true );
+            // Wait for child to exit
+            sleep(2); // FIXME: Catch the ProcessChange StatusMinor::PROC_STOPPED signal from backend
+        }
+        catch (DBusException& excp)
+        {
+            Debug(excp.what());
+            // FIXME: For now, we just ignore any errors here - the
+            // backend process may not be running
+        }
 
         // Remove this session object
         if (!forced)
