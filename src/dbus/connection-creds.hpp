@@ -164,11 +164,33 @@ namespace openvpn
          * @param error        String containing the authorization failure
          *                     message
          */
-        DBusCredentialsException(uid_t requester, std::string quarkdomain, std::string error)
-            : requester(requester), quarkdomain(quarkdomain), error(error)
+        DBusCredentialsException(uid_t requester,
+                                 std::string quarkdomain, std::string error)
+            : quarkdomain(quarkdomain), error(error)
         {
             std::stringstream s;
             s << error << " (Requester UID "<< requester << ")";
+            error_uid = s.str();
+        }
+
+
+        /**
+         *  Initiate the authorization failure exception.  This is
+         *  a variant used when it is not possible to map the D-Bus sender
+         *  to an UID.
+         *
+         * @param requester    String containing the rejected D-Bus sender
+         * @param quarkdomain  String which classifies the authorization
+         *                     error
+         * @param error        String containing the authorization failure
+         *                     message
+         */
+        DBusCredentialsException(std::string requester,
+                                 std::string quarkdomain, std::string error)
+            : quarkdomain(quarkdomain), error(error)
+        {
+            std::stringstream s;
+            s << error << " (D-Bus Request sender "<< requester << ")";
             error_uid = s.str();
         }
 
@@ -226,7 +248,6 @@ namespace openvpn
         }
 
 private:
-        uid_t requester;
         std::string quarkdomain;
         std::string error;
         std::string error_uid;
