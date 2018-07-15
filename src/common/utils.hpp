@@ -151,7 +151,8 @@ std::string get_version(std::string component)
 #ifdef OPENVPN_TUN_BUILDER_BASE_H
     ver << ClientAPI::OpenVPNClient::platform() << std::endl;
 #else
-    ver << openvpn::platform_string() << std::endl;
+    ver << openvpn::platform_string()
+        << " built on " __DATE__ " " __TIME__ << std::endl;
 #endif
     ver << openvpn_copyright;
 
