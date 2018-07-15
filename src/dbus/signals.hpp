@@ -179,6 +179,11 @@ namespace openvpn
         }
 
 
+        std::string GetBusName()
+        {
+            return bus_name;
+        }
+
         guint GetSignalId(std::string signal_name)
         {
             return subscriptions[signal_name];
