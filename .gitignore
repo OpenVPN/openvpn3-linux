@@ -58,9 +58,7 @@ src/tests/dbus/getlaststatus
 src/tests/dbus/getconnectionstats
 src/tests/dbus/log-listener
 src/tests/dbus/log-listener2
-src/tests/dbus/log-prefix-selftest
 src/tests/dbus/logservice1
-src/tests/dbus/gettimestamp
 src/tests/dbus/proc-wait-for
 src/tests/dbus/proc-wait-for-pid
 src/tests/dbus/request-queue-client
@@ -69,7 +67,9 @@ src/tests/dbus/request-queue-service
 src/tests/dbus/set-alias
 src/tests/dbus/signal-listener
 src/tests/misc/config-export-json-test
+src/tests/misc/gettimestamp
 src/tests/misc/json-config-import-test
+src/tests/misc/log-prefix-selftest
 src/tests/misc/lookup-tests
 src/tests/ovpn3-core/profilemerge-optionlist
 src/policy/net.openvpn.v3.conf

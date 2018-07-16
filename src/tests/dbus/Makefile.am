@@ -54,9 +54,7 @@ noinst_PROGRAMS = \
 	signal-listener \
 	log-listener \
 	log-listener2 \
-	log-prefix-selftest \
 	logservice1 \
-	gettimestamp \
 	enable-logging \
 	set-alias \
 	proc-wait-for \
@@ -91,11 +89,7 @@ log_listener_SOURCES = log-listener.cpp
 
 log_listener2_SOURCES = log-listener2.cpp
 
-log_prefix_selftest_SOURCES = log-prefix-selftest.cpp
-
 logservice1_SOURCES = logservice1.cpp
-
-gettimestamp_SOURCES = gettimestamp.cpp
 
 enable_logging_SOURCES = enable-logging.cpp
 

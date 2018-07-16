@@ -36,11 +36,17 @@ AM_LDFLAGS = \
 
 noinst_PROGRAMS = \
 	config-export-json-test \
+	gettimestamp \
 	json-config-import-test \
+	log-prefix-selftest \
 	lookup-tests
 
 config_export_json_test_SOURCES = config-export-json-test.cpp
 
+gettimestamp_SOURCES = gettimestamp.cpp
+
 json_config_import_test_SOURCES = json-config-import-test.cpp
+
+log_prefix_selftest_SOURCES = log-prefix-selftest.cpp
 
 lookup_tests_SOURCES = lookup-tests.cpp
