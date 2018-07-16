@@ -22,29 +22,11 @@
 
 #include <fstream>
 #include <ctime>
-#include <iomanip>
 
 #include "log-helpers.hpp"
 
 namespace openvpn
 {
-    std::string GetTimestamp()
-    {
-        time_t now = time(0);
-        tm *ltm = localtime(&now);
-
-        std::stringstream ret;
-        ret << 1900 + ltm->tm_year
-            << "-" << std::setw(2) << std::setfill('0') << 1 + ltm->tm_mon
-            << "-" << std::setw(2) << std::setfill('0') << ltm->tm_mday
-            << " " << std::setw(2) << std::setfill('0') << ltm->tm_hour
-            << ":" << std::setw(2) << std::setfill('0') << ltm->tm_min
-            << ":" << std::setw(2) << std::setfill('0') << ltm->tm_sec
-            << " ";
-        return ret.str();
-    }
-
-
     /**
      *  Helper class to LogConsumer and LogSender which implements
      *  filtering of log messages.

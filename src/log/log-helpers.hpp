@@ -23,6 +23,25 @@
 #include <cstdint>
 #include <sstream>
 #include <array>
+#include <iomanip>
+
+
+std::string GetTimestamp()
+{
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+
+    std::stringstream ret;
+    ret << 1900 + ltm->tm_year
+        << "-" << std::setw(2) << std::setfill('0') << 1 + ltm->tm_mon
+        << "-" << std::setw(2) << std::setfill('0') << ltm->tm_mday
+        << " " << std::setw(2) << std::setfill('0') << ltm->tm_hour
+        << ":" << std::setw(2) << std::setfill('0') << ltm->tm_min
+        << ":" << std::setw(2) << std::setfill('0') << ltm->tm_sec
+        << " ";
+    return ret.str();
+}
+
 
 class LogException : public std::exception
     {

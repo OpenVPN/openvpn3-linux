@@ -26,11 +26,11 @@
 #include <iostream>
 
 #include "dbus/core.hpp"
-#include "log/dbus-log.hpp"
+#include "log/log-helpers.hpp"
 
 int main()
 {
-    std::cout << "Current Timestamp: " << openvpn::GetTimestamp() << std::endl;
+    std::cout << "Current Timestamp: " << GetTimestamp() << std::endl;
     return 0;
 }
 
