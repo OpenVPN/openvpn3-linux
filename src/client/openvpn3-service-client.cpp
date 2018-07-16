@@ -44,6 +44,7 @@
 #include "dbus/connection-creds.hpp"
 #include "dbus/path.hpp"
 #include "log/dbus-log.hpp"
+#include "log/proxy-log.hpp"
 #include "backend-signals.hpp"
 #include "core-client.hpp"
 
@@ -231,6 +232,9 @@ public:
                     THROW_DBUSEXCEPTION("BackendServiceObject",
                                         "Backend service is already registered");
                 }
+
+                signal.AddTargetBusName(sender); // Target signals to the session mgr
+                signal.AddTargetBusName(GetUniqueBusID(OpenVPN3DBus_name_log)); // Target log events to log service
 
                 gchar *token = NULL;
                 gchar *cfgpath = NULL;
@@ -957,6 +961,8 @@ public:
 
     ~BackendClientDBus()
     {
+        logservice->Detach(OpenVPN3DBus_interf_backends);
+        logservice->Detach(OpenVPN3DBus_interf_sessions);
         procsig->ProcessChange(StatusMinor::PROC_STOPPED);
         //delete be_obj;
     }
@@ -1008,6 +1014,19 @@ public:
      */
     void callback_bus_acquired()
     {
+        try
+        {
+            logservice.reset(new LogServiceProxy(GetConnection()));
+            logservice->Attach(OpenVPN3DBus_interf_backends);
+            logservice->Attach(OpenVPN3DBus_interf_sessions);
+        }
+        catch (DBusException& excp)
+        {
+            std::cout << "FATAL ERROR: openvpn3-service-client could not "
+                      << "attach to the log service: " << excp.what() << std::endl;
+            return; // Throwing an exception here will not be caught/reported
+        }
+
         // Create a new OpenVPN3 client session object
         object_path = generate_path_uuid(OpenVPN3DBus_rootp_backends_sessions, 'z');
         be_obj.reset(new BackendClientObject(GetConnection(), GetBusName(),
@@ -1069,6 +1088,7 @@ private:
     ProcessSignalProducer::Ptr procsig;
     BackendClientObject::Ptr be_obj;
     BackendSignals::Ptr signal;
+    LogServiceProxy::Ptr logservice;
 };
 
 

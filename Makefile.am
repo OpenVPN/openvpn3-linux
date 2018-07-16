@@ -157,7 +157,8 @@ src_client_openvpn3_service_client_SOURCES = \
 	src/common/requiresqueue.hpp \
 	src/common/utils.hpp \
 	src/configmgr/proxy-configmgr.hpp \
-	src/log/dbus-log.hpp
+	src/log/dbus-log.hpp \
+	src/log/proxy-log.hpp
 
 #
 #  openvpn3-service-backendstart: Service which starts VPN client processes
