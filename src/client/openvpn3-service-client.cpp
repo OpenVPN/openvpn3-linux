@@ -83,6 +83,7 @@ public:
           dbusconn(conn),
           mainloop(nullptr),
           signal(conn, LogGroup::CLIENT, objpath),
+          signal_broadcast(false),
           session_token(session_token),
           registered(false),
           paused(false),
@@ -168,6 +169,20 @@ public:
 
 
     /**
+     *  Broadcast all signals, instead of targeted signals.  This is
+     *  disabled by default and must be enabled explicitly.  This is
+     *  most commonly used for debugging.
+     *
+     * @param brdc Boolean flag enabling/disabling signal broadcasts
+     *
+     */
+    void SetSignalBroadcast(bool brdc)
+    {
+        signal_broadcast = brdc;
+    }
+
+
+    /**
      *  Callback method which is called each time a D-Bus method call occurs
      *  on this BackendClientObject.
      *
@@ -233,8 +248,15 @@ public:
                                         "Backend service is already registered");
                 }
 
-                signal.AddTargetBusName(sender); // Target signals to the session mgr
-                signal.AddTargetBusName(GetUniqueBusID(OpenVPN3DBus_name_log)); // Target log events to log service
+                if (!signal_broadcast)
+                {
+                    signal.AddTargetBusName(sender); // Target signals to the session mgr
+                    signal.AddTargetBusName(GetUniqueBusID(OpenVPN3DBus_name_log)); // Target log events to log service
+                }
+                else
+                {
+                    signal.LogWarn("All signals are broadcasted to all users");
+                }
 
                 gchar *token = NULL;
                 gchar *cfgpath = NULL;
@@ -665,6 +687,7 @@ private:
     GDBusConnection *dbusconn;
     GMainLoop *mainloop;
     BackendSignals signal;
+    bool signal_broadcast;
     std::string session_token;
     bool registered;
     bool paused;
@@ -955,16 +978,20 @@ public:
           session_token(sesstoken),
           procsig(nullptr),
           be_obj(nullptr),
-          signal(nullptr)
+          signal(nullptr),
+          signal_broadcast(false)
     {
     };
 
     ~BackendClientDBus()
     {
-        logservice->Detach(OpenVPN3DBus_interf_backends);
-        logservice->Detach(OpenVPN3DBus_interf_sessions);
+        // If we do multicast (!broadcast), detach from the log service
+        if (!signal_broadcast)
+        {
+            logservice->Detach(OpenVPN3DBus_interf_backends);
+            logservice->Detach(OpenVPN3DBus_interf_sessions);
+        }
         procsig->ProcessChange(StatusMinor::PROC_STOPPED);
-        //delete be_obj;
     }
 
 
@@ -1009,22 +1036,42 @@ public:
 
 
     /**
+     *  Broadcast all signals, instead of targeted signals.  This is
+     *  disabled by default and must be enabled explicitly.  This is
+     *  most commonly used for debugging.
+     *
+     * @param brdc Boolean flag enabling/disabling signal broadcasts
+     *
+     */
+    void SetSignalBroadcast(bool brdc)
+    {
+        signal_broadcast = brdc;
+    }
+
+
+    /**
      *  This callback is called when the service was successfully registered
      *  on the D-Bus.
      */
     void callback_bus_acquired()
     {
-        try
+
+        // If we do multicast (!broadcast), attach to the log service
+        if (!signal_broadcast)
         {
-            logservice.reset(new LogServiceProxy(GetConnection()));
-            logservice->Attach(OpenVPN3DBus_interf_backends);
-            logservice->Attach(OpenVPN3DBus_interf_sessions);
-        }
-        catch (DBusException& excp)
-        {
-            std::cout << "FATAL ERROR: openvpn3-service-client could not "
-                      << "attach to the log service: " << excp.what() << std::endl;
-            return; // Throwing an exception here will not be caught/reported
+            try
+            {
+                logservice.reset(new LogServiceProxy(GetConnection()));
+                logservice->Attach(OpenVPN3DBus_interf_backends);
+                logservice->Attach(OpenVPN3DBus_interf_sessions);
+            }
+            catch (DBusException& excp)
+            {
+                std::cout << "FATAL ERROR: openvpn3-service-client could not "
+                          << "attach to the log service: "
+                          << excp.what() << std::endl;
+                return; // Throwing an exception here will not be caught/reported
+            }
         }
 
         // Create a new OpenVPN3 client session object
@@ -1033,6 +1080,7 @@ public:
                                              object_path,
                                              session_token,
                                              default_log_level));
+        be_obj->SetSignalBroadcast(signal_broadcast);
         be_obj->RegisterObject(GetConnection());
 
         // Setup a signal object of the backend
@@ -1088,12 +1136,14 @@ private:
     ProcessSignalProducer::Ptr procsig;
     BackendClientObject::Ptr be_obj;
     BackendSignals::Ptr signal;
+    bool signal_broadcast;
     LogServiceProxy::Ptr logservice;
 };
 
 
 void start_client_thread(pid_t start_pid, const std::string argv0,
-                        const std::string sesstoken, int log_level)
+                        const std::string sesstoken, int log_level,
+                        bool signal_broadcast)
 {
     std::cout << get_version(argv0) << std::endl;
 
@@ -1102,6 +1152,7 @@ void start_client_thread(pid_t start_pid, const std::string argv0,
     {
         backend_service.SetDefaultLogLevel(log_level);
     }
+    backend_service.SetSignalBroadcast(signal_broadcast);
     backend_service.Setup();
 
     // Main loop
@@ -1152,7 +1203,7 @@ int client_service(ParsedArgs args)
         try
         {
             start_client_thread(getpid(), args.GetArgv0(), extra[0],
-                                log_level);
+                                log_level, args.Present("signal-broadcast"));
             return 0;
         }
         catch (std::exception& excp)
@@ -1176,7 +1227,7 @@ int client_service(ParsedArgs args)
         try
         {
             start_client_thread(getpid(), args.GetArgv0(), extra[0],
-                                log_level);
+                                log_level, args.Present("signal-broadcast"));
             return 0;
         }
         catch (std::exception& excp)
@@ -1205,6 +1256,8 @@ int main(int argc, char **argv)
     argparser.AddVersionOption();
     argparser.AddOption("log-level", "LOG-LEVEL", true,
                         "Sets the default log verbosity level (valid values 0-6, default 4)");
+    argparser.AddOption("signal-broadcast", 0,
+                        "Broadcast all D-Bus signals instead of targeted multicast");
 #if DEBUG_OPTIONS
     argparser.AddOption("no-fork", 0,
                         "Debug option: Do not fork a child to be run in the background.");

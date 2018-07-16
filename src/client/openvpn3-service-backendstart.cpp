@@ -503,6 +503,10 @@ int backend_starter(ParsedArgs args)
     {
         client_args.push_back("--no-setsid");
     }
+    if (args.Present("client-signal-broadcast"))
+    {
+        client_args.push_back("--signal-broadcast");
+    }
 #endif
 
     unsigned int idle_wait_sec = 3;
@@ -564,6 +568,8 @@ int main(int argc, char **argv)
                   "Debug option: Adds the --no-fork argument to openvpn3-service-client");
     cmd.AddOption("client-no-setsid", 0,
                   "Debug option: Adds the --no-setsid argument to openvpn3-service-client");
+    cmd.AddOption("client-signal-broadcast", 0,
+                  "Debug option: Adds the --signal-broadcast argument to openvpn3-service-client");
 #endif
     cmd.AddOption("idle-exit", "SECONDS", true,
                   "How long to wait before exiting if being idle. "
