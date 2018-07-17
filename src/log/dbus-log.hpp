@@ -123,6 +123,23 @@ namespace openvpn
             }
         }
 
+
+        /**
+         *  Makes it possible to write LogEvents in a readable format
+         *  via iostreams, such as 'std::cout << event', where event is a
+         *  LogEvent object.
+         *
+         * @param os  std::ostream where to write the data
+         * @param ev  LogEvent to write to the stream
+         *
+         * @return  Returns the provided std::ostream together with the
+         *          decoded LogEvent information
+         */
+        friend std::ostream& operator<<(std::ostream& os , const LogEvent& ev)
+        {
+            return os << LogPrefix(ev.group, ev.category) << ev.message;
+        }
+
         LogGroup group;
         LogCategory category;
         std::string message;
