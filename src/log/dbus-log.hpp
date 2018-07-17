@@ -40,6 +40,18 @@ namespace openvpn
             reset();
         }
 
+        /**
+         *  Initialize the LogEvent object with the provided details.
+         *
+         * @param grp  LogGroup value to use.
+         * @param ctg  LogCategory value to use.
+         * @param msg  std::string containing the log message to use.
+         */
+        LogEvent(const LogGroup grp, const LogCategory ctg,
+                 const std::string msg)
+            : group(grp), category(ctg), message(msg)
+        {
+        }
 
         /**
          *  Initialize a LogEvent, based on a GVariant object containing
