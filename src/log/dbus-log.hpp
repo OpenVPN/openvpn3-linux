@@ -22,7 +22,10 @@
 
 #include <fstream>
 #include <ctime>
+#include <exception>
 
+#include <gio/gio.h>
+#include "dbus/signals.hpp"
 #include "log-helpers.hpp"
 
 namespace openvpn

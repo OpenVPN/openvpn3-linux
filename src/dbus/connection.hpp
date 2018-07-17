@@ -28,6 +28,10 @@
 
 #include <iostream>
 
+#include "exceptions.hpp"
+#include "idlecheck.hpp"
+
+
 namespace openvpn
 {
     /**

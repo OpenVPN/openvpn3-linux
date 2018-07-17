@@ -23,6 +23,8 @@
 #include <map>
 #include <vector>
 
+#include "connection.hpp"
+
 namespace openvpn
 {
     inline const char * string2C_char(std::string in)
