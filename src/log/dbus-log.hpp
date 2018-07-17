@@ -28,6 +28,103 @@
 namespace openvpn
 {
     /**
+     *  Basic Log Event container
+     */
+    struct LogEvent
+    {
+        /**
+         *  Initializes an empty LogEvent struct.
+         */
+        LogEvent()
+        {
+            reset();
+        }
+
+
+        /**
+         *  Initialize a LogEvent, based on a GVariant object containing
+         *  a log entry.  See @Parse() for more information.
+         *
+         * @param status
+         */
+        LogEvent(GVariant *logev)
+        {
+            reset();
+            Parse(logev);
+        }
+
+
+        /**
+         *  Resets the LogEvent struct to a known and empty state
+         */
+        void reset()
+        {
+            group = LogGroup::UNDEFINED;
+            group_str = "";
+            category = LogCategory::UNDEFINED;
+            category_str = "";
+            message = "";
+        }
+
+
+        /**
+         *  Parses a GVariant object containing a Log signal.  The input
+         *  GVariant needs to be of 'a{sv}' which is a named dictonary.  It
+         *  must contain the following key values to be valid:
+         *
+         *     - (u) log_group       Translated into LogGroup
+         *     - (u) log_category    Translated into LogCategory
+         *     - (s) log_message     A string with the log message
+         *
+         * @param logevent  Pointer to the GVariant object containig the
+         *                  log event
+         */
+        void Parse(GVariant *logevent)
+        {
+            GVariant *d = nullptr;
+            unsigned int v = 0;
+
+            d = g_variant_lookup_value(logevent, "log_group", G_VARIANT_TYPE_UINT32);
+            v = g_variant_get_uint32(d);
+            if (v > 0 && v < LogGroup_str.size())
+            {
+                group = (LogGroup) v;
+                group_str = std::string(LogGroup_str[v]);
+            }
+            g_variant_unref(d);
+
+            d = g_variant_lookup_value(logevent, "log_category", G_VARIANT_TYPE_UINT32);
+            v = g_variant_get_uint32(d);
+            if (v > 0 && v < LogCategory_str.size())
+            {
+                category = (LogCategory) v;
+                category_str = std::string(LogCategory_str[v]);
+            }
+            g_variant_unref(d);
+
+            gsize len;
+            d = g_variant_lookup_value(logevent,
+                                       "log_message", G_VARIANT_TYPE_STRING);
+            message = std::string(g_variant_get_string(d, &len));
+            g_variant_unref(d);
+            if (len != message.size())
+            {
+                THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
+                                    "Failed retrieving log event message text "
+                                    "(inconsistent length)");
+            }
+        }
+
+        LogGroup group;
+        std::string group_str;
+        LogCategory category;
+        std::string category_str;
+        std::string message;
+    };
+
+
+
+    /**
      *  Helper class to LogConsumer and LogSender which implements
      *  filtering of log messages.
      */
