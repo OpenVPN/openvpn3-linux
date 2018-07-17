@@ -41,12 +41,12 @@ int main(int argc, char **argv)
         OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, session_path);
         LogEvent log = session.GetLastLogEvent();
 
-        std::cout << "     Log Group: [" << std::to_string((unsigned int) log.group)
-                  << "] " << log.group_str
-                  << std::endl;
-        std::cout << "  Log Category: [" << std::to_string((unsigned int) log.category)
-                      << "] " << log.category_str
-                      << std::endl;
+        std::cout << "     Log Group: ["
+                  << std::to_string((unsigned int) log.group)
+                  << "] " << std::endl;
+        std::cout << "  Log Category: ["
+                  << std::to_string((unsigned int) log.category)
+                  << "] " << std::endl;
         std::cout << "   Log message: " << "[len: " << log.message.size()
                   << "] " << log.message
                   << std::endl;

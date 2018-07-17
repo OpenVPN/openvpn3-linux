@@ -60,9 +60,7 @@ namespace openvpn
         void reset()
         {
             group = LogGroup::UNDEFINED;
-            group_str = "";
             category = LogCategory::UNDEFINED;
-            category_str = "";
             message = "";
         }
 
@@ -89,7 +87,6 @@ namespace openvpn
             if (v > 0 && v < LogGroup_str.size())
             {
                 group = (LogGroup) v;
-                group_str = std::string(LogGroup_str[v]);
             }
             g_variant_unref(d);
 
@@ -98,7 +95,6 @@ namespace openvpn
             if (v > 0 && v < LogCategory_str.size())
             {
                 category = (LogCategory) v;
-                category_str = std::string(LogCategory_str[v]);
             }
             g_variant_unref(d);
 
@@ -116,9 +112,7 @@ namespace openvpn
         }
 
         LogGroup group;
-        std::string group_str;
         LogCategory category;
-        std::string category_str;
         std::string message;
     };
 
