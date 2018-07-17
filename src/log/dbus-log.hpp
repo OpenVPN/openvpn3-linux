@@ -120,9 +120,8 @@ namespace openvpn
             g_variant_unref(d);
             if (len != message.size())
             {
-                THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                    "Failed retrieving log event message text "
-                                    "(inconsistent length)");
+                THROW_LOGEXCEPTION("Failed retrieving log event message text"
+                                   " (inconsistent length)");
             }
         }
 
@@ -186,7 +185,7 @@ namespace openvpn
         {
             if (loglev > 6)
             {
-                THROW_DBUSEXCEPTION("LogSender", "Invalid log level");
+                THROW_LOGEXCEPTION("LogSender: Invalid log level");
             }
             log_level = loglev;
         }
