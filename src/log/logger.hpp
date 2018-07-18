@@ -62,12 +62,6 @@ public:
                          const std::string object_path,
                          const LogEvent& logev)
     {
-        // If file log is active, skip logging to console
-        if (GetLogActive())
-        {
-            return;
-        }
-
         for (const auto& e : exclude_loggroup)
         {
             if (e == logev.group)

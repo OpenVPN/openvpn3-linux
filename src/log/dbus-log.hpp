@@ -445,14 +445,12 @@ namespace openvpn
 
 
     class LogConsumer : public DBusSignalSubscription,
-                        public FileLog,
                         public LogFilter
     {
     public:
         LogConsumer(GDBusConnection * dbuscon, std::string interf,
                     std::string objpath, std::string busn = "")
             : DBusSignalSubscription(dbuscon, busn, interf, objpath, "Log"),
-              FileLog(),
               LogFilter(6)  // By design, accept all kinds of log messages when receiving
         {
         }
@@ -489,12 +487,6 @@ namespace openvpn
             {
                 goto exit;
             }
-
-            if (GetLogActive())
-            {
-                LogWrite(sender, logev);
-            }
-
             ConsumeLogEvent(sender, interface, object_path, logev);
 
         exit:
@@ -532,12 +524,7 @@ namespace openvpn
             auto logev = LogEvent((LogGroup) group, (LogCategory) catg,
                                   std::string(msg));
 
-            if (openvpn::LogConsumer::GetLogActive())
-            {
-                openvpn::LogConsumer::LogWrite(sender, logev);
-            }
             ConsumeLogEvent(sender, interface, object_path, logev);
-
             ProxyLog(params);
             g_free(msg);
         }
