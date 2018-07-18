@@ -141,6 +141,10 @@ public:
             size_t htag = hashfunc(tag);
             g_free(interface_c);
 
+            std::stringstream tagstr_;
+            tagstr_ << "{tag:" << std::to_string(htag) << "}";
+            std::string tagstr(tagstr_.str());
+
             if ("Attach" == meth_name)
             {
                 // Subscribe to signals from a new D-Bus service/client
@@ -149,8 +153,7 @@ public:
                 if (loggers.find(htag) != loggers.end())
                 {
                     std::stringstream l;
-                    l << "Duplicate: " << tag
-                      << " (hash: " << std::to_string(htag) << ")";
+                    l << "Duplicate: " << tag << " " << tagstr;
 
                     logwr->AddMeta(meta.str());
                     logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN,
@@ -163,13 +166,12 @@ public:
                     return;
                 }
 
-                loggers[htag].reset(new Logger(dbuscon, logwr, tag,
+                loggers[htag].reset(new Logger(dbuscon, logwr, tagstr,
                                               sender, interface, log_level));
 
                 std::stringstream l;
-                l << "Attached: " << tag
-                  << " (hash: " << std::to_string(htag) << ")"
-                  << std::endl;
+                l << "Attached: " << tag << "  " << tagstr;
+
                 logwr->AddMeta(meta.str());
                 logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2,
                                       l.str()));
@@ -182,8 +184,7 @@ public:
                 if (loggers.find(htag) == loggers.end())
                 {
                     std::stringstream l;
-                    l << "Not found: " << tag
-                      << " (hash: " << std::to_string(htag) << ")";
+                    l << "Not found: " << tag << " " << tagstr;
 
                     logwr->AddMeta(meta.str());
                     logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN,
@@ -203,8 +204,8 @@ public:
                 // Unsubscribe from signals from a D-Bus service/client
                 loggers.erase(htag);
                 std::stringstream l;
-                l << "Detached: " << tag
-                  << " (hash: " << std::to_string(htag) << ")";
+                l << "Detached: " << tag << " " << tagstr;
+
                 logwr->AddMeta(meta.str());
                 logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2,
                                       l.str()));
