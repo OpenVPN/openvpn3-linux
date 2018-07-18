@@ -40,7 +40,8 @@ noinst_PROGRAMS = \
 	json-config-import-test \
 	log-prefix-selftest \
 	logwriter-tests \
-	lookup-tests
+	lookup-tests \
+	syslog-facility-mapping-test
 
 config_export_json_test_SOURCES = config-export-json-test.cpp
 
@@ -53,3 +54,5 @@ log_prefix_selftest_SOURCES = log-prefix-selftest.cpp
 logwriter_tests_SOURCES = logwriter-tests.cpp
 
 lookup_tests_SOURCES = lookup-tests.cpp
+
+syslog_facility_mapping_test_SOURCES = syslog-facility-mapping-test.cpp

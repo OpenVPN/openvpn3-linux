@@ -271,6 +271,24 @@ private:
 };
 
 
+class SyslogException : public std::exception
+{
+public:
+    SyslogException(const std::string& err)
+        : err(err)
+    {
+    }
+
+    virtual const char* what() const noexcept
+    {
+        return err.c_str();
+    }
+
+private:
+    std::string err;
+};
+
+
 /**
  *  LogWriter implementation, writing to syslog
  */
@@ -293,6 +311,58 @@ public:
     virtual ~SyslogWriter()
     {
         closelog();
+    }
+
+
+    /**
+     *  Converts a string specifiying a syslog log facility
+     *  to the appropriate int syslog integer value.  See syslog(3)
+     *  for valid values.
+     *
+     * @param facility  std::string containing the log facility name
+     *
+     * @return Returns the integer reference to the log facility,
+     *         compliant to syslog(3).  In case of an invalid
+     */
+    static inline int ConvertLogFacility(const std::string& facility)
+    {
+        struct log_facility_mapping_t {
+            const std::string name;
+            const int facility;
+        };
+
+        static const struct log_facility_mapping_t log_facilities[] =
+            {
+                {"LOG_AUTH",     LOG_AUTH},
+                {"LOG_AUTHPRIV", LOG_AUTHPRIV},
+                {"LOG_CRON",     LOG_CRON},
+                {"LOG_DAEMON",   LOG_DAEMON},
+                {"LOG_FTP",      LOG_FTP},
+                {"LOG_KERN",     LOG_KERN},
+                {"LOG_LOCAL0",   LOG_LOCAL0},
+                {"LOG_LOCAL1",   LOG_LOCAL1},
+                {"LOG_LOCAL2",   LOG_LOCAL2},
+                {"LOG_LOCAL3",   LOG_LOCAL3},
+                {"LOG_LOCAL4",   LOG_LOCAL4},
+                {"LOG_LOCAL5",   LOG_LOCAL5},
+                {"LOG_LOCAL6",   LOG_LOCAL6},
+                {"LOG_LOCAL7",   LOG_LOCAL7},
+                {"LOG_LPR",      LOG_LPR},
+                {"LOG_MAIL",     LOG_MAIL},
+                {"LOG_NEWS",     LOG_NEWS},
+                {"LOG_SYSLOG",   LOG_SYSLOG},
+                {"LOG_USER",     LOG_USER},
+                {"LOG_UUCP",     LOG_UUCP}
+            };
+
+        for (auto const& m : log_facilities)
+        {
+            if (facility == m.name)
+            {
+                return m.facility;
+            }
+        }
+        throw SyslogException("Invalid syslog facility value: " + facility);
     }
 
 
