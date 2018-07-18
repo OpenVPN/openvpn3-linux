@@ -30,7 +30,9 @@
 #include "dbus/connection-creds.hpp"
 #include "dbus/exceptions.hpp"
 #include "dbus/object-property.hpp"
+#include "log/ansicolours.hpp"
 #include "log/dbus-log.hpp"
+#include "log/logwriter.hpp"
 #include "ovpn3cli/lookup.hpp"
 
 using namespace openvpn;
@@ -52,11 +54,15 @@ public:
      * @param conn        D-Bus connection to use when sending signals
      * @param object_path D-Bus object to use as sender of signals
      * @param default_log_level  Unsigned integer defining the initial log level
+     * @param logwr       Pointer to a LogWriter object for file logging.
+     *                    Can be nullptr, which results in no active file logging.
      */
     ConfigManagerSignals(GDBusConnection *conn, std::string object_path,
-                         unsigned int default_log_level)
+                         unsigned int default_log_level, LogWriter *logwr)
         : LogSender(conn, LogGroup::CONFIGMGR,
-                    OpenVPN3DBus_interf_configuration, object_path)
+                    OpenVPN3DBus_interf_configuration, object_path,
+                    logwr),
+          logwr(logwr)
     {
         SetLogLevel(default_log_level);
     }
@@ -66,6 +72,11 @@ public:
     {
     }
 
+
+    LogWriter *GetLogWriterPtr()
+    {
+        return logwr;
+    }
 
     /**
      *  Whenever a FATAL error happens, the process is expected to stop.
@@ -106,6 +117,9 @@ public:
         GVariant *params = g_variant_new("(uus)", (guint) major, (guint) minor, "");
         Send("StatusChange", params);
     }
+
+private:
+    LogWriter *logwr = nullptr;
 };
 
 
@@ -127,12 +141,15 @@ public:
      * @param aliasname  A string containing the alias name
      * @param cfgpath    An object path pointing at an existing D-Bus path
      * @param default_log_level  Unsigned integer defining the initial log level
+     * @param logwr      Pointer to LogWriter object; can be nullptr to disable
+     *                   file log.
      */
     ConfigurationAlias(GDBusConnection *dbuscon,
                        std::string aliasname, std::string cfgpath,
-                       unsigned int default_log_level)
+                       unsigned int default_log_level, LogWriter *logwr)
         : DBusObject(OpenVPN3DBus_rootp_configuration + "/aliases/" + aliasname),
-          ConfigManagerSignals(dbuscon, OpenVPN3DBus_rootp_configuration + "/aliases/" + aliasname, default_log_level),
+          ConfigManagerSignals(dbuscon, OpenVPN3DBus_rootp_configuration + "/aliases/" + aliasname,
+                               default_log_level, logwr),
           cfgpath(cfgpath)
     {
         alias = aliasname;
@@ -291,6 +308,8 @@ public:
      *                 destroying this configuration object.
      * @param objpath  D-Bus object path of this object
      * @param default_log_level  Unsigned integer defining the initial log level
+     * @param logwr    Pointer to LogWriter object; can be nullptr to disable
+     *                 file log.
      * @param creator  An uid reference of the owner of this object.  This is
      *                 typically the uid of the front-end user importing this
      *                 VPN configuration profile.
@@ -301,9 +320,9 @@ public:
     ConfigurationObject(GDBusConnection *dbuscon,
                         std::function<void()> remove_callback,
                         std::string objpath, unsigned int default_log_level,
-                        uid_t creator, GVariant *params)
+                        LogWriter *logwr, uid_t creator, GVariant *params)
         : DBusObject(objpath),
-          ConfigManagerSignals(dbuscon, objpath, default_log_level),
+          ConfigManagerSignals(dbuscon, objpath, default_log_level, logwr),
           DBusCredentials(dbuscon, creator),
           remove_callback(remove_callback),
           name(""),
@@ -762,7 +781,8 @@ public:
                     alias =  new ConfigurationAlias(conn,
                                                     std::string(g_variant_get_string(value, &len)),
                                                     GetObjectPath(),
-                                                    GetLogLevel());
+                                                    GetLogLevel(),
+                                                    GetLogWriterPtr());
                     alias->RegisterObject(conn);
                     ret = build_set_property_response(property_name, alias->GetAlias());
                 }
@@ -864,11 +884,14 @@ public:
      * @param dbuscon  D-Bus this object is tied to
      * @param objpath  D-Bus object path to this object
      * @param default_log_level  Unsigned integer defining the initial log level
+     * @param logwr      Pointer to LogWriter object; can be nullptr to disable
+     *                   file log.
+     *
      */
     ConfigManagerObject(GDBusConnection *dbusc, const std::string objpath,
-                        unsigned int default_log_level)
+                        unsigned int default_log_level, LogWriter *logwr)
         : DBusObject(objpath),
-          ConfigManagerSignals(dbusc, objpath, default_log_level),
+          ConfigManagerSignals(dbusc, objpath, default_log_level, logwr),
           dbuscon(dbusc),
           creds(dbusc)
     {
@@ -935,6 +958,7 @@ public:
                                                    },
                                                    cfgpath,
                                                    GetLogLevel(),
+                                                   GetLogWriterPtr(),
                                                    creds.GetUID(sender),
                                                    params);
             IdleCheck_RefInc();
@@ -1083,11 +1107,12 @@ public:
      * @param bustype   GBusType, which defines if this service should be
      *                  registered on the system or session bus.
      */
-    ConfigManagerDBus(GBusType bustype)
+    ConfigManagerDBus(GBusType bustype, LogWriter *logwr)
         : DBus(bustype,
                OpenVPN3DBus_name_configuration,
                OpenVPN3DBus_rootp_configuration,
                OpenVPN3DBus_interf_configuration),
+          logwr(logwr),
           cfgmgr(nullptr),
           procsig(nullptr)
     {
@@ -1121,7 +1146,7 @@ public:
     void callback_bus_acquired()
     {
         cfgmgr.reset(new ConfigManagerObject(GetConnection(), GetRootPath(),
-                                             default_log_level));
+                                             default_log_level, logwr));
         cfgmgr->RegisterObject(GetConnection());
 
         procsig = new ProcessSignalProducer(GetConnection(),
@@ -1168,6 +1193,7 @@ public:
 
 private:
     unsigned int default_log_level = 6; // LogCategory::DEBUG
+    LogWriter *logwr = nullptr;
     ConfigManagerObject::Ptr cfgmgr;
     ProcessSignalProducer * procsig;
 };
