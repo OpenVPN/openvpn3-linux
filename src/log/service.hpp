@@ -58,10 +58,12 @@ public:
      * @param objpath  String with object path this manager should be
      *                 with registered.
      */
-    LogServiceManager(GDBusConnection *dbcon, const std::string objpath)
+    LogServiceManager(GDBusConnection *dbcon, const std::string objpath,
+                      LogWriter *logwr)
                     : DBusObject(objpath),
                       DBusConnectionCreds(dbcon),
-                      dbuscon(dbcon)
+                      dbuscon(dbcon),
+                      logwr(logwr)
 
     {
         // Restrict extended access in this log service from these
@@ -119,6 +121,12 @@ public:
                                       GVariant *params,
                                       GDBusMethodInvocation *invoc)
     {
+        std::stringstream meta;
+        meta << "sender=" << sender
+             << ", object_path=" << obj_path
+             << ", interface=" << intf_name
+             << ", method=" << meth_name;
+
         try
         {
             // Extract the interface to operate on.  All D-Bus method
@@ -140,9 +148,14 @@ public:
                 // Check this has not been already registered
                 if (loggers.find(htag) != loggers.end())
                 {
-                    std::cout << "Duplicate: " << tag
-                              << " (hash: " << std::to_string(htag) << ")"
-                              << std::endl;
+                    std::stringstream l;
+                    l << "Duplicate: " << tag
+                      << " (hash: " << std::to_string(htag) << ")";
+
+                    logwr->AddMeta(meta.str());
+                    logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN,
+                                          l.str()));
+
                     GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.log",
                                                                   "Already registered");
                     g_dbus_method_invocation_return_gerror(invoc, err);
@@ -150,15 +163,17 @@ public:
                     return;
                 }
 
-                loggers[htag].reset(new Logger(dbuscon, tag,
-                                              sender, interface,
-                                              log_level, timestamp));
-                if (log_level > 5)
-                {
-                    std::cout << "Attached: " << tag
-                              << " (hash: " << std::to_string(htag) << ")"
-                              << std::endl;
-                }
+                loggers[htag].reset(new Logger(dbuscon, logwr, tag,
+                                              sender, interface, log_level));
+
+                std::stringstream l;
+                l << "Attached: " << tag
+                  << " (hash: " << std::to_string(htag) << ")"
+                  << std::endl;
+                logwr->AddMeta(meta.str());
+                logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2,
+                                      l.str()));
+
                 g_dbus_method_invocation_return_value(invoc, NULL);
             }
             else if ("Detach" == meth_name)
@@ -166,11 +181,17 @@ public:
                 // Ensure the requested logger is truly configured
                 if (loggers.find(htag) == loggers.end())
                 {
-                    std::cout << "Not found: " << tag
-                              << " (hash: " << std::to_string(htag) << ")"
-                              << std::endl;
-                    GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.log",
-                                                                  "Log registration not found");
+                    std::stringstream l;
+                    l << "Not found: " << tag
+                      << " (hash: " << std::to_string(htag) << ")";
+
+                    logwr->AddMeta(meta.str());
+                    logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN,
+                                          l.str()));
+
+                    GError *err = g_dbus_error_new_for_dbus_error(
+                                    "net.openvpn.v3.error.log",
+                                    "Log registration not found");
                     g_dbus_method_invocation_return_gerror(invoc, err);
                     g_error_free(err);
                     return;
@@ -181,12 +202,13 @@ public:
 
                 // Unsubscribe from signals from a D-Bus service/client
                 loggers.erase(htag);
-                if (log_level > 5)
-                {
-                    std::cout << "Detached: " << tag
-                              << " (hash: " << std::to_string(htag) << ")"
-                              << std::endl;
-                }
+                std::stringstream l;
+                l << "Detached: " << tag
+                  << " (hash: " << std::to_string(htag) << ")";
+                logwr->AddMeta(meta.str());
+                logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2,
+                                      l.str()));
+
                 g_dbus_method_invocation_return_value(invoc, NULL);
             }
             else
@@ -201,7 +223,9 @@ public:
         }
         catch (DBusCredentialsException& excp)
         {
-            std::cout << "** Critical ** " << excp.what() << std::endl;
+            logwr->AddMeta(meta.str());
+            logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::CRIT,
+                                  excp.what()));
             excp.SetDBusError(invoc);
             return;
         }
@@ -281,6 +305,12 @@ public:
                     GVariant *value,
                     GError **error)
     {
+        std::stringstream meta;
+        meta << "sender=" << sender
+             << ", object_path=" << obj_path
+             << ", interface=" << intf_name
+             << ", property_name=" << property_name;
+
         try
         {
             if ("log_level" == property_name)
@@ -299,16 +329,24 @@ public:
                 {
                     l.second->SetLogLevel(log_level);
                 }
+                std::stringstream l;
+                l << "Log level changed to " << std::to_string(log_level);
+                logwr->AddMeta(meta.str());
+                logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1,
+                                      l.str()));
                 return build_set_property_response(property_name,
                                                    (guint32) log_level);
             }
             else if ("timestamp" == property_name)
             {
                 timestamp = g_variant_get_boolean(value);
-                for (const auto& l : loggers)
-                {
-                    l.second->SetTimestampFlag(timestamp);
-                }
+                logwr->EnableTimestamp(timestamp);
+                std::stringstream l;
+                l << "Timestamp flag has changed to: "
+                  << (timestamp ? "enabled" : "disabled");
+                logwr->AddMeta(meta.str());
+                logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1,
+                                      l.str()));
                 return build_set_property_response(property_name,
                                                    (guint32) log_level);
             }
@@ -328,6 +366,7 @@ public:
 
 private:
     GDBusConnection *dbuscon = nullptr;
+    LogWriter *logwr = nullptr;
     std::map<size_t, Logger::Ptr> loggers = {};
     unsigned int log_level = 6;
     bool timestamp = true;
@@ -406,11 +445,12 @@ public:
      *
      * @param dbuscon  D-Bus connection to use to enable this service
      */
-    LogService(GDBusConnection *dbuscon)
+    LogService(GDBusConnection *dbuscon, LogWriter *logwr)
                     : DBus(dbuscon,
                            OpenVPN3DBus_name_log,
                            OpenVPN3DBus_rootp_log,
-                           OpenVPN3DBus_interf_log)
+                           OpenVPN3DBus_interf_log),
+                      logwr(logwr)
     {
     }
 
@@ -428,7 +468,8 @@ public:
         // register the Log Service Manager object which does the
         // real work.
         logmgr.reset(new LogServiceManager(GetConnection(),
-                                           OpenVPN3DBus_rootp_log));
+                                           OpenVPN3DBus_rootp_log,
+                                           logwr));
         logmgr->RegisterObject(GetConnection());
     }
 
@@ -464,4 +505,5 @@ public:
 
 private:
     LogServiceManager::Ptr logmgr;
+    LogWriter *logwr;
 };

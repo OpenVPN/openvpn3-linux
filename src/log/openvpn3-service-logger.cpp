@@ -28,6 +28,8 @@
 #include "common/utils.hpp"
 #include "common/cmdargparser.hpp"
 #include "logger.hpp"
+#include "logwriter.hpp"
+#include "ansicolours.hpp"
 #include "service.hpp"
 
 using namespace openvpn;
@@ -36,8 +38,6 @@ using namespace openvpn;
 static int logger(ParsedArgs args)
 {
     int ret = 0;
-    bool timestamp = args.Present("timestamp");
-    bool colour = args.Present("colour");
 
     unsigned int log_level = 3;
     if (args.Present("log-level"))
@@ -72,50 +72,84 @@ static int logger(ParsedArgs args)
     Logger::Ptr config_subscr = nullptr;
     LogService::Ptr logsrv = nullptr;
 
+    // Open a log destination
+    std::ofstream logfs;
+    std::streambuf * logstream;
+    if (args.Present("log-file"))
+    {
+        logfs.open(args.GetValue("log-file", 0).c_str(), std::ios_base::app);
+        logstream = logfs.rdbuf();
+    }
+    else
+    {
+        logstream = std::cout.rdbuf();
+    }
+    std::ostream logfile(logstream);
+
+
+    // Prepare the appropriate log writer
+    LogWriter::Ptr logwr = nullptr;
+    ColourEngine::Ptr colourengine = nullptr;
+    if (args.Present("colour"))
+     {
+         colourengine.reset(new ANSIColours());
+         logwr.reset(new ColourStreamWriter(logfile,
+                                            colourengine.get()));
+     }
+     else
+     {
+         logwr.reset(new StreamLogWriter(logfile));
+     }
+     logwr->EnableTimestamp(args.Present("timestamp"));
+
+
+     // Setup the log receivers
     try
     {
-        if (logfile.empty())
-        {
-            std::cout << get_version(args.GetArgv0()) << std::endl;
-        }
+        logfile << get_version(args.GetArgv0()) << std::endl;
 
         if (args.Present("service"))
         {
-            logsrv.reset(new LogService(dbusconn));
+            //  openvpn3-logger-service runs as a D-Bus log service
+            //  where log senders request this service to subscribe to
+            //  their log signals.
+            //
+            //  This service will be quite silent if
+            //  openvpn3-service-{backendstart,client,configmgr,sessionmgr}
+            //  uses --signal-broadcast, as they will not request any
+            //  subscriptions from the log service.
+            //
+            logsrv.reset(new LogService(dbusconn, logwr.get()));
             logsrv->Setup();
         }
         else
         {
+            //  openvpn3-service-logger only captures broadcast Log signals
+            //  and subscribes to specific broadcast senders.
+            //
+            //  If openvpn3-service-{backendstart,client,configmr,sessionmgr}
+            //  uses --signal-broadcast, these subscribers will receive
+            //  a lot more Log signals.  These services broadcasts very little
+            //  information by default.
+
+            unsigned int subscribers = 0;
             if (args.Present("vpn-backend"))
             {
-                be_subscription.reset(new Logger(dbusconn, "[B]", "",
+                be_subscription.reset(new Logger(dbusconn, logwr.get(),
+                                                 "[B]", "",
                                                  OpenVPN3DBus_interf_backends,
-                                                 log_level, timestamp));
-                if (!logfile.empty())
-                {
-                    be_subscription->OpenLogFile(logfile);
-                }
-
-                if (colour)
-                {
-                    be_subscription->SetColourScheme(
-                                    Logger::LogColour::BRIGHT_BLUE,
-                                    Logger::LogColour::BLACK);
-                }
+                                                 log_level));
+                ++subscribers;
             }
 
             if (args.Present("session-manager")
                 || args.Present("session-manager-client-proxy"))
             {
-                session_subscr.reset(new Logger(dbusconn, "[S]", "",
-                                                OpenVPN3DBus_interf_sessions,
-                                                log_level, timestamp));
-
-                if (!logfile.empty())
-                {
-                    session_subscr->OpenLogFile(logfile);
-                }
-
+                session_subscr = new Logger(dbusconn, logwr.get(),
+                                            "[S]", "",
+                                            OpenVPN3DBus_interf_sessions,
+                                            log_level);
+                ++subscribers;
                 if (!args.Present("session-manager-client-proxy"))
                 {
                     // Don't forward log messages from the backend client which
@@ -125,29 +159,23 @@ static int logger(ParsedArgs args)
                     // useful for debug reasons
                     session_subscr->AddExcludeFilter(LogGroup::CLIENT);
                 }
-
-                if (colour)
-                {
-                    session_subscr->SetColourScheme(
-                                    Logger::LogColour::BRIGHT_WHITE,
-                                    Logger::LogColour::BLUE);
-                }
             }
 
             if (args.Present("config-manager"))
             {
-                config_subscr.reset(new Logger(dbusconn, "[C]", "",
-                                               OpenVPN3DBus_interf_configuration,
-                                               log_level, timestamp));
-                if (!logfile.empty())
-                {
-                    config_subscr->OpenLogFile(logfile);
-                }
+                config_subscr = new Logger(dbusconn, logwr.get(),
+                                           "[C]", "",
+                                           OpenVPN3DBus_interf_configuration,
+                                           log_level);
+                ++subscribers;
+            }
 
-                if (colour)
-                {
-                    config_subscr->SetColourScheme(Logger::LogColour::WHITE, Logger::LogColour::GREEN);
-                }
+            if ((subscribers > 1) && colourengine)
+            {
+                // If having subscripbtions for different services, it
+                // is easier to separate them by grouping services (LogGroup)
+                // by colour than by LogCategory
+                colourengine->SetColourMode(ColourEngine::ColourMode::BY_GROUP);
             }
         }
 
