@@ -33,7 +33,7 @@
 
 #include "colourengine.hpp"
 #include "log-helpers.hpp"
-#include "dbus-log.hpp"
+#include "logevent.hpp"
 
 
 /**

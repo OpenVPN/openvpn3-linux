@@ -203,6 +203,7 @@ src_log_openvpn3_service_logger_SOURCES = \
 	src/log/colourengine.hpp \
 	src/log/dbus-log.hpp \
 	src/log/log-helpers.hpp \
+	src/log/logevent.hpp \
 	src/log/logger.hpp \
 	src/log/logwriter.hpp \
 	src/log/service.hpp \
