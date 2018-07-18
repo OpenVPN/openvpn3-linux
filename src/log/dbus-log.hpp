@@ -81,6 +81,18 @@ namespace openvpn
 
 
         /**
+         *  Checks if the LogEvent object is empty
+         *
+         * @return Returns true if it is empty/unused
+         */
+        bool empty()
+        {
+            return (LogGroup::UNDEFINED == group)
+                   && (LogCategory::UNDEFINED == category)
+                   && message.empty();
+        }
+
+        /**
          *  Parses a GVariant object containing a Log signal.  The input
          *  GVariant needs to be of 'a{sv}' which is a named dictonary.  It
          *  must contain the following key values to be valid:
