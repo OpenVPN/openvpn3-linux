@@ -57,13 +57,17 @@ public:
      * @param dbcon    GDBusConnection pointer to use for this service.
      * @param objpath  String with object path this manager should be
      *                 with registered.
+     * @param logwr    Pointer to a LogWriter object which handles log writes
+     * @param log_level Unsigned int with initial default log level to use
+     *
      */
     LogServiceManager(GDBusConnection *dbcon, const std::string objpath,
-                      LogWriter *logwr)
+                      LogWriter *logwr, const unsigned int log_level)
                     : DBusObject(objpath),
                       DBusConnectionCreds(dbcon),
                       dbuscon(dbcon),
-                      logwr(logwr)
+                      logwr(logwr),
+                      log_level(log_level)
 
     {
         // Restrict extended access in this log service from these
@@ -369,7 +373,7 @@ private:
     GDBusConnection *dbuscon = nullptr;
     LogWriter *logwr = nullptr;
     std::map<size_t, Logger::Ptr> loggers = {};
-    unsigned int log_level = 6;
+    unsigned int log_level;
     bool timestamp = true;
     std::vector<std::string> allow_list;
 
@@ -445,13 +449,17 @@ public:
      *  Initialize the Log Service.
      *
      * @param dbuscon  D-Bus connection to use to enable this service
+     * @param logwr    Pointer to a LogWriter object which handles log writes
+     * @param log_level Unsigned int with initial default log level to use
      */
-    LogService(GDBusConnection *dbuscon, LogWriter *logwr)
+    LogService(GDBusConnection *dbuscon, LogWriter *logwr,
+               unsigned int log_level)
                     : DBus(dbuscon,
                            OpenVPN3DBus_name_log,
                            OpenVPN3DBus_rootp_log,
                            OpenVPN3DBus_interf_log),
-                      logwr(logwr)
+                      logwr(logwr),
+                      log_level(log_level)
     {
     }
 
@@ -470,7 +478,7 @@ public:
         // real work.
         logmgr.reset(new LogServiceManager(GetConnection(),
                                            OpenVPN3DBus_rootp_log,
-                                           logwr));
+                                           logwr, log_level));
         logmgr->RegisterObject(GetConnection());
     }
 
@@ -507,4 +515,5 @@ public:
 private:
     LogServiceManager::Ptr logmgr;
     LogWriter *logwr;
+    unsigned int log_level;
 };

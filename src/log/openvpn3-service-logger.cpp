@@ -149,7 +149,7 @@ static int logger(ParsedArgs args)
             //  uses --signal-broadcast, as they will not request any
             //  subscriptions from the log service.
             //
-            logsrv.reset(new LogService(dbusconn, logwr.get()));
+            logsrv.reset(new LogService(dbusconn, logwr.get(), log_level));
             logsrv->Setup();
         }
         else
