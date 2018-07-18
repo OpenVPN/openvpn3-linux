@@ -43,6 +43,8 @@
 class LogWriter
 {
 public:
+    typedef std::unique_ptr<LogWriter> Ptr;
+
     LogWriter()
     {
     }

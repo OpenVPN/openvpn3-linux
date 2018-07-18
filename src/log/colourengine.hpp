@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "log-helpers.hpp"
 
 
@@ -36,6 +38,8 @@
 class ColourEngine
 {
 public:
+    typedef std::unique_ptr<ColourEngine> Ptr;
+
     /**
      *  Colouring approaches
      */
