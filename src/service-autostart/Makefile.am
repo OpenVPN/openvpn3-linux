@@ -1,7 +1,7 @@
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
-#  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-#  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2017-2018 OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2017-2018 David Sommerseth <davids@openvpn.net>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -28,12 +28,14 @@ MAINTAINERCLEANFILES = \
 EXTRA_DIST = \
 	net.openvpn.v3.configuration.service.in \
 	net.openvpn.v3.sessions.service.in \
-	net.openvpn.v3.backends.service.in
+	net.openvpn.v3.backends.service.in \
+	net.openvpn.v3.log.service.in
 
 dbus_system_service_DATA = \
 	net.openvpn.v3.configuration.service \
 	net.openvpn.v3.sessions.service \
-	net.openvpn.v3.backends.service
+	net.openvpn.v3.backends.service \
+	net.openvpn.v3.log.service
 
 CLEANFILES = $(dbus_system_service_DATA) *~
 
