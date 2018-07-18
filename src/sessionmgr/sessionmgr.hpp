@@ -1528,15 +1528,6 @@ public:
         RemoveObject(dbuscon);
     }
 
-    /**
-     * Enables logging to file in addition to the D-Bus Log signal events
-     *
-     * @param filename  String containing the name of the log file
-     */
-    void OpenLogFile(std::string filename)
-    {
-        SessionManagerSignals::OpenLogFile(filename);
-    }
 
     /**
      *  Callback method called each time a method in the SessionManagerObject
@@ -1730,8 +1721,7 @@ public:
                OpenVPN3DBus_rootp_sessions,
                OpenVPN3DBus_interf_sessions),
           managobj(nullptr),
-          procsig(nullptr),
-          logfile("")
+          procsig(nullptr)
     {
     };
 
@@ -1739,18 +1729,6 @@ public:
     {
         procsig->ProcessChange(StatusMinor::PROC_STOPPED);
         delete procsig;
-    }
-
-
-    /**
-     *  Prepares logging to file.  This happens in parallel with the
-     *  D-Bus Log events which will be sent with Log events.
-     *
-     * @param filename  Filename of the log file to save the log events.
-     */
-    void SetLogFile(std::string filename)
-    {
-        logfile = filename;
     }
 
 
@@ -1782,10 +1760,6 @@ public:
         // point to this service
         managobj.reset(new SessionManagerObject(GetConnection(), GetRootPath(),
                                                 manager_log_level));
-        if (!logfile.empty())
-        {
-            managobj->OpenLogFile(logfile);
-        }
 
         // Register this object to on the D-Bus
         managobj->RegisterObject(GetConnection());
@@ -1836,7 +1810,6 @@ private:
     unsigned int manager_log_level = 6; // LogCategory::DEBUG
     SessionManagerObject::Ptr managobj;
     ProcessSignalProducer * procsig;
-    std::string logfile;
 };
 
 #endif // OPENVPN3_DBUS_SESSIONMGR_HPP

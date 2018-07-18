@@ -1024,18 +1024,6 @@ public:
 
 
     /**
-     *  Prepares logging to file.  This happens in parallel with the
-     *  D-Bus Log events which will be sent with Log events.
-     *
-     * @param filename  Filename of the log file to save the log events.
-     */
-    void LogFile(std::string logfile)
-    {
-        signal->OpenLogFile(logfile);
-    }
-
-
-    /**
      *  Broadcast all signals, instead of targeted signals.  This is
      *  disabled by default and must be enabled explicitly.  This is
      *  most commonly used for debugging.

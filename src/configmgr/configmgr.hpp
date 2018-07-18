@@ -901,17 +901,6 @@ public:
 
 
     /**
-     * Enables logging to file in addition to the D-Bus Log signal events
-     *
-     * @param filename  String containing the name of the log file
-     */
-    void OpenLogFile(std::string filename)
-    {
-        ConfigManagerSignals::OpenLogFile(filename);
-    }
-
-
-    /**
      *  Callback method called each time a method in the
      *  ConfigurationManagerObject is called over the D-Bus.
      *
@@ -1100,8 +1089,7 @@ public:
                OpenVPN3DBus_rootp_configuration,
                OpenVPN3DBus_interf_configuration),
           cfgmgr(nullptr),
-          procsig(nullptr),
-          logfile("")
+          procsig(nullptr)
     {
     };
 
@@ -1109,18 +1097,6 @@ public:
     {
         procsig->ProcessChange(StatusMinor::PROC_STOPPED);
         delete procsig;
-    }
-
-
-    /**
-     *  Prepares logging to file.  This happens in parallel with the
-     *  D-Bus Log events which will be sent with Log events.
-     *
-     * @param filename  Filename of the log file to save the log events.
-     */
-    void SetLogFile(std::string filename)
-    {
-        logfile = filename;
     }
 
 
@@ -1146,10 +1122,6 @@ public:
     {
         cfgmgr.reset(new ConfigManagerObject(GetConnection(), GetRootPath(),
                                              default_log_level));
-        if (!logfile.empty())
-        {
-            cfgmgr->OpenLogFile(logfile);
-        }
         cfgmgr->RegisterObject(GetConnection());
 
         procsig = new ProcessSignalProducer(GetConnection(),
@@ -1198,7 +1170,6 @@ private:
     unsigned int default_log_level = 6; // LogCategory::DEBUG
     ConfigManagerObject::Ptr cfgmgr;
     ProcessSignalProducer * procsig;
-    std::string logfile;
 };
 
 #endif // OPENVPN3_DBUS_CONFIGMGR_HPP

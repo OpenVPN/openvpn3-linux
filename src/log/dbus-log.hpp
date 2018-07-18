@@ -135,72 +135,12 @@ namespace openvpn
 };
 
 
-    class FileLog
-    {
-    public:
-        FileLog()
-            : file_open(false)
-        {
-        }
-
-        ~FileLog()
-        {
-            if (file_open)
-            {
-                // FIXME: Close file
-            }
-        }
-
-        virtual void OpenLogFile(std::string filename)
-        {
-            if (file_open)
-            {
-                THROW_LOGEXCEPTION("FileLog: Log file already opened");
-            }
-            logfs.open(filename, std::ios_base::app);
-            if (!logfs)
-            {
-                THROW_LOGEXCEPTION("FileLog: Failed to open logfile '" + filename + "'");
-            }
-            file_open = true;
-        }
-
-
-        virtual void LogWrite(const std::string sender, const LogEvent& logev) final
-        {
-            if( !file_open )
-            {
-                THROW_LOGEXCEPTION("FileLog: No log file opened");
-            }
-            logfs << GetTimestamp();
-            if (!sender.empty())
-            {
-                  logfs << "[" << sender << "] ";
-            }
-            logfs << logev << std::endl;
-            logfs.flush();
-        }
-
-
-        bool GetLogActive()
-        {
-            return file_open;
-        }
-
-    private:
-        bool file_open;
-        std::ofstream logfs;
-    };
-
-
     class LogSender : public DBusSignalProducer,
-                      public FileLog,
                       public LogFilter
     {
     public:
         LogSender(GDBusConnection * dbuscon, const LogGroup lgroup, std::string interf, std::string objpath)
             : DBusSignalProducer(dbuscon, "", interf, objpath),
-              FileLog(),
               LogFilter(3),
               log_group(lgroup)
         {
@@ -255,10 +195,6 @@ namespace openvpn
                 return;
             }
 
-            if( GetLogActive() )
-            {
-                LogWrite("", logev);
-            }
             Send("Log", g_variant_new("(uus)",
                                       (guint) logev.group,
                                       (guint) logev.category,
