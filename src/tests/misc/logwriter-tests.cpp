@@ -94,6 +94,9 @@ void run_test_3(LogWriter& w)
                             std::string("LogEvent() test line: ")
                             + std::to_string(group) + ":"
                             + std::to_string(catg));
+                w.AddMeta("Meta data for test line:"
+                          + std::to_string(group) + ":"
+                          + std::to_string(catg));
                 w.Write(ev);
         }
     }

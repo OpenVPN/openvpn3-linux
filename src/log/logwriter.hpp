@@ -130,8 +130,20 @@ public:
     }
 
 
+    /**
+     *  Adds meta log info, which is printed before the log line
+     *  written by Write().  This must be added before each Write() call.
+     *
+     * @param data  std::string containing meta data related to the log data
+     */
+    virtual void AddMeta(const std::string& data)
+    {
+        metadata = data;
+    }
+
 protected:
     bool  timestamp = true;
+    std::string metadata;
 };
 
 
@@ -178,6 +190,13 @@ public:
                        const std::string& colour_init = "",
                        const std::string& colour_reset = "") override
     {
+        if (!metadata.empty())
+        {
+            dest << (timestamp ? GetTimestamp() : "") << " "
+                 << colour_init << metadata << colour_reset
+                 << std::endl;
+            metadata.clear();
+        }
         dest << (timestamp ? GetTimestamp() : "") << " "
              << colour_init << data << colour_reset
              << std::endl;
@@ -394,6 +413,13 @@ public:
         // care about timestamps, as we trust the syslog takes
         // care of that.  We also do not do anything about
         // colours, as that can mess up the log files.
+
+        if (!metadata.empty())
+        {
+            syslog(LOG_INFO, "%s", metadata.c_str());
+            metadata.clear();
+        }
+
         syslog(LOG_INFO, "%s", data.c_str());
     }
 
@@ -406,6 +432,11 @@ public:
         // Equally simple to the other Write() method, but here
         // we have access to LogGroup and LogCategory, so we
         // include that information.
+        if (!metadata.empty())
+        {
+            syslog(logcatg2syslog(ctg), "%s", metadata.c_str());
+            metadata.clear();
+        }
         syslog(logcatg2syslog(ctg), "%s%s",
                LogPrefix(grp, ctg).c_str(), data.c_str());
     }
