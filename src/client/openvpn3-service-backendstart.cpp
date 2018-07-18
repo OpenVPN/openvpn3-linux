@@ -503,11 +503,25 @@ int backend_starter(ParsedArgs args)
     {
         client_args.push_back("--no-setsid");
     }
+#endif
+    if (args.Present("client-log-level"))
+    {
+        client_args.push_back("--log-level");
+        client_args.push_back(args.GetValue("client-log-level", 0));
+    }
+    if (args.Present("client-log-file"))
+    {
+        client_args.push_back("--log-file");
+        client_args.push_back(args.GetValue("client-log-file", 0));
+    }
+    if (args.Present("client-colour"))
+    {
+        client_args.push_back("--colour");
+    }
     if (args.Present("client-signal-broadcast"))
     {
         client_args.push_back("--signal-broadcast");
     }
-#endif
 
     unsigned int idle_wait_sec = 3;
     if (args.Present("idle-exit"))
@@ -568,9 +582,15 @@ int main(int argc, char **argv)
                   "Debug option: Adds the --no-fork argument to openvpn3-service-client");
     cmd.AddOption("client-no-setsid", 0,
                   "Debug option: Adds the --no-setsid argument to openvpn3-service-client");
+#endif
+    cmd.AddOption("client-log-level", "LEVEL", true,
+                  "Adds the --log-level LEVEL argument to openvpn3-service-client");
+    cmd.AddOption("client-log-file", "FILE", true,
+                  "Adds the --log-file FILE argument to openvpn3-service-client");
+    cmd.AddOption("client-colour", 0,
+                  "Adds the --colour argument to openvpn3-service-client");
     cmd.AddOption("client-signal-broadcast", 0,
                   "Debug option: Adds the --signal-broadcast argument to openvpn3-service-client");
-#endif
     cmd.AddOption("idle-exit", "SECONDS", true,
                   "How long to wait before exiting if being idle. "
                   "0 disables it (Default: 10 seconds)");
