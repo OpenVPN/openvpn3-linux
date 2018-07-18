@@ -182,8 +182,7 @@ public:
     void ConsumeLogEvent(const std::string sender,
                          const std::string interface,
                          const std::string object_path,
-                         const LogGroup group, const LogCategory catg,
-                         const std::string msg)
+                         const LogEvent& logev)
     {
         // If file log is active, skip logging to console
         if (GetLogActive())
@@ -193,7 +192,7 @@ public:
 
         for (const auto& e : exclude_loggroup)
         {
-            if (e == group)
+            if (e == logev.group)
             {
                 return;  // Don't do anything if this LogGroup is filtered
             }
@@ -206,7 +205,7 @@ public:
                   << ", path=" << object_path
                   << std::endl
                   << (timestamp ? "                    " : "       ")
-                  << LogPrefix(group, catg) << msg
+                  << logev
                   << std::endl << colourreset;
     }
 
@@ -218,5 +217,3 @@ private:
     std::string colourreset;
     std::vector<LogGroup> exclude_loggroup;
 };
-
-

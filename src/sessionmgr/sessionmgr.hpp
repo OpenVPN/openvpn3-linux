@@ -82,7 +82,7 @@ public:
      */
     void LogFATAL(std::string msg)
     {
-        Log(log_group, LogCategory::FATAL, msg);
+        Log(LogEvent(log_group, LogCategory::FATAL, msg));
         StatusChange(StatusMajor::SESSION, StatusMinor::PROC_KILLED, msg);
         abort();
     }
@@ -173,7 +173,8 @@ public:
                     std::string be_obj_path,
                     std::string sigproxy_obj_path)
         : LogConsumerProxy(conn, interface, be_obj_path,
-                           OpenVPN3DBus_interf_sessions, sigproxy_obj_path)
+                           OpenVPN3DBus_interf_sessions, sigproxy_obj_path),
+           last_logev()
     {
     }
 
@@ -193,12 +194,9 @@ public:
     void ConsumeLogEvent(const std::string sender,
                          const std::string interface,
                          const std::string object_path,
-                         const LogGroup group, const LogCategory catg,
-                         const std::string msg)
+                         const LogEvent& logev)
     {
-        last_group = group;
-        last_logcateg = catg;
-        last_msg = msg;
+        last_logev = logev;
     }
 
 
@@ -210,14 +208,17 @@ public:
      */
     GVariant * GetLastLogEntry()
     {
-        if( last_msg.empty() && LogGroup::UNDEFINED == last_group)
+        if( last_logev.empty())
         {
             return NULL;  // Nothing have been logged, nothing to report
         }
         GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
-        g_variant_builder_add (b, "{sv}", "log_group", g_variant_new_uint32((guint32) last_group));
-        g_variant_builder_add (b, "{sv}", "log_category", g_variant_new_uint32((guint32) last_logcateg));
-        g_variant_builder_add (b, "{sv}", "log_message", g_variant_new_string(last_msg.c_str()));
+        g_variant_builder_add (b, "{sv}", "log_group",
+                               g_variant_new_uint32((guint32) last_logev.group));
+        g_variant_builder_add (b, "{sv}", "log_category",
+                               g_variant_new_uint32((guint32) last_logev.category));
+        g_variant_builder_add (b, "{sv}", "log_message",
+                               g_variant_new_string(last_logev.message.c_str()));
         GVariant *ret = g_variant_builder_end(b);
         g_variant_builder_unref(b);
         return ret;
@@ -230,9 +231,7 @@ public:
     }
 
 private:
-    LogGroup last_group;
-    LogCategory last_logcateg;
-    std::string last_msg;
+    LogEvent last_logev;
 };
 
 

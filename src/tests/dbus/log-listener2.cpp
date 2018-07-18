@@ -45,13 +45,12 @@ public:
 
     void ConsumeLogEvent(const std::string sender, const std::string interface,
                          const std::string object_path,
-                         const LogGroup group, const LogCategory catg,
-                         const std::string msg)
+                         const LogEvent& logev)
     {
         std::cout << log_tag << ":: sender=" << sender
                   << ", interface=" << interface
                   << " path=" << object_path << std::endl
-                  << "       " << LogPrefix(group, catg) << msg << std::endl;
+                  << "       " << logev << std::endl;
     }
 
 private:

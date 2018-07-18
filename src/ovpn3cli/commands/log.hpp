@@ -67,12 +67,9 @@ public:
     void ConsumeLogEvent(const std::string sender,
                          const std::string interface,
                          const std::string object_path,
-                         const LogGroup group, const LogCategory catg,
-                         const std::string msg)
+                         const LogEvent& logev)
     {
-        std::cout << GetTimestamp()
-                  << LogPrefix(group, catg) << msg
-                  << std::endl;
+        std::cout << GetTimestamp() << logev << std::endl;
     }
 };
 

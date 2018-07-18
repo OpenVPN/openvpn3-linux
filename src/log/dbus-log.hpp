@@ -295,9 +295,8 @@ namespace openvpn
             file_open = true;
         }
 
-        virtual void LogWrite(const std::string sender,
-                              LogGroup lgroup, LogCategory catg,
-                              std::string msg) final
+
+        virtual void LogWrite(const std::string sender, const LogEvent& logev) final
         {
             if( !file_open )
             {
@@ -308,19 +307,10 @@ namespace openvpn
             {
                   logfs << "[" << sender << "] ";
             }
-            logfs << LogPrefix(lgroup, catg)
-                  << msg
-                  << std::endl;
+            logfs << logev << std::endl;
             logfs.flush();
         }
 
-        virtual void LogWrite(const std::string sender,
-                              guint32 lgroup, guint32 catg,
-                              gchar *msg) final
-        {
-            LogWrite(sender, (LogGroup) lgroup, (LogCategory) catg,
-                     std::string(msg));
-        }
 
         bool GetLogActive()
         {
@@ -386,64 +376,65 @@ namespace openvpn
             }
         }
 
-        void Log(const LogGroup group, const LogCategory catg, const std::string msg)
+        void Log(const LogEvent& logev)
         {
             // Don't log unless the log level filtering allows it
             // The filtering is done against the LogCategory of the message
-            if (!LogFilterAllow(catg))
+            if (!LogFilterAllow(logev.category))
             {
                 return;
             }
 
             if( GetLogActive() )
             {
-                LogWrite("", group, catg, msg);
+                LogWrite("", logev);
             }
-            guint gr = (guint) group;
-            guint cg = (guint) catg;
-            Send("Log", g_variant_new("(uus)", gr, cg, msg.c_str()));
+            Send("Log", g_variant_new("(uus)",
+                                      (guint) logev.group,
+                                      (guint) logev.category,
+                                      logev.message.c_str()));
         }
 
         virtual void Debug(std::string msg)
         {
-            Log(log_group, LogCategory::DEBUG, msg);
+            Log(LogEvent(log_group, LogCategory::DEBUG, msg));
         }
 
         virtual void LogVerb2(std::string msg)
         {
-            Log(log_group, LogCategory::VERB2, msg);
+            Log(LogEvent(log_group, LogCategory::VERB2, msg));
         }
 
         virtual void LogVerb1(std::string msg)
         {
-            Log(log_group, LogCategory::VERB1, msg);
+            Log(LogEvent(log_group, LogCategory::VERB1, msg));
         }
 
         virtual void LogInfo(std::string msg)
         {
-            Log(log_group, LogCategory::INFO, msg);
+            Log(LogEvent(log_group, LogCategory::INFO, msg));
         }
 
         virtual void LogWarn(std::string msg)
         {
-            Log(log_group, LogCategory::WARN, msg);
+            Log(LogEvent(log_group, LogCategory::WARN, msg));
         }
 
         virtual void LogError(std::string msg)
         {
-            Log(log_group, LogCategory::ERROR, msg);
+            Log(LogEvent(log_group, LogCategory::ERROR, msg));
         }
 
         virtual void LogCritical(std::string msg)
         {
             // Critical log messages will always be sent
-            Log(log_group, LogCategory::CRIT, msg);
+            Log(LogEvent(log_group, LogCategory::CRIT, msg));
         }
 
         virtual void LogFATAL(std::string msg)
         {
             // Fatal log messages will always be sent
-            Log(log_group, LogCategory::FATAL, msg);
+            Log(LogEvent(log_group, LogCategory::FATAL, msg));
             // FIXME: throw something here, to start shutdown procedures
         }
 
@@ -466,8 +457,10 @@ namespace openvpn
         {
         }
 
-        virtual void ConsumeLogEvent(const std::string sender, const std::string interface, const std::string object_path,
-                                     const LogGroup group, const LogCategory catg, const std::string msg) = 0;
+        virtual void ConsumeLogEvent(const std::string sender,
+                                     const std::string interface,
+                                     const std::string object_path,
+                                     const LogEvent& logev) = 0;
 
         void callback_signal_handler(GDBusConnection *connection,
                                      const std::string sender_name,
@@ -489,6 +482,8 @@ namespace openvpn
             guint catg;
             gchar *msg;
             g_variant_get (params, "(uus)", &group, &catg, &msg);
+            auto logev = LogEvent((LogGroup) group, (LogCategory) catg,
+                                  std::string(msg));
 
             if (!LogFilterAllow(catg))
             {
@@ -497,9 +492,10 @@ namespace openvpn
 
             if (GetLogActive())
             {
-                LogWrite(sender, group, catg, msg);
+                LogWrite(sender, logev);
             }
-            ConsumeLogEvent(sender, interface, object_path, (LogGroup) group, (LogCategory) catg, std::string(msg));
+
+            ConsumeLogEvent(sender, interface, object_path, logev);
 
         exit:
             g_free(msg);
@@ -521,9 +517,7 @@ namespace openvpn
         virtual void ConsumeLogEvent(const std::string sender,
                                      const std::string interface,
                                      const std::string object_path,
-                                     const LogGroup group,
-                                     const LogCategory catg,
-                                     const std::string msg) = 0;
+                                     const LogEvent& logev) = 0;
 
     protected:
         virtual void process_log_event(const std::string sender,
@@ -535,13 +529,15 @@ namespace openvpn
             guint catg;
             gchar *msg;
             g_variant_get (params, "(uus)", &group, &catg, &msg);
+            auto logev = LogEvent((LogGroup) group, (LogCategory) catg,
+                                  std::string(msg));
 
             if (openvpn::LogConsumer::GetLogActive())
             {
-                openvpn::LogConsumer::LogWrite(sender, group, catg, msg);
+                openvpn::LogConsumer::LogWrite(sender, logev);
             }
-            ConsumeLogEvent(sender, interface, object_path,
-                            (LogGroup) group, (LogCategory) catg, std::string(msg));
+            ConsumeLogEvent(sender, interface, object_path, logev);
+
             ProxyLog(params);
             g_free(msg);
         }

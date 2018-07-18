@@ -77,7 +77,7 @@ public:
      */
     void LogFATAL(std::string msg)
     {
-        Log(log_group, LogCategory::FATAL, msg);
+        Log(LogEvent(log_group, LogCategory::FATAL, msg));
         StatusChange(StatusMajor::SESSION, StatusMinor::PROC_KILLED, msg);
         abort();
     }
