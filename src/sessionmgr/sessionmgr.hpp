@@ -47,6 +47,7 @@
 #include "dbus/connection-creds.hpp"
 #include "dbus/path.hpp"
 #include "log/dbus-log.hpp"
+#include "log/logwriter.hpp"
 #include "client/backendstatus.hpp"
 #include "ovpn3cli/lookup.hpp"
 
@@ -62,8 +63,9 @@ class SessionManagerSignals : public LogSender
 {
 public:
     SessionManagerSignals(GDBusConnection *conn, std::string object_path,
-                          unsigned int log_level)
-            : LogSender(conn, LogGroup::SESSIONMGR, OpenVPN3DBus_interf_sessions, object_path)
+                          unsigned int log_level, LogWriter *logwr)
+            : LogSender(conn, LogGroup::SESSIONMGR,
+                        OpenVPN3DBus_interf_sessions, object_path, logwr)
     {
         SetLogLevel(log_level);
     }
@@ -420,16 +422,20 @@ public:
      * @param objpath  D-Bus object path of this object
      * @param cfg_path D-Bus object path of the VPN profile configuration this
      *                 session is tied to.
+     * @param manager_log_level Default log level, used by the session manager
+     * @param logwr    Pointer to LogWriter object; can be nullptr to
+     *                 disablefile log.
+     *
      */
     SessionObject(GDBusConnection *dbuscon,
                   std::function<void()> remove_callback,
                   uid_t owner,
                   std::string objpath, std::string cfg_path,
-                  unsigned int manager_log_level)
+                  unsigned int manager_log_level, LogWriter *logwr)
         : DBusObject(objpath),
           DBusSignalSubscription(dbuscon, "", OpenVPN3DBus_interf_backends, ""),
           DBusCredentials(dbuscon, owner),
-          SessionManagerSignals(dbuscon, objpath, manager_log_level),
+          SessionManagerSignals(dbuscon, objpath, manager_log_level, logwr),
           remove_callback(remove_callback),
           be_proxy(nullptr),
           recv_log_events(false),
@@ -1495,11 +1501,14 @@ public:
      *
      * @param dbuscon  D-Bus this object is tied to
      * @param objpath  D-Bus object path to this object
+     * @param logwr    Pointer to LogWriter object; can be nullptr to
+     *                 disablefile log.
+     *
      */
     SessionManagerObject(GDBusConnection *dbuscon, const std::string objpath,
-                         unsigned int manager_log_level)
+                         unsigned int manager_log_level, LogWriter *logwr)
         : DBusObject(objpath),
-          SessionManagerSignals(dbuscon, objpath, manager_log_level),
+          SessionManagerSignals(dbuscon, objpath, manager_log_level, logwr),
           dbuscon(dbuscon),
           creds(dbuscon)
     {
@@ -1577,7 +1586,7 @@ public:
                                                        creds.GetUID(sender),
                                                        sesspath,
                                                        config_path,
-                                                       GetLogLevel());
+                                                       GetLogLevel(), logwr);
             IdleCheck_RefInc();
             session->IdleCheck_Register(IdleCheck_Get());
             session->RegisterObject(conn);
@@ -1714,12 +1723,16 @@ public:
      *
      * @param bus_type  GBusType, which defines if this service should be
      *                  registered on the system or session bus.
+     * @param logwr     Pointer to LogWriter object; can be nullptr to
+     *                  disablefile log.
+     *
      */
-    SessionManagerDBus(GBusType bus_type)
+    SessionManagerDBus(GBusType bus_type, LogWriter *logwr)
         : DBus(bus_type,
                OpenVPN3DBus_name_sessions,
                OpenVPN3DBus_rootp_sessions,
                OpenVPN3DBus_interf_sessions),
+          logwr(logwr),
           managobj(nullptr),
           procsig(nullptr)
     {
@@ -1759,7 +1772,7 @@ public:
         // Create a SessionManagerObject which will be the main entrance
         // point to this service
         managobj.reset(new SessionManagerObject(GetConnection(), GetRootPath(),
-                                                manager_log_level));
+                                                manager_log_level, logwr));
 
         // Register this object to on the D-Bus
         managobj->RegisterObject(GetConnection());
@@ -1808,6 +1821,7 @@ public:
 
 private:
     unsigned int manager_log_level = 6; // LogCategory::DEBUG
+    LogWriter *logwr = nullptr;
     SessionManagerObject::Ptr managobj;
     ProcessSignalProducer * procsig;
 };

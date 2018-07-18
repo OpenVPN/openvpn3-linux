@@ -20,7 +20,9 @@
 #define SHUTDOWN_NOTIF_PROCESS_NAME "openvpn3-service-sessionmgr"
 #include "dbus/core.hpp"
 #include "sessionmgr.hpp"
+#include "log/ansicolours.hpp"
 #include "log/dbus-log.hpp"
+#include "log/logwriter.hpp"
 #include "common/cmdargparser.hpp"
 
 using namespace openvpn;
@@ -41,7 +43,40 @@ static int session_manager(ParsedArgs args)
     {
         idle_wait_min = std::atoi(args.GetValue("idle-exit", 0).c_str());
     }
-    SessionManagerDBus sessmgr(G_BUS_TYPE_SYSTEM);
+
+    // Open a log destination, if requested
+    std::ofstream logfs;
+    std::ostream  *logfile = nullptr;
+    LogWriter::Ptr logwr = nullptr;
+    ColourEngine::Ptr colourengine = nullptr;
+
+    if (args.Present("log-file"))
+    {
+        std::string fname = args.GetValue("log-file", 0);
+
+        if ("stdout:" != fname)
+        {
+            logfs.open(fname.c_str(), std::ios_base::app);
+            logfile = &logfs;
+        }
+        else
+        {
+            logfile = &std::cout;
+        }
+
+        if (args.Present("colour"))
+        {
+            colourengine.reset(new ANSIColours());
+             logwr.reset(new ColourStreamWriter(*logfile,
+                                                colourengine.get()));
+        }
+        else
+        {
+            logwr.reset(new StreamLogWriter(*logfile));
+        }
+    }
+
+    SessionManagerDBus sessmgr(G_BUS_TYPE_SYSTEM, logwr.get());
 
     unsigned int log_level = 3;
     if (args.Present("log-level"))
@@ -84,6 +119,11 @@ int main(int argc, char **argv)
     argparser.AddVersionOption();
     argparser.AddOption("log-level", "LOG-LEVEL", true,
                         "Log verbosity level (valid values 0-6, default 3)");
+    argparser.AddOption("log-file", "FILE" , true,
+                        "Write log data to FILE.  Use 'stdout:' for console logging.");
+    argparser.AddOption("colour", 0,
+                        "Make the log lines colourful");
+
     argparser.AddOption("idle-exit", "MINUTES", true,
                         "How long to wait before exiting if being idle. "
                         "0 disables it (Default: 3 minutes)");
