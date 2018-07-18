@@ -63,6 +63,20 @@ static int logger(ParsedArgs args)
         throw CommandException("openvpn3-service-logger", err.str());
     }
 
+    if (args.Present("syslog") && args.Present("log-file"))
+    {
+        std::stringstream err;
+        err << "--syslog and --log-file cannot be combined.";
+        throw CommandException("openvpn3-service-logger", err.str());
+    }
+
+    if (args.Present("syslog") && args.Present("colour"))
+    {
+        std::stringstream err;
+        err << "--syslog and --colour cannot be combined.";
+        throw CommandException("openvpn3-service-logger", err.str());
+    }
+
     DBus dbus(G_BUS_TYPE_SYSTEM);
     dbus.Connect();
     GDBusConnection *dbusconn = dbus.GetConnection();
@@ -89,7 +103,11 @@ static int logger(ParsedArgs args)
     // Prepare the appropriate log writer
     LogWriter::Ptr logwr = nullptr;
     ColourEngine::Ptr colourengine = nullptr;
-    if (args.Present("colour"))
+    if (args.Present("syslog"))
+     {
+         logwr.reset(new SyslogWriter());
+     }
+     else if (args.Present("colour"))
      {
          colourengine.reset(new ANSIColours());
          logwr.reset(new ColourStreamWriter(logfile,
@@ -225,6 +243,8 @@ int main(int argc, char **argv)
                         "Subscribe to VPN client log entries");
     argparser.AddOption("log-level", 0, "LEVEL", true,
                         "Set the log verbosity level (default 3)");
+    argparser.AddOption("syslog", 0,
+                        "Send all log events to syslog");
     argparser.AddOption("log-file", 0, "FILE", true,
                         "Log events to file");
     argparser.AddOption("service", 0,
