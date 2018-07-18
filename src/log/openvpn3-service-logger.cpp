@@ -105,7 +105,20 @@ static int logger(ParsedArgs args)
     ColourEngine::Ptr colourengine = nullptr;
     if (args.Present("syslog"))
      {
-         logwr.reset(new SyslogWriter());
+        int facility = LOG_DAEMON;
+        if (args.Present("syslog-facility"))
+        {
+            try {
+                std::string f = args.GetValue("syslog-facility", 0);
+                facility = SyslogWriter::ConvertLogFacility(f);
+            }
+            catch (SyslogException& excp)
+            {
+                throw CommandException("openvpn3-service-logger",
+                                       excp.what());
+            }
+        }
+        logwr.reset(new SyslogWriter(args.GetArgv0().c_str(), facility));
      }
      else if (args.Present("colour"))
      {
@@ -245,6 +258,8 @@ int main(int argc, char **argv)
                         "Set the log verbosity level (default 3)");
     argparser.AddOption("syslog", 0,
                         "Send all log events to syslog");
+    argparser.AddOption("syslog-facility", 0, "FACILITY", true,
+                        "Use a specific syslog facility (Default: LOG_DAEMON)");
     argparser.AddOption("log-file", 0, "FILE", true,
                         "Log events to file");
     argparser.AddOption("service", 0,
