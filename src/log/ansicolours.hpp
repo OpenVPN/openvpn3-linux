@@ -143,9 +143,88 @@ public:
 
     }
 
+
     const std::string Reset()
     {
         return "\033[0m";
+    }
+
+
+
+    const std::string ColourByGroup(LogGroup grp)
+    {
+        switch(grp)
+        {
+        case LogGroup::CONFIGMGR:
+            return Set(ColourEngine::Colour::BRIGHT_WHITE,
+                                ColourEngine::Colour::GREEN);
+
+        case LogGroup::SESSIONMGR:
+            return Set(ColourEngine::Colour::BRIGHT_WHITE,
+                                ColourEngine::Colour::BLUE);
+
+        case LogGroup::BACKENDSTART:
+            return Set(ColourEngine::Colour::BRIGHT_WHITE,
+                                ColourEngine::Colour::CYAN);
+
+        case LogGroup::LOGGER:
+            return Set(ColourEngine::Colour::BRIGHT_GREEN,
+                                ColourEngine::Colour::NONE);
+
+        case LogGroup::BACKENDPROC:
+            return Set(ColourEngine::Colour::CYAN,
+                                ColourEngine::Colour::NONE);
+
+        case LogGroup::CLIENT:
+            return Set(ColourEngine::Colour::BRIGHT_YELLOW,
+                                ColourEngine::Colour::NONE);
+
+        case LogGroup::UNDEFINED:
+        case LogGroup::MASTERPROC:
+        default:
+            return "";
+        }
+    }
+
+
+    const std::string ColourByCategory(LogCategory ctg)
+    {
+        switch(ctg)
+        {
+        case LogCategory::DEBUG:
+            return Set(ColourEngine::Colour::BRIGHT_BLUE,
+                       ColourEngine::Colour::NONE);
+
+        case LogCategory::VERB2:
+            return Set(ColourEngine::Colour::BRIGHT_CYAN,
+                       ColourEngine::Colour::NONE);
+
+        case LogCategory::VERB1:
+            return "";
+
+        case LogCategory::INFO:
+            return Set(ColourEngine::Colour::BRIGHT_WHITE,
+                       ColourEngine::Colour::NONE);
+
+        case LogCategory::WARN:
+            return Set(ColourEngine::Colour::BRIGHT_YELLOW,
+                       ColourEngine::Colour::NONE);
+
+        case LogCategory::ERROR:
+            return Set(ColourEngine::Colour::BRIGHT_RED,
+                       ColourEngine::Colour::NONE);
+
+        case LogCategory::CRIT:
+            return Set(ColourEngine::Colour::BRIGHT_WHITE,
+                       ColourEngine::Colour::RED);
+
+        case LogCategory::FATAL:
+            return Set(ColourEngine::Colour::BRIGHT_YELLOW,
+                       ColourEngine::Colour::RED);
+
+        default:
+            return "";
+        }
     }
 };
 

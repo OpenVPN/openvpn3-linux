@@ -132,7 +132,7 @@ int main(int argc, char **argv)
     std::cout << "Testing ColourWriter, mode: by group" << std::endl
               << "----------------------------------------------------------"
               << std::endl;
-    cfw.SetColourMode(ColourStreamWriter::ColourMode::BY_GROUP);
+    colours->SetColourMode(ColourEngine::ColourMode::BY_GROUP);
     run_test_2(cfw);
     run_test_3(cfw);
 

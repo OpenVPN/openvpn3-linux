@@ -216,11 +216,6 @@ protected:
 class ColourStreamWriter : public StreamLogWriter
 {
 public:
-    enum class ColourMode : uint8_t {
-        BY_GROUP,
-        BY_CATEGORY
-    };
-
     /**
      *  Initializes the colourful log writer
      *
@@ -238,35 +233,23 @@ public:
     }
 
 
-    /**
-     *  Changes the colour mode.  This determins if the colour scheme
-     *  to use should be based on the LogGroup (ColourMode::BY_GROUP) or by
-     *  LogCategory (ColourMode::BY_CATEGORY).  The default is BY_CATEGORY.
-     *
-     * @param m  ColourMode to use
-     *
-     */
-    void SetColourMode(ColourMode m)
-    {
-        mode = m;
-    }
-
     virtual void Write(const LogGroup grp,
                        const LogCategory ctg,
                        const std::string& data) override
     {
-        switch (mode)
+        switch (colours->GetColourMode())
         {
-        case ColourMode::BY_CATEGORY:
+        case ColourEngine::ColourMode::BY_CATEGORY:
             LogWriter::Write(grp, ctg, data,
-                             colour_by_category(ctg),
+                             colours->ColourByCategory(ctg),
                              colours->Reset());
             return;
 
-        case ColourMode::BY_GROUP:
+        case ColourEngine::ColourMode::BY_GROUP:
             {
-                std::string grpcol = colour_by_group(grp);
-                std::string ctgcol = (LogCategory::INFO < ctg ? colour_by_category(ctg) : grpcol);
+                std::string grpcol = colours->ColourByGroup(grp);
+                // Highlights parts of the log event which are higher than LogCategory::INFO
+                std::string ctgcol = (LogCategory::INFO < ctg ? colours->ColourByCategory(ctg) : grpcol);
                 LogWriter::Write(grp, ctg, grpcol + data,
                                  ctgcol,
                                  colours->Reset());
@@ -283,100 +266,6 @@ public:
 
 private:
     ColourEngine *colours = nullptr;
-    ColourMode mode = ColourMode::BY_CATEGORY;
-
-
-    /**
-     *  Colour theme to use when mapping LogCategory to
-     *  a colour to use for the log lines.
-     *
-     * @param ctg  LogCategory to colourize
-     *
-     * @return  Returns a std::string containing the proper colour code
-     */
-    const std::string colour_by_category(LogCategory ctg)
-    {
-        switch(ctg)
-        {
-        case LogCategory::DEBUG:
-            return colours->Set(ColourEngine::Colour::BRIGHT_BLUE,
-                                ColourEngine::Colour::NONE);
-
-        case LogCategory::VERB2:
-            return colours->Set(ColourEngine::Colour::BRIGHT_CYAN,
-                                ColourEngine::Colour::NONE);
-
-        case LogCategory::VERB1:
-            return "";
-
-        case LogCategory::INFO:
-            return colours->Set(ColourEngine::Colour::BRIGHT_WHITE,
-                                ColourEngine::Colour::NONE);
-
-        case LogCategory::WARN:
-            return colours->Set(ColourEngine::Colour::BRIGHT_YELLOW,
-                                ColourEngine::Colour::NONE);
-
-        case LogCategory::ERROR:
-            return colours->Set(ColourEngine::Colour::BRIGHT_RED,
-                                ColourEngine::Colour::NONE);
-
-        case LogCategory::CRIT:
-            return colours->Set(ColourEngine::Colour::BRIGHT_WHITE,
-                                ColourEngine::Colour::RED);
-
-        case LogCategory::FATAL:
-            return colours->Set(ColourEngine::Colour::BRIGHT_YELLOW,
-                                ColourEngine::Colour::RED);
-
-        default:
-            return "";
-        }
-    }
-
-
-    /**
-     *  Colour theme to use when mapping LogGroup to
-     *  a colour to use for the log lines.
-     *
-     * @param ctg  LogGroupto colourize
-     *
-     * @return  Returns a std::string containing the proper colour code
-     */
-    const std::string colour_by_group(LogGroup grp)
-    {
-        switch(grp)
-        {
-        case LogGroup::CONFIGMGR:
-            return colours->Set(ColourEngine::Colour::BRIGHT_WHITE,
-                                ColourEngine::Colour::GREEN);
-
-        case LogGroup::SESSIONMGR:
-            return colours->Set(ColourEngine::Colour::BRIGHT_WHITE,
-                                ColourEngine::Colour::BLUE);
-
-        case LogGroup::BACKENDSTART:
-            return colours->Set(ColourEngine::Colour::BRIGHT_WHITE,
-                                ColourEngine::Colour::CYAN);
-
-        case LogGroup::LOGGER:
-            return colours->Set(ColourEngine::Colour::BRIGHT_GREEN,
-                                ColourEngine::Colour::NONE);
-
-        case LogGroup::BACKENDPROC:
-            return colours->Set(ColourEngine::Colour::CYAN,
-                                ColourEngine::Colour::NONE);
-
-        case LogGroup::CLIENT:
-            return colours->Set(ColourEngine::Colour::BRIGHT_YELLOW,
-                                ColourEngine::Colour::NONE);
-
-        case LogGroup::UNDEFINED:
-        case LogGroup::MASTERPROC:
-        default:
-            return "";
-        }
-    }
 };
 
 
