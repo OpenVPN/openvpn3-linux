@@ -77,11 +77,13 @@ public:
         }
 
         std::stringstream meta;
-        meta << log_tag << ":: sender=" << sender
+        meta << log_tag << " sender=" << sender
                         << ", interface=" << interface
                         << ", path=" << object_path;
         logwr->AddMeta(meta.str());
-        logwr->Write(logev);
+        std::stringstream logline;
+        logline << log_tag << " " << logev;
+        logwr->Write(logline.str());
     }
 
 
