@@ -43,12 +43,11 @@ static int logger(ParsedArgs args)
     if (args.Present("log-level"))
     {
         log_level = std::atoi(args.GetValue("log-level", 0).c_str());
-    }
-
-    std::string logfile = "";
-    if (args.Present("log-file"))
-    {
-        logfile = args.GetValue("log-file", 0);
+        if (log_level > 6)
+        {
+            throw CommandException("openvpn3-service-logger",
+                                   "--log-level can only be between 0 and 6");
+        }
     }
 
     if (args.Present("system")
