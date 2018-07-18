@@ -139,9 +139,12 @@ namespace openvpn
                       public LogFilter
     {
     public:
-        LogSender(GDBusConnection * dbuscon, const LogGroup lgroup, std::string interf, std::string objpath)
+        LogSender(GDBusConnection * dbuscon, const LogGroup lgroup,
+                  std::string interf, std::string objpath,
+                  LogWriter *logwr = nullptr)
             : DBusSignalProducer(dbuscon, "", interf, objpath),
               LogFilter(3),
+              logwr(logwr),
               log_group(lgroup)
         {
         }
@@ -195,6 +198,10 @@ namespace openvpn
                 return;
             }
 
+            if( logwr )
+            {
+                logwr->Write(logev);
+            }
             Send("Log", g_variant_new("(uus)",
                                       (guint) logev.group,
                                       (guint) logev.category,
@@ -246,6 +253,7 @@ namespace openvpn
 
 
     protected:
+        LogWriter *logwr = nullptr;
         LogGroup log_group;
     };
 

@@ -43,7 +43,9 @@
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
 #include "dbus/path.hpp"
+#include "log/ansicolours.hpp"
 #include "log/dbus-log.hpp"
+#include "log/logwriter.hpp"
 #include "log/proxy-log.hpp"
 #include "backend-signals.hpp"
 #include "core-client.hpp"
@@ -77,12 +79,12 @@ public:
      */
     BackendClientObject(GDBusConnection *conn, std::string bus_name,
                          std::string objpath, std::string session_token,
-                         unsigned int default_log_level)
+                         unsigned int default_log_level, LogWriter *logwr)
         : DBusObject(objpath),
           DBusConnectionCreds(conn),
           dbusconn(conn),
           mainloop(nullptr),
-          signal(conn, LogGroup::CLIENT, objpath),
+          signal(conn, LogGroup::CLIENT, objpath, logwr),
           signal_broadcast(false),
           session_token(session_token),
           registered(false),
@@ -969,13 +971,15 @@ public:
      *                   command line.  This is used when signalling back
      *                   to the session manager.
      */
-    BackendClientDBus(pid_t start_pid, GBusType bus_type, std::string sesstoken)
+    BackendClientDBus(pid_t start_pid, GBusType bus_type,
+                      std::string sesstoken, LogWriter *logwr)
         : DBus(bus_type,
                OpenVPN3DBus_name_backends_be + to_string(getpid()),
                OpenVPN3DBus_rootp_sessions,
                OpenVPN3DBus_interf_sessions),
           start_pid(start_pid),
           session_token(sesstoken),
+          logwr(logwr),
           procsig(nullptr),
           be_obj(nullptr),
           signal(nullptr),
@@ -1067,12 +1071,14 @@ public:
         be_obj.reset(new BackendClientObject(GetConnection(), GetBusName(),
                                              object_path,
                                              session_token,
-                                             default_log_level));
+                                             default_log_level,
+                                             logwr));
         be_obj->SetSignalBroadcast(signal_broadcast);
         be_obj->RegisterObject(GetConnection());
 
         // Setup a signal object of the backend
-        signal.reset(new BackendSignals(GetConnection(), LogGroup::BACKENDPROC, object_path));
+        signal.reset(new BackendSignals(GetConnection(), LogGroup::BACKENDPROC,
+                                        object_path, logwr));
         signal->SetLogLevel(default_log_level);
         signal->LogVerb2("Backend client process started as pid " + std::to_string(start_pid)
                          + " re-initiated as pid " + std::to_string(getpid()));
@@ -1121,6 +1127,7 @@ private:
     pid_t start_pid;
     std::string session_token;
     std::string object_path;
+    LogWriter *logwr;
     ProcessSignalProducer::Ptr procsig;
     BackendClientObject::Ptr be_obj;
     BackendSignals::Ptr signal;
@@ -1131,11 +1138,12 @@ private:
 
 void start_client_thread(pid_t start_pid, const std::string argv0,
                         const std::string sesstoken, int log_level,
-                        bool signal_broadcast)
+                        bool signal_broadcast, LogWriter *logwr)
 {
     std::cout << get_version(argv0) << std::endl;
 
-    BackendClientDBus backend_service(start_pid, G_BUS_TYPE_SYSTEM, sesstoken);
+    BackendClientDBus backend_service(start_pid, G_BUS_TYPE_SYSTEM,
+                                      sesstoken, logwr);
     if (log_level > 0)
     {
         backend_service.SetDefaultLogLevel(log_level);
@@ -1167,6 +1175,39 @@ int client_service(ParsedArgs args)
         return 1;
     }
 
+    // Open a log destination, if requested
+    std::ofstream logfs;
+    std::streambuf * logstream;
+    LogWriter::Ptr logwr = nullptr;
+    ColourEngine::Ptr colourengine = nullptr;
+
+    if (args.Present("log-file"))
+    {
+        std::string fname = args.GetValue("log-file", 0);
+        if ("stdout:" != fname)
+        {
+            logfs.open(fname.c_str(), std::ios_base::app);
+            logstream = logfs.rdbuf();
+        }
+        else
+        {
+            logstream = std::cout.rdbuf();
+        }
+
+        std::ostream logfile(logstream);
+        if (args.Present("colour"))
+        {
+            colourengine.reset(new ANSIColours());
+             logwr.reset(new ColourStreamWriter(logfile,
+                                                colourengine.get()));
+        }
+        else
+        {
+            logwr.reset(new StreamLogWriter(logfile));
+        }
+    }
+
+
     // Save the current pid, for logging later on
     pid_t start_pid = getpid();
 
@@ -1191,7 +1232,8 @@ int client_service(ParsedArgs args)
         try
         {
             start_client_thread(getpid(), args.GetArgv0(), extra[0],
-                                log_level, args.Present("signal-broadcast"));
+                                log_level, args.Present("signal-broadcast"),
+                                logwr.get());
             return 0;
         }
         catch (std::exception& excp)
@@ -1215,7 +1257,8 @@ int client_service(ParsedArgs args)
         try
         {
             start_client_thread(getpid(), args.GetArgv0(), extra[0],
-                                log_level, args.Present("signal-broadcast"));
+                                log_level, args.Present("signal-broadcast"),
+                                logwr.get());
             return 0;
         }
         catch (std::exception& excp)
@@ -1244,6 +1287,10 @@ int main(int argc, char **argv)
     argparser.AddVersionOption();
     argparser.AddOption("log-level", "LOG-LEVEL", true,
                         "Sets the default log verbosity level (valid values 0-6, default 4)");
+    argparser.AddOption("log-file", "FILE" , true,
+                        "Write log data to FILE.  Use 'stdout:' for console logging.");
+    argparser.AddOption("colour", 0,
+                        "Make the log lines colourful");
     argparser.AddOption("signal-broadcast", 0,
                         "Broadcast all D-Bus signals instead of targeted multicast");
 #if DEBUG_OPTIONS
