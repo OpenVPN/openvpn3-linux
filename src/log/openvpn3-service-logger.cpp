@@ -67,9 +67,9 @@ static int logger(ParsedArgs args)
     DBus dbus(G_BUS_TYPE_SYSTEM);
     dbus.Connect();
     GDBusConnection *dbusconn = dbus.GetConnection();
-    Logger * be_subscription = nullptr;
-    Logger * session_subscr = nullptr;
-    Logger * config_subscr = nullptr;
+    Logger::Ptr be_subscription = nullptr;
+    Logger::Ptr session_subscr = nullptr;
+    Logger::Ptr config_subscr = nullptr;
     LogService::Ptr logsrv = nullptr;
 
     try
@@ -88,9 +88,9 @@ static int logger(ParsedArgs args)
         {
             if (args.Present("vpn-backend"))
             {
-                be_subscription = new Logger(dbusconn, "[B]", "",
-                                             OpenVPN3DBus_interf_backends,
-                                             log_level, timestamp);
+                be_subscription.reset(new Logger(dbusconn, "[B]", "",
+                                                 OpenVPN3DBus_interf_backends,
+                                                 log_level, timestamp));
                 if (!logfile.empty())
                 {
                     be_subscription->OpenLogFile(logfile);
@@ -107,9 +107,9 @@ static int logger(ParsedArgs args)
             if (args.Present("session-manager")
                 || args.Present("session-manager-client-proxy"))
             {
-                session_subscr = new Logger(dbusconn, "[S]", "",
-                                            OpenVPN3DBus_interf_sessions,
-                                            log_level, timestamp);
+                session_subscr.reset(new Logger(dbusconn, "[S]", "",
+                                                OpenVPN3DBus_interf_sessions,
+                                                log_level, timestamp));
 
                 if (!logfile.empty())
                 {
@@ -136,9 +136,9 @@ static int logger(ParsedArgs args)
 
             if (args.Present("config-manager"))
             {
-                config_subscr = new Logger(dbusconn, "[C]", "",
-                                           OpenVPN3DBus_interf_configuration,
-                                           log_level, timestamp);
+                config_subscr.reset(new Logger(dbusconn, "[C]", "",
+                                               OpenVPN3DBus_interf_configuration,
+                                               log_level, timestamp));
                 if (!logfile.empty())
                 {
                     config_subscr->OpenLogFile(logfile);
@@ -171,21 +171,6 @@ static int logger(ParsedArgs args)
     catch (CommandException& excp)
     {
         throw;
-    }
-
-
-    // Clean up and exit
-    if (be_subscription)
-    {
-        delete be_subscription;
-    }
-    if (session_subscr)
-    {
-        delete session_subscr;
-    }
-    if (config_subscr)
-    {
-        delete config_subscr;
     }
 
     return ret;
