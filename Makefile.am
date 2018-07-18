@@ -199,9 +199,12 @@ src_sessionmgr_openvpn3_service_sessionmgr_SOURCES = \
 #
 src_log_openvpn3_service_logger_SOURCES = \
 	src/log/openvpn3-service-logger.cpp \
+	src/log/ansicolours.hpp \
+	src/log/colourengine.hpp \
 	src/log/dbus-log.hpp \
 	src/log/log-helpers.hpp \
 	src/log/logger.hpp \
+	src/log/logwriter.hpp \
 	src/log/service.hpp \
 	$(DBUS_SOURCES) \
 	src/common/utils.hpp
