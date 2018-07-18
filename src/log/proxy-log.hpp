@@ -66,6 +66,8 @@ public:
      */
     void Attach(const std::string interf)
     {
+        Ping();      // Ensure the log service is alive
+        usleep(200);  // And add a short gracetime
         Call("Attach", g_variant_new("(s)", interf.c_str()), true);
     }
 
