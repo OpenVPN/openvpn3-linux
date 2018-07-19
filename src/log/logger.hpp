@@ -70,14 +70,18 @@ public:
             }
         }
 
+        // Prepend log lines with the log tag
+        logwr->WritePrepend(log_tag + std::string(" "), true);
+
+        // Add the meta information
         std::stringstream meta;
-        meta << log_tag << " sender=" << sender
-                        << ", interface=" << interface
-                        << ", path=" << object_path;
+        meta << "sender=" << sender
+             << ", interface=" << interface
+             << ", path=" << object_path;
         logwr->AddMeta(meta.str());
-        std::stringstream logline;
-        logline << log_tag << " " << logev;
-        logwr->Write(logline.str());
+
+        // And write the real log line
+        logwr->Write(logev);
     }
 
 
