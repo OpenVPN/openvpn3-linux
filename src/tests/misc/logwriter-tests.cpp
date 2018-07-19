@@ -49,6 +49,7 @@ void run_test_1(LogWriter& w)
     w.EnableTimestamp(false);
     w.Write("Log line 4 - without timestamp");
     w.EnableTimestamp(true);
+    w.WritePrepend(" [PREPENDED] ");
     w.Write("Log line 5 - with timestamp again");
 }
 
@@ -67,7 +68,11 @@ void run_test_2(LogWriter& w)
     {
         for (int catg = 1; catg < 9; catg++)
         {
-                w.Write((LogGroup) group, (LogCategory) catg,
+            if ((catg % 3) == 0)
+            {
+                w.WritePrepend("!! ---> Prepended data <--- ");
+            }
+            w.Write((LogGroup) group, (LogCategory) catg,
                         std::string("LogGroup/LogCategory test line: ")
                         + std::to_string(group) + ":"
                         + std::to_string(catg));
@@ -90,6 +95,13 @@ void run_test_3(LogWriter& w)
     {
         for (int catg = 1; catg < 9; catg++)
         {
+                if ((catg % 3) == 0)
+                {
+                    std::stringstream s;
+                    s << "!! ---> Prepended data <--- "
+                      << ((catg % 2) == 0 ? "[with meta prepend] " : "");
+                    w.WritePrepend(s.str(), (catg % 2) == 0);
+                }
                 LogEvent ev((LogGroup) group, (LogCategory) catg,
                             std::string("LogEvent() test line: ")
                             + std::to_string(group) + ":"
@@ -117,7 +129,6 @@ int main(int argc, char **argv)
 
     // Similar to the previous text/plain test, but uses the colours variant.
     // Still logging to stdout
-
     std::cout << "Testing ColourWriter, mode: by category" << std::endl
               << "----------------------------------------------------------"
               << std::endl;

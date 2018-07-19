@@ -143,9 +143,28 @@ public:
         metadata = data;
     }
 
+    /**
+     *  Puts a side a string which should be prepended to the next
+     *  @Write() operation.  This is similar to @AddMeta(), but operates
+     *  on the same log line as @AddMeta().
+     *
+     *  @param data      std::string containing data to prepend in front of @Write()
+     *  @param prep_meta Bool indicating if this data should be prepended to
+     *                   the meta log line as well.  This is reset on each
+     *                   interaction.
+     */
+    virtual void WritePrepend(const std::string& data, bool prep_meta = false)
+    {
+        prepend = data;
+        prepend_meta = prep_meta;
+    }
+
+
 protected:
     bool  timestamp = true;
     std::string metadata;
+    std::string prepend;
+    bool prepend_meta;
 };
 
 
@@ -195,13 +214,17 @@ public:
         if (!metadata.empty())
         {
             dest << (timestamp ? GetTimestamp() : "") << " "
-                 << colour_init << metadata << colour_reset
+                 << colour_init
+                 << (prepend_meta ? prepend : "")
+                 << metadata << colour_reset
                  << std::endl;
             metadata.clear();
+            prepend_meta = false;
         }
         dest << (timestamp ? GetTimestamp() : "") << " "
-             << colour_init << data << colour_reset
+             << colour_init << prepend << data << colour_reset
              << std::endl;
+        prepend.clear();
     }
 
 protected:
@@ -377,11 +400,15 @@ public:
 
         if (!metadata.empty())
         {
-            syslog(LOG_INFO, "%s", metadata.c_str());
+            syslog(LOG_INFO, "%s%s",
+                   (prepend_meta ? prepend.c_str() : ""),
+                   metadata.c_str());
             metadata.clear();
+            prepend_meta = false;
         }
 
-        syslog(LOG_INFO, "%s", data.c_str());
+        syslog(LOG_INFO, "%s%s", prepend.c_str(), data.c_str());
+        prepend.clear();
     }
 
 
@@ -395,11 +422,16 @@ public:
         // include that information.
         if (!metadata.empty())
         {
-            syslog(logcatg2syslog(ctg), "%s", metadata.c_str());
+            syslog(logcatg2syslog(ctg), "%s%s",
+                   (prepend_meta ? prepend.c_str() : ""),
+                   metadata.c_str());
             metadata.clear();
+            prepend_meta = false;
         }
-        syslog(logcatg2syslog(ctg), "%s%s",
-               LogPrefix(grp, ctg).c_str(), data.c_str());
+
+        syslog(logcatg2syslog(ctg), "%s%s%s",
+               prepend.c_str(), LogPrefix(grp, ctg).c_str(), data.c_str());
+        prepend.clear();
     }
 
 
