@@ -68,7 +68,6 @@ public:
                       dbuscon(dbcon),
                       logwr(logwr),
                       log_level(log_level)
-
     {
         // Restrict extended access in this log service from these
         // well-known bus names primarily.
@@ -269,7 +268,7 @@ public:
             }
             else if ("timestamp" == property_name)
             {
-                return g_variant_new_boolean(timestamp);
+                return g_variant_new_boolean(logwr->TimestampEnabled());
             }
             else if ("num_attached" == property_name)
             {
@@ -344,17 +343,52 @@ public:
             }
             else if ("timestamp" == property_name)
             {
-                timestamp = g_variant_get_boolean(value);
-                logwr->EnableTimestamp(timestamp);
+                // First check if this will cause a change
+                bool newtstamp = g_variant_get_boolean(value);
+                if (logwr->TimestampEnabled() == newtstamp)
+                {
+                    // Nothing changes ... make some noise about it
+                    throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
+                                                obj_path, intf_name,
+                                                property_name,
+                                                "New value the same as current value");
+                }
+
+                // Try setting the new timestamp flag value
+
+                logwr->EnableTimestamp(newtstamp);
+
+                // Re-read the value from the LogWriter.  Some LogWriters
+                bool timestamp = logwr->TimestampEnabled();
+                // might not allow modifying the timestamp flag
+
                 std::stringstream l;
-                l << "Timestamp flag has changed to: "
-                  << (timestamp ? "enabled" : "disabled");
+                l << "Timestamp flag "
+                  << (newtstamp == timestamp ? "has" : "could not be")
+                  << " changed to: "
+                  << (newtstamp ? "enabled" : "disabled");
+
                 logwr->AddMeta(meta.str());
-                logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1,
-                                      l.str()));
+                logwr->Write(LogEvent(
+                                LogGroup::LOGGER,
+                                (newtstamp == timestamp
+                                 ? LogCategory::VERB1 : LogCategory::ERROR),
+                                l.str()));
+                if (newtstamp != timestamp)
+                {
+                    throw DBusPropertyException(G_IO_ERROR,
+                                                G_IO_ERROR_READ_ONLY,
+                                                obj_path, intf_name,
+                                                property_name,
+                                                "Log timestamp is read-only");
+                }
                 return build_set_property_response(property_name,
-                                                   (guint32) log_level);
+                                                   timestamp);
             }
+        }
+        catch (DBusPropertyException)
+        {
+            throw;
         }
         catch (DBusException& excp)
         {
@@ -362,7 +396,6 @@ public:
                                         obj_path, intf_name, property_name,
                                         excp.what());
         }
-
         throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
                                     obj_path, intf_name, property_name,
                                     "Invalid property");
@@ -374,7 +407,6 @@ private:
     LogWriter *logwr = nullptr;
     std::map<size_t, Logger::Ptr> loggers = {};
     unsigned int log_level;
-    bool timestamp = true;
     std::vector<std::string> allow_list;
 
 
