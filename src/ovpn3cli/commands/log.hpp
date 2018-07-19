@@ -25,6 +25,7 @@
 
 #include "dbus/core.hpp"
 #include "log/dbus-log.hpp"
+#include "log/proxy-log.hpp"
 
 using namespace openvpn;
 
@@ -168,6 +169,82 @@ static int cmd_log_listen(ParsedArgs args)
 
 
 /**
+ *  This command is used to query and manage the net.openvpn.v3.log service
+ *  This service is a global service responsible for all logging.  Changes
+ *  here affects all logging being done by this service on all attached
+ *  log subscriptions.
+ *
+ * @param args  ParsedArgs object containing all related options and arguments
+ * @return Returns the exit code which will be returned to the calling shell
+ *
+ */
+static int cmd_log_service(ParsedArgs args)
+{
+    try
+    {
+        DBus dbus(G_BUS_TYPE_SYSTEM);
+        dbus.Connect();
+        LogServiceProxy logsrvprx(dbus.GetConnection());
+
+        std::string old_loglev("");
+        unsigned int curlev = logsrvprx.GetLogLevel();
+        unsigned int newlev = curlev;
+        if (args.Present("log-level"))
+        {
+            newlev = std::atoi(args.GetValue("log-level", 0).c_str());
+            if ( curlev != newlev )
+            {
+                std::stringstream t;
+                t << "            (Was: " << curlev << ")";
+                old_loglev = t.str();
+                logsrvprx.SetLogLevel(newlev);
+            }
+        }
+
+        std::string old_tstamp("");
+        bool curtstamp = logsrvprx.GetTimestampFlag();
+        bool newtstamp = curtstamp;
+        if (args.Present("timestamp"))
+        {
+            newtstamp = args.GetBoolValue("timestamp", 0);
+            if ( curtstamp != newtstamp)
+            {
+                std::stringstream t;
+                if (newtstamp)
+                {
+                    // simple alignment trick
+                    t << " ";
+                }
+                t << "     (Was: "
+                  << (curtstamp ? "enabled" : "disabled") << ")";
+                old_tstamp = t.str();
+                logsrvprx.SetTimestampFlag(newtstamp);
+            }
+        }
+
+        std::cout << " Attached log subscriptions: "
+                  << logsrvprx.GetNumAttached() << std::endl;
+        std::cout << "             Log timestamps: "
+                  << (newtstamp ? "enabled" : "disabled")
+                  << old_tstamp << std::endl;
+        std::cout << "          Current log level: "
+                  << newlev << old_loglev << std::endl;
+    }
+    catch (DBusProxyAccessDeniedException& excp)
+    {
+        std::string rawerr(excp.what());
+        throw CommandException("log-service", rawerr);
+    }
+    catch (DBusException& excp)
+    {
+        std::string rawerr(excp.what());
+        throw CommandException("log-service",
+                               rawerr.substr(rawerr.rfind(":")));
+    }
+    return 0;
+}
+
+/**
  *  Declare all the supported commands and their options and arguments.
  *
  *  This function should only be called once by the main openvpn3 program,
@@ -193,4 +270,14 @@ void RegisterCommands_log(Commands& ovpn3)
                    arghelper_log_levels);
     cmd->AddOption("config-events",
                    "Receive log events issued by the configuration manager");
+
+    auto service = ovpn3.AddCommand("log-service",
+                               "Manage the OpenVPN 3 Log service",
+                               cmd_log_service);
+    service->AddOption("log-level", "LOG-LEVEL", true,
+                       "Set the log level used by the log service.",
+                       arghelper_log_levels);
+    service->AddOption("timestamp", "true/false", true,
+                       "Set the timestamp flag used by the log service",
+                       arghelper_boolean);
 }
