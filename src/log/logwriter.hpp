@@ -341,6 +341,21 @@ public:
         closelog();
     }
 
+    /**
+     *  We presume syslog will always add timestamps to its logging,
+     *  so we will return true regardless of what an external user wants.
+     *
+     *  In addition, SyslogWriter doesn't even care about the timestamp
+     *  flag.  So try to present a value which is more likely true regardless
+     *  of this internal flag.
+     *
+     * @return Will always return true.
+     */
+    virtual bool TimestampEnabled() override
+    {
+        return true;
+    }
+
 
     /**
      *  Converts a string specifiying a syslog log facility
