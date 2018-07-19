@@ -63,8 +63,11 @@ public:
             return;
         }
 
-        // Filter out systemd related signals as well
-        if (interface_name.find("org.freedesktop.systemd1") != std::string::npos)
+        // Filter out certain non-OpenVPN 3 related signal interfaces
+        if (interface_name.find("org.freedesktop.systemd1") != std::string::npos
+            || interface_name.find("org.freedesktop.DBus.ObjectManager") != std::string::npos
+            || interface_name.find("org.freedesktop.login1.Manager") != std::string::npos
+            || interface_name.find("org.freedesktop.PolicyKit1.Authority") != std::string::npos)
         {
             return;
         }
