@@ -65,6 +65,11 @@ public:
         timestamp = tstamp;
     }
 
+    virtual bool TimestampEnabled()
+    {
+        return timestamp;
+    }
+
 
     /**
      *  Writes log data to the destination buffer
