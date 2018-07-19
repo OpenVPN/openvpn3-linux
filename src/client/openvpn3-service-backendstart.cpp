@@ -35,7 +35,9 @@
 #include "config.h"
 #include "common/cmdargparser.hpp"
 #include "dbus/core.hpp"
+#include "dbus/connection-creds.hpp"
 #include "log/dbus-log.hpp"
+#include "log/proxy-log.hpp"
 #include "common/utils.hpp"
 
 using namespace openvpn;
@@ -119,12 +121,19 @@ public:
     BackendStarterObject(GDBusConnection *dbuscon, const std::string busname,
                          const std::string objpath,
                          const std::vector<std::string> client_args,
-                         unsigned int log_level)
+                         unsigned int log_level,
+                         bool signal_broadcast)
         : DBusObject(objpath),
           BackendStarterSignals(dbuscon, objpath, log_level),
           dbuscon(dbuscon),
           client_args(client_args)
     {
+        if (!signal_broadcast)
+        {
+            DBusConnectionCreds credsprx(dbuscon);
+            AddTargetBusName(credsprx.GetUniqueBusID(OpenVPN3DBus_name_log));
+        }
+
         std::stringstream introspection_xml;
         introspection_xml << "<node name='" << objpath << "'>"
                           << "    <interface name='" << OpenVPN3DBus_interf_backends << "'>"
@@ -359,15 +368,17 @@ public:
      *                  registered on the system or session bus.
      */
 
-    BackendStarterDBus(GBusType bus_type,
+    BackendStarterDBus(GDBusConnection *conn,
                        const std::vector<std::string> cliargs,
-                       unsigned int log_level)
-        : DBus(bus_type,
+                       unsigned int log_level,
+                       bool signal_broadcast)
+        : DBus(conn,
                OpenVPN3DBus_name_backends,
                OpenVPN3DBus_rootp_backends,
                OpenVPN3DBus_interf_backends),
           mainobj(nullptr),
           log_level(log_level),
+          signal_broadcast(signal_broadcast),
           procsig(nullptr),
           client_args(cliargs)
     {
@@ -391,7 +402,8 @@ public:
     {
         mainobj = new BackendStarterObject(GetConnection(), GetBusName(),
                                             GetRootPath(), client_args,
-                                            log_level);
+                                            log_level,
+                                            signal_broadcast);
         mainobj->RegisterObject(GetConnection());
 
         procsig = new ProcessSignalProducer(GetConnection(),
@@ -439,6 +451,7 @@ public:
 private:
     BackendStarterObject * mainobj;
     unsigned int log_level = 3;
+    bool signal_broadcast = true;
     ProcessSignalProducer * procsig;
     std::vector<std::string> client_args;
 };
@@ -511,8 +524,19 @@ int backend_starter(ParsedArgs args)
         idle_wait_sec = std::atoi(args.GetValue("idle-exit", 0).c_str());
     }
 
-    BackendStarterDBus backstart(G_BUS_TYPE_SYSTEM, client_args,
-                                 log_level);
+    DBus dbus(G_BUS_TYPE_SYSTEM);
+    dbus.Connect();
+
+    bool signal_broadcast = args.Present("signal-broadcast");
+    LogServiceProxy::Ptr logsrvprx = nullptr;
+    if (!signal_broadcast)
+    {
+        logsrvprx.reset(new LogServiceProxy(dbus.GetConnection()));
+        logsrvprx->Attach(OpenVPN3DBus_interf_backends);
+    }
+
+    BackendStarterDBus backstart(dbus.GetConnection(), client_args,
+                                 log_level, signal_broadcast);
 
     IdleCheck::Ptr idle_exit;
     if (idle_wait_sec > 0)
@@ -542,6 +566,11 @@ int backend_starter(ParsedArgs args)
     g_main_loop_run(main_loop);
     g_main_loop_unref(main_loop);
 
+    if (logsrvprx)
+    {
+        logsrvprx->Detach(OpenVPN3DBus_interf_backends);
+    }
+
     if (idle_wait_sec > 0)
     {
         idle_exit->Disable();
@@ -559,6 +588,8 @@ int main(int argc, char **argv)
     cmd.AddVersionOption();
     cmd.AddOption("log-level", "LOG-LEVEL", true,
                   "Log verbosity level (valid values 0-6, default 3)");
+    cmd.AddOption("signal-broadcast", 0,
+                  "Broadcast all D-Bus signals from openvpn3-service-backend instead of targeted multicast");
     cmd.AddOption("idle-exit", "SECONDS", true,
                   "How long to wait before exiting if being idle. "
                   "0 disables it (Default: 10 seconds)");
