@@ -57,10 +57,12 @@ public:
      * @param object_path A string with the D-Bus object path signals sent
      *                    should be attached to
      */
-    BackendStarterSignals(GDBusConnection *conn, std::string object_path)
+    BackendStarterSignals(GDBusConnection *conn, std::string object_path,
+                          unsigned int log_level)
             : LogSender(conn, LogGroup::BACKENDSTART,
                         OpenVPN3DBus_interf_backends, object_path)
     {
+        SetLogLevel(log_level);
     }
 
     virtual ~BackendStarterSignals()
@@ -116,9 +118,10 @@ public:
      */
     BackendStarterObject(GDBusConnection *dbuscon, const std::string busname,
                          const std::string objpath,
-                         const std::vector<std::string> client_args)
+                         const std::vector<std::string> client_args,
+                         unsigned int log_level)
         : DBusObject(objpath),
-          BackendStarterSignals(dbuscon, objpath),
+          BackendStarterSignals(dbuscon, objpath, log_level),
           dbuscon(dbuscon),
           client_args(client_args)
     {
@@ -340,12 +343,15 @@ public:
      *                  registered on the system or session bus.
      */
 
-    BackendStarterDBus(GBusType bus_type, const std::vector<std::string> cliargs)
+    BackendStarterDBus(GBusType bus_type,
+                       const std::vector<std::string> cliargs,
+                       unsigned int log_level)
         : DBus(bus_type,
                OpenVPN3DBus_name_backends,
                OpenVPN3DBus_rootp_backends,
                OpenVPN3DBus_interf_backends),
           mainobj(nullptr),
+          log_level(log_level),
           procsig(nullptr),
           client_args(cliargs)
     {
@@ -368,7 +374,8 @@ public:
     void callback_bus_acquired()
     {
         mainobj = new BackendStarterObject(GetConnection(), GetBusName(),
-                                            GetRootPath(), client_args);
+                                            GetRootPath(), client_args,
+                                            log_level);
         mainobj->RegisterObject(GetConnection());
 
         procsig = new ProcessSignalProducer(GetConnection(),
@@ -415,6 +422,7 @@ public:
 
 private:
     BackendStarterObject * mainobj;
+    unsigned int log_level = 3;
     ProcessSignalProducer * procsig;
     std::vector<std::string> client_args;
 };
@@ -475,13 +483,21 @@ int backend_starter(ParsedArgs args)
         client_args.push_back("--signal-broadcast");
     }
 
+    unsigned int log_level = 3;
+    if (args.Present("log-level"))
+    {
+        log_level = std::atoi(args.GetValue("log-level", 0).c_str());
+    }
+
     unsigned int idle_wait_sec = 3;
     if (args.Present("idle-exit"))
     {
         idle_wait_sec = std::atoi(args.GetValue("idle-exit", 0).c_str());
     }
 
-    BackendStarterDBus backstart(G_BUS_TYPE_SYSTEM, client_args);
+    BackendStarterDBus backstart(G_BUS_TYPE_SYSTEM, client_args,
+                                 log_level);
+
     IdleCheck::Ptr idle_exit;
     if (idle_wait_sec > 0)
     {
@@ -525,6 +541,11 @@ int main(int argc, char **argv)
     SingleCommand cmd(argv[0], "OpenVPN 3 VPN Client starter",
                              backend_starter);
     cmd.AddVersionOption();
+    cmd.AddOption("log-level", "LOG-LEVEL", true,
+                  "Log verbosity level (valid values 0-6, default 3)");
+    cmd.AddOption("idle-exit", "SECONDS", true,
+                  "How long to wait before exiting if being idle. "
+                  "0 disables it (Default: 10 seconds)");
 #ifdef DEBUG_OPTIONS
     cmd.AddOption("run-via", 0, "DEBUG_PROGAM", true,
                   "Debug option: Run openvpn3-service-client via provided executable (full path required)");
@@ -543,10 +564,6 @@ int main(int argc, char **argv)
                   "Adds the --colour argument to openvpn3-service-client");
     cmd.AddOption("client-signal-broadcast", 0,
                   "Debug option: Adds the --signal-broadcast argument to openvpn3-service-client");
-    cmd.AddOption("idle-exit", "SECONDS", true,
-                  "How long to wait before exiting if being idle. "
-                  "0 disables it (Default: 10 seconds)");
-
 
     try
     {
