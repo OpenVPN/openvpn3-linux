@@ -164,17 +164,6 @@ public:
 
 
     /**
-     * Enables logging to file in addition to the D-Bus Log signal events
-     *
-     * @param filename  String containing the name of the log file
-     */
-    void OpenLogFile(std::string filename)
-    {
-        OpenLogFile(filename);
-    }
-
-
-    /**
      *  Callback method called each time a method in the Backend Starter
      *  service is called over the D-Bus.
      *
@@ -377,8 +366,7 @@ public:
                OpenVPN3DBus_interf_backends),
           mainobj(nullptr),
           procsig(nullptr),
-          client_args(cliargs),
-          logfile("")
+          client_args(cliargs)
     {
     };
 
@@ -393,18 +381,6 @@ public:
 
 
     /**
-     *  Prepares logging to file.  This happens in parallel with the
-     *  D-Bus Log events which will be sent with Log events.
-     *
-     * @param filename  Filename of the log file to save the log events.
-     */
-    void SetLogFile(std::string filename)
-    {
-        logfile = filename;
-    }
-
-
-    /**
      *  This callback is called when the service was successfully registered
      *  on the D-Bus.
      */
@@ -412,10 +388,6 @@ public:
     {
         mainobj = new BackendStarterObject(GetConnection(), GetBusName(),
                                             GetRootPath(), client_args);
-        if (!logfile.empty())
-        {
-            mainobj->OpenLogFile(logfile);
-        }
         mainobj->RegisterObject(GetConnection());
 
         procsig = new ProcessSignalProducer(GetConnection(),
@@ -464,7 +436,6 @@ private:
     BackendStarterObject * mainobj;
     ProcessSignalProducer * procsig;
     std::vector<std::string> client_args;
-    std::string logfile;
 };
 
 
