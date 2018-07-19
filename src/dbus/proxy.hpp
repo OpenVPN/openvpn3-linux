@@ -22,6 +22,33 @@
 
 namespace openvpn
 {
+    class DBusProxyAccessDeniedException: std::exception
+    {
+    public:
+        DBusProxyAccessDeniedException(const std::string& method,
+                              const std::string& debug)
+            : debug(debug)
+        {
+            std::stringstream err;
+            err << "Access denied to " << method;
+            error = err.str();
+        }
+
+        virtual const char* what() const noexcept
+        {
+            return error.c_str();
+        }
+
+        virtual const std::string getDebug() const noexcept
+        {
+            return debug;
+        }
+    private:
+        std::string error;
+        std::string debug;
+    };
+
+
     class DBusProxy : public DBus
     {
     public:
@@ -263,21 +290,25 @@ namespace openvpn
                                                         -1,          // timeout, -1 == default
                                                         NULL,        // GCancellable
                                                         &error);
-            if (!response || error)
+            if (!response && !error)
             {
-                std::stringstream errmsg;
-                errmsg << "Failed calling D-Bus method "
-                       << "org.freedesktop.DBus.Properties.Get("
-                       << "interface=" << interface
-                       << ", property=" << property
-                       << ")";
-                if (error)
-                {
-                    errmsg << ": " << error->message;
-                }
-                THROW_DBUSEXCEPTION("DBusProxy", errmsg.str());
+                THROW_DBUSEXCEPTION("DBusProxy", "Unspecified error");
             }
-            GVariant * ret = NULL;
+            else if (!response && error)
+            {
+                std::string dbuserr(error->message);
+
+                if (dbuserr.find("GDBus.Error:org.freedesktop.DBus.Error.AccessDenied:") != std::string::npos)
+                {
+                    throw DBusProxyAccessDeniedException(property + " property",
+                                                         dbuserr);
+                }
+
+                std::stringstream errmsg;
+                errmsg << "Failed retrieveing property value for "
+                       << "'" << property << "': " << error->message;
+                THROW_DBUSEXCEPTION("DBusProxy", errmsg.str());
+            }            GVariant * ret = NULL;
             g_variant_get(response, "(v)", &ret);
             g_variant_unref(response);
             return ret;
@@ -345,17 +376,25 @@ namespace openvpn
                                                    -1,          // timeout, -1 == default
                                                    NULL,        // GCancellable
                                                    &error);
-            if (!ret || error)
+            if (!ret && !error)
             {
-                std::stringstream errmsg;
-                errmsg << "Failed calling D-Bus method org.freedesktop.DBus.Properties.Set()";
-                if (error)
-                {
-                    errmsg << ": " << error->message;
-                }
-                THROW_DBUSEXCEPTION("DBusProxy", errmsg.str());
+                THROW_DBUSEXCEPTION("DBusProxy", "Unspecified error");
             }
-            g_variant_unref(ret);
+            else if (!ret && error)
+            {
+                std::string dbuserr(error->message);
+
+                if (dbuserr.find("GDBus.Error:org.freedesktop.DBus.Error.AccessDenied:") != std::string::npos)
+                {
+                    throw DBusProxyAccessDeniedException(property + " property",
+                                                         dbuserr);
+                }
+
+                std::stringstream errmsg;
+                errmsg << "Failed setting new property value on "
+                       << "'" << property << "': " << error->message;
+                THROW_DBUSEXCEPTION("DBusProxy", errmsg.str());
+            }            g_variant_unref(ret);
         }
 
 
@@ -476,8 +515,19 @@ namespace openvpn
                                                        -1,          // timeout, -1 == default
                                                        NULL,        // GCancellable
                                                        &error);
-                if (!ret || error)
+                if (!ret && !error)
                 {
+                    THROW_DBUSEXCEPTION("DBusProxy", "Unspecified error");
+                }
+                else if (!ret && error)
+                {
+                    std::string dbuserr(error->message);
+
+                    if (dbuserr.find("GDBus.Error:org.freedesktop.DBus.Error.AccessDenied:") != std::string::npos)
+                    {
+                        throw DBusProxyAccessDeniedException("method", dbuserr);
+                    }
+
                     std::stringstream errmsg;
                     errmsg << "Failed calling D-Bus method " << method << ": "
                            << error->message;
