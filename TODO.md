@@ -4,10 +4,13 @@ Quick TODO list for OpenVPN 3 Linux client
 This list is not an exhaustive list, but some critical points needed to be
 taken care of.
 
-- [ ] Improve logging service
+- [X] Improve logging service
   Figure out how to tackle logging in a better way than just running
   the ``openvpn3-service-logger`` utility.  Logging to file, syslog, journal
   need to be considered.
+
+  Status: Console, file and syslog logging is implemented. Systemd Journal
+  is still missing, but not considered critical.
 
 - [ ] Handle DNS configuration
   Figure out how to provide DNS server settings to NetworkManager,
@@ -29,14 +32,16 @@ taken care of.
 - [x] Rewrite argument parser in ``openvpn3``
   Make it more similar to the "git" approach.
 
-- [ ] Implement Access Control List management in ``openvpn3`` for
+- [x] Implement Access Control List management in ``openvpn3`` for
   configuration and session objects
 
 - [x] Implement listing of configuration available in the configuration manager
 
 - [x] Implement listing of available sessions in the session manager
 
-- [ ] Implment persistent storage of VPN profiles
+- [+] Implment persistent storage of VPN profiles
+
+  Status: In progress
 
 - [x] Provide a possibility to restrict  end-users from retrieving VPN
   configuration profiles, only allow the openvpn3-service-client process

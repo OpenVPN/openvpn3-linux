@@ -23,11 +23,6 @@ D-Bus aware of the newly installed service:
 
     # systemctl reload dbus
 
-or by triggering the configuration reload by contacting the D-Bus daemon
-directly, over D-Bus
-
-    $ gdbus call --system --dest org.freedesktop.DBus --object-path / --method org.freedesktop.DBus.ReloadConfig
-
 There are five services which is good to beware of:
 
 * openvpn3-service-configmgr
@@ -61,7 +56,9 @@ There are five services which is good to beware of:
 * openvpn3-service-logger
 
   This service will listen for log events happening from all the various
-  backend services.  Currently log data is only sent to stdout.
+  backend services.  Supports writing to the console (stdout), files or
+  redirect to syslog.  This is also automatically started when needed, if
+  it isn't already running.
 
 
 To interact with these services, there are two tools provided:
@@ -159,6 +156,14 @@ line again.  From this point of, this session is now to be managed via the
 `openvpn3` front-end.
 
 
+Prebuilt binaries
+-----------------
+
+There exists installable packages for Fedora, Red Hat Enterprise Linux,
+CentOS and Scientific Linux via a Fedora Copr repository.  See this
+url for more details:  https://copr.fedorainfracloud.org/coprs/dsommers/openvpn3/
+
+
 How to build it
 ---------------
 
@@ -213,6 +218,8 @@ In addition, this git repository will pull in two git submodules:
   The OpenVPN 3 Core library depends on some bleeding edge features
   in ASIO, so we need to do a build against the ASIO git repository.
 
+  This openvpn3-linux git repository will pull in the appropriate ASIO
+  library as a git submodule.
 
 First install the package dependencies needed to run the build.
 
@@ -260,14 +267,49 @@ user.
 
 Logging
 -------
-Logging is not optimal yet.  Currently you need to start the
-``openvpn3-service-logger`` binary and either pipe the output to a proper
-disk logger or watch it on the console.  Multiple loggers can run in parallel,
-and this can be started before starting any of the backend services have
-started.
+
+Logging happens via `openvpn3-service-logger`.  If not started manually,
+it will automatically be started by the backend processes needing it.  The
+default in that case is to send log data to syslog.  This service can be
+started manually and must run as the `openvpn` user.  If  being started as
+`root`, it will automatically switch to the `openvpn` user.  See
+`openvpn3-service-logger --help` for more details.  Unless `--syslog` or
+`--log-file` is provided, it will log to the console (stdout).
+
+This log service can also be managed (even though fairly few options
+to tweak) via `openvpn3 log-service`.  The most important feature here is
+probably to modify the log level.
 
 
-Debugging
+General debugging
+-----------------
+
+Ensure you have done a build using `--enable-debug-options` when running
+`./configure`.  This ensures the most crucial debug options are available.
+
+Most of the backend services (`openvpn3-service-logger`,
+`openvpn3-service-configmgr`, `openvpn3-service-sessionmgr` and
+`openvpn3-service-backendstart`) can be run in a
+console.  All with the exception of `openvpn3-service-backendstart` should
+run as the `openvpn` user. `openvpn3-service-backendstart` must run as
+root.  See their corresponding `--help` screen for details.  Most of these
+programs can be forced to provide more log data by setting `--log-level`.
+And they can all provide logging to the console.
+
+Since several of these services will also shutdown automatically when not
+being in use, it can also be good to disable this mechanism by providing
+`--idle-exit 0`.
+
+The last and more tricky service is the `openvpn3-service-client` which
+must be started via `openvpn3-service-backendstart`.  But it is possible
+to run this client process via a debugging tool, by using the `--run-via`
+and `--debugger-arg` options.
+
+For more detailed debugging details , please see
+[doxygen/debugging.md](doxygen/debugging.md)
+
+
+D-Bus debugging
 ---------
 To debug what is happening, ``busctl``, ``gdbus`` and ``dbus-send`` utilities are useful.
 The service destinations these tools need to move forward are:
@@ -306,23 +348,26 @@ Contribution
   discussions.  Final patches *MUST* go to the mailing list.
 
 * Testing
-  This code is new.  It will be buggy.  And it needs a lot of testing.  Please
-  reach out on FreeNode @ #openvpn for help and discussing issues you
-  encounter.
+  This code is new.  It will be buggy.  And it needs a lot of testing.
+  Please reach out on FreeNode @ #openvpn for help and discussing issues
+  you encounter.
 
 * Packagers
-  We are not targeting packaging in Linux distributions just yet.  This will
-  however come in not too far future when the code begins to mature and
-  stabilize.
+  We are beginning to targeting packaging in Linux distributions.  The
+  Fedora Copr repository is one which is currently available.  We are
+  looking for people willing to package this in other Linux distributions
+  as well.
 
 
 
 DISCLAIMER
 ----------
 
-This code is currently in early alpha stage.  This is NOT production ready.
-Further, this code has not been through much security audits or reviews, so
-this code can currently cause issues.  But it is functional.
+This is NOT production ready yet.  But we are getting there!  It is fully
+functional and quite stable when running.  And we are getting closer to
+a real beta release.  This code has also not been through the same scrutiny
+by security researches as OpenVPN 2.
+
 
 The OpenVPN 3 Core library is also used by the OpenVPN Connect and
 PrivateTunnel clients, so the pure VPN tunnel implementation should be fairly
