@@ -23,6 +23,7 @@
 #include "log/ansicolours.hpp"
 #include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"
+#include "log/proxy-log.hpp"
 #include "common/cmdargparser.hpp"
 
 using namespace openvpn;
@@ -76,7 +77,19 @@ static int session_manager(ParsedArgs args)
         }
     }
 
-    SessionManagerDBus sessmgr(G_BUS_TYPE_SYSTEM, logwr.get());
+    bool signal_broadcast = args.Present("signal-broadcast");
+    DBus dbus(G_BUS_TYPE_SYSTEM);
+    dbus.Connect();
+
+    SessionManagerDBus sessmgr(dbus.GetConnection(), logwr.get(),
+                               signal_broadcast);
+
+    LogServiceProxy::Ptr logsrvprx = nullptr;
+    if (!signal_broadcast)
+    {
+        logsrvprx.reset(new LogServiceProxy(dbus.GetConnection()));
+        logsrvprx->Attach(OpenVPN3DBus_interf_sessions);
+    }
 
     unsigned int log_level = 3;
     if (args.Present("log-level"))
@@ -102,6 +115,11 @@ static int session_manager(ParsedArgs args)
     g_main_loop_run(main_loop);
     g_main_loop_unref(main_loop);
 
+    if (logsrvprx)
+    {
+        logsrvprx->Detach(OpenVPN3DBus_interf_sessions);
+    }
+
     if (idle_wait_min > 0)
     {
         idle_exit->Disable();
@@ -123,7 +141,8 @@ int main(int argc, char **argv)
                         "Write log data to FILE.  Use 'stdout:' for console logging.");
     argparser.AddOption("colour", 0,
                         "Make the log lines colourful");
-
+    argparser.AddOption("signal-broadcast", 0,
+                        "Broadcast all D-Bus signals instead of targeted multicast");
     argparser.AddOption("idle-exit", "MINUTES", true,
                         "How long to wait before exiting if being idle. "
                         "0 disables it (Default: 3 minutes)");

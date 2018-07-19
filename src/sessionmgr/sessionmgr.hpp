@@ -63,15 +63,28 @@ class SessionManagerSignals : public LogSender
 {
 public:
     SessionManagerSignals(GDBusConnection *conn, std::string object_path,
-                          unsigned int log_level, LogWriter *logwr)
+                          unsigned int log_level, LogWriter *logwr,
+                          bool signal_broadcast)
             : LogSender(conn, LogGroup::SESSIONMGR,
-                        OpenVPN3DBus_interf_sessions, object_path, logwr)
+                        OpenVPN3DBus_interf_sessions, object_path, logwr),
+              signal_broadcast(signal_broadcast)
     {
         SetLogLevel(log_level);
+        if (!signal_broadcast)
+        {
+            DBusConnectionCreds credsprx(conn);
+            AddTargetBusName(credsprx.GetUniqueBusID(OpenVPN3DBus_name_log));
+        }
     }
 
     virtual ~SessionManagerSignals()
     {
+    }
+
+
+    bool GetSignalBroadcast()
+    {
+        return signal_broadcast;
     }
 
 
@@ -144,6 +157,9 @@ public:
         GVariant *params = g_variant_new("(uus)", (guint) major, (guint) minor, "");
         Send("StatusChange", params);
     }
+
+private:
+    bool signal_broadcast = true;
 };
 
 
@@ -431,11 +447,13 @@ public:
                   std::function<void()> remove_callback,
                   uid_t owner,
                   std::string objpath, std::string cfg_path,
-                  unsigned int manager_log_level, LogWriter *logwr)
+                  unsigned int manager_log_level, LogWriter *logwr,
+                  bool signal_broadcast)
         : DBusObject(objpath),
           DBusSignalSubscription(dbuscon, "", OpenVPN3DBus_interf_backends, ""),
           DBusCredentials(dbuscon, owner),
-          SessionManagerSignals(dbuscon, objpath, manager_log_level, logwr),
+          SessionManagerSignals(dbuscon, objpath, manager_log_level, logwr,
+                                signal_broadcast),
           remove_callback(remove_callback),
           be_proxy(nullptr),
           recv_log_events(false),
@@ -1506,9 +1524,11 @@ public:
      *
      */
     SessionManagerObject(GDBusConnection *dbuscon, const std::string objpath,
-                         unsigned int manager_log_level, LogWriter *logwr)
+                         unsigned int manager_log_level, LogWriter *logwr,
+                         bool signal_broadcast)
         : DBusObject(objpath),
-          SessionManagerSignals(dbuscon, objpath, manager_log_level, logwr),
+          SessionManagerSignals(dbuscon, objpath, manager_log_level, logwr,
+                                signal_broadcast),
           dbuscon(dbuscon),
           creds(dbuscon)
     {
@@ -1586,7 +1606,9 @@ public:
                                                        creds.GetUID(sender),
                                                        sesspath,
                                                        config_path,
-                                                       GetLogLevel(), logwr);
+                                                       GetLogLevel(),
+                                                       logwr,
+                                                       GetSignalBroadcast());
             IdleCheck_RefInc();
             session->IdleCheck_Register(IdleCheck_Get());
             session->RegisterObject(conn);
@@ -1727,12 +1749,14 @@ public:
      *                  disablefile log.
      *
      */
-    SessionManagerDBus(GBusType bus_type, LogWriter *logwr)
-        : DBus(bus_type,
+    SessionManagerDBus(GDBusConnection *conn, LogWriter *logwr,
+                       bool signal_broadcast)
+        : DBus(conn,
                OpenVPN3DBus_name_sessions,
                OpenVPN3DBus_rootp_sessions,
                OpenVPN3DBus_interf_sessions),
           logwr(logwr),
+          signal_broadcast(signal_broadcast),
           managobj(nullptr),
           procsig(nullptr)
     {
@@ -1772,7 +1796,8 @@ public:
         // Create a SessionManagerObject which will be the main entrance
         // point to this service
         managobj.reset(new SessionManagerObject(GetConnection(), GetRootPath(),
-                                                manager_log_level, logwr));
+                                                manager_log_level, logwr,
+                                                signal_broadcast));
 
         // Register this object to on the D-Bus
         managobj->RegisterObject(GetConnection());
@@ -1822,6 +1847,7 @@ public:
 private:
     unsigned int manager_log_level = 6; // LogCategory::DEBUG
     LogWriter *logwr = nullptr;
+    bool signal_broadcast = true;
     SessionManagerObject::Ptr managobj;
     ProcessSignalProducer * procsig;
 };
