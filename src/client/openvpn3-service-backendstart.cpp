@@ -84,25 +84,6 @@ public:
 
 
     /**
-     *  Sends Debug log messages which adds D-Bus message details
-     *  related to the message
-     *
-     * @param busname  D-Bus bus name triggering this log event
-     * @param path     D-Bus path to the object triggering this log event
-     * @param msg      The log message itself
-     */
-    void Debug(std::string busname, std::string path, std::string msg)
-    {
-            std::stringstream debug;
-            debug << "pid=" << std::to_string(getpid())
-                  << ", busname=" << busname
-                  << ", path=" << path
-                  << ", message=" << msg;
-            LogSender::Debug(debug.str());
-    }
-
-
-    /**
      *  Sends a StatusChange signal with a text message
      *
      * @param major  StatusMajor code of the status change
@@ -153,7 +134,7 @@ public:
                           << "</node>";
         ParseIntrospectionXML(introspection_xml);
 
-        Debug(busname, objpath, "BackendStarterObject registered");
+        Debug("BackendStarterObject registered");
     }
 
     ~BackendStarterObject()
