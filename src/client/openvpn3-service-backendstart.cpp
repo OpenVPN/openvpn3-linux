@@ -280,7 +280,14 @@ private:
         pid_t backend_pid = fork();
         if (0 == backend_pid)
         {
-            // Child
+            //  Child process
+            //
+            //  In this process scope, we do not have any access
+            //  to the D-Bus connection.  So we avoid as much logging
+            //  as possible here - and only critical things are sent
+            //  to stdout, which will be picked up by other logs on the
+            //  system
+            //
             char *args[client_args.size()+2];
             unsigned int i = 0;
 
@@ -302,20 +309,29 @@ private:
 
             execve(args[0], args, NULL);
 
-            // If execve() succeedes, the line below will not be executed at all.
-            // So if we come here, there must be an error.
-            std::cerr << "** Error starting " << args[0] << ": " << strerror(errno) << std::endl;
+            // If execve() succeedes, the line below will not be executed
+            // at all.  So if we come here, there must be an error.
+            std::cerr << "** Error starting " << args[0] << ": "
+                      << strerror(errno) << std::endl;
         }
         else if( backend_pid > 0)
         {
             // Parent
+            std::stringstream cmdline;
+            cmdline << "Command line used: ";
+            for (auto const& c : client_args)
+            {
+                cmdline << c << " ";
+            }
+            cmdline << token;
+            LogVerb2(cmdline.str());
 
-            std::stringstream msg;
             // Wait for the child process to exit, as the client process will fork again
             int rc = -1;
             int w = waitpid(backend_pid, &rc, 0);
             if (-1 == w)
             {
+                std::stringstream msg;
                 msg << "Child process ("  << token
                     << ") - pid " << backend_pid
                     << " failed to start as expected (exit code: "
