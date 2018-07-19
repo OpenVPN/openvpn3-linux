@@ -54,17 +54,26 @@ public:
      * @param conn        D-Bus connection to use when sending signals
      * @param object_path D-Bus object to use as sender of signals
      * @param default_log_level  Unsigned integer defining the initial log level
+     * @param signal_broadcast Should signals be broadcasted (true) or
+     *                         targeted for the log service (false)
      * @param logwr       Pointer to a LogWriter object for file logging.
      *                    Can be nullptr, which results in no active file logging.
      */
     ConfigManagerSignals(GDBusConnection *conn, std::string object_path,
-                         unsigned int default_log_level, LogWriter *logwr)
+                         unsigned int default_log_level, LogWriter *logwr,
+                         bool signal_broadcast = true)
         : LogSender(conn, LogGroup::CONFIGMGR,
                     OpenVPN3DBus_interf_configuration, object_path,
                     logwr),
-          logwr(logwr)
+          logwr(logwr),
+          signal_broadcast(signal_broadcast)
     {
         SetLogLevel(default_log_level);
+        if (!signal_broadcast)
+        {
+            DBusConnectionCreds credsprx(conn);
+            AddTargetBusName(credsprx.GetUniqueBusID(OpenVPN3DBus_name_log));
+        }
     }
 
 
@@ -76,6 +85,12 @@ public:
     LogWriter *GetLogWriterPtr()
     {
         return logwr;
+    }
+
+
+    bool GetSignalBroadcast()
+    {
+        return signal_broadcast;
     }
 
     /**
@@ -120,6 +135,7 @@ public:
 
 private:
     LogWriter *logwr = nullptr;
+    bool signal_broadcast = true;
 };
 
 
@@ -143,13 +159,16 @@ public:
      * @param default_log_level  Unsigned integer defining the initial log level
      * @param logwr      Pointer to LogWriter object; can be nullptr to disable
      *                   file log.
+     * @param signal_broadcast Should signals be broadcasted (true) or
+     *                         targeted for the log service (false)
      */
     ConfigurationAlias(GDBusConnection *dbuscon,
                        std::string aliasname, std::string cfgpath,
-                       unsigned int default_log_level, LogWriter *logwr)
+                       unsigned int default_log_level, LogWriter *logwr,
+                       bool signal_broadcast)
         : DBusObject(OpenVPN3DBus_rootp_configuration + "/aliases/" + aliasname),
           ConfigManagerSignals(dbuscon, OpenVPN3DBus_rootp_configuration + "/aliases/" + aliasname,
-                               default_log_level, logwr),
+                               default_log_level, logwr, signal_broadcast),
           cfgpath(cfgpath)
     {
         alias = aliasname;
@@ -310,6 +329,8 @@ public:
      * @param default_log_level  Unsigned integer defining the initial log level
      * @param logwr    Pointer to LogWriter object; can be nullptr to disable
      *                 file log.
+     * @param signal_broadcast Should signals be broadcasted (true) or
+     *                         targeted for the log service (false)
      * @param creator  An uid reference of the owner of this object.  This is
      *                 typically the uid of the front-end user importing this
      *                 VPN configuration profile.
@@ -320,9 +341,11 @@ public:
     ConfigurationObject(GDBusConnection *dbuscon,
                         std::function<void()> remove_callback,
                         std::string objpath, unsigned int default_log_level,
-                        LogWriter *logwr, uid_t creator, GVariant *params)
+                        LogWriter *logwr, bool signal_broadcast,
+                        uid_t creator, GVariant *params)
         : DBusObject(objpath),
-          ConfigManagerSignals(dbuscon, objpath, default_log_level, logwr),
+          ConfigManagerSignals(dbuscon, objpath, default_log_level, logwr,
+                               signal_broadcast),
           DBusCredentials(dbuscon, creator),
           remove_callback(remove_callback),
           name(""),
@@ -782,7 +805,8 @@ public:
                                                     std::string(g_variant_get_string(value, &len)),
                                                     GetObjectPath(),
                                                     GetLogLevel(),
-                                                    GetLogWriterPtr());
+                                                    GetLogWriterPtr(),
+                                                    GetSignalBroadcast());
                     alias->RegisterObject(conn);
                     ret = build_set_property_response(property_name, alias->GetAlias());
                 }
@@ -886,12 +910,16 @@ public:
      * @param default_log_level  Unsigned integer defining the initial log level
      * @param logwr      Pointer to LogWriter object; can be nullptr to disable
      *                   file log.
+     * @param signal_broadcast Should signals be broadcasted (true) or
+     *                         targeted for the log service (false)
      *
      */
     ConfigManagerObject(GDBusConnection *dbusc, const std::string objpath,
-                        unsigned int default_log_level, LogWriter *logwr)
+                        unsigned int default_log_level, LogWriter *logwr,
+                        bool signal_broadcast)
         : DBusObject(objpath),
-          ConfigManagerSignals(dbusc, objpath, default_log_level, logwr),
+          ConfigManagerSignals(dbusc, objpath, default_log_level, logwr,
+                               signal_broadcast),
           dbuscon(dbusc),
           creds(dbusc)
     {
@@ -959,6 +987,7 @@ public:
                                                    cfgpath,
                                                    GetLogLevel(),
                                                    GetLogWriterPtr(),
+                                                   GetSignalBroadcast(),
                                                    creds.GetUID(sender),
                                                    params);
             IdleCheck_RefInc();
@@ -1106,13 +1135,17 @@ public:
      *
      * @param bustype   GBusType, which defines if this service should be
      *                  registered on the system or session bus.
+     * @param signal_broadcast Should signals be broadcasted (true) or
+     *                         targeted for the log service (false)
      */
-    ConfigManagerDBus(GBusType bustype, LogWriter *logwr)
-        : DBus(bustype,
+    ConfigManagerDBus(GDBusConnection *conn, LogWriter *logwr,
+                      bool signal_broadcast)
+        : DBus(conn,
                OpenVPN3DBus_name_configuration,
                OpenVPN3DBus_rootp_configuration,
                OpenVPN3DBus_interf_configuration),
           logwr(logwr),
+          signal_broadcast(signal_broadcast),
           cfgmgr(nullptr),
           procsig(nullptr)
     {
@@ -1123,7 +1156,6 @@ public:
         procsig->ProcessChange(StatusMinor::PROC_STOPPED);
         delete procsig;
     }
-
 
     /**
      *  Sets the log level to use for the configuration manager main object
@@ -1146,7 +1178,8 @@ public:
     void callback_bus_acquired()
     {
         cfgmgr.reset(new ConfigManagerObject(GetConnection(), GetRootPath(),
-                                             default_log_level, logwr));
+                                             default_log_level, logwr,
+                                             signal_broadcast));
         cfgmgr->RegisterObject(GetConnection());
 
         procsig = new ProcessSignalProducer(GetConnection(),
@@ -1194,6 +1227,7 @@ public:
 private:
     unsigned int default_log_level = 6; // LogCategory::DEBUG
     LogWriter *logwr = nullptr;
+    bool signal_broadcast = true;
     ConfigManagerObject::Ptr cfgmgr;
     ProcessSignalProducer * procsig;
 };
