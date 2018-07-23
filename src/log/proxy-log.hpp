@@ -67,8 +67,12 @@ public:
     void Attach(const std::string interf)
     {
         Ping();      // Ensure the log service is alive
-        usleep(200);  // And add a short gracetime
-        Call("Attach", g_variant_new("(s)", interf.c_str()), true);
+
+        // We do this as a synchronous call, to ensure the backend really
+        // responded.  Then we just throw away the empty response, to avoid
+        // leaking memory.
+        GVariant *empty = Call("Attach", g_variant_new("(s)", interf.c_str()), false);
+        g_variant_unref(empty);
     }
 
 
