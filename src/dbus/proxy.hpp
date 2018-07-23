@@ -236,9 +236,14 @@ namespace openvpn
             {
                 try
                 {
-                    dbus_proxy_call(peer_proxy, "Ping", NULL,
-                                    false, call_flags);
-                    usleep(250);
+                    // The Ping() request does not give any response, but
+                    // we want to make this call synchronous and wait for
+                    // this call to truly have happened.  Then we just
+                    // throw away the empty response, to avoid a memleak.
+                    GVariant *empty = dbus_proxy_call(peer_proxy, "Ping",
+                                                      NULL, false, call_flags);
+                    g_variant_unref(empty);
+                    usleep(400); // Add some additional gracetime
                     return;
                 }
                 catch (DBusException& excp)
