@@ -104,6 +104,28 @@ struct BackendStatus
         }
     }
 
+
+    /**
+     *  Makes it possible to write BackendStatus in a readable format
+     *  via iostreams, such as 'std::cout << status', where status is a
+     *  BackendStatus object.
+     *
+     * @param os  std::ostream where to write the data
+     * @param ev  BackendStatus to write to the stream
+     *
+     * @return  Returns the provided std::ostream together with the
+     *          decoded BackendStatus information
+     */
+    friend std::ostream& operator<<(std::ostream& os , const BackendStatus& s)
+    {
+        return os << "[" << std::to_string((unsigned) s.major) << ","
+                         << std::to_string((unsigned) s.minor)
+                  << "] " << StatusMajor_str[(unsigned) s.major] << ", "
+                          << StatusMinor_str[(unsigned) s.minor]
+                  << (!s.message.empty() ? ": " : "")
+                  << (!s.message.empty() ? s.message : "");
+    }
+
     StatusMajor major;
     std::string major_str;
     StatusMinor minor;
