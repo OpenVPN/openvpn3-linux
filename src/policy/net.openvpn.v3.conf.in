@@ -297,6 +297,16 @@
            send_interface="org.freedesktop.DBus.Peer"
            send_type="method_call"
            send_member="Ping"/>
+    <allow send_destination="net.openvpn.v3.log"
+           send_interface="org.freedesktop.DBus.Properties"
+           send_type="method_call"
+           send_member="Get"
+           send_path="/net/openvpn/v3/log"/>
+    <allow send_destination="net.openvpn.v3.log"
+           send_interface="org.freedesktop.DBus.Properties"
+           send_type="method_call"
+           send_member="Set"
+           send_path="/net/openvpn/v3/log"/>
 
     <allow own_prefix="net.openvpn.v3.backends"/>
   </policy>
