@@ -41,6 +41,8 @@ int main(int argc, char **argv)
         OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, session_path);
         BackendStatus status = session.GetLastStatus();
 
+        std::cout << "        Status: " << status << std::endl;
+        std::cout << "----------------------------------------" << std::endl;
         std::cout << "  Status major: [" << std::to_string((unsigned int) status.major)
                   << "] " << status.major_str
                   << std::endl;
