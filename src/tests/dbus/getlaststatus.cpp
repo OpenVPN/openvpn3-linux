@@ -44,11 +44,9 @@ int main(int argc, char **argv)
         std::cout << "        Status: " << status << std::endl;
         std::cout << "----------------------------------------" << std::endl;
         std::cout << "  Status major: [" << std::to_string((unsigned int) status.major)
-                  << "] " << status.major_str
-                  << std::endl;
+                  << "] " << std::endl;
         std::cout << "  Status minor: [" << std::to_string((unsigned int) status.minor)
-                      << "] " << status.minor_str
-                      << std::endl;
+                      << "] " << std::endl;
         std::cout << "Status message: " << "[len: " << status.message.size()
                   << "] " << status.message
                   << std::endl;

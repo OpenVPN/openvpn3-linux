@@ -51,16 +51,28 @@ struct StatusEvent
         Parse(status);
     }
 
+
     /**
      *  Resets the current status to UNSET
      */
     void reset()
     {
         major = StatusMajor::UNSET;
-        major_str = "";
         minor = StatusMinor::UNSET;
-        minor_str = "";
-        message = "";
+        message.clear();
+    }
+
+
+    /**
+     *  Checks if the StatusEvent object is empty
+     *
+     * @return Returns true if it is empty/unused
+     */
+    bool empty()
+    {
+        return (StatusMajor::UNSET == major)
+               && (StatusMinor::UNSET == minor)
+               && message.empty();
     }
 
 
@@ -81,13 +93,11 @@ struct StatusEvent
         d = g_variant_lookup_value(status, "major", G_VARIANT_TYPE_UINT32);
         v = g_variant_get_uint32(d);
         major = (StatusMajor) v;
-        major_str = std::string(StatusMajor_str[v]);
         g_variant_unref(d);
 
         d = g_variant_lookup_value(status, "minor", G_VARIANT_TYPE_UINT32);
         v = g_variant_get_uint32(d);
         minor = (StatusMinor) v;
-        minor_str = std::string(StatusMinor_str[v]);
         g_variant_unref(d);
 
         gsize len;
@@ -117,17 +127,24 @@ struct StatusEvent
      */
     friend std::ostream& operator<<(std::ostream& os , const StatusEvent& s)
     {
-        return os << "[" << std::to_string((unsigned) s.major) << ","
-                         << std::to_string((unsigned) s.minor)
-                  << "] " << StatusMajor_str[(unsigned) s.major] << ", "
-                          << StatusMinor_str[(unsigned) s.minor]
-                  << (!s.message.empty() ? ": " : "")
-                  << (!s.message.empty() ? s.message : "");
+        if ((StatusMajor::UNSET == s.major)
+            && (StatusMinor::UNSET == s.minor)
+            && s.message.empty())
+        {
+            return os << "(No status)";
+        }
+        else
+        {
+            return os << "[" << std::to_string((unsigned) s.major) << ","
+                             << std::to_string((unsigned) s.minor)
+                      << "] " << StatusMajor_str[(unsigned) s.major] << ", "
+                              << StatusMinor_str[(unsigned) s.minor]
+                      << (!s.message.empty() ? ": " : "")
+                      << (!s.message.empty() ? s.message : "");
+        }
     }
 
     StatusMajor major;
-    std::string major_str;
     StatusMinor minor;
-    std::string minor_str;
     std::string message;
 };

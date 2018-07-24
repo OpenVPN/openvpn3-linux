@@ -344,16 +344,11 @@ static int cmd_session_list(ParsedArgs args)
             be_pid = -1;
         }
 
-        std::string status_str;
         StatusEvent status;
         std::string cfgname = "";
         try
         {
             status = sprx.GetLastStatus();
-            status_str = "[" + std::to_string((unsigned int) status.major) + ","
-                            + std::to_string((unsigned int) status.minor) + "] "
-                            + status.major_str + ", " + status.minor_str;
-
             std::string config_path = sprx.GetStringProperty("config_path");
             try
             {
@@ -367,7 +362,6 @@ static int cmd_session_list(ParsedArgs args)
         }
         catch (DBusException &excp)
         {
-            status_str = "(No status information available)";
         }
 
         std::cout << "        Path: " << sessp << std::endl;
@@ -391,10 +385,8 @@ static int cmd_session_list(ParsedArgs args)
         {
             std::cout << " Config name: " << cfgname << std::endl;
         }
-        std::cout << "      Status: " << status_str << std::endl;
-        std::cout << "              "
-                  << (status.message.empty() ? "(no status message)" : status.message)
-                  << std::endl;
+
+        std::cout << "      Status: " << status << std::endl;
     }
     if (first)
     {
