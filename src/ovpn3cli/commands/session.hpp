@@ -58,7 +58,7 @@ static ConnectionStats fetch_stats(std::string session_path)
  * @param stats  The ConnectionStats object returned by fetch_stats()
  * @return Returns std::string with the statistics pre-formatted as text/plain
  */
-static std::string statistics_plain(ConnectionStats& stats)
+std::string statistics_plain(ConnectionStats& stats)
 {
     if (stats.size() < 1)
     {
@@ -204,7 +204,7 @@ static int cmd_session_start(ParsedArgs args)
                 // Allow approx 30 seconds to establish connection; one loop
                 // will take about 1.3 seconds.
                 unsigned int attempts = 23;
-                BackendStatus s;
+                StatusEvent s;
                 while (attempts > 0)
                 {
                     attempts--;
@@ -345,7 +345,7 @@ static int cmd_session_list(ParsedArgs args)
         }
 
         std::string status_str;
-        BackendStatus status;
+        StatusEvent status;
         std::string cfgname = "";
         try
         {

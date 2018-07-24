@@ -34,7 +34,7 @@
 #include "dbus/core.hpp"
 #include "dbus/requiresqueue-proxy.hpp"
 #include "client/statistics.hpp"
-#include "client/backendstatus.hpp"
+#include "client/statusevent.hpp"
 #include "log/log-helpers.hpp"
 #include "log/dbus-log.hpp"
 
@@ -267,12 +267,12 @@ public:
     /**
      * Retrieves the last reported status from the VPN backend
      *
-     * @return  Returns a populated struct BackendStatus with the full status.
+     * @return  Returns a populated struct StatusEvent with the full status.
      */
-    BackendStatus GetLastStatus()
+    StatusEvent GetLastStatus()
     {
         GVariant *status = GetProperty("status");
-        BackendStatus ret(status);
+        StatusEvent ret(status);
         g_variant_unref(status);
         return ret;
     }

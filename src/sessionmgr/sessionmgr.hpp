@@ -48,7 +48,7 @@
 #include "dbus/path.hpp"
 #include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"
-#include "client/backendstatus.hpp"
+#include "client/statusevent.hpp"
 #include "ovpn3cli/lookup.hpp"
 
 using namespace openvpn;
@@ -342,7 +342,7 @@ public:
 
     void ProxyStatusDict(GVariant *status)
     {
-        BackendStatus be_status(status);
+        StatusEvent be_status(status);
 
         // If the last status received was CONNECTION:CONN_AUTH_FAILED,
         // preserve this status message
@@ -402,7 +402,7 @@ public:
             return false;
         }
 
-        BackendStatus chk(status_chk);
+        StatusEvent chk(status_chk);
         return (chk.major == (StatusMajor) last_major)
                && (chk.minor == (StatusMinor) last_minor)
                && (last_msg.compare(chk.message));

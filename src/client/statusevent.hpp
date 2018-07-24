@@ -20,21 +20,20 @@
 /**
  * @file   backendstatus.hpp
  *
- * @brief  Declares the BackendStatus object, which includes a D-Bus GVariant
+ * @brief  Declares the StatusEvent object, which includes a D-Bus GVariant
  *         value parser
  */
 
-#ifndef SRC_CLIENT_BACKENDSTATUS_HPP_
-#define SRC_CLIENT_BACKENDSTATUS_HPP_
+#pragma once
 
 #include "dbus/constants.hpp"
 
 /**
- * Carries a status record as reported by a VPN backend client
+ * Carries a status event record as reported by a VPN backend client
  */
-struct BackendStatus
+struct StatusEvent
 {
-    BackendStatus()
+    StatusEvent()
     {
         reset();
     }
@@ -46,7 +45,7 @@ struct BackendStatus
      *
      * @param status  Status object (GVariant *) to parse
      */
-    BackendStatus(GVariant *status)
+    StatusEvent(GVariant *status)
     {
         reset();
         Parse(status);
@@ -106,17 +105,17 @@ struct BackendStatus
 
 
     /**
-     *  Makes it possible to write BackendStatus in a readable format
+     *  Makes it possible to write StatusEvent in a readable format
      *  via iostreams, such as 'std::cout << status', where status is a
-     *  BackendStatus object.
+     *  StatusEvent object.
      *
      * @param os  std::ostream where to write the data
-     * @param ev  BackendStatus to write to the stream
+     * @param ev  StatusEvent to write to the stream
      *
      * @return  Returns the provided std::ostream together with the
-     *          decoded BackendStatus information
+     *          decoded StatusEvent information
      */
-    friend std::ostream& operator<<(std::ostream& os , const BackendStatus& s)
+    friend std::ostream& operator<<(std::ostream& os , const StatusEvent& s)
     {
         return os << "[" << std::to_string((unsigned) s.major) << ","
                          << std::to_string((unsigned) s.minor)
@@ -132,8 +131,3 @@ struct BackendStatus
     std::string minor_str;
     std::string message;
 };
-
-
-
-
-#endif /* SRC_CLIENT_BACKENDSTATUS_HPP_ */
