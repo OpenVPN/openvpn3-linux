@@ -33,6 +33,24 @@
  */
 struct StatusEvent
 {
+    StatusEvent(const StatusMajor maj, const StatusMinor min,
+                const std::string& msg)
+    {
+        reset();
+        major = maj;
+        minor = min;
+        message = msg;
+    }
+
+
+    StatusEvent(const StatusMajor& maj, const StatusMinor& min)
+    {
+        reset();
+        major = maj;
+        minor = min;
+    }
+
+
     StatusEvent()
     {
         reset();
@@ -40,15 +58,30 @@ struct StatusEvent
 
 
     /**
-     * Constructor which parses a GVariant dictionary containing a status
-     * object
+     * Constructor which parses a GVariant containing either
+     * a tuple (uus) or a dictionary containing a StatusEvent entry
      *
      * @param status  Status object (GVariant *) to parse
      */
     StatusEvent(GVariant *status)
     {
         reset();
-        Parse(status);
+        if (nullptr != status)
+        {
+            std::string g_type(g_variant_get_type_string(status));
+            if ("(uus)" == g_type)
+            {
+                parse_tuple(status);
+            }
+            else if ("a{sv}" == g_type)
+            {
+                parse_dict(status);
+            }
+            else
+            {
+                THROW_DBUSEXCEPTION("StatusEvent", "Invalid status data");
+            }
+        }
     }
 
 
@@ -68,7 +101,7 @@ struct StatusEvent
      *
      * @return Returns true if it is empty/unused
      */
-    bool empty()
+    bool empty() const
     {
         return (StatusMajor::UNSET == major)
                && (StatusMinor::UNSET == minor)
@@ -76,41 +109,43 @@ struct StatusEvent
     }
 
 
+
+
     /**
-     *   Parses a GVvariant dictionary containing the a status object
+     *  Create a D-Bus compliant GVariant object with the status information
+     *  packed as a '(uus)' tuple
      *
-     * @param status GVariant pointer to a valid dictionary containing the
-     *               status object
+     * @return Returns a pointer to a new GVariant (@g_variant_new())
+     *         allocated object.
      */
-    void Parse(GVariant *status)
+    GVariant *GetGVariantTuple() const
     {
-        GVariant *d = nullptr;
-        unsigned int v = 0;
+        return g_variant_new("(uus)",
+                             (guint32) major,
+                             (guint32) minor,
+                             (!message.empty() ? message.c_str() : NULL));
+    }
 
-        // FIXME: Should type-check better that the input GVariant
-        //        contains the proper fields for a status object
 
-        d = g_variant_lookup_value(status, "major", G_VARIANT_TYPE_UINT32);
-        v = g_variant_get_uint32(d);
-        major = (StatusMajor) v;
-        g_variant_unref(d);
-
-        d = g_variant_lookup_value(status, "minor", G_VARIANT_TYPE_UINT32);
-        v = g_variant_get_uint32(d);
-        minor = (StatusMinor) v;
-        g_variant_unref(d);
-
-        gsize len;
-        d = g_variant_lookup_value(status,
-                                   "status_message", G_VARIANT_TYPE_STRING);
-        message = std::string(g_variant_get_string(d, &len));
-        g_variant_unref(d);
-        if (len != message.size())
-        {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                "Failed retrieving status message text "
-                                "(inconsistent length)");
-        }
+    /**
+     *  Create a D-Bus compliant GVariant object with the status information
+     *  packed as a key/value based dictionary.
+     *
+     * @return Returns a pointer to a new GVariant (@g_variant_new())
+     *         allocated object.
+     */
+    GVariant *GetGVariantDict() const
+    {
+        GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
+        g_variant_builder_add (b, "{sv}", "major",
+                               g_variant_new_uint32((guint) major));
+        g_variant_builder_add (b, "{sv}", "minor",
+                               g_variant_new_uint32((guint) minor));
+        g_variant_builder_add (b, "{sv}", "status_message",
+                               g_variant_new_string(message.c_str()));
+        GVariant *data= g_variant_builder_end(b);
+        g_variant_builder_unref(b);
+        return data;
     }
 
 
@@ -144,7 +179,92 @@ struct StatusEvent
         }
     }
 
+
+    bool operator==(const StatusEvent& compare) const
+    {
+        return ((compare.major == (const StatusMajor) major)
+               && (compare.minor == (const StatusMinor) minor)
+               && (0 == compare.message.compare(message)));
+    }
+
+
+    bool operator!=(const StatusEvent& compare) const
+    {
+        return !(this->operator ==(compare));
+    }
+
     StatusMajor major;
     StatusMinor minor;
     std::string message;
+
+
+private:
+    /**
+     *   Parses a GVvariant dictionary containing the status object
+     */
+    void parse_dict(GVariant *status)
+    {
+        GVariant *d = nullptr;
+        unsigned int v = 0;
+
+        // FIXME: Should type-check better that the input GVariant
+        //        contains the proper fields for a status object
+        reset();
+        d = g_variant_lookup_value(status, "major", G_VARIANT_TYPE_UINT32);
+        if (!d)
+        {
+            THROW_DBUSEXCEPTION("StatusEvent", "Incorrect StatusEvent dict "
+                                "(missing 'major')");
+        }
+        v = g_variant_get_uint32(d);
+        major = (StatusMajor) v;
+        g_variant_unref(d);
+
+        d = g_variant_lookup_value(status, "minor", G_VARIANT_TYPE_UINT32);
+        if (!d)
+        {
+            THROW_DBUSEXCEPTION("StatusEvent", "Incorrect StatusEvent dict "
+                                "(missing 'minor')");
+        }
+        v = g_variant_get_uint32(d);
+        minor = (StatusMinor) v;
+        g_variant_unref(d);
+
+        gsize len;
+        d = g_variant_lookup_value(status,
+                                   "status_message", G_VARIANT_TYPE_STRING);
+        if (!d)
+        {
+            THROW_DBUSEXCEPTION("StatusEvent", "Incorrect StatusEvent dict "
+                                "(missing 'status_message')");
+        }
+        message = std::string(g_variant_get_string(d, &len));
+        g_variant_unref(d);
+        if (len != message.size())
+        {
+            THROW_DBUSEXCEPTION("StatusEvent",
+                                "Failed retrieving status message text "
+                                "(inconsistent length)");
+        }
+    }
+
+
+    /**
+     *   Parses a GVvariant (uus) tupple containing the status object
+    */
+    void parse_tuple(GVariant *status)
+    {
+        guint maj = 0;
+        guint min = 0;
+        gchar *msg = nullptr;
+        g_variant_get(status, "(uus)", &maj, &min, &msg);
+
+        reset();
+        major = (StatusMajor) maj;
+        minor = (StatusMinor) min;
+        if (msg)
+        {
+            message = std::string(msg);
+        }
+    }
 };

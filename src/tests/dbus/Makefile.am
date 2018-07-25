@@ -57,6 +57,7 @@ noinst_PROGRAMS = \
 	logservice1 \
 	enable-logging \
 	set-alias \
+	statusevent-selftest \
 	proc-wait-for \
 	proc-wait-for-pid \
 	request-queue-client \
@@ -94,6 +95,8 @@ logservice1_SOURCES = logservice1.cpp
 enable_logging_SOURCES = enable-logging.cpp
 
 set_alias_SOURCES = set-alias.cpp
+
+statusevent_selftest_SOURCES = statusevent-selftest.cpp
 
 proc_wait_for_SOURCES = proc-wait-for.cpp
 
