@@ -155,8 +155,7 @@ private:
     bool failed_signal_sent;
     StatusMinor run_status;
 
-
-    virtual bool socket_protect(int socket)
+    virtual bool socket_protect(int socket) override
     {
             return true;
     }
@@ -363,7 +362,7 @@ private:
     }
 
 
-    virtual void external_pki_cert_request(ClientAPI::ExternalPKICertRequest& certreq)
+    virtual void external_pki_cert_request(ClientAPI::ExternalPKICertRequest& certreq) override
     {
         std::cout << "*** external_pki_cert_request" << std::endl;
         certreq.error = true;
@@ -372,7 +371,7 @@ private:
     }
 
 
-    virtual void external_pki_sign_request(ClientAPI::ExternalPKISignRequest& signreq)
+    virtual void external_pki_sign_request(ClientAPI::ExternalPKISignRequest& signreq) override
     {
         std::cout << "*** external_pki_sign_request" << std::endl;
         signreq.error = true;
@@ -381,7 +380,7 @@ private:
     }
 
 
-    virtual bool pause_on_connection_timeout()
+    virtual bool pause_on_connection_timeout() override
     {
             return false;
     }
