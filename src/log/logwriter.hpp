@@ -262,6 +262,12 @@ public:
     {
     }
 
+    /*
+     * Explicity tells the compiler that we want to not to override an
+     * existing Write and our Write with different arguments should not
+     * generate a warning
+     */
+    using StreamLogWriter::Write;
 
     virtual void Write(const LogGroup grp,
                        const LogCategory ctg,
@@ -411,7 +417,7 @@ public:
 
     virtual void Write(const std::string& data,
                        const std::string& colour_init = "",
-                       const std::string& colour_reset = "")
+                       const std::string& colour_reset = "") override
     {
         // This is a very simple log implementation.  We do not
         // care about timestamps, as we trust the syslog takes
@@ -435,7 +441,7 @@ public:
     virtual void Write(const LogGroup grp, const LogCategory ctg,
                        const std::string& data,
                        const std::string& colour_init,
-                       const std::string& colour_reset)
+                       const std::string& colour_reset) override
     {
         // Equally simple to the other Write() method, but here
         // we have access to LogGroup and LogCategory, so we

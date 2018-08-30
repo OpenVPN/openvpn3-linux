@@ -79,7 +79,7 @@ public:
         return obj->build_set_property_response(name, *value);
     }
 
-    virtual std::string GetName() const
+    virtual std::string GetName() const override
     {
         return name;
     }
