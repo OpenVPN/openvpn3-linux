@@ -91,7 +91,7 @@ enum class LogGroup : std::uint_fast8_t {
         NETCFG                  /**< Network Configuration service (openvpn3-service-netcfg)*/
 };
 
-const std::array<const std::string, LogGroupCount> LogGroup_str = {
+const std::array<const std::string, LogGroupCount> LogGroup_str = {{
         "[[UNDEFINED]]",
         "Master Process",
         "Config Manager",
@@ -101,7 +101,7 @@ const std::array<const std::string, LogGroupCount> LogGroup_str = {
         "Backend Session Process",
         "Client",
         "Network Configuration"
-};
+}};
 
 enum class LogCategory : uint_fast8_t {
         UNDEFINED,              /**< Undefined/not set */
@@ -115,7 +115,7 @@ enum class LogCategory : uint_fast8_t {
         FATAL                   /**< Fatal errors - The current operation is going to stop */
 };
 
-const std::array<const std::string, 9> LogCategory_str = {
+const std::array<const std::string, 9> LogCategory_str = {{
         "[[UNDEFINED]]",        // LogCategory::UNDEFINED
         "DEBUG",                // LogFlags::DEBUG
         "VERB2",                // LogFlags::VERB2
@@ -125,7 +125,7 @@ const std::array<const std::string, 9> LogCategory_str = {
         "-- ERROR --",          // LogFlags::ERROR
         "!! CRITICAL !!",       // LogFlags::CRIT
         "**!! FATAL !!**",      // LogFlags::FATAL
-};
+}};
 
 const std::string LogPrefix(LogGroup group, LogCategory catg)
 {

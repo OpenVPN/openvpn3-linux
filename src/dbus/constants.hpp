@@ -85,14 +85,14 @@ enum class StatusMajor : std::uint_fast8_t {
         PROCESS                     /**< Status is related to process management */
  };
 
-const std::array<const std::string, StatusMajorCount> StatusMajor_str = {
+const std::array<const std::string, StatusMajorCount> StatusMajor_str = {{
         "(unset)",
         "Configuration",
         "Connection",
         "Session",
         "PKCS#11",
         "Process"
-};
+}};
 
 const uint8_t StatusMinorCount = 30;
 enum class  StatusMinor : std::uint_fast16_t {
@@ -133,7 +133,7 @@ enum class  StatusMinor : std::uint_fast16_t {
         PROC_KILLED,                 /**< A process of ours stopped unexpectedly */
 };
 
-const std::array<const std::string, StatusMinorCount> StatusMinor_str = {
+const std::array<const std::string, StatusMinorCount> StatusMinor_str = {{
         "(unset)",
 
         "Configuration error",
@@ -169,7 +169,7 @@ const std::array<const std::string, StatusMinorCount> StatusMinor_str = {
         "Process started",
         "Process stopped",
         "Process killed"
-};
+}};
 
 
 const uint8_t ClientAttentionTypeCount = 4;
@@ -180,12 +180,12 @@ enum class ClientAttentionType : std::uint_fast8_t {
     ACCESS_PERM
 };
 
-const std::array<const std::string, ClientAttentionTypeCount> ClientAttentionType_str = {
+const std::array<const std::string, ClientAttentionTypeCount> ClientAttentionType_str = {{
     "(unset)",
     "User Credentials",
     "PKCS#11 operation",
     "Requesting access permission"
-};
+}};
 
 const uint8_t ClientAttentionGroupCount = 6;
 enum class ClientAttentionGroup : std::uint_fast8_t {
@@ -197,13 +197,13 @@ enum class ClientAttentionGroup : std::uint_fast8_t {
     PKCS11_DECRYPT
 };
 
-const std::array<const std::string, ClientAttentionGroupCount> ClientAttentionGroup_str = {
+const std::array<const std::string, ClientAttentionGroupCount> ClientAttentionGroup_str = {{
     "(unset)",
     "Username/password authentication",
     "Static challenge",
     "Dynamic challenge",
     "PKCS#11 sign operation",
     "PKCS#11 decrypt operation"
-};
+}};
 
 #endif
