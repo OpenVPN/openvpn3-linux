@@ -147,7 +147,7 @@ namespace openvpn
                                                            dbusobject_callback_signal_handler,
                                                            this,
                                                            NULL );  // destructor
-            if (signal_id < 0)
+            if (signal_id == 0)
             {
                 std::stringstream err;
                 err << "Failed to subscribe to the " << signal_name << "signal on"
