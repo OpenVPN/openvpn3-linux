@@ -176,7 +176,6 @@ namespace openvpn
 
 
     private:
-        GDBusConnection *dbuscon;
         std::string processname;
     };
 };
