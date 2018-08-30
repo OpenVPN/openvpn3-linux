@@ -871,15 +871,14 @@ private:
         {
             std::stringstream statusmsg;
             statusmsg << "config_path=" << configpath << ", "
-                      << "eval_message='" << cfgeval.message << "', "
-                      << "error_message='" << cfgeval.error << "'";
-            signal.LogError("Failed to parse configuration: " + cfgeval.error);
+                      << "eval_message='" << cfgeval.message << "'";
+            signal.LogError("Failed to parse configuration: " + cfgeval.message);
             signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CFG_ERROR,
                                 statusmsg.str());
             signal.Debug(statusmsg.str());
             vpnclient = nullptr;
             THROW_DBUSEXCEPTION("BackendServiceObject",
-                                "Configuration parsing failed: " + cfgeval.error);
+                                "Configuration parsing failed: " + cfgeval.message);
         }
 
         if (cfgeval.externalPki)
