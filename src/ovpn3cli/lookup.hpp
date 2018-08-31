@@ -29,6 +29,7 @@
 #include <cstring>
 #include <sys/types.h>
 #include <pwd.h>
+#include <grp.h>
 
 #include "common/utils.hpp"
 
@@ -67,8 +68,8 @@ static std::string lookup_username(uid_t uid)
 /**
  *  Looks up a specific uid_t based on the provided username.
  *
- * @param username  std::string containing the usrename to lookup
- * @return An uid_t integer is returned on success.
+ * @param username  std::string containing the username to lookup
+ * @return An uid_t integer is returned on success, otherwise -1 on failure
  */
 static uid_t lookup_uid(std::string username)
 {
@@ -119,6 +120,35 @@ inline static uid_t get_userid(const std::string input)
     }
 }
 
+
+/**
+ *  Looks up a specific gid_t based on the provided group name.
+ *
+ * @param groupname  std::string containing the group name to lookup
+ * @return An gid_t integer is returned on success, otherwise -1 on failure
+ */
+inline static gid_t lookup_gid(const std::string& groupname)
+{
+    struct group grprec;
+    struct group *result = nullptr;
+    size_t buflen = sysconf(_SC_GETGR_R_SIZE_MAX);
+    char *buf = nullptr;
+
+    buf = (char *) malloc(buflen);
+    memset(buf, 0, buflen);
+    gid_t ret;
+    int r = getgrnam_r(groupname.c_str(), &grprec, buf, buflen, &result);
+    if ( (0 == r) && (NULL != result))
+    {
+        ret = result->gr_gid;
+    }
+    else
+    {
+        ret =  -1;
+    }
+    free(buf);
+    return ret;
+}
 
 #endif // OPENVPN3_OVPN3CLI_LOOKUP_HPP
 
