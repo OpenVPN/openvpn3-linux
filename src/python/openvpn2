@@ -191,10 +191,10 @@ def start_tunnel(bus, cfgobj, background_mode, verb):
             while done is False and connected is False:
                 time.sleep(1)  # Don't race too quickly forward
 
-                (status_maj, status_min, status_msg) = sessionobj.GetStatus()
+                status = sessionobj.GetStatus()
 
-                if StatusMajor.CONNECTION == status_maj:
-                    if StatusMinor.CONN_CONNECTING == status_min:
+                if StatusMajor.CONNECTION == status['major']:
+                    if StatusMinor.CONN_CONNECTING == status['minor']:
                         if connecting_prompt is False:
                             sys.stdout.write('Connecting ...')
                             sys.stdout.flush()
@@ -203,28 +203,29 @@ def start_tunnel(bus, cfgobj, background_mode, verb):
                             sys.stdout.write('.')
                             sys.stdout.flush()
 
-                    elif StatusMinor.CONN_CONNECTED == status_min:
+                    elif StatusMinor.CONN_CONNECTED == status['minor']:
                         print('\nConnected')
                         connected = True
 
-                    elif status_min in (StatusMinor.CONN_DISCONNECTED,
+                    elif status['minor'] in (StatusMinor.CONN_DISCONNECTED,
                                         StatusMinor.CONN_DONE):
-                        s  = len(status_msg) > 0 \
-                            and status_msg or '(No information)'
+                        s  = len(status['message']) > 0 \
+                            and status['message'] or '(No information)'
                         print('\nConnection got disconnected: ' + s)
                         done = True
 
-                    elif StatusMinor.CFG_REQUIRE_USER == status_min:
+                    elif StatusMinor.CFG_REQUIRE_USER == status['minor']:
                         connected = False
 
-                    elif StatusMinor.CONN_AUTH_FAILED == status_min:  # StatusMinor:CONN_AUTH_FAILED
+                    elif StatusMinor.CONN_AUTH_FAILED == status['minor']:
                         print(' Authentication failed')
                         done = True
                         exit_code = 3
 
                     else:  # Not handled status codes
                         print('{Status: major=%s, minor=%s, message="%s"}' %
-                              (status_maj.name, status_min.name, status_msg))
+                              (status['major'].name, status['minor'].name,
+                               status['message']))
                         exit_code = 7
 
                 if connected is False and done is False:

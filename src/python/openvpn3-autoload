@@ -173,8 +173,8 @@ def start_tunnel(sessmgr, cfgobj, autoload):
 
             # Check the session status and only report unexpected statuses
             status = sess.GetStatus()
-            if StatusMajor.CONNECTION != status[0] and (StatusMinor.CONNECTING != status[1] or StatusMinor.CONNECTED == status[1]):
-                print('[%s] Status: %s/%s' % (cfgn, str(status[0]), str(status[1])))
+            if StatusMajor.CONNECTION != status['major'] and (StatusMinor.CONNECTING != status['minor'] or StatusMinor.CONNECTED == status['minor']):
+                print('[%s] Status: %s/%s' % (cfgn, status['major'].name, status['minor'].name))
             ready = True
 
         except dbus.exceptions.DBusException as excep:

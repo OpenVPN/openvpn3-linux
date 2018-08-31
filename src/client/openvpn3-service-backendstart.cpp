@@ -82,23 +82,10 @@ public:
     void LogFATAL(std::string msg)
     {
         Log(LogEvent(log_group, LogCategory::FATAL, msg));
-        StatusChange(StatusMajor::SESSION, StatusMinor::PROC_KILLED, msg);
+        StatusChange(StatusEvent(StatusMajor::SESSION,
+                                 StatusMinor::PROC_KILLED,
+                                 msg));
         abort();
-    }
-
-
-    /**
-     *  Sends a StatusChange signal with a text message
-     *
-     * @param major  StatusMajor code of the status change
-     * @param minor  StatusMinor code of the status change
-     * @param msg    String containing a description of the reason for this
-     *               status change
-     */
-    void StatusChange(const StatusMajor major, const StatusMinor minor, std::string msg)
-    {
-        GVariant *params = g_variant_new("(uus)", (guint) major, (guint) minor, msg.c_str());
-        Send("StatusChange", params);
     }
 };
 

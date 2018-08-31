@@ -285,9 +285,7 @@ public:
                         std::string sigproxy_obj_path)
         : DBusSignalSubscription(conn, bus_name, interface, be_obj_path, "StatusChange"),
           DBusSignalProducer(conn, "", OpenVPN3DBus_interf_sessions, sigproxy_obj_path),
-          last_major(0),
-          last_minor(0),
-          last_msg("")
+          last_status()
     {
     }
 
@@ -319,82 +317,47 @@ public:
 
     void ProxyStatus(GVariant *status)
     {
-        guint32 maj = 0;
-        guint32 min = 0;
-        gchar *msg;
-        g_variant_get (status, "(uus)", &maj, &min, &msg);
+        StatusEvent s(status);
 
         // If the last status received was CONNECTION:CONN_AUTH_FAILED,
         // preserve this status message
-        if (!(StatusMajor::CONNECTION == (StatusMajor) last_major
-            && StatusMinor::CONN_AUTH_FAILED == (StatusMinor) last_minor))
+        if (!(StatusMajor::CONNECTION == last_status.major
+            && StatusMinor::CONN_AUTH_FAILED == last_status.minor))
         {
-            last_major = maj;
-            last_minor = min;
-            last_msg = std::string(msg);
+            last_status = s;
         }
-        g_free(msg);
 
         // Proxy this mesage via DBusSignalProducer
         Send("StatusChange", status);
     }
 
 
-    void ProxyStatusDict(GVariant *status)
-    {
-        StatusEvent be_status(status);
-
-        // If the last status received was CONNECTION:CONN_AUTH_FAILED,
-        // preserve this status message
-        if (!(StatusMajor::CONNECTION == (StatusMajor) last_major
-            && StatusMinor::CONN_AUTH_FAILED == (StatusMinor) last_minor))
-        {
-            last_major = (guint32) be_status.major;
-            last_minor = (guint32) be_status.minor;
-            last_msg = be_status.message;
-        }
-
-        // Proxy this mesage via DBusSignalProducer
-        GVariant *sig = g_variant_new("(uus)",
-                                      (guint32) be_status.major,
-                                      (guint32) be_status.minor,
-                                      be_status.message.c_str());
-        Send("StatusChange", sig);
-    }
-
     /**
      *  Retrieve the last status message processed
      *
-     * @return  Returns a GVariant Glib2 object containing a key/value
-     *          dictionary of the last signal sent
+     * @return  Returns a GVariant object containing the last signal sent
      */
     GVariant * GetLastStatusChange()
     {
-        if( last_msg.empty() && 0 == last_major && 0 == last_minor)
+        if( last_status.empty())
         {
             return NULL;  // Nothing have been logged, nothing to report
         }
-
-        GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
-        g_variant_builder_add (b, "{sv}", "major", g_variant_new_uint32(last_major));
-        g_variant_builder_add (b, "{sv}", "minor", g_variant_new_uint32(last_minor));
-        g_variant_builder_add (b, "{sv}", "status_message", g_variant_new_string(last_msg.c_str()));
-        GVariant *ret = g_variant_builder_end(b);
-        g_variant_builder_unref(b);
-        return ret;
+        return last_status.GetGVariantTuple();
     }
 
 
     /**
      *  Compares the provided status with what our latest registered status
      *  is.
+     *
      * @param status_chk  GVariant object containing a status dict
      * @return Returns True if the provided status is identical with the last
      *         reigstered status.
      */
     bool CompareStatus(GVariant *status_chk)
     {
-        if ( last_msg.empty() && 0 == last_major && 0 == last_minor)
+        if ( last_status.empty() )
         {
             // No status logged, so it is not possible to compare it.
             // Return false, as uncomparable statuses means we need to handle
@@ -403,16 +366,11 @@ public:
         }
 
         StatusEvent chk(status_chk);
-        return (chk.major == (StatusMajor) last_major)
-               && (chk.minor == (StatusMinor) last_minor)
-               && (last_msg.compare(chk.message));
+        return last_status == chk;
     }
 
 private:
-    guint32 last_major;
-    guint32 last_minor;
-    std::string last_msg;
-
+    StatusEvent last_status;
 };
 
 
@@ -507,7 +465,7 @@ public:
                           << "        <property type='t' name='session_created' access='read'/>"
                           << "        <property type='au' name='acl' access='read'/>"
                           << "        <property type='b' name='public_access' access='readwrite'/>"
-                          << "        <property type='a{sv}' name='status' access='read'/>"
+                          << "        <property type='(uus)' name='status' access='read'/>"
                           << "        <property type='a{sv}' name='last_log' access='read'/>"
                           << "        <property type='a{sx}' name='statistics' access='read'/>"
                           << "        <property type='o' name='config_path' access='read'/>"
@@ -666,18 +624,11 @@ public:
         else if ((signal_name == "StatusChange")
                  && (interface_name == OpenVPN3DBus_interf_backends))
         {
-            guint32 major_u;
-            guint32 minor_u;
-            gchar *msg;
-            g_variant_get (params, "(uus)", &major_u, &minor_u, &msg);
+            StatusEvent status(params);
 
-            StatusMajor major = (StatusMajor) major_u;
-            StatusMinor minor = (StatusMinor) minor_u;
-            g_free(msg);
-
-            if (StatusMajor::CONNECTION == major
-                && (StatusMinor::CONN_FAILED == minor
-                    || StatusMinor::CONN_AUTH_FAILED == minor))
+            if (StatusMajor::CONNECTION == status.major
+                && (StatusMinor::CONN_FAILED == status.minor
+                    || StatusMinor::CONN_AUTH_FAILED == status.minor))
             {
                 // When the backend client signals connection failure
                 // force it to shutdown and close this session object
@@ -686,7 +637,7 @@ public:
                 //        a fatal error (as now) and "Connection failed, but session may resume"
                 //        This link is between here and client/core-client.hpp:173
                 //
-                shutdown(true, (StatusMinor::CONN_FAILED == minor));
+                shutdown(true, (StatusMinor::CONN_FAILED == status.minor));
             }
         }
         else if ((signal_name =="AttentionRequired")
@@ -1407,7 +1358,7 @@ private:
             be_status = be_proxy->GetProperty("status");
             if (!sig_statuschg->CompareStatus(be_status))
             {
-                sig_statuschg->ProxyStatusDict(be_status);
+                sig_statuschg->ProxyStatus(be_status);
             }
         }
         catch (DBusException& excp)

@@ -95,8 +95,8 @@ while not done:
         # update sent by the VPN backend
         status = session_properties.Get('net.openvpn.v3.sessions','status')
 
-        if status['major'] == 2:        # StatusMajor::CONNECTION
-            if status['minor'] == 7:    # StatusMinor::CONNECTED
+        if status[0] == 2:        # StatusMajor::CONNECTION
+            if status[1] == 7:    # StatusMinor::CONNECTED
                 print("Connected")
                 # Simple blocker.  In real-life, more exiting stuff happens here.
                 # Should listen for various signals, can capture and store/present
@@ -109,8 +109,8 @@ while not done:
                     input("Press enter to disconnect")
                 except:
                     pass
-            elif status['minor'] == 9:  # StatusMinor:DISCONNECTED
-                print("Connection got disconnected:" + status['status_message'])
+            elif status[1] == 9:  # StatusMinor:DISCONNECTED
+                print("Connection got disconnected:" + status[2])
 
         session_interface.Disconnect()
         done = True

@@ -65,13 +65,10 @@ public:
      */
     void StatusChange(const StatusMajor major, const StatusMinor minor, std::string msg)
     {
-        last_major = (guint) major;
-        last_minor = (guint) minor;
-        last_msg = msg;
-        GVariant *params = g_variant_new("(uus)",
-                                         last_major, last_minor,
-                                         last_msg.c_str());
-        Send("StatusChange", params);
+        status.major = major;
+        status.minor = minor;
+        status.message = msg;
+        Send("StatusChange", status.GetGVariantTuple());
     }
 
     /**
@@ -109,27 +106,17 @@ public:
      */
     GVariant * GetLastStatusChange()
     {
-        if( last_msg.empty() && 0 == last_major && 0 == last_minor)
+        if( status.empty() )
         {
             return NULL;  // Nothing have been logged, nothing to report
         }
-
-        GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
-        g_variant_builder_add (b, "{sv}", "major", g_variant_new_uint32(last_major));
-        g_variant_builder_add (b, "{sv}", "minor", g_variant_new_uint32(last_minor));
-        g_variant_builder_add (b, "{sv}", "status_message", g_variant_new_string(last_msg.c_str()));
-
-        GVariant *res = g_variant_builder_end(b);
-        g_variant_builder_unref(b);
-        return res;
+        return status.GetGVariantTuple();
     }
 
 
 private:
     const unsigned int default_log_level = 6; // LogCategory::DEBUG
-    guint32 last_major;
-    guint32 last_minor;
-    std::string last_msg;
+    StatusEvent status;
 };
 
 #endif  // OPENVPN3_DBUS_CLIENT_BACKENDSIGNALS_HPP

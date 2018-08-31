@@ -106,33 +106,6 @@ public:
     }
 
 
-    /**
-     *  Sends a StatusChange signal with a text message
-     *
-     * @param major  StatusMajor code of the status change
-     * @param minor  StatusMinro code of the status change
-     * @param msg    String containing a description of the reason for this
-     *               status change
-     */
-    void StatusChange(const StatusMajor major, const StatusMinor minor, std::string msg)
-    {
-        GVariant *params = g_variant_new("(uus)", (guint) major, (guint) minor, msg.c_str());
-        Send("StatusChange", params);
-    }
-
-
-    /**
-     *  A simpler StatusChange signal sender, without a text message
-     *
-     * @param major  StatusMajor code of the status change
-     * @param minor  StatusMinro code of the status change
-     */
-    void StatusChange(const StatusMajor major, const StatusMinor minor)
-    {
-        GVariant *params = g_variant_new("(uus)", (guint) major, (guint) minor, "");
-        Send("StatusChange", params);
-    }
-
 private:
     LogWriter *logwr = nullptr;
     bool signal_broadcast = true;

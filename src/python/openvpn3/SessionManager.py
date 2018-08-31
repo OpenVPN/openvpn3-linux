@@ -233,9 +233,9 @@ class Session(object):
     def GetStatus(self):
         status = self.__prop_intf.Get('net.openvpn.v3.sessions',
                                       'status')
-        return (StatusMajor(status['major']),
-                StatusMinor(status['minor']),
-                status['status_message'])
+        return {"major": StatusMajor(status[0]),
+                "minor": StatusMinor(status[1]),
+                "message": status[2]}
 
 
     ##

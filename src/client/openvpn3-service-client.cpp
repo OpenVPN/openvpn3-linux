@@ -134,7 +134,7 @@ public:
                           << "            <arg type='s' name='token' direction='out'/>"
                           << "        </signal>"
                           << "        <property type='a{sx}' name='statistics' access='read'/>"
-                          << "        <property type='a{sv}' name='status' access='read'/>"
+                          << "        <property type='(uus)' name='status' access='read'/>"
                           <<  "    </interface>"
                           <<  "</node>";
         ParseIntrospectionXML(introspection_xml);

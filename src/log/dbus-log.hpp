@@ -25,6 +25,7 @@
 #include <exception>
 
 #include "dbus/signals.hpp"
+#include "client/statusevent.hpp"
 #include "log-helpers.hpp"
 #include "logevent.hpp"
 #include "logwriter.hpp"
@@ -171,6 +172,12 @@ namespace openvpn
                 "            <arg type='u' name='code_minor' direction='out'/>"
                 "            <arg type='s' name='message' direction='out'/>"
                 "        </signal>";
+        }
+
+
+        void StatusChange(const StatusEvent& statusev)
+        {
+            Send("StatusChange", statusev.GetGVariantTuple());
         }
 
         void ProxyLog(GVariant *values)
