@@ -454,7 +454,7 @@ static int cmd_session_manage(ParsedArgs args)
 
     if (!args.Present("path"))
     {
-        throw CommandException("session-stats",
+        throw CommandException("session-manage",
                                "Missing required session path");
     }
     std::string sesspath = args.GetValue("path", 0);
