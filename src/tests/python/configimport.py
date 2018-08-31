@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+#
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
 #  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>

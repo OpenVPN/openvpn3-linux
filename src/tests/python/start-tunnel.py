@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+#
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
 #  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
@@ -117,7 +119,7 @@ while not done:
 
         print("Disconnected")
 
-    except dbus.exceptions.DBusException, excep:
+    except dbus.exceptions.DBusException as excep:
         if str(excep).find(' Missing user credentials') > 0:
             print("Credentials needed")
 
@@ -143,6 +145,6 @@ while not done:
 
                     session_interface.UserInputProvide(qtype, qgroup, qid, response)
         else:
-            print excep
+            print(excep)
             done = True
 
