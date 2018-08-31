@@ -120,10 +120,8 @@ struct StatusEvent
      */
     GVariant *GetGVariantTuple() const
     {
-        return g_variant_new("(uus)",
-                             (guint32) major,
-                             (guint32) minor,
-                             (!message.empty() ? message.c_str() : NULL));
+        return g_variant_new("(uus)", (guint32) major, (guint32) minor,
+                             message.c_str());
     }
 
 
