@@ -263,6 +263,7 @@ private:
         if (msg)
         {
             message = std::string(msg);
+            g_free(msg);
         }
     }
 };
