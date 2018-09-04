@@ -151,7 +151,7 @@ src_client_openvpn3_service_client_SOURCES = \
 	src/client/core-client.hpp \
 	src/client/backend-signals.hpp \
 	src/client/statistics.hpp \
-	src/client/backendstatus.hpp \
+	src/client/statusevent.hpp \
 	$(DBUS_SOURCES) \
 	src/common/core-extensions.hpp \
 	src/common/requiresqueue.hpp \
@@ -188,7 +188,7 @@ src_configmgr_openvpn3_service_configmgr_SOURCES = \
 src_sessionmgr_openvpn3_service_sessionmgr_SOURCES = \
 	src/sessionmgr/openvpn3-service-sessionmgr.cpp \
 	src/sessionmgr/sessionmgr.hpp \
-	src/client/backendstatus.hpp \
+	src/client/statusevent.hpp \
 	$(DBUS_SOURCES) \
 	src/common/utils.hpp \
 	src/log/dbus-log.hpp
