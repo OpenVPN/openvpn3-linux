@@ -364,8 +364,6 @@ namespace openvpn
         std::string default_interface;
         GDBusConnection *dbuscon;
         guint busid;
-        guint object_cb_id;
-
 
         /**
          *  C wrapper function for the GDBus g_bus_own_name_on_connection()
