@@ -43,6 +43,7 @@ AM_LDFLAGS = \
 noinst_PROGRAMS = \
 	config-lock-down \
 	conncreds \
+	enable-logging \
 	fetch-avail-config-paths \
 	fetch-avail-session-paths \
 	fetch-config \
@@ -51,12 +52,11 @@ noinst_PROGRAMS = \
 	getlastlogevent \
 	getlaststatus \
 	getconnectionstats \
-	signal-listener \
 	log-listener \
 	log-listener2 \
 	logservice1 \
-	enable-logging \
 	set-alias \
+	signal-listener \
 	statusevent-selftest \
 	proc-wait-for \
 	proc-wait-for-pid \
@@ -67,6 +67,8 @@ noinst_PROGRAMS = \
 config_lock_down_SOURCES = config-lock-down.cpp
 
 conncreds_SOURCES = conncreds.cpp
+
+enable_logging_SOURCES = enable-logging.cpp
 
 fetch_avail_config_paths_SOURCES = fetch-avail-config-paths.cpp
 
@@ -84,17 +86,16 @@ getlaststatus_SOURCES = getlaststatus.cpp
 
 getconnectionstats_SOURCES = getconnectionstats.cpp
 
-signal_listener_SOURCES = signal-listener.cpp
-
 log_listener_SOURCES = log-listener.cpp
 
 log_listener2_SOURCES = log-listener2.cpp
 
 logservice1_SOURCES = logservice1.cpp
 
-enable_logging_SOURCES = enable-logging.cpp
 
 set_alias_SOURCES = set-alias.cpp
+
+signal_listener_SOURCES = signal-listener.cpp
 
 statusevent_selftest_SOURCES = statusevent-selftest.cpp
 
