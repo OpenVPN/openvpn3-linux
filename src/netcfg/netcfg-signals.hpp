@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "log/dbus-log.hpp"
 #include "netcfg-stateevent.hpp"
 
 
