@@ -59,6 +59,16 @@ const std::string OpenVPN3DBus_name_backends_be = "net.openvpn.v3.backends.be";
 const std::string OpenVPN3DBus_rootp_backends_sessions =  OpenVPN3DBus_rootp_backends + "/sessions";
 const std::string OpenVPN3DBus_rootp_backends_manager = OpenVPN3DBus_rootp_backends + "/manager";
 
+
+/* Network Configuration Service
+ * Creates/destroys tun devices, configures IP addresses, routing, DNS
+ * and other network configuration related tasks
+ */
+const std::string OpenVPN3DBus_name_netcfg = "net.openvpn.v3.netcfg";
+const std::string OpenVPN3DBus_rootp_netcfg = "/net/openvpn/v3/netcfg";
+const std::string OpenVPN3DBus_interf_netcfg = "net.openvpn.v3.netcfg";
+
+
 /**
  *  Status - major codes
  *  These codes represents a type of master group

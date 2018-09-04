@@ -97,7 +97,7 @@ class LogException : public std::exception
 /**
  * Log groups is used to classify the source of log events
  */
-const uint8_t LogGroupCount = 8;
+const uint8_t LogGroupCount = 9;
 enum class LogGroup : std::uint_fast8_t {
         UNDEFINED,              /**< Default - should not be used in code, but is here to detect errors */
         MASTERPROC,             /**< Master process (main openvpn-manager) */
@@ -106,7 +106,8 @@ enum class LogGroup : std::uint_fast8_t {
         BACKENDSTART,           /**< Backend starter process (openvpn3-service-backendstart) */
         LOGGER,                 /**< Logger process (child of openvpn-manager) */
         BACKENDPROC,            /**< Session process (openvpn-service-client) */
-        CLIENT                  /**< OpenVPN 3 Core tunnel object in the session process */
+        CLIENT,                 /**< OpenVPN 3 Core tunnel object in the session process */
+        NETCFG                  /**< Network Configuration service (openvpn3-service-netcfg)*/
 };
 
 const std::array<const std::string, LogGroupCount> LogGroup_str = {
@@ -117,7 +118,8 @@ const std::array<const std::string, LogGroupCount> LogGroup_str = {
         "Backend Starter",
         "Logger",
         "Backend Session Process",
-        "Client"
+        "Client",
+        "Network Configuration"
 };
 
 enum class LogCategory : uint_fast8_t {
