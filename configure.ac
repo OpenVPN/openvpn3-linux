@@ -100,6 +100,15 @@ PKG_CHECK_MODULES(
         [AC_MSG_ERROR([libuuid package not found. Is the development package installed?])]
 )
 
+dnl
+dnl  Check for libcap-ng - used for capabilities management
+dnl
+PKG_CHECK_MODULES(
+        [LIBCAPNG],
+        [libcap-ng],
+        [have_libcapng="yes"],
+        [AC_MSG_ERROR([libcap-ng package not found. Is the development package installed?])]
+)
 
 dnl
 dnl  Check for mbed TLS library

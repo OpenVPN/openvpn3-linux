@@ -188,6 +188,10 @@ The following dependencies are needed:
 
   https://github.com/open-source-parsers/jsoncpp
 
+* libcap-ng 0.7.5 or newer
+
+  http://people.redhat.com/sgrubb/libcap-ng
+
 * liblz4 1.7.3 or newer
 
   https://lz4.github.io/lz4
@@ -225,15 +229,15 @@ First install the package dependencies needed to run the build.
 
 #### Debian/Ubuntu:
   ``# apt-get install build-essential git pkg-config autoconf autoconf-archive libglib2.0-dev libjsoncpp-dev uuid-dev
-libmbedtls-dev liblz4-dev``
+libmbedtls-dev liblz4-dev libcapng-dev``
 
 #### Fedora:
-  ``# dnf install gcc-c++ git autoconf autoconf-archive automake make pkgconfig mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel``
+  ``# dnf install gcc-c++ git autoconf autoconf-archive automake make pkgconfig mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel libcapng-devel``
 
 #### Red Hat Enterprise Linux / CentOS / Scientific Linux
   First install the ``epel-release`` repository if that is not yet installed.  Then you can run:
 
-  ``# yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel lz4-devel``
+  ``# yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel lz4-devel libcapng-devel``
 
 
 ### Preparations building from git
