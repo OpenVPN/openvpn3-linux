@@ -32,6 +32,7 @@
 #include "dbus/core.hpp"
 #include "common/utils.hpp"
 #include "log/log-helpers.hpp"
+#include "netcfg/netcfg-stateevent.hpp"
 
 using namespace openvpn;
 
@@ -143,6 +144,23 @@ public:
                       << "-- type=" << LogGroup_str[group] << ", "
                       << "group=" << LogCategory_str[catg] << ", "
                       << " message='" << std::string(message) << "'"
+                      << std::endl;
+        }
+        else if (signal_name == "StateChange")
+        {
+            guint type = 0;
+            gchar *dev = 0;
+            gchar *det = NULL;
+            g_variant_get (parameters, "(uss)", &type, &dev, &det);
+
+            std::cout << "-- NetCfg StateChange: "
+                      << "sender=" << sender_name
+                      << ", interface=" << interface_name
+                      << ", path=" << object_path
+                      << ": [" << std::to_string(type) << "] "
+                      << "-- type=" << NetCfgStateEvent::TypeStr((NetCfgStateType) type) << ", "
+                      << "device='" << std::string(dev) << "', "
+                      << " details='" << det << "'"
                       << std::endl;
         }
         else
