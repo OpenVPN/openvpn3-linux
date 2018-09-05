@@ -30,6 +30,8 @@
 
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
+#include "dbus/glibutils.hpp"
+#include "ovpn3cli/lookup.hpp"
 #include "netcfg-stateevent.hpp"
 #include "netcfg-signals.hpp"
 
@@ -319,37 +321,37 @@ public:
             {
                 std::vector<std::string> iplist;
                 // Popluate iplist, formatted as  "ipaddress/prefix"
-                return mk_string_array(iplist);
+                return GLibUtils::GVariantFromVector(iplist);
             }
             else if ("ipv4_routes" == property_name)
             {
                 std::vector<std::string> routelist;
                 // Popluate routelist, formatted as "ipaddress/prefix=>gw" ?
-                return mk_string_array(routelist);
+                return GLibUtils::GVariantFromVector(routelist);
             }
             else if ("ipv6_addresses" == property_name)
             {
                 std::vector<std::string> iplist;
                 // Popluate iplist, formatted as  "ipaddress/prefix"
-                return mk_string_array(iplist);
+                return GLibUtils::GVariantFromVector(iplist);
             }
             else if ("ipv6_routes" == property_name)
             {
                 std::vector<std::string> routelist;
                 // Popluate routelist, formatted as "ipaddress/prefix=>gw" ?
-                return mk_string_array(routelist);
+                return GLibUtils::GVariantFromVector(routelist);
             }
             else if ("dns_servers" == property_name)
             {
                 std::vector<std::string> dns_list;
                 // Popluate dns_list, formatted as "ipaddress"
-                return mk_string_array(dns_list);
+                return GLibUtils::GVariantFromVector(dns_list);
             }
             else if ("dns_search" == property_name)
             {
                 std::vector<std::string> dns_list;
                 // Popluate dns_list, formatted as "search.domain.example.com"
-                return mk_string_array(dns_list);
+                return GLibUtils::GVariantFromVector(dns_list);
             }
         }
         catch (DBusPropertyException)
@@ -458,29 +460,5 @@ private:
                                            );
         }
     }
-
-    /**
-     *  Converts a std::vector<std::string> to a D-Bus compliant
-     *  array of string (as).
-     *
-     * @param input  std::vector<std::string> to convert
-     * @return Returns a GVariant object containing the complete array
-     *
-     */
-    GVariant * mk_string_array(const std::vector<std::string> input)
-    {
-        GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("as"));
-        for (const auto& e : input)
-        {
-            g_variant_builder_add(bld, "s", e.c_str());
-        }
-
-        GVariant *ret = g_variant_builder_end(bld);
-        g_variant_builder_unref(bld);
-
-        return ret;
-    }
-
-
 };
 

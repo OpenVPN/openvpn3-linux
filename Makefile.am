@@ -105,7 +105,8 @@ DBUS_SOURCES = \
 	src/dbus/processwatch.hpp \
 	src/dbus/proxy.hpp \
 	src/dbus/requiresqueue-proxy.hpp \
-	src/dbus/signals.hpp
+	src/dbus/signals.hpp \
+	src/dbus/glibutils.hpp
 
 if GIT_CHECKOUT
 BUILT_SOURCES = config-version.h
