@@ -128,6 +128,15 @@ int netcfg_main(ParsedArgs args)
         log_level = std::atoi(args.GetValue("log-level", 0).c_str());
     }
 
+    // Enable automatic shutdown if the config manager is
+    // idling for 1 minute or more.  By idling, it means
+    // no configuration files is stored in memory.
+    unsigned int idle_wait_min = 5;
+    if (args.Present("idle-exit"))
+    {
+        idle_wait_min = std::atoi(args.GetValue("idle-exit", 0).c_str());
+    }
+
     bool signal_broadcast = args.Present("signal-broadcast");
     LogServiceProxy::Ptr logservice;
     try
@@ -149,13 +158,29 @@ int netcfg_main(ParsedArgs args)
         {
             netcfgsrv.SetDefaultLogLevel(log_level);
         }
-        netcfgsrv.Setup();
 
-        // Main loop
+        // Prepare GLib Main loop
         GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
         g_unix_signal_add(SIGINT, stop_handler, main_loop);
         g_unix_signal_add(SIGTERM, stop_handler, main_loop);
 
+        // Setup idle-exit logic
+        IdleCheck::Ptr idle_exit;
+        if (idle_wait_min > 0)
+        {
+            idle_exit.reset(new IdleCheck(main_loop,
+                                          std::chrono::minutes(idle_wait_min)));
+            idle_exit->SetPollTime(std::chrono::seconds(30));
+            netcfgsrv.EnableIdleCheck(idle_exit);
+        }
+        netcfgsrv.Setup();
+
+        if (idle_wait_min > 0)
+        {
+            idle_exit->Enable();
+        }
+
+        // Start the main loop
         g_main_loop_run(main_loop);
         usleep(500);
         g_main_loop_unref(main_loop);
@@ -163,6 +188,12 @@ int netcfg_main(ParsedArgs args)
         if (logservice)
         {
             logservice->Detach(OpenVPN3DBus_interf_netcfg);
+        }
+
+        if (idle_wait_min > 0)
+        {
+            idle_exit->Disable();
+            idle_exit->Join();
         }
     }
     catch (std::exception& excp)
@@ -187,6 +218,9 @@ int main(int argc, char **argv)
                         "Make the log lines colourful");
     argparser.AddOption("signal-broadcast", 0,
                         "Broadcast all D-Bus signals instead of targeted multicast");
+    argparser.AddOption("idle-exit", "MINUTES", true,
+                        "How long to wait before exiting if being idle. "
+                        "0 disables it (Default: 5 minutes)");
 #if DEBUG_OPTIONS
     argparser.AddOption("disable-capabilities", 0,
                         "Do not restrcit any process capabilties (INSECURE)");

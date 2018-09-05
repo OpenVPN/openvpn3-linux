@@ -119,6 +119,8 @@ public:
     {
         try
         {
+            IdleCheck_UpdateTimestamp();
+
             // Only the VPN backend clients are granted access
             validate_sender(sender);
 
@@ -146,6 +148,8 @@ public:
                                               signal.GetLogWriter());
                 retval = g_variant_new("(o)", dev_path.c_str());
                 g_free(dev_name);
+                IdleCheck_RefInc();
+                device->IdleCheck_Register(IdleCheck_Get());
                 device->RegisterObject(conn);
                 devices[dev_path] = device;
             }
@@ -223,6 +227,7 @@ public:
     {
         try
         {
+            IdleCheck_UpdateTimestamp();
             if ("log_level" == property_name)
             {
                 return g_variant_new_uint32(signal.GetLogLevel());
@@ -264,6 +269,7 @@ public:
     {
         try
         {
+            IdleCheck_UpdateTimestamp();
             validate_sender(sender);
 
             if ("log_level" == property_name)
@@ -403,6 +409,11 @@ public:
         signal->SetLogLevel(default_log_level);
         signal->Debug("NetCfg service registered on '" + GetBusName()
                        + "': " + OpenVPN3DBus_rootp_netcfg);
+
+        if (nullptr != idle_checker)
+        {
+            srv_obj->IdleCheck_Register(idle_checker);
+        }
     }
 
 
