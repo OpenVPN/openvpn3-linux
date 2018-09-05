@@ -129,9 +129,9 @@ public:
                 gchar *dev_name = nullptr;
                 g_variant_get(params, "(us)", &g_dev_type, &dev_name);
 
-                signal.LogVerb1("CreateVirtualInterface("
-                                + std::string(std::to_string(g_dev_type))
-                                + ", '" + std::string(dev_name)+ "')");
+                signal.Debug("CreateVirtualInterface("
+                             + std::string(std::to_string(g_dev_type))
+                             + ", '" + std::string(dev_name)+ "')");
 
                 std::string dev_path = OpenVPN3DBus_rootp_netcfg + "/" + std::string(dev_name);
                 NetCfgDeviceType dev_type = (NetCfgDeviceType) g_dev_type;
