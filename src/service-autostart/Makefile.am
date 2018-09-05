@@ -30,12 +30,14 @@ EXTRA_DIST = \
 	net.openvpn.v3.configuration.service.in \
 	net.openvpn.v3.sessions.service.in \
 	net.openvpn.v3.backends.service.in \
+	net.openvpn.v3.netcfg.service.in \
 	net.openvpn.v3.log.service.in
 
 dbus_system_service_DATA = \
 	net.openvpn.v3.configuration.service \
 	net.openvpn.v3.sessions.service \
 	net.openvpn.v3.backends.service \
+	net.openvpn.v3.netcfg.service \
 	net.openvpn.v3.log.service
 
 CLEANFILES = $(dbus_system_service_DATA) *~
