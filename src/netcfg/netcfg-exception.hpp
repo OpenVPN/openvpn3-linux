@@ -43,7 +43,7 @@ public:
 
     virtual const char* what() const throw()
     {
-        return user_err.c_str();
+        return user_error.c_str();
     }
 
     const std::string& GetObjectPath() const noexcept
