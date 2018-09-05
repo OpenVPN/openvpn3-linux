@@ -158,8 +158,10 @@ public:
                 // Build up an array of object paths to available devices
                 GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("ao"));
 
-                std::string path = OpenVPN3DBus_rootp_netcfg + "/dummy";
-                g_variant_builder_add(bld, "o", path.c_str());
+                for (const auto& dev : devices)
+                {
+                    g_variant_builder_add(bld, "o", dev.first.c_str());
+                }
 
                 // Wrap up the result into a tuple, which GDBus expects and
                 // put it into the invocation response
