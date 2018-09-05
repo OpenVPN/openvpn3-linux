@@ -146,6 +146,16 @@ namespace openvpn
             }
             registered = false;
 
+            GError *err = nullptr;
+            if (!g_dbus_connection_flush_sync(dbuscon, NULL, &err))
+            {
+                std::cout << "** ERROR ** Connection flush failed when "
+                          << "removing object ["
+                          << introspection->interfaces[0] << ":"
+                          << object_path << "]:" << err->message
+                          << std::endl;
+            }
+
             // Remove the object from the D-Bus
             g_dbus_connection_unregister_object(dbuscon, object_id);
 
