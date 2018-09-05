@@ -43,6 +43,7 @@ src/client/openvpn3-service-backendstart
 src/client/openvpn3-service-client
 src/configmgr/openvpn3-service-configmgr
 src/log/openvpn3-service-logger
+src/netcfg/openvpn3-service-netcfg
 src/ovpn3cli/openvpn3
 src/sessionmgr/openvpn3-service-sessionmgr
 src/tests/command-parser/cmdparser

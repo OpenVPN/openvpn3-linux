@@ -124,6 +124,7 @@ pkglibexec_PROGRAMS = \
 	src/client/openvpn3-service-backendstart \
 	src/configmgr/openvpn3-service-configmgr \
 	src/sessionmgr/openvpn3-service-sessionmgr \
+	src/netcfg/openvpn3-service-netcfg \
 	src/log/openvpn3-service-logger
 
 #
@@ -194,6 +195,23 @@ src_sessionmgr_openvpn3_service_sessionmgr_SOURCES = \
 	$(DBUS_SOURCES) \
 	src/common/utils.hpp \
 	src/log/dbus-log.hpp
+
+
+#
+#  openvpn3-service-netcfg: Network Configuration Manager
+#
+src_netcfg_openvpn3_service_netcfg_SOURCES = \
+	src/netcfg/openvpn3-service-netcfg.cpp \
+	src/netcfg/netcfg.hpp \
+	src/netcfg/netcfg-device.hpp \
+	src/netcfg/netcfg-exception.hpp \
+	src/netcfg/netcfg-signals.hpp \
+	src/netcfg/netcfg-stateevent.hpp \
+	$(DBUS_SOURCES) \
+	src/common/utils.hpp \
+	src/log/dbus-log.hpp
+src_netcfg_openvpn3_service_netcfg_CXXFLAGS = $(LIBCAPNG_CFLAGS) $(AM_CXXFLAGS)
+src_netcfg_openvpn3_service_netcfg_LDFLAGS = $(LIBCAPNG_LIBS) $(AM_LDFLAGS)
 
 
 #
