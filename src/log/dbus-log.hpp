@@ -259,6 +259,12 @@ namespace openvpn
         }
 
 
+        LogWriter * GetLogWriter()
+        {
+            return logwr;
+        }
+
+
     protected:
         LogWriter *logwr = nullptr;
         LogGroup log_group;
