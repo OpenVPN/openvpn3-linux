@@ -101,3 +101,40 @@ private:
     std::string errormsg;
     std::string user_error;
 };
+
+
+
+class NetCfgProxyException : public std::exception
+{
+public:
+    NetCfgProxyException(const std::string& method, const std::string& err)
+                : method(method), errormsg(err)
+    {
+        user_error = method + "(): " + err;
+    }
+
+    ~NetCfgProxyException()
+    {
+    }
+
+    virtual const char* what() const throw()
+    {
+        return user_error.c_str();
+    }
+
+    const std::string& GetMethod() const noexcept
+    {
+        return std::move(method);
+    }
+
+    const std::string& GetError() const noexcept
+    {
+        return std::move(errormsg);
+    }
+
+private:
+    std::string method;
+    std::string errormsg;
+    std::string user_error;
+
+};

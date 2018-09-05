@@ -57,6 +57,7 @@ noinst_PROGRAMS = \
 	log-listener \
 	log-listener2 \
 	logservice1 \
+	netcfg-proxy-unit \
 	netcfg-stateevent-selftest \
 	set-alias \
 	signal-listener \
@@ -99,6 +100,8 @@ log_listener2_SOURCES = log-listener2.cpp
 
 logservice1_SOURCES = logservice1.cpp
 
+netcfg_proxy_unit_SOURCES = netcfg-proxy-unit.cpp \
+	$(top_srcdir)/src/netcfg/proxy-netcfg.hpp
 
 netcfg_stateevent_selftest_SOURCES = netcfg-stateevent-selftest.cpp \
 	$(top_srcdir)/src/netcfg/netcfg-stateevent.hpp
