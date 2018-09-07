@@ -51,14 +51,14 @@ In some situations, it might not be wanted to have the
 
 To run `openvpn3-service-client` via `valgrind`, you could do like this:
 
-    # openvpn3-service-backend-start --idle-exit 0 \
+    # openvpn3-service-backendstart --idle-exit 0 \
                 --run-via /usr/bin/valgrind       \
                 --debugger-arg "--leak-check=full"
 
 To run `openvpn3-service-client` via GDB, a different approach needs to be
 taken - by using the remote debugging feature of GDB.
 
-    # openvpn3-service-backend-start --idle-exit 0 \
+    # openvpn3-service-backendstart --idle-exit 0 \
                 --client-no-fork                   \
                 --client-no-setsid                 \
                 --run-via /usr/bin/gdbserver       \
