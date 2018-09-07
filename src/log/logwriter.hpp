@@ -72,6 +72,23 @@ public:
 
 
     /**
+     *  Turns on/off logging meta data
+     *
+     * @param meta  Boolean to enable (true) or disable (false) the
+     *              the meta data logging
+     */
+    void EnableLogMeta(const bool meta)
+    {
+        log_meta= meta;
+    }
+
+    bool LogMetaEnabled()
+    {
+        return log_meta;
+    }
+
+
+    /**
      *  Writes log data to the destination buffer
      *
      *  This is a pure virtual method which must be implemented.
@@ -145,7 +162,10 @@ public:
      */
     virtual void AddMeta(const std::string& data)
     {
-        metadata = data;
+        if (log_meta)
+        {
+            metadata = data;
+        }
     }
 
     /**
@@ -166,7 +186,8 @@ public:
 
 
 protected:
-    bool  timestamp = true;
+    bool timestamp = true;
+    bool log_meta =true;
     std::string metadata;
     std::string prepend;
     bool prepend_meta;

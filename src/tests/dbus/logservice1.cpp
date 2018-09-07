@@ -48,9 +48,15 @@ int cmd_props(ParsedArgs args)
         logsrvprx.SetTimestampFlag(args.GetBoolValue("timestamp", 0));
     }
 
+    if (args.Present("dbus-details"))
+    {
+        logsrvprx.SetDBusDetailsLogging(args.GetBoolValue("dbus-details", 0));
+    }
+
     std::cout << "Number of attached loggers: " << logsrvprx.GetNumAttached() << std::endl;
     std::cout << "Log level: " << logsrvprx.GetLogLevel() << std::endl;
     std::cout << "Timestamp enabled? " << (logsrvprx.GetTimestampFlag() ? "yes" : "no") << std::endl;
+    std::cout << "D-Bus details logging enabled? " << (logsrvprx.GetDBusDetailsLogging() ? "yes" : "no") << std::endl;
 
     return 0;
 }
@@ -133,6 +139,8 @@ int main(int argc, char **argv)
                      "Sets the log verbosity");
     props->AddOption("timestamp", 't', "BOOLEAN", true,
                      "Sets the timestamp flag for log events. Valid values: true, false");
+    props->AddOption("dbus-details", 'D', "BOOLEAN", true,
+                     "Sets the D-Bus details logging flag for log events");
 
     auto send = cmds.AddCommand("send", "Sends log events", cmd_send);
     send->AddOption("attach", 'a', "Do an Attach() method call before sending log event");

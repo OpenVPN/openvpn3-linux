@@ -222,11 +222,35 @@ static int cmd_log_service(ParsedArgs args)
             }
         }
 
+        std::string old_dbusdetails("");
+        bool curdbusdetails = logsrvprx.GetDBusDetailsLogging();
+        bool newdbusdetails = curdbusdetails;
+        if (args.Present("dbus-details"))
+        {
+            newdbusdetails = args.GetBoolValue("dbus-details", 0);
+            if ( curdbusdetails != newdbusdetails)
+            {
+                std::stringstream t;
+                if (newdbusdetails)
+                {
+                    // simple alignment trick
+                    t << " ";
+                }
+                t << "     (Was: "
+                  << (curdbusdetails ? "enabled" : "disabled") << ")";
+                old_dbusdetails = t.str();
+                logsrvprx.SetDBusDetailsLogging(newdbusdetails);
+            }
+        }
+
         std::cout << " Attached log subscriptions: "
                   << logsrvprx.GetNumAttached() << std::endl;
         std::cout << "             Log timestamps: "
                   << (newtstamp ? "enabled" : "disabled")
                   << old_tstamp << std::endl;
+        std::cout << "          Log D-Bus details: "
+                  << (newdbusdetails ? "enabled" : "disabled")
+                  << old_dbusdetails << std::endl;
         std::cout << "          Current log level: "
                   << newlev << old_loglev << std::endl;
     }
@@ -280,4 +304,8 @@ void RegisterCommands_log(Commands& ovpn3)
     service->AddOption("timestamp", "true/false", true,
                        "Set the timestamp flag used by the log service",
                        arghelper_boolean);
+    service->AddOption("dbus-details", "true/false", true,
+                       "Log D-Bus sender, object path and method details of log sender",
+                       arghelper_boolean);
+
 }

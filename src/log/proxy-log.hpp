@@ -149,4 +149,28 @@ public:
     {
         SetProperty("timestamp", tstamp);
     }
+
+
+    /**
+     *  Will log D-Bus details be added to the log (meta log lines)?
+     *
+     * @return  Returns true if D-Bus details are being added to the logs
+     */
+    bool GetDBusDetailsLogging()
+    {
+        return GetBoolProperty("log_dbus_details");
+    }
+
+
+    /**
+     *  Flips the D-Bus details log flag.  This is more useful for debugging
+     *  to better understand who sends the D-Bus Log signals.
+     *
+     * @param tstamp  Boolean flag wheter to enable (true) or disable (false)
+     *                the D-Bus details logging
+     */
+    void SetDBusDetailsLogging(bool dbus_details)
+    {
+        SetProperty("log_dbus_details", dbus_details);
+    }
 };

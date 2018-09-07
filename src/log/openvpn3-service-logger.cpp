@@ -131,7 +131,7 @@ static int logger(ParsedArgs args)
          logwr.reset(new StreamLogWriter(logfile));
      }
      logwr->EnableTimestamp(args.Present("timestamp"));
-
+     logwr->EnableLogMeta(args.Present("service-log-dbus-details"));
 
      // Setup the log receivers
     try
@@ -264,6 +264,8 @@ int main(int argc, char **argv)
                         "Log events to file");
     argparser.AddOption("service", 0,
                         "Run as a background D-Bus service");
+    argparser.AddOption("service-log-dbus-details", 0,
+                        "(Only with --service) Include D-Bus sender, path and method references in logs");
 
     try
     {

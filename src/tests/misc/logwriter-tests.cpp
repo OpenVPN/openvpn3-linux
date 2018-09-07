@@ -115,6 +115,21 @@ void run_test_3(LogWriter& w)
 }
 
 
+/**
+ *  Tests turning on and off the meta line logging
+ */
+void run_test_4(LogWriter& w)
+{
+    w.Write("**** run_test_4() - every other line has a meta log line");
+    for (int i = 1; i < 10; i++)
+    {
+        w.EnableLogMeta((i % 2) == 0);
+        w.AddMeta("Meta data for line #" + std::to_string(i));
+        w.Write("Log data for line #" + std::to_string(i));
+    }
+    w.EnableLogMeta(true);
+}
+
 int main(int argc, char **argv)
 {
     // Simple text/plain log writer, logging to stdout
@@ -125,6 +140,7 @@ int main(int argc, char **argv)
     run_test_1(lfw);
     run_test_2(lfw);
     run_test_3(lfw);
+    run_test_4(lfw);
     std::cout << std::endl << std::endl;
 
     // Similar to the previous text/plain test, but uses the colours variant.
@@ -138,6 +154,7 @@ int main(int argc, char **argv)
     run_test_1(cfw);
     run_test_2(cfw);
     run_test_3(cfw);
+    run_test_4(cfw);
     std::cout << std::endl << std::endl;
 
     std::cout << "Testing ColourWriter, mode: by group" << std::endl
@@ -156,6 +173,7 @@ int main(int argc, char **argv)
     run_test_1(slw);
     run_test_2(slw);
     run_test_3(slw);
+    run_test_4(slw);
     std::cout << "Check the syslog for results" << std::endl << std::endl;
 
     std::cout << "All tests done" << std::endl << std::endl;
