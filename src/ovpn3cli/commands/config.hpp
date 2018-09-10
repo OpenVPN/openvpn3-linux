@@ -259,12 +259,14 @@ static int cmd_config_manage(ParsedArgs args)
         OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path);
         conf.Ping();
 
+        bool valid_option = false;
+
         if (args.Present("alias"))
         {
             std::string alias = args.GetValue("alias", 0);
             conf.SetAlias(alias);
             std::cout << "Alias set to '" << alias << "' " << std::endl;
-            return 0;
+            valid_option = true;
         }
 
         if (args.Present("alias-delete"))
@@ -273,14 +275,14 @@ static int cmd_config_manage(ParsedArgs args)
                                    "Deleting configuration aliases is not yet implemented");
             conf.SetAlias("");
             std::cout << "Alias is deleted" << std::endl;
-            return 0;
+            valid_option = true;
         }
 
         if (args.Present("rename"))
         {
             conf.SetName(args.GetValue("rename", 0));
             std::cout << "Configuration renamed" << std::endl;
-            return 0;
+            valid_option = true;
         }
 
         if (args.Present("persist-tun"))
@@ -297,10 +299,12 @@ static int cmd_config_manage(ParsedArgs args)
                 std::cout << "Persistent (seamless) tunnel is disabled"
                           << std::endl;
             }
-            return 0;
+            valid_option = true;
         }
 
-        throw CommandException("config-manage", "No operation option recognised");
+        if (!valid_option)
+            throw CommandException("config-manage", "No operation option recognised");
+
     }
     catch (DBusPropertyException& err)
     {
@@ -314,6 +318,7 @@ static int cmd_config_manage(ParsedArgs args)
     {
         throw;
     }
+    return 0;
 }
 
 
