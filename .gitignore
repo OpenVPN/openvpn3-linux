@@ -82,3 +82,4 @@ src/python/openvpn3/gen-python-constants
 src/python/openvpn3/__pycache__/
 src/python/openvpn3/*.pyc
 src/service-autostart/net.openvpn*.service
+test-driver
