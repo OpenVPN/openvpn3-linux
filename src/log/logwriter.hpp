@@ -31,8 +31,8 @@
 #include <fstream>
 #include <exception>
 
+#include "common/timestamp.hpp"
 #include "colourengine.hpp"
-#include "log-helpers.hpp"
 #include "logevent.hpp"
 
 

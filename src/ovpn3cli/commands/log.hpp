@@ -24,7 +24,7 @@
  */
 
 #include "dbus/core.hpp"
-#include "log/dbus-log.hpp"
+#include "common/timestamp.hpp"
 #include "log/proxy-log.hpp"
 
 using namespace openvpn;
