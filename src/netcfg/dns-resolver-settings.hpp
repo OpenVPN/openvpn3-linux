@@ -27,6 +27,8 @@
 
 #pragma once
 
+#include "netcfg-exception.hpp"
+
 namespace OpenVPN3
 {
 namespace NetCfg
@@ -172,6 +174,147 @@ namespace DNS
                                          dns_search.end());
             modified = true;
         }
+
+
+#ifdef __GIO_TYPES_H__  // Only add GLib/GDBus methods if this is already used
+        /**
+         *  Adds DNS name servers based on an array of strings provided via
+         *  a GVariant container of the (as) type.
+         *
+         * @param params  GVariant object containing an (as) based string
+         *                array of elements to process
+         */
+        virtual void AddDNSServers(GVariant *params)
+        {
+            std::string params_type(g_variant_get_type_string(params));
+            if ("(as)" != params_type)
+            {
+                throw NetCfgException("Invalid D-Bus data type");
+            }
+
+            GVariantIter *srvlist = nullptr;
+            g_variant_get(params, "(as)", &srvlist);
+            if (nullptr == srvlist)
+            {
+                throw NetCfgException("Failed to extract parameters");
+            }
+
+            GVariant *srv = nullptr;
+            while ((srv = g_variant_iter_next_value(srvlist)))
+            {
+                gsize len;
+                dns_servers.push_back(std::string(g_variant_get_string(srv, &len)));
+                g_variant_unref(srv);
+            }
+            g_variant_iter_free(srvlist);
+            modified = true;
+        }
+
+
+        /**
+         *  Removes already resgistered DNS servers based on an array
+         *  of strings provided via a GVariant container of the (as) type.
+         *
+         * @param params  GVariant object containing an (as) based string
+         *                array of elements to process
+         */
+        virtual void RemoveDNSServers(GVariant *params)
+        {
+            std::string params_type(g_variant_get_type_string(params));
+            if ("(as)" != params_type)
+            {
+                throw NetCfgException("Invalid D-Bus data type");
+            }
+
+            GVariantIter *srvlist = nullptr;
+            g_variant_get(params, "(as)", &srvlist);
+            if (nullptr == srvlist)
+            {
+                throw NetCfgException("Failed to extract parameters");
+            }
+
+            GVariant *srv = nullptr;
+            while ((srv = g_variant_iter_next_value(srvlist)))
+            {
+                gsize len;
+                std::string s(g_variant_get_string(srv, &len));
+                RemoveDNSServer(s);
+                g_variant_unref(srv);
+            }
+            g_variant_iter_free(srvlist);
+            modified = true;
+        }
+
+
+        /**
+         *  Adds new DNS search domains based on an array of strings provided
+         *  via a GVariant container of the (as) type.
+         * @param params  GVariant object containing an (as) based string
+         *                array of elements to process
+         *
+         */
+        virtual void AddDNSSearch(GVariant *params)
+        {
+            std::string params_type(g_variant_get_type_string(params));
+            if ("(as)" != params_type)
+            {
+                throw NetCfgException("Invalid D-Bus data type");
+            }
+
+            GVariantIter *srchlist = nullptr;
+            g_variant_get(params, "(as)", &srchlist);
+            if (nullptr == srchlist)
+            {
+                throw NetCfgException("Failed to extract parameters");
+            }
+
+            GVariant *srchdom = nullptr;
+            while ((srchdom = g_variant_iter_next_value(srchlist)))
+            {
+                gsize len;
+                dns_search.push_back(std::string(g_variant_get_string(srchdom, &len)));
+                g_variant_unref(srchdom);
+            }
+            g_variant_iter_free(srchlist);
+            modified = true;
+        }
+
+
+        /**
+         *  Removes already resgistered DNS search domains based on an array
+         *  of strings provided via a GVariant container of the (as) type.
+         *
+         * @param params  GVariant object containing an (as) based string
+         *                array of elements to process
+         */
+        virtual void RemoveDNSSearch(GVariant *params)
+        {
+            std::string params_type(g_variant_get_type_string(params));
+            if ("(as)" != params_type)
+            {
+                throw NetCfgException("Invalid D-Bus data type");
+            }
+
+            GVariantIter *srchlist = nullptr;
+            g_variant_get(params, "(as)", &srchlist);
+            if (nullptr == srchlist)
+            {
+                throw NetCfgException("Failed to extract parameters");
+            }
+
+            GVariant *srchdom = nullptr;
+            while ((srchdom = g_variant_iter_next_value(srchlist)))
+            {
+                gsize len;
+                std::string dom(g_variant_get_string(srchdom, &len));
+                RemoveDNSSearch(dom);
+                g_variant_unref(srchdom);
+            }
+            g_variant_iter_free(srchlist);
+            modified = true;
+        }
+
+#endif // __GIO_TYPES_H__
 
 
         /**
