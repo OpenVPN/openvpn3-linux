@@ -191,6 +191,48 @@ namespace DNS
         }
 
 
+        /**
+         *  Simplistic reference counter - counting how many devices
+         *  attached to the ResolverSetting object.  This increments the
+         *  counter.
+         *
+         */
+        void IncDeviceCount() noexcept
+        {
+            ++users;
+        }
+
+
+        /**
+         *  Simplistic reference counter - counting how many devices
+         *  attached to the ResolverSetting object.  This decrements the
+         *  counter.
+         *
+         */
+        void DecDeviceCount() noexcept
+        {
+            if (users > 0)
+            {
+                --users;
+            }
+        }
+
+
+        /**
+         *  Simplistic reference counter - counting how many devices
+         *  attached to the ResolverSetting object.  This returns
+         *  the number of attached devices
+         *
+         *  @returns Returns an unsigned int of the number of device users
+         *
+         */
+
+        unsigned int GetDeviceCount() noexcept
+        {
+            return users;
+        }
+
+
 #ifdef __GIO_TYPES_H__  // Only add GLib/GDBus methods if this is already used
         /**
          *  Adds DNS name servers based on an array of strings provided via
@@ -362,6 +404,7 @@ namespace DNS
         std::vector<std::string> dns_servers;
         std::vector<std::string> dns_search;
         bool modified = false;
+        unsigned int users;
     };
 
 } // namespace DNS

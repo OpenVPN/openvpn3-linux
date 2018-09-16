@@ -127,6 +127,12 @@ public:
                    << "</node>";
         ParseIntrospectionXML(introspect);
         signal.LogVerb2("Network device '" + devname + "' prepared");
+
+        // Increment the device reference counter in the resolver
+        if (resolver)
+        {
+            resolver->IncDeviceCount();
+        }
     }
 
     ~NetCfgDevice()
@@ -255,9 +261,19 @@ public:
                 // This tears down and disables a virtual device but
                 // enables the device to be re-activated again with the same
                 // settings by calling the 'Activate' method again
-                if (resolver)
+
+                // Only restore the resolv.conf file if this is the last
+                // device using these ResolverSettings object
+                if (resolver && resolver->GetDeviceCount() <= 1)
                 {
-                    resolver->Restore();
+                    try
+                    {
+                        resolver->Restore();
+                    }
+                    catch (const NetCfgException& excp)
+                    {
+                        signal.LogCritical(excp.what());
+                    }
                 }
             }
             else if ("Destroy" == method_name)
@@ -269,7 +285,18 @@ public:
 
                 if (resolver)
                 {
-                    resolver->Restore();
+                    resolver->DecDeviceCount();
+                    if (resolver->GetDeviceCount() == 0)
+                    {
+                        try
+                        {
+                            resolver->Restore();
+                        }
+                        catch (const NetCfgException& excp)
+                        {
+                            signal.LogCritical(excp.what());
+                        }
+                    }
                 }
 
                 std::string sender_name = lookup_username(GetUID(sender));
