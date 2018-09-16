@@ -107,9 +107,16 @@ int netcfg_main(ParsedArgs args)
 #ifdef DEBUG_OPTIONS
     if (!args.Present("disable-capabilities"))
     {
-        // Need this capability to configure network and routing
+        // Need this capability to configure network and routing.
         capng_update(CAPNG_ADD, (capng_type_t) (CAPNG_EFFECTIVE|CAPNG_PERMITTED),
                       CAP_NET_ADMIN);
+
+        // CAP_FOWNER is needed to be allowed to overwrite /etc/resolv.conf
+        if (args.Present("resolv-conf"))
+        {
+            capng_update(CAPNG_ADD, (capng_type_t) (CAPNG_EFFECTIVE|CAPNG_PERMITTED),
+                         CAP_FOWNER);
+        }
     }
     if (!args.Present("run-as-root"))
     {
@@ -117,9 +124,17 @@ int netcfg_main(ParsedArgs args)
         drop_root_ng();
     }
 #else
-    // Need this capability to configure network and routing
+    // Need this capability to configure network and routing.
     capng_update(CAPNG_ADD, (capng_type_t) (CAPNG_EFFECTIVE|CAPNG_PERMITTED),
                   CAP_NET_ADMIN);
+
+    // CAP_FOWNER is needed to be allowed to overwrite /etc/resolv.conf
+    if (args.Present("resolv-conf"))
+    {
+        capng_update(CAPNG_ADD, (capng_type_t) (CAPNG_EFFECTIVE|CAPNG_PERMITTED),
+                     CAP_FOWNER);
+    }
+
     // With the capapbility set, no root account access is needed
     drop_root_ng();
 #endif
@@ -141,6 +156,11 @@ int netcfg_main(ParsedArgs args)
     }
 
     DNS::ResolverSettings::Ptr resolver = nullptr;
+    if (args.Present("resolv-conf"))
+    {
+        std::string rsc =  args.GetValue("resolv-conf", 0);
+        resolver.reset(new DNS::ResolvConfFile(rsc, rsc + ".ovpn3bak"));
+    }
 
     bool signal_broadcast = args.Present("signal-broadcast");
     LogServiceProxy::Ptr logservice;
@@ -227,6 +247,8 @@ int main(int argc, char **argv)
     argparser.AddOption("idle-exit", "MINUTES", true,
                         "How long to wait before exiting if being idle. "
                         "0 disables it (Default: 5 minutes)");
+    argparser.AddOption("resolv-conf", "FILE", true,
+                        "Use file based resolv.conf management, based using FILE");
 #if DEBUG_OPTIONS
     argparser.AddOption("disable-capabilities", 0,
                         "Do not restrcit any process capabilties (INSECURE)");
