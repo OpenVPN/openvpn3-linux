@@ -35,6 +35,9 @@
 #include "ovpn3cli/lookup.hpp"
 
 #include "netcfg.hpp"
+#include "dns-resolver-settings.hpp"
+
+using namespace OpenVPN3::NetCfg;
 
 static void drop_root_ng()
 {
@@ -137,6 +140,8 @@ int netcfg_main(ParsedArgs args)
         idle_wait_min = std::atoi(args.GetValue("idle-exit", 0).c_str());
     }
 
+    DNS::ResolverSettings::Ptr resolver = nullptr;
+
     bool signal_broadcast = args.Present("signal-broadcast");
     LogServiceProxy::Ptr logservice;
     try
@@ -153,7 +158,8 @@ int netcfg_main(ParsedArgs args)
 
         std::cout << get_version(args.GetArgv0()) << std::endl;
 
-        NetworkCfgService netcfgsrv(dbus.GetConnection(), logwr.get());
+        NetworkCfgService netcfgsrv(dbus.GetConnection(), resolver.get(),
+                                    logwr.get());
         if (log_level > 0)
         {
             netcfgsrv.SetDefaultLogLevel(log_level);

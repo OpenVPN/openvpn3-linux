@@ -32,8 +32,11 @@
 #include "dbus/connection-creds.hpp"
 #include "dbus/glibutils.hpp"
 #include "ovpn3cli/lookup.hpp"
+#include "./dns-direct-file.hpp"
 #include "netcfg-stateevent.hpp"
 #include "netcfg-signals.hpp"
+
+using namespace OpenVPN3::NetCfg;
 
 enum class NetCfgDeviceType
 {
@@ -50,15 +53,18 @@ public:
                  std::function<void()> remove_callback,
                  const uid_t creator, const std::string& objpath,
                  const NetCfgDeviceType& devtype, const std::string& devname,
+                 DNS::ResolverSettings *resolver,
                  const unsigned int log_level, LogWriter *logwr)
         : DBusObject(objpath),
           DBusCredentials(dbuscon, creator),
           remove_callback(remove_callback),
           device_type(devtype),
           device_name(devname),
-          signal(dbuscon, LogGroup::NETCFG, objpath, logwr)
+          signal(dbuscon, LogGroup::NETCFG, objpath, logwr),
+          resolver(resolver)
     {
         signal.SetLogLevel(log_level);
+
         std::stringstream introspect;
         introspect << "<node name='" << objpath << "'>"
                    << "    <interface name='" << OpenVPN3DBus_interf_netcfg << "'>"
@@ -108,6 +114,7 @@ public:
                    << "        <property type='u' name='device_type' access='read'/>"
                    << "        <property type='s' name='device_name' access='read'/>"
                    << "        <property type='b'  name='active' access='read'/>"
+                   << "        <property type='b'  name='modified' access='read'/>"
                    << "        <property type='as' name='ipv4_addresses' access='read'/>"
                    << "        <property type='as' name='ipv4_routes' access='read'/>"
                    << "        <property type='as' name='ipv6_addresses' access='read'/>"
@@ -194,35 +201,64 @@ public:
             }
             if ("AddDNS" == method_name)
             {
-                // Receives a list of DNS server IP addresses to use
-                // for DNS lookup
+                if (!resolver)
+                {
+                    throw NetCfgException("No resolver configured");
+                }
+
+                // Adds DNS servers
+                resolver->AddDNSServers(params);
             }
             else if ("RemoveDNS" == method_name)
             {
-                // Similar to AddDNS, but receives a list of IP addresses
-                // to remove from the DNS lookup
+                if (!resolver)
+                {
+                    throw NetCfgException("No resolver configured");
+                }
+
+                // Removes DNS servers
+                resolver->RemoveDNSServers(params);
             }
             else if ("AddDNSSearch" == method_name)
             {
-                // This is similar to AddDNS, but takes a list of
-                // DNS search domains to apply to the system
+                if (!resolver)
+                {
+                    throw NetCfgException("No resolver configured");
+                }
+
+                // Adds DNS search domains
+                resolver->AddDNSSearch(params);
             }
             if ("RemoveDNSSearch" == method_name)
             {
-                // Similar to AddDNSSearch, but removes the search domains
-                // provided
+                if (!resolver)
+                {
+                    throw NetCfgException("No resolver configured");
+                }
+
+                // Removes DNS search domains
+                resolver->RemoveDNSSearch(params);
             }
             else if ("Activate" == method_name)
             {
                 // The virtual device has not yet been created on the host,
                 // but all settings which has been queued up will be activated
                 // when this method is called.
+                if (resolver && resolver->GetModified())
+                {
+                    resolver->Apply();
+                }
+
             }
             else if ("Disable" == method_name)
             {
                 // This tears down and disables a virtual device but
                 // enables the device to be re-activated again with the same
                 // settings by calling the 'Activate' method again
+                if (resolver)
+                {
+                    resolver->Restore();
+                }
             }
             else if ("Destroy" == method_name)
             {
@@ -230,6 +266,12 @@ public:
                 // and then this object is completely deleted
 
                 CheckOwnerAccess(sender);
+
+                if (resolver)
+                {
+                    resolver->Restore();
+                }
+
                 std::string sender_name = lookup_username(GetUID(sender));
                 signal.LogVerb1("Device '" + device_name + "' was removed by "
                                + sender_name);
@@ -317,6 +359,15 @@ public:
             {
                 return g_variant_new_boolean(active);
             }
+            else if ("modified" == property_name)
+            {
+                bool modified = false;
+                if (resolver)
+                {
+                    modified |= resolver->GetModified();
+                }
+                return g_variant_new_boolean(modified);
+            }
             else if ("ipv4_addresses" == property_name)
             {
                 std::vector<std::string> iplist;
@@ -343,25 +394,39 @@ public:
             }
             else if ("dns_servers" == property_name)
             {
-                std::vector<std::string> dns_list;
-                // Popluate dns_list, formatted as "ipaddress"
-                return GLibUtils::GVariantFromVector(dns_list);
+                if (!resolver)
+                {
+                    // If no resolver is configured, return an empty result
+                    // instead of an error when reading this property
+                    return GLibUtils::GVariantFromVector(std::vector<std::string>{});
+                }
+                return GLibUtils::GVariantFromVector(resolver->GetDNSServers());
             }
             else if ("dns_search" == property_name)
             {
-                std::vector<std::string> dns_list;
-                // Popluate dns_list, formatted as "search.domain.example.com"
-                return GLibUtils::GVariantFromVector(dns_list);
+                if (!resolver)
+                {
+                    // If no resolver is configured, return an empty result
+                    // instead of an error when reading this property
+                    return GLibUtils::GVariantFromVector(std::vector<std::string>{});
+                }
+                return GLibUtils::GVariantFromVector(resolver->GetDNSSearch());
             }
         }
         catch (DBusPropertyException)
         {
             throw;
         }
-        catch (DBusException& excp)
+        catch (const NetCfgException & excp)
         {
             throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                        obj_path, intf_name, property_name,
+                                        intf_name, obj_path, property_name,
+                                        excp.what());
+        }
+        catch (const DBusException& excp)
+        {
+            throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
+                                        intf_name, obj_path, property_name,
                                         excp.what());
         }
         throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
@@ -433,13 +498,15 @@ public:
     }
 
 
+
+
 private:
     std::function<void()> remove_callback;
     NetCfgDeviceType device_type = NetCfgDeviceType::UNSET;
     std::string device_name;
     NetCfgSignals signal;
+    DNS::ResolverSettings * resolver = nullptr;
     bool active = false;
-
     /**
      *  Validate that the sender is allowed to do change the configuration
      *  for this device.  If not, a DBusCredentialsException is thrown.

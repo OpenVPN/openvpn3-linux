@@ -35,10 +35,12 @@
 #include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"
 #include "ovpn3cli/lookup.hpp"
+#include "dns-resolver-settings.hpp"
 #include "netcfg-signals.hpp"
 #include "netcfg-device.hpp"
 
 using namespace openvpn;
+using namespace OpenVPN3::NetCfg;
 
 /**
  *  Main D-Bus entry-point object for the net.openvpn.v3.netcfg service
@@ -61,10 +63,12 @@ public:
      */
     NetCfgServiceObject(GDBusConnection *conn,
                         const unsigned int default_log_level,
+                        DNS::ResolverSettings *resolver,
                         LogWriter *logwr)
         : DBusObject(OpenVPN3DBus_rootp_netcfg),
           DBusConnectionCreds(conn),
           signal(conn, LogGroup::NETCFG, OpenVPN3DBus_rootp_netcfg, logwr),
+          resolver(resolver),
           creds(conn)
     {
         signal.SetLogLevel(default_log_level);
@@ -143,7 +147,7 @@ public:
                                                    self->remove_device_object(dev_path);
                                                },
                                               creds.GetUID(sender), dev_path,
-                                              dev_type, dev_name,
+                                              dev_type, dev_name, resolver,
                                               signal.GetLogLevel(),
                                               signal.GetLogWriter());
                 retval = g_variant_new("(o)", dev_path.c_str());
@@ -185,6 +189,11 @@ public:
         {
             signal.LogCritical(excp.err());
             excp.SetDBusError(invoc);
+        }
+        catch (const NetCfgDeviceException& excp)
+        {
+            signal.LogCritical(excp.what());
+            excp.SetDBusError(invoc, "net.openvpn.v3.netcfg.error");
         }
         catch (const std::exception& excp)
         {
@@ -308,6 +317,7 @@ public:
 
 private:
     NetCfgSignals signal;
+    DNS::ResolverSettings *resolver;
     DBusConnectionCreds creds;
     std::map<std::string, NetCfgDevice *> devices;
 
@@ -360,11 +370,14 @@ public:
      * @param logwr      LogWriter object which takes care of the log processing
      *
      */
-    NetworkCfgService(GDBusConnection *dbuscon, LogWriter *logwr)
+    NetworkCfgService(GDBusConnection *dbuscon,
+                      DNS::ResolverSettings *resolver,
+                      LogWriter *logwr)
         : DBus(dbuscon,
                OpenVPN3DBus_name_netcfg,
                OpenVPN3DBus_rootp_netcfg,
                OpenVPN3DBus_interf_netcfg),
+          resolver(resolver),
           logwr(logwr),
           default_log_level(4),
           signal(nullptr),
@@ -402,6 +415,7 @@ public:
         // Create a new OpenVPN3 client session object
         srv_obj.reset(new NetCfgServiceObject(GetConnection(),
                                               default_log_level,
+                                              resolver,
                                               logwr));
         srv_obj->RegisterObject(GetConnection());
 
@@ -411,6 +425,16 @@ public:
         signal->SetLogLevel(default_log_level);
         signal->Debug("NetCfg service registered on '" + GetBusName()
                        + "': " + OpenVPN3DBus_rootp_netcfg);
+
+        if (resolver)
+        {
+            signal->LogVerb2(resolver->GetBackendInfo());
+
+            // Fetch the current contents of the system DNS resolver
+            // settings.  Beware, this resolver object is shared between
+            // all interfaces managed by netcfg.
+            resolver->Fetch();
+        }
 
         if (nullptr != idle_checker)
         {
@@ -451,7 +475,9 @@ public:
 
 
 private:
+    DNS::ResolverSettings *resolver;
     LogWriter *logwr;
+
     unsigned int default_log_level;
     NetCfgSignals::Ptr signal;
     NetCfgServiceObject::Ptr srv_obj;
