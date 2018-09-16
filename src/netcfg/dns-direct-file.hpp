@@ -150,7 +150,8 @@ namespace DNS
             }
 
             // If we're going to take a backup if the file exists
-            if (!backup_filename.empty() && file_exists(filename))
+            if (!backup_filename.empty() && !backup_active
+                && file_exists(filename))
             {
                 if (file_exists(backup_filename))
                 {
@@ -161,6 +162,7 @@ namespace DNS
                     throw NetCfgException("Could not rename '" + filename +"'"
                                           + " to '" + backup_filename + "'");
                 }
+                backup_active = true;
             }
 
             // Open the destination file, generate contents and write to disk
@@ -180,9 +182,11 @@ namespace DNS
          */
         void RestoreBackup()
         {
-            if (backup_filename.empty())
+            if (backup_filename.empty() || !file_exists(backup_filename))
             {
-                throw NetCfgException("No backup file available");
+                throw NetCfgException("Backup file '" + backup_filename + "'"
+                                      + " to restore '" + filename + "'"
+                                      + " is missing");
             }
 
             if (0 != std::remove(filename.c_str()))
@@ -195,6 +199,7 @@ namespace DNS
                 throw NetCfgException("Failed restoring '" + filename + "'"
                                       + " from '" + backup_filename + "'");
             }
+            backup_active = false;
         }
 
 
@@ -216,6 +221,7 @@ namespace DNS
     private:
         std::string filename = "";
         std::string backup_filename= "";
+        bool backup_active = false;
 
 
         /**
