@@ -28,6 +28,34 @@
 
 #include <exception>
 
+
+class NetCfgException : public std::exception
+{
+public:
+    NetCfgException(const std::string& err)
+                : errormsg(err)
+    {
+    }
+
+    ~NetCfgException()
+    {
+    }
+
+    virtual const char* what() const throw()
+    {
+        return errormsg.c_str();
+    }
+
+    const std::string& GetError() const noexcept
+    {
+        return std::move(errormsg);
+    }
+
+private:
+    std::string errormsg;
+};
+
+
 class NetCfgDeviceException : std::exception
 {
 public:
@@ -57,6 +85,7 @@ public:
     }
 
 
+#ifdef __GIO_TYPES_H__  // Only add GLib/GDBus methods if this is already used
     /**
      *  Wrapper to more easily return a NetCfgDeviceException
      *  back to an on going D-Bus method call.  This will transport the
@@ -69,7 +98,6 @@ public:
      *                   error classification.  Look up G_IO_ERROR_*
      *                   entries in glib-2.0/gio/gioenums.h for details.
      */
-
     void SetDBusError(GError **error,
                       const GQuark domain, const guint errcode) const noexcept
     {
@@ -93,6 +121,7 @@ public:
         g_dbus_method_invocation_return_gerror(invocation, dbuserr);
         g_error_free(dbuserr);
     }
+#endif  // __GIO_TYPES_H__
 
 
 private:
@@ -101,7 +130,6 @@ private:
     std::string errormsg;
     std::string user_error;
 };
-
 
 
 class NetCfgProxyException : public std::exception
