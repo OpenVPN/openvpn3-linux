@@ -27,7 +27,11 @@
 
 #pragma once
 
+#include <openvpn/common/rc.hpp>
+
 #include "netcfg-exception.hpp"
+
+using namespace openvpn;
 
 namespace OpenVPN3
 {
@@ -39,9 +43,11 @@ namespace DNS
      *  Class to provide a structured way to manage resolver settings,
      *  such as DNS name servers and DNS search domains
      */
-    class ResolverSettings
+    class ResolverSettings : public RC<thread_unsafe_refcount>
     {
     public:
+        typedef RCPtr<ResolverSettings> Ptr;
+
         ResolverSettings()
         {
         }
