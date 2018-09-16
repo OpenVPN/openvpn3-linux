@@ -66,6 +66,15 @@ namespace DNS
 
 
         /**
+         *  Provide some information for logging about the configured
+         *  resolver backend.
+         *
+         * @return  Returns a std::string with the information.
+         */
+        virtual std::string GetBackendInfo() = 0;
+
+
+        /**
          *  Get indication if the resolver settings has been modified
          *  since the last update/apply.
          *

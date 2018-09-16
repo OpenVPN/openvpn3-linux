@@ -94,10 +94,21 @@ namespace DNS
             filename = fname;
         }
 
+        virtual std::string GetFilename() noexcept
+        {
+            return filename;
+        }
+
 
         virtual void SetBackupFilename(const std::string& bfname) noexcept
         {
             backup_filename = bfname;
+        }
+
+
+        virtual std::string GetBackupFilename() noexcept
+        {
+            return backup_filename;
         }
 
 
@@ -250,6 +261,18 @@ namespace DNS
 
         virtual ~ResolvConfFile()
         {
+        }
+
+
+        virtual std::string GetBackendInfo()
+        {
+            std::string ret = std::string("ResolvConf file backend. Using: ")
+                            + "'" + GetFilename() + "'";
+            if (!GetBackupFilename().empty())
+            {
+                ret += "  Backup file: '" + GetBackupFilename() + "'";
+            }
+            return ret;
         }
 
 
