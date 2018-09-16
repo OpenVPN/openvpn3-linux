@@ -180,6 +180,26 @@ namespace openvpn
                                           GDBusMethodInvocation *invoc) = 0;
 
 
+        GVariant * _dbus_get_property_internal(GDBusConnection *conn,
+                                               const std::string sender,
+                                               const std::string obj_path,
+                                               const std::string intf_name,
+                                               const std::string property_name,
+                                               GError **error)
+        {
+            try
+            {
+                return callback_get_property(conn, sender, obj_path,
+                                             intf_name, property_name, error);
+            }
+            catch (DBusPropertyException& err)
+            {
+                err.SetDBusError(error);
+                return NULL;
+            }
+        }
+
+
         /**
          *  Called each time a D-Bus client attempts to read a D-Bus object property
          */
@@ -538,12 +558,12 @@ namespace openvpn
                                                            gpointer this_ptr)
         {
             class DBusObject *obj = (class DBusObject *) this_ptr;
-            return obj->callback_get_property(conn,
-                                              std::string(sender),
-                                              std::string(obj_path),
-                                              std::string(intf_name),
-                                              std::string(property_name),
-                                              error);
+            return obj->_dbus_get_property_internal(conn,
+                                                    std::string(sender),
+                                                    std::string(obj_path),
+                                                    std::string(intf_name),
+                                                    std::string(property_name),
+                                                    error);
         }
 
 
