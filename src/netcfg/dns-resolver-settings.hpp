@@ -329,6 +329,20 @@ namespace DNS
         }
 
 
+        bool operator==(const ResolverSettings& cmp) const noexcept
+        {
+            return (dns_servers == cmp.dns_servers
+                    && dns_search == cmp.dns_search);
+
+        }
+
+        bool operator!=(const ResolverSettings& cmp) const noexcept
+        {
+            return (dns_servers != cmp.dns_servers
+                    || dns_search != cmp.dns_search);
+        }
+
+
     protected:
         std::vector<std::string> dns_servers;
         std::vector<std::string> dns_search;

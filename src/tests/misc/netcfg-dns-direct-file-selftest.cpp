@@ -57,6 +57,15 @@ int main()
     copy2.SetFilename("test-copy2.conf");
     copy2.Apply();
 
+    std::cout << "Comparing:: copy == copy2 ==> "
+              << (copy == copy2 ? "Identical - FAIL"
+                                     : "Different - PASS")
+              << std::endl
+              << "Comparing:: copy != copy2 ==> "
+              << (copy != copy2 ? "Not identical - PASS"
+                                     : "Not different - FAIL")
+              << std::endl << std::endl;
+
     ResolvConfFile fresh("test-fresh.conf");
     fresh.AddDNSSearch("example.org");
     fresh.AddDNSSearch("example.net");
@@ -77,11 +86,29 @@ int main()
     std::cout << "DUMP OF backup-test-fresh.conf.bak" << std::endl
               << backupchk.Dump() << std::endl;
 
+    std::cout << "Comparing:: backupchk == fresh ==> "
+              << (backupchk == fresh ? "Identical - PASS"
+                                     : "Different - FAIL")
+              << std::endl
+              << "Comparing:: backupchk != fresh ==> "
+              << (backupchk != fresh ? "Not identical - FAIL"
+                                     : "Not different - PASS")
+              << std::endl << std::endl;
+
     ResolvConfFile overwritechk("test-fresh.conf");
     overwritechk.Fetch();
     std::cout << "DUMP OF overwritten test-fresh.conf "
               << "(contains sysresolvconf)" << std::endl
               << overwritechk.Dump() << std::endl;
+
+    std::cout << "Comparing:: overwritechk == sysresolvconf ==> "
+              << (overwritechk == sysresolvconf ? "Identical - PASS"
+                                                : "Different - FAIL")
+              << std::endl
+              << "Comparing:: overwritechk != sysresolvconf ==> "
+              << (overwritechk != sysresolvconf ? "Not identical - FAIL"
+                                     : "Not different - PASS")
+              << std::endl << std::endl;
 
     std::cout << "Restoring backup-test-fresh.conf.bak to test-fresh.conf"
               << std::endl;
