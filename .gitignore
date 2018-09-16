@@ -77,6 +77,7 @@ src/tests/misc/json-config-import-test
 src/tests/misc/log-prefix-selftest
 src/tests/misc/logwriter-tests
 src/tests/misc/lookup-tests
+src/tests/misc/netcfg-dns-direct-file-selftest
 src/tests/misc/syslog-facility-mapping-test
 src/tests/ovpn3-core/profilemerge-optionlist
 src/policy/net.openvpn.v3.conf

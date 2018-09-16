@@ -209,6 +209,8 @@ src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/netcfg/netcfg-exception.hpp \
 	src/netcfg/netcfg-signals.hpp \
 	src/netcfg/netcfg-stateevent.hpp \
+	src/netcfg/dns-direct-file.hpp \
+	src/netcfg/dns-resolver-settings.hpp \
 	$(DBUS_SOURCES) \
 	src/common/utils.hpp \
 	src/log/dbus-log.hpp
