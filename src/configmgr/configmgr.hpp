@@ -26,6 +26,7 @@
 
 #include <openvpn/log/logsimple.hpp>
 #include "common/core-extensions.hpp"
+#include "configmgr/overrides.hpp"
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
 #include "dbus/exceptions.hpp"
@@ -280,6 +281,58 @@ private:
 
 
 /**
+ *  Specialised template for managing the override list property
+ */
+template <>
+class PropertyType<std::vector<OverrideValue>> : public PropertyTypeBase<std::vector<OverrideValue>>
+{
+public:
+    PropertyType<std::vector<OverrideValue>>(DBusObject *obj_arg,
+                                          std::string name_arg,
+                                          std::string dbus_type_arg,
+                                          std::string dbus_acl_arg,
+                                          bool allow_root_arg,
+                                          std::vector<OverrideValue>& value_arg)
+        : PropertyTypeBase<std::vector<OverrideValue>>(obj_arg,
+                                                     name_arg,
+                                                     dbus_type_arg,
+                                                     dbus_acl_arg,
+                                                     allow_root_arg,
+                                                     value_arg)
+    {
+    }
+
+
+    virtual GVariant *GetValue() const override
+    {
+        GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
+        for (const auto& e : this->value)
+        {
+            GVariant* value;
+            if (OverrideType::string == e.override.type)
+            {
+                value = g_variant_new("s", e.strValue.c_str());
+            }
+            else
+            {
+                value = g_variant_new("b", e.boolValue);
+            }
+            g_variant_builder_add(bld, "{sv}", e.override.key.c_str(), value);
+        }
+        GVariant* ret = g_variant_builder_end(bld);
+        g_variant_builder_unref(bld);
+        return ret;
+    }
+
+    // This property is readonly and need to be modified with Add/UnsetOverride
+    virtual GVariantBuilder *SetValue(GVariant *value_arg) override
+    {
+        return nullptr;
+    }
+};
+
+
+/**
  *  A ConfigurationObject contains information about a specific VPN
  *  configuration profile.  This object is then exposed on the D-Bus through
  *  its own unique object path.
@@ -371,6 +424,7 @@ public:
         properties.AddBinding(new PropertyType<bool>(this, "single_use", "b", "read", false, single_use));
         properties.AddBinding(new PropertyType<unsigned int>(this, "used_count", "u", "read", false, used_count));
         properties.AddBinding(new PropertyType<bool>(this, "valid", "b", "read", false, valid));
+        properties.AddBinding(new PropertyType<std::vector<OverrideValue>>(this, "overrides", "a{sv}", "read", true, override_list));
 
         std::string introsp_xml ="<node name='" + objpath + "'>"
             "    <interface name='net.openvpn.v3.configuration'>"
@@ -383,6 +437,13 @@ public:
             "        <method name='SetOption'>"
             "            <arg direction='in' type='s' name='option'/>"
             "            <arg direction='in' type='s' name='value'/>"
+            "        </method>"
+            "        <method name='SetOverride'>"
+            "            <arg direction='in' type='s' name='name'/>"
+            "            <arg direction='in' type='v' name='value'/>"
+            "        </method>"
+            "        <method name='UnsetOverride'>"
+            "            <arg direction='in' type='s' name='name'/>"
             "        </method>"
             "        <method name='AccessGrant'>"
             "            <arg direction='in' type='u' name='uid'/>"
@@ -528,6 +589,74 @@ public:
                 // TODO: Implement SetOption
                 g_dbus_method_invocation_return_value(invoc, NULL);
                 return;
+            }
+            catch (DBusCredentialsException& excp)
+            {
+                LogWarn(excp.err());
+                excp.SetDBusError(invoc);
+            }
+        }
+        else if ("SetOverride" == method_name)
+        {
+            if (readonly)
+            {
+                g_dbus_method_invocation_return_dbus_error(invoc,
+                                                           "net.openvpn.v3.error.ReadOnly",
+                                                           "Configuration is sealed and readonly");
+                return;
+            }
+            try
+            {
+                CheckOwnerAccess(sender);
+                gchar *key = nullptr;
+                GVariant *val = nullptr;
+                g_variant_get(params, "(sv)", &key, &val);
+
+                const OverrideValue vo = set_override(key, val);
+
+                std::string newValue = vo.strValue;
+                if (OverrideType::boolean == vo.override.type)
+                {
+                    newValue = vo.boolValue ? "true" : "false";
+                }
+
+                LogInfo("Setting configuration override '" + std::string(key)
+                            + "' to '" + newValue + "' by UID " + std::to_string(GetUID(sender)));
+
+                g_free(key);
+                //g_variant_unref(val);
+                g_dbus_method_invocation_return_value(invoc, NULL);
+                return;
+            }
+            catch (DBusCredentialsException& excp)
+            {
+                LogWarn(excp.err());
+                excp.SetDBusError(invoc);
+            }
+        }
+        else if ("UnsetOverride" == method_name)
+        {
+            if (readonly)
+            {
+                g_dbus_method_invocation_return_dbus_error(invoc,
+                                                           "net.openvpn.v3.error.ReadOnly",
+                                                           "Configuration is sealed and readonly");
+                return;
+            }
+            try
+            {
+                CheckOwnerAccess(sender);
+                gchar *key = nullptr;
+                g_variant_get(params, "(s)", &key);
+                if(!remove_override(key))
+                    THROW_DBUSEXCEPTION("ConfigManagerObject",
+                                        "Override does not exist");
+
+                LogInfo("Unset configuration override '" + std::string(key)
+                            + "' by UID " + std::to_string(GetUID(sender)));
+
+                g_dbus_method_invocation_return_value(invoc, NULL);
+                g_free(key);
             }
             catch (DBusCredentialsException& excp)
             {
@@ -837,6 +966,64 @@ public:
     };
 
 
+    /**
+     *  Sets an override value for the configuration profile
+     *
+     * @param key    char * of the override key
+     * @param value  GVariant object of the override value to use
+     *
+     * @return  Returns the OverrideValue object added to the
+     *          array of override settings
+     */
+    OverrideValue set_override(const gchar *key, GVariant *value)
+    {
+        const ValidOverride& vo = GetConfigOverride(key);
+        if (!vo.valid())
+        {
+            THROW_DBUSEXCEPTION("ConfigManagerObject",
+                                "Override is not valid");
+        }
+
+        // Ensure that a previous override value is remove
+        (void) remove_override(key);
+
+        if (OverrideType::string == vo.type)
+        {
+            gsize len = 0;
+            std::string v(g_variant_get_string(value, &len));
+            override_list.push_back(OverrideValue(vo, v));
+
+        }
+        else if (OverrideType::boolean == vo.type)
+        {
+            bool v=g_variant_get_boolean(value);
+            override_list.push_back(OverrideValue(vo, v));
+        }
+        return override_list.back();
+    }
+
+
+    /**
+     *  Removes and override from the std::vector<OverrideValue> array
+     *
+     * @param key  std::string of the override key to remove
+     *
+     * @return Returns true on successful removal, otherwise false.
+     */
+    bool remove_override(const gchar *key)
+    {
+        for (auto it = override_list.begin(); it != override_list.end(); it++)
+        {
+            if ((*it).override.key == key)
+            {
+                override_list.erase(it);
+                return true;
+            }
+        }
+        return false;
+    }
+
+
 private:
     std::function<void()> remove_callback;
     std::string name;
@@ -852,6 +1039,7 @@ private:
     ConfigurationAlias *alias;
     PropertyCollection properties;
     OptionListJSON options;
+    std::vector<OverrideValue> override_list;
 };
 
 
