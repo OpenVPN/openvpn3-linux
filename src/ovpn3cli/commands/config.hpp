@@ -223,6 +223,67 @@ static int cmd_configs_list(ParsedArgs args)
     return 0;
 }
 
+/**
+ * openvpn3 config-manage --show command
+ *
+ *  This command shows all overrides and other details about the config
+ *  apart from the config itself
+ */
+static int cmd_config_manage_show(OpenVPN3ConfigurationProxy& conf,
+                                  bool showall = false)
+{
+
+    try
+    {
+        // Right algin the field with explicit width
+        std::cout << std::right;
+        std::cout << "Configuration: " << std::endl
+                  << std::setw(32) << "                  Name: "
+                  << conf.GetStringProperty("name") << std::endl
+                  << std::setw(32) << "             Read only: "
+                  << (conf.GetBoolProperty("readonly") ? "Yes" : "No") << std::endl
+                  << std::setw(32) << "     Persistent config: "
+                  << (conf.GetBoolProperty("persistent") ? "Yes" : "No") << std::endl
+                  << std::setw(32) << "     Persistent tunnel: "
+                  << (conf.GetPersistTun() ? "Yes" : "No") << std::endl;
+
+
+        std::cout << "  Overrides: ";
+        auto overrides = conf.GetOverrides();
+        if (overrides.empty() && !showall)
+        {
+            std::cout << " No overrides set." << std::endl;
+        }
+        else
+        {
+            std::cout << std::endl;
+        }
+
+        for (auto & vo: configProfileOverrides)
+        {
+            std::string value = "(not set)";
+            for (auto & ov: overrides)
+            {
+                if (ov.override.key == vo.key)
+                {
+                    if (OverrideType::boolean == ov.override.type)
+                        value = ov.boolValue ? "true" : "false";
+                    else
+                        value = ov.strValue;
+                }
+            }
+            if (showall || value != "(not set)")
+            {
+                std::cout << std::setw(30) << vo.key << ": " << value << std::endl;
+            }
+        }
+        return 0;
+    }
+    catch (DBusException& err)
+    {
+        throw CommandException("config-manage --show", err.getRawError());
+    }
+}
 
 /**
  *  openvpn3 config-manage command
@@ -255,13 +316,12 @@ static int cmd_config_manage(ParsedArgs args)
     }
 
     if (!args.Present("alias") && !args.Present("alias-delete")
-        && !args.Present("rename")
-        && !override_present && !args.Present("unset-override")
-        && !args.Present("persist-tun"))
+        && !args.Present("rename") && !args.Present("show")
+        && !override_present && !args.Present("unset-override"))
     {
         throw CommandException("config-manage",
-                               "An operation argument is required (--alias, --alias-delete, --rename, --persist-tun,"
-                               "--add-<key>, --unset-<key>"
+                               "An operation argument is required (--alias, --alias-delete, --rename, --show"
+                               "--<overrideName>, --unset-override"
                                );
     }
 
@@ -320,7 +380,13 @@ static int cmd_config_manage(ParsedArgs args)
             valid_option = true;
         }
 
-        for (const ValidOverride& vo : configProfileOverrides)
+        if (args.Present("show"))
+        {
+            cmd_config_manage_show(conf);
+            valid_option = true;
+        }
+
+        for (const ValidOverride& vo: configProfileOverrides)
         {
             if (args.Present(vo.key))
             {
@@ -618,34 +684,7 @@ static int cmd_config_show(ParsedArgs args)
 
         if (!args.Present("json"))
         {
-            // Right algin the field with explicit width
-            std::cout << std::right;
-            std::cout << "Configuration: " << std::endl
-                      << std::setw(30) << "                  Name: " << conf.GetStringProperty("name") << std::endl
-                      << std::setw(30) << "             Read only: " << (conf.GetBoolProperty("readonly") ? "Yes" : "No") << std::endl
-                      << std::setw(30) << "     Persistent config: " << (conf.GetBoolProperty("persistent") ? "Yes" : "No") << std::endl
-                      << std::setw(30) << "     Persistent tunnel: " << (conf.GetPersistTun() ? "Yes" : "No") << std::endl
-                      << "Overrides: " << std::endl;
-
-            auto overrides = conf.GetOverrides();
-            for (const auto & cfgpov : configProfileOverrides)
-            {
-                std::string value = "(not set)";
-                for (const auto & ov : overrides)
-                {
-                    if (ov.override.key == cfgpov.key)
-                    {
-                        if (OverrideType::boolean == ov.override.type)
-                            value = ov.boolValue ? "true" : "false";
-                        else
-                            value = ov.strValue;
-                    }
-                }
-                std::cout << std::setw(30) << cfgpov.key << ": " << value << std::endl;
-            }
-            std::cout << "--------------------------------------------------" << std::endl
-                      << conf.GetConfig() << std::endl
-                      << "--------------------------------------------------" << std::endl;
+            std::cout << conf.GetConfig() << std::endl;
         }
         else
         {
@@ -658,6 +697,7 @@ static int cmd_config_show(ParsedArgs args)
         throw CommandException("config-show", err.getRawError());
     }
 }
+
 
 
 /**
@@ -759,6 +799,8 @@ void RegisterCommands_config(Commands& ovpn3)
     cmd->AddOption("persist-tun", "<true|false>", true,
                    "Set/unset the persistent tun/seamless tunnel flag",
                    arghelper_boolean);
+    cmd->AddOption("show", 's',
+                    "Show current configuration options");
 
     // Generating options for all configuration profile overrides
     // as defined in overrides.hpp
