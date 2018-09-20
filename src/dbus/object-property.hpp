@@ -25,6 +25,7 @@
 #include <openvpn/common/rc.hpp>
 
 #include "dbus/object.hpp"
+#include "glibutils.hpp"
 
 using namespace openvpn;
 
@@ -41,16 +42,18 @@ public:
 };
 
 
+
 template <typename T>
 class PropertyTypeBase : public Property
 {
 public:
-    PropertyTypeBase(DBusObject *obj_arg, std::string name_arg, std::string
-                 dbus_type_arg, std::string dbus_acl_arg, bool allow_root_arg,
-                 T & value_arg)
+    PropertyTypeBase(DBusObject *obj_arg,
+                     const std::string & name_arg,
+                     const std::string & dbus_acl_arg,
+                     bool allow_root_arg,
+                     T & value_arg)
         : obj(obj_arg),
           name(name_arg),
-          dbus_type(dbus_type_arg),
           dbus_acl(dbus_acl_arg),
           allow_root(allow_root_arg),
           value(value_arg)
@@ -60,9 +63,10 @@ public:
 
     virtual std::string GetIntrospectionXML() const override
     {
-        return "<property type='" + dbus_type + "' name='" + name + "' access='"
-               + dbus_acl + "' />";
+        return "<property type='" + std::string(GetDBusType()) + "' "
+               + " name='" + name + "' access='" + dbus_acl + "' />";
     }
+
 
     virtual bool GetRootAllowed() const override
     {
@@ -70,84 +74,91 @@ public:
     }
 
 
+    virtual const char* GetDBusType() const=0;
+
+
     virtual std::string GetName() const override
     {
         return name;
     }
+
+
 protected:
     DBusObject *obj;
     std::string name;
-    std::string dbus_type;
     std::string dbus_acl;
     bool allow_root;
     T& value;
 };
 
 
+
 template <typename T>
 class PropertyType : public PropertyTypeBase<T>
 {
 public:
-    PropertyType(DBusObject *obj_arg, std::string name_arg, std::string
-    dbus_type_arg, std::string dbus_acl_arg, bool allow_root_arg,
-                     T& value_arg) :
-                     PropertyTypeBase<T>(obj_arg, name_arg, dbus_type_arg,
-                         dbus_acl_arg, allow_root_arg, value_arg)
+    PropertyType(DBusObject *obj_arg, std::string name_arg,
+                 std::string dbus_acl_arg, bool allow_root_arg,
+                 T& value_arg)
+        : PropertyTypeBase<T>(obj_arg, name_arg,
+                              dbus_acl_arg, allow_root_arg,
+                              value_arg)
     {
 
     }
 
+
+    virtual const char* GetDBusType() const override
+    {
+        return GLibUtils::GetDBusDataType<T>();
+    }
+
+
     virtual GVariant *GetValue() const override
     {
-        return g_variant_new(PropertyTypeBase<T>::dbus_type.c_str(), PropertyTypeBase<T>::value);
+        return g_variant_new(GetDBusType(), PropertyTypeBase<T>::value);
     }
 
     virtual GVariantBuilder *SetValue(GVariant *value_arg) override
     {
-        g_variant_get(value_arg, PropertyTypeBase<T>::dbus_type.c_str(), &(PropertyTypeBase<T>::value));
+
+        g_variant_get(value_arg, GetDBusType(), PropertyTypeBase<T>::value);
         return PropertyTypeBase<T>::obj->build_set_property_response(PropertyTypeBase<T>::name, PropertyTypeBase<T>::value);
     }
 };
 
-/* Specialised class to handle vectors */
 
-/* These overloaded getVariant with multiple int and std;:string types are here to
- * allow the vector template to be as generic as possible while still calling the right dbus
-* function */
-
-// Declare template as prototype only so it cannot be used directly
-template<typename T> T getVariantValue(GVariant *v);
-
-template<> uint32_t getVariantValue<uint32_t>(GVariant *v) { return g_variant_get_uint32(v); }
-template<> int32_t getVariantValue<int32_t>(GVariant *v) { return g_variant_get_int32(v); }
-template<> uint16_t getVariantValue<uint16_t>(GVariant *v) { return g_variant_get_uint16(v); }
-template<> int16_t getVariantValue<int16_t>(GVariant *v) { return g_variant_get_int16(v); }
-template<> uint64_t getVariantValue<uint64_t>(GVariant *v) { return g_variant_get_uint64(v); }
-template<> int64_t getVariantValue<int64_t>(GVariant *v) { return g_variant_get_int64(v); }
-template<> std::string getVariantValue<std::string>(GVariant *v) { gsize size=0; return std::string(g_variant_get_string(v, &size)); }
-
-template<unsigned int> unsigned int getVariantValue(GVariant *v) { return g_variant_get_uint32(v); }
-
-
+/**
+ *   Specialised class to handle property values based on vectors
+ */
 template <typename T>
 class PropertyType<std::vector<T>> : public PropertyTypeBase<std::vector<T>>
 {
 public:
     PropertyType<std::vector<T>>(DBusObject *obj_arg,
                                  std::string name_arg,
-                                 std::string dbus_array_member_type,
                                  std::string dbus_acl_arg,
                                  bool allow_root_arg,
                                  std::vector<T> &value_arg)
         : PropertyTypeBase<std::vector<T>>(obj_arg, name_arg,
-                                           "a" + dbus_array_member_type,
                                            dbus_acl_arg,
                                            allow_root_arg,
                                            value_arg),
-                                           dbus_array_member_type(dbus_array_member_type),
-                                           dbus_array_type("a" + dbus_array_member_type)
-            {
-            }
+                                           dbus_array_type("a" + std::string(GLibUtils::GetDBusDataType<T>()))
+    {
+    }
+
+
+    /**
+     *  Retrieve the D-Bus data type of this property
+     *
+     * @return  Returns a C char based string containing the GVariant
+     *          compatible data type in use.
+     */
+    virtual const char* GetDBusType() const override
+    {
+        return dbus_array_type.c_str();
+    }
 
 
     /**
@@ -158,18 +169,22 @@ public:
     virtual GVariant *GetValue() const override
     {
         GVariantBuilder* bld = get_builder();
-        GVariant *ret =g_variant_builder_end(bld);
+        GVariant *ret = g_variant_builder_end(bld);
         g_variant_builder_unref(bld);
         return ret;
     }
 
 
     /**
-     *  Parses a GVariant array and populates this object's std::Vector with
+     *  Parses a GVariant array and populates this object's std::vector with
      *  the provided data
      *
-     * @param value_arg GVariant
-     * @return
+     * @param value_arg  GVariant object containing the array to decode into
+     *                   a C++ based std::vector/array.
+     *
+     * @return  Returns a GVariantBuilder with the vector/array of the input
+     *          data.  This will be used when sending the PropertyChanged
+     *          D-Bus signal.
      */
     virtual GVariantBuilder* SetValue(GVariant *value_arg) override
     {
@@ -180,7 +195,7 @@ public:
         std::vector<T> newvalue;
         while ((iter = g_variant_iter_next_value(list)))
         {
-            newvalue.push_back(getVariantValue<T>(iter));
+            newvalue.push_back(GLibUtils::GetVariantValue<T>(iter));
             g_variant_unref(iter);
         }
         g_variant_unref(value_arg);
@@ -191,7 +206,6 @@ public:
 
 
 private:
-    std::string dbus_array_member_type;
     std::string dbus_array_type;
 
     /**
@@ -206,7 +220,7 @@ private:
         GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE(dbus_array_type.c_str()));
         for (const auto &e : this->value)
         {
-            g_variant_builder_add(bld, dbus_array_member_type.c_str(), e);
+            g_variant_builder_add(bld, GLibUtils::GetDBusDataType<T>(), e);
         }
         return bld;
     }

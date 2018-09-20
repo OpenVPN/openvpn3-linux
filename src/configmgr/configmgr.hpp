@@ -289,19 +289,16 @@ class PropertyType<std::vector<OverrideValue>> : public PropertyTypeBase<std::ve
 public:
     PropertyType<std::vector<OverrideValue>>(DBusObject *obj_arg,
                                           std::string name_arg,
-                                          std::string dbus_type_arg,
                                           std::string dbus_acl_arg,
                                           bool allow_root_arg,
                                           std::vector<OverrideValue>& value_arg)
         : PropertyTypeBase<std::vector<OverrideValue>>(obj_arg,
                                                      name_arg,
-                                                     dbus_type_arg,
                                                      dbus_acl_arg,
                                                      allow_root_arg,
                                                      value_arg)
     {
     }
-
 
     virtual GVariant *GetValue() const override
     {
@@ -322,6 +319,11 @@ public:
         GVariant* ret = g_variant_builder_end(bld);
         g_variant_builder_unref(bld);
         return ret;
+    }
+
+    virtual const char* GetDBusType() const override
+    {
+        return "a{sv}";
     }
 
     // This property is readonly and need to be modified with Add/UnsetOverride
@@ -415,16 +417,16 @@ public:
         //         contains files
         valid = true;
 
-        properties.AddBinding(new PropertyType<std::time_t>(this, "import_timestamp", "t", "read", false, import_tstamp));
-        properties.AddBinding(new PropertyType<std::time_t>(this, "last_used_timestamp", "t", "read", false, last_use_tstamp));
-        properties.AddBinding(new PropertyType<bool>(this, "locked_down", "b", "readwrite", false, locked_down));
-        properties.AddBinding(new PropertyType<bool>(this, "persistent", "b", "read", false, persistent));
-        properties.AddBinding(new PropertyType<bool>(this, "persist_tun", "b", "readwrite", true, persist_tun));
-        properties.AddBinding(new PropertyType<bool>(this, "readonly", "b", "read", false, readonly));
-        properties.AddBinding(new PropertyType<bool>(this, "single_use", "b", "read", false, single_use));
-        properties.AddBinding(new PropertyType<unsigned int>(this, "used_count", "u", "read", false, used_count));
-        properties.AddBinding(new PropertyType<bool>(this, "valid", "b", "read", false, valid));
-        properties.AddBinding(new PropertyType<std::vector<OverrideValue>>(this, "overrides", "a{sv}", "read", true, override_list));
+        properties.AddBinding(new PropertyType<std::time_t>(this, "import_timestamp", "read", false, import_tstamp));
+        properties.AddBinding(new PropertyType<std::time_t>(this, "last_used_timestamp", "read", false, last_use_tstamp));
+        properties.AddBinding(new PropertyType<bool>(this, "locked_down", "readwrite", false, locked_down));
+        properties.AddBinding(new PropertyType<bool>(this, "persistent", "read", false, persistent));
+        properties.AddBinding(new PropertyType<bool>(this, "persist_tun",  "readwrite", true, persist_tun));
+        properties.AddBinding(new PropertyType<bool>(this, "readonly", "read", false, readonly));
+        properties.AddBinding(new PropertyType<bool>(this, "single_use", "read", false, single_use));
+        properties.AddBinding(new PropertyType<unsigned int>(this, "used_count", "read", false, used_count));
+        properties.AddBinding(new PropertyType<bool>(this, "valid", "read", false, valid));
+        properties.AddBinding(new PropertyType<decltype(override_list)>(this, "overrides", "read", true, override_list));
 
         std::string introsp_xml ="<node name='" + objpath + "'>"
             "    <interface name='net.openvpn.v3.configuration'>"
