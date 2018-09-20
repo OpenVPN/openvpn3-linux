@@ -59,6 +59,17 @@ front-end tries to establish contact with a service. If any of these
 object run idle for a certain time and does not carry any
 non-persistent data, they will automatically shutdown
 
+
+|              |                                         |
+|-------------:|-----------------------------------------|
+| Service      | [`net.openvpn.v3.log`](dbus-service-net.openvpn.v3.log.md) |
+| Running as   | openvpn                                 |
+| Process name | openvpn3-service-logger                 |
+| Started by   | Front-end clients and backend processes |
+|   | Log service which receives all `Log` events from all of the OpenVPN 3 Linux services and directs them to log files or console logging.  See also the [OpenVPN 3 Linux Client: Logging](dbus-logging.md) document for more details on the logging. |
+|              |                                         |
+
+
 |              |                                         |
 |-------------:|-----------------------------------------|
 | Service      | [`net.openvpn.v3.configuration`](dbus-service-net.openvpn.v3.configuration.md) |

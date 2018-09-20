@@ -1,15 +1,35 @@
-OpenVPN 3 D-Bus: Logging
-========================
+OpenVPN 3 Linux Client: Logging
+===============================
 
-Logging can happen over D-Bus log signals and is most commonly used to
+Logging happens over D-Bus as log signals and is most commonly used to
 provide information which may be presented for a user at some
 point. It is up to the front-end implementation to decide which log
 events to present to the user at all, as well as when and how.
 
-Logging to file may also be done my a separate logging process, or it
-can be implemented at each of the various OpenVPN 3 D-Bus services
-running. Each D-Bus service will regardless of file logging also send
-the Log signal on the D-Bus.
+Logging to file may also be done in a separate logging process, or can be
+activated in each of the various OpenVPN 3 D-Bus services running. Each
+D-Bus service will regardless of file logging also send the Log signal over
+the message bus.
+
+Log signals are by default sent to the `net.openvpn.v3.log` service,
+provided by `openvpn3-service-logger`.  This service is normally
+automatically started, as each process wanting to log attaches to this
+service very early in the start-up process.  When doing this, only this
+log service will see the log messages being sent over the message bus.
+
+Services can also use signal broadcasts instead.  When this approach is
+used (often by using the `--signal-broadcast` argument to the service), all
+log signals is broadcast and the only part restricting the visibility of
+these log signals is the D-Bus policy
+(`/etc/dbus-1/system.d/net.openvpn.v3.conf`).  This run mode is **not**
+recommended for normal production setups, but is useful when debugging.
+But it might be needed to adjust the D-Bus policy is needed with this
+approach, as the default is to restrict access to most of the D-Bus signals
+OpenVPN 3 Linux client services may send.
+
+For more information about the log service, see the
+[`net.openvpn.v3.log`](dbus-service-net.openvpn.v3.log.md) documentation.
+
 
 Generic logging design
 ----------------------
