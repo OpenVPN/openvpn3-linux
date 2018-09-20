@@ -239,12 +239,30 @@ static int cmd_config_manage(ParsedArgs args)
     {
         throw CommandException("config-manage", "No configuration path provided");
     }
+    bool override_present = false;
+    for (const ValidOverride& vo : configProfileOverrides)
+    {
+        if (args.Present(vo.key)
+            && (args.Present("unset-override") && args.GetValue("unset-override", 0) == vo.key))
+        {
+            throw CommandException("Cannot provide both --" + vo.key +" and " +
+            "--unset-" + vo.key + " at the same time.");
+        }
+        if (args.Present(vo.key))
+        {
+            override_present = true;
+        }
+    }
 
     if (!args.Present("alias") && !args.Present("alias-delete")
-        && !args.Present("rename") && !args.Present("persist-tun"))
+        && !args.Present("rename")
+        && !override_present && !args.Present("unset-override")
+        && !args.Present("persist-tun"))
     {
         throw CommandException("config-manage",
-                               "An operation argument is required (--alias, --alias-delete, --rename or --persist-tun");
+                               "An operation argument is required (--alias, --alias-delete, --rename, --persist-tun,"
+                               "--add-<key>, --unset-<key>"
+                               );
     }
 
     if (args.Present("alias") && args.Present("alias-delete"))
@@ -300,6 +318,41 @@ static int cmd_config_manage(ParsedArgs args)
                           << std::endl;
             }
             valid_option = true;
+        }
+
+        for (const ValidOverride& vo : configProfileOverrides)
+        {
+            if (args.Present(vo.key))
+            {
+                if (OverrideType::boolean == vo.type)
+                {
+                    bool value = args.GetBoolValue(vo.key, 0);
+                    conf.SetOverride(vo, value);
+                    std::cout << "Override '" + vo.key + "' is " + (value ? "enabled" : "disabled")
+                              << std::endl;
+                }
+                else if (OverrideType::string == vo.type)
+                {
+                    std::string value = args.GetValue(vo.key, 0);
+                    conf.SetOverride(vo, value);
+                    std::cout << "Set override '" + vo.key + "' to '" + value +"'"
+                              << std::endl;
+                }
+                return 0;
+            }
+        }
+        if (args.Present("unset-override"))
+        {
+            std::string key = args.GetValue("unset-override", 0);
+            const ValidOverride& override = GetConfigOverride(key, true);
+
+            if (OverrideType::invalid == override.type)
+                throw CommandException("config-manage",
+                                       "Unsetting invalid override " + key + " is not possible");
+
+            conf.UnsetOverride(override);
+            std::cout << "Unset overide '" + override.key + "'" << std::endl;
+            return 0;
         }
 
         if (!valid_option)
@@ -562,14 +615,35 @@ static int cmd_config_show(ParsedArgs args)
                                         args.GetValue("path", 0));
         conf.Ping();
 
+
         if (!args.Present("json"))
         {
+            // Right algin the field with explicit width
+            std::cout << std::right;
             std::cout << "Configuration: " << std::endl
-                      << "                Name:       " << conf.GetStringProperty("name") << std::endl
-                      << "           Read only:  " << (conf.GetBoolProperty("readonly") ? "Yes" : "No") << std::endl
-                      << "   Persistent config: " << (conf.GetBoolProperty("persistent") ? "Yes" : "No") << std::endl
-                      << "   Persistent tunnel: " << (conf.GetPersistTun() ? "Yes" : "No") << std::endl
-                      << "--------------------------------------------------" << std::endl
+                      << std::setw(30) << "                  Name: " << conf.GetStringProperty("name") << std::endl
+                      << std::setw(30) << "             Read only: " << (conf.GetBoolProperty("readonly") ? "Yes" : "No") << std::endl
+                      << std::setw(30) << "     Persistent config: " << (conf.GetBoolProperty("persistent") ? "Yes" : "No") << std::endl
+                      << std::setw(30) << "     Persistent tunnel: " << (conf.GetPersistTun() ? "Yes" : "No") << std::endl
+                      << "Overrides: " << std::endl;
+
+            auto overrides = conf.GetOverrides();
+            for (const auto & cfgpov : configProfileOverrides)
+            {
+                std::string value = "(not set)";
+                for (const auto & ov : overrides)
+                {
+                    if (ov.override.key == cfgpov.key)
+                    {
+                        if (OverrideType::boolean == ov.override.type)
+                            value = ov.boolValue ? "true" : "false";
+                        else
+                            value = ov.strValue;
+                    }
+                }
+                std::cout << std::setw(30) << cfgpov.key << ": " << value << std::endl;
+            }
+            std::cout << "--------------------------------------------------" << std::endl
                       << conf.GetConfig() << std::endl
                       << "--------------------------------------------------" << std::endl;
         }
@@ -592,7 +666,7 @@ static int cmd_config_show(ParsedArgs args)
  *  This command will delete and remove a configuration profile from the
  *  Configuration Manager
  *
- * @param args  ParsedArgs object containing all related options and arguments
+ * @param args  ParsedArgs object containing Valid related options and arguments
  * @return Returns the exit code which will be returned to the calling shell
  *
  */
@@ -685,6 +759,25 @@ void RegisterCommands_config(Commands& ovpn3)
     cmd->AddOption("persist-tun", "<true|false>", true,
                    "Set/unset the persistent tun/seamless tunnel flag",
                    arghelper_boolean);
+
+    // Generating options for all configuration profile overrides
+    // as defined in overrides.hpp
+    for (const auto& override : configProfileOverrides)
+    {
+        if (OverrideType::boolean == override.type)
+        {
+            cmd->AddOption(override.key, "<true|false>", true,
+                           "Adds the boolean override " + override.key,
+                           arghelper_boolean);
+        }
+        else
+        {
+            cmd->AddOption(override.key, "<value>", true,
+                           "Adds the override " + override.key + " with the value <value>.");
+        }
+        cmd->AddOption("unset-" + override.key , false,
+            "Removes the " + override.key + " override");
+    }
 
     //
     //  config-acl command

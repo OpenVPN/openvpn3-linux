@@ -36,8 +36,14 @@ enum class OverrideType
  * Helper classes to store the list of overrides
  */
 struct ValidOverride {
-    ValidOverride(std::string key, OverrideType type)
-        : key(key), type(type)
+    ValidOverride(std::string key, OverrideType type, std::string help)
+        : key(key), type(type), help(help)
+    {
+    }
+
+    ValidOverride(std::string key, OverrideType type,
+                  std::string help, std::string argument)
+        :key(key), type(type), help(help), argument(argument)
     {
     }
 
@@ -50,6 +56,8 @@ struct ValidOverride {
 
     std::string key;
     OverrideType type;
+    std::string help;
+    std::string argument;
 };
 
 
@@ -73,23 +81,49 @@ struct OverrideValue {
 
 
 const ValidOverride configProfileOverrides[] = {
-    {"server-override", OverrideType::string},
-    {"port-override", OverrideType::string},
-    {"proto-override", OverrideType::string},
-    {"ipv6", OverrideType::string},
-    {"dns-fallback-google", OverrideType::boolean},
-    {"dns-sync-lookup", OverrideType::boolean},
-    {"auth-fail-retry", OverrideType::boolean},
-    {"no-client-cert", OverrideType::boolean},
-    {"allow-compression", OverrideType::string},
-    {"force-cipher-aes-cbc", OverrideType::boolean},
-    {"tls-version-min", OverrideType::string},
-    {"tls-cert-profile", OverrideType::string},
-    {"proxy-auth-cleartext", OverrideType::boolean}
+    {"server-override", OverrideType::string,
+     "Replace the remote, connecting to this server instead the server specified in the configuration"},
+
+    {"port-override", OverrideType::string,
+     "Replace the remote port, connecting to this port instead of the configuration value"},
+
+    {"proto-override", OverrideType::string,
+     "Overrides the protocol being used", "tcp|udp"},
+
+    {"ipv6", OverrideType::string,
+     "Sets the IPv6 policy of the client", "yes|no|default"},
+
+    {"dns-fallback-google", OverrideType::boolean,
+     "Uses Google DNS servers (8.8.8.8/8.8.4.4) if no DNS server are provided"},
+
+    {"dns-sync-lookup", OverrideType::boolean,
+     "Use synchronous DNS Lookups"},
+
+    {"auth-fail-retry", OverrideType::boolean,
+     "Should failed authentication be considered a temporary error"},
+
+    {"no-client-cert", OverrideType::boolean,
+     "Disables using cient certificates"},
+
+    {"allow-compression", OverrideType::string,
+     "Set compression mode", "no|asym|yes"},
+
+    {"force-cipher-aes-cbc", OverrideType::boolean,
+     "Forces AES-CBC ciphersuites for control channel and disables AES-GCM data channel support"},
+
+    {"tls-version-min", OverrideType::string,
+     "Sets the minimal TLS version for the control channel", "tls_1_0|tls_1_1|..."},
+
+    {"tls-cert-profile", OverrideType::string,
+     "Sets the control channel tls profile", "insecure|legacy|preferred|suiteb"},
+
+    {"proxy-auth-cleartext", OverrideType::boolean,
+     "Allows clear text HTTP authentication"}
 };
 
 
-const ValidOverride invalidOverride(std::string("invalid"), OverrideType::invalid);
+const ValidOverride invalidOverride(std::string("invalid"),
+                                    OverrideType::invalid, "Invalid override");
 
 
 const ValidOverride & GetConfigOverride(const std::string & key, bool ignoreCase=false)
