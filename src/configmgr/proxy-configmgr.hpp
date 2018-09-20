@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "dbus/core.hpp"
+#include "configmgr/overrides.hpp"
 
 using namespace openvpn;
 
@@ -303,6 +304,95 @@ public:
     uid_t GetOwner()
     {
         return GetUIntProperty("owner");
+    }
+
+    /**
+     *  Retrieve the list of overrides for this object. The overrides
+     *  are key, value pairs
+     *
+     * @return A list of VpnOverride key, value pairs
+     */
+    std::vector<OverrideValue> GetOverrides()
+    {
+        GVariant *res = GetProperty("overrides");
+        if (NULL == res)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
+                                "GetProperty(\"overrides\") call failed");
+        }
+        GVariantIter *override_iter = NULL;
+        g_variant_get(res, "a{sv}", &override_iter);
+
+        std::vector<OverrideValue> ret;
+
+        GVariant *override;
+        while ((override = g_variant_iter_next_value(override_iter)))
+        {
+            gchar *key = nullptr;
+            GVariant *val = nullptr;
+            g_variant_get(override, "{sv}", &key, &val);
+
+
+            const ValidOverride& vo = GetConfigOverride(key);
+            if (!vo.valid())
+            {
+                THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
+                                    "Invalid override found");
+            }
+            if (OverrideType::string == vo.type)
+            {
+                gsize len = 0;
+                std::string v(g_variant_get_string(val, &len));
+                ret.push_back(OverrideValue(vo, v));
+
+            }
+            else if (OverrideType::boolean == vo.type)
+            {
+                bool v = g_variant_get_boolean(val);
+                ret.push_back(OverrideValue(vo, v));
+            }
+        }
+        g_variant_unref(res);
+        g_variant_iter_free(override_iter);
+        return ret;
+    }
+
+    /**
+     * Adds a bool override to this object.
+     */
+    void SetOverride(const ValidOverride &vpnOverride, bool value)
+    {
+        if (OverrideType::boolean != vpnOverride.type)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
+                                "SetOverride for bool called for non bool override");
+        }
+        GVariant* val = g_variant_new("b", value);
+        Call("SetOverride", g_variant_new("(sv)", vpnOverride.key.c_str(), val));
+    }
+
+
+    /**
+     * Adds a string override to this object.
+     */
+    void SetOverride(const ValidOverride &vpnOverride, std::string value)
+    {
+        if (OverrideType::string != vpnOverride.type)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
+                                "SetOverride for bool called for non bool override");
+        }
+        GVariant* val = g_variant_new("s", value.c_str());
+        Call("SetOverride", g_variant_new("(sv)", vpnOverride.key.c_str(), val));
+    }
+
+
+    /**
+     * Removes an override from this object.
+     */
+    void UnsetOverride(const ValidOverride &vpnOverride)
+    {
+        Call("UnsetOverride", g_variant_new("(s)", vpnOverride.key.c_str()));
     }
 
 
