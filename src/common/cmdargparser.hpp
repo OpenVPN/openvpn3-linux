@@ -325,11 +325,11 @@ public:
     bool GetBoolValue(const std::string k, const unsigned int idx)
     {
         std::string value = key_value[k][idx];
-        if (("false" != value) && ("true" != value ))
+        if (("false" != value) && ("true" != value ) && (value != "no") && (value != "yes"))
         {
             throw OptionException(k, "Boolean options must be either 'false' or 'true'");
         }
-        return "true" == value;
+        return "true" == value || "yes" == value;
     }
 
 
