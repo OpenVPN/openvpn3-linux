@@ -943,6 +943,7 @@ private:
             // config, we cannot query it for more details after the first
             // GetConfig() call.
             bool tunPersist = cfg_proxy.GetPersistTun();
+            std::vector<OverrideValue> overrides = cfg_proxy.GetOverrides();
 
             // Parse the configuration
             ProfileMergeFromString pm(cfg_proxy.GetConfig(), "",
@@ -957,6 +958,7 @@ private:
             vpnconfig.info = true;
             vpnconfig.content = pm.profile_content();
             vpnconfig.tunPersist = tunPersist;
+            set_overrides(overrides);
         }
         catch (std::exception& e)
         {
@@ -965,6 +967,66 @@ private:
                             + std::string(e.what()));
         }
     }
+
+    void set_overrides(std::vector<OverrideValue> & overrides)
+    {
+        for (const auto & override: overrides)
+        {
+            if (override.override.key == "server-override")
+            {
+                vpnconfig.serverOverride = override.strValue;
+            }
+            else if (override.override.key == "port-override")
+            {
+                vpnconfig.serverOverride = override.strValue;
+            }
+            else if (override.override.key == "proto-override")
+            {
+                vpnconfig.protoOverride = override.strValue;
+            }
+            else if (override.override.key == "ipv6")
+            {
+                vpnconfig.ipv6 = override.strValue;
+            }
+            else if (override.override.key == "dns-fallback-google")
+            {
+                vpnconfig.googleDnsFallback = override.boolValue;
+            }
+            else if (override.override.key == "dns-sync-lookup")
+            {
+                vpnconfig.synchronousDnsLookup = override.boolValue;
+            }
+            else if (override.override.key == "no-client-cert")
+            {
+                vpnconfig.disableClientCert = override.boolValue;
+            }
+            else if (override.override.key == "auth-fail-retry")
+            {
+                vpnconfig.retryOnAuthFailed = override.boolValue;
+            }
+            else if (override.override.key == "force-cipher-aes-cbc")
+            {
+                vpnconfig.forceAesCbcCiphersuites = override.boolValue;
+            }
+            else if (override.override.key == "allow-compression")
+            {
+                vpnconfig.compressionMode = override.strValue;
+            }
+            else if (override.override.key == "tls-version-min")
+            {
+                vpnconfig.tlsVersionMinOverride = override.strValue;
+            }
+            else if (override.override.key == "tls-cert-profile")
+            {
+                vpnconfig.tlsCertProfileOverride = override.strValue;
+            }
+            else if (override.override.key == "proxy-auth-cleartext")
+            {
+                vpnconfig.proxyAllowCleartextAuth = override.boolValue;
+            }
+        }
+    }
+
 };
 
 
