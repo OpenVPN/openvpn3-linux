@@ -41,12 +41,12 @@ public:
 
 
 template <typename T>
-class PropertyType : public Property
+class PropertyTypeBase : public Property
 {
 public:
-    PropertyType(DBusObject *obj_arg, std::string name_arg, std::string
+    PropertyTypeBase(DBusObject *obj_arg, std::string name_arg, std::string
                  dbus_type_arg, std::string dbus_acl_arg, bool allow_root_arg,
-                 T * value_arg)
+                 T & value_arg)
         : obj(obj_arg),
           name(name_arg),
           dbus_type(dbus_type_arg),
@@ -68,29 +68,44 @@ public:
         return allow_root;
     }
 
-    virtual GVariant *GetValue() const override
-    {
-        return g_variant_new(dbus_type.c_str(), *value);
-    }
-
-    virtual GVariantBuilder *SetValue(GVariant *value_arg) override
-    {
-        g_variant_get(value_arg, dbus_type.c_str(), value);
-        return obj->build_set_property_response(name, *value);
-    }
 
     virtual std::string GetName() const override
     {
         return name;
     }
-
-private:
+protected:
     DBusObject *obj;
     std::string name;
     std::string dbus_type;
     std::string dbus_acl;
     bool allow_root;
-    T *value = nullptr;
+    T& value;
+};
+
+
+template <typename T>
+class PropertyType : public PropertyTypeBase<T>
+{
+public:
+    PropertyType(DBusObject *obj_arg, std::string name_arg, std::string
+    dbus_type_arg, std::string dbus_acl_arg, bool allow_root_arg,
+                     T& value_arg) :
+                     PropertyTypeBase<T>(obj_arg, name_arg, dbus_type_arg,
+                         dbus_acl_arg, allow_root_arg, value_arg)
+    {
+
+    }
+
+    virtual GVariant *GetValue() const override
+    {
+        return g_variant_new(PropertyTypeBase<T>::dbus_type.c_str(), PropertyTypeBase<T>::value);
+    }
+
+    virtual GVariantBuilder *SetValue(GVariant *value_arg) override
+    {
+        g_variant_get(value_arg, PropertyTypeBase<T>::dbus_type.c_str(), &(PropertyTypeBase<T>::value));
+        return PropertyTypeBase<T>::obj->build_set_property_response(PropertyTypeBase<T>::name, PropertyTypeBase<T>::value);
+    }
 };
 
 

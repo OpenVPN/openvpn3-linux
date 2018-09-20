@@ -362,15 +362,15 @@ public:
         //         contains files
         valid = true;
 
-        properties.AddBinding(new PropertyType<std::time_t>(this, "import_timestamp", "t", "read", false, &import_tstamp));
-        properties.AddBinding(new PropertyType<std::time_t>(this, "last_used_timestamp", "t", "read", false, &last_use_tstamp));
-        properties.AddBinding(new PropertyType<bool>(this, "locked_down", "b", "readwrite", false, &locked_down));
-        properties.AddBinding(new PropertyType<bool>(this, "persistent", "b", "read", false, &persistent));
-        properties.AddBinding(new PropertyType<bool>(this, "persist_tun", "b", "readwrite", true, &persist_tun));
-        properties.AddBinding(new PropertyType<bool>(this, "readonly", "b", "read", false, &readonly));
-        properties.AddBinding(new PropertyType<bool>(this, "single_use", "b", "read", false, &single_use));
-        properties.AddBinding(new PropertyType<unsigned int>(this, "used_count", "u", "read", false, &used_count));
-        properties.AddBinding(new PropertyType<bool>(this, "valid", "b", "read", false, &valid));
+        properties.AddBinding(new PropertyType<std::time_t>(this, "import_timestamp", "t", "read", false, import_tstamp));
+        properties.AddBinding(new PropertyType<std::time_t>(this, "last_used_timestamp", "t", "read", false, last_use_tstamp));
+        properties.AddBinding(new PropertyType<bool>(this, "locked_down", "b", "readwrite", false, locked_down));
+        properties.AddBinding(new PropertyType<bool>(this, "persistent", "b", "read", false, persistent));
+        properties.AddBinding(new PropertyType<bool>(this, "persist_tun", "b", "readwrite", true, persist_tun));
+        properties.AddBinding(new PropertyType<bool>(this, "readonly", "b", "read", false, readonly));
+        properties.AddBinding(new PropertyType<bool>(this, "single_use", "b", "read", false, single_use));
+        properties.AddBinding(new PropertyType<unsigned int>(this, "used_count", "u", "read", false, used_count));
+        properties.AddBinding(new PropertyType<bool>(this, "valid", "b", "read", false, valid));
 
         std::string introsp_xml ="<node name='" + objpath + "'>"
             "    <interface name='net.openvpn.v3.configuration'>"
