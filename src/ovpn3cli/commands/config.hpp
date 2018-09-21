@@ -772,12 +772,20 @@ void RegisterCommands_config(Commands& ovpn3)
         }
         else
         {
-            cmd->AddOption(override.key, "<value>", true,
-                           "Adds the override " + override.key + " with the value <value>.");
+            std::string help = "<value>";
+            if (override.argument_helper)
+            {
+                help = "<" + override.argument_helper()  + ">";
+                std::replace(help.begin(), help.end(), ' ', '|');
+            }
+            cmd->AddOption(override.key, help, true,
+                           override.help,
+                           override.argument_helper);
         }
-        cmd->AddOption("unset-" + override.key , false,
-            "Removes the " + override.key + " override");
     }
+    cmd->AddOption("unset-override", "<name>", true,
+                   "Removes the <name> override",
+                   arghelper_unset_overrides);
 
     //
     //  config-acl command

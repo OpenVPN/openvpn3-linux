@@ -42,8 +42,8 @@ struct ValidOverride {
     }
 
     ValidOverride(std::string key, OverrideType type,
-                  std::string help, std::string argument)
-        :key(key), type(type), help(help), argument(argument)
+                  std::string help, std::string (*argument_helper)())
+        : key(key), type(type), help(help), argument_helper(argument_helper)
     {
     }
 
@@ -57,7 +57,7 @@ struct ValidOverride {
     std::string key;
     OverrideType type;
     std::string help;
-    std::string argument;
+    std::string (*argument_helper)()=nullptr;
 };
 
 
@@ -88,10 +88,12 @@ const ValidOverride configProfileOverrides[] = {
      "Replace the remote port, connecting to this port instead of the configuration value"},
 
     {"proto-override", OverrideType::string,
-     "Overrides the protocol being used", "tcp|udp"},
+     "Overrides the protocol being used",
+     [] {return std::string("tcp udp");}},
 
     {"ipv6", OverrideType::string,
-     "Sets the IPv6 policy of the client", "yes|no|default"},
+     "Sets the IPv6 policy of the client",
+     [] { return std::string("yes no default");}},
 
     {"dns-fallback-google", OverrideType::boolean,
      "Uses Google DNS servers (8.8.8.8/8.8.4.4) if no DNS server are provided"},
@@ -106,16 +108,19 @@ const ValidOverride configProfileOverrides[] = {
      "Disables using cient certificates"},
 
     {"allow-compression", OverrideType::string,
-     "Set compression mode", "no|asym|yes"},
+     "Set compression mode",
+     [] {return std::string("no asym yes");}},
 
     {"force-cipher-aes-cbc", OverrideType::boolean,
      "Forces AES-CBC ciphersuites for control channel and disables AES-GCM data channel support"},
 
     {"tls-version-min", OverrideType::string,
-     "Sets the minimal TLS version for the control channel", "tls_1_0|tls_1_1|..."},
+     "Sets the minimal TLS version for the control channel",
+     [] {return std::string("tls_1_0 tls_1_1 tls_1_2 tls_1_3");}},
 
     {"tls-cert-profile", OverrideType::string,
-     "Sets the control channel tls profile", "insecure|legacy|preferred|suiteb"},
+     "Sets the control channel tls profile",
+     [] {return std::string("insecure legacy preferred suiteb");}},
 
     {"proxy-auth-cleartext", OverrideType::boolean,
      "Allows clear text HTTP authentication"}

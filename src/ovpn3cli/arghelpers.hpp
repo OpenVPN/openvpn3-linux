@@ -72,6 +72,22 @@ std::string arghelper_session_paths()
 
 
 /**
+ * List all valid overrides
+ * Note we could also list only set overrides but that would require this option to know if
+ * config-path is somewhere else on the command line and get its argument
+ */
+std::string arghelper_unset_overrides()
+{
+    std::stringstream out;
+    for (const ValidOverride & vo: configProfileOverrides)
+    {
+        out << vo.key << " ";
+    }
+    return out.str();
+}
+
+
+/**
  *  Provides true/false suggestions for command line completion
  */
 std::string arghelper_boolean()
