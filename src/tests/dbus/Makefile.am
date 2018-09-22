@@ -42,6 +42,7 @@ AM_LDFLAGS = \
 
 noinst_PROGRAMS = \
 	config-lock-down \
+	config-override-selftest \
 	conncreds \
 	enable-logging \
 	fetch-avail-config-paths \
@@ -49,6 +50,7 @@ noinst_PROGRAMS = \
 	fetch-config \
 	fetch-config2 \
 	get-acl \
+	get-config-overrides \
 	getlastlogevent \
 	getlaststatus \
 	getconnectionstats \
@@ -67,6 +69,8 @@ noinst_PROGRAMS = \
 
 config_lock_down_SOURCES = config-lock-down.cpp
 
+config_override_selftest_SOURCES = config-override-selftest.cpp
+
 conncreds_SOURCES = conncreds.cpp
 
 enable_logging_SOURCES = enable-logging.cpp
@@ -80,6 +84,8 @@ fetch_config_SOURCES = fetch-config.cpp
 fetch_config2_SOURCES = fetch-config2.cpp
 
 get_acl_SOURCES = get-acl.cpp
+
+get_config_overrides_SOURCES = get-config-overrides.cpp
 
 getlastlogevent_SOURCES = getlastlogevent.cpp
 
