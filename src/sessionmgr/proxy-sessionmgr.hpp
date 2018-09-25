@@ -279,6 +279,35 @@ public:
 
 
     /**
+     *  Will the session log properties be accessible to users granted
+     *  access to the session?
+     *
+     * @return  Returns false if users can modify receive_log_events
+     *          and the log_verbosity properties.  True means only the
+     *          session owner has access to the session log via the sesison
+     *          manager.
+     */
+    bool GetRestrictLogAccess()
+    {
+        return GetBoolProperty("restrict_log_access");
+    }
+
+
+    /**
+     *  Change who can access the session log related properties.
+     *
+     * @param enable  If false, users can modify receive_log_events
+     *                and the log_verbosity properties.  True means only the
+     *                session owner has access to the session log via the
+     *                sesison manager.
+     */
+    void SetRestrictLogAccess(bool enable)
+    {
+        SetProperty("restrict_log_access", enable);
+    }
+
+
+    /**
      *  Will the VPN client backend send log messages via
      *  the session manager?
      *
