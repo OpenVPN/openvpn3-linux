@@ -538,6 +538,7 @@ static int cmd_session_acl(ParsedArgs args)
         && !args.Present("grant")
         && !args.Present("revoke")
         && !args.Present("public-access")
+        && !args.Present("allow-log-access")
         && !args.Present("lock-down")
         && !args.Present("seal"))
     {
@@ -647,28 +648,49 @@ static int cmd_session_acl(ParsedArgs args)
             }
         }
 
+        if (args.Present("allow-log-access"))
+        {
+            bool ala = args.GetBoolValue("allow-log-access", 0);
+            session.SetRestrictLogAccess(!ala);
+            if (ala)
+            {
+                std::cout << "Session log is now accessible to users granted "
+                          << " session access" << std::endl;
+            }
+            else
+            {
+                std::cout << "Session log is only accessible the session"
+                          << " owner" << std::endl;
+            }
+        }
+
+
         if (args.Present("show"))
         {
             std::string owner = lookup_username(session.GetOwner());
-            std::cout << "                 Owner: ("
+            std::cout << "                    Owner: ("
                       << session.GetOwner() << ") "
                       << " " << ('(' != owner[0] ? owner : "(unknown)")
                       << std::endl;
 
-            std::cout << "         Public access: "
+            std::cout << "            Public access: "
                       << (session.GetPublicAccess() ? "yes" : "no")
+                      << std::endl;
+
+            std::cout << " Users granted log access: "
+                      << (session.GetRestrictLogAccess() ? "no" : "yes")
                       << std::endl;
 
             if (!session.GetPublicAccess())
             {
                 std::vector<uid_t> acl = session.GetAccessList();
-                std::cout << "  Users granted access: " << std::to_string(acl.size())
+                std::cout << "     Users granted access: " << std::to_string(acl.size())
                           << (1 != acl.size() ? " users" : " user")
                           << std::endl;
                 for (auto const& uid : acl)
                 {
                     std::string user = lookup_username(uid);
-                    std::cout << "                        - (" << uid << ") "
+                    std::cout << "                           - (" << uid << ") "
                               << " " << ('(' != user[0] ? user : "(unknown)")
                     << std::endl;
                 }
@@ -730,6 +752,9 @@ void RegisterCommands_session(Commands& ovpn3)
                    "Revoke this user access from this session");
     cmd->AddOption("public-access", "<true|false>", true,
                    "Set/unset the public access flag",
+                   arghelper_boolean);
+    cmd->AddOption("allow-log-access", "<true|false>", true,
+                   "Can users granted access also access the session log?",
                    arghelper_boolean);
 
     //
