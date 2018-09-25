@@ -414,6 +414,7 @@ public:
                                 signal_broadcast),
           remove_callback(remove_callback),
           be_proxy(nullptr),
+          restrict_log_access(true),
           recv_log_events(false),
           session_created(std::time(nullptr)),
           config_path(cfg_path),
@@ -470,6 +471,7 @@ public:
                           << "        <property type='a{sx}' name='statistics' access='read'/>"
                           << "        <property type='o' name='config_path' access='read'/>"
                           << "        <property type='u' name='backend_pid' access='read'/>"
+                          << "        <property type='b' name='restrict_log_access' access='readwrite'/>"
                           << "        <property type='b' name='receive_log_events' access='readwrite'/>"
                           << "        <property type='u' name='log_verbosity' access='readwrite'/>"
                           << "    </interface>"
@@ -1002,7 +1004,11 @@ public:
                   << std::endl;
         */
         GVariant *ret = NULL;
-        if ("receive_log_events" == property_name)
+        if ("restrict_log_access" == property_name)
+        {
+            ret = g_variant_new_boolean (restrict_log_access);
+        }
+        else if ("receive_log_events" == property_name)
         {
             ret = g_variant_new_boolean (recv_log_events);
         }
@@ -1137,7 +1143,16 @@ public:
 
         try
         {
-            CheckOwnerAccess(sender);
+            if (!restrict_log_access
+                && ("receive_log_events" == property_name
+                    || "log_verbosity" == property_name))
+            {
+                CheckACL(sender);
+            }
+            else
+            {
+                CheckOwnerAccess(sender);
+            }
         }
         catch (DBusCredentialsException& excp)
         {
@@ -1149,7 +1164,13 @@ public:
 
         try
         {
-            if (("receive_log_events" == property_name) && be_conn)
+            if (("restrict_log_access" == property_name) && be_conn)
+            {
+                restrict_log_access = g_variant_get_boolean(value);
+                return build_set_property_response(property_name,
+                                                   restrict_log_access);
+            }
+            else if (("receive_log_events" == property_name) && be_conn)
             {
                 recv_log_events = g_variant_get_boolean(value);
                 if (recv_log_events && nullptr == sig_logevent)
@@ -1227,6 +1248,7 @@ private:
     unsigned int default_session_log_level = 4; // LogCategory::INFO messages
     std::function<void()> remove_callback;
     DBusProxy *be_proxy;
+    bool restrict_log_access;
     bool recv_log_events;
     std::time_t session_created;
     std::string config_path;
