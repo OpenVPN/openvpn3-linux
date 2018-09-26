@@ -390,9 +390,14 @@ public:
     /**
      * Removes an override from this object.
      */
-    void UnsetOverride(const ValidOverride &vpnOverride)
+    void UnsetOverride(const ValidOverride &override)
     {
-        Call("UnsetOverride", g_variant_new("(s)", vpnOverride.key.c_str()));
+        if (!override.valid())
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
+                                "Invalid override");
+        }
+        Call("UnsetOverride", g_variant_new("(s)", override.key.c_str()));
     }
 
 
