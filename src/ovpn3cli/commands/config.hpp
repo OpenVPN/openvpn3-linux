@@ -237,8 +237,7 @@ static int cmd_config_manage_show(OpenVPN3ConfigurationProxy& conf,
     {
         // Right algin the field with explicit width
         std::cout << std::right;
-        std::cout << "Configuration: " << std::endl
-                  << std::setw(32) << "                  Name: "
+        std::cout << std::setw(32) << "                  Name: "
                   << conf.GetStringProperty("name") << std::endl
                   << std::setw(32) << "             Read only: "
                   << (conf.GetBoolProperty("readonly") ? "Yes" : "No") << std::endl
@@ -247,8 +246,7 @@ static int cmd_config_manage_show(OpenVPN3ConfigurationProxy& conf,
                   << std::setw(32) << "     Persistent tunnel: "
                   << (conf.GetPersistTun() ? "Yes" : "No") << std::endl;
 
-
-        std::cout << "  Overrides: ";
+        std::cout << std::endl << "  Overrides: ";
         auto overrides = conf.GetOverrides();
         if (overrides.empty() && !showall)
         {
@@ -380,12 +378,6 @@ static int cmd_config_manage(ParsedArgs args)
             valid_option = true;
         }
 
-        if (args.Present("show"))
-        {
-            cmd_config_manage_show(conf);
-            valid_option = true;
-        }
-
         for (const ValidOverride& vo: configProfileOverrides)
         {
             if (args.Present(vo.key))
@@ -421,8 +413,25 @@ static int cmd_config_manage(ParsedArgs args)
             return 0;
         }
 
+        if (args.Present("show"))
+        {
+            if (valid_option)
+            {
+                std::cout << std::endl
+                          << "------------------------------"
+                          << "------------------------------"
+                          << std::endl;
+            }
+            std::cout << std::endl;
+            cmd_config_manage_show(conf);
+            std::cout << std::endl;
+            valid_option = true;
+        }
+
         if (!valid_option)
+        {
             throw CommandException("config-manage", "No operation option recognised");
+        }
 
     }
     catch (DBusPropertyException& err)
