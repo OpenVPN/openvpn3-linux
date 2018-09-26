@@ -396,21 +396,27 @@ static int cmd_config_manage(ParsedArgs args)
                     std::cout << "Set override '" + vo.key + "' to '" + value +"'"
                               << std::endl;
                 }
-                return 0;
+                valid_option = true;
             }
         }
+
         if (args.Present("unset-override"))
         {
-            std::string key = args.GetValue("unset-override", 0);
-            const ValidOverride& override = GetConfigOverride(key, true);
+            for (const auto& key : args.GetAllValues("unset-override"))
+            {
+                const ValidOverride& override = GetConfigOverride(key, true);
 
-            if (OverrideType::invalid == override.type)
-                throw CommandException("config-manage",
-                                       "Unsetting invalid override " + key + " is not possible");
+                if (OverrideType::invalid == override.type)
+                {
+                    throw CommandException("config-manage",
+                                           "Unsetting invalid override "
+                                           + key + " is not possible");
+                }
 
-            conf.UnsetOverride(override);
-            std::cout << "Unset overide '" + override.key + "'" << std::endl;
-            return 0;
+                conf.UnsetOverride(override);
+                std::cout << "Unset overide '" + override.key + "'" << std::endl;
+                valid_option = true;
+            }
         }
 
         if (args.Present("show"))
