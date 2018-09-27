@@ -633,6 +633,11 @@ public:
                 LogWarn(excp.err());
                 excp.SetDBusError(invoc);
             }
+            catch (DBusException& excp)
+            {
+                LogWarn(excp.what());
+                excp.SetDBusError(invoc, "net.openvpn.v3.configmgr.error");
+            }
         }
         else if ("UnsetOverride" == method_name)
         {
@@ -648,15 +653,24 @@ public:
                 CheckOwnerAccess(sender);
                 gchar *key = nullptr;
                 g_variant_get(params, "(s)", &key);
-                if(!remove_override(key))
-                    THROW_DBUSEXCEPTION("ConfigManagerObject",
-                                        "Override does not exist");
+                if(remove_override(key))
+                {
+                    LogInfo("Unset configuration override '" + std::string(key)
+                                + "' by UID " + std::to_string(GetUID(sender)));
 
-                LogInfo("Unset configuration override '" + std::string(key)
-                            + "' by UID " + std::to_string(GetUID(sender)));
-
-                g_dbus_method_invocation_return_value(invoc, NULL);
+                    g_dbus_method_invocation_return_value(invoc, NULL);
+                }
+                else
+                {
+                    std::stringstream err;
+                    err << "Override '" << std::string(key) << "' has "
+                        << "not been set";
+                    g_dbus_method_invocation_return_dbus_error (invoc,
+                                                                "net.openvpn.v3.error.OverrideNotSet",
+                                                                err.str().c_str());
+                }
                 g_free(key);
+                return;
             }
             catch (DBusCredentialsException& excp)
             {

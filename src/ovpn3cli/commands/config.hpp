@@ -413,9 +413,25 @@ static int cmd_config_manage(ParsedArgs args)
                                            + key + " is not possible");
                 }
 
-                conf.UnsetOverride(override);
-                std::cout << "Unset overide '" + override.key + "'" << std::endl;
-                valid_option = true;
+                try
+                {
+                    conf.UnsetOverride(override);
+                    std::cout << "Unset overide '" + override.key + "'" << std::endl;
+                    valid_option = true;
+                }
+                catch (DBusException& err)
+                {
+                    std::string e(err.what());
+                    if (e.find("net.openvpn.v3.error.OverrideNotSet") != std::string::npos)
+                    {
+                        std::cout << "Override '" << key
+                                  << "' not set" << std::endl;
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
             }
         }
 
