@@ -93,6 +93,212 @@ int main(int argc, char **argv)
         OpenVPN3ConfigurationProxy cfgobj(dbusobj, cfgpath);
         unsigned int failed = 0;
 
+        std::cout << ".. Testing unsetting an unset override ... ";
+        try
+        {
+            const ValidOverride& ov = GetConfigOverride("ipv6");
+            cfgobj.UnsetOverride(ov);
+            std::cout << "FAIL" << std::endl;
+            ++failed;
+        }
+        catch(DBusException& excp)
+        {
+            std::string e(excp.what());
+            if (e.find("net.openvpn.v3.error.OverrideNotSet") != std::string::npos)
+            {
+                std::cout << "PASS" << std::endl;
+            }
+            else
+            {
+                std::cout << "ERROR:" << excp.what() << std::endl;
+                ++failed;
+            }
+        }
+
+        std::cout << ".. Testing unsetting an invalid override (1)... ";
+        try
+        {
+            const ValidOverride& ov = GetConfigOverride("non-existent-fake-override");
+            cfgobj.UnsetOverride(ov);
+            std::cout << "FAIL" << std::endl;
+            ++failed;
+        }
+        catch(DBusException& excp)
+        {
+            std::string e(excp.what());
+            if (e.find("Invalid override") != std::string::npos)
+            {
+                std::cout << "PASS" << std::endl;
+            }
+            else
+            {
+                std::cout << "ERROR:" << excp.what() << std::endl;
+                ++failed;
+            }
+        }
+
+        std::cout << ".. Testing unsetting an invalid override (2)... ";
+        try
+        {
+            ValidOverride ov = {"non-existing-override",
+                                OverrideType::string,
+                                "Non-existing override"};
+            cfgobj.UnsetOverride(ov);
+            std::cout << "FAIL" << std::endl;
+            ++failed;
+        }
+        catch(DBusException& excp)
+        {
+            std::string e(excp.what());
+            if (e.find("net.openvpn.v3.error.OverrideNotSet") != std::string::npos)
+            {
+                std::cout << "PASS" << std::endl;
+            }
+            else
+            {
+                std::cout << "ERROR:" << excp.what() << std::endl;
+                ++failed;
+            }
+        }
+
+        std::cout << ".. Testing setting an invalid override (1)... ";
+        try
+        {
+            const ValidOverride& ov = GetConfigOverride("non-existent-fake-override");
+            cfgobj.SetOverride(ov, "string-value");
+            std::cout << "FAIL" << std::endl;
+            ++failed;
+        }
+        catch(DBusException& excp)
+        {
+            std::string e(excp.what());
+            if (e.find("Invalid override") != std::string::npos)
+            {
+                std::cout << "PASS" << std::endl;
+            }
+            else
+            {
+                std::cout << "ERROR:" << excp.what() << std::endl;
+                ++failed;
+            }
+        }
+
+        std::cout << ".. Testing setting an invalid override (2)... ";
+        try
+        {
+            const ValidOverride ov = {"non-existing-override",
+                                      OverrideType::string,
+                                      "Non-existing override"};
+            cfgobj.SetOverride(ov, std::string("string-value"));
+            std::cout << "FAIL" << std::endl;
+            ++failed;
+        }
+        catch(DBusException& excp)
+        {
+            std::string e(excp.what());
+            if (e.find("v3.configmgr.error: Invalid override key 'non-existing-override'") != std::string::npos)
+            {
+                std::cout << "PASS" << std::endl;
+            }
+            else
+            {
+                std::cout << "ERROR:" << excp.what() << std::endl;
+                ++failed;
+            }
+        }
+
+        std::cout << ".. Testing setting an override with invalid type [bool:string] (1) ... ";
+        try
+        {
+            const ValidOverride& ov = GetConfigOverride("dns-sync-lookup");
+            cfgobj.SetOverride(ov, std::string("string-value"));
+            std::cout << "FAIL" << std::endl;
+            ++failed;
+        }
+        catch(DBusException& excp)
+        {
+            std::string e(excp.what());
+            if (e.find("for string called for non-string override") != std::string::npos)
+            {
+                std::cout << "PASS" << std::endl;
+            }
+            else
+            {
+                std::cout << "ERROR:" << excp.what() << std::endl;
+                ++failed;
+            }
+        }
+
+        std::cout << ".. Testing setting an override with invalid type [bool:string] (2) ... ";
+        try
+        {
+            ValidOverride ov = GetConfigOverride("dns-sync-lookup");
+            ov.type = OverrideType::string;
+            cfgobj.SetOverride(ov, std::string("string-value"));
+            std::cout << "FAIL" << std::endl;
+            ++failed;
+        }
+        catch(DBusException& excp)
+        {
+            std::string e(excp.what());
+            if (e.find("v3.configmgr.error: Invalid data type for key 'dns-sync-lookup'") != std::string::npos)
+            {
+                std::cout << "PASS" << std::endl;
+            }
+            else
+            {
+                std::cout << "ERROR:" << excp.what() << std::endl;
+                ++failed;
+            }
+        }
+
+        std::cout << ".. Testing setting an override with invalid type [string:bool] (1) ... ";
+        try
+        {
+            const ValidOverride& ov = GetConfigOverride("server-override");
+            cfgobj.SetOverride(ov, true);
+            std::cout << "FAIL" << std::endl;
+            ++failed;
+        }
+        catch(DBusException& excp)
+        {
+            std::string e(excp.what());
+            if (e.find("bool called for non-bool override") != std::string::npos)
+            {
+                std::cout << "PASS" << std::endl;
+            }
+            else
+            {
+                std::cout << "ERROR:" << excp.what() << std::endl;
+                ++failed;
+            }
+        }
+
+        std::cout << ".. Testing setting an override with invalid type [string:bool] (2) ... ";
+        try
+        {
+            const ValidOverride ov = {"server-override",
+                                      OverrideType::boolean,
+                                      "Non-existing override"};
+            cfgobj.SetOverride(ov, true);
+            std::cout << "FAIL" << std::endl;
+            ++failed;
+        }
+        catch(DBusException& excp)
+        {
+            std::string e(excp.what());
+            if (e.find("v3.configmgr.error: Invalid data type for key 'server-override'") != std::string::npos)
+            {
+                std::cout << "PASS" << std::endl;
+            }
+            else
+            {
+                std::cout << "ERROR:" << excp.what() << std::endl;
+                ++failed;
+            }
+        }
+
+
         std::cout << ".. Checking all overrides are unset ... ";
         std::vector<OverrideValue> overrides = cfgobj.GetOverrides();
         if (0 != overrides.size())
