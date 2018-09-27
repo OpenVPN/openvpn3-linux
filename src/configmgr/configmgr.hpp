@@ -995,7 +995,8 @@ public:
         if (!vo.valid())
         {
             THROW_DBUSEXCEPTION("ConfigManagerObject",
-                                "Override is not valid");
+                                "Invalid override key '" + std::string(key)
+                                + "'");
         }
 
         // Ensure that a previous override value is remove
