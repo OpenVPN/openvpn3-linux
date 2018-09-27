@@ -304,8 +304,10 @@ static int cmd_config_manage(ParsedArgs args)
         if (args.Present(vo.key)
             && (args.Present("unset-override") && args.GetValue("unset-override", 0) == vo.key))
         {
-            throw CommandException("Cannot provide both --" + vo.key +" and " +
-            "--unset-" + vo.key + " at the same time.");
+            throw CommandException("config-manage",
+                                   "Cannot provide both --" + vo.key +" and "
+                                   + "--unset-" + vo.key
+                                   + " at the same time.");
         }
         if (args.Present(vo.key))
         {
