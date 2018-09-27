@@ -360,30 +360,40 @@ public:
     /**
      * Adds a bool override to this object.
      */
-    void SetOverride(const ValidOverride &vpnOverride, bool value)
+    void SetOverride(const ValidOverride &override, bool value)
     {
-        if (OverrideType::boolean != vpnOverride.type)
+        if (!override.valid())
         {
             THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "SetOverride for bool called for non bool override");
+                                "Invalid override");
+        }
+        if (OverrideType::boolean != override.type)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
+                                "SetOverride for bool called for non-bool override");
         }
         GVariant* val = g_variant_new("b", value);
-        Call("SetOverride", g_variant_new("(sv)", vpnOverride.key.c_str(), val));
+        Call("SetOverride", g_variant_new("(sv)", override.key.c_str(), val));
     }
 
 
     /**
      * Adds a string override to this object.
      */
-    void SetOverride(const ValidOverride &vpnOverride, std::string value)
+    void SetOverride(const ValidOverride &override, std::string value)
     {
-        if (OverrideType::string != vpnOverride.type)
+        if (!override.valid())
         {
             THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "SetOverride for bool called for non bool override");
+                                "Invalid override");
+        }
+        if (OverrideType::string != override.type)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
+                                "SetOverride for string called for non-string override");
         }
         GVariant* val = g_variant_new("s", value.c_str());
-        Call("SetOverride", g_variant_new("(sv)", vpnOverride.key.c_str(), val));
+        Call("SetOverride", g_variant_new("(sv)", override.key.c_str(), val));
     }
 
 

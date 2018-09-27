@@ -1003,6 +1003,14 @@ public:
 
         if (OverrideType::string == vo.type)
         {
+            std::string g_type(g_variant_get_type_string(value));
+            if ("s" != g_type)
+            {
+                THROW_DBUSEXCEPTION("ConfigManagerObject",
+                                    "Invalid data type for key '"
+                                    + std::string(key) + "'");
+            }
+
             gsize len = 0;
             std::string v(g_variant_get_string(value, &len));
             override_list.push_back(OverrideValue(vo, v));
@@ -1010,7 +1018,15 @@ public:
         }
         else if (OverrideType::boolean == vo.type)
         {
-            bool v=g_variant_get_boolean(value);
+            std::string g_type(g_variant_get_type_string(value));
+            if ("b" != g_type)
+            {
+                THROW_DBUSEXCEPTION("ConfigManagerObject",
+                                    "Invalid data type for key '"
+                                    + std::string(key) + "'");
+            }
+
+            bool v = g_variant_get_boolean(value);
             override_list.push_back(OverrideValue(vo, v));
         }
         return override_list.back();
