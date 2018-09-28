@@ -137,6 +137,7 @@ src_ovpn3cli_openvpn3_SOURCES = \
 	src/ovpn3cli/commands/session.hpp \
 	$(DBUS_SOURCES) \
 	src/configmgr/proxy-configmgr.hpp \
+	src/configmgr/overrides.hpp \
 	src/sessionmgr/proxy-sessionmgr.hpp \
 	src/dbus/requiresqueue-proxy.hpp \
 	src/common/cmdargparser.hpp \
