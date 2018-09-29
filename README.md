@@ -232,12 +232,12 @@ First install the package dependencies needed to run the build.
 libmbedtls-dev liblz4-dev libcap-ng-dev``
 
 #### Fedora:
-  ``# dnf install gcc-c++ git autoconf autoconf-archive automake make pkgconfig mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel libcapng-devel``
+  ``# dnf install gcc-c++ git autoconf autoconf-archive automake make pkgconfig mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel libcap-ng-devel``
 
 #### Red Hat Enterprise Linux / CentOS / Scientific Linux
   First install the ``epel-release`` repository if that is not yet installed.  Then you can run:
 
-  ``# yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel lz4-devel libcapng-devel``
+  ``# yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel lz4-devel libcap-ng-devel``
 
 
 ### Preparations building from git
