@@ -122,6 +122,12 @@ bool isanum_string(const std::string& data)
 }
 
 
+#ifndef CONFIGURE_GIT_REVISION
+constexpr char package_version[] = PACKAGE_GUIVERSION;
+#else
+constexpr char package_version[] = "git:" CONFIGURE_GIT_REVISION CONFIGURE_GIT_FLAGS;
+#endif
+
 /**
  *  Returns a string containing a version reference of the build.
  *  If a git checkout is discovered, flags identifying if there are
@@ -136,12 +142,7 @@ std::string get_version(std::string component)
 {
     std::stringstream ver;
 
-#ifndef CONFIGURE_GIT_REVISION
-    ver << PACKAGE_NAME << " " << PACKAGE_GUIVERSION;
-#else
-    ver << PACKAGE_NAME << " "
-        << "git:" << CONFIGURE_GIT_REVISION << CONFIGURE_GIT_FLAGS;
-#endif
+    ver << PACKAGE_NAME << " " << package_version;
 
     //  Simplistic basename() approach, extracting just the filename
     //  of the binary from argv[0]
