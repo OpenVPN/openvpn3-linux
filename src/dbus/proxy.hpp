@@ -219,6 +219,40 @@ namespace openvpn
 
 
         /**
+         *  Some service expose a 'version' property in the main manager
+         *  object.  This retrieves this but has a retry logic in case the
+         *  service did not start up quickly enough.
+         *
+         * @return  Returns a string containing the version of the service
+         *
+         */
+        std::string GetServiceVersion()
+        {
+            int delay = 1;
+            for (int attempts = 10; attempts > 0; --attempts)
+            {
+                try
+                {
+                    return GetStringProperty("version");
+                }
+                catch (DBusException& excp)
+                {
+                    std::string err(excp.what());
+                    if (err.find("GDBus.Error:org.freedesktop.DBus.Error.UnknownMethod:") == std::string::npos)
+                    {
+                        throw;
+                    }
+                    sleep(delay);
+                    ++delay;
+                }
+            }
+            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
+                                "Could not establish connection with the "
+                                "Configuration Manager");
+        }
+
+
+        /**
          *  Tries to ping a the destination service.  This is used to
          *  activate auto-start of services and give it time to settle.
          *  It will try 3 times with a sleep of 1 second in between.
