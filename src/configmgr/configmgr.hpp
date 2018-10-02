@@ -1130,6 +1130,7 @@ public:
                           << "        <method name='FetchAvailableConfigs'>"
                           << "          <arg type='ao' name='paths' direction='out'/>"
                           << "        </method>"
+                          << "        <property type='s' name='version' access='read'/>"
                           << GetLogIntrospection()
                           << "    </interface>"
                           << "</node>";
@@ -1254,11 +1255,19 @@ public:
                                      GError **error)
     {
         IdleCheck_UpdateTimestamp();
-        GVariant *ret = NULL;
-        g_set_error (error,
-                     G_IO_ERROR,
-                     G_IO_ERROR_FAILED,
-                     "Unknown property");
+        GVariant *ret = nullptr;
+
+        if ("version" == property_name)
+        {
+            ret = g_variant_new_string(package_version);
+        }
+        else
+        {
+            g_set_error (error,
+                         G_IO_ERROR,
+                         G_IO_ERROR_FAILED,
+                         "Unknown property");
+        }
         return ret;
     };
 
