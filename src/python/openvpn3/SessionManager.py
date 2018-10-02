@@ -25,6 +25,7 @@
 #
 
 import dbus
+import time
 from functools import wraps
 from openvpn3.constants import StatusMajor, StatusMinor
 from openvpn3.constants import ClientAttentionType, ClientAttentionGroup
@@ -389,8 +390,15 @@ class SessionManager(object):
 
         # Retireve access to the session interface in the object
         self.__manager_intf = dbus.Interface(self.__manager_object,
-                                          dbus_interface='net.openvpn.v3.sessions')
+                                             dbus_interface='net.openvpn.v3.sessions')
 
+        # Retrive access to the property interface in the object
+        self.__prop_intf = dbus.Interface(self.__manager_object,
+                                          dbus_interface="org.freedesktop.DBus.Properties")
+
+        # Setup a simple access to the Peer interface, for Ping()
+        self.__peer_intf = dbus.Interface(self.__manager_object,
+                                          dbus_interface='org.freedesktop.DBus.Peer')
 
     ##
     #  Create a new VPN session
@@ -401,8 +409,9 @@ class SessionManager(object):
     #  @return Returns a Session object of the imported configuration
     #
     def NewTunnel(self, cfgobj):
-            path = self.__manager_intf.NewTunnel(cfgobj.GetPath())
-            return Session(self.__dbuscon, path)
+        self.__ping()
+        path = self.__manager_intf.NewTunnel(cfgobj.GetPath())
+        return Session(self.__dbuscon, path)
 
 
     ##
@@ -413,6 +422,7 @@ class SessionManager(object):
     #  @return Returns a Session object of the requested VPN session
     #
     def Retrieve(self, objpath):
+        self.__ping()
         return Session(self.__dbuscon, objpath)
 
 
@@ -424,6 +434,31 @@ class SessionManager(object):
     #
     def FetchAvailableSessions(self):
         ret = []
+        self.__ping()
         for s in self.__manager_intf.FetchAvailableSessions():
             ret.append(Session(self.__dbuscon, s))
         return ret
+
+
+    ##
+    #  Private method, which sends a Ping() call to the main D-Bus
+    #  interface for the service.  This is used to wake-up the service
+    #  if it isn't running yet.
+    #
+    def __ping(self):
+        delay = 0.5
+        attempts = 10
+
+        while attempts > 0:
+            try:
+                self.__peer_intf.Ping()
+                self.__prop_intf.Get('net.openvpn.v3.sessions', 'version')
+                return
+            except dbus.exceptions.DBusException as excp:
+                err = str(excp)
+                if err.find("org.freedesktop.DBus.Error.AccessDenied:") > 0:
+                    raise RuntimeError("Access denied to the Session Manager (ping)")
+                time.sleep(delay)
+                delay *= 1.33
+            attempts -= 1
+        raise RuntimeError("Could not establish contact with the Session Manager")

@@ -26,6 +26,7 @@
 
 import dbus
 import json
+import time
 from functools import wraps
 
 
@@ -185,6 +186,13 @@ class ConfigurationManager(object):
         self.__manager_intf = dbus.Interface(self.__manager_object,
                                           dbus_interface='net.openvpn.v3.configuration')
 
+        # Retrive access to the property interface in the object
+        self.__prop_intf = dbus.Interface(self.__manager_object,
+                                          dbus_interface="org.freedesktop.DBus.Properties")
+
+        # Setup a simple access to the Peer interface, for Ping()
+        self.__peer_intf = dbus.Interface(self.__manager_object,
+                                          dbus_interface='org.freedesktop.DBus.Peer')
 
     ##
     #  Import a new configuration profile into the configuration manager D-Bus
@@ -204,11 +212,12 @@ class ConfigurationManager(object):
     #  @return Returns a Configuration object of the imported configuration
     #
     def Import(self, cfgname, cfg, single_use, persistent):
-            path = self.__manager_intf.Import(cfgname,    #  config name
-                                             cfg,        # config profile str  
-                                             single_use, # Single-use config
-                                             persistent) # Persistent config?
-            return Configuration(self.__dbuscon, path)
+        self.__ping()
+        path = self.__manager_intf.Import(cfgname,    #  config name
+                                          cfg,        # config profile str
+                                          single_use, # Single-use config
+                                          persistent) # Persistent config?
+        return Configuration(self.__dbuscon, path)
 
 
     ##
@@ -221,6 +230,7 @@ class ConfigurationManager(object):
     #          profile
     #
     def Retrieve(self, objpath):
+        self.__ping()
         return Configuration(self.__dbuscon, objpath)
 
 
@@ -230,6 +240,31 @@ class ConfigurationManager(object):
     #
     def FetchAvailableConfigs(self):
         ret = []
+        self.__ping()
         for p in self.__manager_intf.FetchAvailableConfigs():
             ret.append(Configuration(self.__dbuscon, p))
         return ret
+
+
+    ##
+    #  Private method, which sends a Ping() call to the main D-Bus
+    #  interface for the service.  This is used to wake-up the service
+    #  if it isn't running yet.
+    #
+    def __ping(self):
+        delay = 0.5
+        attempts = 10
+
+        while attempts > 0:
+            try:
+                self.__peer_intf.Ping()
+                self.__prop_intf.Get('net.openvpn.v3.configuration', 'version')
+                return
+            except dbus.exceptions.DBusException as excp:
+                err = str(excp)
+                if err.find("org.freedesktop.DBus.Error.AccessDenied:") > 0:
+                    raise RuntimeError("Access denied to the Configuration Manager (ping)")
+                time.sleep(delay)
+                delay *= 1.33
+            attempts -= 1
+        raise RuntimeError("Could not establish contact with the Configuration Manager")
