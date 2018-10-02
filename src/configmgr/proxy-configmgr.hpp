@@ -42,6 +42,7 @@ public:
         property_proxy = SetupProxy(OpenVPN3DBus_name_configuration,
                                     "org.freedesktop.DBus.Properties",
                                     object_path);
+        (void) GetServiceVersion();
     }
 
     OpenVPN3ConfigurationProxy(DBus& dbusobj, std::string target)
@@ -57,7 +58,9 @@ public:
         property_proxy = SetupProxy(OpenVPN3DBus_name_configuration,
                                     "org.freedesktop.DBus.Properties",
                                     object_path);
+        (void) GetServiceVersion();
     }
+
 
     std::string Import(std::string name, std::string config_blob,
                        bool single_use, bool persistent)

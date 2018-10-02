@@ -96,6 +96,7 @@ public:
                                  "UserInputQueueCheck",
                                  "UserInputProvide")
     {
+        (void) GetServiceVersion();
     }
 
     /**
@@ -115,6 +116,7 @@ public:
                                  "UserInputQueueCheck",
                                  "UserInputProvide")
     {
+        (void) GetServiceVersion();
     }
 
 
