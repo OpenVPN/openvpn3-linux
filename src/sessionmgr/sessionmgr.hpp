@@ -493,6 +493,7 @@ public:
                                                OpenVPN3DBus_interf_backends,
                                                OpenVPN3DBus_rootp_backends);
                 backend_start.Ping(); // Wake up the backend service first
+                (void) backend_start.GetServiceVersion();
 
                 GVariant *res_g = backend_start.Call("StartClient",
                                                       g_variant_new("(s)", backend_token.c_str()));

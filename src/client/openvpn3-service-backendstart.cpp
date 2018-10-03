@@ -128,6 +128,7 @@ public:
                           << "          <arg type='s' name='token' direction='in'/>"
                           << "          <arg type='u' name='pid' direction='out'/>"
                           << "        </method>"
+                          << "        <property type='s' name='version' access='read'/>"
                           << GetLogIntrospection()
                           << "    </interface>"
                           << "</node>";
@@ -212,19 +213,21 @@ public:
                                      const std::string property_name,
                                      GError **error)
     {
-        /*
-        std::cout << "[BackendStarterObject] get_property(): "
-                  << "sender=" << sender
-                  << ", object_path=" << obj_path
-                  << ", interface=" << intf_name
-                  << ", property=" << property_name
-                  << std::endl;
-        */
-        g_set_error (error,
-                     G_IO_ERROR,
-                     G_IO_ERROR_FAILED,
-                     "Unknown property");
-        return NULL;
+        IdleCheck_UpdateTimestamp();
+        GVariant *ret = nullptr;
+
+        if ("version" == property_name)
+        {
+            ret = g_variant_new_string(package_version);
+        }
+        else
+        {
+            g_set_error (error,
+                         G_IO_ERROR,
+                         G_IO_ERROR_FAILED,
+                         "Unknown property");
+        }
+        return ret;
     };
 
 
