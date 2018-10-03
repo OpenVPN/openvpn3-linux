@@ -99,10 +99,11 @@ class PropertyType : public PropertyTypeBase<T>
 public:
     PropertyType(DBusObject *obj_arg, std::string name_arg,
                  std::string dbus_acl_arg, bool allow_root_arg,
-                 T& value_arg)
+                 T& value_arg, std::string override_dbus_type = "")
         : PropertyTypeBase<T>(obj_arg, name_arg,
                               dbus_acl_arg, allow_root_arg,
-                              value_arg)
+                              value_arg),
+          override_dbus_type(override_dbus_type)
     {
 
     }
@@ -110,7 +111,9 @@ public:
 
     virtual const char* GetDBusType() const override
     {
-        return GLibUtils::GetDBusDataType<T>();
+        return (override_dbus_type.empty()
+                ? GLibUtils::GetDBusDataType<T>()
+                : override_dbus_type.c_str());
     }
 
 
@@ -125,6 +128,9 @@ public:
         g_variant_get(value_arg, GetDBusType(), PropertyTypeBase<T>::value);
         return PropertyTypeBase<T>::obj->build_set_property_response(PropertyTypeBase<T>::name, PropertyTypeBase<T>::value);
     }
+
+private:
+    const std::string override_dbus_type;
 };
 
 
