@@ -240,6 +240,10 @@ namespace openvpn
                     std::string err(excp.what());
                     if (err.find("GDBus.Error:org.freedesktop.DBus.Error.UnknownMethod:") == std::string::npos)
                     {
+                        if (err.find("DBus.Error.InvalidArgs: No such property 'version'") != std::string::npos)
+                        {
+                            return std::string("");  // Consider this as an unkwown version but not an error
+                        }
                         throw;
                     }
                     sleep(delay);
