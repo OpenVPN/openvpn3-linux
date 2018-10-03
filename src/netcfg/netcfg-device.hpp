@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include <functional>
+
 #include <openvpn/common/rc.hpp>
 
 #include "dbus/core.hpp"
