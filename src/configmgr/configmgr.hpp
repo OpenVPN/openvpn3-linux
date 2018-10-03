@@ -417,8 +417,8 @@ public:
         //         contains files
         valid = true;
 
-        properties.AddBinding(new PropertyType<std::time_t>(this, "import_timestamp", "read", false, import_tstamp));
-        properties.AddBinding(new PropertyType<std::time_t>(this, "last_used_timestamp", "read", false, last_use_tstamp));
+        properties.AddBinding(new PropertyType<std::time_t>(this, "import_timestamp", "read", false, import_tstamp, "t"));
+        properties.AddBinding(new PropertyType<std::time_t>(this, "last_used_timestamp", "read", false, last_use_tstamp, "t"));
         properties.AddBinding(new PropertyType<bool>(this, "locked_down", "readwrite", false, locked_down));
         properties.AddBinding(new PropertyType<bool>(this, "persistent", "read", false, persistent));
         properties.AddBinding(new PropertyType<bool>(this, "persist_tun",  "readwrite", true, persist_tun));
