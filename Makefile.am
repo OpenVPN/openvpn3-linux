@@ -27,7 +27,7 @@ SUBDIRS=
 if HAVE_PYTHON
 SUBDIRS += src/python
 endif
-SUBDIRS += src/service-autostart src/policy doxygen
+SUBDIRS += distro/systemd src/service-autostart src/policy doxygen
 if BUILD_TESTS
 SUBDIRS += src/tests
 endif

@@ -1,0 +1,11 @@
+[Unit]
+Description=OpenVPN 3 Linux configuration auto loader and starter
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=@SBINDIR@/openvpn3-autoload --directory @OPENVPN3_CONFIGDIR@/autoload
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

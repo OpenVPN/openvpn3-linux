@@ -31,6 +31,7 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_SED
 AC_PROG_MAKE_SET
+AC_PROG_MKDIR_P
 AC_DEFINE_UNQUOTED([PACKAGE_GUIVERSION], ["PRODUCT_GUIVERSION"], [Version string to be presented to users/logs])
 
 dnl  This project has C++11 as the minimum C++ standard and C++14 as
@@ -200,6 +201,32 @@ fi
 OPENVPN3_CORE_CXXFLAGS="-I${OPENVPN3_CORE_SOURCEDIR}"
 AC_SUBST([OPENVPN3_CORE_CXXFLAGS])
 
+dnl
+dnl  System wide OpenVPN 3 Configuration directory
+dnl
+AC_ARG_VAR([OPENVPN3_CONFIGDIR], [OpenVPN 3 Linux configuration directory (default ${sysconfdir}/openvpn3)])
+if test -n "${OPENVPN3_CONFIGDIR}"; then
+   openvpn3_configdir="${OPENVPN3_CONFIGDIR}"
+else
+   openvpn3_configdir="${sysconfdir}/openvpn3"
+fi
+AC_SUBST([openvpn3_configdir])
+
+
+dnl
+dnl  systemd unit file directory
+dnl
+dnl  This defines the system wide directory for the systemd service
+dnl  unit files should be installed
+dnl
+AC_ARG_VAR([SYSTEMD_UNIT_DIR], [Systemd unit file directory (default: ${prefix}/lib/systemd/system)])
+if test -n "${SYSTEMD_UNIT_DIR}"; then
+   systemd_unitdir="${SYSTEMD_UNIT_DIR}"
+else
+   systemd_unitdir="${prefix}/lib/systemd/system"
+fi
+AC_SUBST([systemd_unitdir])
+
 
 dnl
 dnl  D-Bus system policy path
@@ -348,6 +375,7 @@ dnl
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
         Makefile \
+        distro/systemd/Makefile
         doxygen/Makefile \
         doxygen/openvpn3-linux.doxy \
         src/policy/Makefile \

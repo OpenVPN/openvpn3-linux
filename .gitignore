@@ -23,6 +23,7 @@ configure.h
 depcomp
 .deps
 .dirstamp
+distro/systemd/openvpn3-autoload.service
 doxygen/openvpn3-linux.doxy
 doxygen/doxy-warnings.log
 doxygen/html
