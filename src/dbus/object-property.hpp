@@ -124,8 +124,7 @@ public:
 
     virtual GVariantBuilder *SetValue(GVariant *value_arg) override
     {
-
-        g_variant_get(value_arg, GetDBusType(), PropertyTypeBase<T>::value);
+        g_variant_get(value_arg, GetDBusType(), &(PropertyTypeBase<T>::value));
         return PropertyTypeBase<T>::obj->build_set_property_response(PropertyTypeBase<T>::name, PropertyTypeBase<T>::value);
     }
 
