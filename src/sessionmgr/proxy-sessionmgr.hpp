@@ -96,7 +96,12 @@ public:
                                  "UserInputQueueCheck",
                                  "UserInputProvide")
     {
-        (void) GetServiceVersion();
+        // Only try to ensure the session manager service is available
+        // when accessing the main management object
+        if (OpenVPN3DBus_rootp_sessions == objpath)
+        {
+            (void) GetServiceVersion();
+        }
     }
 
     /**
@@ -116,7 +121,12 @@ public:
                                  "UserInputQueueCheck",
                                  "UserInputProvide")
     {
-        (void) GetServiceVersion();
+        // Only try to ensure the session manager service is available
+        // when accessing the main management object
+        if (OpenVPN3DBus_rootp_sessions == objpath)
+        {
+            (void) GetServiceVersion();
+        }
     }
 
 

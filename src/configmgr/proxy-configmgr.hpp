@@ -42,7 +42,13 @@ public:
         property_proxy = SetupProxy(OpenVPN3DBus_name_configuration,
                                     "org.freedesktop.DBus.Properties",
                                     object_path);
-        (void) GetServiceVersion();
+
+        // Only try to ensure the configuration manager service is available
+        // when accessing the main management object
+        if (OpenVPN3DBus_rootp_configuration == object_path)
+        {
+            (void) GetServiceVersion();
+        }
     }
 
     OpenVPN3ConfigurationProxy(DBus& dbusobj, std::string target)
@@ -58,7 +64,12 @@ public:
         property_proxy = SetupProxy(OpenVPN3DBus_name_configuration,
                                     "org.freedesktop.DBus.Properties",
                                     object_path);
-        (void) GetServiceVersion();
+        // Only try to ensure the configuration manager service is available
+        // when accessing the main management object
+        if (OpenVPN3DBus_rootp_configuration == object_path)
+        {
+            (void) GetServiceVersion();
+        }
     }
 
 
