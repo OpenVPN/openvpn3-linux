@@ -108,17 +108,20 @@ def find_autoload_configs(srcdir):
 #  This will return with the D-Bus path for the imported configuration on
 #  success
 #
-def import_configuration(cfgmgr, cfgname, flags, cfg):
+def import_configuration(cfgmgr, cfgname, autoloadcfg, cfg):
     cfgobj = cfgmgr.Import(cfgname,  # human readable config name
                            cfg,  # configuration profile as a string
                            False,  # Single-use config?  No.
                            False)  # Persistent config?  No.
 
     # If we have a list of flags, set these flags in the configuration object
-    if flags and len(flags) > 0:
+    if autoloadcfg['flags'] and len(autoloadcfg['flags']) > 0:
         # Enable the provided flags.  These flags are only boolean flags
-        for flag in flags:
+        for flag in autoloadcfg['flags']:
             cfgobj.SetProperty(flag, True)
+
+    for (k,v) in autoloadcfg['override'].items():
+        cfgobj.SetOverride(k, v)
 
     return cfgobj
 
@@ -127,17 +130,64 @@ def import_configuration(cfgmgr, cfgname, flags, cfg):
 #  Converts various .autoload flags into flags the property values to be
 #  set in the OpenVPN 3 Configuration Manager for a specific config
 #
-def parse_autoload_config_flags(autoload):
-    cfgflags = []
+def parse_autoload_config(autoload):
+    autoloadcfg = {'flags': [], 'override': {}}
     if 'acl' in autoload:
         for (k, v) in autoload['acl'].items():
             if False == v:
                 continue
 
             if 'public' == k:
-                cfgflags.append('public_access')
+                autoloadcfg['flags'].append('public_access')
             if 'locked-down' == k:
-                cfgflags.append('locked_down')
+                autoloadcfg['flags'].append('locked_down')
+
+    if 'remote' in autoload:
+        for (k,v) in autoload['remote'].items():
+            if False == v:
+                continue
+
+            if 'proto-override' == k:
+                if v in ('udp', 'tcp'):
+                    autoloadcfg['override']['proto-override'] = v and False or True
+                else:
+                    print ('WARNING: Invalid proto-override value: %s' % v)
+
+            elif 'port-override' == k:
+                autoloadcfg['override']['port-override'] = int(v)
+
+            elif 'compression' == k:
+                if v in ('no','asym','yes'):
+                    autoloadcfg['override']['allow-compression'] = v
+                else:
+                    print ('WARNING: Invalid compression value: %s' % v)
+
+    if 'crypto' in autoload:
+        for (k,v) in autoload['crypto'].items():
+            if False == v:
+                continue
+
+            if 'client-cert-enabled' == k:
+                autoloadcfg['override']['no-client-cert'] = v;
+
+            elif 'force-aes-cbc' == k:
+                autoloadcfg['override']['force-cipher-aes-cbc'] = v
+
+            elif 'tls-params' == k:
+                for (tpk, tpv) in v.items():
+                    if False == tpv:
+                        continue
+
+                    if 'cert-profile' == tpk:
+                        if tpv in ('legacy', 'preferred', 'suiteb'):
+                            autoloadcfg['override']['tls-cert-profile'] = tpv
+                        else:
+                            print('WARNINIG: Invalid tls-params:cert-profile value: %s' % tpv)
+                    elif 'min-version' == tpk:
+                        if tpv in ('tls_1_0', 'tls_1_1', 'tls_1_2', 'tls_1_3'):
+                            autoloadcfg['override']['tls-version-min'] = tpv
+                        else:
+                            print('WARNING: Invalid tls-params:min-version value: %s' % tpv)
 
     if 'tunnel' in autoload:
         for (k, v) in autoload['tunnel'].items():
@@ -145,9 +195,21 @@ def parse_autoload_config_flags(autoload):
                 continue
 
             if 'persist' == k:
-                cfgflags.append('persist_tun')
+                autoloadcfg['flags'].append('persist_tun')
 
-    return cfgflags
+            elif 'ipv6' == k:
+                if v in ('yes','no','default'):
+                    autoloadcfg['override']['ipv6'] = v
+                else:
+                    print('WARNING: Invalid tunnel:ipv6 value: %s' % v)
+
+            elif 'dns-fallback' == k:
+                if 'google' == v:
+                    autoloadcfg['override']['dns-fallback-google'] = True
+                else:
+                    print("WARNING: Invalid tunnel:dns-fallback value: %s" % v)
+
+    return autoloadcfg
 
 
 ##
@@ -233,17 +295,17 @@ def autoload_main(cmdargs):
     # Process the autoload configuration directory
     for (cfgname, autocfg) in find_autoload_configs(opts.directory).items():
         # Extract a list of properties with flags to set
-        cfgflags = parse_autoload_config_flags(autocfg['autoload'])
+        autoloadcfg = parse_autoload_config(autocfg['autoload'])
 
         # Import the configuration to the configuration manager, the
         # result value is the D-Bus path to the imported config
         cfgobj = import_configuration(configmgr,
                                       cfgname,
-                                      cfgflags,
+                                      autoloadcfg,
                                       autocfg['config'])
         print ('Configuration "%s" imported: %s [%s]' % (cfgname,
                                                          cfgobj.GetPath(),
-                                                         ", ".join(cfgflags)))
+                                                         ", ".join(autoloadcfg['flags'])))
 
         # Should this configuration be automatically started too?
         if 'autostart' in autocfg['autoload'] and True == autocfg['autoload']['autostart']:
