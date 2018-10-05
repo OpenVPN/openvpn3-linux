@@ -119,6 +119,39 @@ class Configuration(object):
 
 
     ##
+    #  Modifies an override parameter in configuration profile
+    #
+    #  @param override  String containing the property name to modify
+    #  @param value     The new value the property should have. The data
+    #                   type ov the value must match the data type of the
+    #                   property in the D-Bus object
+    #
+    @__delete_check
+    def SetOverride(self, override, value):
+        self.__config_intf.SetOverride(override, value)
+
+
+    ##
+    #  Retrieve all the set overrides
+    #
+    #   @returns  Returns a dictionary of all overrides with their values
+    #
+    @__delete_check
+    def GetOverrides(self,):
+        return self.__prop_intf.Get('net.openvpn.v3.configuration', 'overrides')
+
+
+    ##
+    #  Unset an override setting
+    #
+    #  @param override  Override to remove
+    #
+    @__delete_check
+    def UnsetOverride(self, override):
+        self.__config_intf.UnsetOverride(override)
+
+
+    ##
     #  Seal the configuration, which makes it impossible to modify it later
     #  on.  This CANNOT be undone.
     #
