@@ -162,6 +162,20 @@ def parse_autoload_config(autoload):
                 else:
                     print ('WARNING: Invalid compression value: %s' % v)
 
+            elif 'proxy' == k:
+                for (pk, pv) in v.items():
+                    if 'host' == pk:
+                        autoloadcfg['override']['proxy-host'] = pv
+                    elif 'port' == pk:
+                        autoloadcfg['override']['proxy-port'] = pv
+                    elif 'username' == pk:
+                        autoloadcfg['override']['proxy-username'] = pv
+                    elif 'password' == pk:
+                        autoloadcfg['override']['proxy-password'] = pv
+                    elif 'allow-plain-text' == pk:
+                        autoloadcfg['override']['proxy-auth-cleartext'] = pv
+
+
     if 'crypto' in autoload:
         for (k,v) in autoload['crypto'].items():
             if False == v:
