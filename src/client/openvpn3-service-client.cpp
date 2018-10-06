@@ -1020,6 +1020,22 @@ private:
             {
                 vpnconfig.tlsCertProfileOverride = override.strValue;
             }
+            else if (override.override.key == "proxy-host")
+            {
+                vpnconfig.proxyHost = override.strValue;
+            }
+            else if (override.override.key == "proxy-port")
+            {
+                vpnconfig.proxyPort = override.strValue;
+            }
+            else if (override.override.key == "proxy-username")
+            {
+                vpnconfig.proxyUsername = override.strValue;
+            }
+            else if (override.override.key == "proxy-password")
+            {
+                vpnconfig.proxyPassword = override.strValue;
+            }
             else if (override.override.key == "proxy-auth-cleartext")
             {
                 vpnconfig.proxyAllowCleartextAuth = override.boolValue;
