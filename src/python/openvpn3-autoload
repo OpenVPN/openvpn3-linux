@@ -149,7 +149,7 @@ def parse_autoload_config(autoload):
 
             if 'proto-override' == k:
                 if v in ('udp', 'tcp'):
-                    autoloadcfg['override']['proto-override'] = v and False or True
+                    autoloadcfg['override']['proto-override'] = v
                 else:
                     print ('WARNING: Invalid proto-override value: %s' % v)
 
