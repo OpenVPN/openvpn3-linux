@@ -145,7 +145,7 @@ class Session(object):
     #
     @__delete_check
     def GetPath(self):
-        return self.__session_path
+        return dbus.ObjectPath(self.__session_path)
 
 
     ##

@@ -82,7 +82,7 @@ class Configuration(object):
     #
     @__delete_check
     def GetPath(self):
-        return self.__cfg_path
+        return dbus.ObjectPath(self.__cfg_path)
 
 
     ##
