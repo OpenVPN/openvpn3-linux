@@ -122,6 +122,18 @@ const ValidOverride configProfileOverrides[] = {
      "Sets the control channel tls profile",
      [] {return std::string("insecure legacy preferred suiteb");}},
 
+    {"proxy-host", OverrideType::string,
+     "HTTP Proxy to connect via, overrides configuration file http-proxy"},
+
+    {"proxy-port", OverrideType::string,
+     "HTTP Proxy port to connect on"},
+
+    {"proxy-username", OverrideType::string,
+     "HTTP Proxy username to authenticate as"},
+
+    {"proxy-password", OverrideType::string,
+     "HTTP Proxy password to use for authentication"},
+
     {"proxy-auth-cleartext", OverrideType::boolean,
      "Allows clear text HTTP authentication"}
 };
