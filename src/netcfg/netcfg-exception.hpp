@@ -69,7 +69,7 @@ public:
         user_error = device_name + ": " + errmsg;
     }
 
-    virtual const char* what() const throw()
+    const char* what() const noexcept override
     {
         return user_error.c_str();
     }
@@ -101,7 +101,7 @@ public:
     void SetDBusError(GError **error,
                       const GQuark domain, const guint errcode) const noexcept
     {
-        g_set_error(error, domain, errcode, user_error.c_str());
+        g_set_error(error, domain, errcode, "%s", user_error.c_str());
     }
 
     /**
@@ -135,17 +135,16 @@ private:
 class NetCfgProxyException : public std::exception
 {
 public:
-    NetCfgProxyException(const std::string& method, const std::string& err)
-                : method(method), errormsg(err)
+    NetCfgProxyException(std::string method, std::string err) noexcept
+        : method(std::move(method)), errormsg(std::move(err)),
+          user_error(method + "(): " + err)
     {
-        user_error = method + "(): " + err;
+
     }
 
-    ~NetCfgProxyException()
-    {
-    }
+    ~NetCfgProxyException() = default;
 
-    virtual const char* what() const throw()
+    virtual const char* what() const noexcept
     {
         return user_error.c_str();
     }
