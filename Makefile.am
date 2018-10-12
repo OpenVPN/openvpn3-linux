@@ -157,6 +157,7 @@ src_ovpn3cli_openvpn3_SOURCES = \
 src_client_openvpn3_service_client_SOURCES = \
 	src/client/openvpn3-service-client.cpp \
 	src/client/core-client.hpp \
+	src/client/core-client-netcfg.hpp \
 	src/client/backend-signals.hpp \
 	src/client/statistics.hpp \
 	src/client/statusevent.hpp \

@@ -128,6 +128,8 @@ public:
         properties.AddBinding(new PropertyType<unsigned int>(this, "mtu", "readwrite", false, mtu));
         properties.AddBinding(new PropertyType<unsigned int>(this, "layer", "readwrite", false, device_type));
         properties.AddBinding(new PropertyType<unsigned int>(this, "txqueuelen", "readwrite", false, txqueuelen));
+        properties.AddBinding(new PropertyType<bool>(this, "reroute_ipv4", "readwrite", false, reroute_ipv4));
+        properties.AddBinding(new PropertyType<bool>(this, "reroute_ipv6", "readwrite", false, reroute_ipv6));
 
 
         std::stringstream introspect;
@@ -234,13 +236,13 @@ private:
 
             std::string net(g_variant_get_string(g_variant_get_child_value(network, 0), 0));
             uint32_t prefix = g_variant_get_uint32(g_variant_get_child_value(network, 1));
-            bool exclude = g_variant_get_boolean(g_variant_get_child_value(network, 2));
-            bool ipv6 = g_variant_get_boolean(g_variant_get_child_value(network, 3));
+            bool ipv6 = g_variant_get_boolean(g_variant_get_child_value(network, 2));
+            bool exclude = g_variant_get_boolean(g_variant_get_child_value(network, 3));
 
             signal.LogInfo(std::string("Adding network '") + net + "/"
                            + std::to_string(prefix)
-                           + "' excl: " + std::to_string(exclude)
-                           + " ipv6: " + std::to_string(ipv6));
+                           + "' excl: " + (exclude ? "yes" : "no")
+                           + " ipv6: " + (ipv6 ? "yes" : "no"));
 
             networks.emplace_back(Network(std::string(net), prefix,
                                           ipv6, exclude));
@@ -281,7 +283,6 @@ public:
             validate_sender(sender);
 
             GVariant *retval = nullptr;
-
             if ("AddIPAddress" == method_name)
             {
                 // Adds a single IPv4 address to the virtual device.  If
@@ -648,6 +649,10 @@ private:
     IPAddr remote;
     unsigned int mtu;
     unsigned int txqueuelen;
+
+    bool reroute_ipv4 = false;
+    bool reroute_ipv6 = false;
+
 
     RCPtr<CoreTunbuilder> tunimpl;
     NetCfgSignals signal;

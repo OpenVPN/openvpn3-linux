@@ -49,6 +49,9 @@
 #include "log/logwriter.hpp"
 #include "log/proxy-log.hpp"
 #include "backend-signals.hpp"
+
+
+#define USE_TUN_BUILDER
 #include "core-client.hpp"
 
 using namespace openvpn;
@@ -703,6 +706,7 @@ private:
     ClientAPI::ProvideCreds creds;
     RequiresQueue userinputq;
     std::mutex guard;
+    bool useTunBuilder = true;
 
 
     /**
@@ -864,7 +868,8 @@ private:
 
         // Create a new VPN client object, which is handling the
         // tunnel itself.
-        vpnclient.reset(new CoreVPNClient(&signal, &userinputq));
+
+        vpnclient.reset(new CoreVPNClient(dbusconn, &signal, &userinputq));
 
         // We need to provide a copy of the vpnconfig object, as vpnclient
         // seems to take ownership

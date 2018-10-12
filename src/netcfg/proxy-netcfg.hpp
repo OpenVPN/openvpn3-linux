@@ -303,6 +303,14 @@ namespace NetCfgProxy
          */
         void SetLayer(unsigned int layer);
 
+
+        /**
+         * Set to have a default route installed and reroute the gw to avoid routing loops
+         *
+         * @param ipv6 if ipv4 or ipv6 should be redirected
+         * @param value if it should be enabled for this protocol
+         */
+        void SetRerouteGw(bool ipv6, bool value);
         /*
          *  Generic functions for processing various properties
          */
@@ -458,7 +466,17 @@ namespace NetCfgProxy
         return GetUIntProperty("owner");
     }
 
-
+    void Device::SetRerouteGw(bool ipv6, bool value)
+    {
+        if (ipv6)
+        {
+            SetProperty("reroute_ipv6", value);
+        }
+        else
+        {
+            SetProperty("reroute_ipv4", value);
+        }
+    }
     std::vector<uid_t> Device::GetACL()
     {
         GVariant *res = GetProperty("acl");

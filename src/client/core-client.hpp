@@ -38,7 +38,6 @@
 
 // don't export core symbols
 #define OPENVPN_CORE_API_VISIBILITY_HIDDEN
-
 #include <client/ovpncli.cpp>
 #include <openvpn/common/exception.hpp>
 #include <openvpn/common/string.hpp>
@@ -54,13 +53,29 @@
 #include "backend-signals.hpp"
 #include "statistics.hpp"
 
+#include "core-client-netcfg.hpp"
+
 using namespace openvpn;
 
+#if defined(USE_TUN_BUILDER)
+#define CLIENTBASECLASS NetCfgTunBuilder<ClientAPI::OpenVPNClient>
+#else
+#define CLIENTBASECLASS DummyTunBuilder
+class DummyTunBuilder: public  ClientAPI::OpenVPNClient
+{
+public:
+    DummyTunBuilder(GDBusConnection *dbusconn, BackendSignals *signal) {}
+    bool socket_protect(int, std::string, bool) override
+    {
+        return true;
+    }
+};
+#endif
 
 /**
  *  Core VPN Client implementation of ClientAPI::OpenVPNClient
  */
-class CoreVPNClient : public ClientAPI::OpenVPNClient,
+class CoreVPNClient : public CLIENTBASECLASS,
                       public RC<thread_safe_refcount>
 {
 public:
@@ -77,8 +92,9 @@ public:
      *                    will be used to process dynamic challenge
      *                    interactions and more.
      */
-    CoreVPNClient(BackendSignals *signal, RequiresQueue *userinputq)
-            : OpenVPNClient::OpenVPNClient(),
+    CoreVPNClient(GDBusConnection *dbusconn, BackendSignals *signal,
+                  RequiresQueue *userinputq)
+            : CLIENTBASECLASS(dbusconn, signal),
               signal(signal),
               userinputq(userinputq),
               failed_signal_sent(false),
@@ -146,6 +162,7 @@ public:
         }
         return stats;
     }
+
 
 private:
     std::string dc_cookie;
@@ -386,5 +403,4 @@ private:
             return false;
     }
 };
-
 #endif // OPENVPN3_CORE_CLIENT

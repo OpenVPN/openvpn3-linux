@@ -115,6 +115,11 @@ namespace openvpn
                 }
             }
 
+            if (netCfgDevice.reroute_ipv4 || netCfgDevice.reroute_ipv6)
+            {
+                tbc->tun_builder_reroute_gw(netCfgDevice.reroute_ipv4, netCfgDevice.reroute_ipv6, 0);
+            }
+
             tbc->validate();
 
             // We ignore tbc.dns_servers and other DNS related items since
