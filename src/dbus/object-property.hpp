@@ -119,12 +119,12 @@ public:
 
     virtual GVariant *GetValue() const override
     {
-        return g_variant_new(GetDBusType(), PropertyTypeBase<T>::value);
+        return GLibUtils::CreateVariantValue(GetDBusType(), PropertyTypeBase<T>::value);
     }
 
     virtual GVariantBuilder *SetValue(GVariant *value_arg) override
     {
-        g_variant_get(value_arg, GetDBusType(), &(PropertyTypeBase<T>::value));
+        PropertyTypeBase<T>::value = GLibUtils::GetVariantValue<T>(value_arg);
         return PropertyTypeBase<T>::obj->build_set_property_response(PropertyTypeBase<T>::name, PropertyTypeBase<T>::value);
     }
 
@@ -225,7 +225,7 @@ private:
         GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE(dbus_array_type.c_str()));
         for (const auto &e : this->value)
         {
-            g_variant_builder_add(bld, GLibUtils::GetDBusDataType<T>(), e);
+            GLibUtils::GVariantBuilderAdd(bld, e);
         }
         return bld;
     }
