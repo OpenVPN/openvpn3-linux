@@ -375,8 +375,25 @@ int test4()
                        "In progress");
     std::stringstream chk;
     chk << status;
-    std::string expect("[1,6] Configuration, Client connecting: In progress");
+    std::string expect("Configuration, Client connecting: In progress");
     if (chk.str() != expect)
+    {
+        std::cout << "FAILED: {" << status << "}" << std::endl;
+        ++ret;
+    }
+    else
+    {
+        std::cout << "PASSED" << std::endl;
+    }
+
+    std::cout << "-- Testing string stream: StatusEvent(StatusMajor::CONFIG, "
+              << "StatusMinor::CONN_CONNECTING, \"In progress\") "
+              << "with numeric_status = true... ";
+    std::stringstream chk1;
+    status.show_numeric_status = true;
+    chk1 << status;
+    std::string expect1("[1,6] Configuration, Client connecting: In progress");
+    if (chk1.str() != expect1)
     {
         std::cout << "FAILED: {" << status << "}" << std::endl;
         ++ret;
@@ -392,6 +409,7 @@ int test4()
     StatusEvent status2(StatusMajor::SESSION,
                        StatusMinor::SESS_BACKEND_COMPLETED);
     std::stringstream chk2;
+    status2.show_numeric_status = true;
     chk2 << status2;
     std::string expect2("[3,18] Session, Backend Session Object completed");
     if (chk2.str() != expect2)
@@ -404,6 +422,22 @@ int test4()
         std::cout << "PASSED" << std::endl;
     }
 
+    std::cout << "-- Testing string stream: StatusEvent(StatusMajor::SESSION, "
+              << "StatusMinor::SESS_BACKEND_COMPLETED) with numeric_status "
+              << "reset to false ... ";
+    std::stringstream chk3;
+    status2.show_numeric_status = false;
+    chk3 << status2;
+    std::string expect3("Session, Backend Session Object completed");
+    if (chk3.str() != expect3)
+    {
+        std::cout << "FAILED: {" << status2 << "}" << std::endl;
+        ++ret;
+    }
+    else
+    {
+        std::cout << "PASSED" << std::endl;
+    }
 
     return ret;
 }

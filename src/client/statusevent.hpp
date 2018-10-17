@@ -93,6 +93,11 @@ struct StatusEvent
         major = StatusMajor::UNSET;
         minor = StatusMinor::UNSET;
         message.clear();
+#ifdef DEBUG_CORE_EVENTS
+        show_numeric_status = true;
+#else
+        show_numeric_status = false;
+#endif
     }
 
 
@@ -168,10 +173,15 @@ struct StatusEvent
         }
         else
         {
-            return os << "[" << std::to_string((unsigned) s.major) << ","
-                             << std::to_string((unsigned) s.minor)
-                      << "] " << StatusMajor_str[(unsigned) s.major] << ", "
-                              << StatusMinor_str[(unsigned) s.minor]
+            std::stringstream num_status;
+            if (s.show_numeric_status)
+            {
+                num_status << "[" << std::to_string((unsigned) s.major) << ","
+                           << std::to_string((unsigned) s.minor) << "] ";
+            }
+            return os << num_status.str()
+                      << StatusMajor_str[(unsigned) s.major] << ", "
+                      << StatusMinor_str[(unsigned) s.minor]
                       << (!s.message.empty() ? ": " : "")
                       << (!s.message.empty() ? s.message : "");
         }
@@ -194,7 +204,7 @@ struct StatusEvent
     StatusMajor major;
     StatusMinor minor;
     std::string message;
-
+    bool show_numeric_status;
 
 private:
     /**
