@@ -34,8 +34,8 @@
 class ANSIColours : public ColourEngine
 {
 public:
-    ANSIColours() {}
-    ~ANSIColours() {}
+    ANSIColours() = default;
+    ~ANSIColours() override = default;
 
     const std::string Set(Colour foreground, Colour background)
     {

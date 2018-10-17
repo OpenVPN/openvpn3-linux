@@ -128,6 +128,12 @@ public:
     virtual const std::string ColourByCategory(LogCategory ctg) = 0;
 
 
+    /**
+     * Virtual deconstructor to allow cleanup in inheritated classes
+     */
+    virtual ~ColourEngine() = default;
+
+
 private:
     ColourMode mode = ColourMode::BY_CATEGORY;
 
