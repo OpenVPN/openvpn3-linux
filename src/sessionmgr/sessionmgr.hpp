@@ -1035,7 +1035,13 @@ public:
         {
             try
             {
-                be_proxy->Ping();
+                if (!be_proxy->CheckObjectExists())
+                {
+                    g_set_error(error, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_OBJECT,
+                                "Backend object not available");
+                    return NULL;
+                }
+
                 ret = NULL;
                 if (nullptr != sig_statuschg)
                 {
@@ -1059,7 +1065,12 @@ public:
         {
             try
             {
-                be_proxy->Ping();
+                if (!be_proxy->CheckObjectExists())
+                {
+                    g_set_error(error, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_OBJECT,
+                                "Backend object not available");
+                    return NULL;
+                }
                 ret = be_proxy->GetProperty("statistics");
             }
             catch (DBusException& exp)
