@@ -249,14 +249,7 @@ static int cmd_session_start(ParsedArgs args)
                 {
                     // FIXME: Look into using exceptions here, catch more
                     // fine grained connection issues from the backend
-                    std::cout << "Failed to connect "
-                              << "[" << StatusMajor_str[(unsigned int)s.major]
-                              << " / " << StatusMinor_str[(unsigned int)s.minor]
-                              << "]" << std::endl;
-                    if (!s.message.empty())
-                    {
-                        std::cout << s.message << std::endl;
-                    }
+                    std::cout << "Failed to connect: " << s << std::endl;
                     session.Disconnect();
                     return 3;
                 }
