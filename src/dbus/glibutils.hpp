@@ -34,49 +34,49 @@ namespace GLibUtils
      */
 
     // Declare template as prototype only so it cannot be used directly
-    template<typename T> const char* GetDBusDataType();
+    template<typename T> inline const char* GetDBusDataType();
 
-    template<> const char* GetDBusDataType<uint32_t>()
+    template<> inline const char* GetDBusDataType<uint32_t>()
     {
         return "u";
     }
 
-    template<> const char* GetDBusDataType<int32_t>()
+    template<> inline const char* GetDBusDataType<int32_t>()
     {
         return "i";
     }
 
-    template<> const char* GetDBusDataType<uint16_t>()
+    template<> inline const char* GetDBusDataType<uint16_t>()
     {
         return "q";
     }
 
-    template<> const char* GetDBusDataType<int16_t>()
+    template<> inline const char* GetDBusDataType<int16_t>()
     {
         return "n";
     }
 
-    template<> const char* GetDBusDataType<uint64_t>()
+    template<> inline const char* GetDBusDataType<uint64_t>()
     {
         return "t";
     }
 
-    template<> const char* GetDBusDataType<int64_t>()
+    template<> inline const char* GetDBusDataType<int64_t>()
     {
         return "x";
     }
 
-    template<> const char* GetDBusDataType<double>()
+    template<> inline const char* GetDBusDataType<double>()
     {
         return "d";
     }
 
-    template<> const char* GetDBusDataType<bool>()
+    template<> inline const char* GetDBusDataType<bool>()
     {
         return "b";
     }
 
-    template<> const char* GetDBusDataType<std::string>()
+    template<> inline const char* GetDBusDataType<std::string>()
     {
         return "s";
     }
@@ -89,44 +89,44 @@ namespace GLibUtils
      */
 
     // Declare template as prototype only so it cannot be used directly
-    template<typename T> T GetVariantValue(GVariant *v);
+    template<typename T> inline T GetVariantValue(GVariant *v);
 
-    template<> uint32_t GetVariantValue<uint32_t>(GVariant *v)
+    template<> inline uint32_t GetVariantValue<uint32_t>(GVariant *v)
     {
         return g_variant_get_uint32(v);
     }
 
-    template<> int32_t GetVariantValue<int32_t>(GVariant *v)
+    template<> inline int32_t GetVariantValue<int32_t>(GVariant *v)
     {
         return g_variant_get_int32(v);
     }
 
-    template<> uint16_t GetVariantValue<uint16_t>(GVariant *v)
+    template<> inline uint16_t GetVariantValue<uint16_t>(GVariant *v)
     {
         return g_variant_get_uint16(v);
     }
 
-    template<> int16_t GetVariantValue<int16_t>(GVariant *v)
+    template<> inline int16_t GetVariantValue<int16_t>(GVariant *v)
     {
         return g_variant_get_int16(v);
     }
 
-    template<> uint64_t GetVariantValue<uint64_t>(GVariant *v)
+    template<> inline uint64_t GetVariantValue<uint64_t>(GVariant *v)
     {
         return g_variant_get_uint64(v);
     }
 
-    template<> int64_t GetVariantValue<int64_t>(GVariant *v)
+    template<> inline int64_t GetVariantValue<int64_t>(GVariant *v)
     {
         return g_variant_get_int64(v);
     }
 
-    template<> bool GetVariantValue<bool>(GVariant *v)
+    template<> inline bool GetVariantValue<bool>(GVariant *v)
     {
         return g_variant_get_boolean(v);
     }
 
-    template<> std::string GetVariantValue<std::string>(GVariant *v)
+    template<> inline std::string GetVariantValue<std::string>(GVariant *v)
     {
         gsize size = 0;
         return std::string(g_variant_get_string(v, &size));
@@ -139,22 +139,22 @@ namespace GLibUtils
      *   @param dbustype DBus name auf the type
      *   @param value    Templated value to add to the GVariantBuilder object
      */
-    template<typename T> GVariant* CreateVariantValue(const char* dbustype, T value)
+    template<typename T> inline GVariant* CreateVariantValue(const char* dbustype, T value)
     {
         return g_variant_new(dbustype, value);
     }
 
-    template<> GVariant* CreateVariantValue(const char* dbustype, std::string value)
+    template<> inline GVariant* CreateVariantValue(const char* dbustype, std::string value)
     {
         return g_variant_new(dbustype, value.c_str());
     }
 
-    template<typename T> GVariant* CreateVariantValue(T value)
+    template<typename T> inline GVariant* CreateVariantValue(T value)
     {
         return g_variant_new(GetDBusDataType<T>(), value);
     }
 
-    template<> GVariant* CreateVariantValue(std::string value)
+    template<> inline GVariant* CreateVariantValue(std::string value)
     {
         return g_variant_new(GetDBusDataType<std::string>(), value.c_str());
     }
@@ -166,7 +166,7 @@ namespace GLibUtils
      *   @param builder  GVariantBuilder object where to add the value
      *   @param value    Templated value to add to the GVariantBuilder object
      */
-    template<typename T> void GVariantBuilderAdd(GVariantBuilder *builder, T value)
+    template<typename T> inline void GVariantBuilderAdd(GVariantBuilder *builder, T value)
     {
         g_variant_builder_add(builder, GetDBusDataType<T>(), value);
     }
@@ -178,7 +178,7 @@ namespace GLibUtils
      *   @param builder  GVariantBuilder object where to add the value
      *   @param value    std::string value to add to the GVariantBuilder object
      */
-    template<> void GVariantBuilderAdd(GVariantBuilder *builder, std::string value)
+    template<> inline void GVariantBuilderAdd(GVariantBuilder *builder, std::string value)
     {
         g_variant_builder_add(builder, GetDBusDataType<std::string>(), value.c_str());
     }
@@ -192,7 +192,7 @@ namespace GLibUtils
      *
      * @return Returns a GVariant object containing the complete array
      */
-    template<typename T>
+    template<typename T> inline
     GVariant * GVariantFromVector(const std::vector<T> input)
     {
         std::string type = "a" + std::string(GetDBusDataType<T>());

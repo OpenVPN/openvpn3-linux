@@ -127,7 +127,7 @@ const std::array<const std::string, 9> LogCategory_str = {{
         "**!! FATAL !!**",      // LogFlags::FATAL
 }};
 
-const std::string LogPrefix(LogGroup group, LogCategory catg)
+inline const std::string LogPrefix(LogGroup group, LogCategory catg)
 {
         if ((uint_fast8_t) group >= LogGroupCount) {
             THROW_LOGEXCEPTION("Invalid Log Group value");

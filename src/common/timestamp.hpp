@@ -36,7 +36,7 @@
  *
  * @return  Returns a string with the date and time
  */
-std::string GetTimestamp()
+inline std::string GetTimestamp()
 {
     time_t now = time(0);
     tm *ltm = localtime(&now);

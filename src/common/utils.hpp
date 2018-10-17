@@ -44,7 +44,7 @@
 #include <openvpn/common/platform_string.hpp>
 
 
-void drop_root()
+inline void drop_root()
 {
     if (getegid() == 0)
     {
@@ -102,7 +102,7 @@ void drop_root()
 }
 
 
-std::string simple_basename(const std::string filename)
+inline std::string simple_basename(const std::string filename)
 {
     return filename.substr(filename.rfind('/')+1);
 }
@@ -116,7 +116,7 @@ std::string simple_basename(const std::string filename)
  * @return Returns true if the input string is a plain, positive integer
  *         number, otherwise false.
  */
-bool isanum_string(const std::string& data)
+inline bool isanum_string(const std::string& data)
 {
     return std::all_of(data.begin(), data.end(), ::isdigit);
 }
@@ -138,7 +138,7 @@ constexpr char package_version[] = "git:" CONFIGURE_GIT_REVISION CONFIGURE_GIT_F
  *
  * @return A pre-formatted std::string containing the version references
  */
-std::string get_version(std::string component)
+inline std::string get_version(std::string component)
 {
     std::stringstream ver;
 
@@ -149,7 +149,7 @@ std::string get_version(std::string component)
     ver << " (" << simple_basename(component) << ")"
         << std::endl;
 
-#ifdef OPENVPN_TUN_BUILDER_BASE_H
+#if defined(OPENVPN_TUN_BUILDER_BASE_H)
     ver << ClientAPI::OpenVPNClient::platform() << std::endl;
 #else
     ver << openvpn::platform_string()
@@ -171,7 +171,7 @@ std::string get_version(std::string component)
  *         G_SOURCE_CONTINUE as we do not want to remove/disable the
  *         signal processing.
  */
-int stop_handler(void *loop)
+inline int stop_handler(void *loop)
 {
 #ifdef SHUTDOWN_NOTIF_PROCESS_NAME
     std::cout << "** Shutting down ";
