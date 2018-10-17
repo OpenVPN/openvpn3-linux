@@ -213,7 +213,20 @@ static int cmd_session_start(ParsedArgs args)
                 {
                     attempts--;
                     usleep(300000);  // sleep 0.3 seconds - avg setup time
-                    s = session.GetLastStatus();
+                    try
+                    {
+                        s = session.GetLastStatus();
+                    }
+                    catch (DBusException& excp)
+                    {
+                        std::string err(excp.what());
+                        if (err.find("Failed retrieveing property value for 'status'") != std::string::npos)
+                        {
+                            throw CommandException("session-start",
+                                                   "Failed to start session");
+                        }
+                        throw;
+                    }
                     if (s.minor == StatusMinor::CONN_CONNECTED)
                     {
                         std::cout << "Connected" << std::endl;
