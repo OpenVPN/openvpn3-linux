@@ -40,7 +40,11 @@ static ConnectionStats fetch_stats(std::string session_path)
     try
     {
         OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, session_path);
-        session.Ping();
+        if (!session.CheckObjectExists())
+        {
+            throw CommandException("session-stats",
+                                   "Configuration does not exist");
+        }
         return session.GetConnectionStats();
     }
     catch (DBusException& err)
@@ -462,7 +466,11 @@ static int cmd_session_manage(ParsedArgs args)
     try
     {
         OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, sesspath);
-        session.Ping();
+        if (!session.CheckObjectExists())
+        {
+            throw CommandException("session-manage",
+                                   "Configuration does not exist");
+        }
 
         ConnectionStats stats;
 
@@ -549,7 +557,11 @@ static int cmd_session_acl(ParsedArgs args)
     {
         OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM,
                                      args.GetValue("path", 0));
-        session.Ping();
+        if (!session.CheckObjectExists())
+        {
+            throw CommandException("session-acl",
+                                   "Configuration does not exist");
+        }
 
         if (args.Present("grant"))
         {

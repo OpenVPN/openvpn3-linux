@@ -335,7 +335,11 @@ static int cmd_config_manage(ParsedArgs args)
     {
         std::string path = args.GetValue("path", 0);
         OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path);
-        conf.Ping();
+        if (!conf.CheckObjectExists())
+        {
+            throw CommandException("config-manage",
+                                   "Configuration does not exist");
+        }
 
         bool valid_option = false;
 
@@ -512,7 +516,11 @@ static int cmd_config_acl(ParsedArgs args)
     {
         OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM,
                                         args.GetValue("path", 0));
-        conf.Ping();
+        if (!conf.CheckObjectExists())
+        {
+            throw CommandException("config-acl",
+                                   "Configuration does not exist");
+        }
 
         if (args.Present("grant"))
         {
@@ -712,7 +720,11 @@ static int cmd_config_show(ParsedArgs args)
     {
         OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM,
                                         args.GetValue("path", 0));
-        conf.Ping();
+        if (!conf.CheckObjectExists())
+        {
+            throw CommandException("config-show",
+                                   "Configuration does not exist");
+        }
 
 
         if (!args.Present("json"))
@@ -768,7 +780,11 @@ static int cmd_config_remove(ParsedArgs args)
         {
             OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM,
                                             args.GetValue("path", 0));
-            conf.Ping();
+            if (!conf.CheckObjectExists())
+            {
+                throw CommandException("config-remove",
+                                       "Configuration does not exist");
+            }
             conf.Remove();
             std::cout << "Configuration removed." << std::endl;
         }

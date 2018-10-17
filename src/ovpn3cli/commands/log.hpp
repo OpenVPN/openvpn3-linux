@@ -106,7 +106,11 @@ static int cmd_log_listen(ParsedArgs args)
         // session.  If not, we must enable it - and if we do this, we
         // track that we modified this setting.
         OpenVPN3SessionProxy sesprx(G_BUS_TYPE_SYSTEM, session_path);
-        sesprx.Ping();
+        if (!sesprx.CheckObjectExists())
+        {
+            throw CommandException("log",
+                                   "Configuration does not exist");
+        }
 
         if (!sesprx.GetReceiveLogEvents())
         {
