@@ -633,8 +633,7 @@ public:
             StatusEvent status(params);
 
             if (StatusMajor::CONNECTION == status.major
-                && (StatusMinor::CONN_FAILED == status.minor
-                    || StatusMinor::CONN_AUTH_FAILED == status.minor))
+                && StatusMinor::CONN_FAILED == status.minor)
             {
                 // When the backend client signals connection failure
                 // force it to shutdown and close this session object
