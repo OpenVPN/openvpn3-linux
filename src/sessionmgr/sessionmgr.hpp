@@ -1739,12 +1739,14 @@ public:
           managobj(nullptr),
           procsig(nullptr)
     {
+        procsig.reset(new ProcessSignalProducer(GetConnection(),
+                                                OpenVPN3DBus_interf_sessions,
+                                                "SessionManager"));
     };
 
     ~SessionManagerDBus()
     {
         procsig->ProcessChange(StatusMinor::PROC_STOPPED);
-        delete procsig;
     }
 
 
@@ -1781,9 +1783,6 @@ public:
         // Register this object to on the D-Bus
         managobj->RegisterObject(GetConnection());
 
-        procsig = new ProcessSignalProducer(GetConnection(),
-                                            OpenVPN3DBus_interf_sessions,
-                                            "SessionManager");
         procsig->ProcessChange(StatusMinor::PROC_STARTED);
 
         if (nullptr != idle_checker)
@@ -1828,7 +1827,7 @@ private:
     LogWriter *logwr = nullptr;
     bool signal_broadcast = true;
     SessionManagerObject::Ptr managobj;
-    ProcessSignalProducer * procsig;
+    ProcessSignalProducer::Ptr procsig;
 };
 
 #endif // OPENVPN3_DBUS_SESSIONMGR_HPP
