@@ -133,7 +133,7 @@ namespace openvpn
 
     private:
         unsigned int log_level;
-};
+    };
 
 
     class LogSender : public DBusSignalProducer,
