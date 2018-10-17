@@ -147,7 +147,9 @@ public:
         signal.Send(OpenVPN3DBus_name_sessions,
                     OpenVPN3DBus_interf_backends,
                     "RegistrationRequest",
-                    g_variant_new("(ss)", bus_name.c_str(), session_token.c_str()));
+                    g_variant_new("(ssi)",
+                                  bus_name.c_str(), session_token.c_str(),
+                                  getpid()));
     }
 
 
@@ -1174,7 +1176,7 @@ public:
                                         object_path, logwr));
         signal->SetLogLevel(default_log_level);
         signal->LogVerb2("Backend client process started as pid " + std::to_string(start_pid)
-                         + " re-initiated as pid " + std::to_string(getpid()));
+                         + " daemonized as pid " + std::to_string(getpid()));
         signal->Debug("BackendClientDBus registered on '" + GetBusName()
                        + "': " + object_path);
 
@@ -1349,7 +1351,7 @@ int client_service(ParsedArgs args)
     {
         try
         {
-            start_client_thread(getpid(), args.GetArgv0(), extra[0],
+            start_client_thread(start_pid, args.GetArgv0(), extra[0],
                                 log_level, args.Present("signal-broadcast"),
                                 logwr.get());
             return 0;

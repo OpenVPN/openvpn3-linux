@@ -582,10 +582,12 @@ public:
         {
             gchar *busn;
             gchar *sesstoken_c;
-            g_variant_get (params, "(ss)", &busn, &sesstoken_c);
+            pid_t be_pid;
+            g_variant_get (params, "(ssi)", &busn, &sesstoken_c, &be_pid);
 
             be_conn = conn;
             be_busname = std::string(busn);
+
             g_free(busn);
             std::string sesstoken(sesstoken_c);
             g_free(sesstoken_c);
@@ -612,6 +614,7 @@ public:
                 Subscribe(sender_name, be_path, "AttentionRequired");
                 Subscribe(sender_name, be_path, "StatusChange");
                 register_backend();
+                backend_pid = be_pid;
                 Unsubscribe("RegistrationRequest");
                 SetLogLevel(default_session_log_level);
                 LogVerb2("Backend VPN client process registered");
