@@ -113,7 +113,11 @@ def StatusHandler(major, minor, msg):
                                     maj, min, msg))
 
     # Session got most likely disconnected outside of this program
-    if StatusMajor.SESSION == maj and StatusMinor.PROC_STOPPED:
+    if StatusMajor.SESSION == maj and StatusMinor.PROC_STOPPED == min:
+        mainloop.quit()
+    if StatusMajor.CONNECTION== maj and StatusMinor.CONN_AUTH_FAILED == min:
+        mainloop.quit()
+    if StatusMajor.CONNECTION== maj and StatusMinor.CONN_DISCONNECTED == min:
         mainloop.quit()
 
 
@@ -133,6 +137,11 @@ def fetch_logs_loop(sessobj, verb):
         sessobj.Connect()  # Start the connection
         mainloop.run()     # Start listening for signals
         print("\nSession manager initiated disconnect...")
+        try:
+            # Ensure the session is really closed
+            sessobj.Disconnect()
+        except dbus.exceptions.DBusException as excep:
+            pass
     except KeyboardInterrupt:
         print("\nDisconnecting...")
         print(sessobj.GetFormattedStatistics())

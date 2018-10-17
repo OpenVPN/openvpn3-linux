@@ -219,7 +219,8 @@ static int cmd_session_start(ParsedArgs args)
                         std::cout << "Connected" << std::endl;
                         return 0;
                     }
-                    else if (s.minor == StatusMinor::CONN_DISCONNECTED)
+                    else if (s.minor == StatusMinor::CONN_DISCONNECTED
+                            || s.minor == StatusMinor::CONN_AUTH_FAILED)
                     {
                         attempts = 0;
                         break;
