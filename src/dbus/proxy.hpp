@@ -257,6 +257,51 @@ namespace openvpn
 
 
         /**
+         *  Checks if the object being accessed is really available.
+         *
+         *  This is done by a crude hack which just checks if the
+         *  net.freedesktop.DBus.Properties.GetAll() method works.  If it
+         *  does, it is presumed the object path is valid and points to an
+         *  existing D-Bus object.
+         *
+         * @return  Returns true if the object exists or false if not.  Will
+         *          throw an exception if the the D-Bus method calls fails or
+         *          the property proxy interface has not been configured.
+         */
+        bool CheckObjectExists()
+        {
+            // Objects will normally have the
+            // org.freedesktop.DBus.Properties.GetAll() method available,
+            // so if this fails we presume the object does not exist.
+            if (property_proxy_init)
+            {
+                try
+                {
+                    GVariant *empty = dbus_proxy_call(property_proxy,
+                                                      "GetAll",
+                                                      g_variant_new("(s)", interface.c_str()),
+                                                      false, call_flags);
+                    g_variant_unref(empty);
+                    return true;
+                }
+                catch (DBusProxyAccessDeniedException& excp)
+                {
+                    // This is fine in this case, it means we don't
+                    // have access to all properties which again means the
+                    // object must exist.
+                    return true;
+                }
+                catch (DBusException& excp)
+                {
+                    return false;
+                }
+            }
+            THROW_DBUSEXCEPTION("DBusProxy",
+                                "Property proxy has not been initialized");
+        }
+
+
+        /**
          *  Tries to ping a the destination service.  This is used to
          *  activate auto-start of services and give it time to settle.
          *  It will try 3 times with a sleep of 1 second in between.
