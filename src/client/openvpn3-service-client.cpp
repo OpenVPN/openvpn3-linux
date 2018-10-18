@@ -103,7 +103,7 @@ public:
                           << "        <method name='RegistrationConfirmation'>"
                           << "            <arg type='s' name='token' direction='in'/>"
                           << "            <arg type='o' name='config_path' direction='in'/>"
-                          << "            <arg type='b' name='response' direction='out'/>"
+                          << "            <arg type='s' name='config_name' direction='out'/>"
                           << "        </method>"
                           << "        <method name='Ping'>"
                           << "            <arg type='b' name='alive' direction='out'/>"
@@ -278,13 +278,12 @@ public:
 
                 if (registered)
                 {
-                    g_dbus_method_invocation_return_value(invoc,
-                                                          g_variant_new("(b)", (bool) registered));
-
                     // Fetch the configuration from the config-manager.
                     // Since the configuration may be set up for single-use
                     // only, we must keep this config as long as we're running
-                    fetch_configuration();
+                    std::string config_name = fetch_configuration();
+                    g_dbus_method_invocation_return_value(invoc,
+                                                          g_variant_new("(s)", config_name.c_str()));
 
                     // Sets initial state, which also allows us to early
                     // report back back if more data is required to be
@@ -929,16 +928,20 @@ private:
      *  The configuration is cached in this object as the configuration might
      *  have the 'single_use' attribute set, which means we can only retrieve
      *  it once from the configuration manager.
+     *
+     *  @returns On success, the configuration file name will be returned
      */
-    void fetch_configuration()
+    std::string fetch_configuration()
     {
         // Retrieve confniguration
         signal.LogVerb2("Retrieving configuration from " + configpath);
 
+        std::string config_name;
         try
         {
             auto cfg_proxy = OpenVPN3ConfigurationProxy(G_BUS_TYPE_SYSTEM,
                                                         configpath);
+            config_name = cfg_proxy.GetStringProperty("name");
 
             // We need to extract the persist_tun property *before* calling
             // GetConfig().  If the configuration is tagged as a single-shot
@@ -968,6 +971,7 @@ private:
             signal.LogFATAL("** EXCEPTION ** openvpn3-service-client/fetch_config():"
                             + std::string(e.what()));
         }
+        return config_name;
     }
 
     void set_overrides(std::vector<OverrideValue> & overrides)

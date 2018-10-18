@@ -418,6 +418,7 @@ public:
           recv_log_events(false),
           session_created(std::time(nullptr)),
           config_path(cfg_path),
+          config_name(""),
           sig_statuschg(nullptr),
           sig_logevent(nullptr),
           backend_token(""),
@@ -470,6 +471,7 @@ public:
                           << "        <property type='a{sv}' name='last_log' access='read'/>"
                           << "        <property type='a{sx}' name='statistics' access='read'/>"
                           << "        <property type='o' name='config_path' access='read'/>"
+                          << "        <property type='s' name='config_name' access='read'/>"
                           << "        <property type='u' name='backend_pid' access='read'/>"
                           << "        <property type='b' name='restrict_log_access' access='readwrite'/>"
                           << "        <property type='b' name='receive_log_events' access='readwrite'/>"
@@ -1086,6 +1088,10 @@ public:
         {
             ret = g_variant_new_string (config_path.c_str());
         }
+        else if ("config_name" == property_name)
+        {
+            ret = g_variant_new_string (config_name.c_str());
+        }
         else if ("backend_pid" == property_name)
         {
             ret = g_variant_new_uint32 (backend_pid);
@@ -1266,6 +1272,7 @@ private:
     bool recv_log_events;
     std::time_t session_created;
     std::string config_path;
+    std::string config_name;
     SessionStatusChange *sig_statuschg;
     SessionLogEvent *sig_logevent;
     std::string backend_token;
@@ -1315,12 +1322,14 @@ private:
                                     "Failed to extract the result of the "
                                     "RegistrationConfirmation response");
             }
-            g_variant_get(res_g, "(b)", &registered);
-            if (!registered)
+            gchar *cfgname_c = nullptr;
+            g_variant_get(res_g, "(s)", &cfgname_c);
+            if (!cfgname_c)
             {
                 // FIXME: Find a way to gracefully handle failed registration
                 return;
             }
+            config_name = std::string(cfgname_c);
             Debug("New session registered: " + GetObjectPath());
             StatusChange(StatusMajor::SESSION, StatusMinor::SESS_NEW,
                          "session_path=" + GetObjectPath()
