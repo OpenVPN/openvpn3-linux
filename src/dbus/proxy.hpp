@@ -281,7 +281,10 @@ namespace openvpn
                                                       "GetAll",
                                                       g_variant_new("(s)", interface.c_str()),
                                                       false, call_flags);
-                    g_variant_unref(empty);
+                    if (empty)
+                    {
+                        g_variant_unref(empty);
+                    }
                     return true;
                 }
                 catch (DBusProxyAccessDeniedException& excp)
@@ -325,7 +328,10 @@ namespace openvpn
                     // throw away the empty response, to avoid a memleak.
                     GVariant *empty = dbus_proxy_call(peer_proxy, "Ping",
                                                       NULL, false, call_flags);
-                    g_variant_unref(empty);
+                    if (empty)
+                    {
+                        g_variant_unref(empty);
+                    }
                     usleep(400); // Add some additional gracetime
                     return;
                 }

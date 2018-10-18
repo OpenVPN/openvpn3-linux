@@ -258,6 +258,10 @@
            send_type="method_call"
            send_member="Set"/>
 
+    <allow send_interface="org.freedesktop.DBus.Properties"
+           send_type="method_call"
+           send_member="GetAll"/>
+
     <allow send_interface="org.freedesktop.DBus.Peer"
            send_type="method_call"
            send_member="Ping"/>
