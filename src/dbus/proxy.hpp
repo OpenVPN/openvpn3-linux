@@ -53,15 +53,15 @@ namespace openvpn
     {
     public:
         DBusProxy(GBusType bus_type,
-                  std::string const & busname,
-                  std::string const & interf,
-                  std::string const & objpath)
+                  std::string busname,
+                  std::string interf,
+                  std::string objpath)
             : DBus(bus_type),
               proxy(nullptr),
               property_proxy(nullptr),
-              bus_name(busname),
-              interface(interf),
-              object_path(objpath),
+              bus_name(std::move(busname)),
+              interface(std::move(interf)),
+              object_path(std::move(objpath)),
               call_flags(G_DBUS_CALL_FLAGS_NONE),
               proxy_init(false),
               property_proxy_init(false)
