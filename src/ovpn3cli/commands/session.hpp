@@ -356,7 +356,8 @@ static int cmd_session_list(ParsedArgs args)
         }
 
         StatusEvent status;
-        std::string cfgname = "";
+        std::string cfgname_current = "";
+        bool config_deleted = false;
         try
         {
             status = sprx.GetLastStatus();
@@ -364,7 +365,14 @@ static int cmd_session_list(ParsedArgs args)
             try
             {
                 OpenVPN3ConfigurationProxy cprx(G_BUS_TYPE_SYSTEM, config_path);
-                cfgname = cprx.GetStringProperty("name");
+                if (cprx.CheckObjectExists())
+                {
+                    cfgname_current = cprx.GetStringProperty("name");
+                }
+                else
+                {
+                    config_deleted = true;
+                }
             }
             catch (...)
             {
@@ -392,9 +400,21 @@ static int cmd_session_list(ParsedArgs args)
                   << std::setfill(' ') << " PID: "
                   << (be_pid > 0 ? std::to_string(be_pid) : "(not available)")
                   << std::endl;
+
+        std::string cfgname = sprx.GetStringProperty("config_name");
         if (!cfgname.empty())
         {
-            std::cout << " Config name: " << cfgname << std::endl;
+            std::cout << " Config name: " << cfgname;
+            if (config_deleted)
+            {
+                std::cout << "  (Config not available)";
+            }
+            else if (cfgname_current != cfgname)
+            {
+                std::cout << "  (Current name: "
+                          << cfgname_current << ")";
+            }
+            std::cout << std::endl;
         }
 
         std::cout << "      Status: " << status << std::endl;
