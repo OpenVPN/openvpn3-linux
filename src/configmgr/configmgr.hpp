@@ -824,6 +824,12 @@ public:
         {
             allow_root = properties.GetRootAllowed(property_name);
         }
+        else if ("name" == property_name)
+        {
+            // Grant the root user access to the 'name' property
+            allow_root = true;
+        }
+
 
         // Properties only available for approved users
         try {
