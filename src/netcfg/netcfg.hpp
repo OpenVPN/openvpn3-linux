@@ -2,6 +2,7 @@
 //
 //  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
 //  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018         Arne Schwabe <arne@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -139,7 +140,10 @@ public:
                              + std::string(std::to_string(g_dev_type))
                              + ", '" + std::string(dev_name)+ "')");
 
-                std::string dev_path = OpenVPN3DBus_rootp_netcfg + "/" + std::string(dev_name);
+                // Create a unique enough device path /(ownpid)-(senderpid)-(sendername)
+                std::string dev_path = OpenVPN3DBus_rootp_netcfg + "/" +
+                    std::to_string(getpid()) + "_"  + std::to_string(creds.GetPID(sender)) +
+                    "_" + std::string(dev_name);
                 NetCfgDeviceType dev_type = (NetCfgDeviceType) g_dev_type;
                 NetCfgDevice *device = new NetCfgDevice(conn,
                                               [self=Ptr(this), dev_path]()
