@@ -133,6 +133,8 @@ public:
 
         try
         {
+            IdleCheck_UpdateTimestamp();
+
             // Extract the interface to operate on.  All D-Bus method
             // calls expects this information.
             gchar *interface_c = NULL;
@@ -179,6 +181,7 @@ public:
                 logwr->AddMeta(meta.str());
                 logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2,
                                       l.str()));
+                IdleCheck_RefInc();
 
                 g_dbus_method_invocation_return_value(invoc, NULL);
             }
@@ -213,7 +216,7 @@ public:
                 logwr->AddMeta(meta.str());
                 logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2,
                                       l.str()));
-
+                IdleCheck_RefDec();
                 g_dbus_method_invocation_return_value(invoc, NULL);
             }
             else
@@ -263,6 +266,8 @@ public:
     {
         try
         {
+            IdleCheck_UpdateTimestamp();
+
             if ("log_level" == property_name)
             {
                 return g_variant_new_uint32(log_level);
@@ -323,6 +328,8 @@ public:
 
         try
         {
+            IdleCheck_UpdateTimestamp();
+
             if ("log_level" == property_name)
             {
                 unsigned int new_log_level = g_variant_get_uint32(value);
@@ -544,6 +551,11 @@ public:
                                            OpenVPN3DBus_rootp_log,
                                            logwr, log_level));
         logmgr->RegisterObject(GetConnection());
+
+        if (nullptr != idle_checker)
+        {
+            logmgr->IdleCheck_Register(idle_checker);
+        }
     }
 
     /**

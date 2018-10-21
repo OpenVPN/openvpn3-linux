@@ -77,6 +77,12 @@ static int logger(ParsedArgs args)
         throw CommandException("openvpn3-service-logger", err.str());
     }
 
+    if (args.Present("idle-exit") && !args.Present("service"))
+    {
+        throw CommandException("openvpn3-service-logger",
+                               "--idle-exit cannot be used without --service");
+    }
+
     DBus dbus(G_BUS_TYPE_SYSTEM);
     dbus.Connect();
     GDBusConnection *dbusconn = dbus.GetConnection();
@@ -133,10 +139,25 @@ static int logger(ParsedArgs args)
      logwr->EnableTimestamp(args.Present("timestamp"));
      logwr->EnableLogMeta(args.Present("service-log-dbus-details"));
 
+     // Enable automatic shutdown if the logger is
+     // idling for 10 minute or more.  By idling, it means
+     // no services are attached to this log service
+     IdleCheck::Ptr idle_exit;
+     unsigned int idle_wait_min = 10;
+     if (args.Present("idle-exit"))
+     {
+         idle_wait_min = std::atoi(args.GetValue("idle-exit", 0).c_str());
+     }
+
      // Setup the log receivers
     try
     {
         logfile << get_version(args.GetArgv0()) << std::endl;
+
+        // Prepare the GLib GMainLoop
+        GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
+        g_unix_signal_add(SIGINT, stop_handler, main_loop);
+        g_unix_signal_add(SIGTERM, stop_handler, main_loop);
 
         if (args.Present("service"))
         {
@@ -149,8 +170,30 @@ static int logger(ParsedArgs args)
             //  uses --signal-broadcast, as they will not request any
             //  subscriptions from the log service.
             //
+
             logsrv.reset(new LogService(dbusconn, logwr.get(), log_level));
+            if (idle_wait_min > 0)
+            {
+                idle_exit.reset(new IdleCheck(main_loop,
+                                              std::chrono::minutes(idle_wait_min)));
+                idle_exit->SetPollTime(std::chrono::seconds(30));
+                logsrv->EnableIdleCheck(idle_exit);
+                std::cout << "Idle exit set to " << idle_wait_min
+                          << " minutes" << std::endl;
+            }
+#ifdef DEBUG_OPTIONS
+            else
+            {
+                std::cout << "Idle exit is disabled" << std::endl;
+            }
+#endif
+
             logsrv->Setup();
+
+            if (idle_wait_min > 0)
+            {
+                idle_exit->Enable();
+            }
         }
         else
         {
@@ -217,13 +260,18 @@ static int logger(ParsedArgs args)
 
         ProcessSignalProducer procsig(dbusconn, OpenVPN3DBus_interf_log, "Logger");
 
-        GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
-        g_unix_signal_add(SIGINT, stop_handler, main_loop);
-        g_unix_signal_add(SIGTERM, stop_handler, main_loop);
         procsig.ProcessChange(StatusMinor::PROC_STARTED);
         g_main_loop_run(main_loop);
         procsig.ProcessChange(StatusMinor::PROC_STOPPED);
         g_main_loop_unref(main_loop);
+
+        // If the idle check is running, wait for it to complete
+        if (idle_wait_min > 0)
+        {
+            idle_exit->Disable();
+            idle_exit->Join();
+        }
+
         ret = 0;
     }
     catch (CommandException& excp)
@@ -266,6 +314,9 @@ int main(int argc, char **argv)
                         "Run as a background D-Bus service");
     argparser.AddOption("service-log-dbus-details", 0,
                         "(Only with --service) Include D-Bus sender, path and method references in logs");
+    argparser.AddOption("idle-exit", 0, "MINUTES", true,
+                        "(Only with --service) How long to wait before exiting"
+                        "if being idle. 0 disables it (Default: 10 minutes)");
 
     try
     {
