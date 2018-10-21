@@ -32,6 +32,8 @@
 
 #include <iostream>
 
+#include <openvpn/common/rc.hpp>
+
 #include "config.h"
 #include "common/cmdargparser.hpp"
 #include "dbus/core.hpp"
@@ -94,9 +96,12 @@ public:
  * Main service object for starting VPN client processes
  */
 class BackendStarterObject : public DBusObject,
-                             public BackendStarterSignals
+                             public BackendStarterSignals,
+                             public RC<thread_safe_refcount>
 {
 public:
+    typedef RCPtr<BackendStarterObject> Ptr;
+
     /**
      *  Constructor initializing the Backend Starter to be registered on
      *  the D-Bus.
@@ -372,15 +377,15 @@ public:
           procsig(nullptr),
           client_args(cliargs)
     {
+        procsig.reset(new ProcessSignalProducer(conn,
+                                                OpenVPN3DBus_interf_backends,
+                                                "BackendStarter"));
     };
 
 
     ~BackendStarterDBus()
     {
-        delete mainobj;
-
         procsig->ProcessChange(StatusMinor::PROC_STOPPED);
-        delete procsig;
     }
 
 
@@ -390,15 +395,11 @@ public:
      */
     void callback_bus_acquired()
     {
-        mainobj = new BackendStarterObject(GetConnection(), GetBusName(),
-                                            GetRootPath(), client_args,
-                                            log_level,
-                                            signal_broadcast);
+        mainobj.reset(new BackendStarterObject(GetConnection(), GetBusName(),
+                                               GetRootPath(), client_args,
+                                               log_level, signal_broadcast));
         mainobj->RegisterObject(GetConnection());
 
-        procsig = new ProcessSignalProducer(GetConnection(),
-                                            OpenVPN3DBus_interf_backends,
-                                            "BackendStarter");
         procsig->ProcessChange(StatusMinor::PROC_STARTED);
 
         if (idle_checker)
@@ -439,10 +440,10 @@ public:
     };
 
 private:
-    BackendStarterObject * mainobj;
+    BackendStarterObject::Ptr mainobj;
     unsigned int log_level = 3;
     bool signal_broadcast = true;
-    ProcessSignalProducer * procsig;
+    ProcessSignalProducer::Ptr procsig;
     std::vector<std::string> client_args;
 };
 
