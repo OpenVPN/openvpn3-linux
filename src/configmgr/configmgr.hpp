@@ -1358,12 +1358,14 @@ public:
           cfgmgr(nullptr),
           procsig(nullptr)
     {
+        procsig.reset(new ProcessSignalProducer(conn,
+                                                OpenVPN3DBus_interf_configuration,
+                                                "ConfigurationManager"));
     };
 
     ~ConfigManagerDBus()
     {
         procsig->ProcessChange(StatusMinor::PROC_STOPPED);
-        delete procsig;
     }
 
     /**
@@ -1391,9 +1393,6 @@ public:
                                              signal_broadcast));
         cfgmgr->RegisterObject(GetConnection());
 
-        procsig = new ProcessSignalProducer(GetConnection(),
-                                            OpenVPN3DBus_interf_configuration,
-                                            "ConfigurationManager");
         procsig->ProcessChange(StatusMinor::PROC_STARTED);
 
         if (nullptr != idle_checker)
@@ -1438,7 +1437,7 @@ private:
     LogWriter *logwr = nullptr;
     bool signal_broadcast = true;
     ConfigManagerObject::Ptr cfgmgr;
-    ProcessSignalProducer * procsig;
+    ProcessSignalProducer::Ptr procsig;
 };
 
 #endif // OPENVPN3_DBUS_CONFIGMGR_HPP
