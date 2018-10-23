@@ -81,7 +81,7 @@ public:
         else if (signal_name == "StatusChange")
         {
             guint major, minor;
-            gchar *msg = NULL;
+            gchar *msg = nullptr;
             g_variant_get (parameters, "(uus)", &major, &minor, &msg);
 
             std::cout << "-- Status Change: interface=" << interface_name
@@ -98,7 +98,7 @@ public:
         else if (signal_name =="ProcessChange")
         {
             guint minor;
-            gchar *procname = NULL;
+            gchar *procname = nullptr;
             guint pid;
             g_variant_get (parameters, "(usu)", &minor, &procname, &pid);
 
@@ -114,7 +114,7 @@ public:
         {
             guint type;
             guint group;
-            gchar *message = NULL;
+            gchar *message = nullptr;
             g_variant_get (parameters, "(uus)", &type, &group, &message);
 
             std::cout << "-- User Attention Required: "
@@ -132,7 +132,7 @@ public:
         {
             guint group = 0;
             guint catg = 0;
-            gchar *message = NULL;
+            gchar *message = nullptr;
             g_variant_get (parameters, "(uus)", &group, &catg, &message);
 
             std::cout << "-- Log: "
@@ -150,7 +150,7 @@ public:
         {
             guint type = 0;
             gchar *dev = 0;
-            gchar *det = NULL;
+            gchar *det = nullptr;
             g_variant_get (parameters, "(uss)", &type, &dev, &det);
 
             std::cout << "-- NetCfg StateChange: "

@@ -88,7 +88,7 @@ public:
                                 "Failed to import configuration");
         }
 
-        gchar *buf = NULL;
+        gchar *buf = nullptr;
         g_variant_get(res, "(o)", &buf);
         std::string ret(buf);
         g_variant_unref(res);
@@ -138,7 +138,7 @@ public:
                                 "Failed to retrieve configuration (JSON format)");
         }
 
-        gchar *buf = NULL;
+        gchar *buf = nullptr;
         g_variant_get(res, "(s)", &buf);
         std::string ret(buf);
         g_variant_unref(res);
@@ -155,7 +155,7 @@ public:
             THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy", "Failed to retrieve configuration");
         }
 
-        gchar *buf = NULL;
+        gchar *buf = nullptr;
         g_variant_get(res, "(s)", &buf);
         std::string ret(buf);
         g_variant_unref(res);

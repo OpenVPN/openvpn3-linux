@@ -388,8 +388,8 @@ public:
           alias(nullptr),
           properties(this)
     {
-        gchar *cfgstr;
-        gchar *cfgname_c;
+        gchar *cfgstr = nullptr;
+        gchar *cfgname_c = nullptr;
         g_variant_get (params, "(ssbb)",
                        &cfgname_c, &cfgstr,
                        &single_use, &persistent);

@@ -56,7 +56,7 @@ public:
     {
             guint group;
             guint logflags;
-            gchar *msg;
+            gchar *msg = nullptr;
             g_variant_get (parameters, "(uus)", &group, &logflags, &msg);
 
             std::cout << log_tag << " Log entry (" << sender_name << ") interface=" << interface_name

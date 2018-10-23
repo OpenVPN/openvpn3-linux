@@ -273,8 +273,8 @@ private:
             guint32 type = 0;
             guint32 group;
             guint32 id;
-            gchar *name = NULL;
-            gchar *descr = NULL;
+            gchar *name = nullptr;
+            gchar *descr = nullptr;
             gboolean hidden_input;
             g_variant_get(indata, "(uuussb)",
                           &type,

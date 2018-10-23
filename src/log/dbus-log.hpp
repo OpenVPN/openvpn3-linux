@@ -305,7 +305,7 @@ namespace openvpn
         {
             guint group;
             guint catg;
-            gchar *msg;
+            gchar *msg = nullptr;
             g_variant_get (params, "(uus)", &group, &catg, &msg);
             auto logev = LogEvent((LogGroup) group, (LogCategory) catg,
                                   std::string(msg));
@@ -346,7 +346,7 @@ namespace openvpn
         {
             guint group;
             guint catg;
-            gchar *msg;
+            gchar *msg = nullptr;
             g_variant_get (params, "(uus)", &group, &catg, &msg);
             auto logev = LogEvent((LogGroup) group, (LogCategory) catg,
                                   std::string(msg));

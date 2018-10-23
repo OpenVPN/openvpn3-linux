@@ -582,8 +582,8 @@ public:
         if ((signal_name == "RegistrationRequest")
             && (interface_name == OpenVPN3DBus_interf_backends))
         {
-            gchar *busn;
-            gchar *sesstoken_c;
+            gchar *busn = nullptr;
+            gchar *sesstoken_c = nullptr;
             pid_t be_pid;
             g_variant_get (params, "(ssi)", &busn, &sesstoken_c, &be_pid);
 
@@ -1586,7 +1586,7 @@ public:
 
             // Retrieve the configuration path for the tunnel
             // from the request
-            gchar *config_path_s;
+            gchar *config_path_s = nullptr;
             g_variant_get (params, "(o)", &config_path_s);
             auto config_path = std::string(config_path_s);
             g_free(config_path_s);

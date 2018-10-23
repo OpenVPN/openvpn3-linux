@@ -357,7 +357,7 @@ public:
         unsigned int type;
         unsigned int group;
         guint id;
-        gchar *value = NULL;
+        gchar *value = nullptr;
         g_variant_get(indata, "(uuus)",
                       &type,
                       &group,
@@ -674,7 +674,7 @@ public:
         unsigned int type;
         unsigned int group;
         unsigned int id;
-        gchar *value;
+        gchar *value = nullptr;
         g_variant_get(parameters, "(uuus)", &type, &group, &id, &value);
 
         return QueueCheck((ClientAttentionType) type, (ClientAttentionGroup) group).size() == 0;

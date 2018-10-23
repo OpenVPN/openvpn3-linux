@@ -137,7 +137,7 @@ public:
 
             // Extract the interface to operate on.  All D-Bus method
             // calls expects this information.
-            gchar *interface_c = NULL;
+            gchar *interface_c = nullptr;
             g_variant_get (params, "(s)", &interface_c);
             std::string interface(interface_c);
             std::string tag = "[" + sender + "/" + interface + "]";

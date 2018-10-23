@@ -262,8 +262,8 @@ public:
                     signal.LogWarn("All signals are broadcasted to all users");
                 }
 
-                gchar *token = NULL;
-                gchar *cfgpath = NULL;
+                gchar *token = nullptr;
+                gchar *cfgpath = nullptr;
                 g_variant_get (params, "(so)", &token, &cfgpath);
 
                 registered = (session_token == std::string(token));
@@ -458,7 +458,7 @@ public:
                     return;
                 }
 
-                gchar *reason_str = NULL;
+                gchar *reason_str = nullptr;
                 g_variant_get (params, "(s)", &reason_str);
                 std::string reason(reason_str);
 

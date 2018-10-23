@@ -97,7 +97,7 @@ int main(int argc, char **argv)
         std::cout << "** ERROR ** g_dbus_proxy_call_sync(): " << error->message << std::endl;
         return 2;
     }
-    gchar *conf_s = NULL;
+    gchar *conf_s = nullptr;
     g_variant_get(res_v, "(s)", &conf_s);
     std::string config(conf_s);
     g_variant_unref(res_v);

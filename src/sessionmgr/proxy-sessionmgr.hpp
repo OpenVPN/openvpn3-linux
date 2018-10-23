@@ -150,7 +150,7 @@ public:
                                 "Failed to start a new tunnel");
         }
 
-        gchar *buf = NULL;
+        gchar *buf = nullptr;
         g_variant_get(res, "(o)", &buf);
         std::string ret(buf);
         g_variant_unref(res);

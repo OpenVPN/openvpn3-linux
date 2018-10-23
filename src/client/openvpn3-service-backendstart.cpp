@@ -177,7 +177,7 @@ public:
 
             // Retrieve the configuration path for the tunnel
             // from the request
-            gchar *token;
+            gchar *token = nullptr;
             g_variant_get (params, "(s)", &token);
             pid_t backend_pid = start_backend_process(token);
             if (-1 == backend_pid)
