@@ -37,7 +37,7 @@ public:
     ANSIColours() = default;
     ~ANSIColours() override = default;
 
-    const std::string Set(Colour foreground, Colour background)
+    const std::string Set(Colour foreground, Colour background) override
     {
         const char * fgcode;
         const char * bgcode;
@@ -144,14 +144,14 @@ public:
     }
 
 
-    const std::string Reset()
+    const std::string Reset() override
     {
         return "\033[0m";
     }
 
 
 
-    const std::string ColourByGroup(LogGroup grp)
+    const std::string ColourByGroup(LogGroup grp) override
     {
         switch(grp)
         {
@@ -187,7 +187,7 @@ public:
     }
 
 
-    const std::string ColourByCategory(LogCategory ctg)
+    const std::string ColourByCategory(LogCategory ctg) override
     {
         switch(ctg)
         {
