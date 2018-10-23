@@ -1039,7 +1039,7 @@ protected:
      *         parsing did not complete properly; most likely due to
      *         -h or --help.
      */
-    ParsedArgs parse_commandline(const std::string arg0, unsigned int skip,
+    RegisterParsedArgs parse_commandline(const std::string & arg0, unsigned int skip,
                                  int argc, char **argv)
     {
         struct option *long_opts = init_getopt();
