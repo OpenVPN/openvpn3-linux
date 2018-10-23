@@ -33,6 +33,8 @@
 //        it breaks if included after tuncli.hpp
 #include "common/utils.hpp"
 
+#define OPENVPN_USE_SITNL
+
 #include "core-tunbuilder.hpp"
 #include <openvpn/tun/linux/client/tuncli.hpp>
 #include "netcfg-device.hpp"
@@ -40,9 +42,10 @@
 
 namespace openvpn
 {
+
     class CoreTunbuilderImpl : public CoreTunbuilder
     {
-        TunLinux::Setup::Ptr tun;
+        TUN_LINUX::Setup::Ptr tun;
 
         /**
          * Uses Tunbuilder to open a new tun device
@@ -56,17 +59,18 @@ namespace openvpn
          * @return An fd that is the newly opened tun device
          */
         int establish_tun(const TunBuilderCapture &tbc,
-                          TunBuilderSetup::Config &config,
+                          TunNetlink::Setup::Config &config,
                           Stop *stop,
                           std::ostream& os)
         {
             if (!tun)
             {
-                tun.reset(new TunLinux::Setup);
+                tun.reset(new TUN_LINUX::Setup);
             }
 
             return tun->establish(tbc, &config, nullptr, os);
         }
+
 
         /**
          * This create a TunBuilderCapture (OpenVPN3 internal representation)
@@ -121,7 +125,7 @@ namespace openvpn
     public:
         int establish(const NetCfgDevice& netCfgDevice) override
         {
-            TunLinux::Setup::Config config;
+            TunNetlink::Setup::Config config;
             config.layer = Layer::from_value(netCfgDevice.device_type);
             config.txqueuelen = netCfgDevice.txqueuelen;
 
@@ -144,7 +148,7 @@ namespace openvpn
                 tun->destroy(std::cerr);
             }
         }
-    };
+        };
 
     CoreTunbuilder* getCoreBuilderInstance()
     {
