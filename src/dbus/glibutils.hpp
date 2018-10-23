@@ -183,6 +183,26 @@ namespace GLibUtils
         g_variant_builder_add(builder, GetDBusDataType<std::string>(), value.c_str());
     }
 
+    /**
+     *  Converts a std::vector<T> to a D-Bus compliant
+     *  array  builder of the D-Bus corresponding data type
+     *
+     * @param input  std::vector<T> to convert
+     *
+     * @return Returns a GVariantBuilder object containing the complete array
+     */
+    template<typename T> inline
+    GVariantBuilder* GVariantBuilderFromVector(const std::vector<T> input)
+    {
+        std::string type = "a" + std::string(GetDBusDataType<T>());
+        GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE(type.c_str()));
+        for (const auto& e : input)
+        {
+            GVariantBuilderAdd(bld, e);
+        }
+
+        return bld;
+    }
 
     /**
      *  Converts a std::vector<T> to a D-Bus compliant
@@ -193,18 +213,47 @@ namespace GLibUtils
      * @return Returns a GVariant object containing the complete array
      */
     template<typename T> inline
-    GVariant * GVariantFromVector(const std::vector<T> input)
+    GVariant* GVariantFromVector(const std::vector<T> input)
     {
-        std::string type = "a" + std::string(GetDBusDataType<T>());
-        GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE(type.c_str()));
-        for (const auto& e : input)
-        {
-            GVariantBuilderAdd(bld, e);
-        }
-
+        GVariantBuilder *bld = GVariantBuilderFromVector(input);
         GVariant *ret = g_variant_builder_end(bld);
         g_variant_builder_unref(bld);
 
         return ret;
     }
+
+    /**
+     * Wraps the list/struct build a builder inside a tuple since DBUS
+     * seems to insist on wrapped tuples for fucntions call
+     *
+     * This function unrefs the builder
+     * @param bld the builder to wrap
+     * @return the result of the builder wrapped into a tuple
+     */
+    inline GVariant* wrapInTuple(GVariantBuilder *bld)
+    {
+        GVariantBuilder *wrapper = g_variant_builder_new(G_VARIANT_TYPE_TUPLE);
+        g_variant_builder_add_value(wrapper, g_variant_builder_end(bld));
+        GVariant* ret = g_variant_builder_end(wrapper);
+        g_variant_builder_unref(wrapper);
+        g_variant_builder_unref(bld);
+        return ret;
+    }
+
+    /**
+     *  Converts a std::vector<T> to a D-Bus compliant
+     *  array of the D-Bus corresponding data type wrapped into
+     *  a tuple
+     *
+     * @param input  std::vector<T> to convert
+     *
+     * @return Returns a GVariant object containing the complete array
+     */
+    template<typename T> inline
+    GVariant* GVariantTupleFromVector(const std::vector<T> input)
+    {
+        GVariantBuilder *bld = GVariantBuilderFromVector(input);
+        return wrapInTuple(bld);
+    }
+
 } // namespace GLibUtils
