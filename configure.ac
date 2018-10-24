@@ -52,7 +52,7 @@ AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != :])
 dnl
 dnl  Minor Default CXXFLAGS
 dnl
-CXXFLAGS="${CXXFLAGS} -Wall -Wl,--no-as-needed -Wno-unused-local-typedefs -fwhole-program -Wno-sign-compare -Wno-unused-parameter"
+CXXFLAGS="${CXXFLAGS} -Wall -Wl,--no-as-needed -Wno-unused-local-typedefs -Wno-sign-compare -Wno-unused-parameter"
 
 
 dnl case "${CXXFLAGS}" in
