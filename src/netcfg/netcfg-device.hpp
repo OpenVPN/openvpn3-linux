@@ -458,7 +458,7 @@ public:
                 return properties.GetValue(property_name);
             }
         }
-        catch (DBusPropertyException)
+        catch (DBusPropertyException&)
         {
             throw;
         }
@@ -527,7 +527,7 @@ public:
                                                    (guint32) log_level);
             }
         }
-        catch (DBusPropertyException)
+        catch (DBusPropertyException&)
         {
             throw;
         }

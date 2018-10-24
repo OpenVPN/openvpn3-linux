@@ -349,7 +349,7 @@ static int cmd_session_list(ParsedArgs args)
             owner = lookup_username(sprx.GetUIntProperty("owner"));
             be_pid = sprx.GetUIntProperty("backend_pid");
         }
-        catch (DBusException)
+        catch (DBusException&)
         {
             owner = "(not available)";
             be_pid = -1;
@@ -391,7 +391,7 @@ static int cmd_session_list(ParsedArgs args)
             std::time_t sess_created = sprx.GetUInt64Property("session_created");
             std::cout << std::asctime(std::localtime(&sess_created));
         }
-        catch (DBusException)
+        catch (DBusException&)
         {
             std::cout << "(Not available)" << std::endl;
         }

@@ -299,7 +299,7 @@ public:
                                                    (guint32) log_level);
             }
         }
-        catch (DBusPropertyException)
+        catch (DBusPropertyException&)
         {
             throw;
         }

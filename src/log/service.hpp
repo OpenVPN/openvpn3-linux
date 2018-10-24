@@ -452,7 +452,7 @@ public:
             }
             return ret;
         }
-        catch (DBusPropertyException)
+        catch (DBusPropertyException&)
         {
             throw;
         }
@@ -524,7 +524,7 @@ private:
                                            "net.openvpn.v3.error.acl.denied",
                                            "Access denied");
         }
-        catch (DBusException)
+        catch (DBusException&)
         {
             throw DBusCredentialsException(sender,
                                            "net.openvpn.v3.error.acl.denied",
