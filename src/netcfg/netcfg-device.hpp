@@ -190,16 +190,16 @@ private:
 
     void addIPAddress(GVariant* params)
     {
-        gchar *ipaddr = nullptr;
-        guint prefix=0;
-        gchar *gateway = nullptr;
-        bool ipv6;
+        GLibUtils::checkParams(__func__, params, "(susb)", 4);
 
-        g_variant_get(params, "(susb)", &ipaddr, &prefix, &gateway, &ipv6);
+        std::string ipaddr(g_variant_get_string(g_variant_get_child_value(params, 0), 0));
+        uint32_t prefix = g_variant_get_uint32(g_variant_get_child_value(params, 1));
+        std::string gateway(g_variant_get_string(g_variant_get_child_value(params, 2), 0));
+        bool ipv6 = g_variant_get_boolean(g_variant_get_child_value(params, 3));
 
         signal.LogInfo(std::string("Adding IP Adress ") + ipaddr
                        + "/" + std::to_string(prefix)
-                       + " gw " + gateway + " ipv6: " + std::to_string(ipv6));
+                       + " gw " + gateway + " ipv6: " + (ipv6 ? "yes" : "no"));
 
         vpnips.emplace_back(VPNAddress(std::string(ipaddr), prefix,
                                        std::string(gateway), ipv6));
@@ -207,32 +207,32 @@ private:
 
     void setRemoteAddress(GVariant* params)
     {
-        gchar *ipaddr = nullptr;
-        bool ipv6;
 
-        g_variant_get(params, "(sb)", &ipaddr, &ipv6);
-        signal.LogInfo(std::string("Setting remote IP address to '") + ipaddr
-                                   + " ipv6: " + std::to_string(ipv6));
+        GLibUtils::checkParams(__func__, params, "(sb)", 2);
+
+        std::string ipaddr(g_variant_get_string(g_variant_get_child_value(params, 0), 0));
+        bool ipv6 = g_variant_get_boolean(g_variant_get_child_value(params, 1));
+
+        signal.LogInfo(std::string("Setting remote IP address to '") + ipaddr +
+                                    " ipv6: " + (ipv6 ? "yes" : "no"));
         remote = IPAddr(std::string(ipaddr), ipv6);
     }
 
     void addNetworks(GVariant* params)
     {
+        GLibUtils::checkParams(__func__, params, "(a(subb))", 1);
         GVariantIter* network_iter;
         g_variant_get(params, "(a(subb))", &network_iter);
 
         GVariant *network = nullptr;
         while ((network = g_variant_iter_next_value(network_iter)))
         {
-            gchar *net = nullptr;
-            guint prefix;
-            bool exclude;
-            bool ipv6;
+            GLibUtils::checkParams(__func__, network, "(subb)", 4);
 
-            g_variant_get(network, "(subb)", &net, &prefix, &ipv6, &exclude);
-
-            if (net == nullptr)
-                net = strdup("(nullptr)");
+            std::string net(g_variant_get_string(g_variant_get_child_value(network, 0), 0));
+            uint32_t prefix = g_variant_get_uint32(g_variant_get_child_value(network, 1));
+            bool exclude = g_variant_get_boolean(g_variant_get_child_value(network, 2));
+            bool ipv6 = g_variant_get_boolean(g_variant_get_child_value(network, 3));
 
             signal.LogInfo(std::string("Adding network '") + net + "/"
                            + std::to_string(prefix)
