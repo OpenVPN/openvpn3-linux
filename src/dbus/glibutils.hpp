@@ -281,4 +281,16 @@ namespace GLibUtils
         }
     }
 
+    /**
+     * Unreferences an fd list. This is a helper function since the normal
+     * g_unref_object does not fit the signature and there seem to be no
+     * function to properly unref fdlists. The other examples that I found use
+     * g_object_unref on the list
+     * @param the fd list
+     */
+    inline void unref_fdlist(GUnixFDList *fdlist)
+    {
+        g_object_unref((GVariant*) fdlist);
+    }
+
 } // namespace GLibUtils
