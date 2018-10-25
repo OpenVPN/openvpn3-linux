@@ -258,4 +258,27 @@ namespace GLibUtils
         return wrapInTuple(bld);
     }
 
+    /**
+     *  Validate the data type provided in a GVariant object against
+     *  a string containing the expected data type.
+     *
+     * @param func     C string containing the calling functions name,
+     *                 used if an exception is thrown
+     * @param params   GVariant* containing the parameters
+     * @param format   C string containing the expected data type string
+     * @param num      Number of child elements in the GVariant object
+     *
+     * @throws THROW_DBUSEXCEPTION
+     */
+    inline void checkParams(const char* func, GVariant* params,
+                            const char* format, unsigned int num)
+    {
+        std::string typestr = std::string(g_variant_get_type_string(params));
+        if (format != typestr || num != g_variant_n_children(params))
+        {
+            THROW_DBUSEXCEPTION(func, "Incorrect parameter format: "
+                                + typestr + ", expected " + format);
+        }
+    }
+
 } // namespace GLibUtils
