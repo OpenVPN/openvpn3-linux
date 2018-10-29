@@ -235,7 +235,7 @@ public:
      * @return Boolean value.  If true, the parser completed and the callback
      *         function may be called.
      */
-    bool GetCompleted()
+    bool GetCompleted() const
     {
         return completed;
     }
@@ -244,7 +244,7 @@ public:
      *  Get the program name (argv[0])
      * @return
      */
-    std::string GetArgv0()
+    std::string GetArgv0() const
     {
         return argv0;
     }
@@ -257,7 +257,7 @@ public:
      * @return Returns true the option has been processed and found at the
      *         command line.  Otherwise false.
      */
-    bool Present(const std::string k)
+    bool Present(const std::string k) const
     {
         for (auto const& e : present)
         {
@@ -276,7 +276,7 @@ public:
      *
      * @return Returns a std::vector<std::string> of all unique options parsed.
      */
-    std::vector<std::string> GetOptionNames()
+    std::vector<std::string> GetOptionNames() const
     {
         std::vector<std::string> keys;
         for (auto const& k: present)
@@ -295,9 +295,9 @@ public:
      * @param k  std::string containing the option name to look-up
      * @return Returns the number of elements found for that option name.
      */
-    unsigned int GetValueLen(const std::string k)
+    unsigned int GetValueLen(const std::string k) const
     {
-        return key_value[k].size();
+        return key_value.at(k).size();
     }
 
 
@@ -308,9 +308,9 @@ public:
      * @param idx  unsigned int of the value element to retrieve
      * @return  Returns a std::string with the collected value
      */
-    std::string GetValue(const std::string k, const unsigned int idx)
+    std::string GetValue(const std::string k, const unsigned int idx) const
     {
-        return key_value[k][idx];
+        return key_value.at(k).at(idx);
     }
 
 
@@ -322,9 +322,9 @@ public:
      * @param idx  unsigned int of the value element to retrieve
      * @return  Returns a bool with the collected value
      */
-    bool GetBoolValue(const std::string k, const unsigned int idx)
+    bool GetBoolValue(const std::string k, const unsigned int idx) const
     {
-        std::string value = key_value[k][idx];
+        std::string value = key_value.at(k).at(idx);
         if (("false" != value) && ("true" != value ) && (value != "no") && (value != "yes"))
         {
             throw OptionException(k, "Boolean options must be either 'false' or 'true'");
@@ -340,9 +340,9 @@ public:
      * @return Returns a std::vector<std::string> containing the list of
      *         values affiliated with the provided option name.
      */
-    std::vector<std::string> GetAllValues(const std::string k)
+    std::vector<std::string> GetAllValues(const std::string k) const
     {
-        return key_value[k];
+        return key_value.at(k);
     }
 
 
@@ -354,7 +354,7 @@ public:
      * @return  Returns a std::vector<std::string> list containing all the
      *          various arguments parsed and ready for furhter processing.
      */
-    std::vector<std::string> GetAllExtraArgs()
+    std::vector<std::string> GetAllExtraArgs() const
     {
         return extra_args;
     }
