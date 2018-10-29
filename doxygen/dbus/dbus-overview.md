@@ -89,6 +89,14 @@ non-persistent data, they will automatically shutdown
 |   |  This service manages all VPN profiles being set up and throughout the whole life cycle until the VPN tunnel is disconnected. |
 |              |                                         |
 
+|              |                                         |
+|-------------:|-----------------------------------------|
+| Service      | [`net.openvpn.v3.netcfg`](dbus-service-net.openvpn.v3.netcfg.md) |
+| Running as   | openvpn                                    |
+| Process name | openvpn3-service-netcfg                 |
+| Started by   | net.openvpn.v3.backends (as the root user) |
+|   | This is the process which is responsible for setting up the priviliged network configuration for the openvpn session client. It allows the session client to run unpriviledges and also provides a generic interface to open a tun device and configure the VPN configuration of (IP, routes, DNS) |
+|              |                                         |
 
 |              |                                         |
 |-------------:|-----------------------------------------|
@@ -109,6 +117,8 @@ non-persistent data, they will automatically shutdown
 | Started by   | net.openvpn.v3.backends (as the root user) |
 |   | This is the process which is responsible for a single VPN tunnel. This process implements the OpenVPN 3 Core client, connects to remote servers and allows itself to be managed via the session manager. Each process will use its own unique service name, where the PID of the process is included in the service name. |
 |              |                                         |
+
+
 
 In addition to these services, there needs to be a front-end
 application which interacts with these services on behalf of a user.
