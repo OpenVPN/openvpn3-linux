@@ -264,6 +264,19 @@ AC_SUBST([dbus_system_servicedir])
 
 
 dnl
+dnl  OpenVPN 3 Linux state directory
+dnl
+dnl  Defaults to ${localstatedir}/lib/openvpn3
+dnl
+AC_ARG_VAR([OPENVPN3_STATEDIR], [OpenVPN 3 state directory (default: ${localstatedir}/lib/openvpn3)])
+if test -n "${OPENVPN3_STATEDIR}"; then
+        openvpn3_statedir="${OPENVPN3_STATEDIR}"
+else
+        openvpn3_statedir="${localstatedir}/lib/openvpn3"
+fi
+AC_SUBST([openvpn3_statedir])
+
+dnl
 dnl  Path where to install the various back-end OpenVPN 3 D-Bus services
 dnl
 dnl  These services are most commonly not accessed directly by any end-users

@@ -20,6 +20,7 @@
 %.service : %.service.in Makefile
 	$(AM_V_GEN)sed -e 's|\@LIBEXEC_PATH\@|$(pkglibexecdir)|' \
 		       -e 's|\@OPENVPN_USERNAME\@|$(OPENVPN_USERNAME)|' \
+		       -e 's|\@OPENVPN_STATEDIR\@|$(openvpn3_statedir)|' \
 		$< > $@.tmp && mv $@.tmp $@
 
 MAINTAINERCLEANFILES = \
@@ -39,3 +40,7 @@ dbus_system_service_DATA = \
 
 CLEANFILES = $(dbus_system_service_DATA) *~
 
+# If chown fails, we will ignore that - most likely not run as root
+install-data-local:
+	$(MKDIR_P) -m750 $(DESTDIR)$(openvpn3_statedir)
+	chown $(OPENVPN_USERNAME):$(OPENVPN_GROUP) $(DESTDIR)$(openvpn3_statedir) || echo

@@ -20,4 +20,4 @@
 [D-BUS Service]
 Name=net.openvpn.v3.log
 User=@OPENVPN_USERNAME@
-Exec=@LIBEXEC_PATH@/openvpn3-service-logger --service --log-level 4 --syslog
+Exec=@LIBEXEC_PATH@/openvpn3-service-logger --service --state-dir "@OPENVPN_STATEDIR@" --log-level 4 --syslog
