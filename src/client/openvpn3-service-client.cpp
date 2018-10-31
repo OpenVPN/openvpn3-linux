@@ -890,14 +890,6 @@ private:
             THROW_DBUSEXCEPTION("BackendServiceObject", errmsg);
         }
 
-        if (cfgeval.externalPki)
-        {
-            std::string errmsg = "Failed to parse configuration: "
-                "Configuration requires external PKI which is not implemented yet.";
-            signal.LogError(errmsg);
-            THROW_DBUSEXCEPTION("BackendServiceObject", errmsg);
-        }
-
         // Do we need username/password?  Or does this configuration allow the
         // client to log in automatically?
         if (!cfgeval.autologin
