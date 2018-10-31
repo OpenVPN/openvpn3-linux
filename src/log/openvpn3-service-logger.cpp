@@ -77,10 +77,12 @@ static int logger(ParsedArgs args)
         throw CommandException("openvpn3-service-logger", err.str());
     }
 
-    if (args.Present("idle-exit") && !args.Present("service"))
+    if ((args.Present("idle-exit") || args.Present("state-dir"))
+        && !args.Present("service"))
     {
         throw CommandException("openvpn3-service-logger",
-                               "--idle-exit cannot be used without --service");
+                               "--idle-exit or --state-dir cannot be used "
+                               "without --service");
     }
 
     DBus dbus(G_BUS_TYPE_SYSTEM);
@@ -172,6 +174,11 @@ static int logger(ParsedArgs args)
             //
 
             logsrv.reset(new LogService(dbusconn, logwr.get(), log_level));
+
+            if (args.Present("state-dir"))
+            {
+                logsrv->SetStateDirectory(args.GetValue("state-dir", 0));
+            }
             if (idle_wait_min > 0)
             {
                 idle_exit.reset(new IdleCheck(main_loop,
@@ -317,6 +324,9 @@ int main(int argc, char **argv)
     argparser.AddOption("idle-exit", 0, "MINUTES", true,
                         "(Only with --service) How long to wait before exiting"
                         "if being idle. 0 disables it (Default: 10 minutes)");
+    argparser.AddOption("state-dir", 0, "DIRECTORY", true,
+                        "(Only with --service) Directory where to save the "
+                        "service log settings");
 
     try
     {

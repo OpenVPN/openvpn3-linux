@@ -28,6 +28,7 @@
 #include <map>
 #include <string>
 #include <functional>
+#include <json/json.h>
 
 #include <openvpn/common/rc.hpp>
 
@@ -67,7 +68,8 @@ public:
                       DBusConnectionCreds(dbcon),
                       dbuscon(dbcon),
                       logwr(logwr),
-                      log_level(log_level)
+                      log_level(log_level),
+                      statedir("")
     {
         // Restrict extended access in this log service from these
         // well-known bus names primarily.
@@ -102,6 +104,24 @@ public:
     {
     }
 
+
+    /**
+     *  If called, the LogServiceManager will save each settings change to
+     *  a state file in this directory.  When called it will attempt to
+     *  load a possibly previous saved state file.
+     *
+     * @param sd  std::string containing the directory where to save the state
+     */
+    void SetStateDirectory(std::string sd)
+    {
+        if (sd.empty())
+        {
+            // Ignore this
+            return;
+        }
+        statedir = sd;
+        load_state();
+    }
 
     /**
      *  Callback method which is called each time a D-Bus method call occurs
@@ -329,6 +349,7 @@ public:
         try
         {
             IdleCheck_UpdateTimestamp();
+            GVariantBuilder *ret = nullptr;
 
             if ("log_level" == property_name)
             {
@@ -351,7 +372,7 @@ public:
                 logwr->AddMeta(meta.str());
                 logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1,
                                       l.str()));
-                return build_set_property_response(property_name,
+                ret = build_set_property_response(property_name,
                                                    (guint32) log_level);
             }
             else if ("log_dbus_details" == property_name)
@@ -378,7 +399,7 @@ public:
                 logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1,
                                       l.str()));
 
-                return build_set_property_response(property_name, newval);
+                ret = build_set_property_response(property_name, newval);
             }
             else if ("timestamp" == property_name)
             {
@@ -421,9 +442,15 @@ public:
                                                 property_name,
                                                 "Log timestamp is read-only");
                 }
-                return build_set_property_response(property_name,
+                ret = build_set_property_response(property_name,
                                                    timestamp);
             }
+
+            if (!statedir.empty())
+            {
+                save_state();
+            }
+            return ret;
         }
         catch (DBusPropertyException)
         {
@@ -446,6 +473,7 @@ private:
     LogWriter *logwr = nullptr;
     std::map<size_t, Logger::Ptr> loggers = {};
     unsigned int log_level;
+    std::string statedir;
     std::vector<std::string> allow_list;
 
 
@@ -503,6 +531,72 @@ private:
                                            "Access denied");
         }
     }
+
+
+    /**
+     *  Loads a previously saved state.  The state is typically just
+     *  the various properties of log level and what kind of log details
+     *  being added to the log
+     *
+     *  The state file is simple JSON file which may or may not contain
+     *  all these settings.
+     *
+     */
+    void load_state()
+    {
+        std::ifstream statefile(statedir + "/log-service.json");
+
+        if (statefile.eof() || statefile.fail())
+        {
+            // We ignore situations if the file
+            // does not exist or is not readable
+            return;
+        }
+        std::string line;
+        std::stringstream buf;
+        while (std::getline(statefile, line))
+        {
+            buf << line << std::endl;
+        }
+
+        // Parse buffer into JSON
+        Json::Value state;
+        buf >> state;
+
+        auto val= state["log_level"];
+        if (val.isUInt())
+        {
+            log_level = val.asUInt();
+        }
+
+        val = state["log_dbus_details"];
+        if (val.isBool())
+        {
+            logwr->EnableLogMeta(val.asBool());
+        }
+
+        val = state["timestamp"];
+        if (val.isBool())
+        {
+            logwr->EnableTimestamp(val.asBool());
+        }
+    }
+
+
+    /**
+     *  Saves the state of the current log service settings to a JSON file
+     */
+    void save_state()
+    {
+        Json::Value state;
+        state["log_level"] = log_level;
+        state["log_dbus_details"] = logwr->LogMetaEnabled();
+        state["timestamp"] = logwr->TimestampEnabled();
+
+        std::ofstream statefile(statedir + "/log-service.json");
+        statefile << state << std::endl;
+        statefile.close();
+    }
 };
 
 
@@ -530,12 +624,25 @@ public:
                            OpenVPN3DBus_rootp_log,
                            OpenVPN3DBus_interf_log),
                       logwr(logwr),
-                      log_level(log_level)
+                      log_level(log_level),
+                      statedir("")
     {
     }
 
     ~LogService()
     {
+    }
+
+
+    /**
+     *  Preserves the --state-dir setting, which will be used when
+     *  creating the D-Bus service object
+     *
+     * @param sd  std::string containing the state directory to use
+     */
+    void SetStateDirectory(std::string sd)
+    {
+        statedir = sd;
     }
 
     /**
@@ -550,6 +657,7 @@ public:
         logmgr.reset(new LogServiceManager(GetConnection(),
                                            OpenVPN3DBus_rootp_log,
                                            logwr, log_level));
+        logmgr->SetStateDirectory(statedir);
         logmgr->RegisterObject(GetConnection());
 
         if (nullptr != idle_checker)
@@ -592,4 +700,5 @@ private:
     LogServiceManager::Ptr logmgr;
     LogWriter *logwr;
     unsigned int log_level;
+    std::string statedir;
 };
