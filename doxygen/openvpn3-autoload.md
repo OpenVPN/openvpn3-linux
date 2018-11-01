@@ -337,9 +337,17 @@ are not directly related to features inside the OpenVPN 3 Core
 Library.
 
     "acl": {
+        "set-owner": UID,
         "public": BOOLEAN,
         "locked-down": BOOLEAN
     }
+
+#### acl: set-owner
+By default all imported configurations and automatically started
+sessions are owned by root.  By setting this to a different UID
+value (numeric), the imported configuration profile will be set
+to the provided UID.  If a session is also automatically started,
+the owner of this session is also set to the same value.
 
 #### acl: public
 This is a boolean flag enabling all users on the local system to

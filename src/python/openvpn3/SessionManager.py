@@ -441,6 +441,17 @@ class SessionManager(object):
 
 
     ##
+    #  Transfer the ownership of a given session path to a new user (UID)
+    #
+    #  @param sesspath  D-Bus object path to the session
+    #  @param new_uid   UID of the new owner of this session object
+    #
+    def TransferOwnership(self, sesspath, new_uid):
+        self.__manager_intf.TransferOwnership(dbus.ObjectPath(sesspath),
+                                              dbus.UInt32(new_uid))
+
+
+    ##
     #  Private method, which sends a Ping() call to the main D-Bus
     #  interface for the service.  This is used to wake-up the service
     #  if it isn't running yet.

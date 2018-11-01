@@ -280,6 +280,17 @@ class ConfigurationManager(object):
 
 
     ##
+    #  Transfer the ownership of a given configuration path to a new user (UID)
+    #
+    #  @param cfgpath  D-Bus object path to the configuration profile
+    #  @param new_uid  UID of the new owner of this configuration profile
+    #
+    def TransferOwnership(self, cfgpath, new_uid):
+        self.__manager_intf.TransferOwnership(dbus.ObjectPath(cfgpath),
+                                              dbus.UInt32(new_uid))
+
+
+    ##
     #  Private method, which sends a Ping() call to the main D-Bus
     #  interface for the service.  This is used to wake-up the service
     #  if it isn't running yet.

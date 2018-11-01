@@ -141,6 +141,8 @@ def parse_autoload_config(autoload):
                 autoloadcfg['flags'].append('public_access')
             if 'locked-down' == k:
                 autoloadcfg['flags'].append('locked_down')
+            if 'set-owner' == k:
+                autoloadcfg['owner'] = v
 
     if 'remote' in autoload:
         for (k,v) in autoload['remote'].items():
@@ -322,17 +324,27 @@ def autoload_main(cmdargs):
                                                          ", ".join(autoloadcfg['flags'])))
 
         # Should this configuration be automatically started too?
+        sesspath = None
         if 'autostart' in autocfg['autoload'] and True == autocfg['autoload']['autostart']:
             if False == opts.ignore_autostart:
                 try:
-                    p = start_tunnel(sessionmgr, cfgobj, autocfg['autoload'])
-                    print('Auto-started "%s": %s' % (cfgname, p))
+                    sesspath = start_tunnel(sessionmgr, cfgobj, autocfg['autoload'])
+                    print('Auto-started "%s": %s' % (cfgname, sesspath))
 
                 except Exception as excp:
                     print('WARNING: ' + str(excp))
                     print('WARNING: This configuration may not have been auto-started.')
             else:
                 print('Auto-start of "%s" was ignored.' % cfgname)
+
+        # The transfer ownership feature is restricted to root only, so only
+        # attempt this if this script is run as root.  This transfer is also
+        # done after the a possible auto-start of the tunnel, as that needs to
+        # be done by the root user.
+        if 'acl' in autocfg['autoload'] and 'set-owner' in autocfg['autoload']['acl'] and 0 == os.geteuid():
+            if None != sesspath:
+                sessionmgr.TransferOwnership(sesspath, autocfg['autoload']['acl']['set-owner'])
+            configmgr.TransferOwnership(cfgobj.GetPath(), autocfg['autoload']['acl']['set-owner'])
 
 
 if __name__ == '__main__':
