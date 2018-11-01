@@ -18,6 +18,8 @@ node /net/openvpn/v3/sessions {
       NewTunnel(in  o config_path,
                 out o session_path);
       FetchAvailableSessions(out ao paths);
+      TransferOwnership(in  o path,
+                        in  u new_owner_uid);
     signals:
       Log(u group,
           u level,
@@ -52,6 +54,22 @@ caller is granted access to.
 | Direction | Name        | Type         | Description                                            |
 | Out       | paths       | object paths | An array of object paths to accessible session objects |
 
+
+### Method: `net.openvpn3.v3.sessions.TransferOwnership`
+
+This method transfers the ownership of a session to the given UID value.  This
+feature is by design restricted to the root account only and is only expected
+to be used by `openvpn3-autoload` and similar tools.
+
+This method is also placed in the main session manager object and not the
+session object itself by design, to emphasize this being a special case feature.
+This also makes it easier to control this feature in the D-Bus policy in
+addition to the hard-coded restriction in the session manager code.
+
+#### Arguments
+| Direction | Name          | Type         | Description                                            |
+| In        | path          | object path  | Session object path where to modify the owner property |
+| In        | new_owner_uid | unsigned int | UID value of the new session owner                     |
 
 
 ### Signal: `net.openvpn.v3.sessions.Log`
