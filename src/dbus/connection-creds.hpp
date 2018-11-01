@@ -291,6 +291,28 @@ private:
 
 
         /**
+         *  Returns this objects owner's UID as uid_t
+         *
+         * @returns uid_t containing the object owner's uid
+         */
+        uid_t GetOwnerUID()
+        {
+            return owner;
+        }
+
+
+        /**
+         *  Transfer ownership to a new owner uid
+         *
+         * @param new_owner  uid_t containing the new owner
+         */
+        void TransferOwnership(const uid_t new_owner)
+        {
+            owner = new_owner;
+        }
+
+
+        /**
          *  Sets the public access attribute.  If set to true,
          *  the ACL check is effectively disabled - unless a
          *  strict owner-only check is performed.
