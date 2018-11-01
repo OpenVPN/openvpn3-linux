@@ -1136,6 +1136,10 @@ public:
                           << "        <method name='FetchAvailableConfigs'>"
                           << "          <arg type='ao' name='paths' direction='out'/>"
                           << "        </method>"
+                          << "        <method name='TransferOwnership'>"
+                          << "           <arg type='o' name='path' direction='in'/>"
+                          << "           <arg type='u' name='new_owner_uid' direction='in'/>"
+                          << "        </method>"
                           << "        <property type='s' name='version' access='read'/>"
                           << GetLogIntrospection()
                           << "    </interface>"
@@ -1231,6 +1235,46 @@ public:
             // Clean-up
             g_variant_builder_unref(bld);
             g_variant_builder_unref(ret);
+        }
+        else if ("TransferOwnership" == method_name)
+        {
+            // This feature is quite powerful and is restricted to the
+            // root account only.  This is typically used by openvpn3-autoload
+            // when run during boot where the auto-load configuration wants
+            // the owner to be someone else than root.
+            if (0 != creds.GetUID(sender))
+            {
+                GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.acl.denied",
+                                                              "Access Denied");
+                g_dbus_method_invocation_return_gerror(invoc, err);
+                g_error_free(err);
+                return;
+            }
+            gchar *cfgpath = nullptr;
+            uid_t new_uid = 0;
+            g_variant_get(params, "(ou)", &cfgpath, &new_uid);
+
+            for (const auto& ci : config_objects)
+            {
+                if (ci.first == cfgpath)
+                {
+                    uid_t cur_owner = ci.second->GetOwnerUID();
+                    ci.second->TransferOwnership(new_uid);
+                    g_dbus_method_invocation_return_value(invoc, NULL);
+
+                    std::stringstream msg;
+                    msg << "Transfered ownership from " << cur_owner
+                        << " to " << new_uid
+                        << " on configuration " << cfgpath;
+                    LogInfo(msg.str());
+                    return;
+                }
+            }
+            GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.path",
+                                                          "Invalid configuration path");
+            g_dbus_method_invocation_return_gerror(invoc, err);
+            g_error_free(err);
+            return;
         }
     };
 
