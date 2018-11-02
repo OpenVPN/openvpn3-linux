@@ -1,0 +1,15 @@
+clinetcfg - simple client using openvpn3-service-netcfg
+=======================================================
+
+This test client is the same as found in the openvpn3-core/test/ovpncli/cli.cpp
+with the exception that it uses openvpn3-service-netcfg (net.openvpn.v3.netcfg)
+to configure the virtual network adapter and routes.  This allows the test
+client to run unprivileged.
+
+As the access to the net.openvpn.v3.netcfg D-Bus service is managed by a
+policy and this policy restricts this access to the 'openvpn' user only, it
+is needed to relax this policy first before attempting to run this test
+client.  This can be done by copying the
+`net.openvpn.v3.netcfg-generic-access.conf` file to the D-Bus policy
+directory, typically located at `/etc/dbus-1/system.d`.
+

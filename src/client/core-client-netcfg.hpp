@@ -48,6 +48,22 @@ public:
     {
     }
 
+#ifdef OPENVPN3_CORE_CLI_TEST
+    NetCfgTunBuilder(GDBusConnection* dbuscon)
+        : disabled_dns_config(false),
+          netcfgmgr(dbuscon)
+    {
+        signal = new BackendSignals(dbuscon, LogGroup::CLIENT,
+                                    "/net/openvpn/v3/tests/cli",
+                                    nullptr);
+        signal->SetLogLevel(6);
+    }
+
+    ~NetCfgTunBuilder()
+    {
+        delete signal;
+    }
+#endif
 
     bool tun_builder_new() override
     {

@@ -65,7 +65,9 @@ EXTRA_DIST = \
 	vendor \
 	src/common/requiresqueue.hpp \
 	src/common/timestamp.hpp \
-	src/common/utils.hpp
+	src/common/utils.hpp \
+	src/tests/netcfg/README \
+	src/tests/netcfg/net.openvpn.v3.netcfg-generic-access.conf
 
 # Remove openvpn3-core embedded patches which we don't need
 # and makes 'make dist' complain
@@ -163,7 +165,8 @@ noinst_PROGRAMS = \
 	src/tests/dbus/proxy-checkserviceavail \
 	src/tests/dbus/request-queue-client \
 	src/tests/dbus/request-queue-client2 \
-	src/tests/dbus/request-queue-service
+	src/tests/dbus/request-queue-service \
+	src/tests/netcfg/clinetcfg
 
 # src/tests/comand-parser
 #
@@ -304,6 +307,20 @@ src_tests_dbus_request_queue_service_SOURCES = \
 	src/common/requiresqueue.cpp \
 	src/common/utils.cpp
 
+src_tests_netcfg_clinetcfg_SOURCES = \
+	src/tests/netcfg/cli.cpp \
+	src/client/core-client.hpp \
+	src/client/backend-signals.hpp \
+	src/client/statistics.hpp \
+	src/client/statusevent.hpp \
+	$(DBUS_SOURCES) \
+	src/common/core-extensions.hpp \
+	src/common/requiresqueue.hpp \
+	src/common/timestamp.cpp \
+	src/common/utils.hpp \
+	src/configmgr/proxy-configmgr.hpp \
+	src/log/dbus-log.hpp \
+	src/log/proxy-log.hpp
 endif
 
 #
