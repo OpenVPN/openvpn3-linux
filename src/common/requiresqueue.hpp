@@ -132,10 +132,10 @@ public:
      * @return  Returns a string with the various <method/> tags describing
      *          the required input arguments and what these methods returns.
      */
-    std::string IntrospectionMethods(const std::string meth_qchktypegr,
-                                     const std::string meth_queuefetch,
-                                     const std::string meth_queuechk,
-                                     const std::string meth_provideresp);
+    static std::string IntrospectionMethods(const std::string& meth_qchktypegr,
+                                            const std::string& meth_queuefetch,
+                                            const std::string& meth_queuechk,
+                                            const std::string& meth_provideresp);
 
     /**
      * Adds a user request requirement to the queue.

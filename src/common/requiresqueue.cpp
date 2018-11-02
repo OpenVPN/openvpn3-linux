@@ -107,10 +107,10 @@ RequiresQueue::~RequiresQueue()
 {
 }
 
-std::string RequiresQueue::IntrospectionMethods(const std::string meth_qchktypegr,
-                                                const std::string meth_queuefetch,
-                                                const std::string meth_queuechk,
-                                                const std::string meth_provideresp)
+std::string RequiresQueue::IntrospectionMethods(const std::string& meth_qchktypegr,
+                                                const std::string& meth_queuefetch,
+                                                const std::string& meth_queuechk,
+                                                const std::string& meth_provideresp)
 {
     std::stringstream introspection;
     introspection << "    <method name='" << meth_qchktypegr << "'>"

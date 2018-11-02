@@ -123,10 +123,10 @@ public:
                           << "        <method name='Restart'/>"
                           << "        <method name='Disconnect'/>"
                           << "        <method name='ForceShutdown'/>"
-                          << userinputq.IntrospectionMethods("UserInputQueueGetTypeGroup",
-                                                             "UserInputQueueFetch",
-                                                             "UserInputQueueCheck",
-                                                             "UserInputProvide")
+                          << RequiresQueue::IntrospectionMethods("UserInputQueueGetTypeGroup",
+                                                                 "UserInputQueueFetch",
+                                                                 "UserInputQueueCheck",
+                                                                 "UserInputProvide")
                           << "        <property name='log_level' type='u' access='readwrite'/>"
                           << signal.GetStatusChangeIntrospection()
                           << signal.GetLogIntrospection()

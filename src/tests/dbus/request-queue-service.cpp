@@ -54,10 +54,10 @@ public:
         std::stringstream introspection_xml;
         introspection_xml << "<node name='" << rootpath << "'>"
                           << "  <interface name='" << interface << "'>"
-                          << queue->IntrospectionMethods("t_QueueCheckTypeGroup",
-                                                         "t_QueueFetch",
-                                                         "t_QueueCheck",
-                                                         "t_ProvideResponse")
+                          << RequiresQueue::IntrospectionMethods("t_QueueCheckTypeGroup",
+                                                                 "t_QueueFetch",
+                                                                 "t_QueueCheck",
+                                                                 "t_ProvideResponse")
                           << "    <method name='ServerDumpResponse'/>"
                           << "    <method name='Init'/>"
                           << "  </interface>"

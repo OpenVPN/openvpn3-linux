@@ -432,7 +432,6 @@ public:
         // will switch to the default session log level.
         SetLogLevel(manager_log_level);
         Subscribe("RegistrationRequest");
-        RequiresQueue dummyqueue;  // Only used to get introspection data
 
         // Register configuration the configuration object
         std::stringstream introspection_xml;
@@ -452,10 +451,10 @@ public:
                           << "        <method name='AccessRevoke'>"
                           << "            <arg direction='in' type='u' name='uid'/>"
                           << "        </method>"
-                          << dummyqueue.IntrospectionMethods("UserInputQueueGetTypeGroup",
-                                                             "UserInputQueueFetch",
-                                                             "UserInputQueueCheck",
-                                                             "UserInputProvide")
+                          << RequiresQueue::IntrospectionMethods("UserInputQueueGetTypeGroup",
+                                                                 "UserInputQueueFetch",
+                                                                 "UserInputQueueCheck",
+                                                                 "UserInputProvide")
                           << "        <signal name='AttentionRequired'>"
                           << "            <arg type='u' name='type' direction='out'/>"
                           << "            <arg type='u' name='group' direction='out'/>"
