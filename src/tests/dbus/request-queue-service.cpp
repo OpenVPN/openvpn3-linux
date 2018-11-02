@@ -48,30 +48,21 @@ public:
                  const std::string busname, const std::string interface, const std::string rootpath)
         : DBusObject(rootpath),
           dbuscon(dbuscon),
-          creds(dbuscon)
+          creds(dbuscon),
+          queue(std::unique_ptr<RequiresQueue>(new RequiresQueue()))
     {
         std::stringstream introspection_xml;
         introspection_xml << "<node name='" << rootpath << "'>"
                           << "  <interface name='" << interface << "'>"
-                          << queue.IntrospectionMethods("t_QueueCheckTypeGroup",
-                                                        "t_QueueFetch",
-                                                        "t_QueueCheck",
-                                                        "t_ProvideResponse")
+                          << queue->IntrospectionMethods("t_QueueCheckTypeGroup",
+                                                         "t_QueueFetch",
+                                                         "t_QueueCheck",
+                                                         "t_ProvideResponse")
                           << "    <method name='ServerDumpResponse'/>"
-                          << "    <method name='Reset'/>"
+                          << "    <method name='Init'/>"
                           << "  </interface>"
                           << "</node>";
         ParseIntrospectionXML(introspection_xml);
-
-        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD,
-                         "username", "Test Auth User name", false);
-        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD,
-                         "password", "Test Auth Password", true);
-        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_DYNAMIC,
-                         "dynamic_challenge", "Test Dynamic Challenge", true);
-        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_STATIC,
-                         "static_challenge", "Test Static Challenge", true);
-
     }
 
     ~ReqQueueMain()
@@ -105,7 +96,7 @@ public:
         {
             try
             {
-                queue.QueueCheckTypeGroup(invocation);
+                queue->QueueCheckTypeGroup(invocation);
             }
             catch (RequiresQueueException& excp)
             {
@@ -117,7 +108,7 @@ public:
         {
             try
             {
-                queue.QueueFetch(invocation, params);
+                queue->QueueFetch(invocation, params);
             }
             catch (RequiresQueueException& excp)
             {
@@ -127,14 +118,14 @@ public:
         }
         if ("t_QueueCheck" == method_name)
         {
-            queue.QueueCheck(invocation, params);
+            queue->QueueCheck(invocation, params);
             return;
         }
         else if ("t_ProvideResponse" == method_name)
         {
             try
             {
-                queue.UpdateEntry(invocation, params);
+                queue->UpdateEntry(invocation, params);
             }
             catch (RequiresQueueException& excp)
             {
@@ -144,24 +135,23 @@ public:
         }
         else if ("ServerDumpResponse" == method_name)
         {
-            queue._DumpStdout();
+            queue->_DumpStdout();
             g_dbus_method_invocation_return_value(invocation, NULL);
             return;
         }
-        else if ("Reset" == method_name)
+        else if ("Init" == method_name)
         {
-            // WARNING:  This is hacky.  We just quess the elements allocated
-            // have these IDs.  They most likely will have, but still no
-            // guarantee.  We can't use QueueCheck(), as that reports only
-            // IDs which have not any provided values - and that is what
-            // we try to reset here.
-            for (auto& e : {0,1})
-            {
-                queue.ResetValue(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, e);
-            }
-            queue.ResetValue(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_DYNAMIC, 0);
-            queue.ResetValue(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_STATIC, 0);
-            std::cout << std::endl << "##### Values reset" << std::endl << std::endl;
+            queue = std::unique_ptr<RequiresQueue>(new RequiresQueue());
+            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::PK_PASSPHRASE,
+                              "pk_passphrase", "Test private key passphrase", true);
+            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD,
+                              "username", "Test Auth User name", false);
+            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD,
+                              "password", "Test Auth Password", true);
+            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_DYNAMIC,
+                              "dynamic_challenge", "Test Dynamic Challenge", true);
+            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_STATIC,
+                              "static_challenge", "Test Static Challenge", true);
             g_dbus_method_invocation_return_value(invocation, NULL);
             return;
         }
@@ -195,8 +185,8 @@ public:
 
 private:
     GDBusConnection *dbuscon;
-    RequiresQueue queue;
     DBusConnectionCreds creds;
+    std::unique_ptr<RequiresQueue> queue;
 };
 
 
@@ -245,6 +235,8 @@ void selftest()
 
         RequiresQueue queue;
 
+        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::PK_PASSPHRASE,
+                         "pk_passphrase", "Selftest Private key passphrase", true);
         queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD,
                          "username", "Selftest Auth User name", false);
         queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD,
@@ -299,6 +291,7 @@ void selftest()
         }
 
         // Check retrieving values via variable names
+        std::cout << "GetResponse('pk_passphrase') = " << queue.GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::PK_PASSPHRASE, "pk_passphrase") << std::endl;
         std::cout << "GetResponse('username') = " << queue.GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "username") << std::endl;
         std::cout << "GetResponse('password') = " << queue.GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "password") << std::endl;
         std::cout << "GetResponse('dynamic_challenge') = " << queue.GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_DYNAMIC, "dynamic_challenge") << std::endl;

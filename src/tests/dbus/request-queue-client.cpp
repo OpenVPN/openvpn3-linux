@@ -74,11 +74,42 @@ int main()
 
     for (int i = 0; i < 250; i++)
     {
-        for (auto& type_group : queue.QueueCheckTypeGroup())
+        queue.Call("Init", true);
+        auto res = queue.QueueCheckTypeGroup();
+        if (res.empty())
+        {
+            std::cerr << "-- ERROR -- | empty response from queue.QueueCheckTypeGroup() |" << std::endl;
+            return 1;
+        }
+        bool up, cs, cd, pk;
+        up = cs = cd = pk = false;
+        for (auto& type_group : res)
         {
             ClientAttentionType type;
             ClientAttentionGroup group;
             std::tie(type, group) = type_group;
+            switch (group)
+            {
+                case ClientAttentionGroup::USER_PASSWORD:
+                    up = true;
+                    break;
+
+                case ClientAttentionGroup::CHALLENGE_STATIC:
+                    cs = true;
+                    break;
+
+                case ClientAttentionGroup::CHALLENGE_DYNAMIC:
+                    cd = true;
+                    break;
+
+                case ClientAttentionGroup::PK_PASSPHRASE:
+                    pk = true;
+                    break;
+
+                default:
+                    std::cerr << "-- ERROR -- | unknown group " << ClientAttentionGroup_str[(int)group] << " |" << std::endl;
+                    return 1;
+            }
             for (auto& id : queue.QueueCheck(type, group))
             {
                 try
@@ -101,8 +132,12 @@ int main()
                 }
             }
         }
-        queue.Call("ServerDumpResponse", true);
-        queue.Call("Reset", true);
+        if (!up || !cs || !cd || !pk)
+        {
+            std::cerr << "-- ERROR -- | one of type groups is missing |" << std::endl;
+            return 1;
+        }
+        queue.Call("ServerDumpResponse");
     }
     std::cout << "Done" << std::endl;
     return 0;
@@ -118,7 +153,7 @@ void deserialize(struct RequiresSlot& result, GVariant *indata)
     }
 
     std::string data_type = std::string(g_variant_get_type_string(indata));
-    if ("(uuuss)" == data_type)
+    if ("(uuussb)" == data_type)
     {
         //
         // Typically used by the function popping elements from the RequiresQueue,
@@ -128,14 +163,23 @@ void deserialize(struct RequiresSlot& result, GVariant *indata)
         {
             throw RequiresQueueException("RequiresSlot destination is not empty/unused");
         }
+        guint32 type = 0;
+        guint32 group = 0;
+        guint32 id = 0;
         gchar *name = NULL;
         gchar *descr = NULL;
-        g_variant_get(indata, "(uuuss)",
-                      &result.type,
-                      &result.group,
-                      &result.id,
+        gboolean hidden_input = false;
+
+        g_variant_get(indata, "(uuussb)",
+                      &type,
+                      &group,
+                      &id,
                       &name,
-                      &descr);
+                      &descr,
+                      &hidden_input);
+        result.type = (ClientAttentionType) type;
+        result.group = (ClientAttentionGroup) group;
+        result.id = id;
         if (name)
         {
             std::string name_s(name);
@@ -151,6 +195,7 @@ void deserialize(struct RequiresSlot& result, GVariant *indata)
     }
     else
     {
+        std::cerr << "Unknown data type: " << data_type << std::endl;
         throw RequiresQueueException("Unknown input data formatting ");
     }
 }
@@ -166,45 +211,59 @@ int main()
                     "/net/openvpn/v3/tests/features/requiresqueue");
 
     proxy.Call("ServerDumpResponse", true);
-    GVariant *res = proxy.Call("t_QueueCheck", g_variant_new("(uu)",
-                                                             ClientAttentionType::CREDENTIALS,
-                                                             ClientAttentionGroup::USER_PASSWORD));
-    GVariantIter *array = 0;
-    g_variant_get(res, "(au)", &array);
+    proxy.Call("Init", true);
 
-    GVariant *e = nullptr;
-    while ((e = g_variant_iter_next_value(array)))
+    for (int group = (int)ClientAttentionGroup::USER_PASSWORD;
+         group <= (int)ClientAttentionGroup::CHALLENGE_DYNAMIC; ++group)
     {
-        unsigned int id = g_variant_get_uint32(e);
-        try
+        GVariant *res = proxy.Call("t_QueueCheck",
+                                   g_variant_new("(uu)",
+                                                 ClientAttentionType::CREDENTIALS,
+                                                 (ClientAttentionGroup) group));
+        GVariantIter *array = 0;
+        g_variant_get(res, "(au)", &array);
+
+        if (g_variant_iter_n_children(array) == 0)
         {
-            GVariant *req = proxy.Call("t_QueueFetch", g_variant_new("(uuu)",
-                                                                 ClientAttentionType::CREDENTIALS,
-                                                                 ClientAttentionGroup::USER_PASSWORD,
-                                                                 id));
-            struct RequiresSlot reqdata = {0};
-            deserialize(reqdata, req);
-
-            dump_requires_slot(reqdata, id);
-
-            reqdata.value = "generated-data_" + reqdata.name +"_" + std::to_string(reqdata.id);
-            proxy.Call("t_ProvideResponse", g_variant_new("(uuus)",
-                                                        reqdata.type,
-                                                        reqdata.group,
-                                                        reqdata.id,
-                                                        reqdata.value.c_str()));
-
-            g_variant_unref(req);
-        }
-        catch (DBusException &excp)
-        {
-            std::cerr << "-- ERROR -- |" << excp.getRawError() << "|" << std::endl;
+            std::cerr << "-- ERROR -- | empty result of t_QueueCheck() |" << std::endl;
             return 1;
         }
-        g_variant_unref(e);
+
+        GVariant *e = nullptr;
+        while ((e = g_variant_iter_next_value(array)))
+        {
+            unsigned int id = g_variant_get_uint32(e);
+            try
+            {
+                GVariant *req = proxy.Call("t_QueueFetch",
+                                           g_variant_new("(uuu)",
+                                                         ClientAttentionType::CREDENTIALS,
+                                                         (ClientAttentionGroup) group,
+                                                         id));
+                struct RequiresSlot reqdata;
+                deserialize(reqdata, req);
+                dump_requires_slot(reqdata, id);
+
+                reqdata.value = "generated-data_" + reqdata.name +"_" + std::to_string(reqdata.id);
+                proxy.Call("t_ProvideResponse",
+                           g_variant_new("(uuus)",
+                                         reqdata.type,
+                                         reqdata.group,
+                                         reqdata.id,
+                                         reqdata.value.c_str()));
+                g_variant_unref(req);
+            }
+            catch (DBusException &excp)
+            {
+                std::cerr << "-- ERROR -- |" << excp.getRawError() << "|" << std::endl;
+                return 1;
+            }
+            g_variant_unref(e);
+        }
+        g_variant_iter_free(array);
+        proxy.Call("ServerDumpResponse", true);
     }
-    g_variant_iter_free(array);
-    proxy.Call("ServerDumpResponse", true);
+
     return 0;
 }
 #endif
