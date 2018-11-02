@@ -81,7 +81,7 @@ while not ready:
             raise e
 
         # Query the user for all information the backend has requested
-        for u in s.FetchUserInputSlots():
+        for u in session.FetchUserInputSlots():
             # We only care about responding to credential requests here
             if u.GetTypeGroup()[0] != openvpn3.ClientAttentionType.CREDENTIALS:
                 continue
@@ -95,10 +95,10 @@ while not ready:
 
             # Now the while-loop will ensure session.Ready() is re-run
 
-# Wait 15 seconds for the backend to get a connection 
+# Wait 15 seconds for the backend to get a connection
 for i in range(1, 16):
-    print("[%i] Status: %s" % (i, str(s.GetStatus())))
+    print("[%i] Status: %s" % (i, str(session.GetStatus())))
     time.sleep(1)
 
-# Remove the config profile from the configuration manager service  
+# Remove the config profile from the configuration manager service
 cfg.Remove()

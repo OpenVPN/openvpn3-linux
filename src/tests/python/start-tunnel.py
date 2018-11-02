@@ -43,7 +43,7 @@ import getpass
 import dbus
 
 if len(sys.argv) != 2:
-    printf("** Usage: %s <D-Bus configuration path>" % sys.argv[0])
+    print("** Usage: %s <D-Bus configuration path>" % sys.argv[0])
     sys.exit(1)
 
 # Get a connection to the system bus
