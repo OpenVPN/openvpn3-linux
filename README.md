@@ -16,7 +16,7 @@ The default configuration for the services assumes a service account
 `openvpn` to be present. If it does not exist you should add one, e.g. by:
 
     # groupadd -r openvpn
-    # useradd -r -s /bin/nologin -g openvpn openvpn
+    # useradd -r -s /sbin/nologin -g openvpn openvpn
 
 You will probably also need to reload D-Bus configuration to make
 D-Bus aware of the newly installed service:
