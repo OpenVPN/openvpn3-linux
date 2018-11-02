@@ -891,6 +891,14 @@ private:
         vpnclient->disable_socket_protect(disabled_socket_protect);
         vpnclient->disable_dns_config(ignore_dns_cfg);
 
+        if (userinputq.QueueCount(ClientAttentionType::CREDENTIALS,
+                                  ClientAttentionGroup::PK_PASSPHRASE) > 0)
+        {
+            vpnconfig.privateKeyPassword = userinputq.GetResponse(ClientAttentionType::CREDENTIALS,
+                                                                  ClientAttentionGroup::PK_PASSPHRASE,
+                                                                  "pk_passphrase");
+        }
+
         // We need to provide a copy of the vpnconfig object, as vpnclient
         // seems to take ownership
         cfgeval = vpnclient->eval_config(ClientAPI::Config(vpnconfig));
@@ -932,6 +940,16 @@ private:
             signal.AttentionReq(ClientAttentionType::CREDENTIALS,
                                 ClientAttentionGroup::USER_PASSWORD,
                                 "Username/password credentials needed");
+        }
+
+        if (cfgeval.privateKeyPasswordRequired && vpnconfig.privateKeyPassword.length() == 0)
+        {
+            userinputq.RequireAdd(ClientAttentionType::CREDENTIALS,
+                                  ClientAttentionGroup::PK_PASSPHRASE,
+                                  "pk_passphrase", "Private key passphrase", true);
+            signal.AttentionReq(ClientAttentionType::CREDENTIALS,
+                                ClientAttentionGroup::PK_PASSPHRASE,
+                                "Private key passphrase needed");
         }
 
         signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CFG_OK,
