@@ -111,11 +111,11 @@ int netcfg_main(ParsedArgs args)
         capng_update(CAPNG_ADD, (capng_type_t) (CAPNG_EFFECTIVE|CAPNG_PERMITTED),
                       CAP_NET_ADMIN);
 
-        // CAP_FOWNER is needed to be allowed to overwrite /etc/resolv.conf
+        // CAP_DAC_OVERRIDE is needed to be allowed to overwrite /etc/resolv.conf
         if (args.Present("resolv-conf"))
         {
             capng_update(CAPNG_ADD, (capng_type_t) (CAPNG_EFFECTIVE|CAPNG_PERMITTED),
-                         CAP_FOWNER);
+                         CAP_DAC_OVERRIDE);
         }
     }
     if (!args.Present("run-as-root"))
@@ -132,7 +132,7 @@ int netcfg_main(ParsedArgs args)
     if (args.Present("resolv-conf"))
     {
         capng_update(CAPNG_ADD, (capng_type_t) (CAPNG_EFFECTIVE|CAPNG_PERMITTED),
-                     CAP_FOWNER);
+                     CAP_DAC_OVERRIDE);
     }
 
     // With the capapbility set, no root account access is needed
