@@ -20,4 +20,4 @@
 [D-BUS Service]
 Name=net.openvpn.v3.netcfg
 User=root
-Exec=@LIBEXEC_PATH@/openvpn3-service-netcfg
+Exec=@LIBEXEC_PATH@/openvpn3-service-netcfg --resolv-conf /etc/resolv.conf --log-level 6
