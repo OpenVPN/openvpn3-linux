@@ -32,6 +32,10 @@ if BUILD_TESTS
 SUBDIRS += src/tests
 endif
 
+if ENABLE_SELINUX_BUILD
+SUBDIRS += src/selinux
+endif
+
 MAINTAINERCLEANFILES = \
         config.log config.status \
         $(srcdir)/Makefile.in \

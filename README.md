@@ -205,7 +205,10 @@ The following dependencies are needed:
   If Python 3.4 or newer is found, the openvpn2 utility and an openvpn3
   Python module will be built and installed.
 
-The oldest supported Linux distribution is Red Hat Enterprise Linux 7.
+* (optional) selinux-policy-devel
+
+  For Linux distributions running with SELinux in enforced mode (like Red Hat
+  Enterprise Linux and Fedora), this is required.
 
 In addition, this git repository will pull in two git submodules:
 
@@ -232,12 +235,12 @@ First install the package dependencies needed to run the build.
 libmbedtls-dev liblz4-dev libcap-ng-dev``
 
 #### Fedora:
-  ``# dnf install gcc-c++ git autoconf autoconf-archive automake make pkgconfig mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel libcap-ng-devel``
+  ``# dnf install gcc-c++ git autoconf autoconf-archive automake make pkgconfig mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel libcap-ng-devel selinux-policy-devel``
 
 #### Red Hat Enterprise Linux / CentOS / Scientific Linux
   First install the ``epel-release`` repository if that is not yet installed.  Then you can run:
 
-  ``# yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel lz4-devel libcap-ng-devel``
+  ``# yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel lz4-devel libcap-ng-devel selinux-policy-devel``
 
 
 ### Preparations building from git
@@ -267,6 +270,43 @@ directory the D-Bus message service does not know of.  The same is for the
 With everything built and installed, it should be possible to run both the
 ``openvpn2`` and ``openvpn3`` command line tools - even as an unprivileged
 user.
+
+
+#### SELinux
+
+The `openvpn3-service-netcfg` service depends on being able to pass a file
+descriptor to the tun device it has created to the `openvpn3-service-client`
+service (which is a single VPN client instance).  This is done via D-Bus.  But
+on systems with SELinux, the D-Bus daemon is not allowed to pass file
+descriptors related to `/dev/net/tun`.
+
+The openvpn3-linux project ships an SELinux policy module, which will be
+installed in `/etc/openvpn3/selinux` if the `./configure` script can
+locate the SELinux policy development files.  On RHEL/Fedora the development
+files are located under `/usr/share/selinux/devel` and provided by the
+`selinux-policy-devel` package.
+
+If the `selinux-policy-devel` package has been detected by `./configure`,
+running `make install` will install the `openvpn3.pp` policy package,
+typically in `/etc/openvpn3/selinux`.
+
+To install and activate this SELinux security module, as root run:
+
+         # semodule -i /etc/openvpn3/selinux/openvpn3.pp
+         # semanage boolean --m --on dbus_access_tuntap_device
+
+This policy package adds a SELinux boolean, `dbus_access_tuntap_device`,
+which grants processes, such as `dbus-daemon` running under the
+`system_dbusd_t` security context access to files labelled as
+`tun_tap_device_t`; which matches the label of `/dev/net/tun`.
+
+On Red Hat Enterprise Linux and Fedora, the `openvpn3-service-netcfg` will
+stop running and the OpenVPN 3 Linux client will non-functional if this has not
+been done.  The source code of the policy package can be found in
+[`src/selinux/openvpn3.te`](src/selinux/openvpn3.te).
+
+Users installing the pre-built RPM binaries, this is handled by the RPM
+scriptlet during package install.
 
 
 Logging

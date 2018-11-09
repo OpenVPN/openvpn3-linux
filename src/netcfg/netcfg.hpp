@@ -523,9 +523,16 @@ public:
      */
     void callback_name_lost(GDBusConnection *conn, std::string busname)
     {
-        THROW_DBUSEXCEPTION("openvpn-service-netcfg",
-                            "openvpn3-service-netcfg could not register '"
-                            + busname + "' as a D-Bus service");
+        std::stringstream msg;
+        msg << "Lost the D-Bus connection and the '" + busname + "' "
+            << "bus name. Most likely related to an internal "
+            << "issue in dbus-daemon. Check ";
+#ifdef ENABLE_SELINUX_BUILD
+        msg << "if SELinux dbus_access_tuntap_device boolean is enabled, "
+            << "otherwise ";
+#endif
+        msg << "available audit logs.";
+        THROW_DBUSEXCEPTION("openvpn-service-netcfg", msg.str());
     };
 
 

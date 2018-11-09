@@ -1,0 +1,40 @@
+# OpenVPN 3 Linux - SELinux policy
+#
+#  Copyright (C) 2018      OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2018      David Sommerseth <davids@openvpn.net>
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, version 3 of the
+#  License.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
+module openvpn3 1.0;
+
+require {
+	type tun_tap_device_t;
+	type system_dbusd_t;
+	class chr_file { read write };
+}
+
+## <desc>
+## <p>
+## Allow dbus-daemon system bus to access /dev/net/tun
+## which is needed to pass tun/tap device file descriptors
+## over D-Bus.  This is needed by openvpn3-service-netcfg.
+## </p>
+## </desc>
+gen_tunable(dbus_access_tuntap_device, false)
+
+tunable_policy(`dbus_access_tuntap_device',`
+        allow system_dbusd_t tun_tap_device_t:chr_file { read write };
+')
+

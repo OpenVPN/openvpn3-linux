@@ -264,6 +264,45 @@ AC_SUBST([dbus_system_servicedir])
 
 
 dnl
+dnl  SELinux support
+dnl
+dnl  By default, the SELinux policy will be built if the needed
+dnl  SELinux development files is found on the system.  But this can
+dnl  completely disabled explicitly by providing --disable-selinux-build.
+dnl  This will also remove related SELinux code paths in the various programs.
+dnl
+AC_ARG_ENABLE(
+     [selinux-build],
+     [AS_HELP_STRING([--disable-selinux-build],
+                     [Disables building the SELinux policy])],
+     [],
+     [enable_selinux_build="yes"]
+)
+
+dnl  This path is used to detect if the SELinux policy
+dnl  development files.  By default it will use /usr/share/selinux/devel
+dnl
+AC_ARG_VAR([SELINUX_DEVEL_PATH],
+           [Directory containing the SELinux policy development files (default: ${datarootdir}/selinux/devel)])
+if test -n "${SELINUX_DEVEL_PATH}"; then
+        selinux_devel_path="${SELINUX_DEVEL_PATH}"
+else
+        AX_RECURSIVE_EVAL([${datarootdir}/selinux/devel], [selinux_devel_path])
+fi
+AC_SUBST([selinux_devel_path])
+
+if test "${enable_selinux_build}" = "yes"; then
+   AC_MSG_NOTICE([Checking for SELinux policy development files])
+   AC_CHECK_FILE([${selinux_devel_path}/Makefile], [], [enable_selinux_build="no"])
+
+   if test "${enable_selinux_build}" = "yes"; then
+        AC_DEFINE([ENABLE_SELINUX_BUILD], [1], [Build SELinux policy and enable related code paths])
+   fi
+fi
+AC_SUBST([ENABLE_SELINUX_BUILD])
+AM_CONDITIONAL([ENABLE_SELINUX_BUILD], [test "$enable_selinux_build" = "yes"])
+
+dnl
 dnl  OpenVPN 3 Linux state directory
 dnl
 dnl  Defaults to ${localstatedir}/lib/openvpn3
@@ -393,6 +432,7 @@ AC_CONFIG_FILES([
         doxygen/openvpn3-linux.doxy \
         src/policy/Makefile \
         src/python/Makefile \
+        src/selinux/Makefile \
         src/service-autostart/Makefile \
         src/tests/Makefile \
         src/tests/dbus/Makefile \

@@ -45,6 +45,8 @@ src/configmgr/openvpn3-service-configmgr
 src/log/openvpn3-service-logger
 src/netcfg/openvpn3-service-netcfg
 src/ovpn3cli/openvpn3
+src/selinux/openvpn3.pp
+src/selinux/tmp
 src/sessionmgr/openvpn3-service-sessionmgr
 src/tests/command-parser/cmdparser
 src/tests/dbus/config-lock-down
