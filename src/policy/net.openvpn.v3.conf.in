@@ -4,6 +4,20 @@
  "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
 <busconfig>
   <policy context="default">
+    <!--
+        All users on the system has access to the methods in the
+        configuration and session manager services by default.  These
+        methods are to allow users to manage their own configuration
+        profiles and running sessions.
+
+        Remember that in addition to this D-Bus policy, both these manager
+        services has their own set of of ACL management on top of this policy.
+        The default ACL in these manager services is that a user can only
+        manage configurations and sessions created by that user.
+    -->
+    <!--                                -->
+    <!--  net.openvpn.v3.configuration  -->
+    <!--                                -->
     <allow send_destination="net.openvpn.v3.configuration"
            send_interface="net.openvpn.v3.configuration"
            send_type="method_call"
@@ -71,6 +85,9 @@
            send_type="method_call"
            send_member="Ping"/>
 
+    <!--                                -->
+    <!--  net.openvpn.v3.sessions       -->
+    <!--                                -->
     <allow send_destination="net.openvpn.v3.sessions"
            send_interface="net.openvpn.v3.sessions"
            send_type="method_call"
@@ -152,24 +169,41 @@
 
     <!--
          Only the "@OPENVPN_USERNAME@" user is allowed to
-         receive backend signals
+         receive signals from net.openvpn.v3.backend interfaces
     -->
     <deny receive_interface="net.openvpn.v3.backends"
           receive_type="signal"/>
   </policy>
 
+
   <policy user="@OPENVPN_USERNAME@">
-    <allow own="net.openvpn.v3.log"/>
+    <!--
+         The "@OPENVPN_USERNAME@" needs these privileges to get/set properties
+         in the backend VPN client objects.  Only this user needs these
+         privileges.
 
-    <allow own="net.openvpn.v3.configuration"/>
+         FIXME: Reduce this very broad privilege access.  It should be limited
+                to only net.openvpn.v3.* send_destinations
+    -->
+    <allow send_interface="org.freedesktop.DBus.Properties"
+           send_type="method_call"
+           send_member="Get"/>
+    <allow send_interface="org.freedesktop.DBus.Properties"
+           send_type="method_call"
+           send_member="Set"/>
 
-    <allow own="net.openvpn.v3.sessions"/>
+    <allow send_interface="org.freedesktop.DBus.Properties"
+           send_type="method_call"
+           send_member="GetAll"/>
 
-    <allow own="net.openvpn.v3.netcfg"/>
-    <allow send_destination="net.openvpn.v3.netcfg"
-           send_interface="org.freedesktop.DBus.Peer"
+    <allow send_interface="org.freedesktop.DBus.Peer"
            send_type="method_call"
            send_member="Ping"/>
+
+    <!--                                -->
+    <!--  net.openvpn.v3.log            -->
+    <!--                                -->
+    <allow own="net.openvpn.v3.log"/>
 
     <allow send_destination="net.openvpn.v3.log"
            send_interface="net.openvpn.v3.log"
@@ -179,19 +213,36 @@
            send_interface="net.openvpn.v3.log"
            send_type="method_call"
            send_member="Detach"/>
+
     <allow send_destination="net.openvpn.v3.log"
            send_interface="org.freedesktop.DBus.Peer"
            send_type="method_call"
            send_member="Ping"/>
-    <allow send_destination="net.openvpn.v3.log"
-           send_interface="org.freedesktop.DBus.Properties"
-           send_type="method_call"
-           send_member="GetAll"/>
+
+    <!--                                -->
+    <!--  net.openvpn.v3.configuration  -->
+    <!--                                -->
+    <allow own="net.openvpn.v3.configuration"/>
+
+    <!--                                -->
+    <!--  net.openvpn.v3.sessions       -->
+    <!--                                -->
+    <allow own="net.openvpn.v3.sessions"/>
+
+    <!--                                -->
+    <!--  net.openvpn.v3.backends       -->
+    <!--                                -->
+
+    <!--
+        FIXME: This is fairly broad access, not bound to a specific
+        send_destination.  This is not currently possible, as the backends
+        bus names are net.openvpn.v3.backends.be$PID and the D-Bus policy
+        lacks a send_interface_prefix feature.
+     -->
 
     <allow send_interface="net.openvpn.v3.backends"
            send_type="method_call"
            send_member="StartClient"/>
-
     <allow send_interface="net.openvpn.v3.backends"
            send_type="method_call"
            send_member="RegistrationConfirmation"/>
@@ -232,6 +283,15 @@
            send_type="method_call"
            send_member="UserInputProvide"/>
 
+    <!--                                -->
+    <!--  net.openvpn.v3.netcfg         -->
+    <!--                                -->
+    <allow own="net.openvpn.v3.netcfg"/>
+    <allow send_destination="net.openvpn.v3.netcfg"
+           send_interface="org.freedesktop.DBus.Peer"
+           send_type="method_call"
+           send_member="Ping"/>
+
     <!--
          Signals sent by backends are allowed for
          the "@OPENVPN_USERNAME@" user.  This is needed
@@ -251,48 +311,13 @@
     <allow receive_interface="net.openvpn.v3.backends"
            receive_type="signal"
            receive_member="StatusChange"/>
-
-    <!--
-         The "@OPENVPN_USERNAME@" needs these privileges to get/set properties
-         in the backend VPN client objects.  Only this user needs these
-         privileges
-    -->
-    <allow send_interface="org.freedesktop.DBus.Properties"
-           send_type="method_call"
-           send_member="Get"/>
-    <allow send_interface="org.freedesktop.DBus.Properties"
-           send_type="method_call"
-           send_member="Set"/>
-
-    <allow send_interface="org.freedesktop.DBus.Properties"
-           send_type="method_call"
-           send_member="GetAll"/>
-
-    <allow send_interface="org.freedesktop.DBus.Peer"
-           send_type="method_call"
-           send_member="Ping"/>
-
   </policy>
 
+
   <policy user="root">
-    <allow send_destination="net.openvpn.v3.configuration"
-	send_interface="net.openvpn.v3.configuration"
-	send_type="method_call"
-	send_member="Fetch"/>
-    <allow send_destination="net.openvpn.v3.configuration"
-           send_interface="net.openvpn.v3.configuration"
-           send_type="method_call"
-           send_member="TransferOwnership"/>
-    <allow send_destination="net.openvpn.v3.configuration"
-           send_interface="org.freedesktop.DBus.Peer"
-           send_type="method_call"
-           send_member="Ping"/>
-
-    <allow send_destination="net.openvpn.v3.sessions"
-           send_interface="net.openvpn.v3.sessions"
-           send_type="method_call"
-           send_member="TransferOwnership"/>
-
+    <!--                                -->
+    <!--  net.openvpn.v3.log            -->
+    <!--                                -->
     <allow send_destination="net.openvpn.v3.log"
            send_interface="net.openvpn.v3.log"
            send_type="method_call"
@@ -301,33 +326,11 @@
            send_interface="net.openvpn.v3.log"
            send_type="method_call"
            send_member="Detach"/>
-    <allow send_destination="net.openvpn.v3.log"
-           send_interface="org.freedesktop.DBus.Peer"
-           send_type="method_call"
-           send_member="Ping"/>
 
-    <allow send_destination="net.openvpn.v3.backends"
-           send_interface="org.freedesktop.DBus.Peer"
-           send_type="method_call"
-           send_member="Ping"/>
-
-    <allow send_destination="net.openvpn.v3.sessions"
-           send_interface="org.freedesktop.DBus.Peer"
-           send_type="method_call"
-           send_member="Ping"/>
-
-    <allow send_destination="net.openvpn.v3.log"
-           send_interface="net.openvpn.v3.log"
-           send_type="method_call"
-           send_member="Attach"/>
-    <allow send_destination="net.openvpn.v3.log"
-           send_interface="net.openvpn.v3.log"
-           send_type="method_call"
-           send_member="Detach"/>
-    <allow send_destination="net.openvpn.v3.log"
-           send_interface="org.freedesktop.DBus.Peer"
-           send_type="method_call"
-           send_member="Ping"/>
+    <!--
+        Property access is restricted to the main log object
+        at: /net/openvpn/v3/log
+     -->
     <allow send_destination="net.openvpn.v3.log"
            send_interface="org.freedesktop.DBus.Properties"
            send_type="method_call"
@@ -344,7 +347,120 @@
            send_member="Set"
            send_path="/net/openvpn/v3/log"/>
 
-    <allow own_prefix="net.openvpn.v3.backends"/>
-  </policy>
+    <allow send_destination="net.openvpn.v3.log"
+           send_interface="org.freedesktop.DBus.Peer"
+           send_type="method_call"
+           send_member="Ping"/>
 
+    <!--                                -->
+    <!--  net.openvpn.v3.configuration  -->
+    <!--                                -->
+    <allow send_destination="net.openvpn.v3.configuration"
+           send_interface="net.openvpn.v3.configuration"
+           send_type="method_call"
+           send_member="Fetch"/>
+
+    <allow send_destination="net.openvpn.v3.configuration"
+           send_interface="net.openvpn.v3.configuration"
+           send_type="method_call"
+           send_member="TransferOwnership"/>
+
+    <allow send_destination="net.openvpn.v3.configuration"
+           send_interface="org.freedesktop.DBus.Peer"
+           send_type="method_call"
+           send_member="Ping"/>
+
+    <!--                                -->
+    <!--  net.openvpn.v3.netcfg         -->
+    <!--                                -->
+
+    <!--  In main netcfg object: /net/openvpn/v3/netcfg -->
+    <allow send_interface="net.openvpn.v3.netcfg"
+           send_destination="net.openvpn.v3.netcfg"
+           send_type="method_call"
+           send_member="CreateVirtualInterface"/>
+
+    <allow send_interface="net.openvpn.v3.netcfg"
+           send_destination="net.openvpn.v3.netcfg"
+           send_type="method_call"
+           send_member="ProtectSocket"/>
+
+    <!--  In netcfg managed device object: /net/openvpn/v3/netcfg/$DEVICE -->
+    <allow send_destination="net.openvpn.v3.netcfg"
+           send_interface="net.openvpn.v3.netcfg"
+           send_type="method_call"
+           send_member="AddIPAddress"/>
+    <allow send_destination="net.openvpn.v3.netcfg"
+           send_interface="net.openvpn.v3.netcfg"
+           send_type="method_call"
+           send_member="SetRemoteAddress"/>
+    <allow send_destination="net.openvpn.v3.netcfg"
+           send_interface="net.openvpn.v3.netcfg"
+           send_type="method_call"
+           send_member="AddNetworks"/>
+    <allow send_destination="net.openvpn.v3.netcfg"
+           send_interface="net.openvpn.v3.netcfg"
+           send_type="method_call"
+           send_member="AddDNS"/>
+    <allow send_destination="net.openvpn.v3.netcfg"
+           send_interface="net.openvpn.v3.netcfg"
+           send_type="method_call"
+           send_member="AddDNSSearch"/>
+    <allow send_destination="net.openvpn.v3.netcfg"
+           send_interface="net.openvpn.v3.netcfg"
+           send_type="method_call"
+           send_member="RemoveDNSSearch"/>
+    <allow send_destination="net.openvpn.v3.netcfg"
+           send_interface="net.openvpn.v3.netcfg"
+           send_type="method_call"
+           send_member="Establish"/>
+    <allow send_interface="net.openvpn.v3.netcfg"
+           send_destination="net.openvpn.v3.netcfg"
+           send_type="method_call"
+           send_member="Disable"/>
+    <allow send_interface="net.openvpn.v3.netcfg"
+           send_destination="net.openvpn.v3.netcfg"
+           send_type="method_call"
+           send_member="Destroy"/>
+
+    <allow send_destination="net.openvpn.v3.netcfg"
+           send_interface="org.freedesktop.DBus.Properties"
+           send_type="method_call"
+           send_member="Get"/>
+    <allow send_destination="net.openvpn.v3.netcfg"
+           send_interface="org.freedesktop.DBus.Properties"
+           send_type="method_call"
+           send_member="GetAll"/>
+    <allow send_destination="net.openvpn.v3.netcfg"
+           send_interface="org.freedesktop.DBus.Properties"
+           send_type="method_call"
+           send_member="Set" />
+
+    <allow send_destination="net.openvpn.v3.netcfg"
+          send_interface="org.freedesktop.DBus.Peer"
+          send_type="method_call"
+          send_member="Ping"/>
+
+    <!--                                -->
+    <!--  net.openvpn.v3.backends       -->
+    <!--                                -->
+    <allow own_prefix="net.openvpn.v3.backends"/>
+    <allow send_destination="net.openvpn.v3.backends"
+           send_interface="org.freedesktop.DBus.Peer"
+           send_type="method_call"
+           send_member="Ping"/>
+
+    <!--                                -->
+    <!--  net.openvpn.v3.sessions       -->
+    <!--                                -->
+    <allow send_destination="net.openvpn.v3.sessions"
+           send_interface="net.openvpn.v3.sessions"
+           send_type="method_call"
+           send_member="TransferOwnership"/>
+
+    <allow send_destination="net.openvpn.v3.sessions"
+           send_interface="org.freedesktop.DBus.Peer"
+           send_type="method_call"
+           send_member="Ping"/>
+  </policy>
 </busconfig>
