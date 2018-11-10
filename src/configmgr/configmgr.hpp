@@ -26,6 +26,7 @@
 
 #include <openvpn/log/logsimple.hpp>
 #include "common/core-extensions.hpp"
+#include "common/lookup.hpp"
 #include "configmgr/overrides.hpp"
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
@@ -34,7 +35,6 @@
 #include "log/ansicolours.hpp"
 #include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"
-#include "ovpn3cli/lookup.hpp"
 
 using namespace openvpn;
 

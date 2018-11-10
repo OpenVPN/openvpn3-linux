@@ -24,7 +24,7 @@
  */
 
 #include "common/cmdargparser.hpp"
-#include "../lookup.hpp"
+#include "common/lookup.hpp"
 #include "../arghelpers.hpp"
 
 /**

@@ -37,7 +37,7 @@
 #include "dbus/connection-creds.hpp"
 #include "dbus/glibutils.hpp"
 #include "dbus/object-property.hpp"
-#include "ovpn3cli/lookup.hpp"
+#include "common/lookup.hpp"
 #include "core-tunbuilder.hpp"
 #include "./dns-direct-file.hpp"
 #include "netcfg-options.hpp"

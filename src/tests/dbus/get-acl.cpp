@@ -28,9 +28,9 @@
 #include <exception>
 
 #include "dbus/core.hpp"
+#include "common/lookup.hpp"
 #include "configmgr/proxy-configmgr.hpp"
 #include "sessionmgr/proxy-sessionmgr.hpp"
-#include "ovpn3cli/lookup.hpp"
 
 using namespace openvpn;
 

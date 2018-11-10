@@ -27,6 +27,7 @@
 #include <cap-ng.h>
 
 #include "common/utils.hpp"
+#include "common/lookup.hpp"
 #include "common/cmdargparser.hpp"
 #include "dbus/core.hpp"
 #include "log/dbus-log.hpp"
@@ -34,7 +35,6 @@
 #include "log/ansicolours.hpp"
 #include "log/proxy-log.hpp"
 #include "log/core-dbus-logbase.hpp"
-#include "ovpn3cli/lookup.hpp"
 
 #include "netcfg.hpp"
 #include "netcfg-options.hpp"

@@ -41,6 +41,7 @@
 #include <openvpn/log/logsimple.hpp>
 
 #include "common/core-extensions.hpp"
+#include "common/lookup.hpp"
 #include "common/requiresqueue.hpp"
 #include "common/utils.hpp"
 #include "dbus/core.hpp"
@@ -49,7 +50,6 @@
 #include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"
 #include "client/statusevent.hpp"
-#include "ovpn3cli/lookup.hpp"
 
 using namespace openvpn;
 

@@ -33,12 +33,12 @@
 
 #include "dbus/core.hpp"
 #include "common/cmdargparser.hpp"
+#include "common/lookup.hpp"
 #include "common/requiresqueue.hpp"
 #include "common/utils.hpp"
 #include "configmgr/proxy-configmgr.hpp"
 #include "sessionmgr/proxy-sessionmgr.hpp"
 
-#include "lookup.hpp"
 #include "commands/config.hpp"
 #include "commands/session.hpp"
 #include "commands/log.hpp"

@@ -30,13 +30,13 @@
 
 #include <openvpn/common/rc.hpp>
 
+#include "common/lookup.hpp"
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
 #include "dbus/glibutils.hpp"
 #include "dbus/path.hpp"
 #include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"
-#include "ovpn3cli/lookup.hpp"
 #include "dns-resolver-settings.hpp"
 #include "netcfg-signals.hpp"
 #include "netcfg-device.hpp"

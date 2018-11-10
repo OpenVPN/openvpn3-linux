@@ -27,7 +27,7 @@
 #include <iostream>
 
 #include "common/utils.hpp"
-#include "ovpn3cli/lookup.hpp"
+#include "common/lookup.hpp"
 
 int main(int argc, char **argv)
 {
