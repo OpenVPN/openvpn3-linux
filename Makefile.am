@@ -184,7 +184,8 @@ src_tests_misc_logwriter_tests_SOURCES = \
 	src/tests/misc/logwriter-tests.cpp
 
 src_tests_misc_lookup_tests_SOURCES = \
-	src/tests/misc/lookup-tests.cpp
+	src/tests/misc/lookup-tests.cpp \
+	src/common/lookup.cpp
 
 src_tests_misc_netcfg_dns_direct_file_selftest_SOURCES = \
 	src/tests/misc/netcfg-dns-direct-file-selftest.cpp
@@ -219,7 +220,8 @@ src_tests_dbus_fetch_config2_SOURCES = \
 	src/tests/dbus/fetch-config2.cpp
 
 src_tests_dbus_get_acl_SOURCES = \
-	src/tests/dbus/get-acl.cpp
+	src/tests/dbus/get-acl.cpp \
+	src/common/lookup.cpp
 
 src_tests_dbus_get_config_overrides_SOURCES = \
 	src/tests/dbus/get-config-overrides.cpp
@@ -296,7 +298,8 @@ pkglibexec_PROGRAMS = \
 src_ovpn3cli_openvpn3_SOURCES = \
 	src/ovpn3cli/openvpn3.cpp \
 	src/ovpn3cli/arghelpers.hpp \
-	src/ovpn3cli/lookup.hpp \
+	src/common/lookup.cpp \
+	src/common/lookup.hpp \
 	src/ovpn3cli/commands/config.hpp \
 	src/ovpn3cli/commands/log.hpp \
 	src/ovpn3cli/commands/session.hpp \
@@ -346,6 +349,7 @@ src_configmgr_openvpn3_service_configmgr_SOURCES = \
 	src/configmgr/configmgr.hpp \
 	$(DBUS_SOURCES) \
 	src/common/core-extensions.hpp \
+	src/common/lookup.cpp \
 	src/common/utils.hpp \
 	src/log/dbus-log.hpp
 
@@ -358,6 +362,7 @@ src_sessionmgr_openvpn3_service_sessionmgr_SOURCES = \
 	src/sessionmgr/sessionmgr.hpp \
 	src/client/statusevent.hpp \
 	$(DBUS_SOURCES) \
+	src/common/lookup.cpp \
 	src/common/utils.hpp \
 	src/log/dbus-log.hpp
 
@@ -378,6 +383,7 @@ src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/netcfg/dns-direct-file.hpp \
 	src/netcfg/dns-resolver-settings.hpp \
 	$(DBUS_SOURCES) \
+	src/common/lookup.cpp \
 	src/common/utils.hpp \
 	src/log/core-dbus-logbase.hpp \
 	src/log/dbus-log.hpp

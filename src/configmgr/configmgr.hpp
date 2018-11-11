@@ -27,6 +27,7 @@
 #include <openvpn/log/logsimple.hpp>
 #include "common/core-extensions.hpp"
 #include "common/lookup.hpp"
+#include "common/utils.hpp"
 #include "configmgr/overrides.hpp"
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
