@@ -37,13 +37,13 @@
 #include <sstream>
 
 #define SHUTDOWN_NOTIF_PROCESS_NAME "openvpn3-service-client"
+#include "dbus/core.hpp"
+#include "dbus/connection-creds.hpp"
+#include "dbus/path.hpp"
 #include "common/requiresqueue.hpp"
 #include "common/utils.hpp"
 #include "common/cmdargparser.hpp"
 #include "configmgr/proxy-configmgr.hpp"
-#include "dbus/core.hpp"
-#include "dbus/connection-creds.hpp"
-#include "dbus/path.hpp"
 #include "log/ansicolours.hpp"
 #include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"

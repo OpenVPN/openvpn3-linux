@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017-2018   OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2017-2018   David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -28,18 +28,10 @@
  *         front-end.
  */
 
-#ifndef OPENVPN3_DBUS_REQUIRESQUEUE_HPP
-#define OPENVPN3_DBUS_REQUIRESQUEUE_HPP
+#pragma once
 
-#include <iostream>
-#include <sstream>
-#include <map>
-#include <vector>
-#include <algorithm>
-#include <exception>
-#include <cassert>
-
-#include "dbus/core.hpp"
+#include "config.h"
+#include "dbus/constants.hpp"
 
 
 /**
@@ -48,14 +40,7 @@
  */
 struct RequiresSlot
 {
-    RequiresSlot()
-        : id(0),
-          type(ClientAttentionType::UNSET),
-          group(ClientAttentionGroup::UNSET),
-          name(""), value(""), user_description(""),
-          hidden_input(false), provided(false)
-    {
-    }
+    RequiresSlot();
 
     unsigned int id;               ///< Unique ID per type/group
     ClientAttentionType type;      ///< Type categorization of the requirement
@@ -86,10 +71,7 @@ public:
      *
      * @param err   A string containing the error message
      */
-    RequiresQueueException(std::string err)
-        : error(err)
-    {
-    }
+    RequiresQueueException(std::string err);
 
     /**
      *  Used for both state signalling and errors
@@ -97,27 +79,12 @@ public:
      * @param errname  A string containing a "tag name" of the state/error
      * @param errmsg   A string describing the event
      */
-    RequiresQueueException(std::string errname, std::string errmsg)
-        : error(errmsg),
-          errorname(errname)
-    {
-    }
+    RequiresQueueException(std::string errname, std::string errmsg);
 
     virtual ~RequiresQueueException() throw() {}
 
-    virtual const char* what() const throw()
-    {
-        std::stringstream ret;
-        ret << "[RequireQueryException"
-            << "] " << error;
-        return ret.str().c_str();
-    }
-
-    const std::string& err() const noexcept
-    {
-        std::string ret(error);
-        return std::move(ret);
-    }
+    virtual const char* what() const throw();
+    const std::string& err() const noexcept;
 
 
     /**
@@ -127,13 +94,9 @@ public:
      * @param invocation  Pointer to an active GDBusMethodInvocation object
      *                    belonging to an on-going D-Bus method call.
      */
-    void GenerateDBusError(GDBusMethodInvocation *invocation)
-    {
-        std::string errnam = (!errorname.empty() ? errorname : "net.openvpn.v3.error.undefined");
-        GError *dbuserr = g_dbus_error_new_for_dbus_error(errnam.c_str(), error.c_str());
-        g_dbus_method_invocation_return_gerror(invocation, dbuserr);
-        g_error_free(dbuserr);
-    }
+    void GenerateDBusError(GDBusMethodInvocation *invocation);
+
+
 private:
     std::string error;
     std::string errorname;
@@ -143,19 +106,14 @@ private:
 /**
  *  Implements the service/server side of the RequiresQueue
  */
+
 class RequiresQueue
 {
 public:
     typedef std::tuple<ClientAttentionType, ClientAttentionGroup> ClientAttTypeGroup;
 
-    RequiresQueue()
-        : reqids()
-    {
-    };
-
-    ~RequiresQueue()
-    {
-    }
+    RequiresQueue();
+    ~RequiresQueue();
 
     /**
      * Returns a string containing a D-Bus introspection section for the
@@ -177,36 +135,7 @@ public:
     std::string IntrospectionMethods(const std::string meth_qchktypegr,
                                      const std::string meth_queuefetch,
                                      const std::string meth_queuechk,
-                                     const std::string meth_provideresp)
-    {
-        std::stringstream introspection;
-        introspection << "    <method name='" << meth_qchktypegr << "'>"
-                      << "      <arg type='a(uu)' name='type_group_list' direction='out'/>"
-                      << "    </method>"
-                      << "    <method name='" << meth_queuefetch << "'>"
-                      << "      <arg type='u' name='type' direction='in'/>"
-                      << "      <arg type='u' name='group' direction='in'/>"
-                      << "      <arg type='u' name='id' direction='in'/>"
-                      << "      <arg type='u' name='type' direction='out'/>"
-                      << "      <arg type='u' name='group' direction='out'/>"
-                      << "      <arg type='u' name='id' direction='out'/>"
-                      << "      <arg type='s' name='name' direction='out'/>"
-                      << "      <arg type='s' name='description' direction='out'/>"
-                      << "      <arg type='b' name='hidden_input' direction='out'/>"
-                      << "    </method>"
-                      << "    <method name='" << meth_queuechk << "'>"
-                      << "      <arg type='u' name='type' direction='in'/>"
-                      << "      <arg type='u' name='group' direction='in'/>"
-                      << "      <arg type='au' name='indexes' direction='out'/>"
-                      << "    </method>"
-                      << "    <method name='" << meth_provideresp << "'>"
-                      << "      <arg type='u' name='type' direction='in'/>"
-                      << "      <arg type='u' name='group' direction='in'/>"
-                      << "      <arg type='u' name='id' direction='in'/>"
-                      << "      <arg type='s' name='value' direction='in'/>"
-                      << "    </method>";
-        return introspection.str();
-    }
+                                     const std::string meth_provideresp);
 
     /**
      * Adds a user request requirement to the queue.
@@ -223,23 +152,10 @@ public:
      * @return Returns the assigned ID for this requirement
      */
     unsigned int RequireAdd(ClientAttentionType type,
-                    ClientAttentionGroup group,
-                    std::string name,
-                    std::string descr,
-                    bool hidden_input)
-    {
-        struct RequiresSlot elmt;
-        elmt.id = reqids[get_reqid_index(type, group)]++;
-        elmt.type = type;
-        elmt.group = group;
-        elmt.name = name;
-        elmt.user_description = descr;
-        elmt.provided = false;
-        elmt.hidden_input = hidden_input;
-        slots.push_back(elmt);
-
-        return elmt.id;
-    }
+                            ClientAttentionGroup group,
+                            std::string name,
+                            std::string descr,
+                            bool hidden_input);
 
 
     /**
@@ -251,42 +167,7 @@ public:
      *  Throws RequiresQueueException() when the queue is empty.
      *
      **/
-    void QueueFetch(GDBusMethodInvocation *invocation, GVariant *parameters)
-    {
-        unsigned int type;
-        unsigned int group;
-        unsigned int id;
-        g_variant_get(parameters, "(uuu)", &type, &group, &id);
-
-        // Fetch the requested slot id
-        for (auto& e : slots)
-        {
-            if (id == e.id)
-            {
-                if (e.type == (ClientAttentionType) type
-                    && e.group == (ClientAttentionGroup) group)
-                {
-                    if (e.provided)
-                    {
-                        throw RequiresQueueException("net.openvpn.v3.already-provided",
-                                                     "User input already provided");
-                    }
-
-                    GVariant *elmt = g_variant_new("(uuussb)",
-                                                   e.type,
-                                                   e.group,
-                                                   e.id,
-                                                   e.name.c_str(),
-                                                   e.user_description.c_str(),
-                                                   e.hidden_input);
-                    g_dbus_method_invocation_return_value(invocation, elmt);
-                    return;
-                }
-            }
-        }
-        throw RequiresQueueException("net.openvpn.v3.element-not-found",
-                                     "No requires queue element found");
-    }
+    void QueueFetch(GDBusMethodInvocation *invocation, GVariant *parameters);
 
 
     /**
@@ -307,32 +188,11 @@ public:
      *
      */
     void UpdateEntry(ClientAttentionType type, ClientAttentionGroup group,
-                     unsigned int id, std::string newvalue)
-    {
-        for (auto& e : slots)
-        {
-            if (e.type ==  type && e.group == (ClientAttentionGroup) group && e.id == id)
-            {
-                if (!e.provided)
-                {
-                    e.provided = true;
-                    e.value = newvalue;
-                    return;
-                }
-                else
-                {
-                    throw RequiresQueueException("net.openvpn.v3.error.input-already-provided",
-                                                 "Request ID " + std::to_string(id) + " has already been provided");
-                }
-            }
-        }
-        throw RequiresQueueException("net.openvpn.v3.invalid-input",
-                                     "No matching entry found in the request queue");
-    }
+                     unsigned int id, std::string newvalue);
 
 
     /**
-     *  This is a D-Bus variant of @UpdateEntry().  This takes the
+     *  This is a D-Bus variant of UpdateEntry().  This takes the
      *  D-Bus method call invocation and parameters provided with the call
      *  and parses them.  This information is then sent to the other
      *  @UpdateEntry() method for the real update.
@@ -348,32 +208,7 @@ public:
      *                     the D-Bus call
      *
      */
-    void UpdateEntry(GDBusMethodInvocation *invocation, GVariant *indata)
-    {
-        //
-        // Typically used by the function parsing user provided data
-        // usually a backend process who asked for user input
-        //
-        unsigned int type;
-        unsigned int group;
-        guint id;
-        gchar *value = nullptr;
-        g_variant_get(indata, "(uuus)",
-                      &type,
-                      &group,
-                      &id,
-                      &value);
-
-        if (NULL == value)
-        {
-            throw RequiresQueueException("net.openvpn.v3.error.invalid-input",
-                                         "No value provided for RequiresSlot ID " + std::to_string(id));
-        }
-
-        UpdateEntry((ClientAttentionType) type, (ClientAttentionGroup) group, id, std::string(value));
-        g_dbus_method_invocation_return_value(invocation, NULL);
-        g_free(value);  // Avoid leak
-    }
+    void UpdateEntry(GDBusMethodInvocation *invocation, GVariant *indata);
 
 
     /**
@@ -387,19 +222,9 @@ public:
      * @return Nothing on success.  If the value could not be found, an
      *         exception is thrown.
      */
-    void ResetValue(ClientAttentionType type, ClientAttentionGroup group, unsigned int id)
-    {
-        for (auto& e : slots)
-        {
-            if (e.type == type && e.group == group && e.id == id)
-            {
-                e.provided = false;
-                e.value = "";
-                return;
-            }
-        }
-        throw RequiresQueueException("No matching entry found in the request queue");
-    }
+    void ResetValue(ClientAttentionType type,
+                    ClientAttentionGroup group, unsigned int id);
+
 
     /**
      * Retrieve the value provided by a user, using the RequiresSlot ID as
@@ -411,21 +236,9 @@ public:
      * @return Returns a string with the value if the value was found and
      *         provided by the user, otherwise an exception is thrown.
      */
-    std::string GetResponse(ClientAttentionType type, ClientAttentionGroup group, unsigned int id)
-    {
-        for (auto& e : slots)
-        {
-            if (e.type == type && e.group == group && e.id == id)
-            {
-                if (!e.provided)
-                {
-                    throw RequiresQueueException("Request never provided by front-end");
-                }
-                return e.value;
-            }
-        }
-        throw RequiresQueueException("No matching entry found in the request queue");
-    }
+    std::string GetResponse(ClientAttentionType type,
+                            ClientAttentionGroup group, unsigned int id);
+
 
     /**
      * Retrieve a front-end response, using a RequiresSlot name as the lookup
@@ -437,21 +250,9 @@ public:
      * @return Returns a string with the value if the value was found and
      *         provided by the user, otherwise an exception is thrown.
      */
-    std::string GetResponse(ClientAttentionType type, ClientAttentionGroup group, std::string name)
-    {
-        for (auto& e : slots)
-        {
-            if (e.type == type && e.group == group && e.name == name)
-            {
-                if (!e.provided)
-                {
-                    throw RequiresQueueException("Request never provided by front-end");
-                }
-                return e.value;
-            }
-        }
-        throw RequiresQueueException("No matching entry found in the request queue");
-    }
+    std::string GetResponse(ClientAttentionType type,
+                            ClientAttentionGroup group, std::string name);
+
 
     /**
      * Get the number of requires slots which have been prepared for a
@@ -461,18 +262,8 @@ public:
      * @param group  ClientAttentionGroup the value to count belongs to
      * @return Returns the number of requires slots prepared
      */
-    unsigned int QueueCount(ClientAttentionType type, ClientAttentionGroup group)
-    {
-        unsigned int ret = 0;
-        for (auto& e : slots)
-        {
-            if (type == e.type && group == e.group)
-            {
-                ret++;
-            }
-        }
-        return ret;
-    }
+    unsigned int QueueCount(ClientAttentionType type,
+                            ClientAttentionGroup group);
 
 
     /**
@@ -485,36 +276,8 @@ public:
      * @return Returns a std::vector<ClientAttTypeGroup>
      *         of type/groups not yet satisfied.
      */
-    std::vector<ClientAttTypeGroup> QueueCheckTypeGroup()
-    {
-        std::vector<ClientAttTypeGroup> ret;
+    std::vector<ClientAttTypeGroup> QueueCheckTypeGroup();
 
-        for (auto& e : slots)
-        {
-            if (!e.provided)
-            {
-                // Check if we've already spotted this type/group
-                bool found = false;
-                for (auto& r : ret)
-                {
-                    ClientAttentionType t;
-                    ClientAttentionGroup g;
-                    std::tie(t, g) = r;
-                    if (t == e.type && g == e.group)
-                    {
-                        // yes, we have
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found)
-                {
-                    ret.push_back(std::make_tuple(e.type, e.group));
-                }
-            }
-        }
-        return ret;
-    }
 
     /**
      * D-Bus wrapper around @QueueCheckTypeGroup().  Returns the result
@@ -523,31 +286,7 @@ public:
      * @param GDBusMethodInvocation Pointer to a D-Bus invocation, where the
      *                              result will be returned on success
      */
-    void QueueCheckTypeGroup(GDBusMethodInvocation *invocation)
-    {
-        // Convert the std::vector to a GVariant based array GDBus can use
-        // as the method call response
-        std::vector<std::tuple<ClientAttentionType, ClientAttentionGroup>> qchk_res = QueueCheckTypeGroup();
-
-        GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("a(uu)"));
-        assert(NULL != bld);
-        for (auto& e : qchk_res)
-        {
-            ClientAttentionType t;
-            ClientAttentionGroup g;
-            std::tie(t, g) = e;
-            g_variant_builder_add(bld, "(uu)", (unsigned int) t, (unsigned int) g);
-        }
-
-        // Wrap the GVariant array into a tuple which GDBus expects
-        GVariantBuilder *ret = g_variant_builder_new(G_VARIANT_TYPE_TUPLE);
-        g_variant_builder_add_value(ret, g_variant_builder_end(bld));
-        g_dbus_method_invocation_return_value(invocation, g_variant_builder_end(ret));
-
-        // Clean-up GVariant builders
-        g_variant_builder_unref(bld);
-        g_variant_builder_unref(ret);
-    }
+    void QueueCheckTypeGroup(GDBusMethodInvocation *invocation);
 
 
     /**
@@ -559,20 +298,9 @@ public:
      * @return Returns an array of unsigned integers with IDs to variables
      *         still not been provided by the user
      */
-    std::vector<unsigned int> QueueCheck(ClientAttentionType type, ClientAttentionGroup group)
-    {
-        std::vector<unsigned int> ret;
-        for (auto& e : slots)
-        {
-            if (type == e.type
-                && group == e.group
-                && !e.provided)
-            {
-                ret.push_back(e.id);
-            }
-        }
-        return ret;
-    }
+    std::vector<unsigned int> QueueCheck(ClientAttentionType type,
+                                         ClientAttentionGroup group);
+
 
     /**
      * Retrieve a list of ID references of require slots which have not
@@ -589,48 +317,16 @@ public:
      *                              Must reference a valid ClientAttentionType
      *                              and ClientAttentionGroup
      */
-    void QueueCheck(GDBusMethodInvocation *invocation, GVariant *parameters)
-    {
-        unsigned int type;
-        unsigned int group;
-        g_variant_get(parameters, "(uu)", &type, &group);
+    void QueueCheck(GDBusMethodInvocation *invocation, GVariant *parameters);
 
-        // Convert the std::vector to a GVariant based array GDBus can use
-        // as the method call response
-        std::vector<unsigned int> qchk_result = QueueCheck((ClientAttentionType) type, (ClientAttentionGroup) group);
-        GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("au"));
-        for (auto& e : qchk_result)
-        {
-            g_variant_builder_add(bld, "u", e);
-        }
-
-        // Wrap the GVariant array into a tuple which GDBus expects
-        GVariantBuilder *ret = g_variant_builder_new(G_VARIANT_TYPE_TUPLE);
-        g_variant_builder_add_value(ret, g_variant_builder_end(bld));
-        g_dbus_method_invocation_return_value(invocation, g_variant_builder_end(ret));
-
-        // Clean-up GVariant builders
-        g_variant_builder_unref(bld);
-        g_variant_builder_unref(ret);
-    }
 
     /**
      * Counts all requires slots which have not received any user input
      *
      * @return Returns an unsigned integer of slots lacking user responses
      */
-    unsigned int QueueCheckAll()
-    {
-        unsigned int ret = 0;
-        for (auto& e : slots)
-        {
-            if (!e.provided)
-            {
-                ret++;
-            }
-        }
-        return ret;
-    }
+    unsigned int QueueCheckAll();
+
 
     /**
      * Simple wrapper around @QueueCheckAll which only returns true or false
@@ -638,10 +334,8 @@ public:
      * @return Returns true if all requires slots has been satisfied
      *         successfully
      */
-    bool QueueAllDone()
-        {
-            return QueueCheckAll() == 0;
-        }
+    bool QueueAllDone();
+
 
     /**
      * Checks if a ClientAttentionType and ClientAttentionGroup is fully
@@ -652,10 +346,9 @@ public:
      *
      * @return Returns true if all slots have valid responses.
      */
-    bool QueueDone(ClientAttentionType type, ClientAttentionGroup group)
-    {
-        return QueueCheck(type, group).size() == 0;
-    }
+    bool QueueDone(ClientAttentionType type,
+                   ClientAttentionGroup group);
+
 
     /**
      * Checks if a ClientAttentionType and ClientAttentionGroup is fully
@@ -668,17 +361,8 @@ public:
      * @return Returns true if all slots have received user input responses,
      *         otherwise false.
      */
-    bool QueueDone(GVariant *parameters)
-    {
-        // First, grab the slot ID ...
-        unsigned int type;
-        unsigned int group;
-        unsigned int id;
-        gchar *value = nullptr;
-        g_variant_get(parameters, "(uuus)", &type, &group, &id, &value);
+    bool QueueDone(GVariant *parameters);
 
-        return QueueCheck((ClientAttentionType) type, (ClientAttentionGroup) group).size() == 0;
-    }
 
 #ifdef DEBUG_REQUIRESQUEUE
     /**
@@ -686,7 +370,7 @@ public:
      */
     void _DumpStdout()
     {
-         _DumpQueue(std::cout);
+        _DumpQueue(std::cout);
     }
 
 
@@ -718,6 +402,7 @@ public:
     }
 #endif
 
+
 private:
     std::map<unsigned int, unsigned int> reqids;
     std::vector<struct RequiresSlot> slots;
@@ -740,5 +425,3 @@ private:
     }
 
 };
-
-#endif // OPENVPN3_DBUS_REQUIRESQUEUE_HPP

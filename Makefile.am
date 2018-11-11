@@ -57,9 +57,9 @@ EXTRA_DIST = \
 	src/shell/bash_completion-openvpn3 \
 	openvpn3-core \
 	vendor \
+	src/common/requiresqueue.hpp \
 	src/common/timestamp.hpp \
 	src/common/utils.hpp
-
 
 # Remove openvpn3-core embedded patches which we don't need
 # and makes 'make dist' complain
@@ -219,7 +219,8 @@ src_tests_dbus_fetch_avail_config_paths_SOURCES = \
 	src/tests/dbus/fetch-avail-config-paths.cpp
 
 src_tests_dbus_fetch_avail_session_paths_SOURCES = \
-	src/tests/dbus/fetch-avail-session-paths.cpp
+	src/tests/dbus/fetch-avail-session-paths.cpp \
+	src/common/requiresqueue.cpp
 
 src_tests_dbus_fetch_config_SOURCES = \
 	src/tests/dbus/fetch-config.cpp
@@ -281,13 +282,16 @@ src_tests_dbus_proc_wait_for_pid_SOURCES = \
 	src/common/utils.cpp
 
 src_tests_dbus_request_queue_client_SOURCES = \
-	src/tests/dbus/request-queue-client.cpp
+	src/tests/dbus/request-queue-client.cpp \
+	src/common/requiresqueue.cpp
 
 src_tests_dbus_request_queue_client2_SOURCES = \
-	src/tests/dbus/request-queue-client2.cpp
+	src/tests/dbus/request-queue-client2.cpp \
+	src/common/requiresqueue.cpp
 
 src_tests_dbus_request_queue_service_SOURCES = \
 	src/tests/dbus/request-queue-service.cpp \
+	src/common/requiresqueue.cpp \
 	src/common/utils.cpp
 
 endif
@@ -325,7 +329,7 @@ src_ovpn3cli_openvpn3_SOURCES = \
 	src/sessionmgr/proxy-sessionmgr.hpp \
 	src/dbus/requiresqueue-proxy.hpp \
 	src/common/cmdargparser.hpp \
-	src/common/requiresqueue.hpp \
+	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp
 
@@ -341,7 +345,7 @@ src_client_openvpn3_service_client_SOURCES = \
 	src/client/statusevent.hpp \
 	$(DBUS_SOURCES) \
 	src/common/core-extensions.hpp \
-	src/common/requiresqueue.hpp \
+	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp \
 	src/configmgr/proxy-configmgr.hpp \
@@ -382,6 +386,7 @@ src_sessionmgr_openvpn3_service_sessionmgr_SOURCES = \
 	src/client/statusevent.hpp \
 	$(DBUS_SOURCES) \
 	src/common/lookup.cpp \
+	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp \
 	src/log/dbus-log.hpp
@@ -404,6 +409,7 @@ src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/netcfg/dns-resolver-settings.hpp \
 	$(DBUS_SOURCES) \
 	src/common/lookup.cpp \
+	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp \
 	src/log/core-dbus-logbase.hpp \

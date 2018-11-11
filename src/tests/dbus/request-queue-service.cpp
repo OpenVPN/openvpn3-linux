@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017-2018   OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2017-2018   David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -28,10 +28,12 @@
  */
 
 #define DEBUG_REQUIRESQUEUE // Enables debug functions in requiresqueue.hpp
+
 #include <exception>
 
 #include <glib-unix.h>
 
+#include "config.h"
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
 #include "common/requiresqueue.hpp"
