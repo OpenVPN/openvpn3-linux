@@ -33,6 +33,7 @@
 #include <algorithm>
 #include <sys/types.h>
 
+#include "common/lookup.hpp"
 #include "proxy.hpp"
 
 using namespace openvpn;
@@ -411,13 +412,13 @@ private:
          *  is thrown.
          *
          * @param sender      String containing the callers D-Bus bus name
-         * @param allow_root  Set to false by default.  If set to true, the
-         *                    root user (uid=0) will be granted access
-         *                    regardless of the UID.
+         * @param allow_mngr  Set to false by default.  If set to true, the
+         *                    openvpn user (OpenVPN Manager) will be granted
+         *                    access regardless of the UID.
          */
-        void CheckACL(const std::string sender, bool allow_root = false)
+        void CheckACL(const std::string sender, bool allow_mngr = false)
         {
-            check_acl(sender, false, allow_root);
+            check_acl(sender, false, allow_mngr);
         }
 
 
@@ -431,13 +432,14 @@ private:
          *  is thrown.
          *
          * @param sender      String containing the callers D-Bus bus name
-         * @param allow_root  Set to false by default.  If set to true, the
-         *                    root user (uid=0) will be granted access
-         *                    regardless of the UID.
+         * @param allow_mngr  Set to false by default.  If set to true, the
+         *                    openvpn user (OpenVPN manager) will be granted
+         *                    access regardless of the UID.
          */
-        void CheckOwnerAccess(const std::string sender, bool allow_root = false)
+        void CheckOwnerAccess(const std::string sender,
+                              bool allow_mngr = false)
         {
-            check_acl(sender, true, allow_root);
+            check_acl(sender, true, allow_mngr);
         }
 
 
@@ -450,21 +452,24 @@ private:
         /**
          *  Core authorization method.  It will retrieve the users UID based
          *  on the D-Bus senders bus name and verify that UID value against
-         *  the ACL, the object owners UID, or even root (uid=0) if allowed.
+         *  the ACL, the object owners UID, or even the openvpn user (OpenVPN
+         *  Manager) if allowed.
          *
          *  If the public access attribute is set to true, authorization is
          *  skipped - but only for non-owner-only queries.  Owner-only checks
-         *  will only succeed if the D-Bus caller is the object owner or root
-         *  (if allowed)
+         *  will only succeed if the D-Bus caller is the object owner or
+         *  openvpn user (if allowed)
          *
          *  In case of authorization failure, a DBusCredentialsException
          *  is thrown.
          *
          * @param sender      String containing the callers D-Bus bus name
          * @param owner_only  Only allow the owner of the object?
-         * @param allow_root  Allow root (uid=0) regardless of ACL?
+         * @param allow_mngr  Allow openvpn user (OpenVPN manager) regardless
+         *                    of ACL?
          */
-        void check_acl(const std::string sender, bool owner_only, bool allow_root)
+        void check_acl(const std::string sender,
+                       bool owner_only, bool allow_mngr)
         {
             if (acl_public && !owner_only)
             {
@@ -478,7 +483,7 @@ private:
                 return;
             }
 
-            if (allow_root && sender_uid == 0)
+            if (allow_mngr && sender_uid == lookup_uid(OPENVPN_USERNAME))
             {
                 return;
             }

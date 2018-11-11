@@ -32,9 +32,11 @@ groups for the D-Bus policies implemented
 *   openvpn: The OpenVPN user account will have some restricted
     privileges to manage the OpenVPN services (typically backend VPN
     client processes)
-*   root: The backend VPN client processes runs as root. The
-    operations which can be performed are isolated to communicating
-    with the session manager process.
+*   root: The network configuration service (openvpn3-service-netcfg)
+    needs to be started as root, but it will drop root privileges as soon
+    as the needed capabilities have been set up.  This service will at
+    least require `CAP_NET_ADMIN` but might add more depending on the
+    DNS configuration backend it is configured to use.
 
 The default OpenVPN 3 D-Bus policy will be installed in
 `/etc/dbus-1/system.d/net.openvpn.v3.conf`, which is a location the
@@ -94,27 +96,26 @@ non-persistent data, they will automatically shutdown
 | Service      | [`net.openvpn.v3.netcfg`](dbus-service-net.openvpn.v3.netcfg.md) |
 | Running as   | openvpn                                    |
 | Process name | openvpn3-service-netcfg                 |
-| Started by   | net.openvpn.v3.backends (as the root user) |
-|   | This is the process which is responsible for setting up the priviliged network configuration for the openvpn session client. It allows the session client to run unpriviledges and also provides a generic interface to open a tun device and configure the VPN configuration of (IP, routes, DNS) |
+| Started by   | net.openvpn.v3.backends                 |
+|   | This is the process which is responsible for setting up the priviliged network configuration for the openvpn session client. It allows the session client to run unpriviledges and also provides a generic interface to open a tun device and configure the VPN configuration of (IP, routes, DNS).  This process must be started as root. |
 |              |                                         |
 
 |              |                                         |
 |-------------:|-----------------------------------------|
 | Service      | [`net.openvpn.v3.backends`](dbus-service-net.openvpn.v3.backends.md) |
-| Running as   | root                                    |
+| Running as   | openvpn                                 |
 | Process name | openvpn3-service-backendstart              |
 | Started by   |  net.openvpn.v3.sessions (as the openvpn user) |
-|   |  This service provides an interface for the session manager to start a privileged VPN backend client process, which needs to run with root privileges.
- |
+|   |  This service provides an interface for the session manager to start a the backend VPN client process |
 |              |                                         |
 
 
 |              |                                         |
 |-------------:|-----------------------------------------|
 | Service      | [`net.openvpn.v3.backends.be${PID}`](dbus-service-net.openvpn.v3.client.md) |
-| Running as   | root                                    |
+| Running as   | openvpn                                 |
 | Process name | openvpn3-service-client                 |
-| Started by   | net.openvpn.v3.backends (as the root user) |
+| Started by   | net.openvpn.v3.backends                 |
 |   | This is the process which is responsible for a single VPN tunnel. This process implements the OpenVPN 3 Core client, connects to remote servers and allows itself to be managed via the session manager. Each process will use its own unique service name, where the PID of the process is included in the service name. |
 |              |                                         |
 

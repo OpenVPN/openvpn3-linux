@@ -75,9 +75,8 @@ happening inside a D-Bus service which it can use to get some attention to
 changes. To receive such signals, you need to subscribe to them first.
 
 Lets have a look at a simpler D-Bus service. We will here look at the service
-used to start OpenVPN 3 VPN backend client processes with root privileges. We
-will not look into the service itself now, but focus on how to talk to this
-service.
+used to start OpenVPN 3 VPN backend client processes. We will not look into
+the service itself now, but focus on how to talk to this service.
 
 ```
 $ gdbus introspect --system --dest net.openvpn.v3.backends --object-path /net/openvpn/v3/backends

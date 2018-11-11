@@ -291,12 +291,12 @@ public:
     PropertyType<std::vector<OverrideValue>>(DBusObject *obj_arg,
                                           std::string name_arg,
                                           std::string dbus_acl_arg,
-                                          bool allow_root_arg,
+                                          bool allow_mngr_arg,
                                           std::vector<OverrideValue>& value_arg)
         : PropertyTypeBase<std::vector<OverrideValue>>(obj_arg,
                                                      name_arg,
                                                      dbus_acl_arg,
-                                                     allow_root_arg,
+                                                     allow_mngr_arg,
                                                      value_arg)
     {
     }
@@ -514,16 +514,18 @@ public:
                 {
                     // If the configuration is locked down, restrict any
                     // read-operations to anyone except the backend VPN client
-                    // process (root user) or the configuration profile owner
+                    // process (openvpn user) or the configuration profile
+                    // owner
                     CheckOwnerAccess(sender, true);
                 }
                 g_dbus_method_invocation_return_value(invoc,
                                                       g_variant_new("(s)",
                                                                     options.string_export().c_str()));
 
-                // If the fetching user is root, we consider this
+                // If the fetching user is openvpn (which
+                // openvpn3-service-client runs as), we consider this
                 // configuration to be "used"
-                if (GetUID(sender) == 0)
+                if (GetUID(sender) == lookup_uid(OPENVPN_USERNAME))
                 {
                     // If this config is tagged as single-use only then we delete this
                     // config from memory.
@@ -819,22 +821,22 @@ public:
             return GetOwner();
         }
 
-        // Properties available for root
-        bool allow_root = false;
+        // Properties available for the openvpn user (OpenVPN Manager)
+        bool allow_mngr = false;
         if (properties.Exists(property_name))
         {
-            allow_root = properties.GetRootAllowed(property_name);
+            allow_mngr = properties.GetManagerAllowed(property_name);
         }
         else if ("name" == property_name)
         {
-            // Grant the root user access to the 'name' property
-            allow_root = true;
+            // Grant the openvpn user access to the 'name' property
+            allow_mngr = true;
         }
 
 
         // Properties only available for approved users
         try {
-            CheckACL(sender, allow_root);
+            CheckACL(sender, allow_mngr);
 
             GVariant *ret = NULL;
 

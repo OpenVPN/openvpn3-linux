@@ -1,15 +1,15 @@
 OpenVPN 3 D-Bus API: Backend process starter
 =============================================
 
-This service is only accessible and used by the session manager. The
-backend VPN client processes needs to start with root privileges to be
-able to setup and configure TUN/TAP adapters and modify the routing
-table. This backend process starter and the backend VPN client
-processes are the only ones running with root privileges.
+This service is only accessible for and used by the session manager and it uses
+this backend-start to provide the needed information for the backend VPN
+client process to register properly with the session manager and to get
+information about the configuration profile to retrieve from the configuration
+manager.
 
-The session manager issues a call to this backend process starter to
-start a new backend VPN client process. D-Bus itself takes care of
-starting the process with root privileges upon this call.
+The session manager issues a call to this backend starter to
+start a new backend VPN client process and the session manager will start
+one backend VPN client process per running VPN session.
 
 When this backend process have been idle for a short time, it will
 terminate itself automatically. It is only needed to start the backend

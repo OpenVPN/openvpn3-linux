@@ -40,14 +40,13 @@ There are five services which is good to beware of:
 
 * openvpn3-service-backend
 
-  This is more or less a helper service.  This gets started with root
-  privileges, and only the session manager is by default allowed to use
-  this service.  The only task this service has is to start a new VPN
-  client backend processes (the tunnel instances)
+  This is more or less a helper service and is only used by the session manager
+  The only task this service has is to start a new VPN client backend processes
+  (the VPN tunnel instances)
 
 * openvpn3-service-client
 
-  This is to be started by the openvpn3-service-backend only.  And one such
+  This is to be started by the openvpn3-service-backend only.  One such
   process is started per VPN client.  Once it has started, it registers itself
   with the session manager and the session manager provides it with the needed
   details so it can retrieve the proper configuration from the configuration
@@ -349,9 +348,11 @@ Ensure you have done a build using `--enable-debug-options` when running
 Most of the backend services (`openvpn3-service-logger`,
 `openvpn3-service-configmgr`, `openvpn3-service-sessionmgr` and
 `openvpn3-service-backendstart`) can be run in a
-console.  All with the exception of `openvpn3-service-backendstart` should
-run as the `openvpn` user. `openvpn3-service-backendstart` must run as
-root.  See their corresponding `--help` screen for details.  Most of these
+console.  All with the exception of `openvpn3-service-netcfg` should be
+started as the `openvpn` user. `openvpn3-service-netcfg` must be started as
+root but will as soon as possible drop its privileges to the `openvpn` user as
+well, after it has acquired the `CAP_NET_ADMIN` capability and possibly a
+few others.  See their corresponding `--help` screen for details.  Most of these
 programs can be forced to provide more log data by setting `--log-level`.
 And they can all provide logging to the console.
 

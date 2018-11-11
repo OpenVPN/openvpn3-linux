@@ -35,7 +35,7 @@ public:
     typedef RCPtr<Property> Ptr;
 
     virtual std::string GetIntrospectionXML() const = 0;
-    virtual bool GetRootAllowed() const = 0;
+    virtual bool GetManagerAllowed() const = 0;
     virtual GVariant *GetValue() const = 0;
     virtual GVariantBuilder *SetValue(GVariant *value_arg) = 0;
     virtual std::string GetName() const = 0;
@@ -50,12 +50,12 @@ public:
     PropertyTypeBase(DBusObject *obj_arg,
                      const std::string & name_arg,
                      const std::string & dbus_acl_arg,
-                     bool allow_root_arg,
+                     bool allow_mngr_arg,
                      T & value_arg)
         : obj(obj_arg),
           name(name_arg),
           dbus_acl(dbus_acl_arg),
-          allow_root(allow_root_arg),
+          allow_manager(allow_mngr_arg),
           value(value_arg)
     {
     }
@@ -68,9 +68,9 @@ public:
     }
 
 
-    virtual bool GetRootAllowed() const override
+    virtual bool GetManagerAllowed() const override
     {
-        return allow_root;
+        return allow_manager;
     }
 
 
@@ -87,7 +87,7 @@ protected:
     DBusObject *obj;
     std::string name;
     std::string dbus_acl;
-    bool allow_root;
+    bool allow_manager;
     T& value;
 };
 
@@ -98,10 +98,10 @@ class PropertyType : public PropertyTypeBase<T>
 {
 public:
     PropertyType(DBusObject *obj_arg, std::string name_arg,
-                 std::string dbus_acl_arg, bool allow_root_arg,
+                 std::string dbus_acl_arg, bool allow_mngr_arg,
                  T& value_arg, std::string override_dbus_type = "")
         : PropertyTypeBase<T>(obj_arg, name_arg,
-                              dbus_acl_arg, allow_root_arg,
+                              dbus_acl_arg, allow_mngr_arg,
                               value_arg),
           override_dbus_type(override_dbus_type)
     {
@@ -143,11 +143,11 @@ public:
     PropertyType<std::vector<T>>(DBusObject *obj_arg,
                                  std::string name_arg,
                                  std::string dbus_acl_arg,
-                                 bool allow_root_arg,
+                                 bool allow_mngr_arg,
                                  std::vector<T> &value_arg)
         : PropertyTypeBase<std::vector<T>>(obj_arg, name_arg,
                                            dbus_acl_arg,
-                                           allow_root_arg,
+                                           allow_mngr_arg,
                                            value_arg),
                                            dbus_array_type("a" + std::string(GLibUtils::GetDBusDataType<T>()))
     {
@@ -260,13 +260,13 @@ class PropertyCollection
         return xml;
     }
 
-    bool GetRootAllowed(std::string property_name)
+    bool GetManagerAllowed(std::string property_name)
     {
         auto prop = properties.find(property_name);
         if (prop == properties.end())
             return false;
 
-        return prop->second->GetRootAllowed();
+        return prop->second->GetManagerAllowed();
     }
 
     GVariant *GetValue(std::string property_name)
