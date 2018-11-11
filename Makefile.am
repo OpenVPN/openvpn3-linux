@@ -28,9 +28,6 @@ if HAVE_PYTHON
 SUBDIRS += src/python
 endif
 SUBDIRS += distro/systemd src/service-autostart src/policy doxygen
-if BUILD_TESTS
-SUBDIRS += src/tests
-endif
 
 if ENABLE_SELINUX_BUILD
 SUBDIRS += src/selinux
@@ -114,6 +111,167 @@ DBUS_SOURCES = \
 
 if GIT_CHECKOUT
 BUILT_SOURCES = config-version.h
+endif
+
+
+#
+#   TEST PROGRAMS
+#
+if BUILD_TESTS
+noinst_PROGRAMS = \
+	src/tests/command-parser/cmdparser \
+	src/tests/ovpn3-core/profilemerge-optionlist \
+	src/tests/misc/config-export-json-test \
+	src/tests/misc/gettimestamp \
+	src/tests/misc/json-config-import-test \
+	src/tests/misc/log-prefix-selftest \
+	src/tests/misc/logwriter-tests \
+	src/tests/misc/lookup-tests \
+	src/tests/misc/netcfg-dns-direct-file-selftest \
+	src/tests/misc/syslog-facility-mapping-test \
+	src/tests/dbus/config-lock-down \
+	src/tests/dbus/config-override-selftest \
+	src/tests/dbus/conncreds \
+	src/tests/dbus/enable-logging \
+	src/tests/dbus/fetch-avail-config-paths \
+	src/tests/dbus/fetch-avail-session-paths \
+	src/tests/dbus/fetch-config \
+	src/tests/dbus/fetch-config2 \
+	src/tests/dbus/get-acl \
+	src/tests/dbus/get-config-overrides \
+	src/tests/dbus/getlastlogevent \
+	src/tests/dbus/getlaststatus \
+	src/tests/dbus/getconnectionstats \
+	src/tests/dbus/log-listener \
+	src/tests/dbus/log-listener2 \
+	src/tests/dbus/logservice1 \
+	src/tests/dbus/netcfg-proxy-unit \
+	src/tests/dbus/netcfg-stateevent-selftest \
+	src/tests/dbus/set-alias \
+	src/tests/dbus/signal-listener \
+	src/tests/dbus/statusevent-selftest \
+	src/tests/dbus/proc-wait-for \
+	src/tests/dbus/proc-wait-for-pid \
+	src/tests/dbus/request-queue-client \
+	src/tests/dbus/request-queue-client2 \
+	src/tests/dbus/request-queue-service
+
+# src/tests/comand-parser
+#
+src_tests_command_parser_cmdparser_SOURCES = \
+	src/tests/command-parser/cmdparser.cpp
+
+# src/tests/ovpn3-core
+#
+src_tests_ovpn3_core_profilemerge_optionlist_SOURCES = \
+	src/tests/ovpn3-core/profilemerge-optionlist.cpp
+
+# src/tests/misc
+#
+src_tests_misc_config_export_json_test_SOURCES = \
+	src/tests/misc/config-export-json-test.cpp
+
+src_tests_misc_gettimestamp_SOURCES = \
+	src/tests/misc/gettimestamp.cpp
+
+src_tests_misc_json_config_import_test_SOURCES = \
+	src/tests/misc/json-config-import-test.cpp
+
+src_tests_misc_log_prefix_selftest_SOURCES = \
+	src/tests/misc/log-prefix-selftest.cpp
+
+src_tests_misc_logwriter_tests_SOURCES = \
+	src/tests/misc/logwriter-tests.cpp
+
+src_tests_misc_lookup_tests_SOURCES = \
+	src/tests/misc/lookup-tests.cpp
+
+src_tests_misc_netcfg_dns_direct_file_selftest_SOURCES = \
+	src/tests/misc/netcfg-dns-direct-file-selftest.cpp
+
+src_tests_misc_syslog_facility_mapping_test_SOURCES = \
+	src/tests/misc/syslog-facility-mapping-test.cpp
+
+# src/tests/dbus
+#
+src_tests_dbus_config_lock_down_SOURCES = \
+	src/tests/dbus/config-lock-down.cpp
+
+src_tests_dbus_config_override_selftest_SOURCES = \
+	src/tests/dbus/config-override-selftest.cpp
+
+src_tests_dbus_conncreds_SOURCES = \
+	src/tests/dbus/conncreds.cpp
+
+src_tests_dbus_enable_logging_SOURCES = \
+	src/tests/dbus/enable-logging.cpp
+
+src_tests_dbus_fetch_avail_config_paths_SOURCES = \
+	src/tests/dbus/fetch-avail-config-paths.cpp
+
+src_tests_dbus_fetch_avail_session_paths_SOURCES = \
+	src/tests/dbus/fetch-avail-session-paths.cpp
+
+src_tests_dbus_fetch_config_SOURCES = \
+	src/tests/dbus/fetch-config.cpp
+
+src_tests_dbus_fetch_config2_SOURCES = \
+	src/tests/dbus/fetch-config2.cpp
+
+src_tests_dbus_get_acl_SOURCES = \
+	src/tests/dbus/get-acl.cpp
+
+src_tests_dbus_get_config_overrides_SOURCES = \
+	src/tests/dbus/get-config-overrides.cpp
+
+src_tests_dbus_getlastlogevent_SOURCES = \
+	src/tests/dbus/getlastlogevent.cpp
+
+src_tests_dbus_getlaststatus_SOURCES = \
+	src/tests/dbus/getlaststatus.cpp
+
+src_tests_dbus_getconnectionstats_SOURCES = \
+	src/tests/dbus/getconnectionstats.cpp
+
+src_tests_dbus_log_listener_SOURCES = \
+	src/tests/dbus/log-listener.cpp
+
+src_tests_dbus_log_listener2_SOURCES = \
+	src/tests/dbus/log-listener2.cpp
+
+src_tests_dbus_logservice1_SOURCES = \
+	src/tests/dbus/logservice1.cpp
+
+src_tests_dbus_netcfg_proxy_unit_SOURCES = \
+	src/tests/dbus/netcfg-proxy-unit.cpp
+
+src_tests_dbus_netcfg_stateevent_selftest_SOURCES = \
+	src/tests/dbus/netcfg-stateevent-selftest.cpp
+
+src_tests_dbus_set_alias_SOURCES = \
+	src/tests/dbus/set-alias.cpp
+
+src_tests_dbus_signal_listener_SOURCES = \
+	src/tests/dbus/signal-listener.cpp
+
+src_tests_dbus_statusevent_selftest_SOURCES = \
+	src/tests/dbus/statusevent-selftest.cpp
+
+src_tests_dbus_proc_wait_for_SOURCES = \
+	src/tests/dbus/proc-wait-for.cpp
+
+src_tests_dbus_proc_wait_for_pid_SOURCES = \
+	src/tests/dbus/proc-wait-for-pid.cpp
+
+src_tests_dbus_request_queue_client_SOURCES = \
+	src/tests/dbus/request-queue-client.cpp
+
+src_tests_dbus_request_queue_client2_SOURCES = \
+	src/tests/dbus/request-queue-client2.cpp
+
+src_tests_dbus_request_queue_service_SOURCES = \
+	src/tests/dbus/request-queue-service.cpp
+
 endif
 
 #

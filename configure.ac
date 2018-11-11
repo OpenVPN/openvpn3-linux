@@ -434,9 +434,6 @@ AC_CONFIG_FILES([
         src/python/Makefile \
         src/selinux/Makefile \
         src/service-autostart/Makefile \
-        src/tests/Makefile \
-        src/tests/dbus/Makefile \
-        src/tests/misc/Makefile \
 ])
 
 AC_OUTPUT
