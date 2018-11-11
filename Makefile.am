@@ -57,6 +57,7 @@ EXTRA_DIST = \
 	src/shell/bash_completion-openvpn3 \
 	openvpn3-core \
 	vendor \
+	src/common/timestamp.hpp \
 	src/common/utils.hpp
 
 
@@ -175,7 +176,8 @@ src_tests_misc_config_export_json_test_SOURCES = \
 	src/tests/misc/config-export-json-test.cpp
 
 src_tests_misc_gettimestamp_SOURCES = \
-	src/tests/misc/gettimestamp.cpp
+	src/tests/misc/gettimestamp.cpp \
+	src/common/timestamp.cpp
 
 src_tests_misc_json_config_import_test_SOURCES = \
 	src/tests/misc/json-config-import-test.cpp
@@ -184,7 +186,8 @@ src_tests_misc_log_prefix_selftest_SOURCES = \
 	src/tests/misc/log-prefix-selftest.cpp
 
 src_tests_misc_logwriter_tests_SOURCES = \
-	src/tests/misc/logwriter-tests.cpp
+	src/tests/misc/logwriter-tests.cpp \
+	src/common/timestamp.cpp
 
 src_tests_misc_lookup_tests_SOURCES = \
 	src/tests/misc/lookup-tests.cpp \
@@ -192,7 +195,8 @@ src_tests_misc_lookup_tests_SOURCES = \
 	src/common/utils.cpp
 
 src_tests_misc_netcfg_dns_direct_file_selftest_SOURCES = \
-	src/tests/misc/netcfg-dns-direct-file-selftest.cpp
+	src/tests/misc/netcfg-dns-direct-file-selftest.cpp \
+	src/common/timestamp.cpp
 
 src_tests_misc_syslog_facility_mapping_test_SOURCES = \
 	src/tests/misc/syslog-facility-mapping-test.cpp
@@ -249,6 +253,7 @@ src_tests_dbus_log_listener2_SOURCES = \
 
 src_tests_dbus_logservice1_SOURCES = \
 	src/tests/dbus/logservice1.cpp \
+	src/common/timestamp.cpp \
 	src/common/utils.cpp
 
 src_tests_dbus_netcfg_proxy_unit_SOURCES = \
@@ -321,6 +326,7 @@ src_ovpn3cli_openvpn3_SOURCES = \
 	src/dbus/requiresqueue-proxy.hpp \
 	src/common/cmdargparser.hpp \
 	src/common/requiresqueue.hpp \
+	src/common/timestamp.cpp \
 	src/common/utils.cpp
 
 #
@@ -336,6 +342,7 @@ src_client_openvpn3_service_client_SOURCES = \
 	$(DBUS_SOURCES) \
 	src/common/core-extensions.hpp \
 	src/common/requiresqueue.hpp \
+	src/common/timestamp.cpp \
 	src/common/utils.cpp \
 	src/configmgr/proxy-configmgr.hpp \
 	src/log/dbus-log.hpp \
@@ -361,6 +368,7 @@ src_configmgr_openvpn3_service_configmgr_SOURCES = \
 	$(DBUS_SOURCES) \
 	src/common/core-extensions.hpp \
 	src/common/lookup.cpp \
+	src/common/timestamp.cpp \
 	src/common/utils.cpp \
 	src/log/dbus-log.hpp
 
@@ -374,6 +382,7 @@ src_sessionmgr_openvpn3_service_sessionmgr_SOURCES = \
 	src/client/statusevent.hpp \
 	$(DBUS_SOURCES) \
 	src/common/lookup.cpp \
+	src/common/timestamp.cpp \
 	src/common/utils.cpp \
 	src/log/dbus-log.hpp
 
@@ -395,6 +404,7 @@ src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/netcfg/dns-resolver-settings.hpp \
 	$(DBUS_SOURCES) \
 	src/common/lookup.cpp \
+	src/common/timestamp.cpp \
 	src/common/utils.cpp \
 	src/log/core-dbus-logbase.hpp \
 	src/log/dbus-log.hpp
@@ -415,10 +425,9 @@ src_log_openvpn3_service_logger_SOURCES = \
 	src/log/logger.hpp \
 	src/log/logwriter.hpp \
 	src/log/service.hpp \
-	src/common/timestamp.hpp \
+	src/common/timestamp.cpp \
 	$(DBUS_SOURCES) \
 	src/common/utils.cpp
-
 
 #
 #  Track git referenes of the check-out
