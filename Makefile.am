@@ -56,7 +56,8 @@ EXTRA_DIST = \
 	CLA.md \
 	src/shell/bash_completion-openvpn3 \
 	openvpn3-core \
-	vendor
+	vendor \
+	src/common/utils.hpp
 
 
 # Remove openvpn3-core embedded patches which we don't need
@@ -159,12 +160,14 @@ noinst_PROGRAMS = \
 # src/tests/comand-parser
 #
 src_tests_command_parser_cmdparser_SOURCES = \
-	src/tests/command-parser/cmdparser.cpp
+	src/tests/command-parser/cmdparser.cpp \
+	src/common/utils.cpp
 
 # src/tests/ovpn3-core
 #
 src_tests_ovpn3_core_profilemerge_optionlist_SOURCES = \
-	src/tests/ovpn3-core/profilemerge-optionlist.cpp
+	src/tests/ovpn3-core/profilemerge-optionlist.cpp \
+	src/common/utils.cpp
 
 # src/tests/misc
 #
@@ -185,7 +188,8 @@ src_tests_misc_logwriter_tests_SOURCES = \
 
 src_tests_misc_lookup_tests_SOURCES = \
 	src/tests/misc/lookup-tests.cpp \
-	src/common/lookup.cpp
+	src/common/lookup.cpp \
+	src/common/utils.cpp
 
 src_tests_misc_netcfg_dns_direct_file_selftest_SOURCES = \
 	src/tests/misc/netcfg-dns-direct-file-selftest.cpp
@@ -236,13 +240,16 @@ src_tests_dbus_getconnectionstats_SOURCES = \
 	src/tests/dbus/getconnectionstats.cpp
 
 src_tests_dbus_log_listener_SOURCES = \
-	src/tests/dbus/log-listener.cpp
+	src/tests/dbus/log-listener.cpp \
+	src/common/utils.cpp
 
 src_tests_dbus_log_listener2_SOURCES = \
-	src/tests/dbus/log-listener2.cpp
+	src/tests/dbus/log-listener2.cpp \
+	src/common/utils.cpp
 
 src_tests_dbus_logservice1_SOURCES = \
-	src/tests/dbus/logservice1.cpp
+	src/tests/dbus/logservice1.cpp \
+	src/common/utils.cpp
 
 src_tests_dbus_netcfg_proxy_unit_SOURCES = \
 	src/tests/dbus/netcfg-proxy-unit.cpp
@@ -254,16 +261,19 @@ src_tests_dbus_set_alias_SOURCES = \
 	src/tests/dbus/set-alias.cpp
 
 src_tests_dbus_signal_listener_SOURCES = \
-	src/tests/dbus/signal-listener.cpp
+	src/tests/dbus/signal-listener.cpp \
+	src/common/utils.cpp
 
 src_tests_dbus_statusevent_selftest_SOURCES = \
 	src/tests/dbus/statusevent-selftest.cpp
 
 src_tests_dbus_proc_wait_for_SOURCES = \
-	src/tests/dbus/proc-wait-for.cpp
+	src/tests/dbus/proc-wait-for.cpp \
+	src/common/utils.cpp
 
 src_tests_dbus_proc_wait_for_pid_SOURCES = \
-	src/tests/dbus/proc-wait-for-pid.cpp
+	src/tests/dbus/proc-wait-for-pid.cpp \
+	src/common/utils.cpp
 
 src_tests_dbus_request_queue_client_SOURCES = \
 	src/tests/dbus/request-queue-client.cpp
@@ -272,7 +282,8 @@ src_tests_dbus_request_queue_client2_SOURCES = \
 	src/tests/dbus/request-queue-client2.cpp
 
 src_tests_dbus_request_queue_service_SOURCES = \
-	src/tests/dbus/request-queue-service.cpp
+	src/tests/dbus/request-queue-service.cpp \
+	src/common/utils.cpp
 
 endif
 
@@ -310,7 +321,7 @@ src_ovpn3cli_openvpn3_SOURCES = \
 	src/dbus/requiresqueue-proxy.hpp \
 	src/common/cmdargparser.hpp \
 	src/common/requiresqueue.hpp \
-	src/common/utils.hpp
+	src/common/utils.cpp
 
 #
 #  openvpn3-service-client: The VPN client process
@@ -325,7 +336,7 @@ src_client_openvpn3_service_client_SOURCES = \
 	$(DBUS_SOURCES) \
 	src/common/core-extensions.hpp \
 	src/common/requiresqueue.hpp \
-	src/common/utils.hpp \
+	src/common/utils.cpp \
 	src/configmgr/proxy-configmgr.hpp \
 	src/log/dbus-log.hpp \
 	src/log/proxy-log.hpp \
@@ -337,7 +348,7 @@ src_client_openvpn3_service_client_SOURCES = \
 src_client_openvpn3_service_backendstart_SOURCES = \
 	src/client/openvpn3-service-backendstart.cpp \
 	$(DBUS_SOURCES) \
-	src/common/utils.hpp \
+	src/common/utils.cpp \
 	src/log/dbus-log.hpp
 
 
@@ -350,7 +361,7 @@ src_configmgr_openvpn3_service_configmgr_SOURCES = \
 	$(DBUS_SOURCES) \
 	src/common/core-extensions.hpp \
 	src/common/lookup.cpp \
-	src/common/utils.hpp \
+	src/common/utils.cpp \
 	src/log/dbus-log.hpp
 
 
@@ -363,7 +374,7 @@ src_sessionmgr_openvpn3_service_sessionmgr_SOURCES = \
 	src/client/statusevent.hpp \
 	$(DBUS_SOURCES) \
 	src/common/lookup.cpp \
-	src/common/utils.hpp \
+	src/common/utils.cpp \
 	src/log/dbus-log.hpp
 
 
@@ -384,7 +395,7 @@ src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/netcfg/dns-resolver-settings.hpp \
 	$(DBUS_SOURCES) \
 	src/common/lookup.cpp \
-	src/common/utils.hpp \
+	src/common/utils.cpp \
 	src/log/core-dbus-logbase.hpp \
 	src/log/dbus-log.hpp
 src_netcfg_openvpn3_service_netcfg_CXXFLAGS = $(LIBCAPNG_CFLAGS) $(AM_CXXFLAGS)
@@ -406,7 +417,7 @@ src_log_openvpn3_service_logger_SOURCES = \
 	src/log/service.hpp \
 	src/common/timestamp.hpp \
 	$(DBUS_SOURCES) \
-	src/common/utils.hpp
+	src/common/utils.cpp
 
 
 #

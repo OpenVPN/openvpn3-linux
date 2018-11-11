@@ -30,6 +30,8 @@
 #include <iostream>
 #include <string.h>
 
+#include <glib-unix.h>
+
 #include "dbus/core.hpp"
 #include "common/utils.hpp"
 

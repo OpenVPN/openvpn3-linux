@@ -30,6 +30,8 @@
 #define DEBUG_REQUIRESQUEUE // Enables debug functions in requiresqueue.hpp
 #include <exception>
 
+#include <glib-unix.h>
+
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
 #include "common/requiresqueue.hpp"

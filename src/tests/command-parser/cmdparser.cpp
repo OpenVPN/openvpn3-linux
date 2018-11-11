@@ -27,6 +27,7 @@
 #include <iostream>
 #include <sstream>
 #include <random>
+#include <cstring>
 
 #include "common/cmdargparser.hpp"
 

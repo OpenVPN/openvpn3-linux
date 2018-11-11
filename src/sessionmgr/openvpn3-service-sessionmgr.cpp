@@ -17,6 +17,8 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
+#include <glib-unix.h>
+
 #define SHUTDOWN_NOTIF_PROCESS_NAME "openvpn3-service-sessionmgr"
 #include "dbus/core.hpp"
 #include "sessionmgr.hpp"

@@ -27,10 +27,14 @@
 #define OPENVPN3_CMDARGPARSER_HPP
 
 #include <iomanip>
+#include <iostream>
 #include <map>
+#include <sstream>
+#include <string>
 #include <vector>
 #include <cstdlib>
 #include <getopt.h>
+#include <glib-unix.h>
 
 #include <openvpn/common/rc.hpp>
 using namespace openvpn;

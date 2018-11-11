@@ -28,6 +28,8 @@
 #include <iostream>
 #include <string.h>
 
+#include <glib-unix.h>
+
 #include "dbus/core.hpp"
 #include "log/dbus-log.hpp"
 #include "common/utils.hpp"
