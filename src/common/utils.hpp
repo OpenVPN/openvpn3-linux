@@ -108,20 +108,6 @@ inline std::string simple_basename(const std::string filename)
 }
 
 
-
-/**
- *  Checks if the input string is a number or a string
- *
- * @param data  std::string of the data to classify
- * @return Returns true if the input string is a plain, positive integer
- *         number, otherwise false.
- */
-inline bool isanum_string(const std::string& data)
-{
-    return std::all_of(data.begin(), data.end(), ::isdigit);
-}
-
-
 #ifndef CONFIGURE_GIT_REVISION
 constexpr char package_version[] = PACKAGE_GUIVERSION;
 #else

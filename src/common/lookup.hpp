@@ -33,6 +33,20 @@
 
 #include "common/utils.hpp"
 
+
+/**
+ *  Checks if the input string is a number or a string
+ *
+ * @param data  std::string of the data to classify
+ * @return Returns true if the input string is a plain, positive integer
+ *         number, otherwise false.
+ */
+static inline bool isanum_string(const std::string& data)
+{
+    return std::all_of(data.begin(), data.end(), ::isdigit);
+}
+
+
 /**
  *  Looks up the uid of a user account to extract its username
  *
