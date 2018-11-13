@@ -94,6 +94,8 @@ public:
                           << "          <arg type='b' direction='out' name='succeded'/>"
                           << "        </method>"
                           /* The fd that this method gets is not in the function signature */
+                          << "    <property type='u' name='global_dns_servers' access='read'/>"
+                          << "    <property type='u' name='global_dns_search' access='read'/>"
                           << "    <property type='u' name='log_level' access='readwrite'/>"
                           << signal.GetLogIntrospection()
                           << NetCfgStateEvent::IntrospectionXML()
@@ -262,6 +264,26 @@ public:
             if ("log_level" == property_name)
             {
                 return g_variant_new_uint32(signal.GetLogLevel());
+            }
+            else if ("global_dns_servers" == property_name)
+            {
+                if (!resolver)
+                {
+                    // If no resolver is configured, return an empty result
+                    // instead of an error when reading this property
+                    return GLibUtils::GVariantFromVector(std::vector<std::string>{});
+                }
+                return GLibUtils::GVariantFromVector(resolver->GetDNSServers());
+            }
+            else if ("global_dns_search" == property_name)
+            {
+                if (!resolver)
+                {
+                    // If no resolver is configured, return an empty result
+                    // instead of an error when reading this property
+                    return GLibUtils::GVariantFromVector(std::vector<std::string>{});
+                }
+                return GLibUtils::GVariantFromVector(resolver->GetDNSSearch());
             }
         }
         catch (...)
