@@ -447,6 +447,16 @@ public:
 
                 if (resolver)
                 {
+                    // Clean up DNS servers and search domans we've added
+                    for (const auto& s : dns_servers)
+                    {
+                        resolver->RemoveDNSServer(s);
+                    }
+                    for (const auto& s : dns_search)
+                    {
+                        resolver->RemoveDNSSearch(s);
+                    }
+
                     resolver->DecDeviceCount();
                     if (resolver->GetDeviceCount() == 0)
                     {
@@ -458,6 +468,12 @@ public:
                         {
                             signal.LogCritical(excp.what());
                         }
+                    }
+                    else
+                    {
+                        // If there are more interfaces using the resolver,
+                        // update the resolver config to the current state
+                        resolver->Apply();
                     }
                 }
 
