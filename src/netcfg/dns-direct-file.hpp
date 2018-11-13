@@ -289,6 +289,7 @@ namespace DNS
 
         virtual void Apply()
         {
+            CommitChanges();
             Write();
             modified = false;
         }

@@ -117,11 +117,12 @@ namespace DNS
 
         /**
          *  Adds a new single DNS name server
+         *
          * @param server  std::string of DNS server to enlist
          */
         virtual void AddDNSServer(const std::string& server)
         {
-            dns_servers.push_back(server);
+            dns_servers_new_entries.push_back(server);
             modified = true;
         }
 
@@ -259,11 +260,12 @@ namespace DNS
 
             GVariant *srv = nullptr;
             std::vector<std::string> ret;
+
             while ((srv = g_variant_iter_next_value(srvlist)))
             {
                 gsize len;
                 std::string v(g_variant_get_string(srv, &len));
-                dns_servers.push_back(v);
+                dns_servers_new_entries.push_back(v);
                 ret.push_back(v);
                 g_variant_unref(srv);
             }
@@ -426,9 +428,24 @@ namespace DNS
 
     protected:
         std::vector<std::string> dns_servers;
+        std::vector<std::string> dns_servers_new_entries;
         std::vector<std::string> dns_search;
         bool modified = false;
         unsigned int users;
+
+
+        /**
+         *  Inserts all the added DNS server entries to the main server list,
+         *  but without changing the order.  Just ensure the inserted list
+         *  goes in front of the existing list.
+         */
+        void CommitChanges()
+        {
+            dns_servers.insert(dns_servers.begin(),
+                               dns_servers_new_entries.begin(),
+                               dns_servers_new_entries.end());
+            dns_servers_new_entries.clear();
+        }
     };
 
 } // namespace DNS
