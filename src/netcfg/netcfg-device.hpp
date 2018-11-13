@@ -313,7 +313,12 @@ public:
                 }
 
                 // Adds DNS servers
-                resolver->AddDNSServers(params);
+                auto added = resolver->AddDNSServers(params);
+
+                // Keep track of DNS servers provided by this interface
+                dns_servers.insert(dns_servers.end(),
+                                   std::make_move_iterator(added.begin()),
+                                   std::make_move_iterator(added.end()));
              }
             else if ("RemoveDNS" == method_name)
             {
@@ -323,7 +328,18 @@ public:
                 }
 
                 // Removes DNS servers
-                resolver->RemoveDNSServers(params);
+                auto removed = resolver->RemoveDNSServers(params);
+
+                // Remove local tracking of DNS servers provided by
+                // this interface
+                for (const auto& e : removed)
+                {
+                    dns_servers.erase(std::remove(dns_servers.begin(),
+                                                  dns_servers.end(),
+                                                  e.c_str()),
+                                      dns_servers.end());
+
+                }
              }
             else if ("AddDNSSearch" == method_name)
             {
@@ -333,7 +349,12 @@ public:
                 }
 
                 // Adds DNS search domains
-                resolver->AddDNSSearch(params);
+                auto added = resolver->AddDNSSearch(params);
+
+                // Keep track of DNS search domains added by this interface
+                dns_search.insert(dns_search.end(),
+                                  std::make_move_iterator(added.begin()),
+                                  std::make_move_iterator(added.end()));
             }
             else if ("RemoveDNSSearch" == method_name)
             {
@@ -343,7 +364,16 @@ public:
                 }
 
                 // Removes DNS search domains
-                resolver->RemoveDNSSearch(params);
+                auto removed = resolver->RemoveDNSSearch(params);
+
+                // Remove local tracking of DNS search domains provided
+                // by this interface
+                for (const auto& e : removed)
+                {
+                    dns_search.erase(std::remove(dns_search.begin(),
+                                                 dns_search.end(), e.c_str()),
+                                    dns_search.end());
+                }
             }
             else if ("Establish" == method_name)
             {
@@ -527,16 +557,6 @@ public:
                     modified |= resolver->GetModified();
                 }
                 return g_variant_new_boolean(modified);
-            }
-            else if ("dns_servers" == property_name)
-            {
-                if (!resolver)
-                {
-                    // If no resolver is configured, return an empty result
-                    // instead of an error when reading this property
-                    return GLibUtils::GVariantFromVector(std::vector<std::string>{});
-                }
-                return GLibUtils::GVariantFromVector(resolver->GetDNSServers());
             }
             else if (properties.Exists(property_name))
             {
