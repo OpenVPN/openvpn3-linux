@@ -238,8 +238,11 @@ namespace DNS
          *
          * @param params  GVariant object containing an (as) based string
          *                array of elements to process
+         *
+         * @return  Returns a std::vector<std::string> of all the parsed
+         *          and added input elements
          */
-        virtual void AddDNSServers(GVariant *params)
+        virtual std::vector<std::string> AddDNSServers(GVariant *params)
         {
             std::string params_type(g_variant_get_type_string(params));
             if ("(as)" != params_type)
@@ -255,14 +258,18 @@ namespace DNS
             }
 
             GVariant *srv = nullptr;
+            std::vector<std::string> ret;
             while ((srv = g_variant_iter_next_value(srvlist)))
             {
                 gsize len;
-                dns_servers.push_back(std::string(g_variant_get_string(srv, &len)));
+                std::string v(g_variant_get_string(srv, &len));
+                dns_servers.push_back(v);
+                ret.push_back(v);
                 g_variant_unref(srv);
             }
             g_variant_iter_free(srvlist);
             modified = true;
+            return ret;
         }
 
 
@@ -272,8 +279,11 @@ namespace DNS
          *
          * @param params  GVariant object containing an (as) based string
          *                array of elements to process
+         *
+         * @return  Returns a std::vector<std::string> of all the parsed
+         *          and removed input elements
          */
-        virtual void RemoveDNSServers(GVariant *params)
+        virtual std::vector<std::string> RemoveDNSServers(GVariant *params)
         {
             std::string params_type(g_variant_get_type_string(params));
             if ("(as)" != params_type)
@@ -289,26 +299,32 @@ namespace DNS
             }
 
             GVariant *srv = nullptr;
+            std::vector<std::string> ret;
             while ((srv = g_variant_iter_next_value(srvlist)))
             {
                 gsize len;
                 std::string s(g_variant_get_string(srv, &len));
                 RemoveDNSServer(s);
+                ret.push_back(s);
                 g_variant_unref(srv);
             }
             g_variant_iter_free(srvlist);
             modified = true;
+            return ret;
         }
 
 
         /**
          *  Adds new DNS search domains based on an array of strings provided
          *  via a GVariant container of the (as) type.
+         *
          * @param params  GVariant object containing an (as) based string
          *                array of elements to process
          *
+         * @return  Returns a std::vector<std::string> of all the parsed
+         *          and added input elements
          */
-        virtual void AddDNSSearch(GVariant *params)
+        virtual std::vector<std::string> AddDNSSearch(GVariant *params)
         {
             std::string params_type(g_variant_get_type_string(params));
             if ("(as)" != params_type)
@@ -324,14 +340,18 @@ namespace DNS
             }
 
             GVariant *srchdom = nullptr;
+            std::vector<std::string> ret;
             while ((srchdom = g_variant_iter_next_value(srchlist)))
             {
                 gsize len;
-                dns_search.push_back(std::string(g_variant_get_string(srchdom, &len)));
+                std::string v(g_variant_get_string(srchdom, &len));
+                dns_search.push_back(v);
+                ret.push_back(v);
                 g_variant_unref(srchdom);
             }
             g_variant_iter_free(srchlist);
             modified = true;
+            return ret;
         }
 
 
@@ -341,8 +361,11 @@ namespace DNS
          *
          * @param params  GVariant object containing an (as) based string
          *                array of elements to process
+         *
+         * @return  Returns a std::vector<std::string> of all the parsed
+         *          and removed input elements
          */
-        virtual void RemoveDNSSearch(GVariant *params)
+        virtual std::vector<std::string> RemoveDNSSearch(GVariant *params)
         {
             std::string params_type(g_variant_get_type_string(params));
             if ("(as)" != params_type)
@@ -358,15 +381,18 @@ namespace DNS
             }
 
             GVariant *srchdom = nullptr;
+            std::vector<std::string> ret;
             while ((srchdom = g_variant_iter_next_value(srchlist)))
             {
                 gsize len;
                 std::string dom(g_variant_get_string(srchdom, &len));
                 RemoveDNSSearch(dom);
+                ret.push_back(dom);
                 g_variant_unref(srchdom);
             }
             g_variant_iter_free(srchlist);
             modified = true;
+            return ret;
         }
 
 #endif // __GIO_TYPES_H__
