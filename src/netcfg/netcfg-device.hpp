@@ -27,6 +27,7 @@
 #pragma once
 
 #include <functional>
+#include <gio-unix-2.0/gio/gunixfdlist.h>
 
 #include <openvpn/common/rc.hpp>
 
@@ -56,15 +57,15 @@ public:
     NetCfgDevice(GDBusConnection *dbuscon,
                  std::function<void()> remove_callback,
                  const uid_t creator, const std::string& objpath,
-                 const NetCfgDeviceType& devtype, const std::string& devname,
+                 const NetCfgDeviceType& devtype, const std::string devname,
                  DNS::ResolverSettings *resolver,
                  const unsigned int log_level, LogWriter *logwr)
         : DBusObject(objpath),
           DBusCredentials(dbuscon, creator),
-          remove_callback(remove_callback),
+          remove_callback(std::move(remove_callback)),
           properties(this),
           device_type(devtype),
-          device_name(devname),
+          device_name(std::move(devname)),
           mtu(1500),
           signal(dbuscon, LogGroup::NETCFG, objpath, logwr),
           resolver(resolver)
@@ -116,7 +117,11 @@ public:
                    << "        <method name='RemoveDNSSearch'>"
                    << "            <arg direction='in' type='as' name='domains'/>"
                    << "        </method>"
-                   << "        <method name='Activate'/>"
+                   << "        <method name='Establish'/>"
+                                /* Note: Although Establish returns a unix_fd, it does not belong in
+                                 * the function signature, since glib/dbus abstraction is paper thin
+                                 * and it is handled almost like in recv/sendmsg as auxiliary data
+                                 */
                    << "        <method name='Disable'/>"
                    << "        <method name='Destroy'/>"
                    << "        <property type='u'  name='log_level' access='readwrite'/>"
@@ -253,8 +258,11 @@ public:
                 // Removes DNS search domains
                 resolver->RemoveDNSSearch(params);
             }
-            else if ("Activate" == method_name)
+            else if ("Establish" == method_name)
             {
+                // This should generally be true for DBus 1.3, double checking here cannot hurt
+                g_assert(g_dbus_connection_get_capabilities(conn) & G_DBUS_CAPABILITY_FLAGS_UNIX_FD_PASSING);
+
                 // The virtual device has not yet been created on the host,
                 // but all settings which has been queued up will be activated
                 // when this method is called.
@@ -262,6 +270,22 @@ public:
                 {
                     resolver->Apply();
                 }
+                int fd=-1; // TODO: return the real FD of the tun device here
+
+                GUnixFDList *fdlist;
+                GError *error;
+                fdlist = g_unix_fd_list_new();
+                g_unix_fd_list_append(fdlist, fd, &error);
+                close(fd);
+
+                if(error)
+                {
+                    throw NetCfgException("Creating fd list failed");
+                }
+
+                // DBus will close the handle on our side after transmitting
+                g_dbus_method_invocation_return_value_with_unix_fd_list(invoc, nullptr, fdlist);
+                GLibUtils::unref_fdlist(fdlist);
 
             }
             else if ("Disable" == method_name)

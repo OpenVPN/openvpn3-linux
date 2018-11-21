@@ -261,7 +261,7 @@ namespace NetCfgProxy
          *  the device was already activated, it only commits the last
          *  un-applied changes.
          */
-        void Activate();
+        int Establish();
 
         /**
          *  Disables a virtual device, while preserving the configuration.
@@ -401,10 +401,12 @@ namespace NetCfgProxy
     }
 
 
-    void Device::Activate()
+    int Device::Establish()
     {
-        GVariant *res = Call("Activate");
+        gint fd = -1;
+        GVariant *res = CallGetFD("Establish", fd);
         g_variant_unref(res);
+        return fd;
     }
 
 
