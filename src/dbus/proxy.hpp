@@ -20,6 +20,10 @@
 #ifndef OPENVPN3_DBUS_PROXY_HPP
 #define OPENVPN3_DBUS_PROXY_HPP
 
+#include <gio-unix-2.0/gio/gunixfdlist.h>
+
+#include "glibutils.hpp"
+
 namespace openvpn
 {
     class DBusProxyAccessDeniedException: std::exception
@@ -362,6 +366,23 @@ namespace openvpn
                                    call_flags);
         }
 
+        GVariant * CallGetFD(std::string method, int& fd, bool noresponse = false)
+        {
+            return dbus_proxy_call(proxy, method, NULL, noresponse,
+                                   call_flags, &fd);
+        }
+
+        /**
+         * Will send an additional fd in addition to the normal function call.
+         * This method will *not* take ownership of the fd. The caller needs
+         * to close the fd if it is not needed anymore
+         */
+        GVariant * CallSendFD(std::string method, GVariant* params, int fd, bool noresponse = false)
+        {
+            return dbus_proxy_call(proxy, method, params, noresponse,
+                                   call_flags, nullptr, fd);
+        }
+
 
         GVariant * GetProperty(std::string property)
         {
@@ -588,27 +609,74 @@ namespace openvpn
         bool proxy_init;
         bool property_proxy_init;
 
+        // Note we only implement single fd out/in for the fd API since that
+        // is all we currently need and handling fd extraction here makes
+        // error handling easier
         GVariant * dbus_proxy_call(GDBusProxy *prx, std::string method,
                                    GVariant *params, bool noresponse,
-                                   GDBusCallFlags flags)
+                                   GDBusCallFlags flags,
+                                   int *fd_out = nullptr,
+                                   int fd_in = -1)
         {
             if (method.empty())
             {
                 THROW_DBUSEXCEPTION("DBusProxy", "Method cannot be empty");
             }
 
-            GError *error = NULL;
+            GError *error = nullptr;
+            GVariant *ret = nullptr;
+            GUnixFDList *out_fdlist = nullptr;
             if (!noresponse)
             {
                 // Where we care about the response, we use a synchronous call
                 // and wait for the response
-                GVariant *ret = g_dbus_proxy_call_sync(prx,
-                                                       method.c_str(),
-                                                       params,      // parameters to method
-                                                       flags,
-                                                       -1,          // timeout, -1 == default
-                                                       NULL,        // GCancellable
-                                                       &error);
+                if (!fd_out && fd_in == -1)
+                {
+                    ret = g_dbus_proxy_call_sync(prx,
+                                                 method.c_str(),
+                                                 params,      // parameters to method
+                                                 flags,
+                                                 -1,          // timeout, -1 == default
+                                                 nullptr,        // GCancellable
+                                                 &error);
+                }
+                else
+                {
+                    /* Default these pointers to their "not used" value */
+                    GUnixFDList *fdlist = nullptr;
+                    GUnixFDList** out_fdlist_ptr = nullptr;
+
+                    if (fd_in >=0)
+                    {
+                        fdlist = g_unix_fd_list_new();
+                        g_unix_fd_list_append(fdlist, fd_in, &error);
+                    }
+                    if (fd_out)
+                    {
+                        out_fdlist_ptr = &out_fdlist;
+                    }
+                    if (!error)
+                    {
+                        ret = g_dbus_proxy_call_with_unix_fd_list_sync(prx,
+                                                                       method.c_str(),
+                                                                       params,      // parameters to method
+                                                                       flags,
+                                                                       -1,          // timeout, -1 == default
+                                                                       fdlist,     // fd_list (to send)
+                                                                       out_fdlist_ptr,
+                                                                       nullptr,        // GCancellable
+                                                                       &error);
+                    }
+                    if(ret && !error && fd_out)
+                    {
+                        *fd_out = g_unix_fd_list_get(out_fdlist, 0, &error);
+                        GLibUtils::unref_fdlist(out_fdlist);
+                    }
+                    if (fdlist)
+                    {
+                        GLibUtils::unref_fdlist(fdlist);
+                    }
+                }
                 if (!ret && !error)
                 {
                     THROW_DBUSEXCEPTION("DBusProxy", "Unspecified error");
