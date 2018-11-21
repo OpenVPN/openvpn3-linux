@@ -38,7 +38,7 @@
 #include "netcfg-stateevent.hpp"
 #include "netcfg-signals.hpp"
 
-using namespace OpenVPN3::NetCfg;
+using namespace NetCfg;
 
 enum class NetCfgDeviceType
 {

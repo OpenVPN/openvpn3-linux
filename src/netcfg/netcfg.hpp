@@ -40,7 +40,7 @@
 #include "netcfg-device.hpp"
 
 using namespace openvpn;
-using namespace OpenVPN3::NetCfg;
+using namespace NetCfg;
 
 /**
  *  Main D-Bus entry-point object for the net.openvpn.v3.netcfg service

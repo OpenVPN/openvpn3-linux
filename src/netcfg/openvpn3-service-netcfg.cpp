@@ -37,7 +37,7 @@
 #include "netcfg.hpp"
 #include "dns-resolver-settings.hpp"
 
-using namespace OpenVPN3::NetCfg;
+using namespace NetCfg;
 
 static void drop_root_ng()
 {

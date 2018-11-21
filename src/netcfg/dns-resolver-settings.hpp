@@ -33,8 +33,6 @@
 
 using namespace openvpn;
 
-namespace OpenVPN3
-{
 namespace NetCfg
 {
 namespace DNS
@@ -409,6 +407,3 @@ namespace DNS
 
 } // namespace DNS
 } // namespace NetCfg
-} // namespace OpenVPN3
-
-

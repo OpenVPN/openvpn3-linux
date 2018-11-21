@@ -20,7 +20,7 @@
 /**
  * @file   netcfg-proxy-unit.cpp
  *
- * @brief  Unit test for the OpenVPN3::NetCfgProxy classes
+ * @brief  Unit test for the NetCfgProxy classes
  *
  */
 
@@ -36,7 +36,7 @@ int main(int argc, char **argv)
     DBus conn(G_BUS_TYPE_SYSTEM);
     conn.Connect();
 
-    OpenVPN3::NetCfgProxy::Manager netcfgmgr(conn.GetConnection());
+    NetCfgProxy::Manager netcfgmgr(conn.GetConnection());
     int failures = 0;
 
     // Create a few devices
@@ -94,7 +94,7 @@ int main(int argc, char **argv)
         for (const auto& p : devpaths)
         {
             std::cout << "    Removing: " << p << std::endl;
-            OpenVPN3::NetCfgProxy::Device dev(conn.GetConnection(), p);
+            NetCfgProxy::Device dev(conn.GetConnection(), p);
             dev.Destroy();
         }
         std::cout << std::endl;

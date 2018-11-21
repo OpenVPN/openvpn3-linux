@@ -28,7 +28,7 @@
 #define ENABLE_DEBUG
 #include "netcfg/dns-direct-file.hpp"
 
-using namespace OpenVPN3::NetCfg::DNS;
+using namespace NetCfg::DNS;
 
 int main()
 {

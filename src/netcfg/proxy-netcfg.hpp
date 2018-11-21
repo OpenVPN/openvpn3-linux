@@ -38,9 +38,7 @@
 
 using namespace openvpn;
 
-namespace OpenVPN3
-{
-    namespace NetCfgProxy
+namespace NetCfgProxy
 {
     class Manager : public DBusProxy,
                     public RC<thread_unsafe_refcount>
@@ -527,4 +525,3 @@ namespace OpenVPN3
     }
 
 } // namespace NetCfgProxy
-} // namespace OpenVPN3
