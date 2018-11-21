@@ -33,11 +33,13 @@
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
 #include "dbus/glibutils.hpp"
+#include "dbus/object-property.hpp"
 #include "ovpn3cli/lookup.hpp"
 #include "./dns-direct-file.hpp"
 #include "netcfg-stateevent.hpp"
 #include "netcfg-signals.hpp"
 
+using namespace openvpn;
 using namespace NetCfg;
 
 enum class NetCfgDeviceType
@@ -60,12 +62,20 @@ public:
         : DBusObject(objpath),
           DBusCredentials(dbuscon, creator),
           remove_callback(remove_callback),
+          properties(this),
           device_type(devtype),
           device_name(devname),
+          mtu(1500),
           signal(dbuscon, LogGroup::NETCFG, objpath, logwr),
           resolver(resolver)
     {
         signal.SetLogLevel(log_level);
+
+        properties.AddBinding(new PropertyType<std::string>(this, "device_name", "read", false, device_name));
+        properties.AddBinding(new PropertyType<decltype(dns_servers)>(this, "dns_servers", "read", false, dns_servers));
+        properties.AddBinding(new PropertyType<decltype(dns_search)>(this, "dns_search", "read", false, dns_search));
+        properties.AddBinding(new PropertyType<unsigned int>(this, "mtu", "readwrite", false, mtu));
+        //properties.AddBinding(new PropertyType<NetCfgDeviceType>(this, "layer", "read", false, device_type));
 
         std::stringstream introspect;
         introspect << "<node name='" << objpath << "'>"
@@ -73,7 +83,6 @@ public:
                    << "        <method name='AddIPv4Address'>"
                    << "            <arg direction='in' type='s' name='ip_address'/>"
                    << "            <arg direction='in' type='u' name='prefix'/>"
-                   << "            <arg direction='in' type='s' name='broadcast'/>"
                    << "        </method>"
                    << "        <method name='RemoveIPv4Address'>"
                    << "            <arg direction='in' type='s' name='ip_address'/>"
@@ -113,16 +122,13 @@ public:
                    << "        <property type='u'  name='log_level' access='readwrite'/>"
                    << "        <property type='u'  name='owner' access='read'/>"
                    << "        <property type='au' name='acl' access='read'/>"
-                   << "        <property type='u' name='device_type' access='read'/>"
-                   << "        <property type='s' name='device_name' access='read'/>"
                    << "        <property type='b'  name='active' access='read'/>"
                    << "        <property type='b'  name='modified' access='read'/>"
                    << "        <property type='as' name='ipv4_addresses' access='read'/>"
                    << "        <property type='as' name='ipv4_routes' access='read'/>"
                    << "        <property type='as' name='ipv6_addresses' access='read'/>"
                    << "        <property type='as' name='ipv6_routes' access='read'/>"
-                   << "        <property type='as' name='dns_servers' access='read'/>"
-                   << "        <property type='as' name='dns_search' access='read'/>"
+                   << properties.GetIntrospectionXML()
                    << signal.GetLogIntrospection()
                    << NetCfgStateEvent::IntrospectionXML()
                    << "    </interface>"
@@ -376,14 +382,6 @@ public:
             {
                 return GetAccessList();
             }
-            else if ("device_type" == property_name)
-            {
-                return g_variant_new_uint32((guint) device_type);
-            }
-            else if ("device_name" == property_name)
-            {
-                return g_variant_new_string(device_name.c_str());
-            }
             else if ("active" == property_name)
             {
                 return g_variant_new_boolean(active);
@@ -431,15 +429,9 @@ public:
                 }
                 return GLibUtils::GVariantFromVector(resolver->GetDNSServers());
             }
-            else if ("dns_search" == property_name)
+            else if (properties.Exists(property_name))
             {
-                if (!resolver)
-                {
-                    // If no resolver is configured, return an empty result
-                    // instead of an error when reading this property
-                    return GLibUtils::GVariantFromVector(std::vector<std::string>{});
-                }
-                return GLibUtils::GVariantFromVector(resolver->GetDNSSearch());
+                return properties.GetValue(property_name);
             }
         }
         catch (DBusPropertyException)
@@ -531,8 +523,15 @@ public:
 
 private:
     std::function<void()> remove_callback;
+
+    // Properties
+    PropertyCollection properties;
     NetCfgDeviceType device_type = NetCfgDeviceType::UNSET;
     std::string device_name;
+    std::vector<std::string> dns_servers;
+    std::vector<std::string> dns_search;
+    unsigned int mtu;
+
     NetCfgSignals signal;
     DNS::ResolverSettings * resolver = nullptr;
     bool active = false;
