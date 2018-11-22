@@ -47,7 +47,7 @@ int main(int argc, char **argv)
         for (int i=0; i < 10; i++)
         {
             std::string devname ="testdev" + std::to_string(i);
-            std::string devpath = netcfgmgr.CreateVirtualInterface(NetCfgDeviceType::TUN, devname);
+            std::string devpath = netcfgmgr.CreateVirtualInterface(devname);
             std::cout << "    Device created: " << devname << " ... "
                       << devpath << std::endl;;
             genpaths.push_back(devpath);

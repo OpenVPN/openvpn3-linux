@@ -2,6 +2,7 @@
 //
 //  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
 //  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018         Arne Schwabe <arne@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -28,6 +29,7 @@
 
 #include <functional>
 #include <gio-unix-2.0/gio/gunixfdlist.h>
+#include <gio-unix-2.0/gio/gunixconnection.h>
 
 #include <openvpn/common/rc.hpp>
 
@@ -36,6 +38,7 @@
 #include "dbus/glibutils.hpp"
 #include "dbus/object-property.hpp"
 #include "ovpn3cli/lookup.hpp"
+#include "core-tunbuilder.hpp"
 #include "./dns-direct-file.hpp"
 #include "netcfg-stateevent.hpp"
 #include "netcfg-signals.hpp"
@@ -43,30 +46,74 @@
 using namespace openvpn;
 using namespace NetCfg;
 
-enum class NetCfgDeviceType
+enum NetCfgDeviceType : unsigned int
 {
-    UNSET,   // Primarily to avoid 0 but still have 0 defined
-    TUN,
-    TAP
+    UNSET = 0,   // Primarily to avoid 0 but still have 0 defined
+    TAP   = 2,
+    TUN   = 3
+            // Expliclity use 3 for tun and 2 for tap as 2==TUN would be very
+            // confusing
+};
+
+
+class IPAddr {
+public:
+    IPAddr() = default;
+    IPAddr(std::string ipaddr, bool ipv6)
+        : address(std::move(ipaddr)), ipv6(ipv6)
+    {
+    }
+
+    std::string address;
+    bool ipv6;
+};
+
+/**
+ * Class representing a IPv4 or IPv6 network
+ */
+class Network : public IPAddr {
+public:
+    Network(std::string networkAddress, unsigned int prefix,
+            bool ipv6, bool exclude=false) :
+            IPAddr(networkAddress, ipv6),
+            prefix(prefix), exclude(exclude)
+    {
+    }
+
+    unsigned int prefix;
+    bool exclude;
+};
+
+class VPNAddress: public Network {
+public:
+    VPNAddress(std::string networkAddress, unsigned int prefix,
+               std::string gateway, bool ipv6):
+               Network(networkAddress, prefix, ipv6, false),
+               gateway(std::move(gateway))
+    {
+    }
+
+    std::string gateway;
 };
 
 class NetCfgDevice : public DBusObject,
                      public DBusCredentials
 {
+    friend CoreTunbuilderImpl;
+
 public:
     NetCfgDevice(GDBusConnection *dbuscon,
                  std::function<void()> remove_callback,
                  const uid_t creator, const std::string& objpath,
-                 const NetCfgDeviceType& devtype, const std::string devname,
+                 std::string devname,
                  DNS::ResolverSettings *resolver,
                  const unsigned int log_level, LogWriter *logwr)
         : DBusObject(objpath),
           DBusCredentials(dbuscon, creator),
           remove_callback(std::move(remove_callback)),
           properties(this),
-          device_type(devtype),
-          device_name(std::move(devname)),
-          mtu(1500),
+          device_name(devname),
+          mtu(1500), txqueuelen(0),
           signal(dbuscon, LogGroup::NETCFG, objpath, logwr),
           resolver(resolver)
     {
@@ -76,39 +123,27 @@ public:
         properties.AddBinding(new PropertyType<decltype(dns_servers)>(this, "dns_servers", "read", false, dns_servers));
         properties.AddBinding(new PropertyType<decltype(dns_search)>(this, "dns_search", "read", false, dns_search));
         properties.AddBinding(new PropertyType<unsigned int>(this, "mtu", "readwrite", false, mtu));
-        //properties.AddBinding(new PropertyType<NetCfgDeviceType>(this, "layer", "read", false, device_type));
+        properties.AddBinding(new PropertyType<unsigned int>(this, "layer", "readwrite", false, device_type));
+        properties.AddBinding(new PropertyType<unsigned int>(this, "txqueuelen", "readwrite", false, txqueuelen));
+
 
         std::stringstream introspect;
         introspect << "<node name='" << objpath << "'>"
                    << "    <interface name='" << OpenVPN3DBus_interf_netcfg << "'>"
-                   << "        <method name='AddIPv4Address'>"
+                   << "        <method name='AddIPAddress'>"
                    << "            <arg direction='in' type='s' name='ip_address'/>"
                    << "            <arg direction='in' type='u' name='prefix'/>"
-                   << "        </method>"
-                   << "        <method name='RemoveIPv4Address'>"
-                   << "            <arg direction='in' type='s' name='ip_address'/>"
-                   << "            <arg direction='in' type='u' name='prefix'/>"
-                   << "        </method>"
-                   << "        <method name='AddIPv6Address'>"
-                   << "            <arg direction='in' type='s' name='ip_address'/>"
-                   << "            <arg direction='in' type='u' name='prefix'/>"
-                   << "        </method>"
-                   << "        <method name='RemoveIPv6Address'>"
-                   << "            <arg direction='in' type='s' name='ip_address'/>"
-                   << "            <arg direction='in' type='u' name='prefix'/>"
-                   << "        </method>"
-                   << "        <method name='AddRoutes'>"
-                   << "            <arg direction='in' type='as' name='route_target'/>"
                    << "            <arg direction='in' type='s' name='gateway'/>"
+                   << "            <arg direction='in' type='b' name='ipv6'/>"
                    << "        </method>"
-                   << "        <method name='RemoveRoutes'>"
-                   << "            <arg direction='in' type='as' name='route_target'/>"
-                   << "            <arg direction='in' type='s' name='gateway'/>"
+                   << "        <method name='SetRemoteAddress'>"
+                   << "            <arg direction='in' type='s' name='ip_address'/>"
+                   << "            <arg direction='in' type='b' name='ipv6'/>"
+                   << "        </method>"
+                   << "        <method name='AddNetworks'>"
+                   << "            <arg direction='in' type='a(subb)' name='networks'/>"
                    << "        </method>"
                    << "        <method name='AddDNS'>"
-                   << "            <arg direction='in' type='as' name='server_list'/>"
-                   << "        </method>"
-                   << "        <method name='RemoveDNS'>"
                    << "            <arg direction='in' type='as' name='server_list'/>"
                    << "        </method>"
                    << "        <method name='AddDNSSearch'>"
@@ -118,9 +153,11 @@ public:
                    << "            <arg direction='in' type='as' name='domains'/>"
                    << "        </method>"
                    << "        <method name='Establish'/>"
-                                /* Note: Although Establish returns a unix_fd, it does not belong in
-                                 * the function signature, since glib/dbus abstraction is paper thin
-                                 * and it is handled almost like in recv/sendmsg as auxiliary data
+                                /* Note: Although Establish returns a unix_fd,
+                                 * it does not belong in the method
+                                 * signature, since glib/dbus abstraction is
+                                 * paper thin and it is handled almost like
+                                 * in recv/sendmsg as auxiliary data
                                  */
                    << "        <method name='Disable'/>"
                    << "        <method name='Destroy'/>"
@@ -129,10 +166,6 @@ public:
                    << "        <property type='au' name='acl' access='read'/>"
                    << "        <property type='b'  name='active' access='read'/>"
                    << "        <property type='b'  name='modified' access='read'/>"
-                   << "        <property type='as' name='ipv4_addresses' access='read'/>"
-                   << "        <property type='as' name='ipv4_routes' access='read'/>"
-                   << "        <property type='as' name='ipv6_addresses' access='read'/>"
-                   << "        <property type='as' name='ipv6_routes' access='read'/>"
                    << properties.GetIntrospectionXML()
                    << signal.GetLogIntrospection()
                    << NetCfgStateEvent::IntrospectionXML()
@@ -153,8 +186,68 @@ public:
         remove_callback();
         IdleCheck_RefDec();
     }
+private:
+
+    void addIPAddress(GVariant* params)
+    {
+        gchar *ipaddr = nullptr;
+        guint prefix=0;
+        gchar *gateway = nullptr;
+        bool ipv6;
+
+        g_variant_get(params, "(susb)", &ipaddr, &prefix, &gateway, &ipv6);
+
+        signal.LogInfo(std::string("Adding IP Adress ") + ipaddr
+                       + "/" + std::to_string(prefix)
+                       + " gw " + gateway + " ipv6: " + std::to_string(ipv6));
+
+        vpnips.emplace_back(VPNAddress(std::string(ipaddr), prefix,
+                                       std::string(gateway), ipv6));
+    }
+
+    void setRemoteAddress(GVariant* params)
+    {
+        gchar *ipaddr = nullptr;
+        bool ipv6;
+
+        g_variant_get(params, "(sb)", &ipaddr, &ipv6);
+        signal.LogInfo(std::string("Setting remote IP address to '") + ipaddr
+                                   + " ipv6: " + std::to_string(ipv6));
+        remote = IPAddr(std::string(ipaddr), ipv6);
+    }
+
+    void addNetworks(GVariant* params)
+    {
+        GVariantIter* network_iter;
+        g_variant_get(params, "(a(subb))", &network_iter);
+
+        GVariant *network = nullptr;
+        while ((network = g_variant_iter_next_value(network_iter)))
+        {
+            gchar *net = nullptr;
+            guint prefix;
+            bool exclude;
+            bool ipv6;
+
+            g_variant_get(network, "(subb)", &net, &prefix, &ipv6, &exclude);
+
+            if (net == nullptr)
+                net = strdup("(nullptr)");
+
+            signal.LogInfo(std::string("Adding network '") + net + "/"
+                           + std::to_string(prefix)
+                           + "' excl: " + std::to_string(exclude)
+                           + " ipv6: " + std::to_string(ipv6));
+
+            networks.emplace_back(Network(std::string(net), prefix,
+                                          ipv6, exclude));
+        }
+        g_variant_iter_free(network_iter);
+
+    }
 
 
+public:
     /**
      *  Callback method which is called each time a D-Bus method call occurs
      *  on this BackendClientObject.
@@ -185,26 +278,16 @@ public:
             validate_sender(sender);
 
             GVariant *retval = nullptr;
-            if ("AddIPv4Address" == method_name)
+
+            if ("AddIPAddress" == method_name)
             {
                 // Adds a single IPv4 address to the virtual device.  If
                 // broadcast has not been provided, calculate it if needed.
-            }
-            else if ("RemoveIPv4Address" == method_name)
+                addIPAddress(params);
+             }
+            else if ("AddNetworks" == method_name)
             {
-                // Removes a single IPv4 address from the virtual device
-            }
-            else if ("AddIPv6Address" == method_name)
-            {
-                // Adds a single IPv6 address to the virtual device
-            }
-            if ("RemoveIPv6Address" == method_name)
-            {
-                // Removes a single IPv6 address from the virtual device
-            }
-            else if ("AddRoutes" == method_name)
-            {
-                // The caller sends an array of routes to apply
+                // The caller sends an array of networks to apply
                 // It is an array, as this makes everything happen in a
                 // single D-Bus method call and it can on some hosts
                 // be a considerable amount of routes.  This speeds up
@@ -212,13 +295,13 @@ public:
                 //
                 // The variable signature is not completely decided and
                 // must be adopted to what is appropriate
-            }
-            else if ("RemoveRoutes" == method_name)
+                addNetworks(params);
+             }
+            else if ("SetRemoteAddress" == method_name)
             {
-                // Similar to AddRoutes, receies an array of routes to
-                // remove on this device
+                setRemoteAddress(params);
             }
-            if ("AddDNS" == method_name)
+            else if ("AddDNS" == method_name)
             {
                 if (!resolver)
                 {
@@ -227,7 +310,7 @@ public:
 
                 // Adds DNS servers
                 resolver->AddDNSServers(params);
-            }
+             }
             else if ("RemoveDNS" == method_name)
             {
                 if (!resolver)
@@ -237,7 +320,7 @@ public:
 
                 // Removes DNS servers
                 resolver->RemoveDNSServers(params);
-            }
+             }
             else if ("AddDNSSearch" == method_name)
             {
                 if (!resolver)
@@ -248,7 +331,7 @@ public:
                 // Adds DNS search domains
                 resolver->AddDNSSearch(params);
             }
-            if ("RemoveDNSSearch" == method_name)
+            else if ("RemoveDNSSearch" == method_name)
             {
                 if (!resolver)
                 {
@@ -260,7 +343,8 @@ public:
             }
             else if ("Establish" == method_name)
             {
-                // This should generally be true for DBus 1.3, double checking here cannot hurt
+                // This should generally be true for DBus 1.3,
+                // double checking here cannot hurt
                 g_assert(g_dbus_connection_get_capabilities(conn) & G_DBUS_CAPABILITY_FLAGS_UNIX_FD_PASSING);
 
                 // The virtual device has not yet been created on the host,
@@ -270,10 +354,14 @@ public:
                 {
                     resolver->Apply();
                 }
-                int fd=-1; // TODO: return the real FD of the tun device here
+                if (!tunimpl)
+                {
+                    tunimpl.reset(getCoreBuilderInstance());
+                }
+                int fd = tunimpl->establish(*this);
 
                 GUnixFDList *fdlist;
-                GError *error;
+                GError *error = nullptr;
                 fdlist = g_unix_fd_list_new();
                 g_unix_fd_list_append(fdlist, fd, &error);
                 close(fd);
@@ -286,26 +374,34 @@ public:
                 // DBus will close the handle on our side after transmitting
                 g_dbus_method_invocation_return_value_with_unix_fd_list(invoc, nullptr, fdlist);
                 GLibUtils::unref_fdlist(fdlist);
-
+                return;
             }
             else if ("Disable" == method_name)
             {
-                // This tears down and disables a virtual device but
-                // enables the device to be re-activated again with the same
-                // settings by calling the 'Activate' method again
-
-                // Only restore the resolv.conf file if this is the last
-                // device using these ResolverSettings object
-                if (resolver && resolver->GetDeviceCount() <= 1)
+                if (false) // FIXME
                 {
-                    try
+                    // This tears down and disables a virtual device but
+                    // enables the device to be re-activated again with the
+                    // same settings by calling the 'Activate' method again
+
+                    // Only restore the resolv.conf file if this is the last
+                    // device using these ResolverSettings object
+                    if (resolver && resolver->GetDeviceCount() <= 1)
                     {
-                        resolver->Restore();
+                        try
+                        {
+                            resolver->Restore();
+                        }
+                        catch (const NetCfgException& excp)
+                        {
+                            signal.LogCritical(excp.what());
+                        }
                     }
-                    catch (const NetCfgException& excp)
-                    {
-                        signal.LogCritical(excp.what());
-                    }
+                }
+                if (tunimpl)
+                {
+                    tunimpl->teardown(true);
+                    tunimpl.reset();
                 }
             }
             else if ("Destroy" == method_name)
@@ -335,10 +431,18 @@ public:
                 signal.LogVerb1("Device '" + device_name + "' was removed by "
                                + sender_name);
                 RemoveObject(conn);
-                g_dbus_method_invocation_return_value(invoc, NULL);
+                if (tunimpl) {
+                    tunimpl->teardown(true);
+                    tunimpl.reset();
+                }
+
+                g_dbus_method_invocation_return_value(invoc, nullptr);
                 delete this;
                 return;
-
+            }
+            else
+            {
+                throw NetCfgException("Called method " + method_name + " unknown");
             }
             g_dbus_method_invocation_return_value(invoc, retval);
             return;
@@ -350,7 +454,8 @@ public:
         }
         catch (const std::exception& excp)
         {
-            std::string errmsg = "Failed executing D-Bus call '" + method_name + "': " + excp.what();
+            std::string errmsg = "Failed executing D-Bus call '"
+                                  + method_name + "': " + excp.what();
             GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.netcfg.error.generic",
                                                           errmsg.c_str());
             g_dbus_method_invocation_return_gerror(invoc, err);
@@ -419,30 +524,6 @@ public:
                 }
                 return g_variant_new_boolean(modified);
             }
-            else if ("ipv4_addresses" == property_name)
-            {
-                std::vector<std::string> iplist;
-                // Popluate iplist, formatted as  "ipaddress/prefix"
-                return GLibUtils::GVariantFromVector(iplist);
-            }
-            else if ("ipv4_routes" == property_name)
-            {
-                std::vector<std::string> routelist;
-                // Popluate routelist, formatted as "ipaddress/prefix=>gw" ?
-                return GLibUtils::GVariantFromVector(routelist);
-            }
-            else if ("ipv6_addresses" == property_name)
-            {
-                std::vector<std::string> iplist;
-                // Popluate iplist, formatted as  "ipaddress/prefix"
-                return GLibUtils::GVariantFromVector(iplist);
-            }
-            else if ("ipv6_routes" == property_name)
-            {
-                std::vector<std::string> routelist;
-                // Popluate routelist, formatted as "ipaddress/prefix=>gw" ?
-                return GLibUtils::GVariantFromVector(routelist);
-            }
             else if ("dns_servers" == property_name)
             {
                 if (!resolver)
@@ -477,8 +558,9 @@ public:
         throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
                                     obj_path, intf_name, property_name,
                                     "Invalid property");
-        g_set_error(error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, "Unknown property");
-        return NULL;
+        g_set_error(error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                    "Unknown property");
+        return nullptr;
     }
 
 
@@ -526,6 +608,10 @@ public:
                 return build_set_property_response(property_name,
                                                    (guint32) log_level);
             }
+            else if (properties.Exists(property_name))
+            {
+                return properties.SetValue(property_name, value);
+            }
         }
         catch (DBusPropertyException&)
         {
@@ -550,15 +636,22 @@ private:
 
     // Properties
     PropertyCollection properties;
-    NetCfgDeviceType device_type = NetCfgDeviceType::UNSET;
+    unsigned int device_type = NetCfgDeviceType::UNSET;
     std::string device_name;
     std::vector<std::string> dns_servers;
     std::vector<std::string> dns_search;
+    std::vector<Network> networks;
+    std::vector<VPNAddress> vpnips;
+    IPAddr remote;
     unsigned int mtu;
+    unsigned int txqueuelen;
 
+    RCPtr<CoreTunbuilder> tunimpl;
     NetCfgSignals signal;
     DNS::ResolverSettings * resolver = nullptr;
     bool active = false;
+
+
     /**
      *  Validate that the sender is allowed to do change the configuration
      *  for this device.  If not, a DBusCredentialsException is thrown.

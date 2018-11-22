@@ -78,13 +78,16 @@ public:
         introspection_xml << "<node name='" << OpenVPN3DBus_rootp_netcfg << "'>"
                           << "    <interface name='" << OpenVPN3DBus_interf_netcfg << "'>"
                           << "        <method name='CreateVirtualInterface'>"
-                          << "          <arg type='u' direction='in' name='device_type'/>"
                           << "          <arg type='s' direction='in' name='device_name'/>"
                           << "          <arg type='o' direction='out' name='device_path'/>"
                           << "        </method>"
                           << "        <method name='FetchInterfaceList'>"
                           << "          <arg type='ao' direction='out' name='device_paths'/>"
                           << "        </method>"
+                          << "        <method name='ProtectSocket'>"
+                          << "          <arg type='b' direction='out' name='succeded'/>"
+                          << "        </method>"
+                          /* The fd that this method gets is not in the function signature */
                           << "    <property type='u' name='log_level' access='readwrite'/>"
                           << signal.GetLogIntrospection()
                           << NetCfgStateEvent::IntrospectionXML()
@@ -132,34 +135,36 @@ public:
             GVariant *retval = nullptr;
             if ("CreateVirtualInterface" == method_name)
             {
-                guint g_dev_type = 0;
                 gchar *dev_name = nullptr;
-                g_variant_get(params, "(us)", &g_dev_type, &dev_name);
+                g_variant_get(params, "(s)", &dev_name);
 
-                signal.Debug("CreateVirtualInterface("
-                             + std::string(std::to_string(g_dev_type))
-                             + ", '" + std::string(dev_name)+ "')");
+                signal.Debug(std::string("CreateVirtualInterface(")
+                             + "'" + std::string(dev_name)+ "')");
 
                 // Create a unique enough device path /(ownpid)-(senderpid)-(sendername)
                 std::string dev_path = OpenVPN3DBus_rootp_netcfg + "/" +
                     std::to_string(getpid()) + "_"  + std::to_string(creds.GetPID(sender)) +
                     "_" + std::string(dev_name);
-                NetCfgDeviceType dev_type = (NetCfgDeviceType) g_dev_type;
                 NetCfgDevice *device = new NetCfgDevice(conn,
                                               [self=Ptr(this), dev_path]()
                                                {
                                                    self->remove_device_object(dev_path);
                                                },
                                               creds.GetUID(sender), dev_path,
-                                              dev_type, dev_name, resolver,
+                                              dev_name, resolver,
                                               signal.GetLogLevel(),
                                               signal.GetLogWriter());
                 retval = g_variant_new("(o)", dev_path.c_str());
-                g_free(dev_name);
+
                 IdleCheck_RefInc();
                 device->IdleCheck_Register(IdleCheck_Get());
                 device->RegisterObject(conn);
                 devices[dev_path] = device;
+
+                signal.LogInfo(std::string("Virtual device '") + dev_name + "'"
+                               + " registered on " + dev_path
+                               + " (owner uid " + std::to_string(creds.GetUID(sender)) + ")");
+                g_free(dev_name);
             }
             else if ("FetchInterfaceList" == method_name)
             {
@@ -180,6 +185,10 @@ public:
                 // Clean-up
                 g_variant_builder_unref(bld);
                 g_variant_builder_unref(ret);
+            }
+            else if ("ProtectSocket" == method_name)
+            {
+                retval = protect_socket(conn, invoc);
             }
             else
             {
@@ -360,6 +369,48 @@ private:
         devices.erase(devpath);
     }
 
+
+    /**
+     * Reads a unix fd from a connec and protects that socket from being
+     * routed over the VPN
+     *
+     * @param conn   GDBusConnection pointer where the request came
+     * @param invoc  GDBusMethodInvocation pointer containing the request.
+     *               The file descriptor to be protected must come in the
+     *               message inside this request.
+     *
+     * @return  Returns a GVariant object with the reply to the caller.
+     *          This will always be a boolean true value on success.  In case
+     *          of errors, a NetCfgException is thrown.
+     */
+    GVariant* protect_socket(GDBusConnection *conn, GDBusMethodInvocation *invoc)
+    {
+        // This should generally be true for DBus 1.3, double checking here cannot hurt
+        g_assert(g_dbus_connection_get_capabilities(conn) & G_DBUS_CAPABILITY_FLAGS_UNIX_FD_PASSING);
+
+        GDBusMessage *dmsg = g_dbus_method_invocation_get_message(invoc);
+        GUnixFDList *fdlist = g_dbus_message_get_unix_fd_list(dmsg);
+
+        // Get the first FD from the fdlist list
+        int fd = -1;
+        GError *error = nullptr;
+        if (fdlist)
+        {
+            fd = g_unix_fd_list_get(fdlist, 0, &error);
+        }
+
+        if (!fdlist || error || fd == -1)
+        {
+            throw NetCfgException("Reading fd socket failed");
+        }
+
+        /*
+         * TODO: Add code that figures out the default gw device without VPN and binds
+         * the socket to that device
+         */
+        close(fd);
+        return g_variant_new("(b)", true);
+    }
 };
 
 

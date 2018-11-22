@@ -204,11 +204,13 @@ src_sessionmgr_openvpn3_service_sessionmgr_SOURCES = \
 #
 src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/netcfg/openvpn3-service-netcfg.cpp \
+	src/netcfg/core-tunbuilder.cpp \
 	src/netcfg/netcfg.hpp \
 	src/netcfg/netcfg-device.hpp \
 	src/netcfg/netcfg-exception.hpp \
 	src/netcfg/netcfg-signals.hpp \
 	src/netcfg/netcfg-stateevent.hpp \
+	src/netcfg/core-tunbuilder.hpp \
 	src/netcfg/dns-direct-file.hpp \
 	src/netcfg/dns-resolver-settings.hpp \
 	$(DBUS_SOURCES) \

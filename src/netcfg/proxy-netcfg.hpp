@@ -2,6 +2,7 @@
 //
 //  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
 //  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018         Arne Schwabe <arne@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -40,6 +41,8 @@ using namespace openvpn;
 
 namespace NetCfgProxy
 {
+    class Device;
+
     class Manager : public DBusProxy,
                     public RC<thread_unsafe_refcount>
     {
@@ -53,28 +56,27 @@ namespace NetCfgProxy
          * @param dbuscon  D-Bus connection to use for D-Bus calls
          */
         Manager(GDBusConnection *dbuscon)
-        : DBusProxy(dbuscon,
+            : DBusProxy(dbuscon,
                         OpenVPN3DBus_name_netcfg,
                         OpenVPN3DBus_interf_netcfg,
                         OpenVPN3DBus_rootp_netcfg)
         {
         }
 
-        const std::string CreateVirtualInterface(const NetCfgDeviceType& type,
-                                                 const std::string& device_name);
+        const std::string CreateVirtualInterface(const std::string& device_name);
+
+        Device* getVirtualInterface(const std::string & path);
         std::vector<std::string> FetchInterfaceList();
+        bool ProtectSocket(int socket, const std::string& remote, bool ipv6);
     };
 
-
-    const std::string Manager::CreateVirtualInterface(const NetCfgDeviceType& type,
-                                                      const std::string& device_name)
+    const std::string Manager::CreateVirtualInterface(const std::string& device_name)
     {
         Ping();
         try
         {
             GVariant *res = Call("CreateVirtualInterface",
-                                 g_variant_new("(us)",
-                                               (guint) type,
+                                 g_variant_new("(s)",
                                                device_name.c_str()
                                                ));
             if (!res)
@@ -90,7 +92,7 @@ namespace NetCfgProxy
             g_variant_unref(res);
             return devpath;
         }
-        catch (NetCfgProxyException)
+        catch (NetCfgProxyException&)
         {
             throw;
         }
@@ -99,6 +101,31 @@ namespace NetCfgProxy
             throw NetCfgProxyException("CreateVirtualInterface",
                                        excp.what());
         }
+    }
+
+    bool Manager::ProtectSocket(int socket, const std::string & remote, bool ipv6)
+    {
+        if (!CheckObjectExists())
+        {
+            throw NetCfgProxyException("ProtectSocket",
+                                       "net.openvpn.v3.netcfg service unavailable");
+        }
+
+        bool ret;
+        try {
+            GVariant *res = CallSendFD("ProtectSocket",
+                                       g_variant_new("(sb)",
+                                                     remote.c_str(),
+                                                     ipv6),
+                                       socket);
+            g_variant_get(res, "(b)", &ret);
+            g_variant_unref(res);
+        }
+        catch (NetCfgProxyException&)
+        {
+            throw;
+        }
+        return ret;
     }
 
     std::vector<std::string> Manager::FetchInterfaceList()
@@ -128,7 +155,7 @@ namespace NetCfgProxy
             g_variant_unref(res);
             return device_paths;
         }
-        catch (NetCfgProxyException)
+        catch (NetCfgProxyException&)
         {
             throw;
         }
@@ -139,6 +166,23 @@ namespace NetCfgProxy
         }
     }
 
+    /**
+     * Class representing a IPv4 or IPv6 network
+     */
+    class Network {
+    public:
+        Network(std::string networkAddress, unsigned int prefix,
+                bool ipv6, bool exclude=false)
+            : address(std::move(networkAddress)),
+              prefix(prefix), ipv6(ipv6), exclude(exclude)
+        {
+        }
+
+        std::string address;
+        unsigned int prefix;
+        bool ipv6;
+        bool exclude;
+    };
 
     /**
      *   Class replicating a specific D-Bus network device object
@@ -147,7 +191,7 @@ namespace NetCfgProxy
                     public RC<thread_unsafe_refcount>
     {
     public:
-        typedef RCPtr<Manager> Ptr;
+        typedef RCPtr<Device> Ptr;
 
         /**
          *  Initialize the Network Configuration proxy for
@@ -168,60 +212,25 @@ namespace NetCfgProxy
         /**
          *  Adds an IPv4 address to this network device
          *
-         * @param ip_address
-         * @param prefix
-         * @param broadcast
+         * @param ip_address String representation of the IP Address
+         * @param prefix Prefix length (CIDR)
+         * @param gateway Gateway for this network
+         * @param ipv6 Is this Address an IPv6 address
          */
-        void AddIPv4Address(const std::string& ip_address,
-                            const unsigned int prefix,
-                            const std::string& broadcast);
+        void AddIPAddress(const std::string& ip_address,
+                            unsigned int prefix,
+                            const std::string& gateway,
+                            bool ipv6);
 
-        /**
-         *  Removes an IPv4 address from this network device
-         *
-         * @param ip_address
-         * @param prefix
-         */
-        void RemoveIPv4Address(const std::string& ip_address,
-                               const unsigned int prefix);
-
-        /**
-         *  Adds an IPv6 address to this network device
-         *
-         * @param ip_address
-         * @param prefix
-         */
-        void AddIPv6Address(const std::string& ip_address,
-                            const unsigned int prefix);
-
-        /**
-         *  Removes an IPv6 address from this network device
-         *
-         * @param ip_address
-         * @param prefix
-         */
-        void RemoveIPv6Address(const std::string& ip_address,
-                               const unsigned int prefix);
 
         /**
          *  Takes a vector containing route destinations which is
-         *  to be routed via the given gateway address
+         *  to be routed via the VPN
          *
          * @param routes
          * @param gateway
          */
-        void AddRoutes(std::vector<std::string>& routes,
-                       std::string& gateway);
-
-        /**
-         *  Takes a vector containing route destinations which is to
-         *  be removed from the routing table
-         *
-         * @param routes
-         * @param gateway
-         */
-        void RemoveRoutes(std::vector<std::string>& routes,
-                          std::string& gateway);
+        void AddNetworks(const std::vector<Network> &networks);
 
         /**
          *  Takes a list of DNS server IP addresses to enlist as
@@ -229,7 +238,7 @@ namespace NetCfgProxy
          *
          * @param server_list
          */
-        void AddDNS(std::vector<std::string>& server_list);
+        void AddDNS(const std::vector<std::string>& server_list);
 
         /**
          *  Takes a list of DNS server IP addresses to be removed from
@@ -237,21 +246,21 @@ namespace NetCfgProxy
          *
          * @param server_list
          */
-        void RemoveDNS(std::vector<std::string>& server_list);
+        void RemoveDNS(const std::vector<std::string>& server_list);
 
         /**
          *  Takes a list of DNS search domains to be used on the system
          *
          * @param domains
          */
-        void AddDNSSearch(std::vector<std::string>& domains);
+        void AddDNSSearch(const std::vector<std::string>& domains);
 
         /**
          *  Takes a list of DNS serach domains to be removed from the system
          *
          * @param domains
          */
-        void RemoveDNSSearch(std::vector<std::string>& domains);
+        void RemoveDNSSearch(const std::vector<std::string>& domains);
 
         /**
          *  Creates and applies a configuration to this virtual interface.
@@ -260,6 +269,8 @@ namespace NetCfgProxy
          *  it before applying any Add/Remove settings on the device.  If
          *  the device was already activated, it only commits the last
          *  un-applied changes.
+         *
+         *  @return Tun file descript or -1 on error
          */
         int Establish();
 
@@ -277,6 +288,20 @@ namespace NetCfgProxy
          */
         void Destroy();
 
+        /**
+         * Set the MTU for the device
+         *
+         * @param mtu  unsigned int containing the new MTU value
+         */
+        void SetMtu(unsigned int mtu);
+
+        /**
+         * Set The Layer of the device
+         *
+         * @param layer  unsigned int of the tunnel device layer type.
+         *               Valid values are 2 (TAP) or 3 (TUN).
+         */
+        void SetLayer(unsigned int layer);
 
         /*
          *  Generic functions for processing various properties
@@ -298,86 +323,66 @@ namespace NetCfgProxy
 
         std::vector<std::string> GetDNS();
         std::vector<std::string> GetDNSSearch();
+
+        void SetRemoteAddress(const std::string& remote, bool ipv6);
     };
 
 
-    void Device::AddIPv4Address(const std::string& ip_address,
-                                const unsigned int prefix,
-                                const std::string& broadcast = "")
+    Device* Manager::getVirtualInterface(const std::string & path)
     {
-        GVariant *r = Call("AddIPv4Address",
-                           g_variant_new("(sus)",
-                                         ip_address.c_str(),
-                                         prefix,
-                                         broadcast.c_str()));
+        return new Device(GetConnection(), path);
+    }
+
+
+    void Device::SetRemoteAddress(const std::string& remote, bool ipv6)
+    {
+        GVariant *r = Call("SetRemoteAddress",
+                           g_variant_new("(sb)",
+                                         remote.c_str(), ipv6));
         g_variant_unref(r);
     }
 
 
-    void Device::RemoveIPv4Address(const std::string& ip_address,
-                                   const unsigned int prefix)
+    void Device::AddIPAddress(const std::string& ip_address,
+                              const unsigned int prefix,
+                              const std::string& gateway,
+                              bool ipv6)
     {
-        GVariant *r = Call("RemoveIPv4Address",
-                           g_variant_new("(su)",
-                                         ip_address.c_str(),
-                                         prefix));
+        GVariant *r = Call("AddIPAddress",
+                           g_variant_new("(susb)",
+                                         ip_address.c_str(), prefix,
+                                         gateway.c_str(), ipv6));
         g_variant_unref(r);
     }
 
 
-    void Device::AddIPv6Address(const std::string& ip_address,
-                                const unsigned int prefix)
+    void Device::AddNetworks(const std::vector<Network> &networks)
     {
-        GVariant *r = Call("AddIPv6Address",
-                           g_variant_new("(su)",
-                                         ip_address.c_str(),
-                                         prefix));
-        g_variant_unref(r);
-    }
+        GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("a(subb)"));
+        for (const auto& net : networks)
+        {
+            g_variant_builder_add(bld, "(subb)",
+                                  net.address.c_str(), net.prefix,
+                                  net.ipv6, net.exclude);
+        }
 
+        // DBus somehow wants this still wrapped being able to do this
+        // with one builder would be to simple or not broken enough
+        GVariant *res = Call("AddNetworks", GLibUtils::wrapInTuple(bld));
 
-    void Device::RemoveIPv6Address(const std::string& ip_address,
-                                   const unsigned int prefix)
-    {
-        GVariant *r = Call("RemoveIPv6Address",
-                           g_variant_new("(su)",
-                                         ip_address.c_str(),
-                                         prefix));
-        g_variant_unref(r);
-    }
-
-
-    void Device::AddRoutes(std::vector<std::string>& routes,
-                           std::string& gateway)
-    {
-        GVariant *rts = GLibUtils::GVariantFromVector(routes);
-        GVariant *res = Call("AddRoutes",
-                             g_variant_new("(ass)",
-                                           rts, gateway.c_str()));
         g_variant_unref(res);
     }
 
 
-    void Device::RemoveRoutes(std::vector<std::string>& routes,
-                              std::string& gateway)
+    void Device::AddDNS(const std::vector<std::string>& server_list)
     {
-        GVariant *rts = GLibUtils::GVariantFromVector(routes);
-        GVariant *res = Call("RemoveRoutes",
-                             g_variant_new("(ass)",
-                                           rts, gateway.c_str()));
+        GVariant *list = GLibUtils::GVariantTupleFromVector(server_list);
+        GVariant *res = Call("AddDNS", list);
         g_variant_unref(res);
     }
 
 
-    void Device::AddDNS(std::vector<std::string>& server_list)
-    {
-        GVariant *list = GLibUtils::GVariantFromVector(server_list);
-        GVariant *res = Call("AddDNS", g_variant_new("(as)", list));
-        g_variant_unref(res);
-    }
-
-
-    void Device::RemoveDNS(std::vector<std::string>& server_list)
+    void Device::RemoveDNS(const std::vector<std::string>& server_list)
     {
         GVariant *list = GLibUtils::GVariantTupleFromVector(server_list);
         GVariant *res = Call("RemoveDNS", list);
@@ -385,7 +390,7 @@ namespace NetCfgProxy
     }
 
 
-    void Device::AddDNSSearch(std::vector<std::string>& domains)
+    void Device::AddDNSSearch(const std::vector<std::string>& domains)
     {
         GVariant *list = GLibUtils::GVariantTupleFromVector(domains);
         GVariant *res = Call("AddDNSSearch", list);
@@ -393,7 +398,7 @@ namespace NetCfgProxy
     }
 
 
-    void Device::RemoveDNSSearch(std::vector<std::string>& domains)
+    void Device::RemoveDNSSearch(const std::vector<std::string>& domains)
     {
         GVariant *list = GLibUtils::GVariantTupleFromVector(domains);
         GVariant *res = Call("RemoveDNSSearch", list);
@@ -436,6 +441,18 @@ namespace NetCfgProxy
     }
 
 
+    void Device::SetLayer(unsigned int layer)
+    {
+        SetProperty("layer", layer);
+    }
+
+
+    void Device::SetMtu(unsigned int mtu)
+    {
+        SetProperty("mtu", mtu);
+    }
+
+
     uid_t Device::GetOwner()
     {
         return GetUIntProperty("owner");
@@ -468,7 +485,7 @@ namespace NetCfgProxy
 
     NetCfgDeviceType Device::GetDeviceType()
     {
-        return (NetCfgDeviceType) GetUIntProperty("device_type");
+        return (NetCfgDeviceType) GetUIntProperty("layer");
     }
 
 
