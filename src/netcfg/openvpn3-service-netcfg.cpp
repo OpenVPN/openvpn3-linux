@@ -33,6 +33,7 @@
 #include "log/logwriter.hpp"
 #include "log/ansicolours.hpp"
 #include "log/proxy-log.hpp"
+#include "log/core-dbus-logbase.hpp"
 #include "ovpn3cli/lookup.hpp"
 
 #include "netcfg.hpp"
@@ -169,7 +170,14 @@ int netcfg_main(ParsedArgs args)
         {
             logservice.reset(new LogServiceProxy(dbus.GetConnection()));
             logservice->Attach(OpenVPN3DBus_interf_netcfg);
+            logservice->Attach(OpenVPN3DBus_interf_netcfg + ".core");
         }
+
+        // Initialize logging in the OpenVPN 3 Core library
+        openvpn::CoreDBusLogBase corelog(dbus.GetConnection(),
+                                         OpenVPN3DBus_interf_netcfg + ".core",
+                                         logwr.get());
+        corelog.SetLogLevel(log_level);
 
         std::cout << get_version(args.GetArgv0()) << std::endl;
 
@@ -209,6 +217,7 @@ int netcfg_main(ParsedArgs args)
         if (logservice)
         {
             logservice->Detach(OpenVPN3DBus_interf_netcfg);
+            logservice->Detach(OpenVPN3DBus_interf_netcfg + ".core");
         }
 
         if (idle_wait_min > 0)
