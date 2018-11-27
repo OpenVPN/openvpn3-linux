@@ -213,6 +213,7 @@ src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/netcfg/dns-resolver-settings.hpp \
 	$(DBUS_SOURCES) \
 	src/common/utils.hpp \
+	src/log/core-dbus-logbase.hpp \
 	src/log/dbus-log.hpp
 src_netcfg_openvpn3_service_netcfg_CXXFLAGS = $(LIBCAPNG_CFLAGS) $(AM_CXXFLAGS)
 src_netcfg_openvpn3_service_netcfg_LDFLAGS = $(LIBCAPNG_LIBS) $(AM_LDFLAGS)
