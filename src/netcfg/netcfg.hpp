@@ -32,6 +32,7 @@
 
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
+#include "dbus/glibutils.hpp"
 #include "dbus/path.hpp"
 #include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"
@@ -88,6 +89,8 @@ public:
                           << "          <arg type='ao' direction='out' name='device_paths'/>"
                           << "        </method>"
                           << "        <method name='ProtectSocket'>"
+                          << "          <arg type='s' direction='in' name='remote' />"
+                          << "          <arg type='b' direction='in' name='ipv6' />"
                           << "          <arg type='b' direction='out' name='succeded'/>"
                           << "        </method>"
                           /* The fd that this method gets is not in the function signature */
@@ -192,7 +195,7 @@ public:
             }
             else if ("ProtectSocket" == method_name)
             {
-                retval = protect_socket(conn, invoc);
+                retval = protect_socket(conn, invoc, params);
             }
             else
             {
@@ -388,10 +391,17 @@ private:
      *          This will always be a boolean true value on success.  In case
      *          of errors, a NetCfgException is thrown.
      */
-    GVariant* protect_socket(GDBusConnection *conn, GDBusMethodInvocation *invoc)
+    GVariant* protect_socket(GDBusConnection *conn,
+                             GDBusMethodInvocation *invoc,
+                             GVariant *params)
     {
         // This should generally be true for DBus 1.3, double checking here cannot hurt
         g_assert(g_dbus_connection_get_capabilities(conn) & G_DBUS_CAPABILITY_FLAGS_UNIX_FD_PASSING);
+
+        GLibUtils::checkParams(__func__, params, "(sb)", 2);
+
+        std::string remote(g_variant_get_string(g_variant_get_child_value(params, 0), 0));
+        bool ipv6 = g_variant_get_boolean(g_variant_get_child_value(params, 1));
 
         GDBusMessage *dmsg = g_dbus_method_invocation_get_message(invoc);
         GUnixFDList *fdlist = g_dbus_message_get_unix_fd_list(dmsg);
@@ -409,10 +419,14 @@ private:
             throw NetCfgException("Reading fd socket failed");
         }
 
-        /*
-         * TODO: Add code that figures out the default gw device without VPN and binds
-         * the socket to that device
-         */
+        if (options.so_mark >= 0)
+        {
+            openvpn::protect_socket_somark(fd, remote, options.so_mark);
+        }
+        if (RedirectMethod::BINDTODEV == options.redirect_method)
+        {
+            openvpn::protect_socket_binddev(fd, remote, ipv6);
+        }
         close(fd);
         return g_variant_new("(b)", true);
     }

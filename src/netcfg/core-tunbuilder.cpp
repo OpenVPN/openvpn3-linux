@@ -117,7 +117,30 @@ namespace openvpn
 
             if (netCfgDevice.reroute_ipv4 || netCfgDevice.reroute_ipv6)
             {
-                tbc->tun_builder_reroute_gw(netCfgDevice.reroute_ipv4, netCfgDevice.reroute_ipv6, 0);
+                switch (netCfgDevice.options.redirect_method)
+                {
+                case RedirectMethod::HOST_ROUTE:
+                    tbc->tun_builder_reroute_gw(netCfgDevice.reroute_ipv4,
+                                                netCfgDevice.reroute_ipv6, 0);
+                    break;
+
+                case RedirectMethod::BINDTODEV:
+                    // Add 'def1' style default routes
+                    if (netCfgDevice.reroute_ipv4)
+                    {
+                        tbc->tun_builder_add_route("0.0.0.0", 1, -1, false);
+                        tbc->tun_builder_add_route("128.0.0.0", 1, -1, false);
+                    }
+                    if (netCfgDevice.reroute_ipv4)
+                    {
+                        tbc->tun_builder_add_route("::", 1, -1, true);
+                        tbc->tun_builder_add_route("8000::", 1, -1, true);
+                    }
+                    break;
+
+                case RedirectMethod::NONE:
+                    break;
+                }
             }
 
             tbc->validate();
@@ -153,7 +176,62 @@ namespace openvpn
                 tun->destroy(std::cerr);
             }
         }
-        };
+    };
+
+
+    void protect_socket_somark(int fd, const std::string& remote, int somark)
+    {
+        OPENVPN_LOG("Protecting socket " + std::to_string(fd)
+                    + " to '" + remote + " by setting SO_MARK to "
+                    + std::to_string(somark));
+
+        if (setsockopt(fd, SOL_SOCKET, SO_MARK, (int *) &somark, sizeof(int)))
+        {
+            throw NetCfgException(std::string("Setting SO_MARK failed: ")
+                                  + strerror(errno));
+        }
+    }
+
+
+    void protect_socket_binddev(int fd, const std::string & remote, bool ipv6)
+    {
+        std::string bestdev;
+
+        if (ipv6)
+        {
+            IPv6::Addr bestgw;
+            IP::Route6 hostroute(IPv6::Addr::from_string(remote), 128);
+            if (TunNetlink::SITNL::net_route_best_gw(hostroute,
+                                                     bestgw, bestdev) != 0)
+            {
+                throw NetCfgException("Failed retrieving IPv6 gateway for "
+                                      + remote + " failed");
+            }
+        }
+        else
+        {
+            IPv4::Addr bestgw;
+            IP::Route4 hostroute(IPv4::Addr::from_string(remote), 32);
+            if (TunNetlink::SITNL::net_route_best_gw(hostroute,
+                                                     bestgw, bestdev) != 0)
+            {
+                throw NetCfgException("Failed retrieving IPv4 gateway for "
+                                      + remote + " failed");
+            }
+        }
+
+        OPENVPN_LOG("Protecting socket " + std::to_string(fd)
+                    + " to '" + remote + "'(" + (ipv6 ? "inet6": "inet")
+                    + ") by binding it to '" + bestdev + "'");
+
+        if (setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE,
+                       (void *)bestdev.c_str(), strlen(bestdev.c_str())) < 0)
+        {
+            throw NetCfgException("Failed binding (SO_BINDTODEVICE) to "
+                                  + bestdev + " failed: " + strerror(errno));
+        }
+    }
+
 
     CoreTunbuilder* getCoreBuilderInstance()
     {

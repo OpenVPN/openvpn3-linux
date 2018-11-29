@@ -28,6 +28,7 @@
 
 #pragma once
 #include <openvpn/common/rc.hpp>
+#include <string>
 
 class NetCfgDevice;
 
@@ -42,6 +43,23 @@ namespace openvpn
 
     // Forward declaration to allow friend
     class CoreTunbuilderImpl;
+
+    /**
+     * Function that binds the the fd to the device of the best route to remote
+     * @param fd Socket to bind
+     * @param remote remote host to lookup
+     * @param ipv6 is remote ipv6
+     */
+    void protect_socket_binddev(int fd, const std::string & remote, bool ipv6);
+
+    /**
+     * Function that set the so_mark for socket
+     * @param fd Socket for the SO_MARK to set
+     * @param remote remote host to connect to (for logging only)
+     * @param somark the value to set SO_MARK to
+     */
+    void protect_socket_somark(int fd, const std::string & remote, int somark);
+
 
     // Workaround to avoid circular dependencies
     CoreTunbuilder* getCoreBuilderInstance();
