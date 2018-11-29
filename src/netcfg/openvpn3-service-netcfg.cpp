@@ -23,6 +23,7 @@
  * @brief  OpenVPN 3 D-Bus service managing network configurations
  */
 
+#include <string>
 #include <cap-ng.h>
 
 #include "common/utils.hpp"
@@ -53,6 +54,38 @@ static void drop_root_ng()
                                OPENVPN_USERNAME "/" OPENVPN_GROUP);
     }
 }
+
+static void apply_capabilities(const ParsedArgs& args)
+{
+    //
+    // Prepare dropping capabilities and user privileges
+    //
+    capng_clear(CAPNG_SELECT_BOTH);
+#ifdef DEBUG_OPTIONS
+    if (!args.Present("disable-capabilities"))
+#endif
+    {
+        // Need this capability to configure network and routing.
+        capng_update(CAPNG_ADD, (capng_type_t) (CAPNG_EFFECTIVE|CAPNG_PERMITTED),
+                      CAP_NET_ADMIN);
+
+        // CAP_DAC_OVERRIDE is needed to be allowed to overwrite /etc/resolv.conf
+        if (args.Present("resolv-conf"))
+        {
+            capng_update(CAPNG_ADD, (capng_type_t) (CAPNG_EFFECTIVE|CAPNG_PERMITTED),
+                         CAP_DAC_OVERRIDE);
+        }
+    }
+#ifdef DEBUG_OPTIONS
+    if (!args.Present("run-as-root"))
+#endif
+    {
+        // With the capapbility set, no root account access is needed
+        drop_root_ng();
+    }
+    capng_apply(CAPNG_SELECT_BOTH);
+}
+
 
 int netcfg_main(ParsedArgs args)
 {
@@ -100,45 +133,7 @@ int netcfg_main(ParsedArgs args)
         }
     }
 
-    //
-    // Prepare dropping capabilities and user privileges
-    //
-    capng_clear(CAPNG_SELECT_BOTH);
-#ifdef DEBUG_OPTIONS
-    if (!args.Present("disable-capabilities"))
-    {
-        // Need this capability to configure network and routing.
-        capng_update(CAPNG_ADD, (capng_type_t) (CAPNG_EFFECTIVE|CAPNG_PERMITTED),
-                      CAP_NET_ADMIN);
-
-        // CAP_DAC_OVERRIDE is needed to be allowed to overwrite /etc/resolv.conf
-        if (args.Present("resolv-conf"))
-        {
-            capng_update(CAPNG_ADD, (capng_type_t) (CAPNG_EFFECTIVE|CAPNG_PERMITTED),
-                         CAP_DAC_OVERRIDE);
-        }
-    }
-    if (!args.Present("run-as-root"))
-    {
-        // With the capapbility set, no root account access is needed
-        drop_root_ng();
-    }
-#else
-    // Need this capability to configure network and routing.
-    capng_update(CAPNG_ADD, (capng_type_t) (CAPNG_EFFECTIVE|CAPNG_PERMITTED),
-                  CAP_NET_ADMIN);
-
-    // CAP_FOWNER is needed to be allowed to overwrite /etc/resolv.conf
-    if (args.Present("resolv-conf"))
-    {
-        capng_update(CAPNG_ADD, (capng_type_t) (CAPNG_EFFECTIVE|CAPNG_PERMITTED),
-                     CAP_DAC_OVERRIDE);
-    }
-
-    // With the capapbility set, no root account access is needed
-    drop_root_ng();
-#endif
-    capng_apply(CAPNG_SELECT_BOTH);
+    apply_capabilities(args);
 
     int log_level = -1;
     if (args.Present("log-level"))
