@@ -37,6 +37,7 @@
 #include "ovpn3cli/lookup.hpp"
 
 #include "netcfg.hpp"
+#include "netcfg-options.hpp"
 #include "dns-resolver-settings.hpp"
 
 using namespace NetCfg;
@@ -56,7 +57,9 @@ static void drop_root_ng()
     }
 }
 
-static void apply_capabilities(const ParsedArgs& args)
+
+static void apply_capabilities(const ParsedArgs& args,
+                               const NetCfgOptions& opts)
 {
     //
     // Prepare dropping capabilities and user privileges
@@ -75,6 +78,14 @@ static void apply_capabilities(const ParsedArgs& args)
         {
             capng_update(CAPNG_ADD, (capng_type_t) (CAPNG_EFFECTIVE|CAPNG_PERMITTED),
                          CAP_DAC_OVERRIDE);
+        }
+
+        if (RedirectMethod::BINDTODEV ==  opts.redirect_method)
+        {
+            // We need this to be able to call setsockopt with SO_BINDTODEVICE
+            capng_update(CAPNG_ADD, (capng_type_t) (CAPNG_EFFECTIVE|CAPNG_PERMITTED),
+                         CAP_NET_RAW);
+
         }
     }
 #ifdef DEBUG_OPTIONS
@@ -134,7 +145,15 @@ int netcfg_main(ParsedArgs args)
         }
     }
 
-    apply_capabilities(args);
+
+    // Parse options which will be passed to the
+    // NetCfg manager or device objects
+    NetCfgOptions netcfgopts(args);
+
+    //
+    // Prepare dropping capabilities and user privileges
+    //
+    apply_capabilities(args, netcfgopts);
 
     int log_level = -1;
     if (args.Present("log-level"))
@@ -182,7 +201,7 @@ int netcfg_main(ParsedArgs args)
         std::cout << get_version(args.GetArgv0()) << std::endl;
 
         NetworkCfgService netcfgsrv(dbus.GetConnection(), resolver.get(),
-                                    logwr.get());
+                                    logwr.get(), netcfgopts);
         if (log_level > 0)
         {
             netcfgsrv.SetDefaultLogLevel(log_level);
@@ -253,6 +272,11 @@ int main(int argc, char **argv)
                         "0 disables it (Default: 5 minutes)");
     argparser.AddOption("resolv-conf", "FILE", true,
                         "Use file based resolv.conf management, based using FILE");
+    argparser.AddOption("redirect-method", "METHOD", true,
+                        "Method to use if --redirect-gateway is in use for VPN server redirect. "
+                        "Methods: host-route, bind-device, none (default)");
+    argparser.AddOption("set-somark", "MARK", true,
+                        "Set the specified so mark on all VPN sockets.");
 #if DEBUG_OPTIONS
     argparser.AddOption("disable-capabilities", 0,
                         "Do not restrcit any process capabilties (INSECURE)");
@@ -264,7 +288,7 @@ int main(int argc, char **argv)
     {
         return argparser.RunCommand(simple_basename(argv[0]), argc, argv);
     }
-    catch (CommandException& excp)
+    catch (CommandArgBaseException& excp)
     {
         std::cout << excp.what() << std::endl;
         return 2;

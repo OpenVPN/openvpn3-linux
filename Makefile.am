@@ -212,6 +212,7 @@ src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/netcfg/netcfg.hpp \
 	src/netcfg/netcfg-device.hpp \
 	src/netcfg/netcfg-exception.hpp \
+	src/netcfg/netcfg-options.hpp \
 	src/netcfg/netcfg-signals.hpp \
 	src/netcfg/netcfg-stateevent.hpp \
 	src/netcfg/core-tunbuilder.hpp \

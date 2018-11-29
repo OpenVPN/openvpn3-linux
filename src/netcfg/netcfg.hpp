@@ -39,6 +39,7 @@
 #include "dns-resolver-settings.hpp"
 #include "netcfg-signals.hpp"
 #include "netcfg-device.hpp"
+#include "netcfg-options.hpp"
 
 using namespace openvpn;
 using namespace NetCfg;
@@ -65,12 +66,14 @@ public:
     NetCfgServiceObject(GDBusConnection *conn,
                         const unsigned int default_log_level,
                         DNS::ResolverSettings *resolver,
-                        LogWriter *logwr)
+                        LogWriter *logwr,
+                        NetCfgOptions options)
         : DBusObject(OpenVPN3DBus_rootp_netcfg),
           DBusConnectionCreds(conn),
           signal(conn, LogGroup::NETCFG, OpenVPN3DBus_rootp_netcfg, logwr),
           resolver(resolver),
-          creds(conn)
+          creds(conn),
+          options(std::move(options))
     {
         signal.SetLogLevel(default_log_level);
 
@@ -153,7 +156,8 @@ public:
                                               creds.GetUID(sender), dev_path,
                                               dev_name, resolver,
                                               signal.GetLogLevel(),
-                                              signal.GetLogWriter());
+                                              signal.GetLogWriter(),
+                                              options);
                 retval = g_variant_new("(o)", dev_path.c_str());
 
                 IdleCheck_RefInc();
@@ -333,6 +337,7 @@ private:
     DNS::ResolverSettings *resolver;
     DBusConnectionCreds creds;
     std::map<std::string, NetCfgDevice *> devices;
+    NetCfgOptions options;
 
 
     /**
@@ -427,7 +432,8 @@ public:
      */
     NetworkCfgService(GDBusConnection *dbuscon,
                       DNS::ResolverSettings *resolver,
-                      LogWriter *logwr)
+                      LogWriter *logwr,
+                      NetCfgOptions options)
         : DBus(dbuscon,
                OpenVPN3DBus_name_netcfg,
                OpenVPN3DBus_rootp_netcfg,
@@ -436,7 +442,8 @@ public:
           logwr(logwr),
           default_log_level(4),
           signal(nullptr),
-          srv_obj(nullptr)
+          srv_obj(nullptr),
+          options(std::move(options))
     {
 
     }
@@ -471,7 +478,8 @@ public:
         srv_obj.reset(new NetCfgServiceObject(GetConnection(),
                                               default_log_level,
                                               resolver,
-                                              logwr));
+                                              logwr, options
+                                              ));
         srv_obj->RegisterObject(GetConnection());
 
         // Setup a signal object of the backend
@@ -480,6 +488,9 @@ public:
         signal->SetLogLevel(default_log_level);
         signal->Debug("NetCfg service registered on '" + GetBusName()
                        + "': " + OpenVPN3DBus_rootp_netcfg);
+
+        // Log which redirect method is in use
+        signal->LogVerb1(options.str());
 
         if (resolver)
         {
@@ -543,4 +554,5 @@ private:
     unsigned int default_log_level;
     NetCfgSignals::Ptr signal;
     NetCfgServiceObject::Ptr srv_obj;
+    NetCfgOptions options;
 };

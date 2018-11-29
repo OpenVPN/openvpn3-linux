@@ -40,6 +40,7 @@
 #include "ovpn3cli/lookup.hpp"
 #include "core-tunbuilder.hpp"
 #include "./dns-direct-file.hpp"
+#include "netcfg-options.hpp"
 #include "netcfg-stateevent.hpp"
 #include "netcfg-signals.hpp"
 
@@ -107,7 +108,8 @@ public:
                  const uid_t creator, const std::string& objpath,
                  std::string devname,
                  DNS::ResolverSettings *resolver,
-                 const unsigned int log_level, LogWriter *logwr)
+                 const unsigned int log_level, LogWriter *logwr,
+                 NetCfgOptions options)
         : DBusObject(objpath),
           DBusCredentials(dbuscon, creator),
           remove_callback(std::move(remove_callback)),
@@ -115,7 +117,8 @@ public:
           device_name(devname),
           mtu(1500), txqueuelen(0),
           signal(dbuscon, LogGroup::NETCFG, objpath, logwr),
-          resolver(resolver)
+          resolver(resolver),
+          options(std::move(options))
     {
         signal.SetLogLevel(log_level);
 
@@ -649,6 +652,7 @@ private:
     RCPtr<CoreTunbuilder> tunimpl;
     NetCfgSignals signal;
     DNS::ResolverSettings * resolver = nullptr;
+    NetCfgOptions options;
     bool active = false;
 
 
