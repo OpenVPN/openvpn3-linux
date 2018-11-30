@@ -498,6 +498,10 @@ int backend_starter(ParsedArgs args)
     {
         client_args.push_back("--colour");
     }
+    if (args.Present("client-disable-protect-socket"))
+    {
+        client_args.push_back("--disable-protect-socket");
+    }
     if (args.Present("client-signal-broadcast"))
     {
         client_args.push_back("--signal-broadcast");
@@ -600,6 +604,8 @@ int main(int argc, char **argv)
                   "Adds the --log-file FILE argument to openvpn3-service-client");
     cmd.AddOption("client-colour", 0,
                   "Adds the --colour argument to openvpn3-service-client");
+    cmd.AddOption("client-disable-protect-socket", 0,
+                  "Adds the --disable-protect argument to openvpn3-service-client");
     cmd.AddOption("client-signal-broadcast", 0,
                   "Debug option: Adds the --signal-broadcast argument to openvpn3-service-client");
 

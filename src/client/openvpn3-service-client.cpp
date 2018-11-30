@@ -94,6 +94,7 @@ public:
           registered(false),
           paused(false),
           vpnclient(nullptr),
+          disabled_socket_protect(false),
           client_thread(nullptr)
     {
         // Initialize the VPN Core
@@ -187,6 +188,21 @@ public:
     void SetSignalBroadcast(bool brdc)
     {
         signal_broadcast = brdc;
+    }
+
+
+    /**
+     *  Sets the flag disabling the ProtectSocket method.  If this is
+     *  set to true, any calls to socket_protect ends up as a NOOP with
+     *  no errors.  A VERB2 log message will be added to each
+     *  socket_protect() call if socket protection has been disabled.
+     *
+     * @param val Boolean setting the disable flag.  If true, feature is
+     *            disabled
+     */
+    void DisableSocketProtect(bool val)
+    {
+       disabled_socket_protect = val;
     }
 
 
@@ -700,6 +716,7 @@ private:
     bool paused;
     std::string configpath;
     CoreVPNClient::Ptr vpnclient;
+    bool disabled_socket_protect;
     std::unique_ptr<std::thread> client_thread;
     ClientAPI::Config vpnconfig;
     ClientAPI::EvalConfig cfgeval;
@@ -868,8 +885,8 @@ private:
 
         // Create a new VPN client object, which is handling the
         // tunnel itself.
-
         vpnclient.reset(new CoreVPNClient(dbusconn, &signal, &userinputq));
+        vpnclient->disable_socket_protect(disabled_socket_protect);
 
         // We need to provide a copy of the vpnconfig object, as vpnclient
         // seems to take ownership
@@ -1079,6 +1096,7 @@ public:
           logwr(logwr),
           procsig(nullptr),
           be_obj(nullptr),
+          disabled_socket_protect(false),
           signal(nullptr),
           signal_broadcast(false)
     {
@@ -1139,6 +1157,20 @@ public:
 
 
     /**
+     *  Sets the flag disabling the ProtectSocket method.  If this is
+     *  set to true, any calls to socket_protect ends up as a NOOP with
+     *  no errors.  A VERB2 log message will be added to each
+     *  socket_protect() call if socket protection has been disabled.
+     *
+     * @param val Boolean setting the disable flag.  If true, feature is
+     *            disabled
+     */
+    void DisableSocketProtect(bool val)
+    {
+       disabled_socket_protect = val;
+    }
+
+    /**
      *  This callback is called when the service was successfully registered
      *  on the D-Bus.
      */
@@ -1171,6 +1203,7 @@ public:
                                              default_log_level,
                                              logwr));
         be_obj->SetSignalBroadcast(signal_broadcast);
+        be_obj->DisableSocketProtect(disabled_socket_protect);
         be_obj->RegisterObject(GetConnection());
 
         // Setup a signal object of the backend
@@ -1227,6 +1260,7 @@ private:
     LogWriter *logwr;
     ProcessSignalProducer::Ptr procsig;
     BackendClientObject::Ptr be_obj;
+    bool disabled_socket_protect;
     BackendSignals::Ptr signal;
     bool signal_broadcast;
     LogServiceProxy::Ptr logservice;
@@ -1234,8 +1268,10 @@ private:
 
 
 void start_client_thread(pid_t start_pid, const std::string argv0,
-                        const std::string sesstoken, int log_level,
-                        bool signal_broadcast, LogWriter *logwr)
+                        const std::string sesstoken,
+                        bool disable_socket_protect,
+                        int log_level, bool signal_broadcast,
+                        LogWriter *logwr)
 {
     std::cout << get_version(argv0) << std::endl;
 
@@ -1246,6 +1282,7 @@ void start_client_thread(pid_t start_pid, const std::string argv0,
         backend_service.SetDefaultLogLevel(log_level);
     }
     backend_service.SetSignalBroadcast(signal_broadcast);
+    backend_service.DisableSocketProtect(disable_socket_protect);
     backend_service.Setup();
 
     // Main loop
@@ -1329,6 +1366,7 @@ int client_service(ParsedArgs args)
         try
         {
             start_client_thread(getpid(), args.GetArgv0(), extra[0],
+                                args.Present("disable-protect-socket"),
                                 log_level, args.Present("signal-broadcast"),
                                 logwr.get());
             return 0;
@@ -1354,6 +1392,7 @@ int client_service(ParsedArgs args)
         try
         {
             start_client_thread(start_pid, args.GetArgv0(), extra[0],
+                                args.Present("disable-protect-socket"),
                                 log_level, args.Present("signal-broadcast"),
                                 logwr.get());
             return 0;
@@ -1390,6 +1429,9 @@ int main(int argc, char **argv)
                         "Make the log lines colourful");
     argparser.AddOption("signal-broadcast", 0,
                         "Broadcast all D-Bus signals instead of targeted multicast");
+    argparser.AddOption("disable-protect-socket", 0,
+                        "Disable the socket protect call on the UDP/TCP socket. "
+                        "This is needed on systems not supporting this feature");
 #if DEBUG_OPTIONS
     argparser.AddOption("no-fork", 0,
                         "Debug option: Do not fork a child to be run in the background.");

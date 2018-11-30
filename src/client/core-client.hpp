@@ -1,8 +1,8 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018      Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2017-2018  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017-2018  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018       Arne Schwabe <arne@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -95,11 +95,18 @@ public:
     CoreVPNClient(GDBusConnection *dbusconn, BackendSignals *signal,
                   RequiresQueue *userinputq)
             : CLIENTBASECLASS(dbusconn, signal),
+              disabled_socket_protect(false),
               signal(signal),
               userinputq(userinputq),
               failed_signal_sent(false),
               run_status(StatusMinor::CONN_INIT)
     {
+    }
+
+
+    void disable_socket_protect(bool val)
+    {
+        disabled_socket_protect = val;
     }
 
 
@@ -164,18 +171,30 @@ public:
     }
 
 
+protected:
+
+
 private:
     std::string dc_cookie;
     unsigned long evntcount = 0;
+    bool disabled_socket_protect;
     BackendSignals *signal;
     RequiresQueue *userinputq;
     std::mutex event_mutex;
     bool failed_signal_sent;
     StatusMinor run_status;
 
-    bool socket_protect(int socket, std::string, bool) override
+    bool socket_protect(int socket, std::string remote, bool ipv6) override
     {
+        if (disabled_socket_protect)
+        {
+            signal->LogVerb2("Socket Protect has been disabled");
             return true;
+        }
+        else
+        {
+            return CLIENTBASECLASS::socket_protect(socket, remote, ipv6);
+        }
     }
 
 
