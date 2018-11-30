@@ -51,7 +51,23 @@ There are five services which is good to beware of:
   process is started per VPN client.  Once it has started, it registers itself
   with the session manager and the session manager provides it with the needed
   details so it can retrieve the proper configuration from the configuration
-  manager.  This process will also have root privileges (currently).
+  manager.  This service will depend on the openvpn3-service-netcfg to manage
+  the tun interface and related configuration.
+
+* openvpn3-service-netcfg
+
+  This provides a service similar to a VPN API on other platforms.  It is
+  responsible for creating, managing and destroying of tun interfaces, configure
+  them as well as handle the DNS configuration provided by the VPN server.
+  This is the most privileged process which only have a few capabilities
+  enabled (such as `CAP_NET_ADMIN` and possibly `CAP_DAC_OVERRIDE` or
+  `CAP_NET_RAW`).  With these capabilities, the servuce can run as openvpn.
+  Currently DNS configuration is done by manipulating `/etc/resolv.conf`
+  directly, but can be extended to support better methods
+  (systemd-resolved and NetworkManager is being investigated as potential
+  solutions).  With integrating with other services, the `CAP_DAC_OVERRIDE`
+  privilege might not be needed.  The `CAP_NET_RAW` capability is only needed
+  when using `--redirect-method bind-device`.
 
 * openvpn3-service-logger
 
