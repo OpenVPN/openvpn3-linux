@@ -69,6 +69,9 @@ public:
     {
         return true;
     }
+
+protected:
+    bool disabled_dns_config;
 };
 #endif
 
@@ -109,6 +112,11 @@ public:
         disabled_socket_protect = val;
     }
 
+
+    void disable_dns_config(bool val)
+    {
+        disabled_dns_config = val;
+    }
 
     /**
      *  Do we have a dynamic challenge?

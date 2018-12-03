@@ -42,7 +42,8 @@ public:
     typedef RCPtr<NetCfgTunBuilder> Ptr;
 
     NetCfgTunBuilder(GDBusConnection* dbuscon, BackendSignals *signal)
-        : netcfgmgr(dbuscon),
+        : disabled_dns_config(false),
+          netcfgmgr(dbuscon),
           signal(signal)
     {
     }
@@ -168,6 +169,11 @@ public:
 
     bool tun_builder_add_dns_server(const std::string& address, bool ipv6) override
     {
+        if (disabled_dns_config)
+        {
+            return true;
+        }
+
         const std::vector<std::string> dnsserver{{address}};
         device->AddDNS(dnsserver);
         return true;
@@ -176,6 +182,11 @@ public:
 
     bool tun_builder_add_search_domain(const std::string& domain) override
     {
+        if (disabled_dns_config)
+        {
+            return true;
+        }
+
         const std::vector<std::string> dnsdomain{{domain}};
         device->AddDNSSearch(dnsdomain);
         return true;
@@ -235,6 +246,10 @@ public:
         signal->LogVerb2("Session name: '" + name + "'");
         return true;
     }
+
+
+protected:
+    bool disabled_dns_config;
 
 
 private:

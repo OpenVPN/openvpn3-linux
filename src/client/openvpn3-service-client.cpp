@@ -95,6 +95,7 @@ public:
           paused(false),
           vpnclient(nullptr),
           disabled_socket_protect(false),
+          ignore_dns_cfg(false),
           client_thread(nullptr)
     {
         // Initialize the VPN Core
@@ -717,6 +718,7 @@ private:
     std::string configpath;
     CoreVPNClient::Ptr vpnclient;
     bool disabled_socket_protect;
+    bool ignore_dns_cfg;
     std::unique_ptr<std::thread> client_thread;
     ClientAPI::Config vpnconfig;
     ClientAPI::EvalConfig cfgeval;
@@ -887,6 +889,7 @@ private:
         // tunnel itself.
         vpnclient.reset(new CoreVPNClient(dbusconn, &signal, &userinputq));
         vpnclient->disable_socket_protect(disabled_socket_protect);
+        vpnclient->disable_dns_config(ignore_dns_cfg);
 
         // We need to provide a copy of the vpnconfig object, as vpnclient
         // seems to take ownership
@@ -958,7 +961,7 @@ private:
                                                         configpath);
             config_name = cfg_proxy.GetStringProperty("name");
 
-            // We need to extract the persist_tun property *before* calling
+            // We need to extract the all settings *before* calling
             // GetConfig().  If the configuration is tagged as a single-shot
             // config, we cannot query it for more details after the first
             // GetConfig() call.
@@ -1012,6 +1015,15 @@ private:
             else if (override.override.key == "dns-fallback-google")
             {
                 vpnconfig.googleDnsFallback = override.boolValue;
+            }
+            else if (override.override.key == "dns-setup-disabled")
+            {
+                ignore_dns_cfg = override.boolValue;
+                if (ignore_dns_cfg)
+                {
+                    signal.LogVerb1("DNS setup is disabled (via the "
+                                    "dns-setup-disabled override)");
+                }
             }
             else if (override.override.key == "dns-sync-lookup")
             {
