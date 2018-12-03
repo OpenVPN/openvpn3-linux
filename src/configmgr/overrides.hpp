@@ -98,6 +98,9 @@ const ValidOverride configProfileOverrides[] = {
     {"dns-fallback-google", OverrideType::boolean,
      "Uses Google DNS servers (8.8.8.8/8.8.4.4) if no DNS server are provided"},
 
+    {"dns-setup-disabled", OverrideType::boolean,
+     "Do not change the DNS settings on the system"},
+
     {"dns-sync-lookup", OverrideType::boolean,
      "Use synchronous DNS Lookups"},
 
