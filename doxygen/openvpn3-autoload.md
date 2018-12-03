@@ -214,7 +214,8 @@ the platform.
     "tunnel": {
             "ipv6": "IPV6_SETTING",
             "persist": BOOLEAN,
-            "dns-fallback": "PROVIDER"
+            "dns-fallback": "PROVIDER",
+            "dns-setup-disabled": BOOLEAN
 	}
 
 #### tunnel: ipv6
@@ -241,6 +242,11 @@ server on the system.  Valid strings are:
 
  - `"google"`:  Configures the system to use 8.8.8.8 and 8.8.4.4
                 as fallback DNS servers
+
+#### tunnel: dns-setup-disabled
+Setting this to True will disable modifying the local DNS for this
+configuration profile when the tunnel is started.
+
 
 ## Section: log
 
