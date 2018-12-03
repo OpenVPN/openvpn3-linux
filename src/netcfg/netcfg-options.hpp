@@ -42,7 +42,7 @@ enum class RedirectMethod : std::uint8_t
  */
 struct NetCfgOptions {
     /** Decides wether use the tun-builder redirect functionality */
-    RedirectMethod redirect_method = RedirectMethod::NONE;
+    RedirectMethod redirect_method = RedirectMethod::HOST_ROUTE;
 
     /** the SO_MARK to use if > 0 */
     int so_mark = -1;

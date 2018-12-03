@@ -274,7 +274,7 @@ int main(int argc, char **argv)
                         "Use file based resolv.conf management, based using FILE");
     argparser.AddOption("redirect-method", "METHOD", true,
                         "Method to use if --redirect-gateway is in use for VPN server redirect. "
-                        "Methods: host-route, bind-device, none (default)");
+                        "Methods: host-route (default), bind-device, none");
     argparser.AddOption("set-somark", "MARK", true,
                         "Set the specified so mark on all VPN sockets.");
 #if DEBUG_OPTIONS
