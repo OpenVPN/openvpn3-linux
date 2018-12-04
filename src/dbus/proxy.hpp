@@ -262,6 +262,67 @@ namespace openvpn
 
 
         /**
+         *  Checks if the destination service is available by checking if
+         *  the service bus name is registered.  If not, try to start the
+         *  service.
+         *
+         *  Throws DBusException in case of errors.
+         */
+        void CheckServiceAvail()
+        {
+            GDBusProxy *proxy = SetupProxy("org.freedesktop.DBus",
+                                           "org.freedesktop.DBus",
+                                               "/");
+            for (int i = 5; i > 0; --i)
+            {
+                try
+                {
+                    GVariant *r = dbus_proxy_call(proxy,
+                                                  "StartServiceByName",
+                                                  g_variant_new("(su)",
+                                                                bus_name.c_str(),
+                                                                0 // Not in use by D-Bus
+                                                                ),
+                                                   false,
+                                                   G_DBUS_CALL_FLAGS_NONE);
+                    if (r)
+                    {
+                        guint res = 0;
+                        g_variant_get(r, "(u)", &res);
+                        g_variant_unref(r);
+
+                        if (2 == res) // DBUS_START_REPLY_ALREADY_RUNNING
+                        {
+                            // When getting a clear evidence the service
+                            // is already running, no need to bother more
+                            return;
+                        }
+
+                        // FIXME:  Try to find better ways to
+                        //         identify availability in  a reasonable
+                        //         way.  Perhaps calling
+                        //         org.freedesktop.DBus.GetNameOwner coupled
+                        //         with CheckObjectExists()?  Using Ping()
+                        //         now for the initial testing
+                        Ping();
+                        return;
+                    }
+                }
+                catch (DBusException& excp)
+                {
+                    if (1 == i)
+                    {
+                        THROW_DBUSEXCEPTION("DBusProxy",
+                                            "D-Bus service '"
+                                            + bus_name + "' did not start");
+                    }
+                    sleep(1);
+                }
+            }
+        }
+
+
+        /**
          *  Checks if the object being accessed is really available.
          *
          *  This is done by a crude hack which just checks if the

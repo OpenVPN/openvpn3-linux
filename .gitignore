@@ -67,6 +67,7 @@ src/tests/dbus/netcfg-proxy-unit
 src/tests/dbus/netcfg-stateevent-selftest
 src/tests/dbus/proc-wait-for
 src/tests/dbus/proc-wait-for-pid
+src/tests/dbus/proxy-checkserviceavail
 src/tests/dbus/request-queue-client
 src/tests/dbus/request-queue-client2
 src/tests/dbus/request-queue-service

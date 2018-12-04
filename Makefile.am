@@ -154,6 +154,7 @@ noinst_PROGRAMS = \
 	src/tests/dbus/statusevent-selftest \
 	src/tests/dbus/proc-wait-for \
 	src/tests/dbus/proc-wait-for-pid \
+	src/tests/dbus/proxy-checkserviceavail \
 	src/tests/dbus/request-queue-client \
 	src/tests/dbus/request-queue-client2 \
 	src/tests/dbus/request-queue-service
@@ -280,6 +281,9 @@ src_tests_dbus_proc_wait_for_SOURCES = \
 src_tests_dbus_proc_wait_for_pid_SOURCES = \
 	src/tests/dbus/proc-wait-for-pid.cpp \
 	src/common/utils.cpp
+
+src_tests_dbus_proxy_checkserviceavail_SOURCES = \
+	src/tests/dbus/proxy-checkserviceavail.cpp
 
 src_tests_dbus_request_queue_client_SOURCES = \
 	src/tests/dbus/request-queue-client.cpp \
