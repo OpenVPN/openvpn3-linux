@@ -211,7 +211,7 @@ def parse_autoload_config(autoload):
                 continue
 
             if 'persist' == k:
-                autoloadcfg['flags'].append('persist_tun')
+                autoloadcfg['override']['persist-tun'] = True
 
             elif 'ipv6' == k:
                 if v in ('yes','no','default'):

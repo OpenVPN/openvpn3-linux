@@ -74,9 +74,9 @@ def import_config(bus, opts):
                                    False)                     # persistent
 
     if opts.GetPersistTun() is True:
-        # If --persist-tun was provided, set the persist_tun property
+        # If --persist-tun was provided, set the persist-tun override
         # in the imported configuration
-        cfg.SetProperty('persist_tun', True)
+        cfg.SetOverride('persist-tun', True)
 
     if not single_use:
         print('Configuration path: %s' % cfg.GetPath())
