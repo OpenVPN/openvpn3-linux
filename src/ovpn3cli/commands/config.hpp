@@ -104,7 +104,8 @@ std::string import_config(const std::string filename,
     if (persist_tun)
     {
         OpenVPN3ConfigurationProxy cfgprx(G_BUS_TYPE_SYSTEM, cfgpath);
-        cfgprx.SetPersistTun(persist_tun);
+        const ValidOverride& vo = cfgprx.LookupOverride("persist-tun");
+        cfgprx.SetOverride(vo, true);
     }
 
     // Return the object path to this configuration profile
@@ -242,9 +243,7 @@ static int cmd_config_manage_show(OpenVPN3ConfigurationProxy& conf,
                   << std::setw(32) << "             Read only: "
                   << (conf.GetBoolProperty("readonly") ? "Yes" : "No") << std::endl
                   << std::setw(32) << "     Persistent config: "
-                  << (conf.GetBoolProperty("persistent") ? "Yes" : "No") << std::endl
-                  << std::setw(32) << "     Persistent tunnel: "
-                  << (conf.GetPersistTun() ? "Yes" : "No") << std::endl;
+                  << (conf.GetBoolProperty("persistent") ? "Yes" : "No") << std::endl;
 
         std::cout << std::endl << "  Overrides: ";
         auto overrides = conf.GetOverrides();
@@ -364,23 +363,6 @@ static int cmd_config_manage(ParsedArgs args)
         {
             conf.SetName(args.GetValue("rename", 0));
             std::cout << "Configuration renamed" << std::endl;
-            valid_option = true;
-        }
-
-        if (args.Present("persist-tun"))
-        {
-            bool persist = args.GetBoolValue("persist-tun", 0);
-            conf.SetPersistTun(persist);
-            if (persist)
-            {
-                std::cout << "Persistent (seamless) tunnel is enabled"
-                          << std::endl;
-            }
-            else
-            {
-                std::cout << "Persistent (seamless) tunnel is disabled"
-                          << std::endl;
-            }
             valid_option = true;
         }
 
@@ -845,9 +827,6 @@ void RegisterCommands_config(Commands& ovpn3)
                    "Delete this alias");
     cmd->AddOption("rename", 'r', "NEW-CONFIG-NAME", true,
                    "Renames the configuration");
-    cmd->AddOption("persist-tun", "<true|false>", true,
-                   "Set/unset the persistent tun/seamless tunnel flag",
-                   arghelper_boolean);
     cmd->AddOption("show", 's',
                     "Show current configuration options");
 

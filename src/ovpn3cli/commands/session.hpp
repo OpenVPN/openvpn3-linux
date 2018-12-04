@@ -187,7 +187,8 @@ static int cmd_session_start(ParsedArgs args)
         if (args.Present("persist-tun"))
         {
             OpenVPN3ConfigurationProxy cfgprx(G_BUS_TYPE_SYSTEM, cfgpath);
-            cfgprx.SetPersistTun(true);
+            const ValidOverride& vo = cfgprx.LookupOverride("persist-tun");
+            cfgprx.SetOverride(vo, true);
         }
 
         std::string sessionpath = sessmgr.NewTunnel(cfgpath);
