@@ -33,6 +33,7 @@
 #include <string>
 #include <vector>
 #include <cstdlib>
+#include <cstring>
 #include <getopt.h>
 #include <glib-unix.h>
 
