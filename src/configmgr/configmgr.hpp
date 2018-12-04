@@ -385,7 +385,6 @@ public:
           readonly(false),
           single_use(false),
           persistent(false),
-          persist_tun(false),
           alias(nullptr),
           properties(this)
     {
@@ -422,7 +421,6 @@ public:
         properties.AddBinding(new PropertyType<std::time_t>(this, "last_used_timestamp", "read", false, last_use_tstamp, "t"));
         properties.AddBinding(new PropertyType<bool>(this, "locked_down", "readwrite", false, locked_down));
         properties.AddBinding(new PropertyType<bool>(this, "persistent", "read", false, persistent));
-        properties.AddBinding(new PropertyType<bool>(this, "persist_tun",  "readwrite", true, persist_tun));
         properties.AddBinding(new PropertyType<bool>(this, "readonly", "read", false, readonly));
         properties.AddBinding(new PropertyType<bool>(this, "single_use", "read", false, single_use));
         properties.AddBinding(new PropertyType<unsigned int>(this, "used_count", "read", false, used_count));
@@ -1077,7 +1075,6 @@ private:
     bool single_use;
     bool persistent;
     bool locked_down;
-    bool persist_tun;
     ConfigurationAlias *alias;
     PropertyCollection properties;
     OptionListJSON options;

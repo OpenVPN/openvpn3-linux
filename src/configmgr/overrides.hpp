@@ -95,6 +95,9 @@ const ValidOverride configProfileOverrides[] = {
      "Sets the IPv6 policy of the client",
      [] { return std::string("yes no default");}},
 
+    {"persist-tun", OverrideType::boolean,
+     "The tun interface should persist during reconnect"},
+
     {"dns-fallback-google", OverrideType::boolean,
      "Uses Google DNS servers (8.8.8.8/8.8.4.4) if no DNS server are provided"},
 
