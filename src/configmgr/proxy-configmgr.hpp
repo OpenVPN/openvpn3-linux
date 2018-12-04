@@ -239,31 +239,6 @@ public:
     }
 
 
-    /**
-     *  Sets the persist-tun capability setting
-     *
-     * @param persist_tun  Boolean flag.  If set to true, the persist-tun
-     *                     feature is enabled.
-     */
-    void SetPersistTun(bool persist_tun)
-    {
-        SetProperty("persist_tun", persist_tun);
-    }
-
-
-    /**
-     *   Retrieve the persist-tun capability setting.  If set to true,
-     *   the VPN client process should not tear down the tun device upon
-     *   reconnections.
-     *
-     * @return Returns true if persist-tun should be enabled
-     */
-    bool GetPersistTun()
-    {
-        return GetBoolProperty("persist_tun");
-    }
-
-
     void Seal()
     {
         GVariant *res = Call("Seal");
