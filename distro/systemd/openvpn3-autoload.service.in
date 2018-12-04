@@ -1,6 +1,6 @@
 [Unit]
 Description=OpenVPN 3 Linux configuration auto loader and starter
-After=network.target
+After=network.target dbus.service
 
 [Service]
 Type=oneshot
