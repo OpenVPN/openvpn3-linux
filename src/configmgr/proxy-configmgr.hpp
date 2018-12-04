@@ -411,6 +411,19 @@ public:
     }
 
 
+    const ValidOverride& LookupOverride(const std::string key)
+    {
+        for (const ValidOverride& vo: configProfileOverrides)
+        {
+            if (vo.key == key)
+            {
+                return vo;
+            }
+        }
+        THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
+                            "Invalid override key:" + key);
+    }
+
     /**
      * Removes an override from this object.
      */
