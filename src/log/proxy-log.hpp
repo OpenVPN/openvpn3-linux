@@ -66,7 +66,7 @@ public:
      */
     void Attach(const std::string interf)
     {
-        Ping();      // Ensure the log service is alive
+        CheckServiceAvail();
 
         // We do this as a synchronous call, to ensure the backend really
         // responded.  Then we just throw away the empty response, to avoid
