@@ -1014,82 +1014,143 @@ private:
     {
         for (const auto & override: overrides)
         {
+            bool valid_override = false;
             if (override.override.key == "server-override")
             {
                 vpnconfig.serverOverride = override.strValue;
+                valid_override = true;
             }
             else if (override.override.key == "port-override")
             {
                 vpnconfig.serverOverride = override.strValue;
+                valid_override = true;
             }
             else if (override.override.key == "proto-override")
             {
                 vpnconfig.protoOverride = override.strValue;
+                valid_override = true;
             }
             else if (override.override.key == "ipv6")
             {
                 vpnconfig.ipv6 = override.strValue;
+                valid_override = true;
             }
             else if (override.override.key == "dns-fallback-google")
             {
                 vpnconfig.googleDnsFallback = override.boolValue;
+                valid_override = true;
             }
             else if (override.override.key == "dns-setup-disabled")
             {
                 ignore_dns_cfg = override.boolValue;
-                if (ignore_dns_cfg)
-                {
-                    signal.LogVerb1("DNS setup is disabled (via the "
-                                    "dns-setup-disabled override)");
-                }
+                valid_override = true;
             }
             else if (override.override.key == "dns-sync-lookup")
             {
                 vpnconfig.synchronousDnsLookup = override.boolValue;
+                valid_override = true;
             }
             else if (override.override.key == "no-client-cert")
             {
                 vpnconfig.disableClientCert = override.boolValue;
+                valid_override = true;
             }
             else if (override.override.key == "auth-fail-retry")
             {
                 vpnconfig.retryOnAuthFailed = override.boolValue;
+                valid_override = true;
             }
             else if (override.override.key == "force-cipher-aes-cbc")
             {
                 vpnconfig.forceAesCbcCiphersuites = override.boolValue;
+                valid_override = true;
             }
             else if (override.override.key == "allow-compression")
             {
                 vpnconfig.compressionMode = override.strValue;
+                valid_override = true;
             }
             else if (override.override.key == "tls-version-min")
             {
                 vpnconfig.tlsVersionMinOverride = override.strValue;
+                valid_override = true;
             }
             else if (override.override.key == "tls-cert-profile")
             {
                 vpnconfig.tlsCertProfileOverride = override.strValue;
+                valid_override = true;
+            }
             }
             else if (override.override.key == "proxy-host")
             {
                 vpnconfig.proxyHost = override.strValue;
+                valid_override = true;
             }
             else if (override.override.key == "proxy-port")
             {
                 vpnconfig.proxyPort = override.strValue;
+                valid_override = true;
             }
             else if (override.override.key == "proxy-username")
             {
                 vpnconfig.proxyUsername = override.strValue;
+                valid_override = true;
             }
             else if (override.override.key == "proxy-password")
             {
                 vpnconfig.proxyPassword = override.strValue;
+                valid_override = true;
             }
             else if (override.override.key == "proxy-auth-cleartext")
             {
                 vpnconfig.proxyAllowCleartextAuth = override.boolValue;
+                valid_override = true;
+            }
+
+            // Add some logging to the overrides which got processed
+            if (valid_override)
+            {
+                std::stringstream msg;
+
+                msg << "Configuration override '"
+                    << override.override.key << "' ";
+
+                bool invalid = false;
+                switch (override.override.type)
+                {
+                case OverrideType::string:
+                    msg << "set to '" << override.strValue << "'";
+                    break;
+
+                case OverrideType::boolean:
+                    msg << "set to "
+                        << (override.boolValue ? "True" : "False");
+                    break;
+
+                case OverrideType::invalid:
+                    msg << "contains an invalid value";
+                    invalid = true;
+                    break;
+                }
+
+                if (!invalid)
+                {
+                    // Valid override values are logged as VERB1 messages
+                    signal.LogVerb1(msg.str());
+                }
+                else
+                {
+                    // Invalid override values are logged as errors
+                    signal.LogError(msg.str());
+                }
+            }
+            else
+            {
+                // If an override value exists which is not supported,
+                // the valid_override will typically be false.  Log this
+                // scenario slightly different
+                signal.LogError("Unsupported override: "
+                                + override.override.key);
             }
         }
     }
