@@ -983,7 +983,6 @@ private:
             // GetConfig().  If the configuration is tagged as a single-shot
             // config, we cannot query it for more details after the first
             // GetConfig() call.
-            bool tunPersist = cfg_proxy.GetPersistTun();
             std::vector<OverrideValue> overrides = cfg_proxy.GetOverrides();
 
             // Parse the configuration
@@ -998,7 +997,6 @@ private:
 #endif
             vpnconfig.info = true;
             vpnconfig.content = pm.profile_content();
-            vpnconfig.tunPersist = tunPersist;
             set_overrides(overrides);
         }
         catch (std::exception& e)
@@ -1080,6 +1078,10 @@ private:
                 vpnconfig.tlsCertProfileOverride = override.strValue;
                 valid_override = true;
             }
+            else if (override.override.key == "persist-tun")
+            {
+                vpnconfig.tunPersist = override.boolValue;
+                valid_override = true;
             }
             else if (override.override.key == "proxy-host")
             {
