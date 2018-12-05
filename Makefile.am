@@ -54,6 +54,7 @@ EXTRA_DIST = \
 	COPYRIGHT.md \
 	README.md \
 	CLA.md \
+	docs \
 	src/shell/bash_completion-openvpn3 \
 	openvpn3-core \
 	vendor \

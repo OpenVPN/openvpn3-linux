@@ -7,7 +7,7 @@ taken care of.
 - [+] Implment persistent storage of VPN profiles
 
   Status: In progress.  An already working alternative is to use the
-  [`openvpn3-autoload`](doxygen/openvpn3-autoload.md) feature.
+  [`openvpn3-autoload`](docs/openvpn3-autoload.md) feature.
 
 - [ ] Write man-pages
 

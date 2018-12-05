@@ -171,7 +171,7 @@ configuration profiles found inside `/etc/openvpn3/autoload` which has
 a corresponding `.autoload` configuration present in addition.  This tells
 both the Configuration Manager and Session Manager how to process the
 VPN configuration profile.  For more details, look at the
-[OpenVPN 3 Autoload feature](doxygen/openvpn3-autoload.md) documentation.
+[OpenVPN 3 Autoload feature](docs/openvpn3-autoload.md) documentation.
 
 
 Pre-built binaries
@@ -383,7 +383,7 @@ these programs can be forced to provide more log data by setting
 `--log-level`.  And they can all provide logging to the console.
 
 For more information about debugging, please see
-[doxygen/debugging.md](doxygen/debugging.md)
+[docs/debugging.md](docs/debugging.md)
 
 
 D-Bus debugging
@@ -407,7 +407,7 @@ Looking at the D-Bus log messages can be also helpful, for example with:
     $ journalctl --since today -u dbus
 
 For more information about debugging, please see
-[doxygen/debugging.md](doxygen/debugging.md)
+[docs/debugging.md](docs/debugging.md)
 
 
 Contribution
