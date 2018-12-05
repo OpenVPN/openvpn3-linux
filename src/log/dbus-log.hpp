@@ -287,6 +287,15 @@ namespace openvpn
                                      const std::string object_path,
                                      const LogEvent& logev) = 0;
 
+
+        virtual void ProcessSignal(const std::string sender_name,
+                                   const std::string object_path,
+                                   const std::string interface_name,
+                                   const std::string signal_name,
+                                   GVariant *parameters)
+        {
+        }
+
         void callback_signal_handler(GDBusConnection *connection,
                                      const std::string sender_name,
                                      const std::string object_path,
@@ -294,7 +303,16 @@ namespace openvpn
                                      const std::string signal_name,
                                      GVariant *parameters)
         {
-            process_log_event(sender_name, interface_name, object_path, parameters);
+            if ("Log" == signal_name)
+            {
+                process_log_event(sender_name, interface_name, object_path,
+                                  parameters);
+            }
+            else
+            {
+                ProcessSignal(sender_name, object_path, interface_name,
+                              signal_name, parameters);
+            }
         }
 
     protected:
