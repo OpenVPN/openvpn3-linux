@@ -1,29 +1,19 @@
 OpenVPN 3 Linux client
 ======================
 
-This is the next generation OpenVPN client for Linux.  This code is very
-different from the more classic OpenVPN 2.x versions.
+This is the next generation OpenVPN client for Linux.  This project is very
+different from the more classic OpenVPN 2.x versions.  First of all, this is
+currently only a pure client-only implementation.
 
 This client depends on D-Bus to function.  The implementation tries to resolve
 a lot of issues related to privilege separation and that the VPN tunnel can
 still access information needed by the front-end user which starts a tunnel.
 
 All of the backend services will normally start automatically.  And when they
-are running idle for a little while with no data to maintain, they should
-also stop automatically.
+are lingering idle for a little while with no data to maintain, they will
+shut-down automatically.
 
-The default configuration for the services assumes a service account
-`openvpn` to be present. If it does not exist you should add one, e.g. by:
-
-    # groupadd -r openvpn
-    # useradd -r -s /sbin/nologin -g openvpn openvpn
-
-You will probably also need to reload D-Bus configuration to make
-D-Bus aware of the newly installed service:
-
-    # systemctl reload dbus
-
-There are five services which is good to beware of:
+There are six services which is good to beware of:
 
 * openvpn3-service-configmgr
 
@@ -38,7 +28,7 @@ There are five services which is good to beware of:
   only users with the right access levels can manage the various tunnels.
   This service is started as the openvpn user.
 
-* openvpn3-service-backend
+* openvpn3-service-backendstart
 
   This is more or less a helper service and is only used by the session manager
   The only task this service has is to start a new VPN client backend processes
@@ -60,11 +50,11 @@ There are five services which is good to beware of:
   them as well as handle the DNS configuration provided by the VPN server.
   This is the most privileged process which only have a few capabilities
   enabled (such as `CAP_NET_ADMIN` and possibly `CAP_DAC_OVERRIDE` or
-  `CAP_NET_RAW`).  With these capabilities, the servuce can run as openvpn.
-  Currently DNS configuration is done by manipulating `/etc/resolv.conf`
-  directly, but can be extended to support better methods
-  (systemd-resolved and NetworkManager is being investigated as potential
-  solutions).  With integrating with other services, the `CAP_DAC_OVERRIDE`
+  `CAP_NET_RAW`).  With these capabilities, the service can run as the
+  openvpn user.  Currently DNS configuration is done by manipulating
+  `/etc/resolv.conf` directly, but can be extended to support better methods
+  (systemd-resolved and NetworkManager are being investigated as potential
+  solutions).  When integrating with other services, the `CAP_DAC_OVERRIDE`
   privilege might not be needed.  The `CAP_NET_RAW` capability is only needed
   when using `--redirect-method bind-device`.
 
@@ -76,7 +66,7 @@ There are five services which is good to beware of:
   it isn't already running.
 
 
-To interact with these services, there are two tools provided:
+To interact with these services, there are two front-end tools provided:
 
 * openvpn3
 
@@ -88,19 +78,19 @@ To interact with these services, there are two tools provided:
 
 * openvpn2
 
-  This is a simpler interface which tries to look and behave a quite more
+  This is a simpler interface which tries to look and behave a bit more
   like the classic OpenVPN 2.x versions.  This interface is written in
   Python.  It does only allow options which are supported by the OpenVPN 3
   Core library, plus there are a handful options which are ignored as it
   is possible to establish connections without those options active.
 
-  When running openvpn2 with --daemon it will return a D-Bus path to the
-  VPN session.  This path can be used by the openvpn3 utility to further
+  When running openvpn2 with `--daemon` it will return a D-Bus path to the
+  VPN session.  This path can be used by the `openvpn3` utility to further
   manage this session.
 
 
-Using openvpn3
---------------
+Using the openvpn3 front-end
+----------------------------
 
 The `openvpn3` program is the main and preferred command line user interface.
 
@@ -117,9 +107,9 @@ The `openvpn3` program is the main and preferred command line user interface.
          $ openvpn3 config-import --config my-vpn-config.conf
 
       This will return a configuration path.  This is needed to interact
-      with thisconfiguration later on.
+      with this configuration later on.
 
-  2. (Optional) Display all imported configs
+  2. (Optional) Display all imported configuration profiles
 
          $ openvpn3 configs-list
 
@@ -152,8 +142,8 @@ All the `openvpn3` operations are also described via the `--help` option.
        $ openvpn3 session-start --help
 
 
-Using openvpn2
---------------
+Using openvpn2 front-end
+------------------------
 
 The `openvpn2` front-end is a simpler interface which tries to be somewhat
 similar to the old and classic openvpn-2.x generation.  It supports most of
@@ -171,16 +161,29 @@ line again.  From this point of, this session is now to be managed via the
 `openvpn3` front-end.
 
 
-Prebuilt binaries
+Auto-loading/starting VPN tunnels
+---------------------------------
+
+To enable loading configuration profiles and possibly also start them
+automatically, the `openvpn3-autoload` tool will handle this.  But it
+requires a little bit of preparations.  By default it will look for
+configuration profiles found inside `/etc/openvpn3/autoload` which has
+a corresponding `.autoload` configuration present in addition.  This tells
+both the Configuration Manager and Session Manager how to process the
+VPN configuration profile.  For more details, look at the
+[OpenVPN 3 Autoload feature](doxygen/openvpn3-autoload.md) documentation.
+
+
+Pre-built binaries
 -----------------
 
 There exists installable packages for Fedora, Red Hat Enterprise Linux,
 CentOS and Scientific Linux via a Fedora Copr repository.  See this
-url for more details:  https://copr.fedorainfracloud.org/coprs/dsommers/openvpn3/
+URL for more details:  https://copr.fedorainfracloud.org/coprs/dsommers/openvpn3/
 
 
-How to build it
----------------
+How to build openvpn3-linux locally
+-----------------------------------
 
 The following dependencies are needed:
 
@@ -189,7 +192,7 @@ The following dependencies are needed:
   that if possible, otherwise it will test for ``-std=c++11``.  If support
   for neither is found, it will fail.
 
-* mbedTLS 2.4 or newer
+* mbed TLS 2.4 or newer
 
   https://tls.mbed.org/
 
@@ -226,7 +229,6 @@ The following dependencies are needed:
   Enterprise Linux and Fedora), this is required.
 
 In addition, this git repository will pull in two git submodules:
-
 
 * openvpn3
 
@@ -265,6 +267,13 @@ First install the package dependencies needed to run the build.
 Completing these steps will provide you with a `./configure` script.
 
 
+### Adding the `openvpn` user and group accounts
+The default configuration for the services assumes a service account
+`openvpn` to be present. If it does not exist you should add one, e.g. by:
+
+    # groupadd -r openvpn
+    # useradd -r -s /sbin/nologin -g openvpn openvpn
+
 ### Building OpenVPN 3 Linux client
 If you already have a `./configure` script or have retrieved an
 `openvpn3-linux-*.tar.xz` tarball generated by `make dist`, the following steps
@@ -273,6 +282,13 @@ will build the client.
 - Run: ``./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var``
 - Run: ``make``
 - Run: ``make install``
+
+You might need to also reload D-Bus configuration to make D-Bus aware of
+the newly installed service.  On most system this happens automatically,
+but occasionally a manual operation is needed:
+
+    # systemctl reload dbus
+
 
 The ``--prefix`` can be changed, but beware that you will then need to add
 ``--datarootdir=/usr/share`` instead.  This is related to the D-Bus auto-start
@@ -286,16 +302,26 @@ With everything built and installed, it should be possible to run both the
 user.
 
 
+#### Auto-completion helper for bash/zsh
+The `openvpn3` front-end provides an interface for bash-completion to
+retrieve valid sub-commands, options and arguments - including valid
+D-Bus paths.  To enable this feature, copy
+`src/shell/bash_completion-openvpn3` to either `/etc/bash_completion.d`
+or `/usr/share/bash-completion/completions` (depending on the Linux
+distribution).
+
+
 #### SELinux
 
 The `openvpn3-service-netcfg` service depends on being able to pass a file
-descriptor to the tun device it has created to the `openvpn3-service-client`
-service (which is a single VPN client instance).  This is done via D-Bus.  But
-on systems with SELinux, the D-Bus daemon is not allowed to pass file
-descriptors related to `/dev/net/tun`.
+descriptor to the tun device it has created on behalf of the
+`openvpn3-service-client` service (where each of these processes represents
+a single VPN session).  This is done via D-Bus.  But on systems with
+SELinux, the D-Bus daemon is not allowed to pass file descriptors related
+to `/dev/net/tun`.
 
 The openvpn3-linux project ships an SELinux policy module, which will be
-installed in `/etc/openvpn3/selinux` if the `./configure` script can
+installed in `/etc/openvpn3/selinux` **if** the `./configure` script can
 locate the SELinux policy development files.  On RHEL/Fedora the development
 files are located under `/usr/share/selinux/devel` and provided by the
 `selinux-policy-devel` package.
@@ -304,22 +330,22 @@ If the `selinux-policy-devel` package has been detected by `./configure`,
 running `make install` will install the `openvpn3.pp` policy package,
 typically in `/etc/openvpn3/selinux`.
 
-To install and activate this SELinux security module, as root run:
-
-         # semodule -i /etc/openvpn3/selinux/openvpn3.pp
-         # semanage boolean --m --on dbus_access_tuntap_device
-
 This policy package adds a SELinux boolean, `dbus_access_tuntap_device`,
 which grants processes, such as `dbus-daemon` running under the
 `system_dbusd_t` security context access to files labelled as
 `tun_tap_device_t`; which matches the label of `/dev/net/tun`.
 
+To install and activate this SELinux security module, as root run:
+
+         # semodule -i /etc/openvpn3/selinux/openvpn3.pp
+         # semanage boolean --m --on dbus_access_tuntap_device
+
 On Red Hat Enterprise Linux and Fedora, the `openvpn3-service-netcfg` will
-stop running and the OpenVPN 3 Linux client will non-functional if this has not
-been done.  The source code of the policy package can be found in
+stop running and the OpenVPN 3 Linux client will non-functional if this has
+not been done.  The source code of the policy package can be found in
 [`src/selinux/openvpn3.te`](src/selinux/openvpn3.te).
 
-Users installing the pre-built RPM binaries, this is handled by the RPM
+For users installing the pre-built RPM binaries, this is handled by the RPM
 scriptlet during package install.
 
 
@@ -328,7 +354,7 @@ Logging
 
 Logging happens via `openvpn3-service-logger`.  If not started manually,
 it will automatically be started by the backend processes needing it.  The
-default in that case is to send log data to syslog.  This service can be
+default configuration sends log data to syslog.  This service can be
 started manually and must run as the `openvpn` user.  If  being started as
 `root`, it will automatically switch to the `openvpn` user.  See
 `openvpn3-service-logger --help` for more details.  Unless `--syslog` or
@@ -350,29 +376,21 @@ Most of the backend services (`openvpn3-service-logger`,
 `openvpn3-service-backendstart`) can be run in a
 console.  All with the exception of `openvpn3-service-netcfg` should be
 started as the `openvpn` user. `openvpn3-service-netcfg` must be started as
-root but will as soon as possible drop its privileges to the `openvpn` user as
-well, after it has acquired the `CAP_NET_ADMIN` capability and possibly a
-few others.  See their corresponding `--help` screen for details.  Most of these
-programs can be forced to provide more log data by setting `--log-level`.
-And they can all provide logging to the console.
+root but will as soon as possible drop its privileges to the `openvpn` user
+as well, after it has acquired the `CAP_NET_ADMIN` capability and possibly a
+few others.  See their corresponding `--help` screen for details.  Most of
+these programs can be forced to provide more log data by setting
+`--log-level`.  And they can all provide logging to the console.
 
-Since several of these services will also shutdown automatically when not
-being in use, it can also be good to disable this mechanism by providing
-`--idle-exit 0`.
-
-The last and more tricky service is the `openvpn3-service-client` which
-must be started via `openvpn3-service-backendstart`.  But it is possible
-to run this client process via a debugging tool, by using the `--run-via`
-and `--debugger-arg` options.
-
-For more detailed debugging details , please see
+For more information about debugging, please see
 [doxygen/debugging.md](doxygen/debugging.md)
 
 
 D-Bus debugging
----------
-To debug what is happening, ``busctl``, ``gdbus`` and ``dbus-send`` utilities are useful.
-The service destinations these tools need to move forward are:
+---------------
+To debug what is happening, ``busctl``, ``gdbus`` and ``dbus-send``
+utilities are useful.  The service destinations these tools need to move
+forward are:
 
 - net.openvpn.v3.configuration (Configuration manager)
 - net.openvpn.v3.sessions (Session manager)
@@ -388,13 +406,8 @@ Looking at the D-Bus log messages can be also helpful, for example with:
 
     $ journalctl --since today -u dbus
 
-Further tools in the source tree which can be helpful:
-
-- src/tests/dbus/signal-listener
-  There are typically four different signals these OpenVPN 3 services sends,
-  Log, StatusChange, AttentionRequired and ProcessChange.  It will dump all
-  signals it receives by default, but the first command line argument you
-  can provide is used to subscribe only to a specific signal name.
+For more information about debugging, please see
+[doxygen/debugging.md](doxygen/debugging.md)
 
 
 Contribution
@@ -408,9 +421,10 @@ Contribution
   discussions.  Final patches *MUST* go to the mailing list.
 
 * Testing
-  This code is new.  It will be buggy.  And it needs a lot of testing.
+  This code is quite new, but has been used a lot in various setups.
   Please reach out on FreeNode @ #openvpn for help and discussing issues
-  you encounter.
+  you encounter, or subscribe to and ask on the
+  openvpn-users@lists.sourceforge.net mailing list.
 
 * Packagers
   We are beginning to targeting packaging in Linux distributions.  The
@@ -423,13 +437,11 @@ Contribution
 DISCLAIMER
 ----------
 
-This is NOT production ready yet.  But we are getting there!  It is fully
-functional and quite stable when running.  And we are getting closer to
-a real beta release.  This code has also not been through the same scrutiny
-by security researches as OpenVPN 2.
-
+The OpenVPN 3 Linux project is now considered BETA quality.   It is fully
+functional and quite stable when running.
 
 The OpenVPN 3 Core library is also used by the OpenVPN Connect and
-PrivateTunnel clients, so the pure VPN tunnel implementation should be fairly
-safe and good to use.  However, the Linux implementation with the D-Bus
-integration is brand new code.
+PrivateTunnel clients in addition to the OpenVPN for Android client (need to
+explicitly enable the OpenVPN 3 backend), so the pure VPN tunnel implementation
+should be good to use.  However, this Linux implementation with the D-Bus
+integration is fairly new.
