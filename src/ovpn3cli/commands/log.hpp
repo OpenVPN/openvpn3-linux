@@ -33,12 +33,9 @@ using namespace openvpn;
 /**
  *  Simple class to handle Log signal events
  */
-class Logger : public LogConsumer,
-               public RC<thread_unsafe_refcount>
+class LoggerBase : public LogConsumer
 {
 public:
-    typedef RCPtr<Logger> Ptr;
-
     /**
      *  When instantiating a new Logger object, it will subscribe to
      *  Log signals appearing on a specific interface and D-Bus object path.
@@ -48,7 +45,7 @@ public:
      * @param interf       std::string containing the interface to subscribe to
      * @param object_path  std::string with the D-Bus object path to subscribe to
      */
-    Logger(GDBusConnection * dbscon, std::string interf,
+    LoggerBase(GDBusConnection * dbscon, std::string interf,
            std::string object_path)
         : LogConsumer(dbscon, interf, object_path)
     {
@@ -75,6 +72,70 @@ public:
 };
 
 
+class Logger : public LoggerBase,
+               public RC<thread_unsafe_refcount>
+{
+public:
+    typedef RCPtr<Logger> Ptr;
+
+    /**
+     *  When instantiating a new Logger object, it will subscribe to
+     *  Log signals appearing on a specific interface and D-Bus object path.
+     *  If these are empty, it will listen to any Log signals
+     *
+     * @param dbscon       D-Bus connection to use for subscribing
+     * @param interf       std::string containing the interface to subscribe to
+     * @param object_path  std::string with the D-Bus object path to subscribe to
+     */
+    Logger(GDBusConnection * dbscon, std::string interf,
+           std::string object_path)
+        : LoggerBase(dbscon, interf, object_path)
+    {
+    }
+
+};
+
+
+class SessionLogger : public LoggerBase,
+                      public RC<thread_unsafe_refcount>
+{
+public:
+    typedef RCPtr<SessionLogger> Ptr;
+
+    SessionLogger(GDBusConnection * dbscon, std::string interf,
+                  std::string object_path, GMainLoop *main_loop)
+        : LoggerBase(dbscon, interf, object_path),
+          main_loop(main_loop)
+    {
+        Subscribe("StatusChange");
+    }
+
+    void ProcessSignal(const std::string sender_name,
+                       const std::string object_path,
+                       const std::string interface_name,
+                       const std::string signal_name,
+                       GVariant *parameters) override
+    {
+        if ("StatusChange" == signal_name)
+        {
+            StatusEvent stev(parameters);
+
+            std::cout << GetTimestamp() << ">> " << stev << std::endl;
+
+            // If the session was removed, stop the logger
+            if (stev.Check(StatusMajor::SESSION,
+                           StatusMinor::SESS_REMOVED))
+            {
+                g_main_loop_quit((GMainLoop *) main_loop);
+            }
+        }
+    }
+
+
+private:
+    GMainLoop *main_loop;
+};
+
 /**
  *  Simple log command which can retrieve Log events happening on a specific
  *  session path or coming from the configuration manager.
@@ -91,7 +152,12 @@ static int cmd_log_listen(ParsedArgs args)
                                "Either --session-path or --config-events must be provided");
     }
 
-    Logger::Ptr session_log;
+    // Prepare the main loop which will listen for Log events and process them
+    GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
+    g_unix_signal_add(SIGINT, stop_handler, main_loop);
+    g_unix_signal_add(SIGTERM, stop_handler, main_loop);
+
+    SessionLogger::Ptr session_log;
     Logger::Ptr config_log;
     bool log_flag_reset = false;
     std::string session_path = "";
@@ -118,9 +184,9 @@ static int cmd_log_listen(ParsedArgs args)
             log_flag_reset = true;
         }
         // Setup a Logger object for the provided session path
-        session_log.reset(new Logger(dbuscon.GetConnection(),
-                                     OpenVPN3DBus_interf_sessions,
-                                     session_path));
+        session_log.reset(new SessionLogger(dbuscon.GetConnection(),
+                                            OpenVPN3DBus_interf_sessions,
+                                            session_path, main_loop));
 
         if (args.Present("log-level"))
         {
@@ -148,11 +214,6 @@ static int cmd_log_listen(ParsedArgs args)
         config_log.reset(new Logger(dbuscon.GetConnection(),
                                     OpenVPN3DBus_interf_configuration, ""));
     }
-
-    // Prepare the main loop which will listen for Log events and process them
-    GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
-    g_unix_signal_add(SIGINT, stop_handler, main_loop);
-    g_unix_signal_add(SIGTERM, stop_handler, main_loop);
 
     // Start the main loop.  This will exit on SIGINT or SIGTERM signals only
     g_main_loop_run(main_loop);
