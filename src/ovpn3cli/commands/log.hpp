@@ -162,7 +162,10 @@ static int cmd_log_listen(ParsedArgs args)
     if (!session_path.empty() && log_flag_reset)
     {
         OpenVPN3SessionProxy sesprx(G_BUS_TYPE_SYSTEM, session_path);
-        sesprx.SetReceiveLogEvents(false);
+        if (sesprx.CheckObjectExists())
+        {
+            sesprx.SetReceiveLogEvents(false);
+        }
     }
 
     // Clean-up and shut down.
