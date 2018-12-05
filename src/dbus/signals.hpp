@@ -198,6 +198,10 @@ namespace openvpn
             {
                 return;
             }
+            if (!G_IS_DBUS_CONNECTION(conn))
+            {
+                return;
+            }
             for( auto& sub : subscriptions)
             {
                 if (sub.second > 0)
