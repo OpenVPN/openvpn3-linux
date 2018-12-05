@@ -114,6 +114,19 @@ struct StatusEvent
     }
 
 
+    /**
+     *  Compares the saved status against a specific state
+     *
+     * @param maj  StatusMajor to compare against the saved state
+     * @param min  StatisMinro to compare
+     *
+     * @return Returns true if both maj and min matches the saved
+     *         state
+     */
+    bool Check(const StatusMajor maj, const StatusMinor min) const
+    {
+        return (maj == major) && (min == minor);
+    }
 
 
     /**
