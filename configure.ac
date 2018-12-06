@@ -349,6 +349,13 @@ AC_DEFINE_UNQUOTED([OPENVPN_GROUP], ["${OPENVPN_GROUP}"], [User group name for u
 
 
 dnl
+dnl  Check if rst2man is available, if so man pages will be created
+dnl
+AC_CHECK_PROGS([RST2MAN], [rst2man], []) # optional
+AC_SUBST([HAVE_RST2MAN])
+AM_CONDITIONAL([HAVE_RST2MAN], [test -n "${RST2MAN}"])
+
+dnl
 dnl  Various developer tools
 dnl
 AC_ARG_VAR([GIT], [path to git utility])
@@ -360,6 +367,7 @@ if test -n "${GIT}" -a -d "${srcdir}/.git"; then
 fi
 AC_MSG_RESULT([checking if this is a git checkout ... ${GIT_CHECKOUT}])
 AM_CONDITIONAL([GIT_CHECKOUT], [test "${GIT_CHECKOUT}" = "yes"])
+
 
 dnl
 dnl  opt-in debug mode, adds arguments to some D-Bus service programs
@@ -430,6 +438,7 @@ AC_CONFIG_FILES([
         distro/systemd/Makefile
         doxygen/Makefile \
         doxygen/openvpn3-linux.doxy \
+        docs/man/Makefile \
         src/policy/Makefile \
         src/python/Makefile \
         src/selinux/Makefile \

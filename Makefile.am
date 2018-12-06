@@ -27,7 +27,7 @@ SUBDIRS=
 if HAVE_PYTHON
 SUBDIRS += src/python
 endif
-SUBDIRS += distro/systemd src/service-autostart src/policy doxygen
+SUBDIRS += distro/systemd src/service-autostart src/policy doxygen docs/man
 
 if ENABLE_SELINUX_BUILD
 SUBDIRS += src/selinux
@@ -54,7 +54,8 @@ EXTRA_DIST = \
 	COPYRIGHT.md \
 	README.md \
 	CLA.md \
-	docs \
+	docs/*.md
+	docs/dbus/*.md \
 	src/shell/bash_completion-openvpn3 \
 	openvpn3-core \
 	vendor \

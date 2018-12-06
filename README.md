@@ -223,6 +223,11 @@ The following dependencies are needed:
   If Python 3.4 or newer is found, the openvpn2 utility and an openvpn3
   Python module will be built and installed.
 
+* (optional) Python docutils
+
+  http://docutils.sourceforge.net/
+  This is needed for the `rst2man` utility, used to generate the man pages.
+
 * (optional) selinux-policy-devel
 
   For Linux distributions running with SELinux in enforced mode (like Red Hat
