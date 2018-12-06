@@ -91,6 +91,7 @@ public:
         << "        <method name='Detach'>"
         << "            <arg type='s' name='interface' direction='in'/>"
         << "        </method>"
+        << "        <property type='s' name='version' access='read'/>"
         << "        <property name='log_level' type='u' access='readwrite'/>"
         << "        <property name='log_dbus_details' type='b' access='readwrite'/>"
         << "        <property name='timestamp' type='b' access='readwrite'/>"
@@ -288,7 +289,11 @@ public:
         {
             IdleCheck_UpdateTimestamp();
 
-            if ("log_level" == property_name)
+            if ("version" == property_name)
+            {
+                return g_variant_new_string(package_version);
+            }
+            else if ("log_level" == property_name)
             {
                 return g_variant_new_uint32(log_level);
             }

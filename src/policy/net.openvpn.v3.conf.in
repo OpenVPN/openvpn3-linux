@@ -219,6 +219,10 @@
            send_type="method_call"
            send_member="Ping"/>
 
+    <allow send_interface="org.freedesktop.DBus.Properties"
+           send_type="method_call"
+           send_member="Get"/>
+
     <!--                                -->
     <!--  net.openvpn.v3.configuration  -->
     <!--                                -->
