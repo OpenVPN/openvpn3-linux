@@ -52,6 +52,8 @@ public:
                     OpenVPN3DBus_interf_log,
                     OpenVPN3DBus_rootp_log)
     {
+        CheckServiceAvail();
+        (void) GetServiceVersion();
     }
 
 
