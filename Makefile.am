@@ -54,6 +54,7 @@ DOCUMENTATION = \
 	COPYRIGHT.md \
 	README.md \
 	CLA.md \
+	docs/coding-style.md \
 	docs/dbus \
 	docs/debugging.md
 
