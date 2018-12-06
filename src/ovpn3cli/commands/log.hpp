@@ -175,7 +175,7 @@ static int cmd_log_listen(ParsedArgs args)
         if (!sesprx.CheckObjectExists())
         {
             throw CommandException("log",
-                                   "Configuration does not exist");
+                                   "Session not found");
         }
 
         if (!sesprx.GetReceiveLogEvents())

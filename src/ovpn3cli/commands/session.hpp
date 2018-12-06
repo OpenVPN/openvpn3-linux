@@ -43,7 +43,7 @@ static ConnectionStats fetch_stats(std::string session_path)
         if (!session.CheckObjectExists())
         {
             throw CommandException("session-stats",
-                                   "Configuration does not exist");
+                                   "Session not found");
         }
         return session.GetConnectionStats();
     }
@@ -497,7 +497,7 @@ static int cmd_session_manage(ParsedArgs args)
         if (!session.CheckObjectExists())
         {
             throw CommandException("session-manage",
-                                   "Configuration does not exist");
+                                   "Session not found");
         }
 
         ConnectionStats stats;
@@ -588,7 +588,7 @@ static int cmd_session_acl(ParsedArgs args)
         if (!session.CheckObjectExists())
         {
             throw CommandException("session-acl",
-                                   "Configuration does not exist");
+                                   "Session not found");
         }
 
         if (args.Present("grant"))
