@@ -50,12 +50,15 @@ maintainer-clean-local:
 CLEANFILES = \
         config-version.h *~
 
-EXTRA_DIST = \
+DOCUMENTATION = \
 	COPYRIGHT.md \
 	README.md \
 	CLA.md \
-	docs/*.md
-	docs/dbus/*.md \
+	docs/dbus \
+	docs/debugging.md
+
+EXTRA_DIST = \
+	$(DOCUMENTATION) \
 	src/shell/bash_completion-openvpn3 \
 	openvpn3-core \
 	vendor \
