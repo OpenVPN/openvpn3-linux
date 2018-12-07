@@ -32,7 +32,10 @@ if [ "$(echo ${VERSION} | cut -b-1)" != "v" ]; then
 	GUIVERSION="$(echo $VERSION | sed 's/_/:/')"
 	PRODVERSION="$(echo $VERSION | sed 's#/#_#g')"
 else
-	PRODVERSION="${VERSION:1}"
+	# bash could use ${VERSION:1}, but we try to make it
+	# work with more basic sh - so we use 'cut' to get the
+	# same result
+	PRODVERSION="$(echo ${VERSION} | cut -b2-)"
 	GUIVERSION="${VERSION}"
 fi
 echo "Version: $VERSION"
