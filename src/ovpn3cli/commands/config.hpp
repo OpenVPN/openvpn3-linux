@@ -319,16 +319,19 @@ static int cmd_config_manage(ParsedArgs args)
         && !override_present && !args.Present("unset-override"))
     {
         throw CommandException("config-manage",
-                               "An operation argument is required (--alias, --alias-delete, --rename, --show"
+                               "An operation argument is required "
+                               "(--rename, --show"
                                "--<overrideName>, --unset-override"
                                );
     }
 
+#if 0 // FIXME: Currently disable the alias feature until properly fixed
     if (args.Present("alias") && args.Present("alias-delete"))
     {
         throw CommandException("config-manage",
                                "Cannot provide both --alias and --alias-delete at the same time");
     }
+#endif
 
     try
     {
@@ -342,6 +345,7 @@ static int cmd_config_manage(ParsedArgs args)
 
         bool valid_option = false;
 
+#if 0 // FIXME: Currently disable the alias feature until properly fixed
         if (args.Present("alias"))
         {
             std::string alias = args.GetValue("alias", 0);
@@ -358,6 +362,7 @@ static int cmd_config_manage(ParsedArgs args)
             std::cout << "Alias is deleted" << std::endl;
             valid_option = true;
         }
+#endif
 
         if (args.Present("rename"))
         {
@@ -821,10 +826,12 @@ void RegisterCommands_config(Commands& ovpn3)
     cmd->AddOption("path", 'o', "CONFIG-PATH", true,
                    "Path to the configuration in the configuration manager",
                     arghelper_config_paths);
+#if 0 // FIXME: Currently disable the alias feature until properly fixed
     cmd->AddOption("alias", 'n', "ALIAS-NAME", true,
                    "Set an alias name to use for this configuration");
     cmd->AddOption("alias-delete", 'D',
                    "Delete this alias");
+#endif
     cmd->AddOption("rename", 'r', "NEW-CONFIG-NAME", true,
                    "Renames the configuration");
     cmd->AddOption("show", 's',
