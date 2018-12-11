@@ -80,8 +80,7 @@ const char* RequiresQueueException::what() const noexcept
 
 const std::string& RequiresQueueException::err() const noexcept
 {
-    std::string ret(error);
-    return std::move(ret);
+    return error;
 }
 
 
