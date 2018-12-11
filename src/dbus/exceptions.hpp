@@ -47,10 +47,10 @@ namespace openvpn
         }
 
 
-        virtual ~DBusException() throw() {}
+        virtual ~DBusException() noexcept {}
 
 
-        virtual const char* what() const throw()
+        virtual const char* what() const noexcept
         {
 #ifdef DEBUG_EXCEPTIONS
 	    return sourceref.c_str();
@@ -173,10 +173,10 @@ namespace openvpn
         }
 
 
-        virtual ~DBusPropertyException() throw() {}
+        virtual ~DBusPropertyException() noexcept {}
 
 
-        virtual const char* what() const throw()
+        virtual const char* what() const noexcept
         {
             return detailed.c_str();
         }

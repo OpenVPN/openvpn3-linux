@@ -195,9 +195,9 @@ namespace openvpn
             error_uid = s.str();
         }
 
-        virtual ~DBusCredentialsException() throw() {}
+        virtual ~DBusCredentialsException() noexcept {}
 
-        virtual const char* what() const throw()
+        virtual const char* what() const noexcept
         {
             return error.c_str();
         }

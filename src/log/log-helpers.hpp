@@ -56,9 +56,9 @@ class LogException : public std::exception
 #endif
         }
 
-        virtual ~LogException() throw() {}
+        virtual ~LogException() noexcept {}
 
-        virtual const char* what() const throw()
+        virtual const char* what() const noexcept
         {
             return details.c_str();
         }

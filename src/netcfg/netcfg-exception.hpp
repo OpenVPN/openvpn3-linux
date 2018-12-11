@@ -41,7 +41,7 @@ public:
     {
     }
 
-    virtual const char* what() const throw()
+    virtual const char* what() const noexcept
     {
         return errormsg.c_str();
     }

@@ -69,7 +69,7 @@ RequiresQueueException::RequiresQueueException(std::string errname, std::string 
 }
 
 
-const char* RequiresQueueException::what() const throw()
+const char* RequiresQueueException::what() const noexcept
 {
     std::stringstream ret;
     ret << "[RequireQueryException"

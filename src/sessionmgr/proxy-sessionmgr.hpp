@@ -57,12 +57,12 @@ public:
     }
 
 
-    virtual ~ReadyException() throw()
+    virtual ~ReadyException() noexcept
     {
     }
 
 
-    virtual const char* what() const throw()
+    virtual const char* what() const noexcept
     {
         return std::string("[ReadyException]" + errorstr).c_str();
     }
