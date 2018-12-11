@@ -57,24 +57,23 @@ RequiresSlot::RequiresSlot()
  *  RequiresQueueException
  */
 RequiresQueueException::RequiresQueueException(std::string err)
-    : error(err)
+    : error(err),
+      what_("[RequireQueryException] " + err)
 {
 }
 
 
 RequiresQueueException::RequiresQueueException(std::string errname, std::string errmsg)
     : error(errmsg),
-      errorname(errname)
+      errorname(errname),
+      what_("[RequireQueryException] " + errmsg)
 {
 }
 
 
 const char* RequiresQueueException::what() const noexcept
 {
-    std::stringstream ret;
-    ret << "[RequireQueryException"
-        << "] " << error;
-    return ret.str().c_str();
+    return what_.c_str();
 }
 
 

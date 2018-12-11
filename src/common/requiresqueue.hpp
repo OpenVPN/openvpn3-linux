@@ -100,6 +100,7 @@ public:
 private:
     std::string error;
     std::string errorname;
+    std::string what_;
 };
 
 
