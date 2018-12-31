@@ -55,6 +55,9 @@ _openvpn3_completion()
                             fi
                             # Only list files which most likely are OpenVPN configuration files
                             selopts="-W $(grep -sm1 -E '(client|remote |port |lport |rport |key |cert |ca )' *.conf *.ovpn | cut -d: -f1 | $filter)"
+
+                            # In addition, extend with all pre-loaded configurations
+                            selopts="$selopts $(openvpn3 shell-completion --list-options $first --arg-help $prev)"
                             ;;
 
                         "--grant"|"--revoke") # Takes username (or UID, which we don't tackle here)

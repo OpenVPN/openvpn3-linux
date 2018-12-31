@@ -778,7 +778,8 @@ void RegisterCommands_session(Commands& ovpn3)
                                 "Start a new VPN session",
                                 cmd_session_start);
     cmd->AddOption("config", 'c', "CONFIG-FILE", true,
-                   "Configuration file to start directly");
+                   "Configuration file to start directly",
+                   arghelper_config_names);
     cmd->AddOption("config-path", 'p', "CONFIG-PATH", true,
                    "Configuration path to an already imported configuration",
                    arghelper_config_paths);

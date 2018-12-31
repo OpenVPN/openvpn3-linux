@@ -50,6 +50,54 @@ std::string arghelper_config_paths()
 
 
 /**
+ * Retrieves a list of all available configuration profile names
+ *
+ * @return std::string with all available profile names, each separated
+ *         by space
+ */
+std::string arghelper_config_names()
+{
+    DBus conn(G_BUS_TYPE_SYSTEM);
+    conn.Connect();
+    OpenVPN3ConfigurationProxy confmgr(conn, OpenVPN3DBus_rootp_configuration);
+
+    std::vector<std::string> cfgnames;
+    for (const auto& cfgp : confmgr.FetchAvailableConfigs())
+    {
+        OpenVPN3ConfigurationProxy cfg(conn, cfgp);
+        std::string cfgname = cfg.GetStringProperty("name");
+
+        // Filter out duplicates
+        bool found = false;
+        for (const auto& chk : cfgnames)
+        {
+            if (chk == cfgname)
+            {
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+        {
+            cfgnames.push_back(cfgname);
+        }
+    }
+
+    // Generate the final string which will be returned
+    std::stringstream res;
+    for (const auto& n : cfgnames)
+    {
+        if (n.empty())
+        {
+            continue;
+        }
+        res << n << " ";
+    }
+    return res.str();
+}
+
+
+/**
  * Retrieves a list of available configuration paths
  *
  * @return std::string with all available paths, each separated by space
