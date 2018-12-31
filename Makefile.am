@@ -324,7 +324,8 @@ src_tests_netcfg_clinetcfg_SOURCES = \
 	src/common/utils.hpp \
 	src/configmgr/proxy-configmgr.hpp \
 	src/log/dbus-log.hpp \
-	src/log/proxy-log.hpp
+	src/log/proxy-log.hpp \
+	config-version.h
 endif
 
 #
