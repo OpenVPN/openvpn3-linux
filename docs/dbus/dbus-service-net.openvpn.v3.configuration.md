@@ -21,6 +21,8 @@ node /net/openvpn/v3/configuration {
              in  b persistent,
              out o config_path);
       FetchAvailableConfigs(out ao paths);
+      LookupConfigName(in  s config_name,
+                       out ao config_paths);
       TransferOwnership(in  o path,
                         in  u new_owner_uid);
     signals:
@@ -55,6 +57,18 @@ caller is granted access to.
 | Direction | Name        | Type         | Description                                                           |
 |-----------|-------------|--------------|-----------------------------------------------------------------------|
 | Out       | paths       | object paths | An array of object paths to accessbile configuration objects          |
+
+
+### Method: `net.openvpn.v3.configuration.LookupConfigName`
+
+This method will return an array of object paths to configuration objects the
+caller is granted access with the configuration name provided to the method.
+
+#### Arguments
+| Direction | Name         | Type         | Description                                                           |
+|-----------|--------------|--------------|-----------------------------------------------------------------------|
+| In        | config_name  | string       | String containing the configuration name for the configuration path lookup      |
+| Out       | config_paths | object paths | An array of object paths to accessible configuration objects          |
 
 
 ### Method: `net.openvpn3.v3.configuration.TransferOwnership`
