@@ -141,6 +141,7 @@ noinst_PROGRAMS = \
 	src/tests/misc/syslog-facility-mapping-test \
 	src/tests/dbus/config-lock-down \
 	src/tests/dbus/config-override-selftest \
+	src/tests/dbus/configmgr-lookup-cfgname \
 	src/tests/dbus/conncreds \
 	src/tests/dbus/enable-logging \
 	src/tests/dbus/fetch-avail-config-paths \
@@ -218,6 +219,9 @@ src_tests_dbus_config_lock_down_SOURCES = \
 
 src_tests_dbus_config_override_selftest_SOURCES = \
 	src/tests/dbus/config-override-selftest.cpp
+
+src_tests_dbus_configmgr_lookup_cfgname_SOURCES = \
+	src/tests/dbus/configmgr-lookup-cfgname.cpp
 
 src_tests_dbus_conncreds_SOURCES = \
 	src/tests/dbus/conncreds.cpp

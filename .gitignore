@@ -50,6 +50,7 @@ src/selinux/tmp
 src/sessionmgr/openvpn3-service-sessionmgr
 src/tests/command-parser/cmdparser
 src/tests/dbus/config-lock-down
+src/tests/dbus/configmgr-lookup-cfgname
 src/tests/dbus/conncreds
 src/tests/dbus/enable-logging
 src/tests/dbus/fetch-avail-config-paths

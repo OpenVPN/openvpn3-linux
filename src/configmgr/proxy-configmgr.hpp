@@ -129,6 +129,41 @@ public:
     }
 
 
+    /**
+     *  Lookup the configuration paths for a given configuration name.
+     *
+     * @param cfgname  std::string containing the configuration name to
+     *                 look up
+     *
+     * @return Returns a std::vector<std::string> with all configuration
+     *         paths with the given configuration name.  If no match is found,
+     *         the std::vector will be empty.
+     */
+    std::vector<std::string> LookupConfigName(std::string cfgname)
+    {
+        GVariant *res = Call("LookupConfigName",
+                             g_variant_new("(s)", cfgname.c_str()));
+        if (nullptr == res)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
+                                "Failed to lookup configuration names");
+        }
+        GVariantIter *cfgpaths = nullptr;
+        g_variant_get(res, "(ao)", &cfgpaths);
+
+        GVariant *path = nullptr;
+        std::vector<std::string> ret;
+        while ((path = g_variant_iter_next_value(cfgpaths)))
+        {
+            ret.push_back(GLibUtils::GetVariantValue<std::string>(path));
+            g_variant_unref(path);
+        }
+        g_variant_unref(res);
+        g_variant_iter_free(cfgpaths);
+        return ret;
+    }
+
+
     std::string GetJSONConfig()
     {
         GVariant *res = Call("FetchJSON");
