@@ -53,8 +53,12 @@ _openvpn3_completion()
                             if [ -n "$cur" ]; then
                                 filter="grep -E ^$cur"
                             fi
+
                             # Only list files which most likely are OpenVPN configuration files
-                            selopts="-W $(grep -sm1 -E '(client|remote |port |lport |rport |key |cert |ca )' *.conf *.ovpn | cut -d: -f1 | $filter)"
+                            selopts="-W $(grep -sm1 -E '(client|remote |port |lport |rport |key |cert |ca )' ${cur}*.conf ${cur}*.ovpn | cut -d: -f1 | $filter | tr '\n' ' ')"
+
+                            # Add directories too, but ignore those starting with '.{some-alpha-num-letters}'
+                            selopts="$selopts $(compgen -d -- $cur | sed 's#$#/#' | grep -vE '^\.\w+' | tr '\n' ' ')"
 
                             # In addition, extend with all pre-loaded configurations
                             selopts="$selopts $(openvpn3 shell-completion --list-options $first --arg-help $prev)"
