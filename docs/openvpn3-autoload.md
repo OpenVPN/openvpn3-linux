@@ -35,6 +35,13 @@ to false, it will just load the configuration file and prepare
 everything to be activated later on by a user or through a system
 event later on, outside of the `openvpn3-autoload` process.
 
+## Main section: name
+
+By default, the complete configuration profile file name is used when
+importing the profile, which will include the `.conf` or `.ovpn` file
+extension.  If this attribute is set, it will be used instead of the file
+name itself for the configuration profile name in the configuration manager.
+
 ## Section: user-auth
 This section contains authentication related settings.
 

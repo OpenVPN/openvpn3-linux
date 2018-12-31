@@ -72,6 +72,7 @@ The basic layout of an *.autoload* file is like this:
 |
 |   {
 |       "autostart": BOOLEAN,
+|       "name": "string value",
 |       "acl": {
 |           ...
 |       },
@@ -96,6 +97,13 @@ The *autostart* boolean declares if the configuration profile should be
 started once it has been imported into the OpenVPN 3 Configuration Manager.
 (Default: false)
 
+Attribute: name
+"""""""""""""""
+By default, all automatically imported configuration profiles will use the
+complete profile filename, including the *.conf* or *.ovpn* file extension.
+If this attribute is set, this string will be used for the profile name
+instead of the filename on the filesystem.  Beware that the configuration
+manager will accept duplicate profile names.
 
 Section: acl
 ~~~~~~~~~~~~

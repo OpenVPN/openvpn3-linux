@@ -132,6 +132,9 @@ def import_configuration(cfgmgr, cfgname, autoloadcfg, cfg):
 #
 def parse_autoload_config(autoload):
     autoloadcfg = {'flags': [], 'override': {}}
+    if 'name' in autoload:
+        autoloadcfg['name'] = autoload['name']
+
     if 'acl' in autoload:
         for (k, v) in autoload['acl'].items():
             if False == v:
@@ -319,7 +322,7 @@ def autoload_main(cmdargs):
         # Import the configuration to the configuration manager, the
         # result value is the D-Bus path to the imported config
         cfgobj = import_configuration(configmgr,
-                                      cfgname,
+                                      ('name' in autoloadcfg and autoloadcfg['name'] or cfgname),
                                       autoloadcfg,
                                       autocfg['config'])
         print ('Configuration "%s" imported: %s [%s]' % (cfgname,
