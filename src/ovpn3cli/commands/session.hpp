@@ -172,9 +172,33 @@ static int cmd_session_start(ParsedArgs args)
         std::string cfgpath;
         if (args.Present("config"))
         {
-            cfgpath = import_config(args.GetValue("config", 0),
-                                    args.GetValue("config", 0),
-                                    true, false);
+            // This will first lookup the configuration name in the
+            // Configuration Manager before attempting to load a local file.
+            // If multiple configurations carry the same configuration name,
+            // it will fail as we do not support handling this scenario.  It
+
+            std::string cfgname = args.GetValue("config", 0);
+            OpenVPN3ConfigurationProxy cfgmgr(G_BUS_TYPE_SYSTEM,
+                                              OpenVPN3DBus_rootp_configuration);
+            std::vector<std::string> saved_configs = cfgmgr.LookupConfigName(cfgname);
+            if (0 == saved_configs.size())
+            {
+                std::cout << "Using configuration profile from file: "
+                          << cfgname << std::endl;
+                cfgpath = import_config(cfgname, cfgname, true, false);
+            }
+            else if (1 == saved_configs.size())
+            {
+                std::cout << "Using pre-loaded configuration profile '"
+                          << cfgname << "'" << std::endl;
+                cfgpath = saved_configs.at(0);
+            }
+            else
+            {
+                throw CommandException("session-start",
+                                       "Several configurations found with"
+                                       "the given name.  Need a unique name.");
+            }
         }
         else
         {
