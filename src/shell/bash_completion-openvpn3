@@ -29,53 +29,54 @@
 
 _openvpn3_completion()
 {
-	local first cur prev opts base
-	COMPREPLY=()
-	first=${COMP_WORDS[1]}
-	cur="${COMP_WORDS[COMP_CWORD]}"
-	prev="${COMP_WORDS[COMP_CWORD-1]}"
+    local first cur prev opts base
+    COMPREPLY=()
+    first=${COMP_WORDS[1]}
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-	if [ $COMP_CWORD -eq 1 ]; then
-		# The first argument is always an openvpn3 command
-		o3cmds="$(openvpn3 shell-completion --list-commands)"
-		COMPREPLY=( $( compgen -W "$o3cmds" $cur ) )
-	elif [ $COMP_CWORD -gt 1 ]; then
-		selection=""
-		if [ "${cur:0:2}" == "--" -o "${cur:0:1}" == "-" ]; then
-			# If the argument starts with '-' or '--' provide list of options
-			selopts="-W $(openvpn3 shell-completion --list-options $first)"
-		else
-                        # Some options can get some extra help from bash
-                        case "${prev}" in
-                        "--config")  # Takes file names
-                            # Prepare a simple filter, providing partial matching
-                            filter="cat" # by default everything passes
-                            if [ -n "$cur" ]; then
-                                filter="grep -E ^$cur"
-                            fi
+    if [ $COMP_CWORD -eq 1 ]; then
+        # The first argument is always an openvpn3 command
+        o3cmds="$(openvpn3 shell-completion --list-commands)"
+        COMPREPLY=( $( compgen -W "$o3cmds" $cur ) )
+    elif [ $COMP_CWORD -gt 1 ]; then
+        selection=""
+        if [ "${cur:0:2}" == "--" -o "${cur:0:1}" == "-" ]; then
+            # If the argument starts with '-' or '--' provide list of options
+            selopts="-W $(openvpn3 shell-completion --list-options $first)"
+        else
+            # Some options can get some extra help from bash
+            case "${prev}" in
+            "--config")  # Takes file names
+                # Prepare a simple filter, providing partial matching
+                filter="cat" # by default everything passes
+                if [ -n "$cur" ]; then
+                    filter="grep -E ^$cur"
+                fi
 
-                            # Only list files which most likely are OpenVPN configuration files
-                            selopts="-W $(grep -sm1 -E '(client|remote |port |lport |rport |key |cert |ca )' ${cur}*.conf ${cur}*.ovpn | cut -d: -f1 | $filter | tr '\n' ' ')"
+                # Only list files which most likely are OpenVPN configuration files
+                selopts="-W $(grep -sm1 -E '(client|remote |port |lport |rport |key |cert |ca )' ${cur}*.conf ${cur}*.ovpn | cut -d: -f1 | $filter | tr '\n' ' ')"
 
-                            # Add directories too, but ignore those starting with '.{some-alpha-num-letters}'
-                            selopts="$selopts $(compgen -d -- $cur | sed 's#$#/#' | grep -vE '^\.\w+' | tr '\n' ' ')"
+                # Add directories too, but ignore those starting with '.{some-alpha-num-letters}'
+                selopts="$selopts $(compgen -d -- $cur | sed 's#$#/#' | grep -vE '^\.\w+' | tr '\n' ' ')"
 
-                            # In addition, extend with all pre-loaded configurations
-                            selopts="$selopts $(openvpn3 shell-completion --list-options $first --arg-help $prev)"
-                            ;;
+                # In addition, extend with all pre-loaded configurations
+                selopts="$selopts $(openvpn3 shell-completion --list-options $first --arg-help $prev)"
+                ;;
 
-                        "--grant"|"--revoke") # Takes username (or UID, which we don't tackle here)
-                            selopts="-u"
-                            ;;
-                        *)
-			    # Otherwise try to fill out with possible argument values for the
-			    # provided option
-			    selopts="-W $(openvpn3 shell-completion --list-options $first --arg-help $prev)"
-                            ;;
-                        esac
-		fi
-		COMPREPLY=( $( compgen "${selopts}" -- $cur ) )
-	fi
+            "--grant"|"--revoke") # Takes username (or UID, which we don't tackle here)
+                selopts="-u"
+                ;;
+
+            *)
+                # Otherwise try to fill out with possible argument values for the
+                # provided option
+                selopts="-W $(openvpn3 shell-completion --list-options $first --arg-help $prev)"
+                ;;
+            esac
+        fi
+        COMPREPLY=( $( compgen "${selopts}" -- $cur ) )
+    fi
 }
 
 complete -F _openvpn3_completion openvpn3
