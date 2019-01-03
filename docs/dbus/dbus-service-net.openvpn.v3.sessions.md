@@ -18,6 +18,8 @@ node /net/openvpn/v3/sessions {
       NewTunnel(in  o config_path,
                 out o session_path);
       FetchAvailableSessions(out ao paths);
+      LookupConfigName(in  s config_name,
+                       out ao session_paths);
       TransferOwnership(in  o path,
                         in  u new_owner_uid);
     signals:
@@ -53,6 +55,21 @@ caller is granted access to.
 #### Arguments
 | Direction | Name        | Type         | Description                                            |
 | Out       | paths       | object paths | An array of object paths to accessible session objects |
+
+
+### Method: `net.openvpn.v3.sessions.LookupConfigName`
+
+This method will return an array of paths to session objects the
+caller is granted access to, which where started with the configuration profile
+name provided to the method.  The profile name in the session object will not
+change if it is changed in the configuration manager after the session has
+started.
+
+#### Arguments
+| Direction | Name         | Type         | Description                                                           |
+|-----------|--------------|--------------|-----------------------------------------------------------------------|
+| In        | config_name  | string       | String containing the configuration profile name to lookup            | 
+| Out       | config_paths | object paths | An array of object paths to accessible sessions objects               |
 
 
 ### Method: `net.openvpn3.v3.sessions.TransferOwnership`

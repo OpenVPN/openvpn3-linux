@@ -551,6 +551,18 @@ public:
         IdleCheck_RefDec();
     }
 
+    /**
+     *  Retrieve the initial configuration profile name used for this session.
+     *  If the profile name is changed after this session started, the
+     *  config name returned will still be the old name.
+     *
+     * @return Returns std::string containing the configuration profile name.
+     */
+    std::string GetConfigName() const noexcept
+    {
+        return config_name;
+    }
+
 
     /**
      *  Callback method called each time signals we have subscribed to
@@ -1539,6 +1551,10 @@ public:
                           << "        <method name='FetchAvailableSessions'>"
                           << "          <arg type='ao' name='paths' direction='out'/>"
                           << "        </method>"
+                          << "        <method name='LookupConfigName'>"
+                          << "           <arg type='s' name='config_name' direction='in'/>"
+                          << "           <arg type='ao' name='session_paths' direction='out'/>"
+                          << "        </method>"
                           << "        <method name='TransferOwnership'>"
                           << "           <arg type='o' name='path' direction='in'/>"
                           << "           <arg type='u' name='new_owner_uid' direction='in'/>"
@@ -1650,6 +1666,48 @@ public:
             // Clean-up
             g_variant_builder_unref(bld);
             g_variant_builder_unref(ret);
+        }
+        else if ("LookupConfigName" == method_name)
+        {
+            gchar *cfgname_c = nullptr;
+            g_variant_get(params, "(s)", &cfgname_c);
+
+            if (nullptr == cfgname_c || strlen(cfgname_c) < 1)
+            {
+                GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.name",
+                                                              "Invalid configuration name");
+                g_dbus_method_invocation_return_gerror(invoc, err);
+                g_error_free(err);
+                return;
+            }
+            std::string cfgname(cfgname_c);
+            g_free(cfgname_c);
+
+            // Build up an array of object paths to sessions with a matching
+            // configuration profile name
+            GVariantBuilder *found_paths = g_variant_builder_new(G_VARIANT_TYPE("ao"));
+            for (const auto& item : session_objects)
+            {
+                if (item.second->GetConfigName() == cfgname)
+                {
+                    try
+                    {
+                        // We check if the caller is allowed to access this
+                        // configuration object.  If not, an exception is thrown
+                        // and we will just ignore that exception and continue
+                        item.second->CheckACL(sender);
+                        g_variant_builder_add(found_paths,
+                                              "o", item.first.c_str());
+                    }
+                    catch (DBusCredentialsException& excp)
+                    {
+                        // Ignore credentials exceptions.  It means the
+                        // caller does not have access this configuration object
+                    }
+                }
+            }
+            g_dbus_method_invocation_return_value(invoc, GLibUtils::wrapInTuple(found_paths));
+            return;
         }
         else if ("TransferOwnership" == method_name)
         {
