@@ -50,7 +50,6 @@ src/selinux/tmp
 src/sessionmgr/openvpn3-service-sessionmgr
 src/tests/command-parser/cmdparser
 src/tests/dbus/config-lock-down
-src/tests/dbus/configmgr-lookup-cfgname
 src/tests/dbus/conncreds
 src/tests/dbus/enable-logging
 src/tests/dbus/fetch-avail-config-paths
@@ -64,6 +63,7 @@ src/tests/dbus/getconnectionstats
 src/tests/dbus/log-listener
 src/tests/dbus/log-listener2
 src/tests/dbus/logservice1
+src/tests/dbus/manager-lookupconfigname
 src/tests/dbus/netcfg-proxy-unit
 src/tests/dbus/netcfg-stateevent-selftest
 src/tests/dbus/proc-wait-for

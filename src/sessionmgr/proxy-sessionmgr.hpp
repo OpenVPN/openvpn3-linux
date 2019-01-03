@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2019  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2019  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -187,6 +187,42 @@ public:
         }
         g_variant_unref(res);
         g_variant_iter_free(sesspaths);
+        return ret;
+    }
+
+
+    /**
+     *  Lookup all sessions which where started with the given configuration
+     *  profile name.
+     *
+     * @param cfgname  std::string containing the configuration name to
+     *                 look up
+     *
+     * @return Returns a std::vector<std::string> with all session object
+     *         paths which were started with the given configuration name.
+     *         If no match is found, the std::vector will be empty.
+     */
+    std::vector<std::string> LookupConfigName(std::string cfgname)
+    {
+        GVariant *res = Call("LookupConfigName",
+                             g_variant_new("(s)", cfgname.c_str()));
+        if (nullptr == res)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
+                                "Failed to lookup configuration names");
+        }
+        GVariantIter *session_paths = nullptr;
+        g_variant_get(res, "(ao)", &session_paths);
+
+        GVariant *path = nullptr;
+        std::vector<std::string> ret;
+        while ((path = g_variant_iter_next_value(session_paths)))
+        {
+            ret.push_back(GLibUtils::GetVariantValue<std::string>(path));
+            g_variant_unref(path);
+        }
+        g_variant_unref(res);
+        g_variant_iter_free(session_paths);
         return ret;
     }
 

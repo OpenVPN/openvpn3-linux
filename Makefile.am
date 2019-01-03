@@ -1,7 +1,7 @@
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
-#  Copyright (C) 2017-2018 OpenVPN Inc. <sales@openvpn.net>
-#  Copyright (C) 2017-2018 David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2017 - 2019  OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2017 - 2019  David Sommerseth <davids@openvpn.net>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -141,7 +141,6 @@ noinst_PROGRAMS = \
 	src/tests/misc/syslog-facility-mapping-test \
 	src/tests/dbus/config-lock-down \
 	src/tests/dbus/config-override-selftest \
-	src/tests/dbus/configmgr-lookup-cfgname \
 	src/tests/dbus/conncreds \
 	src/tests/dbus/enable-logging \
 	src/tests/dbus/fetch-avail-config-paths \
@@ -156,6 +155,7 @@ noinst_PROGRAMS = \
 	src/tests/dbus/log-listener \
 	src/tests/dbus/log-listener2 \
 	src/tests/dbus/logservice1 \
+	src/tests/dbus/manager-lookupconfigname \
 	src/tests/dbus/netcfg-proxy-unit \
 	src/tests/dbus/netcfg-stateevent-selftest \
 	src/tests/dbus/set-alias \
@@ -220,9 +220,6 @@ src_tests_dbus_config_lock_down_SOURCES = \
 src_tests_dbus_config_override_selftest_SOURCES = \
 	src/tests/dbus/config-override-selftest.cpp
 
-src_tests_dbus_configmgr_lookup_cfgname_SOURCES = \
-	src/tests/dbus/configmgr-lookup-cfgname.cpp
-
 src_tests_dbus_conncreds_SOURCES = \
 	src/tests/dbus/conncreds.cpp
 
@@ -270,6 +267,9 @@ src_tests_dbus_logservice1_SOURCES = \
 	src/tests/dbus/logservice1.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp
+
+src_tests_dbus_manager_lookupconfigname_SOURCES = \
+	src/tests/dbus/manager-lookupconfigname.cpp
 
 src_tests_dbus_netcfg_proxy_unit_SOURCES = \
 	src/tests/dbus/netcfg-proxy-unit.cpp
