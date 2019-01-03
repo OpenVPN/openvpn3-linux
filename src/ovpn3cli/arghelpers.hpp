@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -114,6 +114,55 @@ std::string arghelper_session_paths()
             continue;
         }
         res << session << " ";
+    }
+    return res.str();
+}
+
+
+/**
+ * Retrieves a list of all available configuration profile names for
+ * currently running sessions.
+ *
+ * @return std::string with all available profile names, each separated
+ *         by space
+ */
+std::string arghelper_config_names_sessions()
+{
+    DBus conn(G_BUS_TYPE_SYSTEM);
+    conn.Connect();
+    OpenVPN3SessionProxy sessmgr(conn, OpenVPN3DBus_rootp_sessions);
+
+    std::vector<std::string> cfgnames;
+    for (const auto& sesp : sessmgr.FetchAvailableSessions())
+    {
+        OpenVPN3SessionProxy sess(conn, sesp);
+        std::string cfgname = sess.GetStringProperty("config_name");
+
+        // Filter out duplicates
+        bool found = false;
+        for (const auto& chk : cfgnames)
+        {
+            if (chk == cfgname)
+            {
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+        {
+            cfgnames.push_back(cfgname);
+        }
+    }
+
+    // Generate the final string which will be returned
+    std::stringstream res;
+    for (const auto& n : cfgnames)
+    {
+        if (n.empty())
+        {
+            continue;
+        }
+        res << n << " ";
     }
     return res.str();
 }

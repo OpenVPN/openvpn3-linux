@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -117,14 +117,40 @@ static std::string statistics_json(ConnectionStats& stats)
  */
 static int cmd_session_stats(ParsedArgs args)
 {
-    if (!args.Present("path"))
+    if (!args.Present("path") && !args.Present("config"))
     {
         throw CommandException("session-stats",
-                               "Missing required session path");
+                               "Missing required session path or config name");
     }
+
     try
     {
-        ConnectionStats stats = fetch_stats(args.GetValue("path", 0));
+        std::string sesspath = "";
+        if (args.Present("config"))
+        {
+            OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
+                                         OpenVPN3DBus_rootp_sessions);
+            std::vector<std::string> paths = sessmgr.LookupConfigName(args.GetValue("config", 0));
+            if (0 == paths.size())
+            {
+                throw CommandException("session-manage",
+                                       "No sessions started with the "
+                                       "configuration profile name was found");
+            }
+            else if (1 < paths.size())
+            {
+                throw CommandException("session-manage",
+                                       "More than one session with the given"
+                                       "configuration profile name was found.");
+            }
+            sesspath = paths.at(0);
+        }
+        else
+        {
+            sesspath = args.GetValue("path", 0);
+        }
+
+        ConnectionStats stats = fetch_stats(sesspath);
 
         std::cout << (args.Present("json") ? statistics_json(stats)
                                            : statistics_plain(stats));
@@ -508,15 +534,40 @@ static int cmd_session_manage(ParsedArgs args)
                                "cannot be used together");
     }
 
-    if (!args.Present("path"))
+    if (!args.Present("path") && !args.Present("config"))
     {
         throw CommandException("session-manage",
-                               "Missing required session path");
+                               "Missing required session path or config name");
     }
-    std::string sesspath = args.GetValue("path", 0);
+
 
     try
     {
+        std::string sesspath = "";
+        if (args.Present("config"))
+        {
+            OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
+                                         OpenVPN3DBus_rootp_sessions);
+            std::vector<std::string> paths = sessmgr.LookupConfigName(args.GetValue("config", 0));
+            if (0 == paths.size())
+            {
+                throw CommandException("session-manage",
+                                       "No sessions started with the "
+                                       "configuration profile name was found");
+            }
+            else if (1 < paths.size())
+            {
+                throw CommandException("session-manage",
+                                       "More than one session with the given"
+                                       "configuration profile name was found.");
+            }
+            sesspath = paths.at(0);
+        }
+        else
+        {
+            sesspath = args.GetValue("path", 0);
+        }
+
         OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, sesspath);
         if (!session.CheckObjectExists())
         {
@@ -589,9 +640,10 @@ static int cmd_session_manage(ParsedArgs args)
 static int cmd_session_acl(ParsedArgs args)
 {
     int ret = 0;
-    if (!args.Present("path"))
+    if (!args.Present("path") && !args.Present("config"))
     {
-        throw CommandException("session-acl", "No session path provided");
+        throw CommandException("session-acl",
+                               "Missing required session path or config name");
     }
 
     if (!args.Present("show")
@@ -607,8 +659,32 @@ static int cmd_session_acl(ParsedArgs args)
 
     try
     {
-        OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM,
-                                     args.GetValue("path", 0));
+        std::string sesspath = "";
+        if (args.Present("config"))
+        {
+            OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
+                                         OpenVPN3DBus_rootp_sessions);
+            std::vector<std::string> paths = sessmgr.LookupConfigName(args.GetValue("config", 0));
+            if (0 == paths.size())
+            {
+                throw CommandException("session-acl",
+                                       "No sessions started with the "
+                                       "configuration profile name was found");
+            }
+            else if (1 < paths.size())
+            {
+                throw CommandException("session-acl",
+                                       "More than one session with the given"
+                                       "configuration profile name was found.");
+            }
+            sesspath = paths.at(0);
+        }
+        else
+        {
+            sesspath = args.GetValue("path", 0);
+        }
+
+        OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, sesspath);
         if (!session.CheckObjectExists())
         {
             throw CommandException("session-acl",
@@ -795,6 +871,10 @@ void RegisterCommands_session(Commands& ovpn3)
     cmd->AddOption("path", 'o', "SESSION-PATH", true,
                    "Path to the session in the session manager",
                    arghelper_session_paths);
+    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
+                   "Alternative to --path, where configuration profile name "
+                   "is used instead",
+                   arghelper_config_names_sessions);
     cmd->AddOption("pause", 'P', "Pauses the VPN session");
     cmd->AddOption("resume", 'R', "Resumes a paused VPN session");
     cmd->AddOption("restart", "Disconnect and reconnect a running VPN session");
@@ -809,6 +889,10 @@ void RegisterCommands_session(Commands& ovpn3)
     cmd->AddOption("path", 'o', "SESSION-PATH", true,
                    "Path to the session in the session manager",
                    arghelper_session_paths);
+    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
+                   "Alternative to --path, where configuration profile name "
+                   "is used instead",
+                   arghelper_config_names_sessions);
     cmd->AddOption("show", 's',
                    "Show the current access control lists");
     cmd->AddOption("grant", 'G', "<UID | username>", true,
@@ -831,6 +915,10 @@ void RegisterCommands_session(Commands& ovpn3)
     cmd->AddOption("path", 'o', "SESSION-PATH", true,
                    "Path to the configuration in the configuration manager",
                    arghelper_session_paths);
+    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
+                   "Alternative to --path, where configuration profile name "
+                   "is used instead",
+                   arghelper_config_names_sessions);
     cmd->AddOption("json", 'j', "Dump the configuration in JSON format");
 
 
