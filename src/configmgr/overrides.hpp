@@ -126,7 +126,7 @@ const ValidOverride configProfileOverrides[] = {
 
     {"tls-cert-profile", OverrideType::string,
      "Sets the control channel tls profile",
-     [] {return std::string("insecure legacy preferred suiteb");}},
+     [] {return std::string("legacy preferred suiteb");}},
 
     {"proxy-host", OverrideType::string,
      "HTTP Proxy to connect via, overrides configuration file http-proxy"},
