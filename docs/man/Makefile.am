@@ -29,7 +29,12 @@ MAN_SECTION_8 = \
 	openvpn3-config-import.8 \
 	openvpn3-config-remove.8 \
 	openvpn3-config-show.8 \
-	openvpn3-configs-list.8
+	openvpn3-configs-list.8 \
+	openvpn3-session-acl.8 \
+	openvpn3-session-manage.8 \
+	openvpn3-session-start.8 \
+	openvpn3-session-stats.8 \
+	openvpn3-sessions-list.8
 
 EXTRA_DIST = \
 	$(foreach var,$(MAN_SECTION_8),$(var).rst)
