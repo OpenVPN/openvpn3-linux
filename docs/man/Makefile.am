@@ -30,6 +30,9 @@ MAN_SECTION_8 = \
 	openvpn3-config-remove.8 \
 	openvpn3-config-show.8 \
 	openvpn3-configs-list.8 \
+	openvpn3-log.8 \
+	openvpn3-log-service.8 \
+	openvpn3-service-logger.8 \
 	openvpn3-session-acl.8 \
 	openvpn3-session-manage.8 \
 	openvpn3-session-start.8 \
