@@ -20,6 +20,9 @@
 % : %.rst Makefile
 	$(AM_V_GEN)rst2man $< > $@
 
+MAN_SECTION_7 = \
+	openvpn3-linux.7
+
 MAN_SECTION_8 = \
 	openvpn2.8 \
 	openvpn3.8 \
@@ -45,13 +48,16 @@ MAN_SECTION_8 = \
 	openvpn3-sessions-list.8
 
 EXTRA_DIST = \
+	$(foreach var,$(MAN_SECTION_7),$(var).rst) \
 	$(foreach var,$(MAN_SECTION_8),$(var).rst)
 
 if HAVE_RST2MAN
+man7_MANS = $(MAN_SECTION_7)
+
 man8_MANS = $(MAN_SECTION_8)
 endif
 
 MAINTAINERCLEANFILES = \
 	Makefile.in
 
-CLEANFILES = $(MAN_SECTION_8) *~
+CLEANFILES = $(MAN_SECTION_7) $(MAN_SECTION_8) *~
