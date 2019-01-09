@@ -67,8 +67,8 @@ OPTIONS
 SEE ALSO
 ========
 
-``openvpn3``
-``openvpn3-config-import``
-``openvpn3-config-manage``
-``openvpn3-config-show``
-``openvpn3-configs-list``
+``openvpn3``\(8)
+``openvpn3-config-import``\(8)
+``openvpn3-config-manage``\(8)
+``openvpn3-config-show``\(8)
+``openvpn3-configs-list``\(8)

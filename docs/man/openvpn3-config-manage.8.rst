@@ -151,8 +151,8 @@ OPTIONS
 SEE ALSO
 ========
 
-``openvpn3``
-``openvpn3-config-acl``
-``openvpn3-config-import``
-``openvpn3-configs-list``
-``openvpn3-config-remove``
+``openvpn3``\(8)
+``openvpn3-config-acl``\(8)
+``openvpn3-config-import``\(8)
+``openvpn3-configs-list``\(8)
+``openvpn3-config-remove``\(8)

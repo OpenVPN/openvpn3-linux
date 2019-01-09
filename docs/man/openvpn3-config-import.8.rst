@@ -41,11 +41,11 @@ OPTIONS
 SEE ALSO
 ========
 
-``openvpn3``
-``openvpn3-config-manage``
-``openvpn3-config-acl``
-``openvpn3-config-remove``
-``openvpn3-config-show``
-``openvpn3-configs-list``
-``openvpn3-session-start``
+``openvpn3``\(8)
+``openvpn3-config-manage``\(8)
+``openvpn3-config-acl``\(8)
+``openvpn3-config-remove``\(8)
+``openvpn3-config-show``\(8)
+``openvpn3-configs-list``\(8)
+``openvpn3-session-start``\(8)
 

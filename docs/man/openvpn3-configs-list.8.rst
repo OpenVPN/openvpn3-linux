@@ -28,5 +28,5 @@ OPTIONS
 SEE ALSO
 ========
 
-``openvpn3``
-``openvpn3-config-import``
+``openvpn3``\(8)
+``openvpn3-config-import``\(8)
