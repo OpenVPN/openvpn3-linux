@@ -36,10 +36,12 @@ enum class NetCfgChangeType : std::uint8_t {
     IPv4ADDR_REMOVED,
     IPv4ROUTE_ADDED,
     IPv4ROUTE_REMOVED,
+    IPv4ROUTE_EXCLUDED,
     IPv6ADDR_ADDED,
     IPv6ADDR_REMOVED,
     IPv6ROUTE_ADDED,
     IPv6ROUTE_REMOVED,
+    IPv6ROUTE_EXCLUDED,
     DNS_SERVER_ADDED,
     DNS_SERVER_REMOVED,
     DNS_SEARCH_ADDED,
@@ -122,6 +124,8 @@ struct NetCfgChangeEvent {
             return "IPv4 Route Added";
         case NetCfgChangeType::IPv4ROUTE_REMOVED:
             return "IPv4 Route Removed";
+        case NetCfgChangeType::IPv4ROUTE_EXCLUDED:
+            return "IPv4 Route Excluded";
         case NetCfgChangeType::IPv6ADDR_ADDED:
             return "IPv6 Address Added";
         case NetCfgChangeType::IPv6ADDR_REMOVED:
@@ -130,6 +134,8 @@ struct NetCfgChangeEvent {
             return "IPv6 Route Added";
         case NetCfgChangeType::IPv6ROUTE_REMOVED:
             return "IPv6 Route Removed";
+        case NetCfgChangeType::IPv6ROUTE_EXCLUDED:
+            return "IPv6 Route Excluded";
         case NetCfgChangeType::DNS_SERVER_ADDED:
             return "DNS Server Added";
         case NetCfgChangeType::DNS_SERVER_REMOVED:

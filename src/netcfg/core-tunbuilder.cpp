@@ -185,13 +185,12 @@ namespace openvpn
             // Announce routes related to this new interface
             for (const auto& net: netCfgDevice.networks)
             {
-                if (net.exclude)
-                {
-                    continue;
-                }
-                NetCfgChangeEvent chg_ev((net.ipv6 ? NetCfgChangeType::IPv6ROUTE_ADDED
-                                                   : NetCfgChangeType::IPv4ROUTE_ADDED),
-                                          config.iface_name, net.str());
+                NetCfgChangeType type;
+                type = (net.ipv6 ? (net.exclude ? NetCfgChangeType::IPv6ROUTE_EXCLUDED
+                                                : NetCfgChangeType::IPv6ROUTE_ADDED)
+                                 : (net.exclude ? NetCfgChangeType::IPv4ROUTE_EXCLUDED
+                                                : NetCfgChangeType::IPv4ROUTE_ADDED));
+                NetCfgChangeEvent chg_ev(type, config.iface_name, net.str());
                 netCfgDevice.signal.NetworkChange(chg_ev);
             }
 
