@@ -81,6 +81,10 @@ public:
     {
     }
 
+    std::string str() const
+    {
+        return address + "/" + std::to_string(prefix);
+    }
     unsigned int prefix;
     bool exclude;
 };
