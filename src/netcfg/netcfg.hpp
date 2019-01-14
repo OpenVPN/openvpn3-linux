@@ -98,7 +98,6 @@ public:
                           << "    <property type='u' name='global_dns_search' access='read'/>"
                           << "    <property type='u' name='log_level' access='readwrite'/>"
                           << signal.GetLogIntrospection()
-                          << NetCfgChangeEvent::IntrospectionXML()
                           << "    </interface>"
                           << "</node>";
         ParseIntrospectionXML(introspection_xml);
