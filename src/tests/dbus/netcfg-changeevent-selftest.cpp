@@ -157,8 +157,40 @@ int test_gvariant()
     }
     g_free(dev_s);
     g_free(det_s);
+
+    std::cout << "-- Testing parsing GVariant data (valid data)... ";
+    NetCfgChangeEvent parsed(g_state);
+    if (g_state != parsed)
+    {
+        std::cout << "FAILED" << std::endl;
+        std::cout << "     Input: " << g_state << std::endl;
+        std::cout << "    Output: " << parsed << std::endl;
+        ++ret;
+    }
+    else
+    {
+        std::cout << "PASSED" << std::endl;
+    }
     g_variant_unref(chk);
 
+
+    std::cout << "-- Testing parsing GVariant data (invalid data)... ";
+    GVariant *invalid = g_variant_new("(uus)", 123, 456, "Invalid data");
+    try
+    {
+        NetCfgChangeEvent invalid_event(invalid);
+        std::cout << "FAILED: Data was parsed: " << invalid << std::endl;
+        ++ret;
+    }
+    catch (const NetCfgException& excp)
+    {
+        std::cout << "PASSED: " << excp.what() << std::endl;
+    }
+    catch (const std::exception& excp)
+    {
+        std::cout << "FAILED: Unknown error: " << excp.what() << std::endl;
+        ++ret;
+    }
     return ret;
 }
 
