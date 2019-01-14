@@ -38,6 +38,7 @@
 #include "core-tunbuilder.hpp"
 #include <openvpn/tun/linux/client/tuncli.hpp>
 #include "netcfg-device.hpp"
+#include "netcfg-signals.hpp"
 
 
 namespace openvpn
@@ -167,16 +168,68 @@ namespace openvpn
             //
             int ret = establish_tun(*tbc, config, nullptr, std::cout);
             netCfgDevice.set_device_name(config.iface_name);
+
+            // Announce the new interface
+            NetCfgStateEvent state_ev(NetCfgStateType::DEVICE_ADDED,
+                                      config.iface_name, "");
+            netCfgDevice.signal.StateChange(state_ev);
+
+            for (const auto& ipaddr: netCfgDevice.vpnips)
+            {
+                NetCfgStateEvent state_ev((ipaddr.ipv6 ? NetCfgStateType::IPv6ADDR_ADDED
+                                                       : NetCfgStateType::IPv4ADDR_ADDED),
+                                          config.iface_name, ipaddr.str());
+                netCfgDevice.signal.StateChange(state_ev);
+            }
+
+            // Announce routes related to this new interface
+            for (const auto& net: netCfgDevice.networks)
+            {
+                if (net.exclude)
+                {
+                    continue;
+                }
+                NetCfgStateEvent state_ev((net.ipv6 ? NetCfgStateType::IPv6ROUTE_ADDED
+                                                    : NetCfgStateType::IPv4ROUTE_ADDED),
+                                          config.iface_name, net.str());
+                netCfgDevice.signal.StateChange(state_ev);
+            }
+
             return ret;
         }
 
-        void teardown(bool disconnect) override
+        void teardown(const NetCfgDevice& ncdev, bool disconnect) override
         {
             if(tun)
             {
                 // the os parameter is not used
                 tun->destroy(std::cerr);
             }
+
+            // Announce the removed routes
+            for (const auto& net: ncdev.networks)
+            {
+                if (net.exclude)
+                {
+                    continue;
+                }
+                NetCfgStateEvent state_ev((net.ipv6 ? NetCfgStateType::IPv6ROUTE_REMOVED
+                                                    : NetCfgStateType::IPv4ROUTE_REMOVED),
+                                          ncdev.get_device_name(), net.str());
+                ncdev.signal.StateChange(state_ev);
+            }
+
+            // Announce the removed interface
+            for (const auto& ipaddr: ncdev.vpnips)
+            {
+                NetCfgStateEvent state_ev((ipaddr.ipv6 ? NetCfgStateType::IPv6ADDR_REMOVED
+                                                      : NetCfgStateType::IPv4ADDR_REMOVED),
+                                          ncdev.get_device_name(), ipaddr.str());
+                ncdev.signal.StateChange(state_ev);
+            }
+            NetCfgStateEvent state_ev(NetCfgStateType::DEVICE_REMOVED,
+                                      ncdev.get_device_name(), "");
+            ncdev.signal.StateChange(state_ev);
         }
     };
 

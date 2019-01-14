@@ -38,7 +38,7 @@ namespace openvpn
     {
     public:
         virtual int establish(NetCfgDevice& netCfgDevice) = 0;
-        virtual void teardown(bool disconnect) = 0;
+        virtual void teardown(const NetCfgDevice& netCfgDevice, bool disconnect) = 0;
     };
 
     // Forward declaration to allow friend

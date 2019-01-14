@@ -453,7 +453,7 @@ public:
                 }
                 if (tunimpl)
                 {
-                    tunimpl->teardown(true);
+                    tunimpl->teardown(*this, true);
                     tunimpl.reset();
                 }
             }
@@ -501,7 +501,7 @@ public:
                                + sender_name);
                 RemoveObject(conn);
                 if (tunimpl) {
-                    tunimpl->teardown(true);
+                    tunimpl->teardown(*this, true);
                     tunimpl.reset();
                 }
 
