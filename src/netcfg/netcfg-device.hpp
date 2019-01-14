@@ -405,7 +405,7 @@ public:
                 // when this method is called.
                 if (resolver && resolver->GetModified())
                 {
-                    resolver->Apply();
+                    resolver->Apply(&signal);
                 }
                 if (!tunimpl)
                 {
@@ -492,7 +492,7 @@ public:
                     {
                         // If there are more interfaces using the resolver,
                         // update the resolver config to the current state
-                        resolver->Apply();
+                        resolver->Apply(&signal);
                     }
                 }
 

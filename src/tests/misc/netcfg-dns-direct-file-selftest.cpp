@@ -37,7 +37,7 @@ int main()
     std::cout << sysresolvconf.Dump();
     std::cout << "Writing copy to test-system.conf" << std::endl << std::endl;
     sysresolvconf.SetFilename("test-system.conf");
-    sysresolvconf.Apply();
+    sysresolvconf.Apply(nullptr);
 
     ResolvConfFile copy(sysresolvconf);
     copy.AddDNSSearch("example.org");
@@ -55,7 +55,7 @@ int main()
     std::cout << "DUMP OF copy 2" << std::endl << copy2.Dump();
     std::cout << "Writing copy to test-copy2.conf" << std::endl << std::endl;
     copy2.SetFilename("test-copy2.conf");
-    copy2.Apply();
+    copy2.Apply(nullptr);
 
     std::cout << "Comparing:: copy == copy2 ==> "
               << (copy == copy2 ? "Identical - FAIL"
@@ -73,13 +73,13 @@ int main()
     fresh.AddDNSServer("1.0.0.1");
     std::cout << "FRESH" << std::endl << fresh.Dump();
     std::cout << "Writing fresh to test-fresh.conf" << std::endl << std::endl;
-    fresh.Apply();
+    fresh.Apply(nullptr);
 
     std::cout << "Overwriting test-fresh.conf from sysresolvconf"
               << " (backup file: backup-test-fresh.conf.bak) " << std::endl;
     sysresolvconf.SetBackupFilename("backup-test-fresh.conf.bak");
     sysresolvconf.SetFilename("test-fresh.conf");
-    sysresolvconf.Apply();
+    sysresolvconf.Apply(nullptr);
 
     ResolvConfFile backupchk("backup-test-fresh.conf.bak");
     backupchk.Fetch();

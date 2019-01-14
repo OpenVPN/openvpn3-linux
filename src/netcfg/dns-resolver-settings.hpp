@@ -29,7 +29,11 @@
 
 #include <openvpn/common/rc.hpp>
 
+#include "dbus/core.hpp"
+#include "netcfg-changeevent.hpp"
 #include "netcfg-exception.hpp"
+#include "netcfg-signals.hpp"
+
 
 using namespace openvpn;
 
@@ -94,8 +98,11 @@ namespace DNS
         /**
          *  The updates the resolver backend with the settings stored
          *  by this object.  This must be implemented for each backend.
+         *
+         *  @param signal   Pointer to a NetCfgSignals object which will send
+         *                  NetCfgChangeEvent notifications on DNS changes
          */
-        virtual void Apply() = 0;
+        virtual void Apply(NetCfgSignals *signal) = 0;
 
 
         /**
@@ -438,13 +445,35 @@ namespace DNS
          *  Inserts all the added DNS server entries to the main server list,
          *  but without changing the order.  Just ensure the inserted list
          *  goes in front of the existing list.
+         *
+         *  @param signal   Pointer to a NetCfgSignals object which will send
+         *                  NetCfgChangeEvent notifications on DNS changes
+         *
          */
-        void CommitChanges()
+        void CommitChanges(NetCfgSignals *signal)
         {
+            if (signal)
+            {
+                for (const auto& s : dns_servers)
+                {
+                    NetCfgChangeEvent ev(NetCfgChangeType::DNS_SERVER_ADDED,
+                                         "", s);
+                    signal->NetworkChange(ev);
+                }
+
+                for (const auto& s : dns_search)
+                {
+                    NetCfgChangeEvent ev(NetCfgChangeType::DNS_SEARCH_ADDED,
+                                         "", s);
+                    signal->NetworkChange(ev);
+                }
+            }
+
             dns_servers.insert(dns_servers.begin(),
                                dns_servers_new_entries.begin(),
                                dns_servers_new_entries.end());
             dns_servers_new_entries.clear();
+
         }
     };
 

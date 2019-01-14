@@ -41,6 +41,8 @@
 #include "common/timestamp.hpp"
 #include "dns-resolver-settings.hpp"
 #include "netcfg-exception.hpp"
+#include "netcfg-signals.hpp"
+
 
 namespace NetCfg
 {
@@ -287,9 +289,9 @@ namespace DNS
         }
 
 
-        virtual void Apply()
+        virtual void Apply(NetCfgSignals *signal)
         {
-            CommitChanges();
+            CommitChanges(signal);
             Write();
             modified = false;
         }
