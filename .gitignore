@@ -52,6 +52,7 @@ src/selinux/tmp
 src/sessionmgr/openvpn3-service-sessionmgr
 src/tests/command-parser/cmdparser
 src/tests/dbus/config-lock-down
+src/tests/dbus/config-override-selftest
 src/tests/dbus/conncreds
 src/tests/dbus/enable-logging
 src/tests/dbus/fetch-avail-config-paths
@@ -59,6 +60,7 @@ src/tests/dbus/fetch-avail-session-paths
 src/tests/dbus/fetch-config
 src/tests/dbus/fetch-config2
 src/tests/dbus/get-acl
+src/tests/dbus/get-config-overrides
 src/tests/dbus/getlastlogevent
 src/tests/dbus/getlaststatus
 src/tests/dbus/getconnectionstats
