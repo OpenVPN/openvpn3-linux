@@ -150,19 +150,14 @@ public:
         }
         else if (signal_name == "NetworkChange")
         {
-            guint type = 0;
-            gchar *dev = 0;
-            gchar *det = nullptr;
-            g_variant_get (parameters, "(uss)", &type, &dev, &det);
+            NetCfgChangeEvent ev(parameters);
 
             std::cout << "-- NetworkChange: "
                       << "sender=" << sender_name
                       << ", interface=" << interface_name
                       << ", path=" << object_path
-                      << ": [" << std::to_string(type) << "] "
-                      << "-- type=" << NetCfgChangeEvent::TypeStr((NetCfgChangeType) type) << ", "
-                      << "device='" << std::string(dev) << "', "
-                      << " details='" << det << "'"
+                      << ": [" << std::to_string((std::uint8_t) ev.type)
+                      << "] " << ev
                       << std::endl;
         }
         else

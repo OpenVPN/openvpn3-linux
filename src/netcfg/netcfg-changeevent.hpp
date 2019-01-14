@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include "netcfg-exception.hpp"
+
 enum class NetCfgChangeType : std::uint8_t {
     UNSET,
     DEVICE_ADDED,
@@ -53,6 +55,25 @@ struct NetCfgChangeEvent {
         type = t;
         device = dev;
         details = d;
+    }
+
+    NetCfgChangeEvent(GVariant *params)
+    {
+        std::string g_type(g_variant_get_type_string(params));
+        if ("(uss)" != g_type)
+        {
+            throw NetCfgException(std::string("Invalid GVariant data type: ")
+                                  + g_type);
+        }
+
+        gchar *dev = nullptr;
+        gchar *det = nullptr;
+        g_variant_get(params, "(uss)", &type, &dev, &det);
+
+        device = std::string(dev);
+        details = std::string(det);
+        g_free(dev);
+        g_free(det);
     }
 
     NetCfgChangeEvent() noexcept
@@ -147,7 +168,7 @@ struct NetCfgChangeEvent {
         }
         return os << "Device " << s.device
                   << " - " << TypeStr(s.type)
-                  << ": " << s.details;
+                  << (s.details.empty() ? "" : ": " + s.details);
     }
 
     NetCfgChangeType type;
