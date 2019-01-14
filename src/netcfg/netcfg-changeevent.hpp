@@ -171,6 +171,20 @@ struct NetCfgChangeEvent {
                   << (s.details.empty() ? "" : ": " + s.details);
     }
 
+
+    bool operator==(const NetCfgChangeEvent& compare) const
+    {
+        return ((compare.type== (const NetCfgChangeType) type)
+                && (0 == compare.device.compare(device))
+                && (0 == compare.details.compare(details)));
+    }
+
+
+    bool operator!=(const NetCfgChangeEvent& compare) const
+    {
+        return !(this->operator==(compare));
+    }
+
     NetCfgChangeType type;
     std::string device;
     std::string details;
