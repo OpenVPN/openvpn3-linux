@@ -195,6 +195,21 @@ public:
         remove_callback();
         IdleCheck_RefDec();
     }
+
+
+protected:
+    void set_device_name(const std::string& devnam) noexcept
+    {
+        device_name = devnam;
+    }
+
+
+    std::string get_device_name() const noexcept
+    {
+        return device_name;
+    }
+
+
 private:
 
     void addIPAddress(GVariant* params)
