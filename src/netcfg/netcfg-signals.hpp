@@ -55,7 +55,7 @@ public:
     }
 
 
-    void StateChange(const NetCfgStateEvent& ev)
+    void StateChange(NetCfgStateEvent& ev) const
     {
         GVariant *e = ev.GetGVariant();
         Send("StateChange", e);
