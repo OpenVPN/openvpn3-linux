@@ -151,7 +151,7 @@ namespace openvpn
         }
 
     public:
-        int establish(const NetCfgDevice& netCfgDevice) override
+        int establish(NetCfgDevice& netCfgDevice) override
         {
             TunNetlink::Setup::Config config;
             config.layer = Layer::from_value(netCfgDevice.device_type);
@@ -165,7 +165,9 @@ namespace openvpn
             //
             // config.ifname is a return value rather than an argument
             //
-            return establish_tun(*tbc, config, nullptr, std::cout);
+            int ret = establish_tun(*tbc, config, nullptr, std::cout);
+            netCfgDevice.set_device_name(config.iface_name);
+            return ret;
         }
 
         void teardown(bool disconnect) override

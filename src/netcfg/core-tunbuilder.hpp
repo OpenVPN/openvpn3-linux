@@ -37,7 +37,7 @@ namespace openvpn
     class CoreTunbuilder : public RC<thread_safe_refcount>
     {
     public:
-        virtual int establish(const NetCfgDevice& netCfgDevice) = 0;
+        virtual int establish(NetCfgDevice& netCfgDevice) = 0;
         virtual void teardown(bool disconnect) = 0;
     };
 
