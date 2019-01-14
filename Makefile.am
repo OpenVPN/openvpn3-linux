@@ -156,8 +156,8 @@ noinst_PROGRAMS = \
 	src/tests/dbus/log-listener2 \
 	src/tests/dbus/logservice1 \
 	src/tests/dbus/manager-lookupconfigname \
+	src/tests/dbus/netcfg-changeevent-selftest \
 	src/tests/dbus/netcfg-proxy-unit \
-	src/tests/dbus/netcfg-stateevent-selftest \
 	src/tests/dbus/set-alias \
 	src/tests/dbus/signal-listener \
 	src/tests/dbus/statusevent-selftest \
@@ -271,11 +271,11 @@ src_tests_dbus_logservice1_SOURCES = \
 src_tests_dbus_manager_lookupconfigname_SOURCES = \
 	src/tests/dbus/manager-lookupconfigname.cpp
 
+src_tests_dbus_netcfg_changeevent_selftest_SOURCES = \
+	src/tests/dbus/netcfg-changeevent-selftest.cpp
+
 src_tests_dbus_netcfg_proxy_unit_SOURCES = \
 	src/tests/dbus/netcfg-proxy-unit.cpp
-
-src_tests_dbus_netcfg_stateevent_selftest_SOURCES = \
-	src/tests/dbus/netcfg-stateevent-selftest.cpp
 
 src_tests_dbus_set_alias_SOURCES = \
 	src/tests/dbus/set-alias.cpp
@@ -435,7 +435,7 @@ src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/netcfg/netcfg-exception.hpp \
 	src/netcfg/netcfg-options.hpp \
 	src/netcfg/netcfg-signals.hpp \
-	src/netcfg/netcfg-stateevent.hpp \
+	src/netcfg/netcfg-changeevent.hpp \
 	src/netcfg/core-tunbuilder.hpp \
 	src/netcfg/dns-direct-file.hpp \
 	src/netcfg/dns-resolver-settings.hpp \

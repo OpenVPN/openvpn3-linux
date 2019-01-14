@@ -112,9 +112,9 @@ interface net.openvpn.v3.netcfg {
       Log(u group,
           u level,
           s message);
-      StateChange(u type,
-                  s device,
-                  s details);
+      NetworkChange(u type,
+                    s device,
+                    s details);
     properties:
       readonly u owner;
       readonly au acl;
@@ -219,6 +219,19 @@ E.g. that the VPN connection is disconnected and currently reconnecting.
 
 Removes the virtual interface and undoes the configuration (routes, DNS, tun device configuration). The
 calling application must close the tun device own its own.
+
+### Signal: `net.openvpn.v3.netcfg.NetworkChange`
+
+This signal indicates that something has changed in the systems network
+configuration.  These signals will be tied to the interface which triggered
+this change.
+
+| Name      | Type   | Description                                     |
+|-----------|--------|-------------------------------------------------|
+| type      | uint   | `NetCfgChangeType` reference of the request. See [`src/netcfg/netcfg-changeevent.hpp`](src/netcfg/netcfg-changeevent.hpp) for details.  |
+| device    | string | The virtual network device name related to this change. |
+| details   | string | Unstructured text blob with details related to this change (this may change) |
+
 
 ### `Properties`
 | Name          | Type             | Read/Write | Description                                                   |

@@ -41,7 +41,7 @@
 #include "core-tunbuilder.hpp"
 #include "./dns-direct-file.hpp"
 #include "netcfg-options.hpp"
-#include "netcfg-stateevent.hpp"
+#include "netcfg-changeevent.hpp"
 #include "netcfg-signals.hpp"
 
 using namespace openvpn;
@@ -177,7 +177,7 @@ public:
                    << "        <property type='b'  name='modified' access='read'/>"
                    << properties.GetIntrospectionXML()
                    << signal.GetLogIntrospection()
-                   << NetCfgStateEvent::IntrospectionXML()
+                   << NetCfgChangeEvent::IntrospectionXML()
                    << "    </interface>"
                    << "</node>";
         ParseIntrospectionXML(introspect);

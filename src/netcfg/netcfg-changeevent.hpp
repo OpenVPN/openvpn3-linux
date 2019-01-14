@@ -18,15 +18,15 @@
 //
 
 /**
- * @file   netcfg-stateevent.hpp
+ * @file   netcfg-changeevent.hpp
  *
  * @brief  Defines constants and provides structs/object capable of handling
- *         state change events from net.openvpn.v3.netcfg
+ *         network change events from net.openvpn.v3.netcfg
  */
 
 #pragma once
 
-enum class NetCfgStateType : std::uint8_t {
+enum class NetCfgChangeType : std::uint8_t {
     UNSET,
     DEVICE_ADDED,
     DEVICE_REMOVED,
@@ -45,8 +45,8 @@ enum class NetCfgStateType : std::uint8_t {
 };
 
 
-struct NetCfgStateEvent {
-    NetCfgStateEvent(const NetCfgStateType& t, const std::string& dev,
+struct NetCfgChangeEvent {
+    NetCfgChangeEvent(const NetCfgChangeType& t, const std::string& dev,
                      const std::string& d) noexcept
     {
         reset();
@@ -55,67 +55,67 @@ struct NetCfgStateEvent {
         details = d;
     }
 
-    NetCfgStateEvent() noexcept
+    NetCfgChangeEvent() noexcept
     {
         reset();
     }
 
     void reset() noexcept
     {
-        type = NetCfgStateType::UNSET;
+        type = NetCfgChangeType::UNSET;
         device.clear();
         details.clear();
     }
 
     bool empty() const noexcept
     {
-        return (NetCfgStateType::UNSET == type
+        return (NetCfgChangeType::UNSET == type
                 && device.empty() && details.empty());
     }
 
 
     static const std::string IntrospectionXML() noexcept
     {
-        return "            <signal name='StateChange'>"
+        return "            <signal name='NetWorkChange'>"
                "                <arg type='u' name='type'/>"
                "                <arg type='s' name='device'/>"
                "                <arg type='s' name='details'/>"
                "            </signal>";
     }
 
-    static const std::string TypeStr(const NetCfgStateType& type ) noexcept
+    static const std::string TypeStr(const NetCfgChangeType& type ) noexcept
     {
         switch (type)
         {
-        case NetCfgStateType::UNSET:
+        case NetCfgChangeType::UNSET:
             return "[UNSET]";
-        case NetCfgStateType::DEVICE_ADDED:
+        case NetCfgChangeType::DEVICE_ADDED:
             return "Device Added";
-        case NetCfgStateType::DEVICE_REMOVED:
+        case NetCfgChangeType::DEVICE_REMOVED:
             return "Device Removed";
-        case NetCfgStateType::IPv4ADDR_ADDED:
+        case NetCfgChangeType::IPv4ADDR_ADDED:
             return "IPv4 Address Added";
-        case NetCfgStateType::IPv4ADDR_REMOVED:
+        case NetCfgChangeType::IPv4ADDR_REMOVED:
             return "IPv4 Address Removed";
-        case NetCfgStateType::IPv4ROUTE_ADDED:
+        case NetCfgChangeType::IPv4ROUTE_ADDED:
             return "IPv4 Route Added";
-        case NetCfgStateType::IPv4ROUTE_REMOVED:
+        case NetCfgChangeType::IPv4ROUTE_REMOVED:
             return "IPv4 Route Removed";
-        case NetCfgStateType::IPv6ADDR_ADDED:
+        case NetCfgChangeType::IPv6ADDR_ADDED:
             return "IPv6 Address Added";
-        case NetCfgStateType::IPv6ADDR_REMOVED:
+        case NetCfgChangeType::IPv6ADDR_REMOVED:
             return "IPv6 Address Removed";
-        case NetCfgStateType::IPv6ROUTE_ADDED:
+        case NetCfgChangeType::IPv6ROUTE_ADDED:
             return "IPv6 Route Added";
-        case NetCfgStateType::IPv6ROUTE_REMOVED:
+        case NetCfgChangeType::IPv6ROUTE_REMOVED:
             return "IPv6 Route Removed";
-        case NetCfgStateType::DNS_SERVER_ADDED:
+        case NetCfgChangeType::DNS_SERVER_ADDED:
             return "DNS Server Added";
-        case NetCfgStateType::DNS_SERVER_REMOVED:
+        case NetCfgChangeType::DNS_SERVER_REMOVED:
             return "DNS Server Removed";
-        case NetCfgStateType::DNS_SEARCH_ADDED:
+        case NetCfgChangeType::DNS_SEARCH_ADDED:
             return "DNS Search domain Added";
-        case NetCfgStateType::DNS_SEARCH_REMOVED:
+        case NetCfgChangeType::DNS_SEARCH_REMOVED:
             return "DNS Search domain Removed";
         default:
             return "[UNKNOWN: " + std::to_string((uint8_t) type) + "]";
@@ -139,18 +139,18 @@ struct NetCfgStateEvent {
      * @return  Returns the provided std::ostream together with the
      *          decoded NetCfgStateEvent information
      */
-    friend std::ostream& operator<<(std::ostream& os , const NetCfgStateEvent& s)
+    friend std::ostream& operator<<(std::ostream& os , const NetCfgChangeEvent& s)
     {
         if (s.empty())
         {
-            return os << "(Empty State Change Event)";
+            return os << "(Empty Network Change Event)";
         }
         return os << "Device " << s.device
                   << " - " << TypeStr(s.type)
                   << ": " << s.details;
     }
 
-    NetCfgStateType type;
+    NetCfgChangeType type;
     std::string device;
     std::string details;
 };

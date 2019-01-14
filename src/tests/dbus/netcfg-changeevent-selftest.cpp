@@ -18,9 +18,9 @@
 //
 
 /**
- * @file   netcfg-stateevent-selftest.cpp
+ * @file   netcfg-changeeevent-selftest.cpp
  *
- * @brief  Unit test for struct NetCfgStateEvent
+ * @brief  Unit test for struct NetCfgChangeEvent
  */
 
 #include <iostream>
@@ -28,10 +28,10 @@
 #include <sstream>
 
 #include "dbus/core.hpp"
-#include "netcfg/netcfg-stateevent.hpp"
+#include "netcfg/netcfg-changeevent.hpp"
 
 
-bool test_empty(const NetCfgStateEvent& ev, const bool expect)
+bool test_empty(const NetCfgChangeEvent& ev, const bool expect)
 {
     bool ret = false;
 
@@ -49,7 +49,7 @@ bool test_empty(const NetCfgStateEvent& ev, const bool expect)
     }
 
 
-    r = (NetCfgStateType::UNSET == ev.type
+    r = (NetCfgChangeType::UNSET == ev.type
          && ev.device.empty()
          && ev.details.empty());
     std::cout << "      test_empty():  Element check:"
@@ -75,7 +75,7 @@ int test_init()
     int ret = 0;
 
     std::cout << "-- Testing just initialized object - empty" << std::endl;
-    NetCfgStateEvent empty;
+    NetCfgChangeEvent empty;
 
     if (test_empty(empty, true))
     {
@@ -83,7 +83,7 @@ int test_init()
     }
 
     std::cout << "-- Testing just initialized object - init with values (1)" << std::endl;
-    NetCfgStateEvent populated1(NetCfgStateType::DEVICE_ADDED, "test-dev", "Some detail");
+    NetCfgChangeEvent populated1(NetCfgChangeType::DEVICE_ADDED, "test-dev", "Some detail");
     if (test_empty(populated1, false))  // This should fail
     {
         ++ret;
@@ -104,9 +104,9 @@ int test_stream()
 {
     int ret = 0;
 
-    std::cout << "-- Testing string stream: NetCfgState(NetCfgStateType::IPv6ADDR_ADDED, "
+    std::cout << "-- Testing string stream: NetCfgChangeEvent(NetCfgChangeType::IPv6ADDR_ADDED, "
               << "'testdev', '2001:db8:a050::1/64') ... ";
-    NetCfgStateEvent state(NetCfgStateType::IPv6ADDR_ADDED, "testdev", "2001:db8:a050::1/64");
+    NetCfgChangeEvent state(NetCfgChangeType::IPv6ADDR_ADDED, "testdev", "2001:db8:a050::1/64");
     std::stringstream chk;
     chk << state;
     std::string expect("Device testdev - IPv6 Address Added: 2001:db8:a050::1/64");
@@ -129,7 +129,7 @@ int test_gvariant()
     int ret = 0;
 
     std::cout << "-- Testing .GetGVariant() ... ";
-    NetCfgStateEvent g_state(NetCfgStateType::IPv6ROUTE_ADDED, "tun22",
+    NetCfgChangeEvent g_state(NetCfgChangeType::IPv6ROUTE_ADDED, "tun22",
                            "2001:db8:bb50::/64 via 2001:db8:a050::1/64");
     GVariant *chk = g_state.GetGVariant();
 
@@ -168,7 +168,7 @@ int main(int argc, char **argv)
     bool failed = false;
     int r = 0;
 
-    std::cout << "** NetCfgStateEvent Unit Test **" << std::endl;
+    std::cout << "** NetCfgChangeEvent Unit Test **" << std::endl;
     if ((r = test_init()) > 0)
     {
         std::cout << "** test_init() failed, result: " << r << std::endl;

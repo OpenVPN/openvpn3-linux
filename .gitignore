@@ -68,8 +68,8 @@ src/tests/dbus/log-listener
 src/tests/dbus/log-listener2
 src/tests/dbus/logservice1
 src/tests/dbus/manager-lookupconfigname
+src/tests/dbus/netcfg-changeevent-selftest
 src/tests/dbus/netcfg-proxy-unit
-src/tests/dbus/netcfg-stateevent-selftest
 src/tests/dbus/proc-wait-for
 src/tests/dbus/proc-wait-for-pid
 src/tests/dbus/proxy-checkserviceavail

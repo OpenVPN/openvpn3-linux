@@ -26,7 +26,7 @@
 #pragma once
 
 #include "log/dbus-log.hpp"
-#include "netcfg-stateevent.hpp"
+#include "netcfg-changeevent.hpp"
 
 
 class NetCfgSignals : public LogSender,
@@ -55,10 +55,10 @@ public:
     }
 
 
-    void StateChange(NetCfgStateEvent& ev) const
+    void NetworkChange(NetCfgChangeEvent& ev) const
     {
         GVariant *e = ev.GetGVariant();
-        Send("StateChange", e);
+        Send("NetworkChange", e);
     }
 
 private:

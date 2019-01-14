@@ -170,16 +170,16 @@ namespace openvpn
             netCfgDevice.set_device_name(config.iface_name);
 
             // Announce the new interface
-            NetCfgStateEvent state_ev(NetCfgStateType::DEVICE_ADDED,
+            NetCfgChangeEvent dev_ev(NetCfgChangeType::DEVICE_ADDED,
                                       config.iface_name, "");
-            netCfgDevice.signal.StateChange(state_ev);
+            netCfgDevice.signal.NetworkChange(dev_ev);
 
             for (const auto& ipaddr: netCfgDevice.vpnips)
             {
-                NetCfgStateEvent state_ev((ipaddr.ipv6 ? NetCfgStateType::IPv6ADDR_ADDED
-                                                       : NetCfgStateType::IPv4ADDR_ADDED),
+                NetCfgChangeEvent chg_ev((ipaddr.ipv6 ? NetCfgChangeType::IPv6ADDR_ADDED
+                                                      : NetCfgChangeType::IPv4ADDR_ADDED),
                                           config.iface_name, ipaddr.str());
-                netCfgDevice.signal.StateChange(state_ev);
+                netCfgDevice.signal.NetworkChange(chg_ev);
             }
 
             // Announce routes related to this new interface
@@ -189,10 +189,10 @@ namespace openvpn
                 {
                     continue;
                 }
-                NetCfgStateEvent state_ev((net.ipv6 ? NetCfgStateType::IPv6ROUTE_ADDED
-                                                    : NetCfgStateType::IPv4ROUTE_ADDED),
+                NetCfgChangeEvent chg_ev((net.ipv6 ? NetCfgChangeType::IPv6ROUTE_ADDED
+                                                   : NetCfgChangeType::IPv4ROUTE_ADDED),
                                           config.iface_name, net.str());
-                netCfgDevice.signal.StateChange(state_ev);
+                netCfgDevice.signal.NetworkChange(chg_ev);
             }
 
             return ret;
@@ -213,23 +213,23 @@ namespace openvpn
                 {
                     continue;
                 }
-                NetCfgStateEvent state_ev((net.ipv6 ? NetCfgStateType::IPv6ROUTE_REMOVED
-                                                    : NetCfgStateType::IPv4ROUTE_REMOVED),
+                NetCfgChangeEvent chg_ev((net.ipv6 ? NetCfgChangeType::IPv6ROUTE_REMOVED
+                                                   : NetCfgChangeType::IPv4ROUTE_REMOVED),
                                           ncdev.get_device_name(), net.str());
-                ncdev.signal.StateChange(state_ev);
+                ncdev.signal.NetworkChange(chg_ev);
             }
 
             // Announce the removed interface
             for (const auto& ipaddr: ncdev.vpnips)
             {
-                NetCfgStateEvent state_ev((ipaddr.ipv6 ? NetCfgStateType::IPv6ADDR_REMOVED
-                                                      : NetCfgStateType::IPv4ADDR_REMOVED),
+                NetCfgChangeEvent chg_ev((ipaddr.ipv6 ? NetCfgChangeType::IPv6ADDR_REMOVED
+                                                      : NetCfgChangeType::IPv4ADDR_REMOVED),
                                           ncdev.get_device_name(), ipaddr.str());
-                ncdev.signal.StateChange(state_ev);
+                ncdev.signal.NetworkChange(chg_ev);
             }
-            NetCfgStateEvent state_ev(NetCfgStateType::DEVICE_REMOVED,
-                                      ncdev.get_device_name(), "");
-            ncdev.signal.StateChange(state_ev);
+            NetCfgChangeEvent chg_ev(NetCfgChangeType::DEVICE_REMOVED,
+                                     ncdev.get_device_name(), "");
+            ncdev.signal.NetworkChange(chg_ev);
         }
     };
 
