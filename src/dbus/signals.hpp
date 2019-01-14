@@ -295,7 +295,7 @@ namespace openvpn
                          const std::string interf,
                          const std::string objpath,
                          const std::string signal_name,
-                         GVariant *params)
+                         GVariant *params) const
         {
             g_variant_ref_sink(params);  // This method must own this object
             if (!busn.empty() || 0 == target_bus_names.size())
@@ -313,37 +313,37 @@ namespace openvpn
         void Send(const std::string busn,
                   const std::string interf,
                   const std::string signal_name,
-                  GVariant *params)
+                  GVariant *params) const
         {
             Send(busn, interf, object_path, signal_name, params);
         }
 
 
-        void Send(const std::string busn, const std::string interf, const std::string signal_name)
+        void Send(const std::string busn, const std::string interf, const std::string signal_name) const
         {
             Send(busn, interf, object_path, signal_name, NULL);
         }
 
 
-        void Send(const std::string interf, const std::string signal_name, GVariant *params)
+        void Send(const std::string interf, const std::string signal_name, GVariant *params) const
         {
             Send("", interf, object_path, signal_name, params);
         }
 
 
-        void Send(const std::string interf, const std::string signal_name)
+        void Send(const std::string interf, const std::string signal_name) const
         {
             Send("", interf, object_path, signal_name, NULL);
         }
 
 
-        void Send(const std::string signal_name, GVariant *params)
+        void Send(const std::string signal_name, GVariant *params) const
         {
             Send("", interface, object_path, signal_name, params);
         }
 
 
-        void Send(const std::string signal_name)
+        void Send(const std::string signal_name) const
         {
             Send("", interface, object_path, signal_name, NULL);
         }
@@ -373,7 +373,7 @@ namespace openvpn
                          const std::string interf,
                          const std::string objpath,
                          const std::string signal_name,
-                         GVariant *params)
+                         GVariant *params) const
         {
             /*
               std::cout << "Signal Send: bus=" << (!target_bus_names.empty() ? target_bus_names : "(not set)")
