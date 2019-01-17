@@ -106,44 +106,45 @@ struct NetCfgChangeEvent {
                "            </signal>";
     }
 
-    static const std::string TypeStr(const NetCfgChangeType& type ) noexcept
+    static const std::string TypeStr(const NetCfgChangeType& type,
+                                     bool tech_form = false) noexcept
     {
         switch (type)
         {
         case NetCfgChangeType::UNSET:
             return "[UNSET]";
         case NetCfgChangeType::DEVICE_ADDED:
-            return "Device Added";
+            return (tech_form ? "DEVICE_ADDED" : "Device Added");
         case NetCfgChangeType::DEVICE_REMOVED:
-            return "Device Removed";
+            return (tech_form ? "DEVICE_REMOVED" : "Device Removed");
         case NetCfgChangeType::IPv4ADDR_ADDED:
-            return "IPv4 Address Added";
+            return (tech_form ? "IPv4ADDR_ADDED" : "IPv4 Address Added");
         case NetCfgChangeType::IPv4ADDR_REMOVED:
-            return "IPv4 Address Removed";
+            return (tech_form ? "IPv4ADDR_REMOVED" : "IPv4 Address Removed");
         case NetCfgChangeType::IPv4ROUTE_ADDED:
-            return "IPv4 Route Added";
+            return (tech_form ? "IPv4ROUTE_ADDED" : "IPv4 Route Added");
         case NetCfgChangeType::IPv4ROUTE_REMOVED:
-            return "IPv4 Route Removed";
+            return (tech_form ? "IPv4ROUTE_REMOVED" : "IPv4 Route Removed");
         case NetCfgChangeType::IPv4ROUTE_EXCLUDED:
-            return "IPv4 Route Excluded";
+            return (tech_form ? "IPv4ROUTE_EXCLUDED" : "IPv4 Route Excluded");
         case NetCfgChangeType::IPv6ADDR_ADDED:
-            return "IPv6 Address Added";
+            return (tech_form ? "IPv6ADDR_ADDED" : "IPv6 Address Added");
         case NetCfgChangeType::IPv6ADDR_REMOVED:
-            return "IPv6 Address Removed";
+            return (tech_form ? "IPv6ADDR_REMOVED" : "IPv6 Address Removed");
         case NetCfgChangeType::IPv6ROUTE_ADDED:
-            return "IPv6 Route Added";
+            return (tech_form ? "IPv6ROUTE_ADDED" : "IPv6 Route Added");
         case NetCfgChangeType::IPv6ROUTE_REMOVED:
-            return "IPv6 Route Removed";
+            return (tech_form ? "IPv6ROUTE_REMOVED" : "IPv6 Route Removed");
         case NetCfgChangeType::IPv6ROUTE_EXCLUDED:
-            return "IPv6 Route Excluded";
+            return (tech_form ? "IPv6ROUTE_EXCLUDED" : "IPv6 Route Excluded");
         case NetCfgChangeType::DNS_SERVER_ADDED:
-            return "DNS Server Added";
+            return (tech_form ? "DNS_SERVER_ADDED" : "DNS Server Added");
         case NetCfgChangeType::DNS_SERVER_REMOVED:
-            return "DNS Server Removed";
+            return (tech_form ? "DNS_SERVER_REMOVED" : "DNS Server Removed");
         case NetCfgChangeType::DNS_SEARCH_ADDED:
-            return "DNS Search domain Added";
+            return (tech_form ? "DNS_SEARCH_ADDED" : "DNS Search domain Added");
         case NetCfgChangeType::DNS_SEARCH_REMOVED:
-            return "DNS Search domain Removed";
+            return (tech_form ? "DNS_SEARCH_REMOVED" : "DNS Search domain Removed");
         default:
             return "[UNKNOWN: " + std::to_string((uint8_t) type) + "]";
         }
