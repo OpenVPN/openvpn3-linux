@@ -150,6 +150,26 @@ struct NetCfgChangeEvent {
         }
     }
 
+
+    static const std::vector<std::string> FilterMaskList(const uint16_t mask,
+                                           bool tech_form = false)
+    {
+        std::vector<std::string> ret;
+
+        for (uint16_t i = 0; i < 16; ++i)
+        {
+            uint16_t flag = 1 << i;
+            NetCfgChangeType t = (NetCfgChangeType)(flag);
+            if (flag & mask)
+            {
+                ret.push_back(TypeStr(t, tech_form));
+            }
+        }
+
+        return ret;
+    }
+
+
     GVariant * GetGVariant() const
     {
         return g_variant_new("(uss)", (guint32) type, device.c_str(),

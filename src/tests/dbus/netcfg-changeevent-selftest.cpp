@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -195,6 +195,54 @@ int test_gvariant()
 }
 
 
+int process_filtermask(uint16_t m, uint8_t expect)
+{
+    std::vector<std::string> res = NetCfgChangeEvent::FilterMaskList(m, true);
+    std::cout << "[" << std::to_string(res.size()) << " elements] ";
+    for (const auto& t : res)
+    {
+        std::cout << t << " ";
+    }
+    if (res.size() != expect)
+    {
+        std::cout << " ... FAILED: Expected "<< std::to_string(expect)
+                  << " elements" << std::endl;
+        return 1;
+    }
+    std::cout << " ... PASSED" << std::endl;
+    return 0;
+}
+
+
+int test_filtermasklist()
+{
+
+    int ret = 0;
+
+    try
+    {
+        uint16_t mask = (1 << 16) - 1;
+        std::cout << "-- Filter mask to string conversion (all bits set): ";
+
+        ret += process_filtermask(mask, 16);
+
+        mask = 2 | 16 | 2048 | 8192;
+        std::cout << "-- Filter mask to string conversion (bits 1, 4, 11, 13 set): ";
+        ret += process_filtermask(mask, 4);
+
+        mask = 0;
+        std::cout << "-- Filter mask to string conversion (no bits set): ";
+        ret += process_filtermask(mask, 0);
+    }
+    catch (std::exception& excp)
+    {
+        std::cout << " ... FAILED: " << excp.what() << std::endl;
+        ++ret;
+
+    }
+    return ret;
+}
+
 int main(int argc, char **argv)
 {
     bool failed = false;
@@ -219,6 +267,11 @@ int main(int argc, char **argv)
         failed = true;
     }
 
+    if ((r = test_filtermasklist()) > 0)
+    {
+        std::cout << "** test_filtermasklist() failed" << std::endl;
+        failed = true;
+    }
 
     std::cout << std::endl
               << ">> OVERAL TEST RESULT: " << (failed ? "FAILED" : "PASSED")
