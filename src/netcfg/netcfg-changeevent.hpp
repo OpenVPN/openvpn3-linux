@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -28,24 +28,24 @@
 
 #include "netcfg-exception.hpp"
 
-enum class NetCfgChangeType : std::uint8_t {
-    UNSET,
-    DEVICE_ADDED,
-    DEVICE_REMOVED,
-    IPv4ADDR_ADDED,
-    IPv4ADDR_REMOVED,
-    IPv4ROUTE_ADDED,
-    IPv4ROUTE_REMOVED,
-    IPv4ROUTE_EXCLUDED,
-    IPv6ADDR_ADDED,
-    IPv6ADDR_REMOVED,
-    IPv6ROUTE_ADDED,
-    IPv6ROUTE_REMOVED,
-    IPv6ROUTE_EXCLUDED,
-    DNS_SERVER_ADDED,
-    DNS_SERVER_REMOVED,
-    DNS_SEARCH_ADDED,
-    DNS_SEARCH_REMOVED
+enum class NetCfgChangeType : std::uint16_t {
+    UNSET              = 0,         //      0
+    DEVICE_ADDED       = 1,         //      1
+    DEVICE_REMOVED     = 1 << 1,    //      2
+    IPv4ADDR_ADDED     = 1 << 2,    //      4
+    IPv4ADDR_REMOVED   = 1 << 3,    //      8
+    IPv4ROUTE_ADDED    = 1 << 4,    //     16
+    IPv4ROUTE_REMOVED  = 1 << 5,    //     32
+    IPv4ROUTE_EXCLUDED = 1 << 6,    //     64
+    IPv6ADDR_ADDED     = 1 << 7,    //    128
+    IPv6ADDR_REMOVED   = 1 << 8,    //    256
+    IPv6ROUTE_ADDED    = 1 << 9,    //    512
+    IPv6ROUTE_REMOVED  = 1 << 10,   //   1024
+    IPv6ROUTE_EXCLUDED = 1 << 11,   //   2048
+    DNS_SERVER_ADDED   = 1 << 12,   //   4096
+    DNS_SERVER_REMOVED = 1 << 13,   //   8192
+    DNS_SEARCH_ADDED   = 1 << 14,   //  16384
+    DNS_SEARCH_REMOVED = 1 << 15,   //  32768
 };
 
 
