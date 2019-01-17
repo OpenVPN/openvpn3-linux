@@ -169,6 +169,20 @@ struct NetCfgChangeEvent {
         return ret;
     }
 
+    static const std::string FilterMaskStr(const uint16_t mask,
+                                           bool tech_form = false,
+                                           const std::string& separator=", ")
+    {
+        std::stringstream buf;
+        bool first_done = false;
+        for (const auto& t : FilterMaskList(mask, tech_form))
+        {
+            buf << (first_done ? separator : "") << t;
+            first_done = true;
+        }
+        std::string ret(buf.str());
+        return ret;
+    }
 
     GVariant * GetGVariant() const
     {
@@ -216,5 +230,3 @@ struct NetCfgChangeEvent {
     std::string device;
     std::string details;
 };
-
-
