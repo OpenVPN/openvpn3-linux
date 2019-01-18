@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -177,7 +177,6 @@ int netcfg_main(ParsedArgs args)
         resolver.reset(new DNS::ResolvConfFile(rsc, rsc + ".ovpn3bak"));
     }
 
-    bool signal_broadcast = args.Present("signal-broadcast");
     LogServiceProxy::Ptr logservice;
     try
     {
@@ -185,7 +184,7 @@ int netcfg_main(ParsedArgs args)
         dbus.Connect();
 
         // If we do multicast (!broadcast), attach to the log service
-        if (!signal_broadcast)
+        if (!netcfgopts.signal_broadcast)
         {
             logservice.reset(new LogServiceProxy(dbus.GetConnection()));
             logservice->Attach(OpenVPN3DBus_interf_netcfg);
