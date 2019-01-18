@@ -37,7 +37,7 @@ node /net/openvpn/v3/netcfg {
 ```
 
 
-### Method: `net.openvpn.v3.backends.CreateVirtualInterface`
+### Method: `net.openvpn.v3.netcfg.CreateVirtualInterface`
 
 Create a virtual interface and return the object path of the new interface.
 
@@ -47,7 +47,7 @@ Create a virtual interface and return the object path of the new interface.
 | In        | dev_name     | string      | A user friendly name for the device, will be part of device_path |
 | Out       | device_path  | object path | A unique D-Bus object path for create device                     |
 
-## Method: `net.openvpn.v3.configuration.FetchInterfaceList`
+## Method: `net.openvpn.v3.netcfg.FetchInterfaceList`
 
 This method will return an array of object paths to virtual interfaces the
 caller is granted access to.
@@ -58,7 +58,7 @@ caller is granted access to.
 | Out       | paths       | object paths | An array of object paths to accessible virtual interfaces  |
 
 
-### Method: `net.openvpn.v3.backends.ProtectSocket`
+### Method: `net.openvpn.v3.netcfg.ProtectSocket`
 
 This method is called by the service client to signal that a socket
 needs to be `protected` from being routed over the VPN to avoid routing
@@ -150,7 +150,7 @@ This method is restricted to the `root` user.
 | Out       | subscriptions  | array(string, unsigned int) | An array of tuples with the subscribers unique D-Bus name (string) and the attached filter mask (unsigned int) |
 
 
-### Signal: `net.openvpn.v3.sessions.Log`
+### Signal: `net.openvpn.v3.netcfg.Log`
 
 Whenever the backend process starter needs to log something, it issues
 a Log signal which carries a log group, log verbosity level and a
@@ -206,11 +206,12 @@ interface net.openvpn.v3.netcfg {
 };
 ```
 
-### Method: `net.openvpn.v3.backends.AddIPAddress`
+### Method: `net.openvpn.v3.netcfg.AddIPAddress`
 
 Adds a new local IP Address to the VPN configuration of the virtual interface
 
 #### Arguments
+
 | Direction | Name         | Type        | Description                                                                  |
 |-----------|--------------|-------------|------------------------------------------------------------------------------|
 | In        | ip_address   | string      | The IP address in string representation (e.g. 198.51.100.12 or 2001:db8::23) |
@@ -218,7 +219,8 @@ Adds a new local IP Address to the VPN configuration of the virtual interface
 | In        | gateway      | string      | The IP address in string representation of the remote gateway inside the VPN |
 | In        | ipv6         | ipv6        | Is the new IP address IPv6 or IPv4                                           |
 
-### Method: `net.openvpn.v3.backends.SetRemoteAddress`
+
+### Method: `net.openvpn.v3.netcfg.SetRemoteAddress`
 
 Set the remote address of the VPN server. This is the address the VPN
 uses to connect to VPN server. This is used when creating direct routes
@@ -231,7 +233,7 @@ to the VPN server to avoid routing loops (redirect gateway option).
 | In        | ipv6         | ipv6        | Is the IP address IPv6 or IPv4                                               |
 
 
-### Method: `net.openvpn.v3.backends.AddNetworks`
+### Method: `net.openvpn.v3.netcfg.AddNetworks`
 
 Specifies a array of networks that should be either routed over the VPN or
 explicitly not routed over the VPN. Conflicts between included and excluded
@@ -251,7 +253,8 @@ A network is specified in the following way:
  | ipv6         | boolean     | Is this a IPv6 or IPv4 network specification                                 |
  | exclude      | boolean     | If true, exclude (do not route) otherwise include (do route) this network over the VPN |
 
-### Method: `net.openvpn.v3.backends.AddDNS`
+
+### Method: `net.openvpn.v3.netcfg.AddDNS`
 
 Specifies a array of DNS server addresses that should be added to the list of DNS
 server of the virtual interface.
@@ -261,7 +264,8 @@ server of the virtual interface.
 |-----------|--------------|-------------------|----------------------------------------------------------|
 | In        | server_list  | array of strings  | An array of DNS server IP addresses.                     |
 
-### Method: `net.openvpn.v3.backends.AddDNSSearch`
+
+### Method: `net.openvpn.v3.netcfg.AddDNSSearch`
 
 Specifies a array of DNS search domains that should be added to the list
 of DNS search to the network.
@@ -271,7 +275,8 @@ of DNS search to the network.
 |-----------|--------------|-------------------|----------------------------------------------------------|
 | In        | domains      | array of strings  | An array of DNS domains                                  |
 
-### Method: `net.openvpn.v3.backends.Establish`
+
+### Method: `net.openvpn.v3.netcfg.Establish`
 
 Uses all the information provided to the interface to setup a tun device
 and set routes, DNS and interface accordingly. The resulting tun device
@@ -284,16 +289,19 @@ is returned to the caller.
 
 [1] Unix file descriptors that are passed are not in the D-Bus method signature.
 
-### Method: `net.openvpn.v3.backends.Disable`
+
+### Method: `net.openvpn.v3.netcfg.Disable`
 
 Indicates that the interface is temporarily not used by the VPN service.
 E.g. that the VPN connection is disconnected and currently reconnecting.
 **Note:** This is currently not implemented.
 
-### Method: `net.openvpn.v3.backends.Destroy`
+
+### Method: `net.openvpn.v3.netcfg.Destroy`
 
 Removes the virtual interface and undoes the configuration (routes, DNS, tun device configuration). The
 calling application must close the tun device own its own.
+
 
 ### Signal: `net.openvpn.v3.netcfg.NetworkChange`
 
