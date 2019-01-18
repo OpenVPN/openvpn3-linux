@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2019  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2019  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -291,6 +291,23 @@ namespace openvpn
         }
 
 
+        void Send(const std::vector<std::string>& bus_names,
+                  const std::string& interf,
+                  const std::string& objpath,
+                  const std::string& signal_name,
+                  GVariant *params) const
+        {
+            g_variant_ref_sink(params);  // This method must own this object
+
+            for (const auto& target : bus_names)
+            {
+                send_signal(target, interf, objpath, signal_name, params);
+            }
+
+            g_variant_unref(params);  // Now params can be released and freed
+
+        }
+
         void Send(const std::string busn,
                          const std::string interf,
                          const std::string objpath,
@@ -298,17 +315,20 @@ namespace openvpn
                          GVariant *params) const
         {
             g_variant_ref_sink(params);  // This method must own this object
+
             if (!busn.empty() || 0 == target_bus_names.size())
             {
                 send_signal(busn, interf, objpath, signal_name, params);
             }
 
-            for (const auto& target : target_bus_names)
+            if (0 < target_bus_names.size())
             {
-                send_signal(target, interf, objpath, signal_name, params);
+                Send(target_bus_names, interf, objpath, signal_name, params);
             }
+
             g_variant_unref(params);  // Now params can be released and freed
         }
+
 
         void Send(const std::string busn,
                   const std::string interf,
