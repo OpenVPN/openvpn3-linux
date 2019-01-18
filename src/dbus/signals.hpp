@@ -370,6 +370,16 @@ namespace openvpn
 
 
     protected:
+        const std::string get_object_path() const
+        {
+            return object_path;
+        }
+
+        const std::string get_interface() const
+        {
+            return interface;
+        }
+
         void validate_params()
         {
             if (interface.empty()) {
