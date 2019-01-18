@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -27,7 +27,7 @@
 
 #include "log/dbus-log.hpp"
 #include "netcfg-changeevent.hpp"
-
+#include "netcfg-subscriptions.hpp"
 
 class NetCfgSignals : public LogSender,
                       public RC<thread_unsafe_refcount>
@@ -55,13 +55,33 @@ public:
     }
 
 
+    void AddSubscriptionList(NetCfgSubscriptions::Ptr subs)
+    {
+        subscriptions = subs;
+    }
+
+
     void NetworkChange(NetCfgChangeEvent& ev) const
     {
         GVariant *e = ev.GetGVariant();
-        Send("NetworkChange", e);
+        if (subscriptions)
+        {
+            Send(subscriptions->GetSubscribersList(ev),
+                 get_interface(), get_object_path(),
+                 "NetworkChange", e);
+        }
+        else
+        {
+            // If no subscription manager is configured, we switch
+            // to broadcasting NetworkChange signals.  This is typically
+            // not configured if --signal-broadcast is given to the
+            // main program.
+            Send("NetworkChange", e);
+        }
     }
+
 
 private:
     const unsigned int default_log_level = 6; // LogCategory::DEBUG
-
+    NetCfgSubscriptions::Ptr subscriptions;
 };
