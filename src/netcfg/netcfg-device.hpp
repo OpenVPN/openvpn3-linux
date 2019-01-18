@@ -1,8 +1,8 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018         Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2019  Arne Schwabe <arne@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -43,6 +43,7 @@
 #include "netcfg-options.hpp"
 #include "netcfg-changeevent.hpp"
 #include "netcfg-signals.hpp"
+#include "netcfg-subscriptions.hpp"
 
 using namespace openvpn;
 using namespace NetCfg;
@@ -112,6 +113,7 @@ public:
                  const uid_t creator, const std::string& objpath,
                  std::string devname,
                  DNS::ResolverSettings *resolver,
+                 NetCfgSubscriptions::Ptr subscriptions,
                  const unsigned int log_level, LogWriter *logwr,
                  NetCfgOptions options)
         : DBusObject(objpath),
@@ -125,6 +127,11 @@ public:
           options(std::move(options))
     {
         signal.SetLogLevel(log_level);
+
+        if (subscriptions)
+        {
+            signal.AddSubscriptionList(subscriptions);
+        }
 
         properties.AddBinding(new PropertyType<std::string>(this, "device_name", "read", false, device_name));
         properties.AddBinding(new PropertyType<decltype(dns_servers)>(this, "dns_servers", "read", false, dns_servers));

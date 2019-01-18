@@ -1,8 +1,8 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018         Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2019  Arne Schwabe <arne@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -39,6 +39,7 @@
 #include "log/logwriter.hpp"
 #include "dns-resolver-settings.hpp"
 #include "netcfg-signals.hpp"
+#include "netcfg-subscriptions.hpp"
 #include "netcfg-device.hpp"
 #include "netcfg-options.hpp"
 
@@ -93,6 +94,9 @@ public:
                           << "          <arg type='b' direction='in' name='ipv6' />"
                           << "          <arg type='b' direction='out' name='succeded'/>"
                           << "        </method>"
+                          << NetCfgSubscriptions::GenIntrospection("NotificationSubscribe",
+                                                                   "NotificationUnsubscribe",
+                                                                   "NotificationSubscriberList")
                           /* The fd that this method gets is not in the function signature */
                           << "    <property type='u' name='global_dns_servers' access='read'/>"
                           << "    <property type='u' name='global_dns_search' access='read'/>"
@@ -107,6 +111,18 @@ public:
 
     ~NetCfgServiceObject()
     {
+    }
+
+
+    /**
+     *  Enables the subscription list management for NetworkChange signals
+     *
+     * @param subs  NetCfgSubscription::Ptr to an instantiated subscriptions
+     *              management object
+     */
+    void ConfigureSubscriptionManager(NetCfgSubscriptions::Ptr subs)
+    {
+        subscriptions = subs;
     }
 
 
@@ -158,7 +174,7 @@ public:
                                                    self->remove_device_object(dev_path);
                                                },
                                               creds.GetUID(sender), dev_path,
-                                              dev_name, resolver,
+                                              dev_name, resolver, subscriptions.get(),
                                               signal.GetLogLevel(),
                                               signal.GetLogWriter(),
                                               options);
@@ -197,6 +213,96 @@ public:
             else if ("ProtectSocket" == method_name)
             {
                 retval = protect_socket(conn, invoc, params);
+            }
+            else if ("NotificationSubscribe" == method_name)
+            {
+                if (!subscriptions)
+                {
+                    signal.LogWarn("Ignored NotificationSubscribe request "
+                                    "from " + sender + ", "
+                                    "subscription management disabled");
+                    throw NetCfgException("Notification subscription disabled");
+                }
+
+                //  By default, the subscribe method access is managed by
+                //  the D-Bus policy.  The default policy will only allow
+                //  this by the openvpn user account.
+
+                // Use a larger data type to allow better input validation
+                uint32_t filter_flags = 0;
+                g_variant_get(params, "(u)", &filter_flags);
+                subscriptions->Subscribe(sender, filter_flags);
+
+                std::stringstream msg;
+                msg << "New subscription: '" << sender << "' => "
+                    << NetCfgChangeEvent::FilterMaskStr(filter_flags, true);
+                signal.LogVerb2(msg.str());
+                IdleCheck_RefInc();
+            }
+            else if ("NotificationUnsubscribe" == method_name)
+            {
+                if (!subscriptions)
+                {
+                    signal.LogWarn("Ignored NotificationUnsubscribe request "
+                                    "from " + sender + ", "
+                                    "subscription management disabled");
+                    throw NetCfgException("Notification subscription disabled");
+                }
+
+                //  By default, an external utility can only unsubscribe its
+                //  own subscription while the root user accounts can
+                //  unsubscribe any subscriber.
+                //
+                //  Who can call the unsubscribe methods is also managed by
+                //  the D-Bus policy.  The default policy will only allow
+                //  this by the openvpn and root user accounts.
+
+                // Only retrieve the subscriber value if the call comes
+                // from an admin user
+                std::string sub(sender);
+                uid_t uid = GetUID(sender);
+                if (0 == uid )
+                {
+                    gchar *sub_c = nullptr;
+                    g_variant_get(params, "(s)", &sub_c);
+                    if (nullptr == sub_c)
+                    {
+                        signal.LogCritical("Failed to retrieve subscriber");
+                        throw NetCfgException("Failed to retrieve subscriber");
+                    }
+                    if (strlen(sub_c) > 0)
+                    {
+                        sub = std::string(sub_c);
+                    }
+                    g_free(sub_c);
+                }
+
+                subscriptions->Unsubscribe(sub);
+                signal.LogVerb2("Unsubscribed subscription: '"+ sub + "'");
+                IdleCheck_RefDec();
+            }
+            else if ("NotificationSubscriberList" == method_name)
+            {
+                if (!subscriptions)
+                {
+                    signal.LogWarn("Ignored NotificationSubscriberList "
+                                    "request from " + sender + ", "
+                                    "subscription management disabled");
+                    throw NetCfgException("Notification subscription disabled");
+                }
+
+                // Only allow this method to be accessible by root
+                uid_t uid = GetUID(sender);
+                if (0 != uid )
+                {
+                    throw DBusCredentialsException(uid,
+                                                   "net.openvpn.v3.error.acl.denied",
+                                                   "Access denied");
+                }
+
+                g_dbus_method_invocation_return_value(invoc,
+                                                      subscriptions->List());
+                return;
             }
             else
             {
@@ -362,6 +468,7 @@ private:
     DBusConnectionCreds creds;
     std::map<std::string, NetCfgDevice *> devices;
     NetCfgOptions options;
+    NetCfgSubscriptions::Ptr subscriptions;
 
 
     /**
@@ -480,7 +587,6 @@ public:
           srv_obj(nullptr),
           options(std::move(options))
     {
-
     }
 
 
@@ -509,6 +615,11 @@ public:
      */
     void callback_bus_acquired()
     {
+        // Setup a signal object of the backend
+        signal.reset(new NetCfgSignals(GetConnection(), LogGroup::NETCFG,
+                                       OpenVPN3DBus_rootp_netcfg, logwr));
+        signal->SetLogLevel(default_log_level);
+
         // Create a new OpenVPN3 client session object
         srv_obj.reset(new NetCfgServiceObject(GetConnection(),
                                               default_log_level,
@@ -516,11 +627,17 @@ public:
                                               logwr, options
                                               ));
         srv_obj->RegisterObject(GetConnection());
+        if (!options.signal_broadcast)
+        {
+            subscriptions.reset(new NetCfgSubscriptions);
+            srv_obj->ConfigureSubscriptionManager(subscriptions);
+        }
+        else
+        {
+            signal->LogCritical("Signal broadcast enabled, "
+                                "which includes NetworkChange signals");
+        }
 
-        // Setup a signal object of the backend
-        signal.reset(new NetCfgSignals(GetConnection(), LogGroup::NETCFG,
-                                       OpenVPN3DBus_rootp_netcfg, logwr));
-        signal->SetLogLevel(default_log_level);
         signal->Debug("NetCfg service registered on '" + GetBusName()
                        + "': " + OpenVPN3DBus_rootp_netcfg);
 
@@ -588,6 +705,7 @@ private:
 
     unsigned int default_log_level;
     NetCfgSignals::Ptr signal;
+    NetCfgSubscriptions::Ptr subscriptions;
     NetCfgServiceObject::Ptr srv_obj;
     NetCfgOptions options;
 };

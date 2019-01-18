@@ -1,0 +1,81 @@
+#!/usr/bin/python3
+#  OpenVPN 3 Linux client -- Next generation OpenVPN client
+#
+#  Copyright (C) 2019         OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2019         David Sommerseth <davids@openvpn.net>
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, version 3 of the
+#  License.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
+##
+# @file  netcfg-subscription-test
+#
+# @brief Simple test utility which subscribes to specific NetworkChange
+#        signals from net.openvpn.v3.netcfg
+
+import sys
+import os
+import dbus
+import traceback
+from dbus.mainloop.glib import DBusGMainLoop
+from gi.repository import GLib
+
+mainloop = GLib.MainLoop()
+
+def NetworkChangeHandler(type, device, details):
+    print ('NetworkChange: type=%i device=%s details="%s"' % (type, device, details))
+
+
+def subscription_test_main(prog_args):
+    if len(prog_args) != 2:
+        print ('Usage: %s <filter_mask (uint16_t)>' % (prog_args[0],))
+        return 1
+
+    dbusloop = DBusGMainLoop(set_as_default=True)
+    bus = dbus.SystemBus(mainloop=dbusloop)
+    bus.add_signal_receiver(NetworkChangeHandler, 'NetworkChange', 'net.openvpn.v3.netcfg', 'net.openvpn.v3.netcfg')
+
+    netcfgmgr_obj = bus.get_object('net.openvpn.v3.netcfg', '/net/openvpn/v3/netcfg', introspect=False)
+    netcfgmgr_intf = dbus.Interface(netcfgmgr_obj, 'net.openvpn.v3.netcfg')
+
+    subscription_enabled = True
+    try:
+        netcfgmgr_intf.NotificationSubscribe(dbus.UInt32(prog_args[1]))
+    except dbus.exceptions.DBusException as excp:
+        print ("Failed to subscribe: " + str(excp))
+        print ("Ignoring error, will handle all broadcast NetworkChange signals")
+        subscription_enabled = False
+
+    try:
+        mainloop.run()
+    except KeyboardInterrupt:
+        print("Stopping")
+        pass
+
+    if subscription_enabled:
+        netcfgmgr_intf.NotificationUnsubscribe("")
+
+    return 0
+
+if __name__ == '__main__':
+    ret = 9
+    try:
+        ret = subscription_test_main(sys.argv)
+    except Exception as e:
+        print ('\n** ERROR ** %s' % str(e))
+        print ('\nmain traceback:')
+        print (traceback.format_exc())
+        ret = 2
+
+    sys.exit(ret)
