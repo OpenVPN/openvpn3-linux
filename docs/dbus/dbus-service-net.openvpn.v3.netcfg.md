@@ -23,6 +23,9 @@ node /net/openvpn/v3/netcfg {
       ProtectSocket(in  s remote,
                     in  b ipv6,
                     out b succeded);
+      NotificationSubscribe(in  u filter);
+      NotificationUnsubscribe(in  s optional_subscriber);
+      NotificationSubscriberList(out a(su) subscriptions);
     signals:
       Log(u group,
           u level,
@@ -73,6 +76,78 @@ This method also
 | In        | ipv6         | boolean     | The initial process ID (PID) of the VPN backend client.    |
 
 [1] Unix file descriptors that are passed are not in the D-Bus method signature
+
+
+### Method: `net.openvpn.v3.netcfg.NotificationSubscribe`
+
+A service which wants to respond to various network change activities triggered
+by OpenVPN can subscribe to the `net.openvpn.v3.netcfg.NetworkChange`
+signal.  Such subscriptions are handled by calling this method.
+
+The default OpenVPN 3 Linux D-Bus policy will restrict such subscriptions to
+processes running as the `openvpn` user account.
+
+This method takes a filter mask as input parameter.  The possible values are:
+
+| Change Event Type  |  bit field  |  value  | Description |
+|--------------------|-------------|---------|----------------|
+| DEVICE_ADDED       |        0    |       1 |  A new virtual interface has been added on the system
+| DEVICE_REMOVED     |        1    |       2 |  A virtual interface has been removed from the system
+| IPv4ADDR_ADDED     |        2    |       4 |  An IPv4 address has been added to a virtual interface 
+| IPv4ADDR_REMOVED   |        3    |       8 |  An IPv4 address has been removed from the virtual interface
+| IPv4ROUTE_ADDED    |        4    |      16 |  An IPv4 route has been added to the routing table, related to this interface
+| IPv4ROUTE_REMOVED  |        5    |      32 |  An IPv4 route has been remove from the routing table, related to this interface
+| IPv4ROUTE_EXCLUDED |        6    |      64 |  An IPv4 route has been excluded from the routing table, related to this interface
+| IPv6ADDR_ADDED     |        7    |     128 |  An IPv6 address has been added to a virtual interface
+| IPv6ADDR_REMOVED   |        8    |     256 |  An IPv6 address has been removed from the virtual interface
+| IPv6ROUTE_ADDED    |        9    |     512 |  An IPv6 route has been added to the routing table, related to this interface
+| IPv6ROUTE_REMOVED  |       10    |    1024 |  An IPv6 route has been remove from the routing table, related to this interface
+| IPv6ROUTE_EXCLUDED |       11    |    2048 |  An IPv6 route has been excluded from the routing table, related to this interface
+| DNS_SERVER_ADDED   |       12    |    4096 |  A new DNS server has been added to the DNS configuration 
+| DNS_SERVER_REMOVED |       13    |    8192 |  A DNS server has been removed from the DNS configuration
+| DNS_SEARCH_ADDED   |       14    |   16384 |  A DNS search domain has been added to the DNS configuration
+| DNS_SEARCH_REMOVED |       15    |   32768 |  A DNS search domain has been removed from the DNS configuration
+
+To subscribe to several change event types, the values must be added together
+when being sent to the subscription method.  If you want to subscribe to
+IPv6 address being added and removed, you use `128 + 256 = 384`.  The
+subscription filter value will then be `384`.
+
+#### Arguments
+
+| Direction | Name         | Type             | Description                                                |
+|-----------|--------------|------------------|------------------------------------------------------------|
+| In        | filter       | unsigned integer | A filter mask defining which NetworkChange events to subscribe to.  Valid values are `1`  to `65535` |
+
+
+### Method: `net.openvpn.v3.netcfg.NotificationUnubscribe`
+
+Any services who has subscribed to NetworkChange signals must unsubscribe
+before disconnecting from the D-Bus.  This is done by calling this method.
+
+The subscriber argument this method needs should always be an empty string.
+Processes running as `root` can send the the unique D-Bus name to forcefully
+subscribe a specific subscription.
+
+#### Arguments
+
+| Direction | Name                | Type    | Description                                                |
+|-----------|---------------------|---------|------------------------------------------------------------|
+| In        | optional_subscriber | string  | This should be empty for non-root users.  Must otherwise contain a valid unique D-Bus name |
+
+
+
+### Method: `net.openvpn.v3.netcfg.NotificationSubscriberList`
+
+Retrieves a list of all active subscriptions together with their filter mask.
+
+This method is restricted to the `root` user.
+
+#### Arguments
+
+| Direction | Name           | Type                        | Description                                                |
+|-----------|----------------|-----------------------------|------------------------------------------------------------|
+| Out       | subscriptions  | array(string, unsigned int) | An array of tuples with the subscribers unique D-Bus name (string) and the attached filter mask (unsigned int) |
 
 
 ### Signal: `net.openvpn.v3.sessions.Log`
