@@ -1,8 +1,9 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
 //  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
 //  Copyright (C) 2018         Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2019         Lev Stipakov <lev@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -36,6 +37,7 @@
 #include "dbus/glibutils.hpp"
 #include "netcfg-device.hpp"
 #include "netcfg-exception.hpp"
+#include "netcfg-subscriptions.hpp"
 
 using namespace openvpn;
 
@@ -68,6 +70,11 @@ namespace NetCfgProxy
         Device* getVirtualInterface(const std::string & path);
         std::vector<std::string> FetchInterfaceList();
         bool ProtectSocket(int socket, const std::string& remote, bool ipv6);
+
+        void NotificationSubscribe(uint32_t filter_flags);
+        void NotificationUnsubscribe(const std::string& subscriber);
+        void NotificationUnsubscribe();
+        NetCfgSubscriptions::NetCfgNotifSubscriptions NotificationSubscriberList();
     };
 
     const std::string Manager::CreateVirtualInterface(const std::string& device_name)
@@ -162,6 +169,77 @@ namespace NetCfgProxy
         catch (std::exception& excp)
         {
             throw NetCfgProxyException("CreateVirtualInterface",
+                                       excp.what());
+        }
+    }
+
+    void Manager::NotificationSubscribe(uint32_t filter_flags)
+    {
+        Ping();
+        try
+        {
+            Call("NotificationSubscribe", g_variant_new("(u)", filter_flags), true);
+        }
+        catch (std::exception& excp)
+        {
+            throw NetCfgProxyException("NotificationSubscribe",
+                                       excp.what());
+        }
+    }
+
+    void Manager::NotificationUnsubscribe()
+    {
+        NotificationUnsubscribe(std::string());
+    }
+
+    void Manager::NotificationUnsubscribe(const std::string& subscriber)
+    {
+        Ping();
+        try
+        {
+            Call("NotificationUnsubscribe", g_variant_new("(s)", subscriber.c_str()), true);
+        }
+        catch (std::exception& excp)
+        {
+            throw NetCfgProxyException("NotificationUnsubscribe",
+                                       excp.what());
+        }
+    }
+
+    NetCfgSubscriptions::NetCfgNotifSubscriptions Manager::NotificationSubscriberList()
+    {
+        Ping();
+        try
+        {
+            GVariant *res = Call("NotificationSubscriberList");
+            if (!res)
+            {
+                throw NetCfgProxyException("NotificationSubscriberList",
+                                           "No results returned");
+            }
+
+            GVariantIter *iter = nullptr;
+            g_variant_get(res, "(a(su))", &iter);
+
+            GVariant *val = nullptr;
+            NetCfgSubscriptions::NetCfgNotifSubscriptions subscriptions;
+            while ((val = g_variant_iter_next_value(iter)))
+            {
+                gchar *dbusname;
+                gint filter_bitmask;
+                g_variant_get(val, "(su)", &dbusname, &filter_bitmask);
+                subscriptions.insert(NetCfgSubscriptions::NetCfgNotifSubscriptions::
+                                     value_type(dbusname, filter_bitmask));
+                g_free(dbusname);
+                g_variant_unref(val);
+            }
+            g_variant_iter_free(iter);
+            g_variant_unref(res);
+            return subscriptions;
+        }
+        catch (std::exception& excp)
+        {
+            throw NetCfgProxyException("NotificationSubscriberList",
                                        excp.what());
         }
     }
