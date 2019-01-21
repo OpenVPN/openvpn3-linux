@@ -64,7 +64,8 @@ using namespace openvpn;
 class DummyTunBuilder: public  ClientAPI::OpenVPNClient
 {
 public:
-    DummyTunBuilder(GDBusConnection *dbusconn, BackendSignals *signal) {}
+    DummyTunBuilder(GDBusConnection *dbusconn, BackendSignals *signal,
+                    const std::string& session_token) {}
     bool socket_protect(int, std::string, bool) override
     {
         return true;
@@ -96,8 +97,8 @@ public:
      *                    interactions and more.
      */
     CoreVPNClient(GDBusConnection *dbusconn, BackendSignals *signal,
-                  RequiresQueue *userinputq)
-            : CLIENTBASECLASS(dbusconn, signal),
+                  RequiresQueue *userinputq, const std::string session_token)
+            : CLIENTBASECLASS(dbusconn, signal, session_token),
               disabled_socket_protect(false),
               signal(signal),
               userinputq(userinputq),

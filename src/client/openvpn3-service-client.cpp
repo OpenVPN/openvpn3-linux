@@ -889,7 +889,8 @@ private:
 
         // Create a new VPN client object, which is handling the
         // tunnel itself.
-        vpnclient.reset(new CoreVPNClient(dbusconn, &signal, &userinputq));
+        vpnclient.reset(new CoreVPNClient(dbusconn, &signal, &userinputq,
+                                          session_token));
         vpnclient->disable_socket_protect(disabled_socket_protect);
         vpnclient->disable_dns_config(ignore_dns_cfg);
 

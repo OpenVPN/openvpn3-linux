@@ -41,10 +41,12 @@ class NetCfgTunBuilder : public T
 public:
     typedef RCPtr<NetCfgTunBuilder> Ptr;
 
-    NetCfgTunBuilder(GDBusConnection* dbuscon, BackendSignals *signal)
+    NetCfgTunBuilder(GDBusConnection* dbuscon, BackendSignals *signal,
+                     const std::string& session_token)
         : disabled_dns_config(false),
           netcfgmgr(dbuscon),
-          signal(signal)
+          signal(signal),
+          session_token(session_token)
     {
     }
 
@@ -74,7 +76,7 @@ public:
             // Cleanup the old things
             networks.clear();
 
-            std::string devpath = netcfgmgr.CreateVirtualInterface("o3tun");
+            std::string devpath = netcfgmgr.CreateVirtualInterface(session_token);
             device.reset(netcfgmgr.getVirtualInterface(devpath));
             return true;
         }
@@ -273,4 +275,5 @@ private:
     NetCfgProxy::Device::Ptr device;
     NetCfgProxy::Manager netcfgmgr;
     BackendSignals *signal;
+    std::string session_token;
 };
