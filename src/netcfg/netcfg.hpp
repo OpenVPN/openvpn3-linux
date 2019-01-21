@@ -165,9 +165,9 @@ public:
                              + "'" + std::string(dev_name)+ "')");
 
                 // Create a unique enough device path /(ownpid)-(senderpid)-(sendername)
-                std::string dev_path = OpenVPN3DBus_rootp_netcfg + "/" +
-                    std::to_string(getpid()) + "_"  + std::to_string(creds.GetPID(sender)) +
-                    "_" + std::string(dev_name);
+                std::string dev_path = OpenVPN3DBus_rootp_netcfg + "/"
+                                     + std::to_string(creds.GetPID(sender))
+                                     + "_" + std::string(dev_name);
                 NetCfgDevice *device = new NetCfgDevice(conn,
                                               [self=Ptr(this), dev_path]()
                                                {
