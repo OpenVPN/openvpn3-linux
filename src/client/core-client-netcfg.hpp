@@ -54,7 +54,7 @@ public:
           netcfgmgr(dbuscon)
     {
         signal = new BackendSignals(dbuscon, LogGroup::CLIENT,
-                                    "/net/openvpn/v3/tests/cli",
+                                    "(netcfg-cli-test)",
                                     nullptr);
         signal->SetLogLevel(6);
     }

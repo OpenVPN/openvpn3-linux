@@ -88,7 +88,7 @@ public:
           DBusConnectionCreds(conn),
           dbusconn(conn),
           mainloop(nullptr),
-          signal(conn, LogGroup::CLIENT, objpath, logwr),
+          signal(conn, LogGroup::CLIENT, session_token, logwr),
           signal_broadcast(false),
           session_token(session_token),
           registered(false),
@@ -366,8 +366,7 @@ public:
                     g_error_free(err);
                     return;
                 }
-                signal.LogInfo("Starting connection for token "
-                               + session_token);
+                signal.LogInfo("Starting connection");
                 connect();
             }
             else if ("Disconnect" == method_name)
@@ -380,8 +379,7 @@ public:
                     THROW_DBUSEXCEPTION("BackendServiceObject", "Backend service is not initialized");
                 }
 
-                signal.LogInfo("Stopping connection for token "
-                               + session_token);
+                signal.LogInfo("Stopping connection");
                 signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_DISCONNECTING);
                 vpnclient->stop();
                 if (client_thread)
@@ -486,8 +484,7 @@ public:
                 g_variant_get (params, "(s)", &reason_str);
                 std::string reason(reason_str);
 
-                signal.LogInfo("Pausing connection for token "
-                               + session_token);
+                signal.LogInfo("Pausing connection");
                 signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_PAUSING,
                                     "Reason: " + reason);
                 vpnclient->pause(reason);
@@ -512,8 +509,7 @@ public:
                     return;
                 }
 
-                signal.LogInfo("Resuming connection for token "
-                               + session_token);
+                signal.LogInfo("Resuming connection");
                 signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_RESUMING);
                 vpnclient->resume();
                 paused = false;
@@ -528,8 +524,7 @@ public:
                 {
                     THROW_DBUSEXCEPTION("BackendServiceObject", "Backend service is not initialized");
                 }
-                signal.LogInfo("Restarting connection for token "
-                                + session_token);
+                signal.LogInfo("Restarting connection");
                 signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_RECONNECTING);
                 vpnclient->reconnect(0);
             }
@@ -1308,7 +1303,7 @@ public:
 
         // Setup a signal object of the backend
         signal.reset(new BackendSignals(GetConnection(), LogGroup::BACKENDPROC,
-                                        object_path, logwr));
+                                        session_token, logwr));
         signal->SetLogLevel(default_log_level);
         signal->LogVerb2("Backend client process started as pid " + std::to_string(start_pid)
                          + " daemonized as pid " + std::to_string(getpid()));

@@ -27,6 +27,7 @@
 #ifndef OPENVPN3_DBUS_CLIENT_BACKENDSIGNALS_HPP
 #define OPENVPN3_DBUS_CLIENT_BACKENDSIGNALS_HPP
 
+#include <sstream>
 #include <openvpn/common/rc.hpp>
 
 #include "log/logwriter.hpp"
@@ -37,11 +38,39 @@ class BackendSignals : public LogSender,
 public:
     typedef RCPtr<BackendSignals> Ptr;
     BackendSignals(GDBusConnection *conn, LogGroup lgroup,
-                   std::string object_path, LogWriter *logwr)
+                   std::string session_token, LogWriter *logwr)
         : LogSender(conn, lgroup, OpenVPN3DBus_interf_backends,
-                    object_path, logwr)
+                    OpenVPN3DBus_rootp_backends_session, logwr),
+          session_token(session_token)
     {
         SetLogLevel(default_log_level);
+    }
+
+    /**
+     *  Reimplement LogSender::Log() to prefix all messages with
+     *  the session token.
+     *
+     * @param logev  LogEvent object containing the log message to log.
+     */
+    void Log(const LogEvent& logev)
+    {
+        // Don't log unless the log level filtering allows it
+        // The filtering is done against the LogCategory of the message
+        if (!LogFilterAllow(logev.category))
+        {
+            return;
+        }
+
+        if( logwr )
+        {
+            logwr->Write(logev);
+        }
+        std::stringstream msg;
+        msg << "{sessiontoken:" << session_token << "} " << logev.message;
+        Send("Log", g_variant_new("(uus)",
+                                  (guint) logev.group,
+                                  (guint) logev.category,
+                                  msg.str().c_str()));
     }
 
     /**
@@ -116,6 +145,7 @@ public:
 
 private:
     const unsigned int default_log_level = 6; // LogCategory::DEBUG
+    std::string session_token;
     StatusEvent status;
 };
 
