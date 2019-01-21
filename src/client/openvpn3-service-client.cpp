@@ -149,7 +149,8 @@ public:
         // request will also carry the correct object path
         // in the response automatically, but the well-known
         // bus name needs to be sent back.
-        signal.Debug("Sending RegistrationRequest('" + bus_name + "', '" + session_token + "') signal");
+        signal.LogVerb1("Initializing VPN client session, token "
+                        + session_token);
         signal.Send(OpenVPN3DBus_name_sessions,
                     OpenVPN3DBus_interf_backends,
                     "RegistrationRequest",
@@ -365,7 +366,8 @@ public:
                     g_error_free(err);
                     return;
                 }
-                signal.LogInfo("Starting connection: " + to_string(obj_path));
+                signal.LogInfo("Starting connection for token "
+                               + session_token);
                 connect();
             }
             else if ("Disconnect" == method_name)
@@ -378,7 +380,8 @@ public:
                     THROW_DBUSEXCEPTION("BackendServiceObject", "Backend service is not initialized");
                 }
 
-                signal.LogInfo("Stopping connection: " + to_string(obj_path));
+                signal.LogInfo("Stopping connection for token "
+                               + session_token);
                 signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_DISCONNECTING);
                 vpnclient->stop();
                 if (client_thread)
@@ -483,7 +486,8 @@ public:
                 g_variant_get (params, "(s)", &reason_str);
                 std::string reason(reason_str);
 
-                signal.LogInfo("Pausing connection: " + to_string(obj_path));
+                signal.LogInfo("Pausing connection for token "
+                               + session_token);
                 signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_PAUSING,
                                     "Reason: " + reason);
                 vpnclient->pause(reason);
@@ -508,7 +512,8 @@ public:
                     return;
                 }
 
-                signal.LogInfo("Resuming connection: " + to_string(obj_path));
+                signal.LogInfo("Resuming connection for token "
+                               + session_token);
                 signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_RESUMING);
                 vpnclient->resume();
                 paused = false;
@@ -523,7 +528,8 @@ public:
                 {
                     THROW_DBUSEXCEPTION("BackendServiceObject", "Backend service is not initialized");
                 }
-                signal.LogInfo("Restarting connection: " + to_string(obj_path));
+                signal.LogInfo("Restarting connection for token "
+                                + session_token);
                 signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_RECONNECTING);
                 vpnclient->reconnect(0);
             }
@@ -535,7 +541,8 @@ public:
                 // clean-up stray session objects which is considered dead
                 // by the session manager.
 
-                signal.LogInfo("Forcing shutdown of backend process: " + to_string(obj_path));
+                signal.LogInfo("Forcing shutdown of backend process for "
+                                "token " + session_token);
                 signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_DONE);
 
                 // Shutting down our selves.
@@ -1289,7 +1296,7 @@ public:
         }
 
         // Create a new OpenVPN3 client session object
-        object_path = generate_path_uuid(OpenVPN3DBus_rootp_backends_sessions, 'z');
+        object_path = OpenVPN3DBus_rootp_backends_session;
         be_obj.reset(new BackendClientObject(GetConnection(), GetBusName(),
                                              object_path,
                                              session_token,

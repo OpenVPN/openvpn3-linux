@@ -56,7 +56,7 @@ const std::string OpenVPN3DBus_interf_backends_manager = OpenVPN3DBus_interf_bac
 
 /* Backend VPN client process (openvpn-service-client) - which is the real tunnel instance */
 const std::string OpenVPN3DBus_name_backends_be = "net.openvpn.v3.backends.be";
-const std::string OpenVPN3DBus_rootp_backends_sessions =  OpenVPN3DBus_rootp_backends + "/sessions";
+const std::string OpenVPN3DBus_rootp_backends_session =  OpenVPN3DBus_rootp_backends + "/session";
 const std::string OpenVPN3DBus_rootp_backends_manager = OpenVPN3DBus_rootp_backends + "/manager";
 
 
