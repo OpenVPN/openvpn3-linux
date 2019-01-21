@@ -196,7 +196,7 @@ namespace openvpn
             }
         }
 
-        void Log(const LogEvent& logev)
+        virtual void Log(const LogEvent& logev)
         {
             // Don't log unless the log level filtering allows it
             // The filtering is done against the LogCategory of the message
