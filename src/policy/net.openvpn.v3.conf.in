@@ -177,6 +177,11 @@
            send_type="method_call"
            send_member="Ping"/>
 
+    <allow send_destination="net.openvpn.v3.netcfg"
+           send_interface="org.freedesktop.DBus.Introspectable"
+           send_type="method_call"
+           send_member="Introspect"/>
+
     <!--
          Only the "@OPENVPN_USERNAME@" user is allowed to
          receive signals from net.openvpn.v3.backend interfaces
