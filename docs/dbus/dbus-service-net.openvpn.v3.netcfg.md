@@ -89,35 +89,30 @@ processes running as the `openvpn` user account.
 
 This method takes a filter mask as input parameter.  The possible values are:
 
-| Change Event Type  |  bit field  |  value  | Description |
-|--------------------|-------------|---------|----------------|
-| DEVICE_ADDED       |        0    |       1 |  A new virtual interface has been added on the system
-| DEVICE_REMOVED     |        1    |       2 |  A virtual interface has been removed from the system
-| IPv4ADDR_ADDED     |        2    |       4 |  An IPv4 address has been added to a virtual interface 
-| IPv4ADDR_REMOVED   |        3    |       8 |  An IPv4 address has been removed from the virtual interface
-| IPv4ROUTE_ADDED    |        4    |      16 |  An IPv4 route has been added to the routing table, related to this interface
-| IPv4ROUTE_REMOVED  |        5    |      32 |  An IPv4 route has been remove from the routing table, related to this interface
-| IPv4ROUTE_EXCLUDED |        6    |      64 |  An IPv4 route has been excluded from the routing table, related to this interface
-| IPv6ADDR_ADDED     |        7    |     128 |  An IPv6 address has been added to a virtual interface
-| IPv6ADDR_REMOVED   |        8    |     256 |  An IPv6 address has been removed from the virtual interface
-| IPv6ROUTE_ADDED    |        9    |     512 |  An IPv6 route has been added to the routing table, related to this interface
-| IPv6ROUTE_REMOVED  |       10    |    1024 |  An IPv6 route has been remove from the routing table, related to this interface
-| IPv6ROUTE_EXCLUDED |       11    |    2048 |  An IPv6 route has been excluded from the routing table, related to this interface
-| DNS_SERVER_ADDED   |       12    |    4096 |  A new DNS server has been added to the DNS configuration 
-| DNS_SERVER_REMOVED |       13    |    8192 |  A DNS server has been removed from the DNS configuration
-| DNS_SEARCH_ADDED   |       14    |   16384 |  A DNS search domain has been added to the DNS configuration
-| DNS_SEARCH_REMOVED |       15    |   32768 |  A DNS search domain has been removed from the DNS configuration
+| Change Event Type  |  bit field  |  value  | Description                                                                   |
+|--------------------|-------------|---------|-------------------------------------------------------------------------------|
+| DEVICE_ADDED       |        0    |       1 |  A new virtual interface has been added on the system                         |
+| DEVICE_REMOVED     |        1    |       2 |  A virtual interface has been removed from the system                         |
+| IPADDR_ADDED       |        2    |       4 |  An IP address has been added to a virtual interface                          |
+| IPADDR_REMOVED     |        3    |       8 |  An IP address has been removed from the virtual interface                    |
+| ROUTE_ADDED        |        4    |      16 |  A route has been added to the routing table, related to this interface       |
+| ROUTE_REMOVED      |        5    |      32 |  A route has been remove from the routing table, related to this interface    |
+| ROUTE_EXCLUDED     |        6    |      64 |  A route has been excluded from the routing table, related to this interface  |
+| DNS_SERVER_ADDED   |        7    |     128 |  A DNS server has been added to the DNS configuration                         |
+| DNS_SERVER_REMOVED |        8    |     256 |  A DNS server has been removed from the DNS configuration                     |
+| DNS_SEARCH_ADDED   |        9    |     512 |  A DNS search domain has been added to the DNS configuration                  |
+| DNS_SEARCH_REMOVED |       10    |    1024 |  A DNS search domain has been removed from the DNS configuration              |
 
 To subscribe to several change event types, the values must be added together
 when being sent to the subscription method.  If you want to subscribe to
-IPv6 address being added and removed, you use `128 + 256 = 384`.  The
-subscription filter value will then be `384`.
+IP addresses being added and removed, you use `4 + 8 = 12`.  The
+subscription filter value will then be `12`.
 
 #### Arguments
 
 | Direction | Name         | Type             | Description                                                |
 |-----------|--------------|------------------|------------------------------------------------------------|
-| In        | filter       | unsigned integer | A filter mask defining which NetworkChange events to subscribe to.  Valid values are `1`  to `65535` |
+| In        | filter       | unsigned integer | A filter mask defining which NetworkChange events to subscribe to.  Valid values are `1`  to `2047` |
 
 
 ### Method: `net.openvpn.v3.netcfg.NotificationUnubscribe`
@@ -309,11 +304,42 @@ This signal indicates that something has changed in the systems network
 configuration.  These signals will be tied to the interface which triggered
 this change.
 
-| Name      | Type   | Description                                     |
-|-----------|--------|-------------------------------------------------|
-| type      | uint   | `NetCfgChangeType` reference of the request. See [`src/netcfg/netcfg-changeevent.hpp`](src/netcfg/netcfg-changeevent.hpp) for details.  |
-| device    | string | The virtual network device name related to this change. |
-| details   | string | Unstructured text blob with details related to this change (this may change) |
+| Name      | Type       | Description                                     |
+|-----------|------------|-------------------------------------------------|
+| type      | uint       | `NetCfgChangeType` reference of the request. See [`src/netcfg/netcfg-changeevent.hpp`](src/netcfg/netcfg-changeevent.hpp) for details.  |
+| device    | string     | The virtual network device name related to this change. |
+| details   | dictionary | Structured details of the change event |
+
+The contents of the `details` dictionary depends on the change type.  Below
+will the different change types which provides information be listed.  Events
+not providing any details are not mentioned.
+
+#### NetworkChange type `IPADDR_ADDED` and `IPADDR_REMOVED`
+
+| Key           | Description                                                               |
+|---------------|---------------------------------------------------------------------------|
+| ip_version    | Will be `4` or `6` which refers to IPv4 or IPv6                           |
+| ip_address    | The IP address added to/removed from the interface                        |
+| prefix        | The subnet prefix of the IP address                                       |
+
+#### NetworkChange type `ROUTE_ADDED`, `ROUTE_REMOVED` and `ROUTE_EXCLUDED`
+
+| Key           | Description                                                               |
+|---------------|---------------------------------------------------------------------------|
+| ip_version    | Will be `4` or `6` which refers to IPv4 or IPv6                           |
+| subnet        | Network IP address for the route which was added/removed/excluded         |
+| prefix        | The subnet prefix of the subnet IP address                                |
+| gateway       | The gateway configured for this subnet (not present when removing routes) |
+
+#### NetworkChange type `DNS_SERVER_ADDED` and `DNS_SERVER_REMOVED`
+| Key           | Description                                                               |
+|---------------|---------------------------------------------------------------------------|
+| dns_server    | IP address containing the DNS server being added/removed                  |
+
+#### NetworkChange type `DNS_SEARCH_ADDED` and `DNS_SEARCH_REMOVED`
+| Key           | Description                                                               |
+|---------------|---------------------------------------------------------------------------|
+| search_domain | DNS search domain being added/removed                                     |
 
 
 ### `Properties`
