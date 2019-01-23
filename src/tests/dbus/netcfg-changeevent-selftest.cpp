@@ -55,7 +55,7 @@ bool test_empty(const NetCfgChangeEvent& ev, const bool expect)
     std::cout << "      test_empty():  Element check:"
               << " (" << std::to_string((unsigned) ev.type)
               << ", '" << ev.device
-              << "', '" << ev.details << "') = " << r << " ... ";
+              << "', details.size=" << ev.details.size() << ") = " << r << " ... ";
     if (expect != r)
     {
         std::cerr << "** ERROR **  Object not empty [direct member check]"
@@ -83,7 +83,8 @@ int test_init()
     }
 
     std::cout << "-- Testing just initialized object - init with values (1)" << std::endl;
-    NetCfgChangeEvent populated1(NetCfgChangeType::DEVICE_ADDED, "test-dev", "Some detail");
+    NetCfgChangeEvent populated1(NetCfgChangeType::DEVICE_ADDED, "test-dev",
+                                 {{"some_key", "Some detail"}});
     if (test_empty(populated1, false))  // This should fail
     {
         ++ret;
@@ -106,10 +107,12 @@ int test_stream()
 
     std::cout << "-- Testing string stream: NetCfgChangeEvent(NetCfgChangeType::IPv6ADDR_ADDED, "
               << "'testdev', '2001:db8:a050::1/64') ... ";
-    NetCfgChangeEvent state(NetCfgChangeType::IPv6ADDR_ADDED, "testdev", "2001:db8:a050::1/64");
+    NetCfgChangeEvent state(NetCfgChangeType::IPv6ADDR_ADDED, "testdev",
+                            {{"ip_address", "2001:db8:a050::1"},
+                             {"prefix", "64"}});
     std::stringstream chk;
     chk << state;
-    std::string expect("Device testdev - IPv6 Address Added: 2001:db8:a050::1/64");
+    std::string expect("Device testdev - IPv6 Address Added: ip_address='2001:db8:a050::1', prefix='64'");
     if (chk.str() != expect)
     {
         std::cout << "FAILED: {" << state << "}" << std::endl;
@@ -128,19 +131,51 @@ int test_gvariant()
 {
     int ret = 0;
 
-    std::cout << "-- Testing .GetGVariant() ... ";
+    std::cout << "-- Testing .GetGVariant() ... " << std::endl;
     NetCfgChangeEvent g_state(NetCfgChangeType::IPv6ROUTE_ADDED, "tun22",
-                           "2001:db8:bb50::/64 via 2001:db8:a050::1/64");
+                              {{"ip_address", "2001:db8:a050::1"},
+                               {"prefix", "64"}});
     GVariant *chk = g_state.GetGVariant();
 
+    std::cout << "      g_variant_print() check: ";
+    gchar *dmp = g_variant_print(chk, true);
+    std::string dump_check(dmp);
+    g_free(dmp);
+    if (dump_check != "(uint32 512, 'tun22', {'ip_address': '2001:db8:a050::1', 'prefix': '64'})")
+    {
+        std::cout << "FAILED: " << dump_check;
+    }
+    else
+    {
+        std::cout << "PASSED";
+    }
+    std::cout << std::endl;
+
+
+    std::cout << "      manual parsing: ";
     guint type = 0;
     gchar *dev_s = nullptr;
-    gchar *det_s = nullptr;
-    g_variant_get(chk, "(uss)", &type, &dev_s, &det_s);
+    GVariantIter *det_g = nullptr;
+    g_variant_get(chk, "(usa{ss})", &type, &dev_s, &det_g);
+    g_variant_unref(chk);
+
+    NetCfgChangeDetails det_s;
+    GVariant *kv = nullptr;
+    while ((kv = g_variant_iter_next_value(det_g)))
+    {
+        gchar *key = nullptr;
+        gchar *value = nullptr;
+        g_variant_get(kv, "{ss}", &key, &value);
+
+        det_s[key] = std::string(value);
+        g_free(key);
+        g_free(value);
+    }
+    g_variant_iter_free(det_g);
 
     if ((guint) g_state.type != type
         || 0 != (g_state.device.compare(dev_s))
-        || 0 != (g_state.details.compare(det_s))
+        || g_state.details != det_s
         )
     {
         std::cout << "FAILED" << std::endl;
@@ -148,7 +183,17 @@ int test_gvariant()
         std::cout << "    Output: "
                   << "type=" << std::to_string(type) << ", "
                   << "device='" << dev_s << "', "
-                  << "details='" << det_s<< "'" << std::endl;
+                  << "details={";
+
+        bool f = true;
+        for (const auto& kv : det_s)
+        {
+            std::cout << (f ? "" : ", ")
+                      << kv.first << "='" << kv.second << "'";
+            f = false;
+        }
+        std::cout << std::endl;
+
         ++ret;
     }
     else
@@ -156,7 +201,6 @@ int test_gvariant()
         std::cout << "PASSED" << std::endl;
     }
     g_free(dev_s);
-    g_free(det_s);
 
     std::cout << "-- Testing parsing GVariant data (valid data)... ";
     NetCfgChangeEvent parsed(g_state);
@@ -171,7 +215,6 @@ int test_gvariant()
     {
         std::cout << "PASSED" << std::endl;
     }
-    g_variant_unref(chk);
 
 
     std::cout << "-- Testing parsing GVariant data (invalid data)... ";
@@ -191,6 +234,7 @@ int test_gvariant()
         std::cout << "FAILED: Unknown error: " << excp.what() << std::endl;
         ++ret;
     }
+    g_variant_unref(invalid);
     return ret;
 }
 

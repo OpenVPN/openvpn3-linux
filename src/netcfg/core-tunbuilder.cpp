@@ -171,15 +171,41 @@ namespace openvpn
 
             // Announce the new interface
             NetCfgChangeEvent dev_ev(NetCfgChangeType::DEVICE_ADDED,
-                                      config.iface_name, "");
+                                      config.iface_name, {});
             netCfgDevice.signal.NetworkChange(dev_ev);
 
             for (const auto& ipaddr: netCfgDevice.vpnips)
             {
                 NetCfgChangeEvent chg_ev((ipaddr.ipv6 ? NetCfgChangeType::IPv6ADDR_ADDED
                                                       : NetCfgChangeType::IPv4ADDR_ADDED),
-                                          config.iface_name, ipaddr.str());
+                                          config.iface_name,
+                                          {{"ip_address", ipaddr.address},
+                                           {"prefix", std::to_string(ipaddr.prefix)},
+                                           {"ip_version", (ipaddr.ipv6 ? "6" : "4")}});
                 netCfgDevice.signal.NetworkChange(chg_ev);
+            }
+
+
+            // WARNING:  This is NOT optimal
+            //           - but should work for most use cases
+            //
+            // We presume we have at most one IPv4 and one IPv6 address
+            // on the virtual interface.  We will expose the gateway
+            // addresses from these interfaces when announcing route
+            // changes.
+            //
+            VPNAddress local4;
+            VPNAddress local6;
+            for (const auto& ip : netCfgDevice.vpnips)
+            {
+                if (ip.ipv6)
+                {
+                    local6 = ip;
+                }
+                else
+                {
+                    local4 = ip;
+                }
             }
 
             // Announce routes related to this new interface
@@ -190,10 +216,13 @@ namespace openvpn
                                                 : NetCfgChangeType::IPv6ROUTE_ADDED)
                                  : (net.exclude ? NetCfgChangeType::IPv4ROUTE_EXCLUDED
                                                 : NetCfgChangeType::IPv4ROUTE_ADDED));
-                NetCfgChangeEvent chg_ev(type, config.iface_name, net.str());
+                NetCfgChangeEvent chg_ev(type, config.iface_name,
+                                         {{"ip_version", (net.ipv6 ? "6" : "4")},
+                                          {"subnet", net.address},
+                                          {"prefix", std::to_string(net.prefix)},
+                                          {"gateway", (net.ipv6 ? local6.gateway : local4.gateway)}});
                 netCfgDevice.signal.NetworkChange(chg_ev);
             }
-
             return ret;
         }
 
@@ -214,7 +243,10 @@ namespace openvpn
                 }
                 NetCfgChangeEvent chg_ev((net.ipv6 ? NetCfgChangeType::IPv6ROUTE_REMOVED
                                                    : NetCfgChangeType::IPv4ROUTE_REMOVED),
-                                          ncdev.get_device_name(), net.str());
+                                          ncdev.get_device_name(),
+                                          {{"ip_version", (net.ipv6 ? "6" : "4")},
+                                           {"subnet", net.address},
+                                           {"prefix", std::to_string(net.prefix)}});
                 ncdev.signal.NetworkChange(chg_ev);
             }
 
@@ -223,11 +255,14 @@ namespace openvpn
             {
                 NetCfgChangeEvent chg_ev((ipaddr.ipv6 ? NetCfgChangeType::IPv6ADDR_REMOVED
                                                       : NetCfgChangeType::IPv4ADDR_REMOVED),
-                                          ncdev.get_device_name(), ipaddr.str());
+                                          ncdev.get_device_name(),
+                                          {{"ip_address", ipaddr.address},
+                                           {"prefix", std::to_string(ipaddr.prefix)},
+                                           {"ip_version", (ipaddr.ipv6 ? "6" : "4")}});
                 ncdev.signal.NetworkChange(chg_ev);
             }
             NetCfgChangeEvent chg_ev(NetCfgChangeType::DEVICE_REMOVED,
-                                     ncdev.get_device_name(), "");
+                                     ncdev.get_device_name(), {});
             ncdev.signal.NetworkChange(chg_ev);
         }
     };

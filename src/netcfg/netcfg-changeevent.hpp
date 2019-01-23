@@ -48,10 +48,11 @@ enum class NetCfgChangeType : std::uint16_t {
     DNS_SEARCH_REMOVED = 1 << 15,   //  32768
 };
 
+typedef std::map<std::string, std::string> NetCfgChangeDetails;
 
 struct NetCfgChangeEvent {
     NetCfgChangeEvent(const NetCfgChangeType& t, const std::string& dev,
-                     const std::string& d) noexcept
+                     const NetCfgChangeDetails& d) noexcept
     {
         reset();
         type = t;
@@ -62,20 +63,31 @@ struct NetCfgChangeEvent {
     NetCfgChangeEvent(GVariant *params)
     {
         std::string g_type(g_variant_get_type_string(params));
-        if ("(uss)" != g_type)
+        if ("(usa{ss})" != g_type)
         {
             throw NetCfgException(std::string("Invalid GVariant data type: ")
                                   + g_type);
         }
 
         gchar *dev = nullptr;
-        gchar *det = nullptr;
-        g_variant_get(params, "(uss)", &type, &dev, &det);
+        GVariantIter *det = nullptr;
+        g_variant_get(params, "(usa{ss})", &type, &dev, &det);
 
         device = std::string(dev);
-        details = std::string(det);
         g_free(dev);
-        g_free(det);
+        details.clear();
+
+        GVariant *kv = nullptr;
+        while ((kv = g_variant_iter_next_value(det)))
+        {
+            gchar *key = nullptr;
+            gchar *val = nullptr;
+            g_variant_get(kv, "{ss}", &key, &val);
+            details[key] = std::string(val);
+            g_free(key);
+            g_free(val);
+        }
+        g_variant_iter_free(det);
     }
 
     NetCfgChangeEvent() noexcept
@@ -102,7 +114,7 @@ struct NetCfgChangeEvent {
         return "            <signal name='NetWorkChange'>"
                "                <arg type='u' name='type'/>"
                "                <arg type='s' name='device'/>"
-               "                <arg type='s' name='details'/>"
+               "                <arg type='a{ss}' name='details'/>"
                "            </signal>";
     }
 
@@ -186,9 +198,33 @@ struct NetCfgChangeEvent {
 
     GVariant * GetGVariant() const
     {
-        return g_variant_new("(uss)", (guint32) type, device.c_str(),
-                             details.c_str());
+        GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("(usa{ss})"));
+        g_variant_builder_add(b, "u", (guint32) type);
+        g_variant_builder_add(b, "s", device.c_str());
+
+        g_variant_builder_open(b, G_VARIANT_TYPE ("a{ss}"));
+        for (const auto& e : details)
+        {
+            // WARNING: For some odd reason, these four lines
+            // below this code context triggers a memory leak
+            // warning in valgrind.  This is currently believed
+            // to be a false positive, as extracting this code
+            // to a separate and minimal program does not trigger
+            // this leak warning despite being practically the same
+            // code.
+            g_variant_builder_open(b, G_VARIANT_TYPE("{ss}"));
+            g_variant_builder_add(b, "s", e.first.c_str());
+            g_variant_builder_add(b, "s", e.second.c_str());
+            g_variant_builder_close(b);
+        }
+        g_variant_builder_close(b);
+
+        GVariant *ret = g_variant_builder_end(b);
+        g_variant_builder_clear(b);
+        g_variant_builder_unref(b);
+        return ret;
     }
+
 
     /**
      *  Makes it possible to write NetCfgStateEvent in a readable format
@@ -207,9 +243,18 @@ struct NetCfgChangeEvent {
         {
             return os << "(Empty Network Change Event)";
         }
+
+        std::stringstream detstr;
+        bool beginning = true;
+        for (const auto& kv : s.details)
+        {
+            detstr << (beginning ? ": " : ", ")
+                   << kv.first << "='" << kv.second << "'";
+            beginning = false;
+        }
         return os << "Device " << s.device
                   << " - " << TypeStr(s.type)
-                  << (s.details.empty() ? "" : ": " + s.details);
+                  << detstr.str();
     }
 
 
@@ -217,9 +262,9 @@ struct NetCfgChangeEvent {
     {
         return ((compare.type== (const NetCfgChangeType) type)
                 && (0 == compare.device.compare(device))
-                && (0 == compare.details.compare(details)));
-    }
+                && (compare.details == details));
 
+    }
 
     bool operator!=(const NetCfgChangeEvent& compare) const
     {
@@ -228,5 +273,5 @@ struct NetCfgChangeEvent {
 
     NetCfgChangeType type;
     std::string device;
-    std::string details;
+    NetCfgChangeDetails details;
 };

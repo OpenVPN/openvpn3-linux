@@ -456,15 +456,14 @@ namespace DNS
             {
                 for (const auto& s : dns_servers)
                 {
-                    NetCfgChangeEvent ev(NetCfgChangeType::DNS_SERVER_ADDED,
-                                         "", s);
+                    NetCfgChangeEvent ev(NetCfgChangeType::DNS_SERVER_ADDED, "", {{"dns_server", s}});
                     signal->NetworkChange(ev);
                 }
 
                 for (const auto& s : dns_search)
                 {
                     NetCfgChangeEvent ev(NetCfgChangeType::DNS_SEARCH_ADDED,
-                                         "", s);
+                                         "", {{"search_domain", s}});
                     signal->NetworkChange(ev);
                 }
             }
