@@ -71,7 +71,7 @@ namespace NetCfgProxy
         std::vector<std::string> FetchInterfaceList();
         bool ProtectSocket(int socket, const std::string& remote, bool ipv6);
 
-        void NotificationSubscribe(uint32_t filter_flags);
+        void NotificationSubscribe(NetCfgChangeType filter_flags);
         void NotificationUnsubscribe(const std::string& subscriber);
         void NotificationUnsubscribe();
         NetCfgSubscriptions::NetCfgNotifSubscriptions NotificationSubscriberList();
@@ -173,12 +173,12 @@ namespace NetCfgProxy
         }
     }
 
-    void Manager::NotificationSubscribe(uint32_t filter_flags)
+    void Manager::NotificationSubscribe(NetCfgChangeType filter_flags)
     {
         Ping();
         try
         {
-            Call("NotificationSubscribe", g_variant_new("(u)", filter_flags), true);
+            Call("NotificationSubscribe", g_variant_new("(u)", static_cast<std::uint16_t>(filter_flags), true));
         }
         catch (std::exception& excp)
         {

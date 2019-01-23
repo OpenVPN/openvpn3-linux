@@ -435,6 +435,7 @@ src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/netcfg/netcfg-exception.hpp \
 	src/netcfg/netcfg-options.hpp \
 	src/netcfg/netcfg-signals.hpp \
+	src/netcfg/netcfg-changeevent.cpp \
 	src/netcfg/netcfg-changeevent.hpp \
 	src/netcfg/netcfg-subscriptions.cpp \
 	src/netcfg/netcfg-subscriptions.hpp \

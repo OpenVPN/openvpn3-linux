@@ -26,6 +26,12 @@
 
 #pragma once
 
+#include <map>
+#include <vector>
+#include <sstream>
+
+#include <glib.h>
+
 #include "netcfg-exception.hpp"
 
 enum class NetCfgChangeType : std::uint16_t {
@@ -44,6 +50,8 @@ enum class NetCfgChangeType : std::uint16_t {
 };
 
 typedef std::map<std::string, std::string> NetCfgChangeDetails;
+
+NetCfgChangeType operator | (const NetCfgChangeType& a, const NetCfgChangeType& b);
 
 struct NetCfgChangeEvent {
     NetCfgChangeEvent(const NetCfgChangeType& t, const std::string& dev,
