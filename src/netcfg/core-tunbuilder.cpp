@@ -176,12 +176,11 @@ namespace openvpn
 
             for (const auto& ipaddr: netCfgDevice.vpnips)
             {
-                NetCfgChangeEvent chg_ev((ipaddr.ipv6 ? NetCfgChangeType::IPv6ADDR_ADDED
-                                                      : NetCfgChangeType::IPv4ADDR_ADDED),
-                                          config.iface_name,
-                                          {{"ip_address", ipaddr.address},
-                                           {"prefix", std::to_string(ipaddr.prefix)},
-                                           {"ip_version", (ipaddr.ipv6 ? "6" : "4")}});
+                NetCfgChangeEvent chg_ev(NetCfgChangeType::IPADDR_ADDED,
+                                         config.iface_name,
+                                         {{"ip_address", ipaddr.address},
+                                          {"prefix", std::to_string(ipaddr.prefix)},
+                                          {"ip_version", (ipaddr.ipv6 ? "6" : "4")}});
                 netCfgDevice.signal.NetworkChange(chg_ev);
             }
 
@@ -212,10 +211,8 @@ namespace openvpn
             for (const auto& net: netCfgDevice.networks)
             {
                 NetCfgChangeType type;
-                type = (net.ipv6 ? (net.exclude ? NetCfgChangeType::IPv6ROUTE_EXCLUDED
-                                                : NetCfgChangeType::IPv6ROUTE_ADDED)
-                                 : (net.exclude ? NetCfgChangeType::IPv4ROUTE_EXCLUDED
-                                                : NetCfgChangeType::IPv4ROUTE_ADDED));
+                type = (net.exclude ? NetCfgChangeType::ROUTE_EXCLUDED
+                                    : NetCfgChangeType::ROUTE_ADDED);
                 NetCfgChangeEvent chg_ev(type, config.iface_name,
                                          {{"ip_version", (net.ipv6 ? "6" : "4")},
                                           {"subnet", net.address},
@@ -241,24 +238,22 @@ namespace openvpn
                 {
                     continue;
                 }
-                NetCfgChangeEvent chg_ev((net.ipv6 ? NetCfgChangeType::IPv6ROUTE_REMOVED
-                                                   : NetCfgChangeType::IPv4ROUTE_REMOVED),
-                                          ncdev.get_device_name(),
-                                          {{"ip_version", (net.ipv6 ? "6" : "4")},
-                                           {"subnet", net.address},
-                                           {"prefix", std::to_string(net.prefix)}});
+                NetCfgChangeEvent chg_ev(NetCfgChangeType::ROUTE_REMOVED,
+                                         ncdev.get_device_name(),
+                                         {{"ip_version", (net.ipv6 ? "6" : "4")},
+                                          {"subnet", net.address},
+                                          {"prefix", std::to_string(net.prefix)}});
                 ncdev.signal.NetworkChange(chg_ev);
             }
 
             // Announce the removed interface
             for (const auto& ipaddr: ncdev.vpnips)
             {
-                NetCfgChangeEvent chg_ev((ipaddr.ipv6 ? NetCfgChangeType::IPv6ADDR_REMOVED
-                                                      : NetCfgChangeType::IPv4ADDR_REMOVED),
-                                          ncdev.get_device_name(),
-                                          {{"ip_address", ipaddr.address},
-                                           {"prefix", std::to_string(ipaddr.prefix)},
-                                           {"ip_version", (ipaddr.ipv6 ? "6" : "4")}});
+                NetCfgChangeEvent chg_ev(NetCfgChangeType::IPADDR_REMOVED,
+                                         ncdev.get_device_name(),
+                                         {{"ip_address", ipaddr.address},
+                                          {"prefix", std::to_string(ipaddr.prefix)},
+                                          {"ip_version", (ipaddr.ipv6 ? "6" : "4")}});
                 ncdev.signal.NetworkChange(chg_ev);
             }
             NetCfgChangeEvent chg_ev(NetCfgChangeType::DEVICE_REMOVED,

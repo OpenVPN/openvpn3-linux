@@ -105,14 +105,14 @@ int test_stream()
 {
     int ret = 0;
 
-    std::cout << "-- Testing string stream: NetCfgChangeEvent(NetCfgChangeType::IPv6ADDR_ADDED, "
+    std::cout << "-- Testing string stream: NetCfgChangeEvent(NetCfgChangeType::IPADDR_ADDED, "
               << "'testdev', '2001:db8:a050::1/64') ... ";
-    NetCfgChangeEvent state(NetCfgChangeType::IPv6ADDR_ADDED, "testdev",
+    NetCfgChangeEvent state(NetCfgChangeType::IPADDR_ADDED, "testdev",
                             {{"ip_address", "2001:db8:a050::1"},
                              {"prefix", "64"}});
     std::stringstream chk;
     chk << state;
-    std::string expect("Device testdev - IPv6 Address Added: ip_address='2001:db8:a050::1', prefix='64'");
+    std::string expect("Device testdev - IP Address Added: ip_address='2001:db8:a050::1', prefix='64'");
     if (chk.str() != expect)
     {
         std::cout << "FAILED: {" << state << "}" << std::endl;
@@ -132,7 +132,7 @@ int test_gvariant()
     int ret = 0;
 
     std::cout << "-- Testing .GetGVariant() ... " << std::endl;
-    NetCfgChangeEvent g_state(NetCfgChangeType::IPv6ROUTE_ADDED, "tun22",
+    NetCfgChangeEvent g_state(NetCfgChangeType::ROUTE_ADDED, "tun22",
                               {{"ip_address", "2001:db8:a050::1"},
                                {"prefix", "64"}});
     GVariant *chk = g_state.GetGVariant();
@@ -141,7 +141,7 @@ int test_gvariant()
     gchar *dmp = g_variant_print(chk, true);
     std::string dump_check(dmp);
     g_free(dmp);
-    if (dump_check != "(uint32 512, 'tun22', {'ip_address': '2001:db8:a050::1', 'prefix': '64'})")
+    if (dump_check != "(uint32 16, 'tun22', {'ip_address': '2001:db8:a050::1', 'prefix': '64'})")
     {
         std::cout << "FAILED: " << dump_check;
     }
