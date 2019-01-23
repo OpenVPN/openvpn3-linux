@@ -75,6 +75,12 @@ public:
  */
 class Network : public IPAddr {
 public:
+    Network()
+        : IPAddr()
+    {
+    }
+
+
     Network(std::string networkAddress, unsigned int prefix,
             bool ipv6, bool exclude=false) :
             IPAddr(networkAddress, ipv6),
@@ -92,6 +98,12 @@ public:
 
 class VPNAddress: public Network {
 public:
+    VPNAddress()
+        : Network()
+    {
+    }
+
+
     VPNAddress(std::string networkAddress, unsigned int prefix,
                std::string gateway, bool ipv6):
                Network(networkAddress, prefix, ipv6, false),
