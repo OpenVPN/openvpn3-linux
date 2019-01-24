@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -126,7 +126,9 @@ int main(int argc, char **argv)
     Commands cmds("Command line parser test",
                   "Simple example and test tool for the command line parser");
 
-    auto test1_cmd = cmds.AddCommand("test1", "Test command 1", cmd_dump_arg_test);
+    SingleCommand::Ptr test1_cmd;
+    test1_cmd.reset(new SingleCommand("test1", "Test command 1",
+                                      cmd_dump_arg_test));
     test1_cmd->AddOption("set-value", 's',
                          "key", true, "Set a variable");
     test1_cmd->AddOption("test-func1", "Just testing more options");
@@ -134,17 +136,24 @@ int main(int argc, char **argv)
     test1_cmd->AddOption("mandatory-arg", "string", true, "Test mandatory option argument",
                          arghelper_mandatory_arg);
     test1_cmd->AddVersionOption();
+    cmds.RegisterCommand(test1_cmd);
 
-    auto test2_cmd = cmds.AddCommand("test2", "Test command two", cmd_multiply);
+    SingleCommand::Ptr test2_cmd;
+    test2_cmd.reset(new SingleCommand("test2", "Test command two",
+                                      cmd_multiply));
     test2_cmd->AddOption("multiply", 'm', "values" , true, "Multiply two numbers",
                          arghelper_random_numbers);
     test2_cmd->AddOption("bool-test", 'b',
                          "<true|false>", true, "Test of a boolean option",
                          arghelp_boolean);
+    cmds.RegisterCommand(test2_cmd);
 
-    auto test3_cmd = cmds.AddCommand("test3", "Test command 3", cmd_dump_arg_test);
+    SingleCommand::Ptr test3_cmd;
+    test3_cmd.reset(new SingleCommand("test3", "Test command 3",
+                                           cmd_dump_arg_test));
     test3_cmd->AddOption("opt-string", 'o',
                          "string-1", false, "Optional strings");
+    cmds.RegisterCommand(test3_cmd);
 
     try
     {
@@ -159,4 +168,3 @@ int main(int argc, char **argv)
     }
 
 }
-

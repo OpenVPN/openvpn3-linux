@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -137,6 +137,8 @@ private:
 };
 
 /**
+ *  openvpn3 log
+ *
  *  Simple log command which can retrieve Log events happening on a specific
  *  session path or coming from the configuration manager.
  *
@@ -144,7 +146,7 @@ private:
  * @return Returns the exit code which will be returned to the calling shell
  *
  */
-static int cmd_log_listen(ParsedArgs args)
+static int cmd_log(ParsedArgs args)
 {
     if (!args.Present("session-path") && !args.Present("config-events"))
     {
@@ -236,7 +238,36 @@ static int cmd_log_listen(ParsedArgs args)
 }
 
 
+SingleCommand::Ptr prepare_command_log()
+{
+    //
+    //  log command
+    //
+    SingleCommand::Ptr cmd;
+    cmd.reset(new SingleCommand("log",
+                                "Receive log events as they occur",
+                                cmd_log));
+    cmd->AddOption("session-path", "SESSION-PATH", true,
+                   "Receive log events for a specific session",
+                   arghelper_session_paths);
+    cmd->AddOption("log-level", "LOG-LEVEL", true,
+                   "Set the log verbosity level of messages to be shown (default: 4)",
+                   arghelper_log_levels);
+    cmd->AddOption("config-events",
+                   "Receive log events issued by the configuration manager");
+
+    return cmd;
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////
+
+
+
 /**
+ *  openvpn3 log-service
+ *
  *  This command is used to query and manage the net.openvpn.v3.log service
  *  This service is a global service responsible for all logging.  Changes
  *  here affects all logging being done by this service on all attached
@@ -346,34 +377,22 @@ static int cmd_log_service(ParsedArgs args)
  * @param ovpn3  Commands object where to register all the commands, options
  *               and arguments.
  */
-void RegisterCommands_log(Commands& ovpn3)
+
+SingleCommand::Ptr prepare_command_log_service()
 {
-    //
-    //  session-start command
-    //
-    auto cmd = ovpn3.AddCommand("log",
-                                "Receive log events as they occur",
-                                cmd_log_listen);
-    cmd->AddOption("session-path", "SESSION-PATH", true,
-                   "Receive log events for a specific session",
-                   arghelper_session_paths);
+    SingleCommand::Ptr cmd;
+    cmd.reset(new SingleCommand("log-service",
+                                "Manage the OpenVPN 3 Log service",
+                                cmd_log_service));
     cmd->AddOption("log-level", "LOG-LEVEL", true,
-                   "Set the log verbosity level of messages to be shown (default: 4)",
+                   "Set the log level used by the log service.",
                    arghelper_log_levels);
-    cmd->AddOption("config-events",
-                   "Receive log events issued by the configuration manager");
+    cmd->AddOption("timestamp", "true/false", true,
+                   "Set the timestamp flag used by the log service",
+                   arghelper_boolean);
+    cmd->AddOption("dbus-details", "true/false", true,
+                   "Log D-Bus sender, object path and method details of log sender",
+                   arghelper_boolean);
 
-    auto service = ovpn3.AddCommand("log-service",
-                               "Manage the OpenVPN 3 Log service",
-                               cmd_log_service);
-    service->AddOption("log-level", "LOG-LEVEL", true,
-                       "Set the log level used by the log service.",
-                       arghelper_log_levels);
-    service->AddOption("timestamp", "true/false", true,
-                       "Set the timestamp flag used by the log service",
-                       arghelper_boolean);
-    service->AddOption("dbus-details", "true/false", true,
-                       "Log D-Bus sender, object path and method details of log sender",
-                       arghelper_boolean);
-
+    return cmd;
 }

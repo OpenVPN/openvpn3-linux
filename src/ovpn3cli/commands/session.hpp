@@ -162,6 +162,37 @@ static int cmd_session_stats(ParsedArgs args)
     }
 }
 
+/**
+ *  Creates the SingleCommand object for the 'session-stats' command
+ *
+ * @return  Returns a SingleCommand::Ptr object declaring the command
+ */
+SingleCommand::Ptr prepare_command_session_stats()
+{
+    //
+    //  session-stats command
+    //
+    SingleCommand::Ptr cmd;
+    cmd.reset(new SingleCommand("session-stats",
+                                "Show session statistics",
+                                cmd_session_stats));
+    cmd->AddOption("path", 'o', "SESSION-PATH", true,
+                   "Path to the configuration in the configuration manager",
+                   arghelper_session_paths);
+    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
+                   "Alternative to --path, where configuration profile name "
+                   "is used instead",
+                   arghelper_config_names_sessions);
+    cmd->AddOption("json", 'j', "Dump the configuration in JSON format");
+
+    return cmd;
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////
+
+
 
 /**
  *  openvpn3 session-start command
@@ -356,9 +387,40 @@ static int cmd_session_start(ParsedArgs args)
     }
 }
 
+/**
+ *  Creates the SingleCommand object for the 'session-start' command
+ *
+ * @return  Returns a SingleCommand::Ptr object declaring the command
+ */
+SingleCommand::Ptr prepare_command_session_start()
+{
+    //
+    //  session-start command
+    //
+    SingleCommand::Ptr cmd;
+    cmd.reset(new SingleCommand("session-start",
+                                "Start a new VPN session",
+                                cmd_session_start));
+    cmd->AddOption("config", 'c', "CONFIG-FILE", true,
+                   "Configuration file to start directly",
+                   arghelper_config_names);
+    cmd->AddOption("config-path", 'p', "CONFIG-PATH", true,
+                   "Configuration path to an already imported configuration",
+                   arghelper_config_paths);
+    cmd->AddOption("persist-tun", 0,
+                   "Enforces persistent tun/seamless tunnel (requires --config)");
+
+    return cmd;
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////
+
+
 
 /**
- *  openvpn3 session-list command
+ *  openvpn3 sessions-list command
  *
  *  Lists all available VPN sessions.  Only sessions where the
  *  calling user is the owner, have been added to the access control list
@@ -368,7 +430,7 @@ static int cmd_session_start(ParsedArgs args)
  * @param args  ParsedArgs object containing all related options and arguments
  * @return Returns the exit code which will be returned to the calling shell
  */
-static int cmd_session_list(ParsedArgs args)
+static int cmd_sessions_list(ParsedArgs args)
 {
     OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
                                  OpenVPN3DBus_rootp_sessions);
@@ -481,6 +543,29 @@ static int cmd_session_list(ParsedArgs args)
 
     return 0;
 }
+
+/**
+ *  Creates the SingleCommand object for the 'session-list' command
+ *
+ * @return  Returns a SingleCommand::Ptr object declaring the command
+ */
+SingleCommand::Ptr prepare_command_sessions_list()
+{
+    //
+    //  sessions-list command
+    //
+    SingleCommand::Ptr cmd;
+    cmd.reset(new SingleCommand("sessions-list",
+                                "List available VPN sessions",
+                                cmd_sessions_list));
+
+    return cmd;
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////
+
 
 
 /**
@@ -619,6 +704,40 @@ static int cmd_session_manage(ParsedArgs args)
         throw;
     }
 }
+
+/**
+ *  Creates the SingleCommand object for the 'session-manage' command
+ *
+ * @return  Returns a SingleCommand::Ptr object declaring the command
+ */
+SingleCommand::Ptr prepare_command_session_manage()
+{
+    //
+    //  session-manage command
+    //
+    SingleCommand::Ptr cmd;
+    cmd.reset(new SingleCommand("session-manage",
+                                "Manage VPN sessions",
+                                cmd_session_manage));
+    cmd->AddOption("path", 'o', "SESSION-PATH", true,
+                   "Path to the session in the session manager",
+                   arghelper_session_paths);
+    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
+                   "Alternative to --path, where configuration profile name "
+                   "is used instead",
+                   arghelper_config_names_sessions);
+    cmd->AddOption("pause", 'P', "Pauses the VPN session");
+    cmd->AddOption("resume", 'R', "Resumes a paused VPN session");
+    cmd->AddOption("restart", "Disconnect and reconnect a running VPN session");
+    cmd->AddOption("disconnect", 'D', "Disconnects a VPN session");
+
+    return cmd;
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////
+
 
 
 /**
@@ -845,47 +964,20 @@ static int cmd_session_acl(ParsedArgs args)
 }
 
 
-void RegisterCommands_session(Commands& ovpn3)
+/**
+ *  Creates the SingleCommand object for the 'session-acl' command
+ *
+ * @return  Returns a SingleCommand::Ptr object declaring the command
+ */
+SingleCommand::Ptr prepare_command_session_acl()
 {
-    //
-    //  session-start command
-    //
-    auto cmd = ovpn3.AddCommand("session-start",
-                                "Start a new VPN session",
-                                cmd_session_start);
-    cmd->AddOption("config", 'c', "CONFIG-FILE", true,
-                   "Configuration file to start directly",
-                   arghelper_config_names);
-    cmd->AddOption("config-path", 'p', "CONFIG-PATH", true,
-                   "Configuration path to an already imported configuration",
-                   arghelper_config_paths);
-    cmd->AddOption("persist-tun", 0,
-                   "Enforces persistent tun/seamless tunnel (requires --config)");
-
-    //
-    //  session-manage command
-    //
-    cmd = ovpn3.AddCommand("session-manage",
-                           "Manage VPN sessions",
-                           cmd_session_manage);
-    cmd->AddOption("path", 'o', "SESSION-PATH", true,
-                   "Path to the session in the session manager",
-                   arghelper_session_paths);
-    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
-                   "Alternative to --path, where configuration profile name "
-                   "is used instead",
-                   arghelper_config_names_sessions);
-    cmd->AddOption("pause", 'P', "Pauses the VPN session");
-    cmd->AddOption("resume", 'R', "Resumes a paused VPN session");
-    cmd->AddOption("restart", "Disconnect and reconnect a running VPN session");
-    cmd->AddOption("disconnect", 'D', "Disconnects a VPN session");
-
     //
     //  session-acl command
     //
-    cmd = ovpn3.AddCommand("session-acl",
-                           "Manage access control lists for sessions",
-                           cmd_session_acl);
+    SingleCommand::Ptr cmd;
+    cmd.reset(new SingleCommand("session-acl",
+                                "Manage access control lists for sessions",
+                                cmd_session_acl));
     cmd->AddOption("path", 'o', "SESSION-PATH", true,
                    "Path to the session in the session manager",
                    arghelper_session_paths);
@@ -906,26 +998,9 @@ void RegisterCommands_session(Commands& ovpn3)
                    "Can users granted access also access the session log?",
                    arghelper_boolean);
 
-    //
-    //  session-stats command
-    //
-    cmd = ovpn3.AddCommand("session-stats",
-                           "Show session statistics",
-                           cmd_session_stats);
-    cmd->AddOption("path", 'o', "SESSION-PATH", true,
-                   "Path to the configuration in the configuration manager",
-                   arghelper_session_paths);
-    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
-                   "Alternative to --path, where configuration profile name "
-                   "is used instead",
-                   arghelper_config_names_sessions);
-    cmd->AddOption("json", 'j', "Dump the configuration in JSON format");
-
-
-    //
-    //  sessions-list command
-    //
-    cmd = ovpn3.AddCommand("sessions-list",
-                           "List available VPN sessions",
-                           cmd_session_list);
+    return cmd;
 }
+
+
+
+//////////////////////////////////////////////////////////////////////////

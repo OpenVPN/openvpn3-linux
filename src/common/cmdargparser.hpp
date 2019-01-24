@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -1235,23 +1235,14 @@ public:
 
     /**
      *  Register a new command with a reference to the callback
-     *  function
+     *  function.
      *
-     * @param cmdnam     Command line name of the command being registered
-     * @param descr      A short description of the command's purpose
-     * @param cmdfunc    commandPtr (function pointer) to the callback function
-     *
-     * @return Retuns an RC-smart pointer to the registered command object,
-     *         which is used to further add options and arguments for that
-     *         specific command.
+     * @param cmd  SingleCommand::Ptr object pointing to the command
+     *             to register to the main program.
      */
-    SingleCommand::Ptr AddCommand(const std::string cmdnam,
-                                  const std::string descr,
-                                  const commandPtr cmdfunc)
+    void RegisterCommand(const SingleCommand::Ptr cmd)
     {
-        SingleCommand::Ptr sc = new SingleCommand(cmdnam, descr, cmdfunc);
-        commands.push_back(sc);
-        return sc;
+        commands.push_back(cmd);
     }
 
 

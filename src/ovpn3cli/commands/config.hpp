@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -151,6 +151,36 @@ static int cmd_config_import(ParsedArgs args)
 
 
 /**
+ *  Creates the SingleCommand object for the 'config-import' command
+ *
+ * @return  Returns a SingleCommand::Ptr object declaring the command
+ */
+SingleCommand::Ptr prepare_command_config_import()
+{
+    //
+    //  config-import command
+    //
+    SingleCommand::Ptr cmd;
+    cmd.reset(new SingleCommand("config-import",
+                                "Import configuration profiles",
+                                cmd_config_import));
+    cmd->AddOption("config", 'c', "CFG-FILE", true,
+                   "Configuration file to import");
+    cmd->AddOption("name", 'n', "NAME", true,
+                   "Provide a different name for the configuration (default: CFG-FILE)");
+    cmd->AddOption("persistent", 'p',
+                   "Make the configuration file persistent through boots");
+
+    return cmd;
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////
+
+
+
+/**
  *  openvpn3 config-list command
  *
  *  Lists all available configuration profiles.  Only profiles where the
@@ -224,13 +254,37 @@ static int cmd_configs_list(ParsedArgs args)
     return 0;
 }
 
+
+/**
+ *  Creates the SingleCommand object for the 'config-list' command
+ *
+ * @return  Returns a SingleCommand::Ptr object declaring the command
+ */
+SingleCommand::Ptr prepare_command_configs_list()
+{
+    //
+    //  config-list command
+    //
+    SingleCommand::Ptr cmd;
+    cmd.reset(new SingleCommand("configs-list",
+                                "List all available configuration profiles",
+                                cmd_configs_list));
+    return cmd;
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////
+
+
+
 /**
  * openvpn3 config-manage --show command
  *
  *  This command shows all overrides and other details about the config
  *  apart from the config itself
  */
-static int cmd_config_manage_show(OpenVPN3ConfigurationProxy& conf,
+static int config_manage_show(OpenVPN3ConfigurationProxy& conf,
                                   bool showall = false)
 {
 
@@ -438,7 +492,7 @@ static int cmd_config_manage(ParsedArgs args)
                           << std::endl;
             }
             std::cout << std::endl;
-            cmd_config_manage_show(conf);
+            config_manage_show(conf);
             std::cout << std::endl;
             valid_option = true;
         }
@@ -463,6 +517,69 @@ static int cmd_config_manage(ParsedArgs args)
     }
     return 0;
 }
+
+
+/**
+ *  Creates the SingleCommand object for the 'config-manage' command
+ *
+ * @return  Returns a SingleCommand::Ptr object declaring the command
+ */
+SingleCommand::Ptr prepare_command_config_manage()
+{
+    //
+    //  config-manage command
+    SingleCommand::Ptr cmd;
+    cmd.reset(new SingleCommand("config-manage",
+                                "Manage configuration properties",
+                                cmd_config_manage));
+    cmd->AddOption("path", 'o', "CONFIG-PATH", true,
+                   "Path to the configuration in the configuration manager",
+                    arghelper_config_paths);
+#if 0 // FIXME: Currently disable the alias feature until properly fixed
+    cmd->AddOption("alias", 'n', "ALIAS-NAME", true,
+                   "Set an alias name to use for this configuration");
+    cmd->AddOption("alias-delete", 'D',
+                   "Delete this alias");
+#endif
+    cmd->AddOption("rename", 'r', "NEW-CONFIG-NAME", true,
+                   "Renames the configuration");
+    cmd->AddOption("show", 's',
+                    "Show current configuration options");
+
+    // Generating options for all configuration profile overrides
+    // as defined in overrides.hpp
+    for (const auto& override : configProfileOverrides)
+    {
+        if (OverrideType::boolean == override.type)
+        {
+            cmd->AddOption(override.key, "<true|false>", true,
+                           "Adds the boolean override " + override.key,
+                           arghelper_boolean);
+        }
+        else
+        {
+            std::string help = "<value>";
+            if (override.argument_helper)
+            {
+                help = "<" + override.argument_helper()  + ">";
+                std::replace(help.begin(), help.end(), ' ', '|');
+            }
+            cmd->AddOption(override.key, help, true,
+                           override.help,
+                           override.argument_helper);
+        }
+    }
+    cmd->AddOption("unset-override", "<name>", true,
+                   "Removes the <name> override",
+                   arghelper_unset_overrides);
+
+    return cmd;
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////
+
 
 
 /**
@@ -686,6 +803,47 @@ static int cmd_config_acl(ParsedArgs args)
 
 
 /**
+ *  Creates the SingleCommand object for the 'config-acl' command
+ *
+ * @return  Returns a SingleCommand::Ptr object declaring the command
+ */
+SingleCommand::Ptr prepare_command_config_acl()
+{
+    //
+    //  config-acl command
+    //
+    SingleCommand::Ptr cmd;
+    cmd.reset(new SingleCommand("config-acl",
+                                "Manage access control lists for configurations",
+                                cmd_config_acl));
+    cmd->AddOption("path", 'o', "OBJ-PATH", true,
+                   "Path to the configuration in the configuration manager",
+                   arghelper_config_paths);
+    cmd->AddOption("show", 's',
+                   "Show the current access control lists");
+    cmd->AddOption("grant", 'G', "<UID | username>", true,
+                   "Grant this user access to this configuration profile");
+    cmd->AddOption("revoke", 'R', "<UID | username>", true,
+                   "Revoke this user access from this configuration profile");
+    cmd->AddOption("public-access", "<true|false>", true,
+                   "Set/unset the public access flag",
+                   arghelper_boolean);
+    cmd->AddOption("lock-down", "<true|false>", true,
+                   "Set/unset the lock-down flag.  Will disable config retrieval for users",
+                   arghelper_boolean);
+    cmd->AddOption("seal", 'S',
+                   "Make the configuration profile permanently read-only");
+
+    return cmd;
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////
+
+
+
+/**
  *  openvpn3 config-show command
  *
  *  This command is used to show the contents of a configuration profile.
@@ -729,6 +887,33 @@ static int cmd_config_show(ParsedArgs args)
         throw CommandException("config-show", err.getRawError());
     }
 }
+
+
+/**
+ *  Creates the SingleCommand object for the 'config-show' command
+ *
+ * @return  Returns a SingleCommand::Ptr object declaring the command
+ */
+SingleCommand::Ptr prepare_command_config_show()
+{
+    //
+    //  config-show command
+    //
+    SingleCommand::Ptr cmd;
+    cmd.reset(new SingleCommand("config-show",
+                                "Show/dump a configuration profile",
+                                cmd_config_show));
+    cmd->AddOption("path", 'o', "OBJ-PATH", true,
+                   "Path to the configuration in the configuration manager",
+                   arghelper_config_paths);
+    cmd->AddOption("json", 'j', "Dump the configuration in JSON format");
+
+    return cmd;
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////
 
 
 
@@ -793,128 +978,30 @@ static int cmd_config_remove(ParsedArgs args)
 }
 
 
+
 /**
- *  Declare all the supported commands and their options and arguments.
+ *  Creates the SingleCommand object for the 'config-remove' command
  *
- *  This function should only be called once by the main openvpn3 program,
- *  which sends a reference to the Commands argument parser which is used
- *  for this registration process
- *
- * @param ovpn3  Commands object where to register all the commands, options
- *               and arguments.
+ * @return  Returns a SingleCommand::Ptr object declaring the command
  */
-void RegisterCommands_config(Commands& ovpn3)
+SingleCommand::Ptr prepare_command_config_remove()
 {
-    //
-    //  config-import command
-    //
-    auto cmd = ovpn3.AddCommand("config-import",
-                                "Import configuration profiles",
-                                cmd_config_import);
-    cmd->AddOption("config", 'c', "CFG-FILE", true,
-                   "Configuration file to import");
-    cmd->AddOption("name", 'n', "NAME", true,
-                   "Provide a different name for the configuration (default: CFG-FILE)");
-    cmd->AddOption("persistent", 'p',
-                   "Make the configuration file persistent through boots");
-
-    //
-    //  config-manage command
-    cmd = ovpn3.AddCommand("config-manage",
-                           "Manage configuration properties",
-                           cmd_config_manage);
-    cmd->AddOption("path", 'o', "CONFIG-PATH", true,
-                   "Path to the configuration in the configuration manager",
-                    arghelper_config_paths);
-#if 0 // FIXME: Currently disable the alias feature until properly fixed
-    cmd->AddOption("alias", 'n', "ALIAS-NAME", true,
-                   "Set an alias name to use for this configuration");
-    cmd->AddOption("alias-delete", 'D',
-                   "Delete this alias");
-#endif
-    cmd->AddOption("rename", 'r', "NEW-CONFIG-NAME", true,
-                   "Renames the configuration");
-    cmd->AddOption("show", 's',
-                    "Show current configuration options");
-
-    // Generating options for all configuration profile overrides
-    // as defined in overrides.hpp
-    for (const auto& override : configProfileOverrides)
-    {
-        if (OverrideType::boolean == override.type)
-        {
-            cmd->AddOption(override.key, "<true|false>", true,
-                           "Adds the boolean override " + override.key,
-                           arghelper_boolean);
-        }
-        else
-        {
-            std::string help = "<value>";
-            if (override.argument_helper)
-            {
-                help = "<" + override.argument_helper()  + ">";
-                std::replace(help.begin(), help.end(), ' ', '|');
-            }
-            cmd->AddOption(override.key, help, true,
-                           override.help,
-                           override.argument_helper);
-        }
-    }
-    cmd->AddOption("unset-override", "<name>", true,
-                   "Removes the <name> override",
-                   arghelper_unset_overrides);
-
-    //
-    //  config-acl command
-    //
-    cmd = ovpn3.AddCommand("config-acl",
-                           "Manage access control lists for configurations",
-                           cmd_config_acl);
-    cmd->AddOption("path", 'o', "OBJ-PATH", true,
-                   "Path to the configuration in the configuration manager",
-                   arghelper_config_paths);
-    cmd->AddOption("show", 's',
-                   "Show the current access control lists");
-    cmd->AddOption("grant", 'G', "<UID | username>", true,
-                   "Grant this user access to this configuration profile");
-    cmd->AddOption("revoke", 'R', "<UID | username>", true,
-                   "Revoke this user access from this configuration profile");
-    cmd->AddOption("public-access", "<true|false>", true,
-                   "Set/unset the public access flag",
-                   arghelper_boolean);
-    cmd->AddOption("lock-down", "<true|false>", true,
-                   "Set/unset the lock-down flag.  Will disable config retrieval for users",
-                   arghelper_boolean);
-    cmd->AddOption("seal", 'S',
-                   "Make the configuration profile permanently read-only");
-
-    //
-    //  config-show command
-    //
-    cmd = ovpn3.AddCommand("config-show",
-                           "Show/dump a configuration profile",
-                           cmd_config_show);
-    cmd->AddOption("path", 'o', "OBJ-PATH", true,
-                   "Path to the configuration in the configuration manager",
-                   arghelper_config_paths);
-    cmd->AddOption("json", 'j', "Dump the configuration in JSON format");
-
     //
     //  config-remove command
     //
-    cmd = ovpn3.AddCommand("config-remove",
-                           "Remove an available configuration profile",
-                           cmd_config_remove);
+    SingleCommand::Ptr cmd;
+    cmd.reset(new SingleCommand("config-remove",
+                                "Remove an available configuration profile",
+                                cmd_config_remove));
     cmd->AddOption("path", 'o', "OBJ-PATH", true,
                    "Path to the configuration in the configuration manager",
                    arghelper_config_paths);
     cmd->AddOption("force",
                    "Force the deletion process without asking for confirmation");
 
-    //
-    //  config-list command
-    //
-    cmd = ovpn3.AddCommand("configs-list",
-                           "List all available configuration profiles",
-                           cmd_configs_list);
+    return cmd;
 }
+
+
+
+//////////////////////////////////////////////////////////////////////////

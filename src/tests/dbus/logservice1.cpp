@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -133,16 +133,19 @@ int main(int argc, char **argv)
                   "Simple program to test the interfaces exposted by "
                   "openvpn3-service-logger (net.openvpn.v3.log)");
 
-    auto props = cmds.AddCommand("props", "Gets and sets properties",
-                                 cmd_props);
+    SingleCommand::Ptr props;
+    props.reset(new SingleCommand("props", "Gets and sets properties",
+                                  cmd_props));
     props->AddOption("log-level", 'l', "LEVEL", true,
                      "Sets the log verbosity");
     props->AddOption("timestamp", 't', "BOOLEAN", true,
                      "Sets the timestamp flag for log events. Valid values: true, false");
     props->AddOption("dbus-details", 'D', "BOOLEAN", true,
                      "Sets the D-Bus details logging flag for log events");
+    cmds.RegisterCommand(props);
 
-    auto send = cmds.AddCommand("send", "Sends log events", cmd_send);
+    SingleCommand::Ptr send;
+    send.reset(new SingleCommand("send", "Sends log events", cmd_send));
     send->AddOption("attach", 'a', "Do an Attach() method call before sending log event");
     send->AddOption("object-path", 'o', "PATH", true,
                     "D-Bus path to use as the signal origin (default: /net/openvpn/v3/logtest)");
@@ -152,6 +155,7 @@ int main(int argc, char **argv)
                     "LogGroup value to use for the log event");
     send->AddOption("category", 'c', "INTEGER", true,
                     "LogCategory value to use for the log event");
+    cmds.RegisterCommand(send);
 
     try
     {

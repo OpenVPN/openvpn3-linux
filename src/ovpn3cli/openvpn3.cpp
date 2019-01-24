@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2019  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2019  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -42,6 +42,7 @@
 #include "commands/config.hpp"
 #include "commands/session.hpp"
 #include "commands/log.hpp"
+#include "commands/commands.hpp"
 
 
 /**
@@ -65,14 +66,19 @@ int main(int argc, char **argv)
                       "configurations and sessions");
 
     //  Add a separate 'version' command, which just prints version information.
-    openvpn3.AddCommand("version", "Show OpenVPN 3 version information",
-                        cmd_version);
+    SingleCommand::Ptr version;
+    version.reset(new SingleCommand("version",
+                                    "Show OpenVPN 3 version information",
+                                    cmd_version));
+    openvpn3.RegisterCommand(version);
 
-    //  Register commands found in ./commands/*.hpp
-    RegisterCommands_config(openvpn3);
-    RegisterCommands_session(openvpn3);
-    RegisterCommands_log(openvpn3);
+    // Register commands declared in commands/commands.hpp
+    for (const auto& cmd : command_list_openvpn3)
+    {
+        openvpn3.RegisterCommand(cmd());
+    }
 
+    // Parse the command line arguments and execute the commands given
     try
     {
         return openvpn3.ProcessCommandLine(argc, argv);

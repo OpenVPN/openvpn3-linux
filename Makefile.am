@@ -352,6 +352,7 @@ src_ovpn3cli_openvpn3_SOURCES = \
 	src/ovpn3cli/arghelpers.hpp \
 	src/common/lookup.cpp \
 	src/common/lookup.hpp \
+	src/ovpn3cli/commands/commands.hpp \
 	src/ovpn3cli/commands/config.hpp \
 	src/ovpn3cli/commands/log.hpp \
 	src/ovpn3cli/commands/session.hpp \
