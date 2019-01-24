@@ -218,7 +218,8 @@ src_tests_dbus_config_lock_down_SOURCES = \
 	src/tests/dbus/config-lock-down.cpp
 
 src_tests_dbus_config_override_selftest_SOURCES = \
-	src/tests/dbus/config-override-selftest.cpp
+	src/tests/dbus/config-override-selftest.cpp \
+	src/configmgr/overrides.cpp
 
 src_tests_dbus_conncreds_SOURCES = \
 	src/tests/dbus/conncreds.cpp
@@ -244,7 +245,8 @@ src_tests_dbus_get_acl_SOURCES = \
 	src/common/lookup.cpp
 
 src_tests_dbus_get_config_overrides_SOURCES = \
-	src/tests/dbus/get-config-overrides.cpp
+	src/tests/dbus/get-config-overrides.cpp \
+	src/configmgr/overrides.cpp
 
 src_tests_dbus_getlastlogevent_SOURCES = \
 	src/tests/dbus/getlastlogevent.cpp
@@ -358,7 +360,7 @@ src_ovpn3cli_openvpn3_SOURCES = \
 	src/ovpn3cli/commands/session.hpp \
 	$(DBUS_SOURCES) \
 	src/configmgr/proxy-configmgr.hpp \
-	src/configmgr/overrides.hpp \
+	src/configmgr/overrides.cpp \
 	src/sessionmgr/proxy-sessionmgr.hpp \
 	src/dbus/requiresqueue-proxy.hpp \
 	src/common/cmdargparser.hpp \
@@ -381,6 +383,7 @@ src_client_openvpn3_service_client_SOURCES = \
 	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp \
+	src/configmgr/overrides.cpp \
 	src/configmgr/proxy-configmgr.hpp \
 	src/log/dbus-log.hpp \
 	src/log/proxy-log.hpp \
@@ -402,6 +405,8 @@ src_client_openvpn3_service_backendstart_SOURCES = \
 src_configmgr_openvpn3_service_configmgr_SOURCES = \
 	src/configmgr/openvpn3-service-configmgr.cpp \
 	src/configmgr/configmgr.hpp \
+	src/configmgr/overrides.cpp \
+	src/configmgr/overrides.hpp \
 	$(DBUS_SOURCES) \
 	src/common/core-extensions.hpp \
 	src/common/lookup.cpp \

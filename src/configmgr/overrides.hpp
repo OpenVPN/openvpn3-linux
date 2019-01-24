@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2019  Arne Schwabe <arne@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -149,24 +149,5 @@ const ValidOverride invalidOverride(std::string("invalid"),
                                     OverrideType::invalid, "Invalid override");
 
 
-const ValidOverride & GetConfigOverride(const std::string & key, bool ignoreCase=false)
-{
-    for (const auto& vo: configProfileOverrides)
-    {
-        if (vo.key==key)
-        {
-           return vo;
-        }
-
-        // This is appearently the best way to do a case insenstive
-        // comparision in C++
-        if (ignoreCase && std::equal(vo.key.begin(), vo.key.end(), key.begin(),
-            [](char a, char b) { return std::tolower(a) == std::tolower(b);} ))
-        {
-            return vo;
-        }
-    }
-
-    // Override not found
-    return invalidOverride;
-}
+const ValidOverride & GetConfigOverride(const std::string& key,
+                                        bool ignoreCase = false);
