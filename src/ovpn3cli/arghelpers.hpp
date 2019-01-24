@@ -24,29 +24,14 @@
  *
  */
 
-#ifndef OPENVPN3_ARGHELPERS_HPP
-#define OPENVPN3_ARGHELPERS_HPP
+#pragma once
 
 /**
  * Retrieves a list of available configuration paths
  *
  * @return std::string with all available paths, each separated by space
  */
-std::string arghelper_config_paths()
-{
-    OpenVPN3ConfigurationProxy confmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration);
-
-    std::stringstream res;
-    for (auto& cfg : confmgr.FetchAvailableConfigs())
-    {
-        if (cfg.empty())
-        {
-            continue;
-        }
-        res << cfg << " ";
-    }
-    return res.str();
-}
+std::string arghelper_config_paths();
 
 
 /**
@@ -55,46 +40,7 @@ std::string arghelper_config_paths()
  * @return std::string with all available profile names, each separated
  *         by space
  */
-std::string arghelper_config_names()
-{
-    DBus conn(G_BUS_TYPE_SYSTEM);
-    conn.Connect();
-    OpenVPN3ConfigurationProxy confmgr(conn, OpenVPN3DBus_rootp_configuration);
-
-    std::vector<std::string> cfgnames;
-    for (const auto& cfgp : confmgr.FetchAvailableConfigs())
-    {
-        OpenVPN3ConfigurationProxy cfg(conn, cfgp);
-        std::string cfgname = cfg.GetStringProperty("name");
-
-        // Filter out duplicates
-        bool found = false;
-        for (const auto& chk : cfgnames)
-        {
-            if (chk == cfgname)
-            {
-                found = true;
-                break;
-            }
-        }
-        if (!found)
-        {
-            cfgnames.push_back(cfgname);
-        }
-    }
-
-    // Generate the final string which will be returned
-    std::stringstream res;
-    for (const auto& n : cfgnames)
-    {
-        if (n.empty())
-        {
-            continue;
-        }
-        res << n << " ";
-    }
-    return res.str();
-}
+std::string arghelper_config_names();
 
 
 /**
@@ -102,21 +48,7 @@ std::string arghelper_config_names()
  *
  * @return std::string with all available paths, each separated by space
  */
-std::string arghelper_session_paths()
-{
-    OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_sessions);
-
-    std::stringstream res;
-    for (auto& session : sessmgr.FetchAvailableSessions())
-    {
-        if (session.empty())
-        {
-            continue;
-        }
-        res << session << " ";
-    }
-    return res.str();
-}
+std::string arghelper_session_paths();
 
 
 /**
@@ -126,46 +58,7 @@ std::string arghelper_session_paths()
  * @return std::string with all available profile names, each separated
  *         by space
  */
-std::string arghelper_config_names_sessions()
-{
-    DBus conn(G_BUS_TYPE_SYSTEM);
-    conn.Connect();
-    OpenVPN3SessionProxy sessmgr(conn, OpenVPN3DBus_rootp_sessions);
-
-    std::vector<std::string> cfgnames;
-    for (const auto& sesp : sessmgr.FetchAvailableSessions())
-    {
-        OpenVPN3SessionProxy sess(conn, sesp);
-        std::string cfgname = sess.GetStringProperty("config_name");
-
-        // Filter out duplicates
-        bool found = false;
-        for (const auto& chk : cfgnames)
-        {
-            if (chk == cfgname)
-            {
-                found = true;
-                break;
-            }
-        }
-        if (!found)
-        {
-            cfgnames.push_back(cfgname);
-        }
-    }
-
-    // Generate the final string which will be returned
-    std::stringstream res;
-    for (const auto& n : cfgnames)
-    {
-        if (n.empty())
-        {
-            continue;
-        }
-        res << n << " ";
-    }
-    return res.str();
-}
+std::string arghelper_config_names_sessions();
 
 
 /**
@@ -173,43 +66,13 @@ std::string arghelper_config_names_sessions()
  * Note we could also list only set overrides but that would require this option to know if
  * config-path is somewhere else on the command line and get its argument
  */
-std::string arghelper_unset_overrides()
-{
-    std::stringstream out;
-    for (const ValidOverride & vo: configProfileOverrides)
-    {
-        out << vo.key << " ";
-    }
-    return out.str();
-}
+std::string arghelper_unset_overrides();
 
 
 /**
  *  Provides true/false suggestions for command line completion
  */
-std::string arghelper_boolean()
-{
-    return "false true";
-}
-
-
-/**
- *  Generates a list of integers, based on the given start and end values
- *
- * @param start   Start number of the range
- * @param end     End number of the range
- *
- * @return std::string with all the numbers on a single line
- */
-static std::string intern_arghelper_integer_range(int start, int end)
-{
-    std::stringstream out;
-    for (int i = start; i <= end; i++)
-    {
-        out << std::to_string(i) << " ";
-    }
-    return out.str();
-}
+std::string arghelper_boolean();
 
 
 /**
@@ -217,11 +80,4 @@ static std::string intern_arghelper_integer_range(int start, int end)
  *
  * @return  std::string with all valid log levels
  */
-std::string arghelper_log_levels()
-{
-    // See dbus-log.hpp - LogFilter::SetLogLevel() and
-    // LogFilter::_LogFilterAllow() for details
-    return intern_arghelper_integer_range(0, 6);
-}
-
-#endif // OPENVPN3_ARGHELPERS_HPP
+std::string arghelper_log_levels();

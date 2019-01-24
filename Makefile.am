@@ -66,6 +66,7 @@ EXTRA_DIST = \
 	src/common/requiresqueue.hpp \
 	src/common/timestamp.hpp \
 	src/common/utils.hpp \
+	src/ovpn3cli/arghelpers.hpp \
 	src/tests/netcfg/README \
 	src/tests/netcfg/net.openvpn.v3.netcfg-generic-access.conf
 
@@ -351,7 +352,7 @@ pkglibexec_PROGRAMS = \
 #
 src_ovpn3cli_openvpn3_SOURCES = \
 	src/ovpn3cli/openvpn3.cpp \
-	src/ovpn3cli/arghelpers.hpp \
+	src/ovpn3cli/arghelpers.cpp \
 	src/common/lookup.cpp \
 	src/common/lookup.hpp \
 	src/ovpn3cli/commands/commands.hpp \
