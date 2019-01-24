@@ -23,9 +23,16 @@
  * @brief  Implementation of all the various openvpn3 config-* commands
  */
 
+#include <client/ovpncli.cpp>
+
+#include "dbus/core.hpp"
 #include "common/cmdargparser.hpp"
 #include "common/lookup.hpp"
+#include "configmgr/proxy-configmgr.hpp"
+#include "sessionmgr/proxy-sessionmgr.hpp"
 #include "../arghelpers.hpp"
+
+using namespace openvpn;
 
 /**
  *  Parses and imports an OpenVPN configuration file and saves it

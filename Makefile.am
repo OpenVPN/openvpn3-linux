@@ -356,9 +356,9 @@ src_ovpn3cli_openvpn3_SOURCES = \
 	src/common/lookup.cpp \
 	src/common/lookup.hpp \
 	src/ovpn3cli/commands/commands.hpp \
-	src/ovpn3cli/commands/config.hpp \
-	src/ovpn3cli/commands/log.hpp \
-	src/ovpn3cli/commands/session.hpp \
+	src/ovpn3cli/commands/config.cpp \
+	src/ovpn3cli/commands/log.cpp \
+	src/ovpn3cli/commands/session.cpp \
 	$(DBUS_SOURCES) \
 	src/configmgr/proxy-configmgr.hpp \
 	src/configmgr/overrides.cpp \

@@ -24,8 +24,14 @@
  */
 
 #include "dbus/core.hpp"
+#include "common/cmdargparser.hpp"
 #include "common/timestamp.hpp"
+#include "log/dbus-log.hpp"
+#include "log/logevent.hpp"
 #include "log/proxy-log.hpp"
+#include "configmgr/proxy-configmgr.hpp"
+#include "sessionmgr/proxy-sessionmgr.hpp"
+#include "../arghelpers.hpp"
 
 using namespace openvpn;
 

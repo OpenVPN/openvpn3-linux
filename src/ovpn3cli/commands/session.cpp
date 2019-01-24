@@ -25,8 +25,12 @@
 
 #include <json/json.h>
 
+#include "dbus/core.hpp"
 #include "common/cmdargparser.hpp"
 #include "common/lookup.hpp"
+#include "common/requiresqueue.hpp"
+#include "configmgr/proxy-configmgr.hpp"
+#include "sessionmgr/proxy-sessionmgr.hpp"
 #include "../arghelpers.hpp"
 
 /**
@@ -193,6 +197,11 @@ SingleCommand::Ptr prepare_command_session_stats()
 //////////////////////////////////////////////////////////////////////////
 
 
+// Implemented in config.cpp
+std::string import_config(const std::string filename,
+                          const std::string cfgname,
+                          const bool single_use,
+                          const bool persistent);
 
 /**
  *  openvpn3 session-start command
