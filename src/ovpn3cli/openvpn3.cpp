@@ -34,32 +34,11 @@
 #include "commands/commands.hpp"
 
 
-/**
- *  Dump various version information, both about the openvpn3 command
- *  but also about the OpenVPN 3 Core library.
- *
- * @param args  ParsedArgs object containing all related options and arguments
- * @return Returns the exit code which will be returned to the calling shell
- */
-int cmd_version(ParsedArgs args)
-{
-    std::cout << get_version("/openvpn3") << std::endl;
-    return 0;
-}
-
-
 int main(int argc, char **argv)
 {
     Commands openvpn3("OpenVPN3",
                       "Command line interface to manage OpenVPN 3 "
                       "configurations and sessions");
-
-    //  Add a separate 'version' command, which just prints version information.
-    SingleCommand::Ptr version;
-    version.reset(new SingleCommand("version",
-                                    "Show OpenVPN 3 version information",
-                                    cmd_version));
-    openvpn3.RegisterCommand(version);
 
     // Register commands declared in commands/commands.hpp
     for (const auto& cmd : command_list_openvpn3)

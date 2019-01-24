@@ -29,7 +29,10 @@
 
 typedef SingleCommand::Ptr (*PrepareCommand)();
 
-// Commands provided in config.hpp
+// Command provided in version.cpp
+SingleCommand::Ptr prepare_command_version();
+
+// Commands provided in config.cpp
 SingleCommand::Ptr prepare_command_config_import();
 SingleCommand::Ptr prepare_command_config_manage();
 SingleCommand::Ptr prepare_command_config_acl();
@@ -53,6 +56,8 @@ SingleCommand::Ptr prepare_command_sessions_list();
 // here is reflected in the help screen when the main
 // program is run.
 std::vector<PrepareCommand> command_list_openvpn3 = {
+    prepare_command_version,
+
     prepare_command_config_import,
     prepare_command_config_manage,
     prepare_command_config_acl,

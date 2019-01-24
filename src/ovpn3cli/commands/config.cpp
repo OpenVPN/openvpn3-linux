@@ -23,6 +23,11 @@
  * @brief  Implementation of all the various openvpn3 config-* commands
  */
 
+#include "config.h"
+#ifdef HAVE_CONFIG_VERSION_H
+#include "config-version.h"
+#endif
+
 #include <client/ovpncli.cpp>
 
 #include "dbus/core.hpp"
