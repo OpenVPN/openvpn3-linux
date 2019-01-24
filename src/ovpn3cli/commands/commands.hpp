@@ -54,6 +54,10 @@ SingleCommand::Ptr prepare_command_session_acl();
 SingleCommand::Ptr prepare_command_session_stats();
 SingleCommand::Ptr prepare_command_sessions_list();
 
+// Commands provided in netcfg-service.cpp
+SingleCommand::Ptr prepare_command_netcfg_service();
+
+
 
 // Gather the complete list of commands.  The order
 // here is reflected in the help screen when the main
@@ -96,5 +100,6 @@ std::vector<PrepareCommand> command_list_openvpn3admin = {
     prepare_command_version,
 
     prepare_command_log_service,
+    prepare_command_netcfg_service,
 };
 #endif // OVPN3CLI_OPENVPN3ADMIN

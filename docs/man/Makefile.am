@@ -28,6 +28,7 @@ MAN_SECTION_8 = \
 	openvpn3.8 \
 	openvpn3-admin.8 \
 	openvpn3-admin-log-service.8 \
+	openvpn3-admin-netcfg-service.8 \
 	openvpn3-autoload.8 \
 	openvpn3-config-acl.8 \
 	openvpn3-config-manage.8 \

@@ -38,10 +38,19 @@ log-service
                 * D-Bus service: *net.openvpn.v3.logger*
                 * Provided by: **openvpn3-service-logger**\(8)
 
+netcfg-service
+                Manage the OpenVPN 3 Network Configuration service
+
+                * D-Bus service: *net.openvpn.v3.netcfg*
+                * Provided by: **openvpn3-service-netcfg**\(8)
+
+
 SEE ALSO
 ========
 
 ``openvpn3``\(8)
 ``openvpn3-admin-log-service``\(8)
+``openvpn3-admin-netcfg-service``\(8)
 ``openvpn3-service-logger``\(8)
+``openvpn3-service-netcfg``\(8)
 

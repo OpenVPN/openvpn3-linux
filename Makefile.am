@@ -384,6 +384,7 @@ src_ovpn3cli_openvpn3_admin_SOURCES = \
 	src/ovpn3cli/commands/commands.hpp \
 	src/ovpn3cli/commands/version.cpp \
 	src/ovpn3cli/commands/log-service.cpp \
+	src/ovpn3cli/commands/netcfg-service.cpp \
 	src/common/utils.cpp
 
 
