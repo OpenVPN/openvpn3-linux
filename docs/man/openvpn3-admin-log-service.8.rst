@@ -1,6 +1,6 @@
-====================
-openvpn3-log-service
-====================
+==========================
+openvpn3-admin-log-service
+==========================
 
 ----------------------
 OpenVPN 3 Linux client
@@ -11,8 +11,8 @@ OpenVPN 3 Linux client
 
 SYNOPSIS
 ========
-| ``openvpn3 log`` ``[OPTIONS]``
-| ``openvpn3 log`` ``-h`` | ``--help``
+| ``openvpn3-admin log-service`` ``[OPTIONS]``
+| ``openvpn3-admin log-service`` ``-h`` | ``--help``
 
 
 DESCRIPTION

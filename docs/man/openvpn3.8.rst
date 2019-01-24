@@ -62,9 +62,6 @@ Log commands
 ------------
 log               - Receive log events as they occur
 
-log-service       - Manage the OpenVPN 3 Log service
-
-
 SEE ALSO
 ========
 
@@ -80,5 +77,5 @@ SEE ALSO
 ``openvpn3-session-stats``\(8)
 ``openvpn3-sessions-list``\(8)
 ``openvpn3-log``\(8)
-``openvpn3-log-service``\(8)
+``openvpn3-admin``\(8)
 

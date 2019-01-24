@@ -336,6 +336,8 @@ endif
 #
 bin_PROGRAMS = src/ovpn3cli/openvpn3
 
+sbin_PROGRAMS = src/ovpn3cli/openvpn3-admin
+
 #
 #  System binaries
 #
@@ -371,6 +373,19 @@ src_ovpn3cli_openvpn3_SOURCES = \
 	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp
+
+#
+# openvpn3-admin:  Service management admin utility
+#
+src_ovpn3cli_openvpn3_admin_SOURCES = \
+	src/ovpn3cli/openvpn3-admin.cpp \
+	src/ovpn3cli/arghelpers.cpp \
+	src/ovpn3cli/ovpn3cli.hpp \
+	src/ovpn3cli/commands/commands.hpp \
+	src/ovpn3cli/commands/version.cpp \
+	src/ovpn3cli/commands/log-service.cpp \
+	src/common/utils.cpp
+
 
 #
 #  openvpn3-service-client: The VPN client process

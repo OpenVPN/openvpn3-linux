@@ -58,6 +58,16 @@ SingleCommand::Ptr prepare_command_sessions_list();
 // Gather the complete list of commands.  The order
 // here is reflected in the help screen when the main
 // program is run.
+//
+// These lists are fenced with separate macros per
+// command line utility, to avoid needing to modify
+// multiple files when adding the prepare_command_*()
+// functions.
+
+#ifdef OVPN3CLI_OPENVPN3
+//
+//  openvpn3 command line utility
+//
 std::vector<PrepareCommand> command_list_openvpn3 = {
     prepare_command_version,
 
@@ -75,5 +85,16 @@ std::vector<PrepareCommand> command_list_openvpn3 = {
     prepare_command_sessions_list,
 
     prepare_command_log,
+};
+#endif // OVPN3CLI_OPENVPN3
+
+#ifdef OVPN3CLI_OPENVPN3ADMIN
+//
+//  openvpn3-admin command line utility
+//
+std::vector<PrepareCommand> command_list_openvpn3admin = {
+    prepare_command_version,
+
     prepare_command_log_service,
 };
+#endif // OVPN3CLI_OPENVPN3ADMIN
