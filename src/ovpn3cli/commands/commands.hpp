@@ -43,6 +43,8 @@ SingleCommand::Ptr prepare_command_configs_list();
 
 // Commands provided in log.cpp
 SingleCommand::Ptr prepare_command_log();
+
+// Commands provided in log-service.cpp
 SingleCommand::Ptr prepare_command_log_service();
 
 // Commands provided in session.cpp
