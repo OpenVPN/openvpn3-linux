@@ -17,45 +17,11 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "config.h"
-#ifdef HAVE_CONFIG_VERSION_H
-#include "config-version.h"
-#endif
-
-#include <iostream>
-#include <sstream>
-#include <vector>
-#include <tuple>
-#include <cstdlib>
-#include <getopt.h>
-
-#include "common/cmdargparser.hpp"
-
 #include "commands/commands.hpp"
 
+#define OVPN3CLI_PROGNAME "OpenVPN 3"
+#define OVPN3CLI_PROGDESCR "Command line interface to manage OpenVPN 3 " \
+                           "configurations and sessions"
+#define OVPN3CLI_COMMANDS_LIST command_list_openvpn3
 
-int main(int argc, char **argv)
-{
-    Commands openvpn3("OpenVPN3",
-                      "Command line interface to manage OpenVPN 3 "
-                      "configurations and sessions");
-
-    // Register commands declared in commands/commands.hpp
-    for (const auto& cmd : command_list_openvpn3)
-    {
-        openvpn3.RegisterCommand(cmd());
-    }
-
-    // Parse the command line arguments and execute the commands given
-    try
-    {
-        return openvpn3.ProcessCommandLine(argc, argv);
-    }
-    catch (CommandException& e)
-    {
-        if (e.gotErrorMessage())
-        {
-            std::cerr << e.getCommand() << ": ** ERROR ** " << e.what() << std::endl;
-        }
-    }
-}
+#include "ovpn3cli.hpp"  // main() is implemented here

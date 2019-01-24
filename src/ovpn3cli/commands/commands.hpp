@@ -24,8 +24,9 @@
  *         command line utilities
  */
 
-
 #pragma once
+
+#include "common/cmdargparser.hpp"
 
 typedef SingleCommand::Ptr (*PrepareCommand)();
 

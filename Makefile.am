@@ -353,6 +353,7 @@ pkglibexec_PROGRAMS = \
 src_ovpn3cli_openvpn3_SOURCES = \
 	src/ovpn3cli/openvpn3.cpp \
 	src/ovpn3cli/arghelpers.cpp \
+	src/ovpn3cli/ovpn3cli.hpp \
 	src/common/lookup.cpp \
 	src/common/lookup.hpp \
 	src/ovpn3cli/commands/commands.hpp \
