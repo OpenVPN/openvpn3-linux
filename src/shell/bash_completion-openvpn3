@@ -18,32 +18,34 @@
 #
 
 ##
-# @file  bash_completion_openvpn3.sh
+# @file  bash_completion_openvpn3
 #
-# @brief  A bash_completion helper script for the openvpn3 program.
-#         This script makes use of the openvpn3 shell-completion command
-#         which provides up-to-date insight on the various commands, options
-#         and arguments.
+# @brief  A bash_completion helper script for the openvpn3 command line
+#         programs.  This script makes use of the shell-completion command
+#         provided by openvpn3 or openvpn3-admin, which provides up-to-date
+#         insight on the various commands, options and arguments.
+#
 #         Also works with zsh after loading bascomphinit
 #         (autoload -U +X bashcompinit && bashcompinit)
 
-_openvpn3_completion()
+_openvpn3_generic_completion()
 {
-    local first cur prev opts base
+    local cmd first cur prev opts base
     COMPREPLY=()
+    cmd="$1"
     first=${COMP_WORDS[1]}
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     if [ $COMP_CWORD -eq 1 ]; then
         # The first argument is always an openvpn3 command
-        o3cmds="$(openvpn3 shell-completion --list-commands)"
+        o3cmds="$($cmd shell-completion --list-commands)"
         COMPREPLY=( $( compgen -W "$o3cmds" $cur ) )
     elif [ $COMP_CWORD -gt 1 ]; then
         selection=""
         if [ "${cur:0:2}" == "--" -o "${cur:0:1}" == "-" ]; then
             # If the argument starts with '-' or '--' provide list of options
-            selopts="-W $(openvpn3 shell-completion --list-options $first)"
+            selopts="-W $($cmd shell-completion --list-options $first)"
         else
             # Some options can get some extra help from bash
             case "${prev}" in
@@ -64,7 +66,7 @@ _openvpn3_completion()
                 fi
 
                 # In addition, extend with all pre-loaded configurations
-                selopts="$selopts $(openvpn3 shell-completion --list-options $first --arg-help $prev)"
+                selopts="$selopts $($cmd shell-completion --list-options $first --arg-help $prev)"
                 ;;
 
             "--grant"|"--revoke") # Takes username (or UID, which we don't tackle here)
@@ -74,7 +76,7 @@ _openvpn3_completion()
             *)
                 # Otherwise try to fill out with possible argument values for the
                 # provided option
-                selopts="-W $(openvpn3 shell-completion --list-options $first --arg-help $prev)"
+                selopts="-W $($cmd shell-completion --list-options $first --arg-help $prev)"
                 ;;
             esac
         fi
@@ -82,4 +84,15 @@ _openvpn3_completion()
     fi
 }
 
+_openvpn3_completion()
+{
+    _openvpn3_generic_completion openvpn3
+}
 complete -F _openvpn3_completion openvpn3
+
+
+_openvpn3admin_completion()
+{
+    _openvpn3_generic_completion openvpn3-admin
+}
+complete -F _openvpn3admin_completion openvpn3-admin
