@@ -122,6 +122,10 @@ DBUS_SOURCES = \
 
 if GIT_CHECKOUT
 BUILT_SOURCES = config-version.h
+src_common_utils.$(OBJEXT) : config-version.h
+src_ovpn3cli_commands_config.$(OBJEXT) : config-version.h
+src_tests_netcfg_cli.$(OBJEXT) : config-version.h
+src_tests_ovpn3-core_profilemerge_optionlist.$(OBJEXT) : config-version.h
 endif
 
 
