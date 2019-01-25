@@ -181,7 +181,7 @@ SingleCommand::Ptr prepare_command_config_import()
     cmd->AddOption("name", 'n', "NAME", true,
                    "Provide a different name for the configuration (default: CFG-FILE)");
     cmd->AddOption("persistent", 'p',
-                   "Make the configuration file persistent through boots");
+                   "Make the configuration profile persistent through service restarts");
 
     return cmd;
 }
