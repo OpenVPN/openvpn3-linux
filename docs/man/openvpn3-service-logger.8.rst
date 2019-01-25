@@ -144,6 +144,6 @@ OPTIONS
 SEE ALSO
 ========
 
-``openvpn3``\(8)
-``openvpn3-log-service``\(8)
+``openvpn3``\(1)
+``openvpn3-log-service``\(1)
 ``syslog``\(3)

@@ -48,7 +48,7 @@ netcfg-service
 SEE ALSO
 ========
 
-``openvpn3``\(8)
+``openvpn3``\(1)
 ``openvpn3-admin-log-service``\(8)
 ``openvpn3-admin-netcfg-service``\(8)
 ``openvpn3-service-logger``\(8)

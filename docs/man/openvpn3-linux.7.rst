@@ -88,7 +88,7 @@ three different front-ends targeting users.
 
         This is the main utility for managing all the features available in
         OpenVPN 3 Linux and has a very different user interface than
-        ``openvpn2``\(8) or ``openvpn``\(8).  On systems with the
+        ``openvpn2``\(1) or ``openvpn``\(8).  On systems with the
         bash-completion integration installed, almost every command, option and
         argument used by ``openvpn3`` will get auto-completion help.
 
@@ -151,12 +151,12 @@ extended as we receive more feedback.
 
 SEE ALSO
 ========
-``openpvn2``\(8)
-``openpvn3``\(8)
-``openpvn3-autoload``\(8)
-``openpvn3-service-backendstart``\(8)
-``openpvn3-service-client``\(8)
-``openpvn3-service-configmgr``\(8)
-``openpvn3-service-logger``\(8)
-``openpvn3-service-netcfg``\(8)
-``openpvn3-service-sessionmgr``\(8)
+``openvpn2``\(1)
+``openvpn3``\(1)
+``openvpn3-autoload``\(8)
+``openvpn3-service-backendstart``\(8)
+``openvpn3-service-client``\(8)
+``openvpn3-service-configmgr``\(8)
+``openvpn3-service-logger``\(8)
+``openvpn3-service-netcfg``\(8)
+``openvpn3-service-sessionmgr``\(8)

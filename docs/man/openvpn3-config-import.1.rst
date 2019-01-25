@@ -6,7 +6,7 @@ openvpn3-config-import
 OpenVPN 3 Linux client
 ----------------------
 
-:Manual section: 8
+:Manual section: 1
 :Manual group: OpenVPN 3 Linux
 
 SYNOPSIS
@@ -41,11 +41,11 @@ OPTIONS
 SEE ALSO
 ========
 
-``openvpn3``\(8)
-``openvpn3-config-manage``\(8)
-``openvpn3-config-acl``\(8)
-``openvpn3-config-remove``\(8)
-``openvpn3-config-show``\(8)
-``openvpn3-configs-list``\(8)
-``openvpn3-session-start``\(8)
+``openvpn3``\(1)
+``openvpn3-config-manage``\(1)
+``openvpn3-config-acl``\(1)
+``openvpn3-config-remove``\(1)
+``openvpn3-config-show``\(1)
+``openvpn3-configs-list``\(1)
+``openvpn3-session-start``\(1)
 

@@ -409,6 +409,6 @@ VPN configuration profile is not suitable for *autostart*.
 SEE ALSO
 ========
 
-``openvpn3``\(8)
-``openvpn3-config-manage``\(8)
+``openvpn3``\(1)
+``openvpn3-config-manage``\(1)
 

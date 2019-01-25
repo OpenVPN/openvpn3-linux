@@ -6,7 +6,7 @@ openvpn2
 OpenVPN 2 front-end to OpenVPN 3 Linux
 --------------------------------------
 
-:Manual section: 8
+:Manual section: 1
 :Manual group: OpenVPN 3 Linux
 
 SYNOPSIS
@@ -295,5 +295,5 @@ SEE ALSO
 ========
 
 ``openvpn``\(8)
-``openvpn3``\(8)
+``openvpn3``\(1)
 

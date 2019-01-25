@@ -20,7 +20,7 @@ DESCRIPTION
 The ``openvpn3-service-configmgr`` is a backend service for OpenVPN 3 Linux,
 responsible for managing OpenVPN configuration profiles.  Once a configuration
 profile has been imported, either via ``openvpn3 config-import``,
-``openvpn3 session-start`` or ``openvpn2``, it will run in the background as a
+``openvpn3 session-start`` or ``openvpn2``\(1), it will run in the background as a
 D-Bus service as long as it has at least one configuration profile in memory.
 
 The VPN backend process (``openvpn3-service-client``) will retrieve the contents
@@ -85,11 +85,12 @@ OPTIONS
 SEE ALSO
 ========
 
-``openvpn3``\(8)
-``openvpn3-config-acl``\(8)
-``openvpn3-config-import``\(8)
-``openvpn3-config-manage``\(8)
-``openvpn3-config-remove``\(8)
-``openvpn3-config-show``\(8)
-``openvpn3-configs-list``\(8)
-``openvpn3-session-start``\(8)
+``openvpn2``\(1)
+``openvpn3``\(1)
+``openvpn3-config-acl``\(1)
+``openvpn3-config-import``\(1)
+``openvpn3-config-manage``\(1)
+``openvpn3-config-remove``\(1)
+``openvpn3-config-show``\(1)
+``openvpn3-configs-list``\(1)
+``openvpn3-session-start``\(1)

@@ -53,5 +53,5 @@ OPTIONS
 SEE ALSO
 ========
 
-``openvpn3``\(8)
+``openvpn3``\(1)
 ``openvpn3-service-logger``\(8)

@@ -6,7 +6,7 @@ openvpn3-session-acl
 OpenVPN 3 Linux client
 ----------------------
 
-:Manual section: 8
+:Manual section: 1
 :Manual group: OpenVPN 3 Linux
 
 SYNOPSIS
@@ -68,9 +68,9 @@ OPTIONS
 SEE ALSO
 ========
 
-``openvpn3``\(8)
-``openvpn3-log``\(8)
-``openvpn3-session-manage``\(8)
-``openvpn3-session-start``\(8)
-``openvpn3-session-stats``\(8)
-``openvpn3-sessions-list``\(8)
+``openvpn3``\(1)
+``openvpn3-log``\(1)
+``openvpn3-session-manage``\(1)
+``openvpn3-session-start``\(1)
+``openvpn3-session-stats``\(1)
+``openvpn3-sessions-list``\(1)

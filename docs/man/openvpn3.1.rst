@@ -6,7 +6,7 @@ openvpn3
 OpenVPN 3 Linux client
 ----------------------
 
-:Manual section: 8
+:Manual section: 1
 :Manual group: OpenVPN 3 Linux
 
 SYNOPSIS
@@ -65,17 +65,17 @@ log               - Receive log events as they occur
 SEE ALSO
 ========
 
-``openvpn2``\(8)
-``openvpn3-config-import``\(8)
-``openvpn3-config-acl``\(8)
-``openvpn3-config-show``\(8)
-``openvpn3-config-remove``\(8)
-``openvpn3-configs-list``\(8)
-``openvpn3-session-start``\(8)
-``openvpn3-session-manage``\(8)
-``openvpn3-session-acl``\(8)
-``openvpn3-session-stats``\(8)
-``openvpn3-sessions-list``\(8)
-``openvpn3-log``\(8)
+``openvpn2``\(1)
+``openvpn3-config-import``\(1)
+``openvpn3-config-acl``\(1)
+``openvpn3-config-show``\(1)
+``openvpn3-config-remove``\(1)
+``openvpn3-configs-list``\(1)
+``openvpn3-session-start``\(1)
+``openvpn3-session-manage``\(1)
+``openvpn3-session-acl``\(1)
+``openvpn3-session-stats``\(1)
+``openvpn3-sessions-list``\(1)
+``openvpn3-log``\(1)
 ``openvpn3-admin``\(8)
 

@@ -81,10 +81,10 @@ OPTIONS
 SEE ALSO
 ========
 
-``openvpn3``\(8)
+``openvpn3``\(1)
 ``openvpn3-service-client``\(8)
-``openvpn3-session-acl``\(8)
-``openvpn3-session-manage``\(8)
-``openvpn3-session-start``\(8)
-``openvpn3-session-stats``\(8)
-``openvpn3-sessions-list``\(8)
+``openvpn3-session-acl``\(1)
+``openvpn3-session-manage``\(1)
+``openvpn3-session-start``\(1)
+``openvpn3-session-stats``\(1)
+``openvpn3-sessions-list``\(1)
