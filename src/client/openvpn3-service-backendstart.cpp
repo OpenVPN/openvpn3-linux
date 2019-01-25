@@ -584,7 +584,7 @@ int main(int argc, char **argv)
     cmd.AddOption("log-level", "LOG-LEVEL", true,
                   "Log verbosity level (valid values 0-6, default 3)");
     cmd.AddOption("signal-broadcast", 0,
-                  "Broadcast all D-Bus signals from openvpn3-service-backend instead of targeted multicast");
+                  "Broadcast all D-Bus signals from openvpn3-service-backend instead of targeted unicast");
     cmd.AddOption("idle-exit", "SECONDS", true,
                   "How long to wait before exiting if being idle. "
                   "0 disables it (Default: 10 seconds)");

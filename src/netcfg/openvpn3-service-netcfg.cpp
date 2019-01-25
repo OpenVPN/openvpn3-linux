@@ -183,7 +183,7 @@ int netcfg_main(ParsedArgs args)
         DBus dbus(G_BUS_TYPE_SYSTEM);
         dbus.Connect();
 
-        // If we do multicast (!broadcast), attach to the log service
+        // If we do unicast (!broadcast), attach to the log service
         if (!netcfgopts.signal_broadcast)
         {
             logservice.reset(new LogServiceProxy(dbus.GetConnection()));
@@ -265,7 +265,7 @@ int main(int argc, char **argv)
     argparser.AddOption("colour", 0,
                         "Make the log lines colourful");
     argparser.AddOption("signal-broadcast", 0,
-                        "Broadcast all D-Bus signals instead of targeted multicast");
+                        "Broadcast all D-Bus signals instead of targeted unicast");
     argparser.AddOption("idle-exit", "MINUTES", true,
                         "How long to wait before exiting if being idle. "
                         "0 disables it (Default: 5 minutes)");

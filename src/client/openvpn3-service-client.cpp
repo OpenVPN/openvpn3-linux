@@ -1200,7 +1200,7 @@ public:
 
     ~BackendClientDBus()
     {
-        // If we do multicast (!broadcast), detach from the log service
+        // If we do unicast (!broadcast), detach from the log service
         if (!signal_broadcast)
         {
             logservice->Detach(OpenVPN3DBus_interf_backends);
@@ -1273,7 +1273,7 @@ public:
     void callback_bus_acquired()
     {
 
-        // If we do multicast (!broadcast), attach to the log service
+        // If we do unicast (!broadcast), attach to the log service
         if (!signal_broadcast)
         {
             try
@@ -1524,7 +1524,7 @@ int main(int argc, char **argv)
     argparser.AddOption("colour", 0,
                         "Make the log lines colourful");
     argparser.AddOption("signal-broadcast", 0,
-                        "Broadcast all D-Bus signals instead of targeted multicast");
+                        "Broadcast all D-Bus signals instead of targeted unicast");
     argparser.AddOption("disable-protect-socket", 0,
                         "Disable the socket protect call on the UDP/TCP socket. "
                         "This is needed on systems not supporting this feature");
