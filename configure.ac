@@ -212,6 +212,15 @@ else
 fi
 AC_SUBST([openvpn3_configdir])
 
+dnl
+dnl The default $prefix is set to 'NONE' but due to
+dnl some odd autoconf behaviour, $prefix is never
+dnl changed from 'NONE' unless --prefix is given.
+dnl
+dnl Enforce $prefix to the autoconf default prefix
+dnl if --prefix has not been given on the command line.
+dnl
+test "x$prefix" = xNONE && prefix=$ac_default_prefix
 
 dnl
 dnl  systemd unit file directory
