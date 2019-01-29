@@ -52,8 +52,22 @@ struct LogEvent
      * @param msg  std::string containing the log message to use.
      */
     LogEvent(const LogGroup grp, const LogCategory ctg,
-             const std::string msg)
+             const std::string& msg)
         : group(grp), category(ctg), message(msg)
+    {
+    }
+
+    /**
+     *  Initialize the LogEvent object with the provided details.
+     *
+     * @param grp  LogGroup value to use.
+     * @param ctg  LogCategory value to use.
+     * @param msg  std::string containing the log message to use.
+     */
+    LogEvent(const LogGroup grp, const LogCategory ctg,
+             const std::string& session_token, const std::string& msg)
+        : group(grp), category(ctg),
+          session_token(session_token), message(msg)
     {
     }
 
@@ -78,13 +92,36 @@ struct LogEvent
             }
             else if ("(uus)" == g_type)
             {
-                parse_tuple(logev);
+                parse_tuple(logev, false);
+            }
+            else if ("(uuss)" == g_type)
+            {
+                parse_tuple(logev, true);
             }
             else
             {
                 THROW_LOGEXCEPTION("LogEvent: Invalid LogEvent data type");
             }
         }
+    }
+
+
+    static const std::string GetIntrospection(const std::string& name,
+                                              bool with_session_token = false)
+    {
+        std::stringstream ret;
+        ret << "        <signal name='" << name <<"'>"
+            << "            <arg type='u' name='group' direction='out'/>"
+            << "            <arg type='u' name='level' direction='out'/>";
+
+        if (with_session_token)
+        {
+            ret << "            <arg type='s' name='session_token' direction='out'/>";
+        }
+
+        ret << "            <arg type='s' name='message' direction='out'/>"
+            << "        </signal>";
+        return std::string(ret.str());
     }
 
 
@@ -97,8 +134,16 @@ struct LogEvent
      */
     GVariant *GetGVariantTuple() const
     {
-        return g_variant_new("(uus)", (guint32) group, (guint32) category,
-                             message.c_str());
+        if (session_token.empty())
+        {
+            return g_variant_new("(uus)", (guint32) group, (guint32) category,
+                                 message.c_str());
+        }
+        else
+        {
+            return g_variant_new("(uuss)", (guint32) group, (guint32) category,
+                                 session_token.c_str(), message.c_str());
+        }
     }
 
 
@@ -116,6 +161,11 @@ struct LogEvent
                               g_variant_new_uint32((guint) group));
         g_variant_builder_add(b, "{sv}", "log_category",
                               g_variant_new_uint32((guint) category));
+        if (!session_token.empty())
+        {
+            g_variant_builder_add(b, "{sv}", "log_session_token",
+                                  g_variant_new_string(session_token.c_str()));
+        }
         g_variant_builder_add(b, "{sv}", "log_message",
                               g_variant_new_string(message.c_str()));
         GVariant *ret = g_variant_builder_end(b);
@@ -131,7 +181,8 @@ struct LogEvent
     {
         group = LogGroup::UNDEFINED;
         category = LogCategory::UNDEFINED;
-        message = "";
+        session_token.clear();
+        message.clear();
     }
 
 
@@ -144,6 +195,7 @@ struct LogEvent
     {
         return (LogGroup::UNDEFINED == group)
                && (LogCategory::UNDEFINED == category)
+               && session_token.empty()
                && message.empty();
     }
 
@@ -166,9 +218,19 @@ struct LogEvent
 
     bool operator==(const LogEvent& compare) const
     {
-        return ((compare.group == group)
-                && (compare.category == category)
-                && (0 == compare.message.compare(message)));
+        if (session_token.empty())
+        {
+            return ((compare.group == group)
+                    && (compare.category == category)
+                    && (0 == compare.message.compare(message)));
+        }
+        else
+        {
+            return ((compare.group == group)
+                    && (compare.category == category)
+                    && (0 == compare.session_token.compare(session_token))
+                    && (0 == compare.message.compare(message)));
+        }
     }
 
 
@@ -179,6 +241,7 @@ struct LogEvent
 
     LogGroup group;
     LogCategory category;
+    std::string session_token;
     std::string message;
 
 
@@ -188,9 +251,10 @@ private:
      *  GVariant needs to be of 'a{sv}' which is a named dictionary.  It
      *  must contain the following key values to be valid:
      *
-     *     - (u) log_group       Translated into LogGroup
-     *     - (u) log_category    Translated into LogCategory
-     *     - (s) log_message     A string with the log message
+     *     - (u) log_group          Translated into LogGroup
+     *     - (u) log_category       Translated into LogCategory
+     *     - (s) log_session_token  An optional session token string
+     *     - (s) log_message        A string with the log message
      *
      * @param logevent  Pointer to the GVariant object containig the
      *                  log event
@@ -207,6 +271,7 @@ private:
             group = (LogGroup) v;
         }
         g_variant_unref(d);
+        d = nullptr;
 
         d = g_variant_lookup_value(logevent, "log_category", G_VARIANT_TYPE_UINT32);
         v = g_variant_get_uint32(d);
@@ -215,12 +280,23 @@ private:
             category = (LogCategory) v;
         }
         g_variant_unref(d);
+        d = nullptr;
 
         gsize len;
+        d = g_variant_lookup_value(logevent, "log_session_token",
+                                   G_VARIANT_TYPE_STRING);
+        if (d)
+        {
+            session_token = std::string(g_variant_get_string(d, &len));
+            g_variant_unref(d);
+        }
+        d = nullptr;
+
         d = g_variant_lookup_value(logevent,
                                    "log_message", G_VARIANT_TYPE_STRING);
         message = std::string(g_variant_get_string(d, &len));
         g_variant_unref(d);
+
         if (len != message.size())
         {
             THROW_LOGEXCEPTION("Failed retrieving log event message text"
@@ -231,20 +307,39 @@ private:
 
     /**
      *  Parses a tuple oriented GVariant object matching the data type
-     *  for a LogEvent object.
+     *  for a LogEvent object.  The data type must be (uus) if the
+     *  GVariant object is does not carry a session token value; otherwise
+     *  it must be (uuss) if it does.
      *
-     * @param logevent  Pointer to the GVariant object containig the
-     *                  log event
+     * @param logevent            Pointer to the GVariant object containig the
+     *                            log event
+     * @param with_session_token  Boolean flag indicating if the logevent
+     *                            GVariant object is expected to contain a
+     *                            session token.
      */
-    void parse_tuple(GVariant *logevent)
+    void parse_tuple(GVariant *logevent, bool with_session_token)
     {
         guint grp;
         guint ctg;
+        gchar *sesstok = nullptr;
         gchar *msg = nullptr;
-        g_variant_get(logevent, "(uus)", &grp, &ctg, &msg);
+
+        if (!with_session_token)
+        {
+            g_variant_get(logevent, "(uus)", &grp, &ctg, &msg);
+        }
+        else
+        {
+            g_variant_get(logevent, "(uuss)", &grp, &ctg, &sesstok, &msg);
+        }
 
         group = (LogGroup) grp;
         category = (LogCategory) ctg;
+        if (sesstok)
+        {
+            session_token = std::string(sesstok);
+            g_free(sesstok);
+        }
         if (msg)
         {
             message = std::string(msg);
