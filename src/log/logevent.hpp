@@ -71,6 +71,14 @@ struct LogEvent
     {
     }
 
+
+    LogEvent(const LogEvent& logev, const std::string& session_token)
+        : group(logev.group), category(logev.category),
+          session_token(session_token), message(logev.message)
+    {
+    }
+
+
     /**
      *  Initialize a LogEvent, based on a GVariant object containing
      *  a Log signal.  It supports both tuple based and dictonary based

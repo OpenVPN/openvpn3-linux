@@ -77,6 +77,7 @@ node /net/openvpn/v3/backends/session {
                    s message);
       Log(u group,
           u level,
+          s session_token,
           s message);
       AttentionRequired(u type,
                         u group,
@@ -298,6 +299,11 @@ signal which carries a log group, log verbosity level and a string
 with the log message itself.  The D-Bus path provided in the signal
 points at the issuing VPN session.  See the separate [logging
 documentation](dbus-logging.md) for details on this signal.
+
+Beware that the back-end Log signalling differs slightly from the front-end
+signalling, where the Log signal is extended to carry a session token as well.
+This is due to the back-end client process cannot separate Log signals via the
+D-Bus object path.
 
 
 ### Signal: `net.openvpn.v3.backends.AttentionRequired`

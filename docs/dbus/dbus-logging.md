@@ -78,8 +78,9 @@ Each log signal carries the information described in the section above, but each
 
 The `Log` signals provides these variables:
 
-| Name      | Type   | Description                                    |
-|-----------|--------|------------------------------------------------|
-| group     | uint   | Which log group this signal belongs to         |
-| level     | uint   | Which log verbosity level this message carries |
-| message   | string | The log message itself                         |
+| Name            | Type   | Description                                    |
+|-----------------|--------|------------------------------------------------|
+| group           | uint   | Which log group this signal belongs to         |
+| level           | uint   | Which log verbosity level this message carries |
+| [session_token] | string | Only available in signals from [`openvpn3-service-client`](dbus-service-net.openvpn.v3.client.md).  Contains a unique reference to an active session |
+| message         | string | The log message itself                         |

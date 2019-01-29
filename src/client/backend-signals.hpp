@@ -46,6 +46,12 @@ public:
         SetLogLevel(default_log_level);
     }
 
+
+    const std::string GetLogIntrospection() override
+    {
+        return LogEvent::GetIntrospection("Log", true);
+    }
+
     /**
      *  Reimplement LogSender::Log() to prefix all messages with
      *  the session token.
@@ -65,12 +71,8 @@ public:
         {
             logwr->Write(logev);
         }
-        std::stringstream msg;
-        msg << "{sessiontoken:" << session_token << "} " << logev.message;
 
-        // FIXME: This is a hackish workaround for now
-        LogEvent l(logev);
-        l.message = std::string(msg.str());
+        LogEvent l(logev, session_token);
         Send("Log", l.GetGVariantTuple());
     }
 
