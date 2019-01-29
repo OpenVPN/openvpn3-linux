@@ -159,6 +159,7 @@ noinst_PROGRAMS = \
 	src/tests/dbus/getconnectionstats \
 	src/tests/dbus/log-listener \
 	src/tests/dbus/log-listener2 \
+	src/tests/dbus/logevent-selftest \
 	src/tests/dbus/logservice1 \
 	src/tests/dbus/manager-lookupconfigname \
 	src/tests/dbus/netcfg-changeevent-selftest \
@@ -269,6 +270,9 @@ src_tests_dbus_log_listener_SOURCES = \
 src_tests_dbus_log_listener2_SOURCES = \
 	src/tests/dbus/log-listener2.cpp \
 	src/common/utils.cpp
+
+src_tests_dbus_logevent_selftest_SOURCES = \
+	src/tests/dbus/logevent-selftest.cpp
 
 src_tests_dbus_logservice1_SOURCES = \
 	src/tests/dbus/logservice1.cpp \
