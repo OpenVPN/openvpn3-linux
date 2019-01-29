@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2019  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2019  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -91,13 +91,15 @@ namespace openvpn
          * Checks if the LogCategory matches a log level where
          * logging should happen
          *
-         * @param catg  LogCategory value to check against the set log level
+         * @param logev  LogEvent where to extract the log category from
+         *               for the filter
          *
-         * @return  Returns true if this Log Category should be logged
+         * @return  Returns true if this LogEvent should be logged, based
+         *          on the log category in the LogEvent object
          */
-        bool LogFilterAllow(LogCategory catg)
+        bool LogFilterAllow(const LogEvent& logev)
         {
-            switch(catg)
+            switch(logev.category)
             {
             case LogCategory::DEBUG:
                 return log_level >= 6;
@@ -116,20 +118,6 @@ namespace openvpn
             }
         }
 
-
-        /**
-         * Checks if the LogCategory matches a log level where
-         * logging should happen
-         *
-         * @param catg  Unsigned integer representation of the LogCategory
-         *              value to check against the set log level
-         *
-         * @return  Returns true if this LogCategory should be logged
-         */
-        bool LogFilterAllow(guint catg)
-        {
-            return LogFilterAllow((LogCategory) catg);
-        }
 
     private:
         unsigned int log_level;
@@ -186,11 +174,8 @@ namespace openvpn
             // allows it.  The filtering is done against the LogCategory of
             // the message, so we need to extract the LogCategory first
 
-            guint group = 0;
-            guint catg = 0;
-            g_variant_get(values, "(uus)", &group, &catg, NULL);
-
-            if (LogFilterAllow(catg))
+            LogEvent logev(values);
+            if (LogFilterAllow(logev))
             {
                 Send("Log", values);
             }
@@ -200,7 +185,7 @@ namespace openvpn
         {
             // Don't log unless the log level filtering allows it
             // The filtering is done against the LogCategory of the message
-            if (!LogFilterAllow(logev.category))
+            if (!LogFilterAllow(logev))
             {
                 return;
             }
@@ -321,21 +306,13 @@ namespace openvpn
                                        const std::string object_path,
                                        GVariant *params)
         {
-            guint group;
-            guint catg;
-            gchar *msg = nullptr;
-            g_variant_get (params, "(uus)", &group, &catg, &msg);
-            auto logev = LogEvent((LogGroup) group, (LogCategory) catg,
-                                  std::string(msg));
+            LogEvent logev(params);
 
-            if (!LogFilterAllow(catg))
+            if (!LogFilterAllow(params))
             {
-                goto exit;
+                return;
             }
             ConsumeLogEvent(sender, interface, object_path, logev);
-
-        exit:
-            g_free(msg);
         }
     };
 
@@ -362,16 +339,9 @@ namespace openvpn
                                        const std::string object_path,
                                        GVariant *params)
         {
-            guint group;
-            guint catg;
-            gchar *msg = nullptr;
-            g_variant_get (params, "(uus)", &group, &catg, &msg);
-            auto logev = LogEvent((LogGroup) group, (LogCategory) catg,
-                                  std::string(msg));
-
+            LogEvent logev(params);
             ConsumeLogEvent(sender, interface, object_path, logev);
             ProxyLog(params);
-            g_free(msg);
         }
     };
 };

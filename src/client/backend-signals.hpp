@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2019  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2019  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -56,7 +56,7 @@ public:
     {
         // Don't log unless the log level filtering allows it
         // The filtering is done against the LogCategory of the message
-        if (!LogFilterAllow(logev.category))
+        if (!LogFilterAllow(logev))
         {
             return;
         }
@@ -67,10 +67,11 @@ public:
         }
         std::stringstream msg;
         msg << "{sessiontoken:" << session_token << "} " << logev.message;
-        Send("Log", g_variant_new("(uus)",
-                                  (guint) logev.group,
-                                  (guint) logev.category,
-                                  msg.str().c_str()));
+
+        // FIXME: This is a hackish workaround for now
+        LogEvent l(logev);
+        l.message = std::string(msg.str());
+        Send("Log", l.GetGVariantTuple());
     }
 
     /**
