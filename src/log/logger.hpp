@@ -78,6 +78,10 @@ public:
         meta << "sender=" << sender
              << ", interface=" << interface
              << ", path=" << object_path;
+        if (!logev.session_token.empty())
+        {
+            meta << ", session-token=" << logev.session_token;
+        }
         logwr->AddMeta(meta.str());
 
         // And write the real log line
