@@ -36,11 +36,11 @@ proxy those calls to the proper backend. And signals from the backend
 will be proxied back via the session manager.
 
 
-D-Bus destination: `net.openvpn.v3.backends.be${PID}` \- Object path: `/net/openvpn/v3/backends/sessions/${BE_UNIQUE_PATH}`
----------------------------------------------------------------------------------------------------------------------------
+D-Bus destination: `net.openvpn.v3.backends.be${PID}` \- Object path: `/net/openvpn/v3/backends/session`
+-------------------------------------------------------------------------------------------------------------
 
 ```
-node /net/openvpn/v3/backends/sessions/${BE\_UNIQUE\_PATH} {
+node /net/openvpn/v3/backends/session {
   interface net.openvpn.v3.backends {
     methods:
      RegistrationConfirmation(in  s token,
