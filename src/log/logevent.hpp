@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -66,7 +66,7 @@ struct LogEvent
     LogEvent(GVariant *logev)
     {
         reset();
-        Parse(logev);
+        parse_dict(logev);
     }
 
 
@@ -94,8 +94,30 @@ struct LogEvent
     }
 
     /**
+     *  Makes it possible to write LogEvents in a readable format
+     *  via iostreams, such as 'std::cout << event', where event is a
+     *  LogEvent object.
+     *
+     * @param os  std::ostream where to write the data
+     * @param ev  LogEvent to write to the stream
+     *
+     * @return  Returns the provided std::ostream together with the
+     *          decoded LogEvent information
+     */
+    friend std::ostream& operator<<(std::ostream& os , const LogEvent& ev)
+    {
+        return os << LogPrefix(ev.group, ev.category) << ev.message;
+    }
+
+    LogGroup group;
+    LogCategory category;
+    std::string message;
+
+
+private:
+    /**
      *  Parses a GVariant object containing a Log signal.  The input
-     *  GVariant needs to be of 'a{sv}' which is a named dictonary.  It
+     *  GVariant needs to be of 'a{sv}' which is a named dictionary.  It
      *  must contain the following key values to be valid:
      *
      *     - (u) log_group       Translated into LogGroup
@@ -105,7 +127,7 @@ struct LogEvent
      * @param logevent  Pointer to the GVariant object containig the
      *                  log event
      */
-    void Parse(GVariant *logevent)
+    void parse_dict(GVariant *logevent)
     {
         GVariant *d = nullptr;
         unsigned int v = 0;
@@ -138,24 +160,4 @@ struct LogEvent
         }
     }
 
-
-    /**
-     *  Makes it possible to write LogEvents in a readable format
-     *  via iostreams, such as 'std::cout << event', where event is a
-     *  LogEvent object.
-     *
-     * @param os  std::ostream where to write the data
-     * @param ev  LogEvent to write to the stream
-     *
-     * @return  Returns the provided std::ostream together with the
-     *          decoded LogEvent information
-     */
-    friend std::ostream& operator<<(std::ostream& os , const LogEvent& ev)
-    {
-        return os << LogPrefix(ev.group, ev.category) << ev.message;
-    }
-
-    LogGroup group;
-    LogCategory category;
-    std::string message;
 };
