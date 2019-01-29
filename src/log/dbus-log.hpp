@@ -142,7 +142,7 @@ namespace openvpn
         {
         }
 
-        const std::string GetLogIntrospection()
+        virtual const std::string GetLogIntrospection()
         {
             return
                 "        <signal name='Log'>"
