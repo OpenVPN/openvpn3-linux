@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(openvpn3_linux C CXX)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
@@ -20,8 +20,6 @@ set(OPENVPN3_LINUX_CONFIG_DEFINES
         -DPACKAGE_GUIVERSION="2"
         -DOPENVPN_GROUP="openvpn"
         -DPACKAGE_NAME="openvpn3-linux")
-set(OPENVPN3_LINUX_CONFIG_DEFINES
-        ${OPENVPN3_LINUX_CONFIG_DEFINES} PARENT_SCOPE)
 add_definitions(${OPENVPN3_LINUX_CONFIG_DEFINES})
 
 set(OPENVPN3_LINUX_LIBS
@@ -31,7 +29,6 @@ set(OPENVPN3_LINUX_LIBS
         ${OPENSSL_LIBRARIES}
         ${JSONCPP_LIBRARIES}
         ${UUID})
-set(OPENVPN3_LINUX_LIBS ${OPENVPN3_LINUX_LIBS} PARENT_SCOPE)
 link_libraries(${OPENVPN3_LINUX_LIBS})
 
 if(NOT DEFINED OPENVPN3_LINUX_ROOT)
@@ -45,8 +42,15 @@ set(OPENVPN3_LINUX_INCLUDE_DIRS
         ${GLIB2_INCLUDE_DIRS}
         ${JSONCPP_INCLUDE_DIRS}
         ${OPENVPN3_LINUX_ROOT}/vendor/asio/asio/include)
-set(OPENVPN3_LINUX_INCLUDE_DIRS ${OPENVPN3_LINUX_INCLUDE_DIRS} PARENT_SCOPE)
 include_directories(${OPENVPN3_LINUX_INCLUDE_DIRS})
+
+get_directory_property(hasParent PARENT_DIRECTORY)
+if(hasParent)
+    set(OPENVPN3_LINUX_CONFIG_DEFINES
+            ${OPENVPN3_LINUX_CONFIG_DEFINES} PARENT_SCOPE)
+    set(OPENVPN3_LINUX_LIBS ${OPENVPN3_LINUX_LIBS} PARENT_SCOPE)
+    set(OPENVPN3_LINUX_INCLUDE_DIRS ${OPENVPN3_LINUX_INCLUDE_DIRS} PARENT_SCOPE)
+endif()
 
 file(WRITE config.h "")
 
@@ -62,6 +66,7 @@ add_executable(openvpn3-service-client
         ${OPENVPN3_LINUX_ROOT}/src/common/timestamp.cpp
         ${OPENVPN3_LINUX_ROOT}/src/common/utils.cpp
         ${OPENVPN3_LINUX_ROOT}/src/configmgr/proxy-configmgr.hpp
+        ${OPENVPN3_LINUX_ROOT}/src/configmgr/overrides.cpp
         ${OPENVPN3_LINUX_ROOT}/src/log/dbus-log.hpp
         ${OPENVPN3_LINUX_ROOT}/src/log/proxy-log.hpp
         ${OPENVPN3_LINUX_ROOT}/src/netcfg/proxy-netcfg.hpp
@@ -70,6 +75,7 @@ add_executable(openvpn3-service-client
 add_executable(openvpn3-service-configmgr
         ${OPENVPN3_LINUX_ROOT}/src/configmgr/openvpn3-service-configmgr.cpp
         ${OPENVPN3_LINUX_ROOT}/src/configmgr/configmgr.hpp
+        ${OPENVPN3_LINUX_ROOT}/src/configmgr/overrides.cpp
         ${OPENVPN3_LINUX_ROOT}/src/common/core-extensions.hpp
         ${OPENVPN3_LINUX_ROOT}/src/common/lookup.cpp
         ${OPENVPN3_LINUX_ROOT}/src/common/timestamp.cpp
@@ -79,14 +85,17 @@ add_executable(openvpn3-service-configmgr
 
 add_executable(openvpn3
         ${OPENVPN3_LINUX_ROOT}/src/ovpn3cli/openvpn3.cpp
+        ${OPENVPN3_LINUX_ROOT}/src/ovpn3cli/arghelpers.cpp
+        ${OPENVPN3_LINUX_ROOT}/src/ovpn3cli/commands/version.cpp
+        ${OPENVPN3_LINUX_ROOT}/src/ovpn3cli/commands/config.cpp
+        ${OPENVPN3_LINUX_ROOT}/src/ovpn3cli/commands/session.cpp
+        ${OPENVPN3_LINUX_ROOT}/src/ovpn3cli/commands/log.cpp
         ${OPENVPN3_LINUX_ROOT}/src/ovpn3cli/arghelpers.hpp
         ${OPENVPN3_LINUX_ROOT}/src/common/lookup.cpp
         ${OPENVPN3_LINUX_ROOT}/src/common/lookup.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/ovpn3cli/commands/config.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/ovpn3cli/commands/log.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/ovpn3cli/commands/session.hpp
         ${OPENVPN3_LINUX_ROOT}/src/configmgr/proxy-configmgr.hpp
         ${OPENVPN3_LINUX_ROOT}/src/configmgr/overrides.hpp
+        ${OPENVPN3_LINUX_ROOT}/src/configmgr/overrides.cpp
         ${OPENVPN3_LINUX_ROOT}/src/sessionmgr/proxy-sessionmgr.hpp
         ${OPENVPN3_LINUX_ROOT}/src/dbus/requiresqueue-proxy.hpp
         ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.hpp
@@ -143,4 +152,3 @@ add_executable(openvpn3-service-sessionmgr
         ${OPENVPN3_LINUX_ROOT}/src/common/utils.cpp
         ${OPENVPN3_LINUX_ROOT}/src/log/dbus-log.hpp
         )
-
