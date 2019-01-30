@@ -2,91 +2,47 @@ OpenVPN 3 Linux client
 ======================
 
 This is the next generation OpenVPN client for Linux.  This project is very
-different from the more classic OpenVPN 2.x versions.  First of all, this is
+different from the more classic OpenVPN 2.x versions.  First, this is
 currently only a pure client-only implementation.
 
-This client depends on D-Bus to function.  The implementation tries to resolve
-a lot of issues related to privilege separation and that the VPN tunnel can
-still access information needed by the front-end user which starts a tunnel.
+The biggest change from the classic OpenVPN 2.x generation is that it does
+not need to be started by a root or otherwise privileged account any more.
+By default, all users on the system will have access to start and manage
+their own VPN tunnels.  It will also support configuring DNS out-of-the-box.
 
-All of the backend services will normally start automatically.  And when they
-are lingering idle for a little while with no data to maintain, they will
-shut-down automatically.
+The same OpenVPN 3 Core library which is used in the OpenVPN Connect clients
+is also used in this OpenVPN 3 client.  This implementation does not support
+all options OpenVPN 2.x does, but if you have a functional configuration
+with OpenVPN Connect (typically on Android or iOS devices) it will work with
+this client.  In general OpenVPN 3 supports routed TUN configurations; TAP
+and bridged setups are unsupported and will not work.
 
-There are six services which is good to beware of:
-
-* openvpn3-service-configmgr
-
-  This is the configuration manager.  All configurations will be uploaded to
-  this service before a tunnel is started.  This process is started as the
-  openvpn user.
-
-* openvpn3-service-sessionmgr
-
-  This manages all VPN tunnels which is about to start or has started.  It
-  takes care of communicating with the backend tunnel processes and ensures
-  only users with the right access levels can manage the various tunnels.
-  This service is started as the openvpn user.
-
-* openvpn3-service-backendstart
-
-  This is more or less a helper service and is only used by the session manager
-  The only task this service has is to start a new VPN client backend processes
-  (the VPN tunnel instances)
-
-* openvpn3-service-client
-
-  This is to be started by the openvpn3-service-backend only.  One such
-  process is started per VPN client.  Once it has started, it registers itself
-  with the session manager and the session manager provides it with the needed
-  details so it can retrieve the proper configuration from the configuration
-  manager.  This service will depend on the openvpn3-service-netcfg to manage
-  the tun interface and related configuration.
-
-* openvpn3-service-netcfg
-
-  This provides a service similar to a VPN API on other platforms.  It is
-  responsible for creating, managing and destroying of tun interfaces, configure
-  them as well as handle the DNS configuration provided by the VPN server.
-  This is the most privileged process which only have a few capabilities
-  enabled (such as `CAP_NET_ADMIN` and possibly `CAP_DAC_OVERRIDE` or
-  `CAP_NET_RAW`).  With these capabilities, the service can run as the
-  openvpn user.  Currently DNS configuration is done by manipulating
-  `/etc/resolv.conf` directly, but can be extended to support better methods
-  (systemd-resolved and NetworkManager are being investigated as potential
-  solutions).  When integrating with other services, the `CAP_DAC_OVERRIDE`
-  privilege might not be needed.  The `CAP_NET_RAW` capability is only needed
-  when using `--redirect-method bind-device`.
-
-* openvpn3-service-logger
-
-  This service will listen for log events happening from all the various
-  backend services.  Supports writing to the console (stdout), files or
-  redirect to syslog.  This is also automatically started when needed, if
-  it isn't already running.
+On a more technical level, this client builds on D-Bus and does also ship
+with a Python 3 module which can also be used to implement your own OpenVPN
+client front-end.  Any language which supports D-Bus bindings can also be
+used.
 
 
-To interact with these services, there are two front-end tools provided:
+Quick start: Using the `openvpn2` front-end
+-----------------------------------------
 
-* openvpn3
+The `openvpn2` front-end is a command line interface which tries to be
+similar to the old and classic openvpn-2.x generation.  It supports most of
+the options used by clients and will ignore unsupported options which does
+not impact the ability to get a connection running.
 
-  This is a brand new command line interface which does not look like
-  OpenVPN 2.x at all.  It can be used to start, stop, pause, resume tunnels
-  and retrieve tunnel statistics. It can also be used as import, retrieve
-  and manage configurations stored in the configuration manager and retrieve
-  tunnel statistics for running tunnels.
+* Starting a VPN session:
 
-* openvpn2
+      $ openvpn2 --config my-vpn-config.conf
 
-  This is a simpler interface which tries to look and behave a bit more
-  like the classic OpenVPN 2.x versions.  This interface is written in
-  Python.  It does only allow options which are supported by the OpenVPN 3
-  Core library, plus there are a handful options which are ignored as it
-  is possible to establish connections without those options active.
+If the provided configuration contains the `--daemon` option, it will
+provide the session path related to this session and return to the command
+line again.  From this point of, this session needs to be managed via the
+`openvpn3` front-end.
 
-  When running openvpn2 with `--daemon` it will return a D-Bus path to the
-  VPN session.  This path can be used by the `openvpn3` utility to further
-  manage this session.
+For more information, see the [`openvpn2(1)`](docs/man/openvpn2.1.rst) and
+[`openvpn3-session-manage(1)`](docs/man/openvpn3-session-manage.1.rst)
+man-pages.
 
 
 Using the openvpn3 front-end
@@ -115,6 +71,10 @@ The `openvpn3` program is the main and preferred command line user interface.
 
   3. Start a new VPN session
 
+         $ openvpn3 session-start --config my-vpn-config.conf
+
+     or
+
          $ openvpn3 session-start --config-path /net/openvpn/v3/configuration/d45d4263x42b8x4669xa8b2x583bcac770b2
 
 * Listing established sessions
@@ -125,12 +85,20 @@ The `openvpn3` program is the main and preferred command line user interface.
   For already running tunnels, it is possible to extract live statistics
   of each VPN session individually
 
+      $ openvpn3 session-stats --config my-vpn-config.conf
+
+    or
+
       $ openvpn3 session-stats --path /net/openvpn/v3/sessions/46fff369sd155s41e5sb97fsbb9d54738124
 
 * Managing VPN sessions
   For running VPN sessions, you manage them using the
   `openvpn3 session-manage` command, again by providing the session path.  For
   example, to restart a connection:
+
+      $ openvpn3 session-manage --config my-vpn-config.conf --restart
+
+    or
 
       $ openvpn3 session-manage --path /net/openvpn/v3/sessions/46fff369sd155s41e5sb97fsbb9d54738124 --restart
 
@@ -142,36 +110,122 @@ All the `openvpn3` operations are also described via the `--help` option.
        $ openvpn3 session-start --help
 
 
-Using openvpn2 front-end
-------------------------
-
-The `openvpn2` front-end is a simpler interface which tries to be somewhat
-similar to the old and classic openvpn-2.x generation.  It supports most of
-the options used by clients, but not everything.  This might also be a
-limitation of the OpenVPN 3 Core library this openvpn3-linux client builds
-on.
-
-* Starting a VPN session:
-
-      $ openvpn2 --config my-vpn-config.conf
-
-If the provided configuration contains the `--daemon` option, it will
-provide the session path related to this session and return to the command
-line again.  From this point of, this session is now to be managed via the
-`openvpn3` front-end.
+For more information, see the [`openvpn3(1)`](docs/man/openvpn3.1.rst),
+[`openvpn3-session-start(1)`](docs/man/openvpn3-session-start.1.rst),
+[`openvpn3-session-manage(1)`](docs/man/openvpn3-session-manage.1.rst) and
+[`openvpn3-config-import(1)`](docs/man/openvpn3-config-import.1.rst) man-pages.
 
 
 Auto-loading/starting VPN tunnels
 ---------------------------------
 
-To enable loading configuration profiles and possibly also start them
-automatically, the `openvpn3-autoload` tool will handle this.  But it
-requires a little bit of preparations.  By default it will look for
+The `openvpn3-autoload` utility is used to pre-load configuration profiles
+and possibly also start tunnels.  This requires a little bit of preparations.
+When starting it via `systemctl start openvpn3-autoload` it will look for
 configuration profiles found inside `/etc/openvpn3/autoload` which has
 a corresponding `.autoload` configuration present in addition.  This tells
 both the Configuration Manager and Session Manager how to process the
-VPN configuration profile.  For more details, look at the
-[OpenVPN 3 Autoload feature](docs/openvpn3-autoload.md) documentation.
+VPN configuration profile.
+
+For more details, look at the [`openvpn3-autoload(8)`](docs/man/openvpn3-autoload.8.rst) man-page.
+
+
+Introduction to the OpenVPN 3 Linux architecture
+------------------------------------------------
+
+This client depends on D-Bus to function.  The implementation tries to resolve
+a lot of issues related to privilege separation and that the VPN tunnel can
+still access information needed by the front-end user which starts a tunnel.
+
+There are six services which is good to beware of:
+
+All of the backend services will normally start automatically.  And when they
+are idle for a little while with no data to maintain, they will shutdown
+automatically.
+
+* openvpn3-service-configmgr
+
+  This is the configuration manager.  All configuration profiles will be
+  uploaded to this service before a tunnel is started.  This process is
+  started as the `openvpn` user.
+
+* openvpn3-service-sessionmgr
+
+  This manages all VPN tunnels which is about to start or has started.  It
+  takes care of communicating with the backend tunnel processes and ensures
+  only users with the right access levels can manage the various tunnels.
+  This service is started as the `openvpn` user.
+
+* openvpn3-service-backendstart
+
+  This is more or less a helper service and is only used by the session manager
+  The only task this service has is to start a new VPN client backend processes
+  (the VPN tunnel instances)
+
+* openvpn3-service-client
+
+  This is to be started by the `openvpn3-service-backendstart` only.  One such
+  process is started per VPN client.  Once it has started, it registers itself
+  with the session manager and the session manager provides it with the needed
+  details so it can retrieve the proper configuration profile from the
+  configuration manager.  This service will depend on the
+  `openvpn3-service-netcfg` to manage the tun interface and related
+  configuration.
+
+* openvpn3-service-netcfg
+
+  This provides a service similar to a VPN API on other platforms.  It
+  is responsible for creating, managing and destroying of TUN interfaces,
+  configure them as well as handle the DNS configuration provided by the
+  VPN server.  This is the most privileged process which only have a few
+  capabilities enabled (such as `CAP_NET_ADMIN` and possibly `CAP_DAC_OVERRIDE`
+  or `CAP_NET_RAW`) by default.  With these capabilities, the service can run
+  as the `openvpn` user.  Currently DNS configuration is done by manipulating
+  `/etc/resolv.conf` directly, but can be extended to support better methods
+  (systemd-resolved and NetworkManager are being investigated as potential
+  solutions).  When integrating with other services, the `CAP_DAC_OVERRIDE`
+  privilege might not be needed.  The `CAP_NET_RAW` capability is only needed
+  when using `--redirect-method bind-device`.
+
+* openvpn3-service-logger
+
+  This service will listen for log events happening from all the various
+  backend services.  It supports writing these events to the console
+  (stdout), files or redirect to syslog.  This is also automatically started
+  when needed, if it isn't already running.
+
+To interact with these services, there are three front-end tools provided:
+
+* openvpn3
+
+  This is a brand new command line interface which does not look like
+  OpenVPN 2.x at all.  It can be used to start, stop, pause, resume tunnels
+  and retrieve tunnel statistics.  It can also be used as import, retrieve
+  and manage configurations stored in the configuration manager and retrieve
+  tunnel statistics for running tunnels.
+
+* openvpn2
+
+  This is a simpler interface which tries to look and behave a bit more
+  like the classic OpenVPN 2.x versions.  This interface is written in
+  Python.  It does only allow options which are supported by the OpenVPN 3
+  Core library, plus there are a handful options which are ignored as it
+  is possible to establish connections without those options active.
+
+  When running openvpn2 with `--daemon` it will return a D-Bus path to the
+  VPN session.  This path can be used by the `openvpn3` utility to further
+  manage this session.
+
+* openvpn3-admin
+
+  This will mostly only work when run as `root`.  This is used to adjust
+  some settings or retrieve information from some of the backend services.
+
+More information can be found in the following man-pages:
+[`openvpn3-linux(7)`](docs/man/openvpn3-linux.7.rst),
+[`openvpn3(1)`](docs/man/openvpn3.1.rst),
+[`openvpn2(1)`](docs/man/openvpn2.1.rst) and
+[`openvpn3-admin(8)`](docs/man/openvpn3-admin.8.rst).
 
 
 Pre-built binaries
@@ -274,7 +328,7 @@ Completing these steps will provide you with a `./configure` script.
 
 ### Adding the `openvpn` user and group accounts
 The default configuration for the services assumes a service account
-`openvpn` to be present. If it does not exist you should add one, e.g. by:
+`openvpn` to be present.  If it does not exist you should add one, e.g. by:
 
     # groupadd -r openvpn
     # useradd -r -s /sbin/nologin -g openvpn openvpn
@@ -289,7 +343,7 @@ will build the client.
 - Run: ``make install``
 
 You might need to also reload D-Bus configuration to make D-Bus aware of
-the newly installed service.  On most system this happens automatically,
+the newly installed service.  On most system this happens automatically
 but occasionally a manual operation is needed:
 
     # systemctl reload dbus
@@ -369,6 +423,12 @@ This log service can also be managed (even though fairly few options
 to tweak) via `openvpn3 log-service`.  The most important feature here is
 probably to modify the log level.
 
+For more information about logging, see the
+[`openvpn3-service-logger(8)`](docs/man/openvpn3-service-logger.8.rst),
+man page, [D-Bus Logging](docs/dbus/dbus-logging.md) and
+[`net.openvpn.v3.log` D-Bus service](docs/dbus/dbus-service-net.openvpn.v3.log.md)
+documentation.
+
 
 General debugging
 -----------------
@@ -442,8 +502,8 @@ Contribution
 DISCLAIMER
 ----------
 
-The OpenVPN 3 Linux project is now considered BETA quality.   It is fully
-functional and quite stable when running.
+The OpenVPN 3 Linux project is BETA quality.  It is fully functional and quite
+stable when running.
 
 The OpenVPN 3 Core library is also used by the OpenVPN Connect and
 PrivateTunnel clients in addition to the OpenVPN for Android client (need to
