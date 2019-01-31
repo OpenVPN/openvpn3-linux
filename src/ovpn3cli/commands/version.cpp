@@ -36,7 +36,7 @@
  */
 int cmd_version(ParsedArgs args)
 {
-    std::cout << get_version("/openvpn3") << std::endl;
+    std::cout << get_version("/" + args.GetArgv0()) << std::endl;
     return 0;
 }
 
