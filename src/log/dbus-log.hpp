@@ -168,16 +168,14 @@ namespace openvpn
             Send("StatusChange", statusev.GetGVariantTuple());
         }
 
-        void ProxyLog(GVariant *values)
+        void ProxyLog(const LogEvent& logev)
         {
             // Don't proxy this log message unless the log level filtering
             // allows it.  The filtering is done against the LogCategory of
             // the message, so we need to extract the LogCategory first
-
-            LogEvent logev(values);
             if (LogFilterAllow(logev))
             {
-                Send("Log", values);
+                Send("Log", logev.GetGVariantTuple());
             }
         }
 
@@ -341,7 +339,7 @@ namespace openvpn
         {
             LogEvent logev(params);
             ConsumeLogEvent(sender, interface, object_path, logev);
-            ProxyLog(params);
+            ProxyLog(logev);
         }
     };
 };
