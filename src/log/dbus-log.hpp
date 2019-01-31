@@ -326,10 +326,20 @@ namespace openvpn
         {
         }
 
-        virtual void ConsumeLogEvent(const std::string sender,
-                                     const std::string interface,
-                                     const std::string object_path,
-                                     const LogEvent& logev) = 0;
+        void ConsumeLogEvent(const std::string sender,
+                             const std::string interface,
+                             const std::string object_path,
+                             const LogEvent& logev)
+        {
+            // This is a dummy method and is not used by LogConsumerProxy.
+            // The InterceptLogEvent() method is used instead, which allows
+            // the LogEvent to be modified on-the-fly before being proxied.
+        }
+
+        virtual LogEvent InterceptLogEvent(const std::string sender,
+                                           const std::string interface,
+                                           const std::string object_path,
+                                           const LogEvent& logev) = 0;
 
     protected:
         virtual void process_log_event(const std::string sender,
@@ -338,8 +348,8 @@ namespace openvpn
                                        GVariant *params)
         {
             LogEvent logev(params);
-            ConsumeLogEvent(sender, interface, object_path, logev);
-            ProxyLog(logev);
+            LogEvent ev = InterceptLogEvent(sender, interface, object_path, logev);
+            ProxyLog(ev);
         }
     };
 };

@@ -208,14 +208,17 @@ public:
      * @param group        LogGroup reference of the log event
      * @param catg         LogCategory reference of the log event
      * @param msg          The log message itself
+     *
+     * @returns Returns the LogEvent to be used further.
      */
-    void ConsumeLogEvent(const std::string sender,
-                         const std::string interface,
-                         const std::string object_path,
-                         const LogEvent& logev)
+    LogEvent InterceptLogEvent(const std::string sender,
+                               const std::string interface,
+                               const std::string object_path,
+                               const LogEvent& logev) override
     {
         last_logev = logev;
         last_logev.session_token.clear();
+        return last_logev;
     }
 
 
