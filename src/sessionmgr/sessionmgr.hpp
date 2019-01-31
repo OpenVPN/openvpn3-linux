@@ -228,18 +228,9 @@ public:
     {
         if( last_logev.empty())
         {
-            return NULL;  // Nothing have been logged, nothing to report
+            return nullptr;  // Nothing have been logged, nothing to report
         }
-        GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
-        g_variant_builder_add (b, "{sv}", "log_group",
-                               g_variant_new_uint32((guint32) last_logev.group));
-        g_variant_builder_add (b, "{sv}", "log_category",
-                               g_variant_new_uint32((guint32) last_logev.category));
-        g_variant_builder_add (b, "{sv}", "log_message",
-                               g_variant_new_string(last_logev.message.c_str()));
-        GVariant *ret = g_variant_builder_end(b);
-        g_variant_builder_unref(b);
-        return ret;
+        return last_logev.GetGVariantDict();
     }
 
     void SetLogLevel(unsigned int loglev)
