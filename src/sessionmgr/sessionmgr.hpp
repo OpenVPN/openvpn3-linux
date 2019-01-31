@@ -215,6 +215,7 @@ public:
                          const LogEvent& logev)
     {
         last_logev = logev;
+        last_logev.session_token.clear();
     }
 
 
