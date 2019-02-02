@@ -87,7 +87,7 @@ namespace openvpn
             {
                 THROW_DBUSEXCEPTION("DBusConnectionCreds",
                                     "Failed to retrieve UID for bus name '"
-                                    + busname + "': " + excp.getRawError());
+                                    + busname + "': " + excp.GetRawError());
             }
         }
 
@@ -114,7 +114,7 @@ namespace openvpn
             {
                 THROW_DBUSEXCEPTION("DBusConnectionCreds",
                                     "Failed to retrieve process ID for bus name '"
-                                    + busname + "': " + excp.getRawError());
+                                    + busname + "': " + excp.GetRawError());
             }
         }
 
@@ -145,7 +145,7 @@ namespace openvpn
             {
                 THROW_DBUSEXCEPTION("DBusConnectionCreds",
                                     "Failed to retrieve unique bus ID for bus name '"
-                                    + busname + "': " + excp.getRawError());
+                                    + busname + "': " + excp.GetRawError());
             }
         }
     };
@@ -201,17 +201,6 @@ namespace openvpn
         {
             return error.c_str();
         }
-
-        const std::string& err() const noexcept
-        {
-            return std::move(error_uid);
-        }
-
-        const std::string getUserError() const noexcept
-        {
-            return std::move(error);
-        }
-
 
         /**
          *  Wrapper for more easily returning an authorization failure

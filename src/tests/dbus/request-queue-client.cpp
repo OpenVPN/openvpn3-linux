@@ -127,7 +127,7 @@ int main()
                 }
                 catch (DBusException &excp)
                 {
-                    std::cerr << "-- ERROR -- |" << excp.getRawError() << "|" << std::endl;
+                    std::cerr << "-- ERROR -- |" << excp.GetRawError() << "|" << std::endl;
                     return 1;
                 }
             }
@@ -255,7 +255,7 @@ int main()
             }
             catch (DBusException &excp)
             {
-                std::cerr << "-- ERROR -- |" << excp.getRawError() << "|" << std::endl;
+                std::cerr << "-- ERROR -- |" << excp.GetRawError() << "|" << std::endl;
                 return 1;
             }
             g_variant_unref(e);

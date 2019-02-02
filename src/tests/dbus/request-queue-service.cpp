@@ -89,7 +89,7 @@ public:
         catch (DBusException& excp)
         {
             std::cout << "Failed to retrieve sender credentials: "
-                       << excp.getRawError();
+                       << excp.GetRawError();
         }
 
         if ("t_QueueCheckTypeGroup" == method_name)

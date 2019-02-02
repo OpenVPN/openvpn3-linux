@@ -62,10 +62,7 @@ class LogException : public std::exception
         {
             return details.c_str();
         }
-        const std::string& err() const noexcept
-        {
-            return std::move(details);
-        }
+
 
     private:
         std::string errorstr;

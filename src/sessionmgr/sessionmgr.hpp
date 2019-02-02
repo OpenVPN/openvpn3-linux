@@ -711,7 +711,7 @@ public:
                 ping = false;
                 THROW_DBUSEXCEPTION("SessionObject",
                                     "Backend did not respond: "
-                                    + std::string(dbserr.getRawError()));
+                                    + std::string(dbserr.GetRawError()));
             }
 
             if (!registered)
@@ -869,7 +869,7 @@ public:
             std::string errmsg;
 
             Debug("Exception [callback_method_call("+ method_name + ")]: "
-                  + dberr.getRawError());
+                  + dberr.GetRawError());
 
             if (!registered && "Disconnect" == method_name)
             {
@@ -926,7 +926,8 @@ public:
             }
             else
             {
-                errmsg = "Failed communicating with VPN backend: " + dberr.getRawError();
+                errmsg = "Failed communicating with VPN backend: "
+                       + std::string(dberr.GetRawError());
             }
 
             if (registered && !selfdestruct_complete && !do_selfdestruct)
@@ -949,7 +950,7 @@ public:
         }
         catch (DBusCredentialsException& excp)
         {
-            LogWarn(excp.err());
+            LogWarn(excp.what());
             excp.SetDBusError(invoc);
         }
     };
@@ -1000,7 +1001,7 @@ public:
         }
         catch (DBusCredentialsException& excp)
         {
-            LogWarn(excp.err());
+            LogWarn(excp.what());
             excp.SetDBusError(error, G_IO_ERROR, G_IO_ERROR_FAILED);
             return NULL;
         }
@@ -1182,10 +1183,10 @@ public:
         }
         catch (DBusCredentialsException& excp)
         {
-            LogWarn(excp.err());
+            LogWarn(excp.what());
             throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
                                         obj_path, intf_name, property_name,
-                                        excp.getUserError());
+                                        excp.what());
         }
 
         try

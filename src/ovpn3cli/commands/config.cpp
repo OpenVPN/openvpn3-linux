@@ -344,7 +344,7 @@ static int config_manage_show(OpenVPN3ConfigurationProxy& conf,
     }
     catch (DBusException& err)
     {
-        throw CommandException("config-manage --show", err.getRawError());
+        throw CommandException("config-manage --show", err.GetRawError());
     }
 }
 
@@ -517,11 +517,11 @@ static int cmd_config_manage(ParsedArgs args)
     }
     catch (DBusPropertyException& err)
     {
-        throw CommandException("config-manage", err.getRawError());
+        throw CommandException("config-manage", err.GetRawError());
     }
     catch (DBusException& err)
     {
-        throw CommandException("config-manage", err.getRawError());
+        throw CommandException("config-manage", err.GetRawError());
     }
     catch (...)
     {
@@ -896,7 +896,7 @@ static int cmd_config_show(ParsedArgs args)
     }
     catch (DBusException& err)
     {
-        throw CommandException("config-show", err.getRawError());
+        throw CommandException("config-show", err.GetRawError());
     }
 }
 
@@ -981,7 +981,7 @@ static int cmd_config_remove(ParsedArgs args)
     }
     catch (DBusException& err)
     {
-        throw CommandException("config-remove", err.getRawError());
+        throw CommandException("config-remove", err.GetRawError());
     }
     catch (...)
     {

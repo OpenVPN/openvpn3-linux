@@ -47,28 +47,28 @@ using namespace openvpn;
  * indicates the VPN backend client needs more information from the
  * frontend process.
  */
-class ReadyException : public DBusException
+class ReadyException : public std::exception
 {
 public:
-    ReadyException(const std::string& err, const char *filen,
-                   const unsigned int linenum, const char *fn) noexcept
-        : DBusException("ReadyException", err, filen, linenum, fn)
+    ReadyException(const std::string& err) noexcept
+        : errorstr(err)
     {
     }
 
 
-    virtual ~ReadyException() noexcept
-    {
-    }
+    virtual ~ReadyException() = default;
 
 
     virtual const char* what() const noexcept
     {
-        return std::string("[ReadyException]" + errorstr).c_str();
+        return errorstr.c_str();
     }
 
+
+private:
+    std::string errorstr;
 };
-#define THROW_READYEXCEPTION(fault_data) throw ReadyException(fault_data, __FILE__, __LINE__, __FUNCTION__)
+
 
 
 /**
@@ -301,10 +301,10 @@ public:
         catch (DBusException& excp)
         {
             // Throw D-Bus errors related to "Ready" errors as ReadyExceptions
-            std::string e = excp.getRawError();
+            std::string e(excp.GetRawError());
             if (e.find("net.openvpn.v3.error.ready") != std::string::npos)
             {
-                THROW_READYEXCEPTION(excp.getRawError());
+                throw ReadyException(e);
             }
             // Otherwise, just rethrow the DBusException
             throw;

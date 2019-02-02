@@ -77,12 +77,6 @@ const char* RequiresQueueException::what() const noexcept
 }
 
 
-const std::string& RequiresQueueException::err() const noexcept
-{
-    return error;
-}
-
-
 void RequiresQueueException::GenerateDBusError(GDBusMethodInvocation *invocation)
 {
     std::string errnam = (!errorname.empty() ? errorname : "net.openvpn.v3.error.undefined");

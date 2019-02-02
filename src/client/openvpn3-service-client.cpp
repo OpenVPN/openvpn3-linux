@@ -559,7 +559,7 @@ public:
         }
         catch (DBusCredentialsException& excp)
         {
-            signal.LogCritical(excp.err());
+            signal.LogCritical(excp.what());
             excp.SetDBusError(invoc);
         }
         catch (const std::exception& excp)
@@ -640,7 +640,7 @@ public:
         }
         catch (DBusCredentialsException& excp)
         {
-            signal.LogCritical(excp.err());
+            signal.LogCritical(excp.what());
             excp.SetDBusError(error, G_IO_ERROR, G_IO_ERROR_FAILED);
         }
         catch (...)
@@ -693,7 +693,7 @@ public:
         }
         catch (DBusCredentialsException& excp)
         {
-            signal.LogCritical(excp.err());
+            signal.LogCritical(excp.what());
             excp.SetDBusError(error, G_IO_ERROR, G_IO_ERROR_FAILED);
         }
         catch (DBusException& excp)

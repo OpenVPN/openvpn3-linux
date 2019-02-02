@@ -552,7 +552,7 @@ public:
             }
             catch (DBusCredentialsException& excp)
             {
-                LogWarn(excp.err());
+                LogWarn(excp.what());
                 excp.SetDBusError(invoc);
             }
         }
@@ -584,7 +584,7 @@ public:
             }
             catch (DBusCredentialsException& excp)
             {
-                LogWarn(excp.err());
+                LogWarn(excp.what());
                 excp.SetDBusError(invoc);
             }
         }
@@ -606,7 +606,7 @@ public:
             }
             catch (DBusCredentialsException& excp)
             {
-                LogWarn(excp.err());
+                LogWarn(excp.what());
                 excp.SetDBusError(invoc);
             }
         }
@@ -644,7 +644,7 @@ public:
             }
             catch (DBusCredentialsException& excp)
             {
-                LogWarn(excp.err());
+                LogWarn(excp.what());
                 excp.SetDBusError(invoc);
             }
             catch (DBusException& excp)
@@ -688,7 +688,7 @@ public:
             }
             catch (DBusCredentialsException& excp)
             {
-                LogWarn(excp.err());
+                LogWarn(excp.what());
                 excp.SetDBusError(invoc);
             }
         }
@@ -717,7 +717,7 @@ public:
             }
             catch (DBusCredentialsException& excp)
             {
-                LogWarn(excp.err());
+                LogWarn(excp.what());
                 excp.SetDBusError(invoc);
             }
         }
@@ -746,7 +746,7 @@ public:
             }
             catch (DBusCredentialsException& excp)
             {
-                LogWarn(excp.err());
+                LogWarn(excp.what());
                 excp.SetDBusError(invoc);
             }
         }
@@ -770,7 +770,7 @@ public:
             }
             catch (DBusCredentialsException& excp)
             {
-                LogWarn(excp.err());
+                LogWarn(excp.what());
                 excp.SetDBusError(invoc);
             }
         }
@@ -789,7 +789,7 @@ public:
             }
             catch (DBusCredentialsException& excp)
             {
-                LogWarn(excp.err());
+                LogWarn(excp.what());
                 excp.SetDBusError(invoc);
             }
         }
@@ -881,7 +881,7 @@ public:
         }
         catch (DBusCredentialsException& excp)
         {
-            LogWarn(excp.err());
+            LogWarn(excp.what());
             excp.SetDBusError(error, G_IO_ERROR, G_IO_ERROR_FAILED);
             return NULL;
         }
@@ -952,7 +952,7 @@ public:
                     alias = nullptr;
                     throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_EXISTS,
                                                 obj_path, intf_name, property_name,
-                                                err.getRawError().c_str());
+                                                err.GetRawError());
                 }
             }
             else if (("name" == property_name) && conn)
@@ -992,10 +992,10 @@ public:
         }
         catch (DBusCredentialsException& excp)
         {
-            LogWarn(excp.err());
+            LogWarn(excp.what());
             throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
                                         obj_path, intf_name, property_name,
-                                        excp.getUserError());
+                                        excp.what());
         }
     };
 

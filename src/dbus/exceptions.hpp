@@ -52,23 +52,21 @@ namespace openvpn
 
         virtual const char* what() const noexcept
         {
-#ifdef DEBUG_EXCEPTIONS
-	    return sourceref.c_str();
-#else
-	    return errorstr.c_str();
-#endif
+            return sourceref.c_str();
         }
 
 
-        const std::string& err() const noexcept
+        /**
+         *  Using @what() may return a modified error message, containing
+         *  more debug details.  This method will instead just return the
+         *  unmodified error message from the the DBusException constructor.
+         *
+         * @return  Returns a const char * containing the unmodified
+         *          error message.
+         */
+        virtual const char* GetRawError() const noexcept
         {
-            return std::move(std::string(sourceref + errorstr));
-        }
-
-
-        std::string getRawError() const noexcept
-        {
-            return errorstr;
+            return errorstr.c_str();
         }
 
 
@@ -118,8 +116,13 @@ namespace openvpn
                                const char *filen, const unsigned int linenum,
                                const char *fn, const std::string err) noexcept
         {
+#ifdef DEBUG_EXCEPTIONS
             sourceref = "{" + std::string(filen) + ":" + std::to_string(linenum)
                       + ", " + classn + "::" + std::string(fn) + "()} " + err;
+#else
+            sourceref = err;
+#endif
+
         }
 
     };
@@ -182,15 +185,9 @@ namespace openvpn
         }
 
 
-        const std::string& err() const noexcept
+        virtual const char* GetRawError() const noexcept
         {
-            return std::move(detailed);
-        }
-
-
-        std::string getRawError() const noexcept
-        {
-            return errorstr;
+            return errorstr.c_str();
         }
 
 

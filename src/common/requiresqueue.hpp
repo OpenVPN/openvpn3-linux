@@ -84,7 +84,6 @@ public:
     virtual ~RequiresQueueException() noexcept {}
 
     virtual const char* what() const noexcept;
-    const std::string& err() const noexcept;
 
 
     /**

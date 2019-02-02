@@ -77,7 +77,7 @@ int main()
     }
     catch (DBusException &excp)
     {
-        std::cerr << "-- ERROR -- |" << excp.getRawError() << "|" << std::endl;
+        std::cerr << "-- ERROR -- |" << excp.GetRawError() << "|" << std::endl;
         return 1;
     }
     return 0;

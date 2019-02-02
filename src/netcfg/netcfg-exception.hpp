@@ -47,10 +47,6 @@ public:
         return errormsg.c_str();
     }
 
-    const std::string& GetError() const noexcept
-    {
-        return std::move(errormsg);
-    }
 
 private:
     std::string errormsg;
@@ -75,14 +71,10 @@ public:
         return user_error.c_str();
     }
 
-    const std::string& GetObjectPath() const noexcept
-    {
-        return std::move(object_path);
-    }
 
-    const std::string& GetError() const noexcept
+    const char* GetObjectPath() const noexcept
     {
-        return std::move(errormsg);
+        return object_path.c_str();
     }
 
 
@@ -150,14 +142,9 @@ public:
         return user_error.c_str();
     }
 
-    const std::string& GetMethod() const noexcept
+    const char* GetMethod() const noexcept
     {
-        return std::move(method);
-    }
-
-    const std::string& GetError() const noexcept
-    {
-        return std::move(errormsg);
+        return method.c_str();
     }
 
 private:

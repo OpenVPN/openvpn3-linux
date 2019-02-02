@@ -54,7 +54,7 @@ static ConnectionStats fetch_stats(std::string session_path)
     catch (DBusException& err)
     {
         std::stringstream errmsg;
-        errmsg << "Failed to fetch statistics: " << err.getRawError();
+        errmsg << "Failed to fetch statistics: " << err.GetRawError();
         throw CommandException("session-stats",  errmsg.str());
     }
 }
@@ -383,7 +383,7 @@ static int cmd_session_start(ParsedArgs args)
             {
                 std::stringstream errm;
                 errm << "Failed to start new session: "
-                     << err.getRawError();
+                     << err.GetRawError();
                 throw CommandException("session-start", errm.str());
             }
         }

@@ -44,10 +44,13 @@ namespace openvpn
             return error.c_str();
         }
 
-        virtual const std::string getDebug() const noexcept
+
+        virtual const char* getDebug() const noexcept
         {
-            return debug;
+            return debug.c_str();
         }
+
+
     private:
         std::string error;
         std::string debug;

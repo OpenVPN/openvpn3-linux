@@ -537,7 +537,7 @@ public:
         }
         catch (DBusCredentialsException& excp)
         {
-            signal.LogCritical(excp.err());
+            signal.LogCritical(excp.what());
             excp.SetDBusError(invoc);
         }
         catch (const std::exception& excp)

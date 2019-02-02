@@ -193,11 +193,6 @@ public:
     }
 
 
-    virtual const char * what() const noexcept
-    {
-        return message.c_str();
-    }
-
     /**
      *  Retrieves the option name where this issue occured.  This is always
      *  available in this type of exceptions.
