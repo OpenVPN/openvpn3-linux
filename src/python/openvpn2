@@ -67,11 +67,11 @@ def import_config(bus, opts):
     if 'OPENVPN3_DEBUG' in os.environ:
         single_use = False
 
-    cfgname = opts.GetConfigName();
-    cfg = cfgmgr.Import(cfgname and cfgname or '(command line)', #name
-                                   opts.GenerateConfig(),     # config_str
-                                   single_use,                # single_use
-                                   False)                     # persistent
+    cfgname = opts.GetConfigName()
+    cfg = cfgmgr.Import(cfgname and cfgname or '(command line)',  # name
+                        opts.GenerateConfig(),                    # config_str
+                        single_use,                               # single_use
+                        False)                                    # persistent
 
     if opts.GetPersistTun() is True:
         # If --persist-tun was provided, set the persist-tun override
@@ -95,8 +95,7 @@ def LogHandler(group, catg, msg):
 
     print('%s [LOG] %s' % (datetime.datetime.now(), loglines[0]))
     for line in loglines[1:]:
-        print('%s%s' % (' '*33, line))
-
+        print('%s%s' % (' ' * 33, line))
 
 
 ##
@@ -110,14 +109,14 @@ def StatusHandler(major, minor, msg):
     maj = StatusMajor(major)
     min = StatusMinor(minor)
     print('%s [STATUS] (%s, %s) %s' % (datetime.datetime.now(),
-                                    maj, min, msg))
+                                       maj, min, msg))
 
     # Session got most likely disconnected outside of this program
     if StatusMajor.SESSION == maj and StatusMinor.PROC_STOPPED == min:
         mainloop.quit()
-    if StatusMajor.CONNECTION== maj and StatusMinor.CONN_AUTH_FAILED == min:
+    if StatusMajor.CONNECTION == maj and StatusMinor.CONN_AUTH_FAILED == min:
         mainloop.quit()
-    if StatusMajor.CONNECTION== maj and StatusMinor.CONN_DISCONNECTED == min:
+    if StatusMajor.CONNECTION == maj and StatusMinor.CONN_DISCONNECTED == min:
         mainloop.quit()
 
 
@@ -149,7 +148,6 @@ def fetch_logs_loop(sessobj, verb):
 
     print('Disconnected')
     return 0
-
 
 
 ##
@@ -193,8 +191,8 @@ def start_tunnel(bus, cfgobj, background_mode, verb):
             sessionobj.Connect()
 
             # Simple poll routine to catch the situation of the tunnel
-            # The 'status' property in a session object contains the last status
-            # update sent by the VPN backend
+            # The 'status' property in a session object contains the last
+            # status update sent by the VPN backend
             connected = False
             connecting_prompt = False
             while done is False and connected is False:
@@ -217,8 +215,8 @@ def start_tunnel(bus, cfgobj, background_mode, verb):
                         connected = True
 
                     elif status['minor'] in (StatusMinor.CONN_DISCONNECTED,
-                                        StatusMinor.CONN_DONE):
-                        s  = len(status['message']) > 0 \
+                                             StatusMinor.CONN_DONE):
+                        s = len(status['message']) > 0 \
                             and status['message'] or '(No information)'
                         print('\nConnection got disconnected: ' + s)
                         done = True
@@ -248,7 +246,7 @@ def start_tunnel(bus, cfgobj, background_mode, verb):
                     print('Running connection in the background.  To manage '
                           + 'this connection, use')
                     print('the openvpn3 command line tool with the session '
-                          +'path below:')
+                          + 'path below:')
                     print('>>> Session path: ' + sessionobj.GetPath())
             done = True
 
@@ -258,7 +256,8 @@ def start_tunnel(bus, cfgobj, background_mode, verb):
                 print('Credentials needed')
 
                 # User credentials comes in tuples of (type, group).
-                # Type should always be 1 - that is the type for user credentials.
+                # Type should always be 1 - that is the type for
+                # user credentials.
                 for input_slot in sessionobj.FetchUserInputSlots():
 
                     # Skip non-user credentials requests
@@ -285,7 +284,7 @@ def start_tunnel(bus, cfgobj, background_mode, verb):
                     print ('\nstart_tunnel() [1] traceback:\n')
                     print (traceback.format_exc())
                 raise Exception('VPN backend process stopped unexpectedly. '
-                                +'Session has closed. :: ' + str(excep))
+                                + 'Session has closed. :: ' + str(excep))
             elif str(excep).find('Backend VPN process is not ready') > 1:
                 # Wait for the backend to settle
                 time.sleep(0.5)
@@ -306,13 +305,12 @@ def start_tunnel(bus, cfgobj, background_mode, verb):
     return exit_code
 
 
-
 def openvpn2_main(args):
     ret = 9
     try:
         if len(args) < 2:
-            raise Exception('No options provided.  See "%s --help" for details.' %
-                            args[0])
+            raise Exception('No options provided.  See "%s --help" '
+                            'for details.' % args[0])
 
         # Simulate the classic OpenVPN 2.x behaviour where it can take a
         # single file name as the argument, which is the config file name
@@ -322,7 +320,8 @@ def openvpn2_main(args):
         # Parse provided provided on the command line
         opts = ConfigParser(args, 'OpenVPN 2.x wrapper for OpenVPN 3')
         opts.SanityCheck()
-        if 'OPENVPN3_DEBUG' in os.environ and 'DUMP_PARSE' == os.environ['OPENVPN3_DEBUG']:
+        if ('OPENVPN3_DEBUG' in os.environ
+           and 'DUMP_PARSE' == os.environ['OPENVPN3_DEBUG']):
             print (opts.GenerateConfig())
             return 0
 
@@ -330,11 +329,13 @@ def openvpn2_main(args):
         dbusloop = DBusGMainLoop(set_as_default=True)
         bus = dbus.SystemBus(mainloop=dbusloop)
 
-        # Import the configuration, which is stored in the configuration manager
+        # Import the configuration, which is stored in the
+        # configuration manager
         cfgobj = import_config(bus, opts)
 
         # Start the tunnel, which his managed by the session manager
-        ret = start_tunnel(bus, cfgobj, opts.GetDaemon(), opts.GetLogVerbosity())
+        ret = start_tunnel(bus, cfgobj,
+                           opts.GetDaemon(), opts.GetLogVerbosity())
 
     except KeyboardInterrupt:
         print("")
@@ -348,7 +349,6 @@ def openvpn2_main(args):
             print (traceback.format_exc())
 
     return ret
-
 
 
 if __name__ == "__main__":
