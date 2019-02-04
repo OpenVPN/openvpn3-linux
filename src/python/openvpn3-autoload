@@ -66,7 +66,7 @@ def find_autoload_configs(srcdir):
         # Extract the base filename without the .conf/.ovpn extension
         cfgnam = str(cfg)
         for ext in extensions:
-            # Find the base name without extention
+            # Find the base name without extension
             pos = cfgnam.rfind(ext)
             if pos < 1:
                 continue
@@ -307,6 +307,7 @@ def autoload_main(cmdargs):
                       help='Do not automatically start configurations')
 
     opts = argp.parse_args(cmdargs[1:])
+    exit_code = 0   # Presume all goes fine
 
     # Get a connection to the D-Bus' system bus and connect to the
     # OpenVPN 3 manager services
@@ -340,6 +341,7 @@ def autoload_main(cmdargs):
                 except Exception as excp:
                     print('WARNING: ' + str(excp))
                     print('WARNING: This configuration may not have been auto-started.')
+                    exit_code = 1
             else:
                 print('Auto-start of "%s" was ignored.' % cfgname)
 
@@ -351,6 +353,8 @@ def autoload_main(cmdargs):
             if None != sesspath:
                 sessionmgr.TransferOwnership(sesspath, autocfg['autoload']['acl']['set-owner'])
             configmgr.TransferOwnership(cfgobj.GetPath(), autocfg['autoload']['acl']['set-owner'])
+
+    return exit_code
 
 
 if __name__ == '__main__':
