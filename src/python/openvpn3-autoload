@@ -85,7 +85,7 @@ def find_autoload_configs(srcdir):
                                                   os.path.dirname(cfgnam),
                                                   '--config',
                                                   os.path.basename(cfgnam)],
-                                                  'OpenVPN 3 autoloader')
+                                                 'OpenVPN 3 autoloader')
                     opts.SanityCheck()
 
                     # Save all parsed/loaded data into a dictionary
@@ -94,11 +94,11 @@ def find_autoload_configs(srcdir):
                         'autoload': autoload
                     }
                 except TypeError as e:
-                    print ('Could not parse "%s": %s' % (cfgnam, str(e)))
+                    print('Could not parse "%s": %s' % (cfgnam, str(e)))
                 except ValueError as e:
-                    print ('Invalid JSON data in "%s": %s' % (cfgnam, str(e)))
+                    print('Invalid JSON data in "%s": %s' % (cfgnam, str(e)))
                 except Exception as e:
-                    print ('Error: ' + str(e))
+                    print('Error: ' + str(e))
 
     return autoload_cfgs
 
@@ -120,7 +120,7 @@ def import_configuration(cfgmgr, cfgname, autoloadcfg, cfg):
         for flag in autoloadcfg['flags']:
             cfgobj.SetProperty(flag, True)
 
-    for (k,v) in autoloadcfg['override'].items():
+    for (k, v) in autoloadcfg['override'].items():
         cfgobj.SetOverride(k, v)
 
     return cfgobj
@@ -137,7 +137,7 @@ def parse_autoload_config(autoload):
 
     if 'acl' in autoload:
         for (k, v) in autoload['acl'].items():
-            if False == v:
+            if not v:
                 continue
 
             if 'public' == k:
@@ -148,24 +148,24 @@ def parse_autoload_config(autoload):
                 autoloadcfg['owner'] = v
 
     if 'remote' in autoload:
-        for (k,v) in autoload['remote'].items():
-            if False == v:
+        for (k, v) in autoload['remote'].items():
+            if not v:
                 continue
 
             if 'proto-override' == k:
                 if v in ('udp', 'tcp'):
                     autoloadcfg['override']['proto-override'] = v
                 else:
-                    print ('WARNING: Invalid proto-override value: %s' % v)
+                    print('WARNING: Invalid proto-override value: %s' % v)
 
             elif 'port-override' == k:
                 autoloadcfg['override']['port-override'] = int(v)
 
             elif 'compression' == k:
-                if v in ('no','asym','yes'):
+                if v in ('no', 'asym', 'yes'):
                     autoloadcfg['override']['allow-compression'] = v
                 else:
-                    print ('WARNING: Invalid compression value: %s' % v)
+                    print('WARNING: Invalid compression value: %s' % v)
 
             elif 'proxy' == k:
                 for (pk, pv) in v.items():
@@ -180,21 +180,20 @@ def parse_autoload_config(autoload):
                     elif 'allow-plain-text' == pk:
                         autoloadcfg['override']['proxy-auth-cleartext'] = pv
 
-
     if 'crypto' in autoload:
-        for (k,v) in autoload['crypto'].items():
-            if False == v:
+        for (k, v) in autoload['crypto'].items():
+            if not v:
                 continue
 
             if 'client-cert-enabled' == k:
-                autoloadcfg['override']['no-client-cert'] = v;
+                autoloadcfg['override']['no-client-cert'] = v
 
             elif 'force-aes-cbc' == k:
                 autoloadcfg['override']['force-cipher-aes-cbc'] = v
 
             elif 'tls-params' == k:
                 for (tpk, tpv) in v.items():
-                    if False == tpv:
+                    if not tpv:
                         continue
 
                     if 'cert-profile' == tpk:
@@ -210,14 +209,14 @@ def parse_autoload_config(autoload):
 
     if 'tunnel' in autoload:
         for (k, v) in autoload['tunnel'].items():
-            if False == v:
+            if not v:
                 continue
 
             if 'persist' == k:
                 autoloadcfg['override']['persist-tun'] = True
 
             elif 'ipv6' == k:
-                if v in ('yes','no','default'):
+                if v in ('yes', 'no', 'default'):
                     autoloadcfg['override']['ipv6'] = v
                 else:
                     print('WARNING: Invalid tunnel:ipv6 value: %s' % v)
@@ -239,25 +238,26 @@ def parse_autoload_config(autoload):
 #
 def start_tunnel(sessmgr, cfgobj, autoload):
     cfgn = cfgobj.GetProperty('name')
-    sess = sessmgr.NewTunnel(cfgobj);
+    sess = sessmgr.NewTunnel(cfgobj)
 
     ready = False
     attempts = 0
     conn_started = False
-    while ready == False:
+    while not ready:
         try:
             # See of the backend process is ready to start a connection
             sess.Ready()
 
             # Only try to call the Connect() method
             # if it hasn't been done yet
-            if False == conn_started:
+            if not conn_started:
                 sess.Connect()
                 conn_started = True
 
             # Check the session status and only report unexpected statuses
             status = sess.GetStatus()
-            if StatusMajor.CONNECTION != status['major'] and (StatusMinor.CONNECTING != status['minor'] or StatusMinor.CONNECTED == status['minor']):
+            if StatusMajor.CONNECTION != status['major'] and (StatusMinor.CONNECTING != status['minor']
+                                                              or StatusMinor.CONNECTED == status['minor']):
                 print('[%s] Status: %s/%s' % (cfgn, status['major'].name, status['minor'].name))
             ready = True
 
@@ -270,19 +270,21 @@ def start_tunnel(sessmgr, cfgobj, autoload):
                 conn_started = False
                 if 'user-auth' not in autoload:
                     sess.Disconnect()
-                    raise Exception('Configuration "%s" requires user/password authentication, but .autoload is not configured with credentials. Auto-start ignored.' % cfgn)
+                    raise Exception('Configuration "%s" requires user/password authentication, but .autoload is not '
+                                    ' configured with credentials. Auto-start ignored.' % cfgn)
 
                 userauth = autoload['user-auth']
                 for ui in sess.FetchUserInputSlots():
                     varn = ui.GetVariableName()
                     if varn not in userauth:
                         sess.Disconnect()
-                        raise Exception('The .autoload config for "%s" is lacking details for "%s".  Auto-start ignored.' % (cfgn, varn))
+                        raise Exception('The .autoload config for "%s" is lacking details for "%s".  Auto-start '
+                                        'ignored.' % (cfgn, varn))
                     ui.ProvideInput(userauth[varn])
 
             # If the VPN backend doesn't reply soon enough, try again in a bit
-            elif err.find('org.freedesktop.DBus.Error.NoReply') > -1 \
-                or err.find('Backend VPN process is not ready') > -1:
+            elif (err.find('org.freedesktop.DBus.Error.NoReply') > -1
+                  or err.find('Backend VPN process is not ready') > -1):
                 attempts += 1
                 if attempts > 15:
                     raise Exception('Failed to successfully start a VPN backend process')
@@ -326,14 +328,14 @@ def autoload_main(cmdargs):
                                       ('name' in autoloadcfg and autoloadcfg['name'] or cfgname),
                                       autoloadcfg,
                                       autocfg['config'])
-        print ('Configuration "%s" imported: %s [%s]' % (cfgname,
-                                                         cfgobj.GetPath(),
-                                                         ", ".join(autoloadcfg['flags'])))
+        print('Configuration "%s" imported: %s [%s]' % (cfgname,
+                                                        cfgobj.GetPath(),
+                                                        ', '.join(autoloadcfg['flags'])))
 
         # Should this configuration be automatically started too?
         sesspath = None
-        if 'autostart' in autocfg['autoload'] and True == autocfg['autoload']['autostart']:
-            if False == opts.ignore_autostart:
+        if 'autostart' in autocfg['autoload'] and autocfg['autoload']['autostart']:
+            if not opts.ignore_autostart:
                 try:
                     sesspath = start_tunnel(sessionmgr, cfgobj, autocfg['autoload'])
                     print('Auto-started "%s": %s' % (cfgname, sesspath))
@@ -350,7 +352,7 @@ def autoload_main(cmdargs):
         # done after the a possible auto-start of the tunnel, as that needs to
         # be done by the root user.
         if 'acl' in autocfg['autoload'] and 'set-owner' in autocfg['autoload']['acl'] and 0 == os.geteuid():
-            if None != sesspath:
+            if sesspath is not None:
                 sessionmgr.TransferOwnership(sesspath, autocfg['autoload']['acl']['set-owner'])
             configmgr.TransferOwnership(cfgobj.GetPath(), autocfg['autoload']['acl']['set-owner'])
 
@@ -358,18 +360,18 @@ def autoload_main(cmdargs):
 
 
 if __name__ == '__main__':
-    ret = 9;
+    ret = 9
     try:
         ret = autoload_main(sys.argv)
     except KeyboardInterrupt:
         print('')
         ret = 8
     except Exception as e:
-        print ('\n** ERROR ** %s' % str(e))
+        print('\n** ERROR ** %s' % str(e))
         ret = 2
 
         if 'OPENVPN3_DEBUG' in os.environ:
-            print ('\nmain traceback:')
-            print (traceback.format_exc())
+            print('\nmain traceback:')
+            print(traceback.format_exc())
 
     sys.exit(ret)
