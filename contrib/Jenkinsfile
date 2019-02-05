@@ -1,0 +1,71 @@
+// This file is used to build in the internal Jenkins build system.
+// It might be also useful for external CI/CD
+
+def checkout_git() {
+    checkout([
+        $class: 'GitSCM',
+        branches: scm.branches,
+        doGenerateSubmoduleConfigurations: false,
+        extensions: [[
+            $class: 'SubmoduleOption',
+            disableSubmodules: false,
+            parentCredentials: true,
+            recursiveSubmodules: true,
+            reference: '',
+            trackingSubmodules: false
+        ]],
+        userRemoteConfigs: scm.userRemoteConfigs
+    ])
+}
+
+
+def build_tarball()
+{
+   stage("Building tarball") {
+       timeout(time:120) {
+           node('linux_slave') {
+               step([$class: 'WsCleanup'])
+               withEnv(["CXXFLAGS=-g -O2 -grecord-gcc-switches -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -mtune=generic"]) {
+               dir("${WORKSPACE}/openvpn3-linux") {
+                   checkout_git()
+                    sh "./bootstrap.sh"
+                    sh "./configure --prefix=/usr --sysconfdir=/etc --enable-debug-core-events --enable-debug-options --enable-debug-exceptions"
+                    sh 'make -j$(nproc)'
+                    sh 'make -j$(nproc) distcheck'
+                    sh './src/ovpn3cli/openvpn3 version'
+                    archiveArtifacts 'openvpn3-linux-*.tar.xz'
+               }
+           }
+       }
+     }
+   }
+}
+
+stage('build') {
+    try {
+        bitbucketStatusNotify(buildState: 'INPROGRESS')
+        echo "build parameters ${params}"
+
+        build_tarball()
+
+        currentBuild.result = 'SUCCESS'
+        bitbucketStatusNotify(buildState: 'SUCCESSFUL')
+    }
+    catch (Exception e) {
+        currentBuild.result = 'FAILURE'
+        bitbucketStatusNotify(buildState: 'FAILED')
+        throw e
+    }
+    finally {
+        // send mail on first build, failure or status change
+        if ((currentBuild.previousBuild == null) ||
+            (currentBuild.result == 'FAILURE') ||
+            ((currentBuild.previousBuild != null) && (currentBuild.previousBuild.result != currentBuild.result))) {
+                emailext(
+                    body: '$DEFAULT_CONTENT',
+                    subject: '$DEFAULT_SUBJECT',
+                    recipientProviders: [[$class: 'RequesterRecipientProvider'], [$class: 'CulpritsRecipientProvider']]
+                )
+        }
+    }
+}
