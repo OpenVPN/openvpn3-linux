@@ -177,21 +177,26 @@ public:
      *   the session managers interface.
      *
      * @param conn               D-Bus connection to use
-     * @param bus_name           Backend D-Bus name which will this object
-     *                           will subscribe to
      * @param interface          Backend D-Bus interface needed for the
      *                           subscription
-     * @param be_obj_path        Backend D-Bus object path where the log
-     *                           event signals are sent
-     * @param sigproxy_obj_path  Destinaion D-Bus path for the signal
+     * @param bus_name           Unique bus name of the backend VPN client
+     *                           process to expect messages from.  This is
+     *                           used for filtering.
+     * @param session_token      Backend VPN client session token, used to
+     *                           validate if the LogEvent is targeting the
+     *                           same session this object is configured for.
+     * @param sigproxy_obj_path  Destination D-Bus path for the signal
      */
     SessionLogEvent(GDBusConnection *conn,
-                    std::string bus_name,
                     std::string interface,
-                    std::string be_obj_path,
+                    std::string bus_name,
+                    std::string session_token,
                     std::string sigproxy_obj_path)
-        : LogConsumerProxy(conn, interface, be_obj_path,
+        : LogConsumerProxy(conn, interface,
+                           OpenVPN3DBus_rootp_backends_session,
                            OpenVPN3DBus_interf_sessions, sigproxy_obj_path),
+           bus_name(bus_name),
+           session_token(session_token),
            last_logev()
     {
     }
@@ -216,6 +221,23 @@ public:
                                const std::string object_path,
                                const LogEvent& logev) override
     {
+        if (sender != bus_name)
+        {
+            // If the log event is sent from an unexpected sender,
+            // ignore it
+            throw LogConsumerProxyException(LogProxyExceptionType::IGNORE);
+        }
+        if (logev.session_token.empty())
+        {
+            throw LogConsumerProxyException(LogProxyExceptionType::INVALID,
+                                            "Missing session token");
+        }
+        if (logev.session_token != session_token)
+        {
+            // If this log event is not related to our session, ignore it
+            throw LogConsumerProxyException(LogProxyExceptionType::IGNORE);
+        }
+
         last_logev = logev;
         last_logev.session_token.clear();
         return last_logev;
@@ -244,6 +266,8 @@ public:
     }
 
 private:
+    std::string bus_name;
+    std::string session_token;
     LogEvent last_logev;
 };
 
@@ -1203,11 +1227,18 @@ public:
                 if (recv_log_events && nullptr == sig_logevent)
                 {
                     // Subscribe to log signals
+                    //
+                    // The SessionLogEvent() need the unique bus name
+                    // to be able to filter out the proper signals based on
+                    // the D-Bus sender.  This is since all the backend VPN
+                    // client processes uses the same object path.  In
+                    // addition, it will also match against the
+                    // session/backend token.
                     sig_logevent = new SessionLogEvent(
                                     be_conn,
-                                    be_busname,
                                     OpenVPN3DBus_interf_backends,
-                                    be_path,
+                                    GetUniqueBusID(be_busname),
+                                    backend_token,
                                     GetObjectPath());
                     sig_logevent->SetLogLevel(default_session_log_level);
                 }
