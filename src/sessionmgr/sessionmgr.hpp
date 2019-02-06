@@ -287,12 +287,11 @@ public:
      *
      * @param conn               D-Bus connection to use
      * @param bus_name           D-Bus bus name to use for the signal
-     *                           subscription
+     *                           subscription.  This must be a unique bus
+     *                           name and NOT a well-known bus name, otherwise
+     *                           signals will not be proxied further.
      * @param interface          D-Bus interface to use for the signal
      *                           subscription
-     * @param be_obj_path        D-Bus object path of the backend process
-     *                           which sends the signals we want to subscribe
-     *                           to
      * @param sigproxy_obj_path  D-Bus object path which will be used when
      *                           the session manager sends the proxied
      *                           StatusChange signal
@@ -300,10 +299,13 @@ public:
     SessionStatusChange(GDBusConnection *conn,
                         std::string bus_name,
                         std::string interface,
-                        std::string be_obj_path,
                         std::string sigproxy_obj_path)
-        : DBusSignalSubscription(conn, bus_name, interface, be_obj_path, "StatusChange"),
-          DBusSignalProducer(conn, "", OpenVPN3DBus_interf_sessions, sigproxy_obj_path),
+        : DBusSignalSubscription(conn, bus_name, interface,
+                                 OpenVPN3DBus_rootp_backends_session,
+                                 "StatusChange"),
+          DBusSignalProducer(conn, "", OpenVPN3DBus_interf_sessions,
+                             sigproxy_obj_path),
+          backend_busname(bus_name),
           last_status()
     {
     }
@@ -321,12 +323,25 @@ public:
      *                         the variables and values the signal carries
      */
     void callback_signal_handler(GDBusConnection *connection,
-                                 const std::string sender_name,
+                                 const std::string sender,
                                  const std::string object_path,
                                  const std::string interface_name,
                                  const std::string signal_name,
                                  GVariant *parameters)
     {
+        //
+        // Check if this signal matches the session we're managing
+        // Since the sender bus name is the unique bus name,
+        // bus name, backend_busname must contain the unique bus
+        // name as well of the backend this object belongs to.
+        //
+        if (sender != backend_busname)
+        {
+            // Sender did not match our requirements, ignore it
+            return;
+        }
+
+        // Signals we proxy further, ignore the rest
         if (signal_name == "StatusChange")
         {
             ProxyStatus(parameters);
@@ -389,6 +404,7 @@ public:
     }
 
 private:
+    std::string backend_busname;
     StatusEvent last_status;
 };
 
@@ -1343,12 +1359,17 @@ private:
             be_proxy->SetGDBusCallFlags(G_DBUS_CALL_FLAGS_NO_AUTO_START);
             ping_backend();
 
-            // Setup signal listeneres from the backend process
-            // FIXME: Verify how this is related to the subscrition in the caller function
+            // Setup signal listeners from the backend process
+            // The SessionStatusChange() handler will use the senders
+            // unique bus name to identify if this is a signal this class
+            // responsible for.
+            //
+            // As the be_busname contains the well-known bus name of the
+            // backend VPN client process, we resolve this to the unique
+            // bus name for this signal handling object.
             sig_statuschg = new SessionStatusChange(be_conn,
-                                                    be_busname,
+                                                    GetUniqueBusID(be_busname),
                                                     OpenVPN3DBus_interf_backends,
-                                                    be_path,
                                                     GetObjectPath());
 
             GVariant *res_g = be_proxy->Call("RegistrationConfirmation",
