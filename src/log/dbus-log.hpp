@@ -314,6 +314,45 @@ namespace openvpn
         }
     };
 
+    enum class LogProxyExceptionType : std::uint8_t
+    {
+        IGNORE,
+        INVALID
+    };
+
+
+    class LogConsumerProxyException : public std::exception
+    {
+    public:
+        LogConsumerProxyException(LogProxyExceptionType type) noexcept
+            : type(type), message()
+        {
+        }
+
+        LogConsumerProxyException(LogProxyExceptionType type,
+                                  const std::string& message) noexcept
+            : type(type), message(std::move(message))
+        {
+        }
+
+        ~LogConsumerProxyException() = default;
+
+        const char *what() const noexcept
+        {
+            return message.c_str();
+        }
+
+        LogProxyExceptionType GetExceptionType() const noexcept
+        {
+            return type;
+        }
+
+    private:
+        LogProxyExceptionType type;
+        std::string message;
+    };
+
+
 
     class LogConsumerProxy : public LogConsumer, public LogSender
     {
@@ -347,9 +386,36 @@ namespace openvpn
                                        const std::string object_path,
                                        GVariant *params)
         {
-            LogEvent logev(params);
-            LogEvent ev = InterceptLogEvent(sender, interface, object_path, logev);
-            ProxyLog(ev);
+            try
+            {
+                LogEvent logev(params);
+                LogEvent ev = InterceptLogEvent(sender, interface,
+                                                object_path, logev);
+                ProxyLog(ev);
+            }
+            catch (const LogConsumerProxyException& excp)
+            {
+                switch (excp.GetExceptionType())
+                {
+                case LogProxyExceptionType::IGNORE:
+                    // The InterceptLogEvent method asks is to ignore and not
+                    // proxy this log event, so we return
+                    return;
+
+                case LogProxyExceptionType::INVALID:
+                    // Re-throw the exception if the log event is invalid
+                    THROW_LOGEXCEPTION("LogConsumerProxy: "
+                                       + std::string(excp.what()));
+
+                default:
+                    THROW_LOGEXCEPTION("LogConsmerProxy:  Unknown error");
+                }
+            }
+            catch(...)
+            {
+                throw;
+            }
+
         }
     };
 };
