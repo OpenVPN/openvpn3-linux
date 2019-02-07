@@ -861,7 +861,16 @@ private:
                 }
             }
 
-            // Start client thread
+            // Start a new client thread ...
+            // ... but first clean up if we have an old thread
+            if (client_thread)
+            {
+                if (client_thread->joinable())
+                {
+                    client_thread->join();
+                }
+                client_thread = nullptr;
+            }
             client_thread.reset(new std::thread([self=Ptr(this)]()
                                                 {
                                                     self->run_connection_thread();
