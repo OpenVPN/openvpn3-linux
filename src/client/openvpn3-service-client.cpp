@@ -739,6 +739,9 @@ private:
 
     void validate_sender(std::string sender)
     {
+#if DEBUG_DISABLE_SESSIONMGR_CHECK
+        return;
+#endif
         // Only the session manager is susposed to talk to the
         // the backend VPN client service
         if (GetUniqueBusID(OpenVPN3DBus_name_sessions) != sender)

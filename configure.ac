@@ -427,6 +427,24 @@ if test "${enable_debug_core_events}" = "yes"; then
 fi
 
 dnl
+dnl   Debug feature - disables the Session Manager check in backend client
+dnl
+dnl   Disabling this feature is a highly security senstive change and will
+dnl   allow other D-Bus clients to manipulate backend VPN clients.  This
+dnl   feature requires DEBUG_OPTIONS to be enabled.
+dnl
+AC_ARG_ENABLE(
+    [debug-disable-sessionmgr-check],
+    [AS_HELP_STRING([--enable-debug-disable-sessionmgr-check],
+                    [WARNING - SECURITY SENSITIVE: Will disable the check in openvpn3-service-client restricting D-Bus call to come from the session manager])],
+    [debug_disable_sessmgr_check="yes"],
+    []
+)
+if test "${enable_debug_options}" = "yes" -a "${debug_disable_sessmgr_check}" = "yes"; then
+    AC_DEFINE([DEBUG_DISABLE_SESSIONMGR_CHECK], [1], [WARNING - SECURITY SENSITIVE: Session manager check disabled in openvpn3-service-client])
+fi
+
+dnl
 dnl   Make it possible to not build the various test programs by default
 dnl
 AC_ARG_ENABLE(
