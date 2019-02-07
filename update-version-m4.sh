@@ -50,3 +50,6 @@ define([PRODUCT_TARNAME], [openvpn3-linux])
 define([PRODUCT_BUGREPORT], [openvpn-devel@lists.sourceforge.net])
 EOF
 } > version.m4
+
+# Ensure the config-version.h file gets updated
+rm -f config-version.h
