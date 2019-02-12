@@ -62,26 +62,22 @@ namespace openvpn {
     class OptionListJSON : public openvpn::OptionList
     {
     public:
-        std::string json_export()
+        Json::Value json_export() const
         {
             Json::Value outdata;
 
-            // FIXME: Looks very hacky
-            for(auto element : *this) {
+            for(const auto& element : *this) {
                 outdata[element.ref(0)] = (element.size() > 1 ? element.ref(1) : "");
             }
 
-            std::stringstream output;
-            output << outdata;
-            return output.str();
+            return outdata;
         }
 
         std::string string_export()
         {
             std::stringstream cfgstr;
 
-            // FIXME: Looks very hacky
-            for(auto element : *this)
+            for(const auto& element : *this)
             {
                 std::string optname = element.ref(0);
                 std::string params;

@@ -401,9 +401,13 @@ public:
                     // read-operations to the configuration profile owner
                     CheckOwnerAccess(sender);
                 }
+
+                std::stringstream jsoncfg;
+                jsoncfg << options.json_export();
+
                 g_dbus_method_invocation_return_value(invoc,
                                                       g_variant_new("(s)",
-                                                                    options.json_export().c_str()));
+                                                                    jsoncfg.str().c_str()));
 
                 // Do not remove single-use object with this method.
                 // FetchJSON is only used by front-ends, never backends.  So
