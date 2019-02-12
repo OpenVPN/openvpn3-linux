@@ -81,7 +81,7 @@ namespace openvpn
         }
 
 
-        guint GetObjectId()
+        guint GetObjectId() const
         {
             if (!registered)
             {
@@ -91,7 +91,7 @@ namespace openvpn
         }
 
 
-        std::string GetObjectPath()
+        std::string GetObjectPath() const
         {
             return object_path;
         }
