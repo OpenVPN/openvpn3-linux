@@ -72,7 +72,7 @@ namespace openvpn
          * @return Returns an uid_t containing the bus owners UID.
          *         In case of errors, a DBusException is thrown.
          */
-        uid_t GetUID(std::string busname)
+        uid_t GetUID(std::string busname) const
         {
             try
             {
@@ -99,7 +99,7 @@ namespace openvpn
          * @return Returns a pid_t value of the process ID.
          *         In case of errors, a DBusException is thrown.
          */
-        pid_t GetPID(std::string busname)
+        pid_t GetPID(std::string busname) const
         {
             try
             {
@@ -128,7 +128,7 @@ namespace openvpn
          * @return Returns a string containing the unique bus name if found,
          *         otherwise a DBusException is thrown.
          */
-        std::string GetUniqueBusID(std::string busname)
+        std::string GetUniqueBusID(std::string busname) const
         {
             try
             {
@@ -274,7 +274,7 @@ private:
          *
          * @return GVariant<uint32> object containing the UID
          */
-        GVariant * GetOwner()
+        GVariant * GetOwner() const
         {
             return g_variant_new_uint32(owner);
         }
@@ -285,7 +285,7 @@ private:
          *
          * @returns uid_t containing the object owner's uid
          */
-        uid_t GetOwnerUID()
+        uid_t GetOwnerUID() const
         {
             return owner;
         }
@@ -395,7 +395,7 @@ private:
          *                    openvpn user (OpenVPN Manager) will be granted
          *                    access regardless of the UID.
          */
-        void CheckACL(const std::string sender, bool allow_mngr = false)
+        void CheckACL(const std::string sender, bool allow_mngr = false) const
         {
             check_acl(sender, false, allow_mngr);
         }
@@ -416,7 +416,7 @@ private:
          *                    access regardless of the UID.
          */
         void CheckOwnerAccess(const std::string sender,
-                              bool allow_mngr = false)
+                              bool allow_mngr = false) const
         {
             check_acl(sender, true, allow_mngr);
         }
@@ -448,7 +448,7 @@ private:
          *                    of ACL?
          */
         void check_acl(const std::string sender,
-                       bool owner_only, bool allow_mngr)
+                       bool owner_only, bool allow_mngr) const
         {
             if (acl_public && !owner_only)
             {
