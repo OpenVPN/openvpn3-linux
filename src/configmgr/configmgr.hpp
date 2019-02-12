@@ -686,11 +686,11 @@ public:
             }
             else if ("public_access" == property_name)
             {
-                ret = GetPublicAccess();
+                ret = g_variant_new_boolean(GetPublicAccess());
             }
             else if ("acl" == property_name)
             {
-                    ret = GetAccessList();
+                    ret = GLibUtils::GVariantFromVector(GetAccessList());
             }
             else if (properties.Exists(property_name))
             {

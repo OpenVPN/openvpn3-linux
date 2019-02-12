@@ -597,7 +597,8 @@ public:
             }
             else if ("acl" == property_name)
             {
-                return GetAccessList();
+
+                return GLibUtils::GVariantFromVector(GetAccessList());
             }
             else if ("active" == property_name)
             {

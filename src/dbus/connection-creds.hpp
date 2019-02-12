@@ -321,9 +321,9 @@ private:
          *
          * @return Returns a boolean with the public access attribute
          */
-        GVariant * GetPublicAccess()
+        bool GetPublicAccess() const
         {
-            return g_variant_new_boolean(acl_public);
+            return acl_public;
         }
 
 
@@ -331,22 +331,12 @@ private:
          *  Retrieve the ACL list of UIDs granted access.  The owner UID
          *  is not enlisted.
          *
-         * @return  Returns a GVariant object containing an array of uid_t
+         * @return  Returns a std::vector object containing an array of uid_t
          */
-        GVariant * GetAccessList()
+        std::vector<uid_t> GetAccessList() const
         {
-            GVariant *ret = NULL;
-            GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("au"));
-            for (auto& e : acl_list)
-            {
-                g_variant_builder_add(bld, "u", e);
-            }
-            ret = g_variant_builder_end(bld);
-            g_variant_builder_unref(bld);
-
-            return ret;
+            return acl_list;
         }
-
 
         /**
          *  Adds a user ID (UID) to the access list
