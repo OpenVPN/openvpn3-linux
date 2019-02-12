@@ -418,20 +418,20 @@ namespace openvpn
         }
 
 
-        GVariant * Call(std::string method, GVariant *params, bool noresponse = false)
+        GVariant * Call(std::string method, GVariant *params, bool noresponse = false) const
         {
             return dbus_proxy_call(proxy, method, params, noresponse,
                                    call_flags);
         }
 
 
-        GVariant * Call(std::string method, bool noresponse = false)
+        GVariant * Call(std::string method, bool noresponse = false) const
         {
             return dbus_proxy_call(proxy, method, NULL, noresponse,
                                    call_flags);
         }
 
-        GVariant * CallGetFD(std::string method, int& fd, bool noresponse = false)
+        GVariant * CallGetFD(std::string method, int& fd, bool noresponse = false) const
         {
             return dbus_proxy_call(proxy, method, NULL, noresponse,
                                    call_flags, &fd);
@@ -442,14 +442,14 @@ namespace openvpn
          * This method will *not* take ownership of the fd. The caller needs
          * to close the fd if it is not needed anymore
          */
-        GVariant * CallSendFD(std::string method, GVariant* params, int fd, bool noresponse = false)
+        GVariant * CallSendFD(std::string method, GVariant* params, int fd, bool noresponse = false) const
         {
             return dbus_proxy_call(proxy, method, params, noresponse,
                                    call_flags, nullptr, fd);
         }
 
 
-        GVariant * GetProperty(std::string property)
+        GVariant * GetProperty(std::string property) const
         {
             if (property.empty())
             {
@@ -495,7 +495,7 @@ namespace openvpn
         }
 
 
-        bool GetBoolProperty(std::string property)
+        bool GetBoolProperty(std::string property) const
         {
             GVariant *res = GetProperty(property);
             bool ret = g_variant_get_boolean(res);
@@ -504,7 +504,7 @@ namespace openvpn
         }
 
 
-        std::string GetStringProperty(std::string property)
+        std::string GetStringProperty(std::string property) const
         {
             gsize len = 0;
             GVariant *res = GetProperty(property);
@@ -514,7 +514,7 @@ namespace openvpn
         }
 
 
-        guint32 GetUIntProperty(std::string property)
+        guint32 GetUIntProperty(std::string property) const
         {
             GVariant *res = GetProperty(property);
             guint32 ret = g_variant_get_uint32(res);
@@ -523,7 +523,7 @@ namespace openvpn
         }
 
 
-        guint64 GetUInt64Property(std::string property)
+        guint64 GetUInt64Property(std::string property) const
         {
             GVariant *res = GetProperty(property);
             guint64 ret = g_variant_get_uint64(res);
@@ -532,7 +532,7 @@ namespace openvpn
         }
 
 
-        void SetProperty(std::string property, GVariant *value)
+        void SetProperty(std::string property, GVariant *value) const
         {
             if (property.empty())
             {
@@ -578,19 +578,19 @@ namespace openvpn
         }
 
 
-        inline void SetProperty(std::string property, bool value)
+        inline void SetProperty(std::string property, bool value) const
         {
             SetProperty(property, g_variant_new_boolean(value));
         }
 
 
-        inline void SetProperty(std::string property, std::string value)
+        inline void SetProperty(std::string property, std::string value) const
         {
             SetProperty(property, g_variant_new_string(value.c_str()));
         }
 
 
-        inline void SetProperty(std::string property, guint32 value)
+        inline void SetProperty(std::string property, guint32 value) const
         {
             SetProperty(property, g_variant_new_uint32(value));
         }
@@ -681,7 +681,7 @@ namespace openvpn
                                    GVariant *params, bool noresponse,
                                    GDBusCallFlags flags,
                                    int *fd_out = nullptr,
-                                   int fd_in = -1)
+                                   int fd_in = -1) const
         {
             if (method.empty())
             {
