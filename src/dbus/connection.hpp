@@ -189,7 +189,7 @@ namespace openvpn
          *
          * @return GBusType of the configured bus type.
          */
-        GBusType GetBusType() noexcept
+        GBusType GetBusType() const noexcept
         {
             return bus_type;
         }
@@ -202,7 +202,7 @@ namespace openvpn
          * @return  GDBUsConnection pointer to the currently extablished
          *          D-Bus.  In case of errors, an exception will be thrown.
          */
-        GDBusConnection * GetConnection()
+        GDBusConnection * GetConnection() const
         {
             if (!connected)
             {
@@ -218,7 +218,7 @@ namespace openvpn
          * @return  Returns an unsigned integer referencing the current bus ID.
          *          In case of errors, an exception is thrown.
          */
-        guint GetBusID()
+        guint GetBusID() const
         {
             if (!connected)
             {
@@ -236,7 +236,7 @@ namespace openvpn
          * @return  Returns a std::string containing the configured D-Bus
          *          bus name.  In case of errors an exception is thrown.
          */
-        std::string GetBusName()
+        std::string GetBusName() const
         {
             if (connection_only)
             {
@@ -256,7 +256,7 @@ namespace openvpn
          *          root object path.  In case of errors an exception is
          *          thrown.
          */
-        std::string GetRootPath()
+        std::string GetRootPath() const
         {
             if (connection_only)
             {
@@ -278,7 +278,7 @@ namespace openvpn
          *          D-Bus interface for this connection.  In case of errors an
          *          exception is thrown.
          */
-        std::string GetDefaultInterface()
+        std::string GetDefaultInterface() const
         {
             if (connection_only)
             {
