@@ -214,9 +214,7 @@ static int cmd_configs_list(ParsedArgs args)
               << "Last used" << std::setw(26-9) << " "
               << "Used"
               << std::endl;
-    std::cout << "Name" << std::setw(32-4) << " "
-              << "Alias" << std::setw(26-5) << " "
-              << "Owner"
+    std::cout << "Name" << std::setw(58-4) << " " << "Owner"
               << std::endl;
     std::cout << std::setw(32+26+18+2) << std::setfill('-') << "-" << std::endl;
 
@@ -236,7 +234,6 @@ static int cmd_configs_list(ParsedArgs args)
         first = false;
 
         std::string name = cprx.GetStringProperty("name");
-        std::string alias = cprx.GetStringProperty("alias");
         std::string user = lookup_username(cprx.GetUIntProperty("owner"));
 
         std::time_t imp_tstamp = cprx.GetUInt64Property("import_timestamp");
@@ -257,9 +254,7 @@ static int cmd_configs_list(ParsedArgs args)
                   << last_used <<  std::setw(26 - last_used.size()) << " "
                   << std::to_string(used_count)
                   << std::endl;
-        std::cout << name << std::setw(32 - name.size()) << " "
-                  << alias << std::setw(26 - alias.size()) << " "
-                  << user
+        std::cout << name << std::setw(58 - name.size()) << " " << user
                   << std::endl;
     }
     std::cout << std::setw(32+26+18+2) << std::setfill('-') << "-" << std::endl;
@@ -380,8 +375,7 @@ static int cmd_config_manage(ParsedArgs args)
         }
     }
 
-    if (!args.Present("alias") && !args.Present("alias-delete")
-        && !args.Present("rename") && !args.Present("show")
+    if (!args.Present("rename") && !args.Present("show")
         && !override_present && !args.Present("unset-override"))
     {
         throw CommandException("config-manage",
@@ -390,14 +384,6 @@ static int cmd_config_manage(ParsedArgs args)
                                "--<overrideName>, --unset-override"
                                );
     }
-
-#if 0 // FIXME: Currently disable the alias feature until properly fixed
-    if (args.Present("alias") && args.Present("alias-delete"))
-    {
-        throw CommandException("config-manage",
-                               "Cannot provide both --alias and --alias-delete at the same time");
-    }
-#endif
 
     try
     {
@@ -410,25 +396,6 @@ static int cmd_config_manage(ParsedArgs args)
         }
 
         bool valid_option = false;
-
-#if 0 // FIXME: Currently disable the alias feature until properly fixed
-        if (args.Present("alias"))
-        {
-            std::string alias = args.GetValue("alias", 0);
-            conf.SetAlias(alias);
-            std::cout << "Alias set to '" << alias << "' " << std::endl;
-            valid_option = true;
-        }
-
-        if (args.Present("alias-delete"))
-        {
-            throw CommandException("config-manage",
-                                   "Deleting configuration aliases is not yet implemented");
-            conf.SetAlias("");
-            std::cout << "Alias is deleted" << std::endl;
-            valid_option = true;
-        }
-#endif
 
         if (args.Present("rename"))
         {
@@ -547,12 +514,6 @@ SingleCommand::Ptr prepare_command_config_manage()
     cmd->AddOption("path", 'o', "CONFIG-PATH", true,
                    "Path to the configuration in the configuration manager",
                     arghelper_config_paths);
-#if 0 // FIXME: Currently disable the alias feature until properly fixed
-    cmd->AddOption("alias", 'n', "ALIAS-NAME", true,
-                   "Set an alias name to use for this configuration");
-    cmd->AddOption("alias-delete", 'D',
-                   "Delete this alias");
-#endif
     cmd->AddOption("rename", 'r', "NEW-CONFIG-NAME", true,
                    "Renames the configuration");
     cmd->AddOption("show", 's',

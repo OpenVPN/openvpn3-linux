@@ -29,13 +29,12 @@ using namespace openvpn;
 
 class OpenVPN3ConfigurationProxy : public DBusProxy {
 public:
-    OpenVPN3ConfigurationProxy(GBusType bus_type, std::string target)
+    OpenVPN3ConfigurationProxy(GBusType bus_type, std::string object_path)
         : DBusProxy(bus_type,
                     OpenVPN3DBus_name_configuration,
                     OpenVPN3DBus_interf_configuration,
                     "", true)
     {
-        std::string object_path = get_object_path(bus_type, target);
         proxy = SetupProxy(OpenVPN3DBus_name_configuration,
                            OpenVPN3DBus_interf_configuration,
                            object_path);
@@ -51,13 +50,12 @@ public:
         }
     }
 
-    OpenVPN3ConfigurationProxy(DBus& dbusobj, std::string target)
+    OpenVPN3ConfigurationProxy(DBus& dbusobj, std::string object_path)
         : DBusProxy(dbusobj.GetConnection(),
                     OpenVPN3DBus_name_configuration,
                     OpenVPN3DBus_interf_configuration,
                     "", true)
     {
-        std::string object_path = get_object_path(GetBusType(), target);
         proxy = SetupProxy(OpenVPN3DBus_name_configuration,
                            OpenVPN3DBus_interf_configuration,
                            object_path);
@@ -213,12 +211,6 @@ public:
     void SetName(std::string name)
     {
         SetProperty("name", name);
-    }
-
-
-    void SetAlias(std::string aliasname)
-    {
-        SetProperty("alias", aliasname);
     }
 
 
@@ -477,28 +469,6 @@ public:
         g_variant_iter_free(acl);
         return ret;
     }
-
-
-private:
-    std::string get_object_path(const GBusType bus_type, std::string target)
-    {
-        if (target[0] != '/')
-        {
-            // If the object path does not start with a leadning slash (/),
-            // it is an alias, so we need to query /net/openvpn/v3/configuration/aliases
-            // to retrieve the proper configuration path
-            DBusProxy alias_proxy(bus_type,
-                                  OpenVPN3DBus_name_configuration,
-                                  OpenVPN3DBus_interf_configuration,
-                                  OpenVPN3DBus_rootp_configuration + "/aliases/" + target);
-            return alias_proxy.GetStringProperty("config_path");
-        }
-        else
-        {
-            return target;
-        }
-    }
-
 };
 
 #endif // OPENVPN3_DBUS_PROXY_CONFIG_HPP

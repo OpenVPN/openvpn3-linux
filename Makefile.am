@@ -164,7 +164,6 @@ noinst_PROGRAMS = \
 	src/tests/dbus/manager-lookupconfigname \
 	src/tests/dbus/netcfg-changeevent-selftest \
 	src/tests/dbus/netcfg-proxy-unit \
-	src/tests/dbus/set-alias \
 	src/tests/dbus/signal-listener \
 	src/tests/dbus/statusevent-selftest \
 	src/tests/dbus/proc-wait-for \
@@ -287,9 +286,6 @@ src_tests_dbus_netcfg_changeevent_selftest_SOURCES = \
 
 src_tests_dbus_netcfg_proxy_unit_SOURCES = \
 	src/tests/dbus/netcfg-proxy-unit.cpp
-
-src_tests_dbus_set_alias_SOURCES = \
-	src/tests/dbus/set-alias.cpp
 
 src_tests_dbus_signal_listener_SOURCES = \
 	src/tests/dbus/signal-listener.cpp \

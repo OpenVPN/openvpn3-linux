@@ -115,173 +115,6 @@ private:
 
 
 /**
- *  ConfigurationAlias objects are present under the
- *  /net/openvpn/v3/configuration/alias/$ALIAS_NAME D-Bus path in the
- *  configuration manager service.  They are simpler aliases which can be
- *  used instead of the full D-Bus object path to a single VPN configuration
- *  profile
- */
-class ConfigurationAlias : public DBusObject,
-                           public ConfigManagerSignals
-{
-public:
-    /**
-     * Initializes a Configuration Alias
-     *
-     * @param dbuscon    D-Bus connection to use for this object
-     * @param aliasname  A string containing the alias name
-     * @param cfgpath    An object path pointing at an existing D-Bus path
-     * @param default_log_level  Unsigned integer defining the initial log level
-     * @param logwr      Pointer to LogWriter object; can be nullptr to disable
-     *                   file log.
-     * @param signal_broadcast Should signals be broadcasted (true) or
-     *                         targeted for the log service (false)
-     */
-    ConfigurationAlias(GDBusConnection *dbuscon,
-                       std::string aliasname, std::string cfgpath,
-                       unsigned int default_log_level, LogWriter *logwr,
-                       bool signal_broadcast)
-        : DBusObject(OpenVPN3DBus_rootp_configuration + "/aliases/" + aliasname),
-          ConfigManagerSignals(dbuscon, OpenVPN3DBus_rootp_configuration + "/aliases/" + aliasname,
-                               default_log_level, logwr, signal_broadcast),
-          cfgpath(cfgpath)
-    {
-        alias = aliasname;
-        std::string new_obj_path = OpenVPN3DBus_rootp_configuration + "/aliases/"
-                                   + aliasname;
-
-        if (!g_variant_is_object_path(new_obj_path.c_str()))
-        {
-            THROW_DBUSEXCEPTION("ConfigurationAlias",
-                                "Specified alias is invalid");
-        }
-
-        std::string introsp_xml ="<node name='" + new_obj_path + "'>"
-            "    <interface name='" + OpenVPN3DBus_interf_configuration + "'>"
-            "        <property  type='o' name='config_path' access='read'/>"
-            "    </interface>"
-            "</node>";
-        ParseIntrospectionXML(introsp_xml);
-    }
-
-
-    /**
-     *  Returns a C string (char *) of the configured alias name
-
-     * @return Returns a const char * pointing at the alias name
-     */
-    const char * GetAlias()
-    {
-        return alias.c_str();
-    }
-
-
-    /**
-     *  Callback method which is called each time a D-Bus method call occurs
-     *  on this ConfigurationAlias object.
-     *
-     *  This object does not have any methods, so it is not expected that
-     *  this callback will be called.  If it is, throw an exception.
-     *
-     * @param conn       D-Bus connection where the method call occurred
-     * @param sender     D-Bus bus name of the sender of the method call
-     * @param obj_path   D-Bus object path of the target object.
-     * @param intf_name  D-Bus interface of the method call
-     * @param method_name D-Bus method name to be executed
-     * @param params     GVariant Glib2 object containing the arguments for
-     *                   the method call
-     * @param invoc      GDBusMethodInvocation where the response/result of
-     *                   the method call will be returned.
-     */
-    void callback_method_call(GDBusConnection *conn,
-                              const std::string sender,
-                              const std::string obj_path,
-                              const std::string intf_name,
-                              const std::string method_name,
-                              GVariant *params,
-                              GDBusMethodInvocation *invoc)
-    {
-        THROW_DBUSEXCEPTION("ConfigManagerAlias", "method_call not implemented");
-    }
-
-
-    /**
-     *   Callback which is called each time a ConfigurationAlias D-Bus
-     *   property is being read.
-     *
-     * @param conn           D-Bus connection this event occurred on
-     * @param sender         D-Bus bus name of the requester
-     * @param obj_path       D-Bus object path to the object being requested
-     * @param intf_name      D-Bus interface of the property being accessed
-     * @param property_name  The property name being accessed
-     * @param error          A GLib2 GError object if an error occurs
-     *
-     * @return  Returns a GVariant Glib2 object containing the value of the
-     *          requested D-Bus object property.  On errors, NULL must be
-     *          returned and the error must be returned via a GError
-     *          object.
-     */
-    GVariant * callback_get_property(GDBusConnection *conn,
-                                     const std::string sender,
-                                     const std::string obj_path,
-                                     const std::string intf_name,
-                                     const std::string property_name,
-                                     GError **error)
-    {
-        GVariant *ret = NULL;
-
-        if ("config_path" == property_name)
-        {
-            ret = g_variant_new_string (cfgpath.c_str());
-        }
-        else
-        {
-            ret = NULL;
-            g_set_error (error,
-                         G_IO_ERROR,
-                         G_IO_ERROR_FAILED,
-                         "Unknown property");
-        }
-        return ret;
-    };
-
-    /**
-     *  Callback method which is used each time a ConfigurationAlias
-     *  property is being modified over the D-Bus.
-     *
-     *  This will always fail with an exception, as there exists no properties
-     *  which can be modified in a ConfigurationAlias object.
-     *
-     * @param conn           D-Bus connection this event occurred on
-     * @param sender         D-Bus bus name of the requester
-     * @param obj_path       D-Bus object path to the object being requested
-     * @param intf_name      D-Bus interface of the property being accessed
-     * @param property_name  The property name being accessed
-     * @param value          GVariant object containing the value to be stored
-     * @param error          A GLib2 GError object if an error occurs
-     *
-     * @return Will always throw an exception as there are no properties to
-     *         modify.
-     */
-    GVariantBuilder * callback_set_property(GDBusConnection *conn,
-                                            const std::string sender,
-                                            const std::string obj_path,
-                                            const std::string intf_name,
-                                            const std::string property_name,
-                                            GVariant *value,
-                                            GError **error)
-    {
-        THROW_DBUSEXCEPTION("ConfigManagerAlias", "set property not implemented");
-    }
-
-
-private:
-    std::string alias;
-    std::string cfgpath;
-};
-
-
-/**
  *  Specialised template for managing the override list property
  */
 template <>
@@ -385,7 +218,6 @@ public:
           readonly(false),
           single_use(false),
           persistent(false),
-          alias(nullptr),
           properties(this)
     {
         gchar *cfgstr = nullptr;
@@ -458,7 +290,6 @@ public:
             "        <property type='au' name='acl' access='read'/>"
             "        <property type='s' name='name' access='readwrite'/>"
             "        <property type='b' name='public_access' access='readwrite'/>"
-            "        <property type='s' name='alias' access='readwrite'/>"
             + properties.GetIntrospectionXML() +
             "    </interface>"
             "</node>";
@@ -853,10 +684,6 @@ public:
             {
                 ret = g_variant_new_string (name.c_str());
             }
-            else if ("alias" == property_name)
-            {
-                ret = g_variant_new_string(alias ? alias->GetAlias() : "");
-            }
             else if ("public_access" == property_name)
             {
                 ret = GetPublicAccess();
@@ -925,37 +752,7 @@ public:
             CheckOwnerAccess(sender);
 
             GVariantBuilder * ret = NULL;
-            if (("alias" == property_name) && conn)
-            {
-                if (nullptr != alias)
-                {
-                    alias->RemoveObject(conn);
-                    delete alias;
-                    alias = nullptr;
-                }
-
-                try
-                {
-                    gsize len = 0;
-                    alias =  new ConfigurationAlias(conn,
-                                                    std::string(g_variant_get_string(value, &len)),
-                                                    GetObjectPath(),
-                                                    GetLogLevel(),
-                                                    GetLogWriterPtr(),
-                                                    GetSignalBroadcast());
-                    alias->RegisterObject(conn);
-                    ret = build_set_property_response(property_name, alias->GetAlias());
-                }
-                catch (DBusException& err)
-                {
-                    delete alias;
-                    alias = nullptr;
-                    throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_EXISTS,
-                                                obj_path, intf_name, property_name,
-                                                err.GetRawError());
-                }
-            }
-            else if (("name" == property_name) && conn)
+            if (("name" == property_name) && conn)
             {
                 gsize len = 0;
                 name = std::string(g_variant_get_string(value, &len));
@@ -1086,7 +883,6 @@ private:
     bool single_use;
     bool persistent;
     bool locked_down;
-    ConfigurationAlias *alias;
     PropertyCollection properties;
     OptionListJSON options;
     std::vector<OverrideValue> override_list;

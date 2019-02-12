@@ -270,7 +270,6 @@ node /net/openvpn/v3/configuration/2e356d14x6d51x4d16xbaf3x3d758626fc82 {
       readonly b readonly = false;
       readonly b single_use = false;
       readonly b persistent = false;
-      readwrite s alias = '';
   };
 };
 $
@@ -408,7 +407,7 @@ methods and properties inside any object on the D-Bus.
 
 1.  Implement retrieving an object property using Python or another language
 with D-Bus bindings available
-2.  Try changing the `alias` property of the configuration profile object.
+2.  Try changing the `name` property of the configuration profile object.
     *   What happens? Try to do introspection on both the main configuration
         manager object and this specific configuration profile object.
 
