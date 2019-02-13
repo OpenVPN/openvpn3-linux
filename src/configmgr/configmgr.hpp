@@ -425,21 +425,38 @@ public:
 
                 // If the fetching user is openvpn (which
                 // openvpn3-service-client runs as), we consider this
-                // configuration to be "used"
-                if (GetUID(sender) == lookup_uid(OPENVPN_USERNAME))
+                // configuration to be "used".
+                //
+                // If we don't have an UID for some reason, don't remove
+                // anything.
+                //
+                try
                 {
-                    // If this config is tagged as single-use only then we delete this
-                    // config from memory.
-                    if (single_use)
+                    if (GetUID(sender) == lookup_uid(OPENVPN_USERNAME))
                     {
-                        LogVerb2("Single-use configuration fetched");
-                        RemoveObject(conn);
-                        delete this;
-                        return;
+                        // If this config is tagged as single-use only then we delete this
+                        // config from memory.
+                        if (single_use)
+                        {
+                            LogVerb2("Single-use configuration fetched");
+                            RemoveObject(conn);
+                            delete this;
+                            return;
+                        }
+                        used_count++;
+                        last_use_tstamp = std::time(nullptr);
+                        update_persistent_file();
                     }
-                    used_count++;
-                    last_use_tstamp = std::time(nullptr);
-                    update_persistent_file();
+                }
+                catch (DBusException& excp)
+                {
+                    std::string err(excp.what());
+                    if (err.find("NameHasNoOwner: Could not get UID of name") == std::string::npos)
+                    {
+                        // If the error is related to something else than
+                        // retriving the UID, re-throw the exception
+                        throw;
+                    }
                 }
                 return;
             }
