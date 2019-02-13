@@ -20,4 +20,4 @@
 [D-BUS Service]
 Name=net.openvpn.v3.configuration
 User=@OPENVPN_USERNAME@
-Exec=@LIBEXEC_PATH@/openvpn3-service-configmgr
+Exec=@LIBEXEC_PATH@/openvpn3-service-configmgr --state-dir "@OPENVPN_STATEDIR@/configs"

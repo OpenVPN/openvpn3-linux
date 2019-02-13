@@ -204,7 +204,7 @@ public:
                         std::function<void()> remove_callback,
                         std::string objpath, unsigned int default_log_level,
                         LogWriter *logwr, bool signal_broadcast,
-                        uid_t creator, GVariant *params)
+                        uid_t creator, std::string state_dir, GVariant *params)
         : DBusObject(objpath),
           ConfigManagerSignals(dbuscon, objpath, default_log_level, logwr,
                                signal_broadcast),
@@ -217,11 +217,12 @@ public:
           valid(false),
           readonly(false),
           single_use(false),
-          persistent(false),
-          properties(this)
+          properties(this),
+          persistent_file("")
     {
         gchar *cfgstr = nullptr;
         gchar *cfgname_c = nullptr;
+        bool persistent = false;
         g_variant_get (params, "(ssbb)",
                        &cfgname_c, &cfgstr,
                        &single_use, &persistent);
@@ -252,7 +253,6 @@ public:
         properties.AddBinding(new PropertyType<std::time_t>(this, "import_timestamp", "read", false, import_tstamp, "t"));
         properties.AddBinding(new PropertyType<std::time_t>(this, "last_used_timestamp", "read", false, last_use_tstamp, "t"));
         properties.AddBinding(new PropertyType<bool>(this, "locked_down", "readwrite", false, locked_down));
-        properties.AddBinding(new PropertyType<bool>(this, "persistent", "read", false, persistent));
         properties.AddBinding(new PropertyType<bool>(this, "readonly", "read", false, readonly));
         properties.AddBinding(new PropertyType<bool>(this, "single_use", "read", false, single_use));
         properties.AddBinding(new PropertyType<unsigned int>(this, "used_count", "read", false, used_count));
@@ -290,6 +290,7 @@ public:
             "        <property type='au' name='acl' access='read'/>"
             "        <property type='s' name='name' access='readwrite'/>"
             "        <property type='b' name='public_access' access='readwrite'/>"
+            "        <property type='b' name='persistent' access='read'/>"
             + properties.GetIntrospectionXML() +
             "    </interface>"
             "</node>";
@@ -297,6 +298,14 @@ public:
 
         g_free(cfgname_c);
         g_free(cfgstr);
+
+        if (persistent && !state_dir.empty())
+        {
+            std::string objp = GetObjectPath();
+            std::stringstream p;
+            p << state_dir << "/" << simple_basename(objp) << ".json";
+            persistent_file = std::string(p.str());
+        }
     }
 
 
@@ -696,6 +705,10 @@ public:
             {
                     ret = GLibUtils::GVariantFromVector(GetAccessList());
             }
+            else if ("persistent" == property_name)
+            {
+                ret = g_variant_new_boolean(!persistent_file.empty());
+            }
             else if (properties.Exists(property_name))
             {
                 ret = properties.GetValue(property_name);
@@ -885,9 +898,9 @@ private:
     bool valid;
     bool readonly;
     bool single_use;
-    bool persistent;
     bool locked_down;
     PropertyCollection properties;
+    std::string persistent_file;
     OptionListJSON options;
     std::vector<OverrideValue> override_list;
 };
@@ -971,6 +984,17 @@ public:
     }
 
 
+    void SetStateDirectory(const std::string& stdir)
+    {
+        if (!state_dir.empty())
+        {
+            THROW_DBUSEXCEPTION("ConfigManagerObject",
+                                "State directory already set");
+        }
+        state_dir = stdir;
+    }
+
+
     /**
      *  Callback method called each time a method in the
      *  ConfigurationManagerObject is called over the D-Bus.
@@ -1009,6 +1033,7 @@ public:
                                                    GetLogWriterPtr(),
                                                    GetSignalBroadcast(),
                                                    creds.GetUID(sender),
+                                                   state_dir,
                                                    params);
             IdleCheck_RefInc();
             cfgobj->IdleCheck_Register(IdleCheck_Get());
@@ -1211,6 +1236,7 @@ public:
 private:
     GDBusConnection *dbuscon;
     DBusConnectionCreds creds;
+    std::string state_dir;
     std::map<std::string, ConfigurationObject *> config_objects;
 
     /**
@@ -1283,6 +1309,19 @@ public:
 
 
     /**
+     *  Enables the persistent storage feature.  This defines where
+     *  these configurations will saved on the file system.
+     *
+     * @param stdir  std::string containing the directory where to load and
+     *               save persistent configuration profiles.
+     */
+    void SetStateDirectory(const std::string& stdir)
+    {
+        state_dir = stdir;
+    }
+
+
+    /**
      *  This callback is called when the service was successfully registered
      *  on the D-Bus.
      */
@@ -1293,6 +1332,10 @@ public:
                                              signal_broadcast));
         cfgmgr->RegisterObject(GetConnection());
 
+        if (!state_dir.empty())
+        {
+            cfgmgr->SetStateDirectory(state_dir);
+        }
         procsig->ProcessChange(StatusMinor::PROC_STARTED);
 
         if (nullptr != idle_checker)
@@ -1336,6 +1379,7 @@ private:
     unsigned int default_log_level = 6; // LogCategory::DEBUG
     LogWriter *logwr = nullptr;
     bool signal_broadcast = true;
+    std::string state_dir = "";
     ConfigManagerObject::Ptr cfgmgr;
     ProcessSignalProducer::Ptr procsig;
 };

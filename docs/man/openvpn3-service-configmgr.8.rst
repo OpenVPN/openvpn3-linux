@@ -81,6 +81,11 @@ OPTIONS
                 ``openvpn3 configs-list``.  If this results in an empty list,
                 no configuration profiles are being managed.
 
+--state-dir DIRECTORY
+                Sets the directory the configuration manager must use for
+                storing persistent configuration profiles.  When this argument
+                is given, the service will scan this directory for configuration
+                profiles and load them automatically at start-up.
 
 SEE ALSO
 ========

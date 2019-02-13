@@ -97,6 +97,12 @@ static int config_manager(ParsedArgs args)
     }
     cfgmgr.SetLogLevel(log_level);
 
+    if (args.Present("state-dir"))
+    {
+        cfgmgr.SetStateDirectory(args.GetValue("state-dir", 0));
+        umask(077);
+    }
+
     IdleCheck::Ptr idle_exit;
     if (idle_wait_min > 0)
     {
@@ -145,6 +151,8 @@ int main(int argc, char **argv)
     argparser.AddOption("idle-exit", "MINUTES", true,
                         "How long to wait before exiting if being idle. "
                         "0 disables it (Default: 3 minutes)");
+    argparser.AddOption("state-dir", 0, "DIRECTORY", true,
+                        "Directory where to save persistent data");
 
 
     try
