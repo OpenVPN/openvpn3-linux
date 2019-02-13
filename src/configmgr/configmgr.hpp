@@ -230,72 +230,13 @@ public:
 
         // Parse the options from the imported configuration
         OptionList::Limits limits("profile is too large",
-				  ProfileParseLimits::MAX_PROFILE_SIZE,
-				  ProfileParseLimits::OPT_OVERHEAD,
-				  ProfileParseLimits::TERM_OVERHEAD,
-				  ProfileParseLimits::MAX_LINE_SIZE,
-				  ProfileParseLimits::MAX_DIRECTIVE_SIZE);
+                                  ProfileParseLimits::MAX_PROFILE_SIZE,
+                                  ProfileParseLimits::OPT_OVERHEAD,
+                                  ProfileParseLimits::TERM_OVERHEAD,
+                                  ProfileParseLimits::MAX_LINE_SIZE,
+                                  ProfileParseLimits::MAX_DIRECTIVE_SIZE);
         options.parse_from_config(cfgstr, &limits);
-
-        std::stringstream msg;
-        msg << "Parsed "
-            << (persistent ? "persistent" : "")
-            << (persistent && single_use ? ", " : "")
-            << (single_use ? "single-use" : "")
-            << " configuration '" << name << "'"
-            << ", owner: " << lookup_username(creator);
-        LogInfo(msg.str());
-
-        // FIXME:  Validate the configuration file, ensure --ca/--key/--cert/--dh/--pkcs12
-        //         contains files
-        valid = true;
-
-        properties.AddBinding(new PropertyType<std::time_t>(this, "import_timestamp", "read", false, import_tstamp, "t"));
-        properties.AddBinding(new PropertyType<std::time_t>(this, "last_used_timestamp", "read", false, last_use_tstamp, "t"));
-        properties.AddBinding(new PropertyType<bool>(this, "locked_down", "readwrite", false, locked_down));
-        properties.AddBinding(new PropertyType<bool>(this, "readonly", "read", false, readonly));
-        properties.AddBinding(new PropertyType<bool>(this, "single_use", "read", false, single_use));
-        properties.AddBinding(new PropertyType<unsigned int>(this, "used_count", "read", false, used_count));
-        properties.AddBinding(new PropertyType<bool>(this, "valid", "read", false, valid));
-        properties.AddBinding(new PropertyType<decltype(override_list)>(this, "overrides", "read", true, override_list));
-
-        std::string introsp_xml ="<node name='" + objpath + "'>"
-            "    <interface name='net.openvpn.v3.configuration'>"
-            "        <method name='Fetch'>"
-            "            <arg direction='out' type='s' name='config'/>"
-            "        </method>"
-            "        <method name='FetchJSON'>"
-            "            <arg direction='out' type='s' name='config_json'/>"
-            "        </method>"
-            "        <method name='SetOption'>"
-            "            <arg direction='in' type='s' name='option'/>"
-            "            <arg direction='in' type='s' name='value'/>"
-            "        </method>"
-            "        <method name='SetOverride'>"
-            "            <arg direction='in' type='s' name='name'/>"
-            "            <arg direction='in' type='v' name='value'/>"
-            "        </method>"
-            "        <method name='UnsetOverride'>"
-            "            <arg direction='in' type='s' name='name'/>"
-            "        </method>"
-            "        <method name='AccessGrant'>"
-            "            <arg direction='in' type='u' name='uid'/>"
-            "        </method>"
-            "        <method name='AccessRevoke'>"
-            "            <arg direction='in' type='u' name='uid'/>"
-            "        </method>"
-            "        <method name='Seal'/>"
-            "        <method name='Remove'/>"
-            "        <property type='u' name='owner' access='read'/>"
-            "        <property type='au' name='acl' access='read'/>"
-            "        <property type='s' name='name' access='readwrite'/>"
-            "        <property type='b' name='public_access' access='readwrite'/>"
-            "        <property type='b' name='persistent' access='read'/>"
-            + properties.GetIntrospectionXML() +
-            "    </interface>"
-            "</node>";
-        ParseIntrospectionXML(introsp_xml);
-
+        initialize_configuration(persistent);
         g_free(cfgname_c);
         g_free(cfgstr);
 
@@ -972,6 +913,69 @@ public:
             }
         }
         return false;
+    }
+
+
+    void initialize_configuration(const bool persistent)
+    {
+        std::stringstream msg;
+        msg << "Parsed"
+            << (persistent ? " persistent" : "")
+            << (persistent && single_use ? "," : "")
+            << (single_use ? " single-use" : "")
+            << " configuration '" << name << "'"
+            << ", owner: " << lookup_username(GetOwnerUID());
+        LogInfo(msg.str());
+
+        // FIXME:  Validate the configuration file, ensure --ca/--key/--cert/--dh/--pkcs12
+        //         contains files
+        valid = true;
+
+        properties.AddBinding(new PropertyType<std::time_t>(this, "import_timestamp", "read", false, import_tstamp, "t"));
+        properties.AddBinding(new PropertyType<std::time_t>(this, "last_used_timestamp", "read", false, last_use_tstamp, "t"));
+        properties.AddBinding(new PropertyType<bool>(this, "locked_down", "readwrite", false, locked_down));
+        properties.AddBinding(new PropertyType<bool>(this, "readonly", "read", false, readonly));
+        properties.AddBinding(new PropertyType<bool>(this, "single_use", "read", false, single_use));
+        properties.AddBinding(new PropertyType<unsigned int>(this, "used_count", "read", false, used_count));
+        properties.AddBinding(new PropertyType<bool>(this, "valid", "read", false, valid));
+        properties.AddBinding(new PropertyType<decltype(override_list)>(this, "overrides", "read", true, override_list));
+
+        std::string introsp_xml ="<node name='" + GetObjectPath() + "'>"
+            "    <interface name='net.openvpn.v3.configuration'>"
+            "        <method name='Fetch'>"
+            "            <arg direction='out' type='s' name='config'/>"
+            "        </method>"
+            "        <method name='FetchJSON'>"
+            "            <arg direction='out' type='s' name='config_json'/>"
+            "        </method>"
+            "        <method name='SetOption'>"
+            "            <arg direction='in' type='s' name='option'/>"
+            "            <arg direction='in' type='s' name='value'/>"
+            "        </method>"
+            "        <method name='SetOverride'>"
+            "            <arg direction='in' type='s' name='name'/>"
+            "            <arg direction='in' type='v' name='value'/>"
+            "        </method>"
+            "        <method name='UnsetOverride'>"
+            "            <arg direction='in' type='s' name='name'/>"
+            "        </method>"
+            "        <method name='AccessGrant'>"
+            "            <arg direction='in' type='u' name='uid'/>"
+            "        </method>"
+            "        <method name='AccessRevoke'>"
+            "            <arg direction='in' type='u' name='uid'/>"
+            "        </method>"
+            "        <method name='Seal'/>"
+            "        <method name='Remove'/>"
+            "        <property type='u' name='owner' access='read'/>"
+            "        <property type='au' name='acl' access='read'/>"
+            "        <property type='s' name='name' access='readwrite'/>"
+            "        <property type='b' name='public_access' access='readwrite'/>"
+            "        <property type='b' name='persistent' access='read'/>"
+            + properties.GetIntrospectionXML() +
+            "    </interface>"
+            "</node>";
+        ParseIntrospectionXML(introsp_xml);
     }
 
 
