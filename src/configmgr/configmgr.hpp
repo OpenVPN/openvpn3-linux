@@ -305,6 +305,7 @@ public:
             std::stringstream p;
             p << state_dir << "/" << simple_basename(objp) << ".json";
             persistent_file = std::string(p.str());
+            update_persistent_file();
         }
     }
 
@@ -325,6 +326,57 @@ public:
     std::string GetConfigName() const noexcept
     {
         return name;
+    }
+
+
+    /**
+     *  Exports the configuration, including all the available settings
+     *  specific to the Linux client.  The output format is JSON.
+     *
+     * @return Returns a Json::Value object containing the serialized
+     *         configuration profile
+     */
+    Json::Value Export() const
+    {
+        Json::Value ret;
+
+        ret["object_path"] = GetObjectPath();
+        ret["owner"] = (uint32_t) GetOwnerUID();
+        ret["name"] = name;
+        ret["import_timestamp"] = (uint32_t) import_tstamp;
+        ret["last_used_timestamp"] = (uint32_t) last_use_tstamp;
+        ret["locked_down"] = locked_down;
+        ret["readonly"] = readonly;
+        ret["single_use"] = single_use;
+        ret["used_count"] = used_count;
+        ret["valid"] = valid;
+        ret["profile"] = options.json_export();
+
+        ret["public_access"] = GetPublicAccess();
+        for (const auto& e : GetAccessList())
+        {
+            ret["acl"].append(e);
+        }
+        for (const auto& ov : override_list)
+        {
+            switch (ov.override.type)
+            {
+            case OverrideType::boolean:
+                ret["overrides"][ov.override.key] = ov.boolValue;
+                break;
+
+            case OverrideType::string:
+                ret["overrides"][ov.override.key] = ov.strValue;
+                break;
+
+            default:
+                THROW_DBUSEXCEPTION("ConfigurationObject",
+                                    "Invalid override type for key "
+                                    "'" + ov.override.key + "'");
+            }
+        }
+
+        return ret;
     }
 
 
@@ -387,6 +439,7 @@ public:
                     }
                     used_count++;
                     last_use_tstamp = std::time(nullptr);
+                    update_persistent_file();
                 }
                 return;
             }
@@ -446,6 +499,7 @@ public:
                 CheckOwnerAccess(sender);
                 // TODO: Implement SetOption
                 g_dbus_method_invocation_return_value(invoc, NULL);
+                update_persistent_file();
                 return;
             }
             catch (DBusCredentialsException& excp)
@@ -484,6 +538,7 @@ public:
                 g_free(key);
                 //g_variant_unref(val);
                 g_dbus_method_invocation_return_value(invoc, NULL);
+                update_persistent_file();
                 return;
             }
             catch (DBusCredentialsException& excp)
@@ -528,6 +583,7 @@ public:
                                                                 err.str().c_str());
                 }
                 g_free(key);
+                update_persistent_file();
                 return;
             }
             catch (DBusCredentialsException& excp)
@@ -557,6 +613,7 @@ public:
 
                 LogInfo("Access granted to UID " + std::to_string(uid)
                          + " by UID " + std::to_string(GetUID(sender)));
+                update_persistent_file();
                 return;
             }
             catch (DBusCredentialsException& excp)
@@ -586,6 +643,7 @@ public:
 
                 LogInfo("Access revoked for UID " + std::to_string(uid)
                          + " by UID " + std::to_string(GetUID(sender)));
+                update_persistent_file();
                 return;
             }
             catch (DBusCredentialsException& excp)
@@ -603,6 +661,7 @@ public:
                 if (valid) {
                     readonly = true;
                     g_dbus_method_invocation_return_value(invoc, NULL);
+                    update_persistent_file();
                 }
                 else
                 {
@@ -628,6 +687,15 @@ public:
                         + sender_name);
                 RemoveObject(conn);
                 g_dbus_method_invocation_return_value(invoc, NULL);
+
+                // If this is a persistent config, remove it from
+                // the file system too
+                if (!persistent_file.empty())
+                {
+                    unlink(persistent_file.c_str());
+                    LogVerb2("Persistent configuration profile removed: '"
+                             + persistent_file + "'");
+                }
                 delete this;
                 return;
             }
@@ -802,6 +870,7 @@ public:
                                             "Denied");
             };
 
+            update_persistent_file();
             return ret;
         }
         catch (DBusCredentialsException& excp)
@@ -886,6 +955,22 @@ public:
             }
         }
         return false;
+    }
+
+
+    void update_persistent_file()
+    {
+        if (persistent_file.empty())
+        {
+            // If this configuration is not configured as persistent,
+            // we're done.
+            return;
+        }
+
+        std::ofstream state(persistent_file);
+        state << Export();
+        state.close();
+        LogVerb2("Updated persistent config: " + persistent_file);
     }
 
 
