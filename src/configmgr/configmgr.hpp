@@ -1150,27 +1150,21 @@ public:
         {
             // Import the configuration
             std::string cfgpath = generate_path_uuid(OpenVPN3DBus_rootp_configuration, 'x');
+            ConfigurationObject *cfgobj;
+            cfgobj = new ConfigurationObject(dbuscon,
+                                             [self=Ptr(this), cfgpath]()
+                                             {
+                                                self->remove_config_object(cfgpath);
+                                             },
+                                             cfgpath,
+                                             GetLogLevel(),
+                                             GetLogWriterPtr(),
+                                             GetSignalBroadcast(),
+                                             creds.GetUID(sender),
+                                             state_dir,
+                                             params);
 
-            auto *cfgobj = new ConfigurationObject(dbuscon,
-                                                   [self=Ptr(this), cfgpath]()
-                                                   {
-                                                       self->remove_config_object(cfgpath);
-                                                   },
-                                                   cfgpath,
-                                                   GetLogLevel(),
-                                                   GetLogWriterPtr(),
-                                                   GetSignalBroadcast(),
-                                                   creds.GetUID(sender),
-                                                   state_dir,
-                                                   params);
-            IdleCheck_RefInc();
-            cfgobj->IdleCheck_Register(IdleCheck_Get());
-            cfgobj->RegisterObject(conn);
-            config_objects[cfgpath] = cfgobj;
-
-            Debug(std::string("ConfigurationObject registered on '")
-                         + intf_name + "': " + cfgpath
-                         + " (owner uid " + std::to_string(creds.GetUID(sender)) + ")");
+            register_config_object(cfgobj, "created");
             g_dbus_method_invocation_return_value(invoc, g_variant_new("(o)", cfgpath.c_str()));
         }
         else if ("FetchAvailableConfigs" == method_name)
@@ -1366,6 +1360,30 @@ private:
     DBusConnectionCreds creds;
     std::string state_dir;
     std::map<std::string, ConfigurationObject *> config_objects;
+
+
+    /**
+     *  Register a new configuration object on the D-Bus, with the
+     *  idle-check reference counting, internal object tracking and
+     *  logging handled.
+     *
+     * @param cfgobj    ConfigurationObject pointer to register
+     * @param operation std::string used for logging, describing how it
+     *                  was processed.
+     */
+    void register_config_object(ConfigurationObject *cfgobj,
+                                const std::string& operation)
+    {
+        IdleCheck_RefInc();
+        cfgobj->IdleCheck_Register(IdleCheck_Get());
+        cfgobj->RegisterObject(dbuscon);
+        config_objects[cfgobj->GetObjectPath()] = cfgobj;
+
+        Debug("New configuration object " + operation + ": "
+              + cfgobj->GetObjectPath()
+              + " (owner uid " + std::to_string(cfgobj->GetOwnerUID()) + ")");
+    }
+
 
     /**
      * Callback function used by ConfigurationObject instances to remove
