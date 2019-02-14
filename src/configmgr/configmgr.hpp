@@ -855,7 +855,7 @@ public:
         const ValidOverride& vo = GetConfigOverride(key);
         if (!vo.valid())
         {
-            THROW_DBUSEXCEPTION("ConfigManagerObject",
+            THROW_DBUSEXCEPTION("ConfigurationObject",
                                 "Invalid override key '" + std::string(key)
                                 + "'");
         }
@@ -863,35 +863,57 @@ public:
         // Ensure that a previous override value is remove
         (void) remove_override(key);
 
-        if (OverrideType::string == vo.type)
+        std::string g_type(g_variant_get_type_string(value));
+        if ("s" == g_type)
         {
-            std::string g_type(g_variant_get_type_string(value));
-            if ("s" != g_type)
-            {
-                THROW_DBUSEXCEPTION("ConfigManagerObject",
-                                    "Invalid data type for key '"
-                                    + std::string(key) + "'");
-            }
-
             gsize len = 0;
             std::string v(g_variant_get_string(value, &len));
-            override_list.push_back(OverrideValue(vo, v));
-
+            return set_override(key, v);
         }
-        else if (OverrideType::boolean == vo.type)
+        else if ("b" == g_type)
         {
-            std::string g_type(g_variant_get_type_string(value));
-            if ("b" != g_type)
-            {
-                THROW_DBUSEXCEPTION("ConfigManagerObject",
-                                    "Invalid data type for key '"
-                                    + std::string(key) + "'");
-            }
-
-            bool v = g_variant_get_boolean(value);
-            override_list.push_back(OverrideValue(vo, v));
+            return set_override(key, g_variant_get_boolean(value));
         }
-        return override_list.back();
+        THROW_DBUSEXCEPTION("ConfigurationObject",
+                            "Unsupported override data type: " + g_type);
+    }
+
+
+    /**
+     *  Sets an override value for the configuration profile
+     *
+     * @param key    char * of the override key
+     * @param value  Value for the override
+     *
+     * @return  Returns the OverrideValue object added to the
+     *          array of override settings
+     */
+    template<typename T>
+    OverrideValue set_override(const gchar *key, T value)
+    {
+        const ValidOverride& vo = GetConfigOverride(key);
+        if (!vo.valid())
+        {
+            THROW_DBUSEXCEPTION("ConfigurationObject",
+                                "Invalid override key '" + std::string(key)
+                                + "'");
+        }
+
+        // Ensure that a previous override value is remove
+        (void) remove_override(key);
+
+        switch (vo.type)
+        {
+        case OverrideType::string:
+        case OverrideType::boolean:
+            override_list.push_back(OverrideValue(vo, value));
+            return override_list.back();
+
+        default:
+            THROW_DBUSEXCEPTION("ConfigurationObject",
+                                "Unsupported data type for key '"
+                                + std::string(key) + "'");
+        }
     }
 
 
