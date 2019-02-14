@@ -250,6 +250,66 @@ public:
         }
     }
 
+    ConfigurationObject(GDBusConnection *dbuscon,
+                        const std::string& fname, Json::Value profile,
+                        std::function<void()> remove_callback,
+                        unsigned int default_log_level,
+                        LogWriter *logwr, bool signal_broadcast)
+        : DBusObject(profile["object_path"].asString()),
+          ConfigManagerSignals(dbuscon, profile["object_path"].asString(),
+                               default_log_level, logwr, signal_broadcast),
+          DBusCredentials(dbuscon, profile["owner"].asUInt64()),
+          remove_callback(remove_callback),
+          properties(this),
+          persistent_file(fname)
+    {
+        name = profile["name"].asString();
+        import_tstamp = profile["import_timestamp"].asUInt64();
+        last_use_tstamp = profile["last_used_timestamp"].asUInt64();
+        locked_down = profile["locked_down"].asBool();
+        readonly = profile["readonly"].asBool();
+        single_use = profile["single_use"].asBool();
+        used_count = profile["used_count"].asUInt();
+        valid = profile["valid"].asBool();
+
+        SetPublicAccess(profile["public_access"].asBool());
+        for (const auto& id : profile["acl"])
+        {
+            GrantAccess(id.asUInt());
+        }
+
+        for (const auto& ovkey : profile["overrides"].getMemberNames())
+        {
+            Json::Value ov = profile["overrides"][ovkey];
+            switch(ov.type())
+            {
+            case Json::ValueType::booleanValue:
+                set_override(ovkey.c_str(), ov.asBool());
+                break;
+            case Json::ValueType::stringValue:
+                set_override(ovkey.c_str(), ov.asString());
+                break;
+            default:
+                THROW_DBUSEXCEPTION("ConfigurationObject",
+                                    "Invalid data type for ...");
+            }
+        }
+
+        std::stringstream jsonstr;
+        jsonstr << profile["profile"];
+
+        // Parse the options from the imported configuration
+        OptionList::Limits limits("profile is too large",
+                                  ProfileParseLimits::MAX_PROFILE_SIZE,
+                                  ProfileParseLimits::OPT_OVERHEAD,
+                                  ProfileParseLimits::TERM_OVERHEAD,
+                                  ProfileParseLimits::MAX_LINE_SIZE,
+                                  ProfileParseLimits::MAX_DIRECTIVE_SIZE);
+        ProfileMergeJSON pm(jsonstr.str());
+        options.parse_from_config(pm.profile_content(), &limits);
+
+        initialize_configuration(true);
+    }
 
     ~ConfigurationObject()
     {
