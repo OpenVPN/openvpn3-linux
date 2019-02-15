@@ -1169,6 +1169,16 @@ public:
     }
 
 
+    /**
+     *  Sets the directory where the configuration manager should store
+     *  persistent configuration profiles.
+     *
+     *  When calling this function, all already saved configuration files
+     *  will be imported and registered before continuing.
+     *
+     * @param stdir  std::string containing the file system directory for
+     *               the persistent configuration profile storage
+     */
     void SetStateDirectory(const std::string& stdir)
     {
         if (!state_dir.empty())
@@ -1177,6 +1187,28 @@ public:
                                 "State directory already set");
         }
         state_dir = stdir;
+
+        // Load all the already saved persistent configurations before
+        // continuing.
+        for (const auto& fname : get_persistent_config_file_list(state_dir))
+        {
+            try
+            {
+                import_persistent_configuration(fname);
+            }
+            catch (const DBusException& excp)
+            {
+                std::string err(excp.what());
+                if (err.find("failed: An object is already exported for the interface") != std::string::npos)
+                {
+                    LogCritical("Could not import persistent configuration: " + fname);
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
     }
 
 
@@ -1439,6 +1471,87 @@ private:
         Debug("New configuration object " + operation + ": "
               + cfgobj->GetObjectPath()
               + " (owner uid " + std::to_string(cfgobj->GetOwnerUID()) + ")");
+    }
+
+
+    /**
+     *  Get a list (std::vector<std::string>) of all persistent configuration
+     *  files in the given directory.
+     *
+     *  The filtering is based on a course filename check.  Filenames must be
+     *  41 characters long and must end with '.json'.  Only files and
+     *  symbolic links are reported back.  It will not traverse any
+     *  directories.
+     *
+     * @param directory  std::string of the directory where to find files
+     *
+     * @return  Returns a std::vector<std::string> of all matching files.
+     *          Each entry will have the full path to the file.
+     *
+     * @throws  Throws DBusException if the directory cannot be opened
+     */
+    std::vector<std::string> get_persistent_config_file_list(const std::string& directory)
+    {
+        DIR *dirfd = nullptr;
+        struct dirent *entry = nullptr;
+
+        dirfd = opendir(directory.c_str());
+        if (nullptr == dirfd)
+        {
+            std::stringstream err;
+            err << "Cannot open state-dir directory '" << directory << "': "
+                << strerror(errno);
+            THROW_DBUSEXCEPTION("ConfigManagerObject", err.str());
+        }
+
+        std::vector<std::string> filelist;
+        while (nullptr != (entry = readdir(dirfd)))
+        {
+            // Filter out filenames not relevant.  The expected format is:
+            //    34eea818xe578x4356x924bx9fccbbeb92eb.json
+            // which, for simplicity is checked as:
+            //     string length == 41 and last 5 characters are ".json"
+            std::string fname(entry->d_name);
+            if (41 != fname.size()
+               || ".json" != fname.substr(36, 5))
+            {
+                continue;
+            }
+
+            std::stringstream fullpath;
+            fullpath <<  directory << "/" << fname;
+
+            // Filter out only files and symbolic links
+            struct stat stbuf;
+            if (0 == lstat(fullpath.str().c_str(), &stbuf))
+            {
+                switch (stbuf.st_mode & S_IFMT)
+                {
+                case S_IFREG:
+                case S_IFLNK:
+                    filelist.push_back(fullpath.str());
+                    break;
+
+                case S_IFDIR:
+                    // Ignore directories silently
+                    break;
+
+                default:
+                    LogWarn("Unsupported file type: " + fullpath.str());
+                    break;
+                }
+            }
+            else
+            {
+                std::stringstream err;
+                err << "Could not access file '" << fullpath.str() << "': "
+                    << strerror(errno);
+                LogError(err.str());
+            }
+        }
+        closedir(dirfd);
+
+        return filelist;
     }
 
 
