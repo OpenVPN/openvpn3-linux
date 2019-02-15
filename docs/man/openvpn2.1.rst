@@ -132,6 +132,51 @@ OPTIONS
 
 --port PORT           TCP/UDP port number for both local and remote.
 
+--profile-override OVERRIDE-KEY OVERRIDE-VALUE
+                      OpenVPN 3 specific feature, allowing to set some local
+                      overrides or disable some functionality.  Valid
+                      *OVERRIDE-KEY* values and their valid *OVERRIDE-VALUES*
+                      are:
+
+                      * *server-override*:
+                        A server host name
+
+                      * *port-override*:
+                        A port number
+
+                      * *proto-override*:
+                        *tcp* or *udp*
+
+                      * *ipv6*:
+                        *yes*, *no* or *default*
+
+                      * *dns-setup-disabled*:
+                        *true* or *false*
+
+                      * *dns-sync-lookup*:
+                        *true* or *false*
+
+                      * *auth-fail-retry*:
+                        *true* or *false*
+
+                      * *proxy-host*:
+                        Proxy server host name
+
+                      * *proxy-port*:
+                        Proxy server port number
+
+                      * *proxy-username*:
+                        Username used for proxy authentication
+
+                      * *proxy-password*:
+                        Password used for proxy authentication
+
+                      * *proxy-auth-cleartext*:
+                        *true* or *false*
+
+                      These overrides are described further in
+                      ``openvpn3-config-manage``\(1)
+
 --proto PROTO         Use protocol PROTO for communicating with peer. Valid
                       values: udp, tcp
 
@@ -296,4 +341,4 @@ SEE ALSO
 
 ``openvpn``\(8)
 ``openvpn3``\(1)
-
+``openvpn3-config-manage``\(1)

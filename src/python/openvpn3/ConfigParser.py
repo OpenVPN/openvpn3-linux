@@ -118,6 +118,13 @@ class ConfigParser():
             return False
 
 
+    def GetOverrides(self):
+        if self.__opts['profile_override'] is None \
+           or len(self.__opts['profile_override']) < 1:
+            return {}
+        return self.__opts['profile_override']
+
+
     ##
     #  Checks if we have at least the pure minimum of options and arguments
     #  to establish a connection.
@@ -360,6 +367,19 @@ class ConfigParser():
                                    nargs=1,
                                    help='TCP/UDP port number for both local '
                                    + 'and remote.')
+
+        profoverrides=['server-override', 'port-override', 'proto-override',
+                       'ipv6', 'dns-setup-disabled', 'dns-sync-lookup',
+                       'auth-fail-retry', 'proxy-host', 'proxy-port',
+                       'proxy-username', 'proxy-password',
+                       'proxy-auth-cleartext']
+        self.__parser.add_argument('--profile-override',
+                                   metavar='OVERRIDE-KEY OVERRIDE-VALUE',
+                                   action=ConfigParser.OpenVPNoverrideArgs,
+                                   choices=profoverrides,
+                                   help='OpenVPN 3 specific: Override '
+                                   + 'specific settings. Valid override keys: '
+                                   + ', '.join(profoverrides))
 
         self.__parser.add_argument('--proto', metavar='PROTO',
                                    action='store',
@@ -774,6 +794,42 @@ class ConfigParser():
                     dst.append(' '.join(values))
                 else:
                     dst.append(values)
+
+                setattr(namespace, self.dest, dst)
+
+
+    ##
+    #  The --profile-override args takes arguments like "KEY VALUE"
+    #  We need to split out the valid keys and extracting the proper values
+    #
+    class OpenVPNoverrideArgs(argparse.Action):
+            def __init__(self, option_strings, dest, nargs=None, **kwargs):
+                try:
+                    self.__overrides = kwargs.pop('choices')
+                except KeyError:
+                    raise Exception('Missing required choices')
+
+                super(ConfigParser.OpenVPNoverrideArgs, self).__init__(option_strings, dest, '+', **kwargs)
+
+            def __call__(self, parser, namespace, values, option_string=None):
+
+                dst = getattr(namespace, self.dest)
+                if dst is None:
+                    dst = {}
+
+                if isinstance(values, list):
+                    if len(values) < 2:
+                        err = 'Missing override value to "%s"' % (values[0],)
+                        raise argparse.ArgumentError(self, err)
+
+                    if values[0] not in self.__overrides:
+                        err = 'Invalida override key: %s' % (values[0],)
+                        raise argparse.ArgumentError(self, err)
+
+                    dst[values[0]] = ' '.join(values[1:])
+                else:
+                    err = 'Missing override value to "%s"' % (values,)
+                    raise argparse.ArgumentError(self, err)
 
                 setattr(namespace, self.dest, dst)
 

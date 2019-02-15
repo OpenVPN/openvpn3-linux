@@ -78,6 +78,13 @@ def import_config(bus, opts):
         # in the imported configuration
         cfg.SetOverride('persist-tun', True)
 
+    try:
+        for (k, v) in opts.GetOverrides().items():
+            cfg.SetOverride(k, v)
+    except dbus.exceptions.DBusException as excp:
+        cfg.Remove()
+        raise Exception('Incorrect override: %s=%s' % (k, v))
+
     if not single_use:
         print('Configuration path: %s' % cfg.GetPath())
 
