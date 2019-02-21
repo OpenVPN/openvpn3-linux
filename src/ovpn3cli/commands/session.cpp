@@ -144,7 +144,7 @@ static int cmd_session_stats(ParsedArgs args)
             else if (1 < paths.size())
             {
                 throw CommandException("session-manage",
-                                       "More than one session with the given"
+                                       "More than one session with the given "
                                        "configuration profile name was found.");
             }
             sesspath = paths.at(0);
@@ -652,7 +652,7 @@ static int cmd_session_manage(ParsedArgs args)
             else if (1 < paths.size())
             {
                 throw CommandException("session-manage",
-                                       "More than one session with the given"
+                                       "More than one session with the given "
                                        "configuration profile name was found.");
             }
             sesspath = paths.at(0);
@@ -802,7 +802,7 @@ static int cmd_session_acl(ParsedArgs args)
             else if (1 < paths.size())
             {
                 throw CommandException("session-acl",
-                                       "More than one session with the given"
+                                       "More than one session with the given "
                                        "configuration profile name was found.");
             }
             sesspath = paths.at(0);
