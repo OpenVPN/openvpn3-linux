@@ -30,6 +30,7 @@ node /net/openvpn/v3/configuration {
           u level,
           s message);
     properties:
+          readonly s version;
   };
 };
 ```
@@ -84,6 +85,7 @@ in addition to the hard-coded restriction in the configuration manager code.
 
 #### Arguments
 | Direction | Name          | Type         | Description                                                  |
+|-----------|---------------|--------------|--------------------------------------------------------------|
 | In        | path          | object path  | Configuration object path where to modify the owner property |
 | In        | new_owner_uid | unsigned int | UID value of the new owner of the configuration profile      |
 
@@ -95,6 +97,11 @@ Log signal which carries a log group, log verbosity level and a string
 with the log message itself. See the separate [logging documentation](dbus-logging.md)
 for details on this signal.
 
+### `Properties`
+
+| Name          | Type             | Read/Write | Description                                         |
+|---------------|------------------|:----------:|-----------------------------------------------------|
+| version       | string           | readonly   | Version of the currently running service            |
 
 D-Bus destination: `net.openvpn.v3.configuration` \- Object path: `/net/openvpn/v3/configuration/${UNIQUE_ID}`
 --------------------------------------------------------------------------------------------------------------
@@ -107,24 +114,28 @@ node /net/openvpn/v3/configuration/${UNIQUE_ID} {
       FetchJSON(out s config_json);
       SetOption(in  s option,
                 in  s value);
+      SetOverride(in  s name,
+                  in  v value);
+      UnsetOverride(in  s name);
       AccessGrant(in  u uid);
       AccessRevoke(in  u uid);
       Seal();
       Remove();
     signals:
     properties:
-      readonly u owner = 2001;
-      readonly au acl = [];
+      readonly u owner;
+      readonly au acl;
       readonly s name;
+      readwrite b public_access;
+      readonly b persistent;
       readonly t import_timestamp;
       readonly t last_used_timestamp;
-      readonly u used_count;
-      readonly b valid;
+      readwrite b locked_down;
+      readonly a{sv} overrides;
       readonly b readonly;
       readonly b single_use;
-      readonly b persistent;
-      readwrite b locked_down;
-      readwrite b public_access;
+      readonly u used_count;
+      readonly b valid;
   };
 };
 ```
@@ -228,13 +239,15 @@ success. If an error occurs, a D-Bus error is returned.
 | owner         | unsigned integer | Read-only  | The UID value of the user which did the import      |
 | acl           | array(integer)   | Read-only  | An array of UID values granted access               |
 | name          | string           | Read-only  | Contains the user friendly name of the configuration profile |
+| public_access | boolean          | Read/Write | If set to true, access control is disabled. But only owner may change this property, modify the ACL or delete the configuration |
+| persistent    | boolean          | Read-only  | If set to true, this configuration will be saved to disk by the configuration manager. The location of the file storage is managed by the configuration manager itself and the configuration manager will load persistent profiles each time it starts |
 | import_timestamp | uint64        | Read-only  | Unix Epoch timestamp of the import time             |
 | last_used_timestamp | uint64     | Read-only  | Unix Epoch timestamp of the last time it Fetch was called [1] |
-| used_count    | unsigned integer | Read-only  | Number of times Fetch has been called [1]           |
+| locked_down   | boolean          | Read/Write | If set to true, only the owner and openvpn user can retrieve the configuration file.  Other users granted access can only use this profile to start a new tunnel |
+| overrides     | dictionary       | Read-only  | Contains all the override settings enabled.  This is stored as a key/value based dictionary, where value can be any arbitrary data type |
 | readonly      | boolean          | Read-only  | If set to true, the configuration have been sealed and can no longer be modified |
 | single_use    | boolean          | Read-only  | If set to true, this configuration profile will be automatically removed after the first `Fetch` call. This is intended to be used by command line clients providing a similar user experience as the OpenVPN 2.x versions provides. |
-| persistent    | boolean          | Read-only  | If set to true, this configuration will be saved to disk by the configuration manager. The location of the file storage is managed by the configuration manager itself and the configuration manager will load persistent profiles each time it starts |
-| locked_down   | boolean          | Read/Write | If set to true, only the owner and openvpn user can retrieve the configuration file.  Other users granted access can only use this profile to start a new tunnel |
-| public_access | boolean          | Read/Write | If set to true, access control is disabled. But only owner may change this property, modify the ACL or delete the configuration |
+| used_count    | unsigned integer | Read-only  | Number of times Fetch has been called [1]           |
+| valid         | boolean          | Read-only  | Contains an indication if the configuration profile is considered functional for a VPN session |
 
-  [1] It will track/count of ``Fetch`` usage only if the calling user is openvpn
+  [1] It will track/count ``Fetch`` usage only if the calling user is ``openvpn``
