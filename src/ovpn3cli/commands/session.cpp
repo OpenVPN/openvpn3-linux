@@ -487,7 +487,7 @@ static int cmd_sessions_list(ParsedArgs args)
             try
             {
                 OpenVPN3ConfigurationProxy cprx(G_BUS_TYPE_SYSTEM, config_path);
-                if (cprx.CheckObjectExists())
+                if (cprx.CheckObjectExists(100))
                 {
                     cfgname_current = cprx.GetStringProperty("name");
                 }
