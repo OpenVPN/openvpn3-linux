@@ -333,19 +333,35 @@ namespace openvpn
          *  does, it is presumed the object path is valid and points to an
          *  existing D-Bus object.
          *
+         * @param  allow_tries   How many times it should do an attempt
+         *                       before calling it a failure.  This is 1
+         *                       by default but can be overridden by caller
+         *                       if needs to wait for a service to start up
+         *                       and settle.
+         * @param  sleep_us      How long (in µs) it should wait between
+         *                       each attempt.  Default: 1000
+         *
          * @return  Returns true if the object exists or false if not.  Will
          *          throw an exception if the the D-Bus method calls fails or
          *          the property proxy interface has not been configured.
          */
-        bool CheckObjectExists()
+        bool CheckObjectExists(const unsigned int allow_tries=1,
+                               const unsigned int sleep_us=1000)
         {
-            // Objects will normally have the
-            // org.freedesktop.DBus.Properties.GetAll() method available,
-            // so if this fails we presume the object does not exist.
-            if (property_proxy_init)
+            if (!property_proxy_init)
+            {
+                THROW_DBUSEXCEPTION("DBusProxy",
+                                    "Property proxy has not been initialized");
+            }
+
+            unsigned int attempts = allow_tries;
+            while (1 < attempts)
             {
                 try
                 {
+                    // Objects will normally have the
+                    // org.freedesktop.DBus.Properties.GetAll() method available,
+                    // so if this fails we presume the object does not exist.
                     GVariant *empty = dbus_proxy_call(property_proxy,
                                                       "GetAll",
                                                       g_variant_new("(s)", interface.c_str()),
@@ -365,11 +381,18 @@ namespace openvpn
                 }
                 catch (DBusException& excp)
                 {
-                    return false;
+                    --attempts;
+                    if (0 == attempts)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        usleep(sleep_us);
+                    }
                 }
             }
-            THROW_DBUSEXCEPTION("DBusProxy",
-                                "Property proxy has not been initialized");
+            return false;
         }
 
 
