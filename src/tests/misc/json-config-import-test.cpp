@@ -36,13 +36,26 @@ using namespace openvpn;
 
 int main(int argc, char **argv)
 {
-    std::stringstream jsoncfg;
+    Json::Value jsondata;
+    if (argc < 2)
+    {
+        std::cerr << "Reading configuration from stdin" << std::endl;
 
-    for (std::string line; std::getline(std::cin, line);) {
-        jsoncfg << line << std::endl;
+        std::stringstream cfgfile;
+        for (std::string line; std::getline(std::cin, line);)
+        {
+            cfgfile << line << std::endl;
+        }
+        cfgfile >> jsondata;
+    }
+    else
+    {
+        std::cerr << "Reading configuration from " << argv[1] << std::endl;
+        std::ifstream file(argv[1], std::ifstream::binary);
+        file >> jsondata;
     }
 
-    ProfileMergeJSON pm(jsoncfg.str());
+    ProfileMergeJSON pm(jsondata);
     std::cout << pm.profile_content() << std::endl;
     return 0;
 }
