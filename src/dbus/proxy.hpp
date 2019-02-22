@@ -355,7 +355,7 @@ namespace openvpn
             }
 
             unsigned int attempts = allow_tries;
-            while (1 < attempts)
+            while (0 < attempts)
             {
                 try
                 {
