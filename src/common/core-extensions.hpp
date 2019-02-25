@@ -121,8 +121,8 @@ namespace openvpn {
             // Parse the JSON input into a plain/text config file which
             // is then parsed/imported into the OpenVPN option storage.
             std::stringstream config_str;
-            for( Json::ValueIterator it = data.begin();
-                 it != data.end(); ++it) {
+            for(auto it = data.begin(); it != data.end(); ++it)
+            {
                 std::string name = it.name();
                 config_str << optparser_mkline(name, data[name].asString());
             }
