@@ -117,10 +117,10 @@ dnl  Provide facility to switch between SSL/TLS library
 dnl
 AC_ARG_WITH(
         [crypto-library],
-        [AS_HELP_STRING([--with-crypto-library=LIB], [build using the given crypto library backend. Valid options: mbedtls (default)])],
+        [AS_HELP_STRING([--with-crypto-library=LIB], [build using the given crypto library backend. Valid options: mbedtls (default), openssl])],
         [
                 case "${withval}" in
-                        mbedtls)
+                        mbedtls|openssl)
                                 ;;
                         *)
                                 AC_MSG_ERROR([Invalid crypto library: ${withval}])
@@ -190,6 +190,61 @@ if test "${with_crypto_library}" = "mbedtls"; then
         CRYPTO_LIBS="${MBEDTLS_LIBS}"
 fi
 
+
+dnl
+dnl  Check for OpenSSL library
+dnl
+AC_ARG_VAR([OPENSSL_CFLAGS], [C compiler flags for OpenSSL])
+AC_ARG_VAR([OPENSSL_LIBS], [linker flags for OpenSSL])
+
+if test "${with_crypto_library}" = "openssl"; then
+        saved_CFLAGS="${CFLAGS}"
+        saved_LIBS="${LIBS}"
+
+        if test -z "${OPENSSL_CFLAGS}" -a -z "${OPENSSL_LIBS}"; then
+                PKG_CHECK_MODULES(
+                        [OPENSSL],
+                        [openssl >= 1.0.2],
+                        [have_openssl="yes"],
+                        [] # This will be double checked a bit later
+                )
+                OPENSSL_LIBS=${OPENSSL_LIBS:--lssl -lcrypto}
+        fi
+
+       CFLAGS="${CFLAGS} ${OPENSSL_CFLAGS}"
+       LIBS="${LIBS} ${OPENSSL_LIBS}"
+
+       # If pkgconfig check failed or OPENSSL_CFLAGS/OPENSSL_LIBS env vars
+       # are used, check the version directly in the OpenSSL include file
+       if test "${have_openssl}" != "yes"; then
+               AC_MSG_CHECKING([additionally if OpenSSL is available and version >= 1.0.2])
+               AC_COMPILE_IFELSE(
+                       [AC_LANG_PROGRAM(
+                               [[
+#include <openssl/opensslv.h>
+                               ]],
+                               [[
+/*          Version encoding: MNNFFPPS - see opensslv.h for details */
+#if OPENSSL_VERSION_NUMBER < 0x10002000L
+#error OpenSSL too old
+#endif
+                               ]]
+                       )],
+                       [AC_MSG_RESULT([ok])],
+                       [AC_MSG_ERROR([OpenSSL 1.0.2 or newer is required])]
+               )
+       fi
+
+        CFLAGS="${saved_CFLAGS}"
+        LIBS="${saved_LIBS}"
+        CRYPTO_CFLAGS="-D USE_OPENSSL ${OPENSSL_CFLAGS}"
+        CRYPTO_LIBS="${OPENSSL_LIBS}"
+fi
+
+
+dnl
+dnl   Export the crypto cflags and libs settings discovered
+dnl
 AC_SUBST([CRYPTO_CFLAGS])
 AC_SUBST([CRYPTO_LIBS])
 
