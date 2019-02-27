@@ -448,7 +448,7 @@ dnl
 AC_ARG_VAR([GIT], [path to git utility])
 AC_CHECK_PROGS([GIT], [git], []) # optional
 GIT_CHECKOUT="no"
-if test -n "${GIT}" -a -d "${srcdir}/.git"; then
+if test -n "${GIT}" -a -e "${srcdir}/.git"; then
         AC_DEFINE([HAVE_CONFIG_VERSION_H], [1], [extra version available in config-version.h])
         GIT_CHECKOUT="yes"
 fi
