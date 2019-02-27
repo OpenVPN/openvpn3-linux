@@ -1,7 +1,7 @@
 dnl  OpenVPN 3 Linux client -- Next generation OpenVPN client
 dnl
-dnl  Copyright (C) 2017-2018 OpenVPN Inc. <sales@openvpn.net>
-dnl  Copyright (C) 2017-2018 David Sommerseth <davids@openvpn.net>
+dnl  Copyright (C) 2017 - 2019  OpenVPN Inc. <sales@openvpn.net>
+dnl  Copyright (C) 2017 - 2019  David Sommerseth <davids@openvpn.net>
 dnl
 dnl  This program is free software: you can redistribute it and/or modify
 dnl  it under the terms of the GNU General Public License as published by
@@ -111,62 +111,85 @@ PKG_CHECK_MODULES(
         [AC_MSG_ERROR([libcap-ng package not found. Is the development package installed?])]
 )
 
+
+dnl
+dnl  Provide facility to switch between SSL/TLS library
+dnl
+AC_ARG_WITH(
+        [crypto-library],
+        [AS_HELP_STRING([--with-crypto-library=LIB], [build using the given crypto library backend. Valid options: mbedtls (default)])],
+        [
+                case "${withval}" in
+                        mbedtls)
+                                ;;
+                        *)
+                                AC_MSG_ERROR([Invalid crypto library: ${withval}])
+                                ;;
+                esac
+        ],
+        [with_crypto_library="mbedtls"]
+)
+
+
 dnl
 dnl  Check for mbed TLS library
 dnl
 AC_ARG_VAR([MBEDTLS_CFLAGS], [C compiler flags for mbedtls])
 AC_ARG_VAR([MBEDTLS_LIBS], [linker flags for mbedtls])
 
-saved_CFLAGS="${CFLAGS}"
-saved_LIBS="${LIBS}"
+if test "${with_crypto_library}" = "mbedtls"; then
+        saved_CFLAGS="${CFLAGS}"
+        saved_LIBS="${LIBS}"
 
-if test -z "${MBEDTLS_CFLAGS}" -a -z "${MBEDTLS_LIBS}"; then
-        # if the user did not explicitly specify flags, try to autodetect
-        LIBS="${LIBS} -lmbedtls -lmbedx509 -lmbedcrypto"
-        AC_CHECK_LIB(
-                [mbedtls],
-                [mbedtls_ssl_init],
-                [MBEDTLS_LIBS="-lmbedtls -lmbedx509 -lmbedcrypto"],
-                [AC_MSG_ERROR([Could not find mbed TLS.])],
-                [${PKCS11_HELPER_LIBS}]
-        )
-fi
+        if test -z "${MBEDTLS_CFLAGS}" -a -z "${MBEDTLS_LIBS}"; then
+                # if the user did not explicitly specify flags, try to autodetect
+                LIBS="${LIBS} -lmbedtls -lmbedx509 -lmbedcrypto"
+                AC_CHECK_LIB(
+                        [mbedtls],
+                        [mbedtls_ssl_init],
+                        [MBEDTLS_LIBS="-lmbedtls -lmbedx509 -lmbedcrypto"],
+                        [AC_MSG_ERROR([Could not find mbed TLS.])],
+                        [${PKCS11_HELPER_LIBS}]
+                )
+        fi
 
-CFLAGS="${MBEDTLS_CFLAGS} ${PKCS11_HELPER_CFLAGS} ${CFLAGS}"
-LIBS="${MBEDTLS_LIBS} ${PKCS11_HELPER_LIBS} ${LIBS}"
+        CFLAGS="${MBEDTLS_CFLAGS} ${PKCS11_HELPER_CFLAGS} ${CFLAGS}"
+        LIBS="${MBEDTLS_LIBS} ${PKCS11_HELPER_LIBS} ${LIBS}"
 
-AC_MSG_CHECKING([mbedtls version])
-AC_COMPILE_IFELSE(
-        [AC_LANG_PROGRAM(
-                [[
+        AC_MSG_CHECKING([mbedtls version])
+        AC_COMPILE_IFELSE(
+                [AC_LANG_PROGRAM(
+                        [[
 #include <mbedtls/version.h>
-                ]],
-                [[
+                        ]],
+                        [[
 #if MBEDTLS_VERSION_NUMBER < 0x02000000 || MBEDTLS_VERSION_NUMBER >= 0x03000000
 #error Invalid version
 #endif
-                ]]
-        )],
-        [AC_MSG_RESULT([ok])],
-        [AC_MSG_ERROR([mbed TLS 2.y.z required])]
-)
+                        ]]
+                )],
+                [AC_MSG_RESULT([ok])],
+                [AC_MSG_ERROR([mbed TLS 2.y.z required])]
+        )
 
-have_crypto_aead_modes="yes"
-AC_CHECK_FUNCS(
-        [ \
-                mbedtls_cipher_write_tag \
-                mbedtls_cipher_check_tag \
-        ],
-        ,
-        [have_crypto_aead_modes="no"; break]
-)
+        have_crypto_aead_modes="yes"
+        AC_CHECK_FUNCS(
+                [ \
+                        mbedtls_cipher_write_tag \
+                        mbedtls_cipher_check_tag \
+                ],
+                ,
+                [have_crypto_aead_modes="no"; break]
+        )
 
-CFLAGS="${saved_CFLAGS}"
-LIBS="${saved_LIBS}"
-have_crypto="yes"
-AC_DEFINE([ENABLE_CRYPTO_MBEDTLS], [1], [Use mbed TLS library])
-CRYPTO_CFLAGS="-D USE_MBEDTLS ${MBEDTLS_CFLAGS}"
-CRYPTO_LIBS="${MBEDTLS_LIBS}"
+        CFLAGS="${saved_CFLAGS}"
+        LIBS="${saved_LIBS}"
+        have_crypto="yes"
+        AC_DEFINE([ENABLE_CRYPTO_MBEDTLS], [1], [Use mbed TLS library])
+        CRYPTO_CFLAGS="-D USE_MBEDTLS ${MBEDTLS_CFLAGS}"
+        CRYPTO_LIBS="${MBEDTLS_LIBS}"
+fi
+
 AC_SUBST([CRYPTO_CFLAGS])
 AC_SUBST([CRYPTO_LIBS])
 
