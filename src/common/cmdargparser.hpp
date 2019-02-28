@@ -467,6 +467,7 @@ public:
           help_text(help_text)
     {
         update_getopt(longopt, shortopt, no_argument);
+        getopt_alias.name = nullptr;
     }
 
 
@@ -494,7 +495,8 @@ public:
                         const argHelperFunc arg_helper_func = nullptr)
         : longopt(longopt), shortopt(shrtopt),
           metavar(metavar),  arg_helper_func(arg_helper_func),
-          help_text(help_text)
+          help_text(help_text),
+          alias("")
     {
         update_getopt(longopt, shortopt,
                       (required ? required_argument : optional_argument));
@@ -508,7 +510,36 @@ public:
         // getopt typically expects this to be static.  This
         // is allocated in init_getopt()
         free((char *)getopt_option.name);
+
+        if (getopt_alias.name)
+        {
+            free((char *)getopt_alias.name);
+        }
     }
+
+
+    /**
+     *  Sets an alias option for this option.  Only the long
+     *  option type is supported.
+     *
+     * @param optalias  std::string with the alias to use
+     */
+    void SetAlias(const std::string& optalias)
+    {
+        if (!alias.empty())
+        {
+            throw CommandException(alias, "Alias already registered");
+        }
+
+        alias = optalias;
+
+        //  Initialise a separate struct option for the alias
+        getopt_alias.name = strdup(alias.c_str());
+        getopt_alias.flag = NULL;
+        getopt_alias.has_arg =  getopt_option.has_arg;
+        getopt_alias.val = 0;
+    }
+
 
     /**
      *  Returns a string containing the registered option, formatted
@@ -528,11 +559,19 @@ public:
         }
         if (!longopt.empty())
         {
-            if (0 != shortopt)
+            if (r.tellp() != std::streampos(0))
             {
                 r << " ";
             }
             r << "--" << longopt;
+        }
+        if (!alias.empty())
+        {
+            if (r.tellp() != std::streampos(0))
+            {
+                r << " ";
+            }
+            r << "--" << alias;
         }
         return r.str();
     }
@@ -603,7 +642,7 @@ public:
 
     /**
      *  Checks if the provided long option matches the value of this
-     *  object's registered long option.
+     *  object's registered long or alias option.
      *
      * @param o  const char * string containing the long option to check
      * @return   Returns true if it is a match, otherwise false
@@ -612,7 +651,7 @@ public:
     {
         if (NULL != o)
         {
-            return std::string(o) == longopt;
+            return (std::string(o) == longopt || std::string(o) == alias);
         }
         return false;
     }
@@ -638,6 +677,12 @@ public:
     {
         std::vector<struct option *> ret;
         ret.push_back(&getopt_option);
+
+        // Add the alias, if configured
+        if (!alias.empty())
+        {
+            ret.push_back(&getopt_alias);
+        }
         return ret;
     }
 
@@ -659,6 +704,13 @@ public:
         std::vector<std::string> ret;
         ret.push_back(gen_help_line_generator(shortopt, longopt,
                                               help_text, width));
+        if (!alias.empty())
+        {
+            std::stringstream alias_help;
+            alias_help << "Alias for --" << longopt;
+            ret.push_back(gen_help_line_generator(0, alias,
+                                                  alias_help.str(), width));
+        }
         return ret;
     }
 
@@ -727,7 +779,9 @@ private:
     const std::string metavar;
     const argHelperFunc arg_helper_func;
     const std::string help_text;
+    std::string alias;
     struct option getopt_option;
+    struct option getopt_alias;
 
 
     /**
