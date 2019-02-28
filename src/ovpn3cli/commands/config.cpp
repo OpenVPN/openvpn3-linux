@@ -354,9 +354,10 @@ static int config_manage_show(OpenVPN3ConfigurationProxy& conf,
  */
 static int cmd_config_manage(ParsedArgs args)
 {
-    if (!args.Present("path"))
+    if (!args.Present("path") && !args.Present("config"))
     {
-        throw CommandException("config-manage", "No configuration path provided");
+        throw CommandException("config-manage", "No configuration provided "
+                               "(--path, --config)");
     }
     bool override_present = false;
     for (const ValidOverride& vo : configProfileOverrides)
@@ -387,7 +388,11 @@ static int cmd_config_manage(ParsedArgs args)
 
     try
     {
-        std::string path = args.GetValue("path", 0);
+
+        std::string path = (args.Present("config")
+                             ? retrieve_config_path("config-manage",
+                                                    args.GetValue("config", 0))
+                             : args.GetValue("path", 0));
         OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path);
         if (!conf.CheckObjectExists())
         {
@@ -516,6 +521,10 @@ SingleCommand::Ptr prepare_command_config_manage()
                                    "configuration manager",
                                    arghelper_config_paths);
     path_opt->SetAlias("config-path");
+    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
+                   "Alternative to --path, where configuration profile name "
+                   "is used instead",
+                   arghelper_config_names);
     cmd->AddOption("rename", 'r', "NEW-CONFIG-NAME", true,
                    "Renames the configuration");
     cmd->AddOption("show", 's',
@@ -576,9 +585,11 @@ SingleCommand::Ptr prepare_command_config_manage()
 static int cmd_config_acl(ParsedArgs args)
 {
     int ret = 0;
-    if (!args.Present("path"))
+    if (!args.Present("path") && !args.Present("config"))
     {
-        throw CommandException("config-acl", "No configuration path provided");
+        throw CommandException("config-acl",
+                               "No configuration profile provided "
+                               "(--config, --path)");
     }
 
     if (!args.Present("show")
@@ -593,8 +604,11 @@ static int cmd_config_acl(ParsedArgs args)
 
     try
     {
-        OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM,
-                                        args.GetValue("path", 0));
+        std::string path = (args.Present("config")
+                             ? retrieve_config_path("config-acl",
+                                                    args.GetValue("config", 0))
+                             : args.GetValue("path", 0));
+        OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path);
         if (!conf.CheckObjectExists())
         {
             throw CommandException("config-acl",
@@ -796,6 +810,10 @@ SingleCommand::Ptr prepare_command_config_acl()
                                    "configuration manager",
                                    arghelper_config_paths);
     path_opt->SetAlias("config-path");
+    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
+                   "Alternative to --path, where configuration profile name "
+                   "is used instead",
+                   arghelper_config_names);
     cmd->AddOption("show", 's',
                    "Show the current access control lists");
     cmd->AddOption("grant", 'G', "<UID | username>", true,
@@ -833,15 +851,20 @@ SingleCommand::Ptr prepare_command_config_acl()
  */
 static int cmd_config_show(ParsedArgs args)
 {
-    if (!args.Present("path"))
+    if (!args.Present("path") && !args.Present("config"))
     {
-        throw CommandException("config-show", "No configuration path provided");
+        throw CommandException("config-show",
+                               "No configuration profile provided "
+                               "(--config, --path)");
     }
 
     try
     {
-        OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM,
-                                        args.GetValue("path", 0));
+        std::string path = (args.Present("config")
+                             ? retrieve_config_path("config-show",
+                                                    args.GetValue("config", 0))
+                             : args.GetValue("path", 0));
+        OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path);
         if (!conf.CheckObjectExists())
         {
             throw CommandException("config-show",
@@ -885,6 +908,10 @@ SingleCommand::Ptr prepare_command_config_show()
                                    "configuration manager",
                                    arghelper_config_paths);
     path_opt->SetAlias("config-path");
+    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
+                   "Alternative to --path, where configuration profile name "
+                   "is used instead",
+                   arghelper_config_names);
     cmd->AddOption("json", 'j', "Dump the configuration in JSON format");
 
     return cmd;
@@ -908,13 +935,20 @@ SingleCommand::Ptr prepare_command_config_show()
  */
 static int cmd_config_remove(ParsedArgs args)
 {
-    if (!args.Present("path"))
+    if (!args.Present("path") && !args.Present("config"))
     {
-        throw CommandException("config-remove", "No configuration path provided");
+        throw CommandException("config-remove",
+                               "No configuration profile provided "
+                               "(--config, --path)");
     }
 
     try
     {
+        std::string path = (args.Present("config")
+                             ? retrieve_config_path("config-remove",
+                                                    args.GetValue("config", 0))
+                             : args.GetValue("path", 0));
+
         std::string response;
         if (!args.Present("force"))
         {
@@ -929,8 +963,7 @@ static int cmd_config_remove(ParsedArgs args)
 
         if ("YES" == response || args.Present("force"))
         {
-            OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM,
-                                            args.GetValue("path", 0));
+            OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path);
             if (!conf.CheckObjectExists())
             {
                 throw CommandException("config-remove",
@@ -977,6 +1010,10 @@ SingleCommand::Ptr prepare_command_config_remove()
                                    "configuration manager",
                                    arghelper_config_paths);
     path_opt->SetAlias("config-path");
+    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
+                   "Alternative to --path, where configuration profile name "
+                   "is used instead",
+                   arghelper_config_names);
     cmd->AddOption("force",
                    "Force the deletion process without asking for confirmation");
 
