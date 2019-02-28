@@ -634,9 +634,11 @@ public:
      *
      * @return A pointer to a prepared struct option element
      */
-    struct option *get_struct_option()
+    std::vector<struct option *> get_struct_option()
     {
-        return &getopt_option;
+        std::vector<struct option *> ret;
+        ret.push_back(&getopt_option);
+        return ret;
     }
 
 
@@ -648,24 +650,37 @@ public:
      * @param width  Unsigned int defining the available width for the
      *               option/argument part of the output.  Set to 30 by
      *               default.
-     * @return Returns a std::string containing one or more newline separated
-     *         lines describing this specific option.
+     *
+     * @return Returns a std::vector<std::string >containing one or more
+     *         newline separated lines describing this specific option.
      */
-    std::string gen_help_line(const unsigned int width = 30)
+    std::vector<std::string> gen_help_line(const unsigned int width = 30)
+    {
+        std::vector<std::string> ret;
+        ret.push_back(gen_help_line_generator(shortopt, longopt,
+                                              help_text, width));
+        return ret;
+    }
+
+
+    std::string gen_help_line_generator(const char opt_short,
+                                        const std::string& opt_long,
+                                        const std::string& opt_help,
+                                        const unsigned int width)
     {
         std::stringstream r;
 
         // If we don't have a short option, fill out with blanks to
         // have the long options aligned under each other
-        if (0 == shortopt)
+        if (0 == opt_short)
         {
             r << "     ";
         }
         else  // ... we have a short option, format the output of it
         {
-            r << "-" << shortopt << " | ";
+            r << "-" << opt_short<< " | ";
         }
-        r << "--" << longopt;
+        r << "--" << opt_long;
 
         // If this option can process a provided value ...
         if (!metavar.empty())
@@ -701,7 +716,7 @@ public:
             // Set the needed spacing to the description column
             r << std::setw(width - l);
         }
-        r << " - " << help_text;
+        r << " - " << opt_help;
 
         return r.str();
     }
@@ -1161,8 +1176,11 @@ private:
         {
             // Apply the option definition into the pre-defined designated
             // slot
-            memcpy(&result[idx], opt->get_struct_option(), sizeof(struct option));
-            idx++;
+            for (const auto& o : opt->get_struct_option())
+            {
+                memcpy(&result[idx], o, sizeof(struct option));
+                idx++;
+            }
 
             // Collect all we need for the short flags too
             shortopts += opt->getopt_optstring();
@@ -1189,9 +1207,12 @@ private:
         r << arg0 << ": " << command << " - " << description << std::endl;
         r << std::endl;
 
-        for (auto& opt : options)
+        for (const auto& opt : options)
         {
-            r << "   " << opt->gen_help_line() << std::endl;
+            for (const auto& l : opt->gen_help_line())
+            {
+                r << "   " << l << std::endl;
+            }
         }
         return r.str();
     }
