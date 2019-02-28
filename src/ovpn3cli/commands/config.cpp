@@ -511,9 +511,11 @@ SingleCommand::Ptr prepare_command_config_manage()
     cmd.reset(new SingleCommand("config-manage",
                                 "Manage configuration properties",
                                 cmd_config_manage));
-    cmd->AddOption("path", 'o', "CONFIG-PATH", true,
-                   "Path to the configuration in the configuration manager",
-                    arghelper_config_paths);
+    auto path_opt = cmd->AddOption("path", 'o', "CONFIG-PATH", true,
+                                   "Path to the configuration in the "
+                                   "configuration manager",
+                                   arghelper_config_paths);
+    path_opt->SetAlias("config-path");
     cmd->AddOption("rename", 'r', "NEW-CONFIG-NAME", true,
                    "Renames the configuration");
     cmd->AddOption("show", 's',
@@ -789,9 +791,11 @@ SingleCommand::Ptr prepare_command_config_acl()
     cmd.reset(new SingleCommand("config-acl",
                                 "Manage access control lists for configurations",
                                 cmd_config_acl));
-    cmd->AddOption("path", 'o', "OBJ-PATH", true,
-                   "Path to the configuration in the configuration manager",
-                   arghelper_config_paths);
+    auto path_opt = cmd->AddOption("path", 'o', "OBJ-PATH", true,
+                                   "Path to the configuration in the "
+                                   "configuration manager",
+                                   arghelper_config_paths);
+    path_opt->SetAlias("config-path");
     cmd->AddOption("show", 's',
                    "Show the current access control lists");
     cmd->AddOption("grant", 'G', "<UID | username>", true,
@@ -876,9 +880,11 @@ SingleCommand::Ptr prepare_command_config_show()
     cmd.reset(new SingleCommand("config-show",
                                 "Show/dump a configuration profile",
                                 cmd_config_show));
-    cmd->AddOption("path", 'o', "OBJ-PATH", true,
-                   "Path to the configuration in the configuration manager",
-                   arghelper_config_paths);
+    auto path_opt = cmd->AddOption("path", 'o', "OBJ-PATH", true,
+                                   "Path to the configuration in the "
+                                   "configuration manager",
+                                   arghelper_config_paths);
+    path_opt->SetAlias("config-path");
     cmd->AddOption("json", 'j', "Dump the configuration in JSON format");
 
     return cmd;
@@ -966,9 +972,11 @@ SingleCommand::Ptr prepare_command_config_remove()
     cmd.reset(new SingleCommand("config-remove",
                                 "Remove an available configuration profile",
                                 cmd_config_remove));
-    cmd->AddOption("path", 'o', "OBJ-PATH", true,
-                   "Path to the configuration in the configuration manager",
-                   arghelper_config_paths);
+    auto path_opt = cmd->AddOption("path", 'o', "OBJ-PATH", true,
+                                   "Path to the configuration in the "
+                                   "configuration manager",
+                                   arghelper_config_paths);
+    path_opt->SetAlias("config-path");
     cmd->AddOption("force",
                    "Force the deletion process without asking for confirmation");
 

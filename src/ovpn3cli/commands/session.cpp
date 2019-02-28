@@ -180,9 +180,11 @@ SingleCommand::Ptr prepare_command_session_stats()
     cmd.reset(new SingleCommand("session-stats",
                                 "Show session statistics",
                                 cmd_session_stats));
-    cmd->AddOption("path", 'o', "SESSION-PATH", true,
-                   "Path to the configuration in the configuration manager",
-                   arghelper_session_paths);
+    auto path_opt = cmd->AddOption("path", 'o', "SESSION-PATH", true,
+                                   "Path to the configuration in the "
+                                   "configuration manager",
+                                   arghelper_session_paths);
+    path_opt->SetAlias("session-path");
     cmd->AddOption("config", 'c', "CONFIG-NAME", true,
                    "Alternative to --path, where configuration profile name "
                    "is used instead",
@@ -728,9 +730,11 @@ SingleCommand::Ptr prepare_command_session_manage()
     cmd.reset(new SingleCommand("session-manage",
                                 "Manage VPN sessions",
                                 cmd_session_manage));
-    cmd->AddOption("path", 'o', "SESSION-PATH", true,
-                   "Path to the session in the session manager",
-                   arghelper_session_paths);
+    auto path_opt = cmd->AddOption("path", 'o', "SESSION-PATH", true,
+                                   "Path to the session in the session "
+                                   "manager",
+                                   arghelper_session_paths);
+    path_opt->SetAlias("session-path");
     cmd->AddOption("config", 'c', "CONFIG-NAME", true,
                    "Alternative to --path, where configuration profile name "
                    "is used instead",
@@ -987,9 +991,11 @@ SingleCommand::Ptr prepare_command_session_acl()
     cmd.reset(new SingleCommand("session-acl",
                                 "Manage access control lists for sessions",
                                 cmd_session_acl));
-    cmd->AddOption("path", 'o', "SESSION-PATH", true,
-                   "Path to the session in the session manager",
-                   arghelper_session_paths);
+    auto path_opt = cmd->AddOption("path", 'o', "SESSION-PATH", true,
+                                   "Path to the session in the session "
+                                   "manager",
+                                   arghelper_session_paths);
+    path_opt->SetAlias("session-path");
     cmd->AddOption("config", 'c', "CONFIG-NAME", true,
                    "Alternative to --path, where configuration profile name "
                    "is used instead",
