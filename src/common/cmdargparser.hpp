@@ -852,15 +852,19 @@ public:
      * @param shortopt   char containing the short option name to use
      * @param help_text  std::string containing the help text used on the
      *                   --help screen for this command
+     *
+     * @return Returns SingleCommandOption::Ptr belonging to the new option
+     *
      */
-    void AddOption(const std::string longopt,
-                   const char shortopt,
-                   const std::string help_text)
+    SingleCommandOption::Ptr AddOption(const std::string longopt,
+                                       const char shortopt,
+                                       const std::string help_text)
     {
         SingleCommandOption::Ptr opt = new SingleCommandOption(longopt,
                                                                shortopt,
                                                                help_text);
         options.push_back(opt);
+        return opt;
     }
 
 
@@ -878,13 +882,16 @@ public:
      *                   it is optional if false.
      * @param help_text  std::string containing the help text used on the
      *                   --help screen for this command
+     *
+     * @return Returns SingleCommandOption::Ptr belonging to the new option
+     *
      */
-    void AddOption(const std::string longopt,
-                   const char shortopt,
-                   const std::string metavar,
-                   const bool required,
-                   const std::string help_text,
-                   const argHelperFunc arg_helper = nullptr)
+    SingleCommandOption::Ptr AddOption(const std::string longopt,
+                                       const char shortopt,
+                                       const std::string metavar,
+                                       const bool required,
+                                       const std::string help_text,
+                                       const argHelperFunc arg_helper = nullptr)
     {
         SingleCommandOption::Ptr opt = new SingleCommandOption(longopt,
                                                                shortopt,
@@ -893,6 +900,7 @@ public:
                                                                help_text,
                                                                arg_helper);
         options.push_back(opt);
+        return opt;
     }
 
 
@@ -903,11 +911,14 @@ public:
      * @param longopt    std::string of the long option name to use
      * @param help_text  std::string containing the help text used on the
      *                   --help screen for this command
+     *
+     * @return Returns SingleCommandOption::Ptr belonging to the new option
+     *
      */
-    void AddOption(const std::string longopt,
+    SingleCommandOption::Ptr AddOption(const std::string longopt,
                    const std::string help_text)
     {
-        AddOption(longopt, 0, help_text);
+        return AddOption(longopt, 0, help_text);
     }
 
 
@@ -923,16 +934,17 @@ public:
      *                   it is optional if false.
      * @param help_text  std::string containing the help text used on the
      *                   --help screen for this command
+     *
+     * @return Returns SingleCommandOption::Ptr belonging to the new option
+     *
      */
-
-    void AddOption(const std::string longopt,
-                   const std::string metavar,
-                   const bool required,
-                   const std::string help_text,
-                   const argHelperFunc arg_helper = nullptr
-                   )
+    SingleCommandOption::Ptr AddOption(const std::string longopt,
+                                       const std::string metavar,
+                                       const bool required,
+                                       const std::string help_text,
+                                       const argHelperFunc arg_helper = nullptr)
     {
-        AddOption(longopt, 0, metavar, required, help_text, arg_helper);
+        return AddOption(longopt, 0, metavar, required, help_text, arg_helper);
     }
 
 
@@ -943,7 +955,7 @@ public:
      */
     void AddVersionOption(const char shortopt = 0)
     {
-        AddOption("version", shortopt, "Show version information");
+        (void) AddOption("version", shortopt, "Show version information");
         opt_version_added = true;
     }
 
