@@ -281,6 +281,58 @@ namespace GLibUtils
         }
     }
 
+
+    /*
+     * These methods extracts values from a GVariant tuples object,
+     * used as an alternative to g_variant_get() which may cause
+     * explosions in some situations.  This method seems to work more
+     * reliable and with with less surprises.
+     */
+
+    // Declare template as prototype only so it cannot be used directly
+    template<typename T> inline T ExtractValue(GVariant *v, int elm);
+
+    template<> inline uint64_t ExtractValue<uint64_t>(GVariant *v, int elm)
+    {
+        return g_variant_get_uint64(g_variant_get_child_value(v, elm));
+    }
+
+    template<> inline int64_t ExtractValue<int64_t>(GVariant *v, int elm)
+    {
+        return g_variant_get_int64(g_variant_get_child_value(v, elm));
+    }
+
+    template<> inline uint32_t ExtractValue<uint32_t>(GVariant *v, int elm)
+    {
+        return g_variant_get_uint32(g_variant_get_child_value(v, elm));
+    }
+
+    template<> inline int32_t ExtractValue<int32_t>(GVariant *v, int elm)
+    {
+        return g_variant_get_int32(g_variant_get_child_value(v, elm));
+    }
+
+    template<> inline uint16_t ExtractValue<uint16_t>(GVariant *v, int elm)
+    {
+        return g_variant_get_uint16(g_variant_get_child_value(v, elm));
+    }
+
+    template<> inline int16_t ExtractValue<int16_t>(GVariant *v, int elm)
+    {
+        return g_variant_get_int16(g_variant_get_child_value(v, elm));
+    }
+
+    template<> inline bool ExtractValue<bool>(GVariant *v, int elm)
+    {
+        return g_variant_get_boolean(g_variant_get_child_value(v, elm));
+    }
+
+    template<> inline std::string ExtractValue<std::string>(GVariant *v, int elm)
+    {
+        return std::string(g_variant_get_string(g_variant_get_child_value(v, elm), 0));
+    }
+
+
     /**
      * Unreferences an fd list. This is a helper function since the normal
      * g_unref_object does not fit the signature and there seem to be no
