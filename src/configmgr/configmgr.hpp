@@ -220,13 +220,11 @@ public:
           properties(this),
           persistent_file("")
     {
-        gchar *cfgstr = nullptr;
-        gchar *cfgname_c = nullptr;
-        bool persistent = false;
-        g_variant_get (params, "(ssbb)",
-                       &cfgname_c, &cfgstr,
-                       &single_use, &persistent);
-        name = std::string(cfgname_c);
+        GLibUtils::checkParams(__func__, params, "(ssbb)", 4);
+        name = GLibUtils::ExtractValue<std::string>(params, 0);
+        std::string cfgstr(GLibUtils::ExtractValue<std::string>(params, 1));
+        single_use = GLibUtils::ExtractValue<bool>(params, 2);
+        bool persistent = GLibUtils::ExtractValue<bool>(params, 3);
 
         // Parse the options from the imported configuration
         OptionList::Limits limits("profile is too large",
@@ -237,8 +235,6 @@ public:
                                   ProfileParseLimits::MAX_DIRECTIVE_SIZE);
         options.parse_from_config(cfgstr, &limits);
         initialize_configuration(persistent);
-        g_free(cfgname_c);
-        g_free(cfgstr);
 
         if (persistent && !state_dir.empty())
         {
