@@ -28,6 +28,7 @@
 #include <sstream>
 
 #include "configmgr/proxy-configmgr.hpp"
+#include "common/cmdargparser.hpp"
 #include "sessionmgr/proxy-sessionmgr.hpp"
 
 /**
@@ -225,4 +226,39 @@ std::string arghelper_log_levels()
     // See dbus-log.hpp - LogFilter::SetLogLevel() and
     // LogFilter::_LogFilterAllow() for details
     return intern_arghelper_integer_range(0, 6);
+}
+
+
+/**
+ *  Retrieve a configuration path based on a configuration name
+ *
+ * @param cmd          std::string containing the command name to use in
+ *                     case of errors
+ * @param config_name  std::string containing the configuration name to
+ *                     look up
+ *
+ * @return  Returns a std::string containing the D-Bus configuration path
+ *          if a match was found.
+ *
+ * @throws  Throws CommandException if no or more than one configuration
+ *          paths were found.
+ */
+std::string retrieve_config_path(const std::string& cmd,
+                                 const std::string& config_name)
+{
+    OpenVPN3ConfigurationProxy cfgmgr(G_BUS_TYPE_SYSTEM,
+                                      OpenVPN3DBus_rootp_configuration);
+    std::vector<std::string> paths = cfgmgr.LookupConfigName(config_name);
+    if (0 == paths.size())
+    {
+        throw CommandException(cmd,
+                               "No configuration profiles found");
+    }
+    else if (1 < paths.size())
+    {
+        throw CommandException(cmd,
+                               "More than one configuration profile was "
+                               "found with the given name");
+    }
+    return paths.at(0);
 }

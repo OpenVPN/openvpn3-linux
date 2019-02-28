@@ -81,3 +81,6 @@ std::string arghelper_boolean();
  * @return  std::string with all valid log levels
  */
 std::string arghelper_log_levels();
+
+std::string retrieve_config_path(const std::string& cmd,
+                                 const std::string& config_name);

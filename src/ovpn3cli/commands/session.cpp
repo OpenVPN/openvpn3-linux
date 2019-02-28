@@ -246,26 +246,22 @@ static int cmd_session_start(ParsedArgs args)
             // it will fail as we do not support handling this scenario.  It
 
             std::string cfgname = args.GetValue("config", 0);
-            OpenVPN3ConfigurationProxy cfgmgr(G_BUS_TYPE_SYSTEM,
-                                              OpenVPN3DBus_rootp_configuration);
-            std::vector<std::string> saved_configs = cfgmgr.LookupConfigName(cfgname);
-            if (0 == saved_configs.size())
+            try
             {
-                std::cout << "Using configuration profile from file: "
-                          << cfgname << std::endl;
-                cfgpath = import_config(cfgname, cfgname, true, false);
-            }
-            else if (1 == saved_configs.size())
-            {
+                cfgpath = retrieve_config_path("session-start", cfgname);
                 std::cout << "Using pre-loaded configuration profile '"
                           << cfgname << "'" << std::endl;
-                cfgpath = saved_configs.at(0);
             }
-            else
+            catch (const CommandException& excp)
             {
-                throw CommandException("session-start",
-                                       "Several configurations found with"
-                                       "the given name.  Need a unique name.");
+                std::string err(excp.what());
+                if (err.find("More than one configuration profile was found") != std::string::npos)
+                {
+                    throw;
+                }
+                cfgpath = import_config(cfgname, cfgname, true, false);
+                std::cout << "Using configuration profile from file: "
+                          << cfgname << std::endl;
             }
         }
         else
