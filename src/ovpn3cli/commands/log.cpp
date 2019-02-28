@@ -154,10 +154,13 @@ private:
  */
 static int cmd_log(ParsedArgs args)
 {
-    if (!args.Present("session-path") && !args.Present("config-events"))
+    if (!args.Present("session-path")
+        && !args.Present("config")
+        && !args.Present("config-events"))
     {
         throw CommandException("log",
-                               "Either --session-path or --config-events must be provided");
+                               "Either --session-path, --config or "
+                               "--config-events must be provided");
     }
 
     // Prepare the main loop which will listen for Log events and process them
@@ -172,9 +175,32 @@ static int cmd_log(ParsedArgs args)
     DBus dbuscon(G_BUS_TYPE_SYSTEM);
     dbuscon.Connect();
 
-    if (args.Present("session-path"))
+    if (args.Present("session-path") || args.Present("config"))
     {
-        session_path = args.GetValue("session-path", 0);
+        std::string session_path = "";
+        if (args.Present("config"))
+        {
+            OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
+                                         OpenVPN3DBus_rootp_sessions);
+            std::vector<std::string> paths = sessmgr.LookupConfigName(args.GetValue("config", 0));
+            if (0 == paths.size())
+            {
+                throw CommandException("log",
+                                       "No sessions started with this "
+                                       "configuration profile name was found");
+            }
+            else if (1 < paths.size())
+            {
+                throw CommandException("log",
+                                       "More than one session with the given "
+                                       "configuration profile name was found.");
+            }
+            session_path = paths.at(0);
+        }
+        else
+        {
+            session_path = args.GetValue("path", 0);
+        }
 
         // Check if the session manager will forward log events for this
         // session.  If not, we must enable it - and if we do this, we
@@ -256,6 +282,10 @@ SingleCommand::Ptr prepare_command_log()
     cmd->AddOption("session-path", "SESSION-PATH", true,
                    "Receive log events for a specific session",
                    arghelper_session_paths);
+    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
+                   "Alternative to --session-path, where configuration "
+                   "profile name is used instead",
+                   arghelper_config_names_sessions);
     cmd->AddOption("log-level", "LOG-LEVEL", true,
                    "Set the log verbosity level of messages to be shown (default: 4)",
                    arghelper_log_levels);
