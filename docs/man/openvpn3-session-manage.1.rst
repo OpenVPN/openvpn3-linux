@@ -29,6 +29,9 @@ OPTIONS
                 to manage.  Use ``openvpn3 sessions-list`` to retrieve a list
                 of available session D-Bus paths.
 
+--session-path DBUS-PATH
+                Alias for ``--path``.
+
 -c CONFIG-NAME, --config CONFIG-NAME
                 Can be used instead of ``--path`` where the configuration
                 profile name is given instead.  The *CONFIG_NAME* must be the

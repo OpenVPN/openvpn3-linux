@@ -11,7 +11,7 @@ OpenVPN 3 Linux client
 
 SYNOPSIS
 ========
-| ``openvpn3 config-manage`` ``-o D-BUS_PATH`` | ``--path D-BUS_PATH`` [OPTIONS]
+| ``openvpn3 config-manage`` ``-o DBUS-PATH`` | ``--path DBUS-PATH`` | ``--config CONFIG-NAME`` [OPTIONS]
 | ``openvpn3 config-manage`` ``-h`` | ``--help``
 
 
@@ -25,9 +25,18 @@ OPTIONS
 
 -h, --help              Print  usage and help details to the terminal
 
--o D-BUS_PATH, --path D-BUS_PATH
+-o DBUS-PATH, --path DBUS-PATH
                         D-Bus configuration path to the
                         configuration to delete.  This can be found in
+                        ``openvpn3 configs-list``.
+
+--config-path DBUS-PATH
+                        Alias for ``--path``.
+
+-c CONFIG-NAME, --config CONFIG-NAME
+                        Can be used instead of ``--path`` where the
+                        configuration profile name is given instead.  Available
+                        configuration names can be found via
                         ``openvpn3 configs-list``.
 
 -r NEW-CONFIG-NAME, --rename NEW-CONFIG-NAME

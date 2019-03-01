@@ -35,6 +35,13 @@ OPTIONS
                 events from.  Use ``openvpn3 sessions-list`` to retrieve a list
                 of available session D-Bus paths.
 
+-c CONFIG-NAME, --config CONFIG-NAME
+                Can be used instead of ``--session-path`` where the
+                configuration profile name is given instead.  The *CONFIG_NAME*
+                must be the name which was active when the session was started.
+                Available configuration names can be found via
+                ``openvpn3 sessions-list``.
+
 --log-level LEVEL
                 Sets the log verbosity for the log events.  Valid values are
                 *0* to *6*.  The higher value, the more verbose the log events

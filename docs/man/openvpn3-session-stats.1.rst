@@ -30,6 +30,9 @@ OPTIONS
 -o SESSION-PATH, --path SESSION-PATH
                 D-Bus session path to the currently running session to query
 
+--session-path DBUS-PATH
+                Alias for ``--path``.
+
 -c CONFIG-NAME, --config CONFIG-NAME
                 Can be used instead of ``--path`` where the configuration
                 profile name is given instead.  The *CONFIG_NAME* must be the

@@ -11,7 +11,7 @@ OpenVPN 3 Linux client
 
 SYNOPSIS
 ========
-| ``openvpn3 config-show`` ``-o D-BUS_PATH`` | ``--path D-BUS_PATH`` ``[--json]``
+| ``openvpn3 config-show`` ``-o DBUS-PATH`` | ``--path DBUS-PATH`` | ``--config CONFIG-NAME`` ``[--json]``
 | ``openvpn3 config-show`` ``-h`` | ``--help``
 
 
@@ -29,12 +29,24 @@ will not be able to see the contents of the configuration profile.
 OPTIONS
 =======
 
--h, --help               Print  usage and help details to the terminal
--o D-BUS_PATH, --path D-BUS_PATH    D-Bus configuration path to the
-                         configuration to show.  This can be found in
-                         ``openvpn3 configs-list``.
---json                   Use JSON formatting of the output instead of
-                         text/plain.
+-h, --help              Print  usage and help details to the terminal
+
+-o DBUS-PATH, --path DBUS-PATH
+                        D-Bus configuration path to the
+                        configuration to show.  This can be found in
+                        ``openvpn3 configs-list``.
+
+--config-path DBUS-PATH
+                        Alias for ``--path``.
+
+-c CONFIG-NAME, --config CONFIG-NAME
+                        Can be used instead of ``--path`` where the
+                        configuration profile name is given instead.  Available
+                        configuration names can be found via
+                        ``openvpn3 configs-list``.
+
+--json                  Use JSON formatting of the output instead of
+                        text/plain.
 
 
 SEE ALSO
