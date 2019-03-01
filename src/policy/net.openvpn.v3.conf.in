@@ -177,10 +177,18 @@
            send_type="method_call"
            send_member="Ping"/>
 
+    <!--                                -->
+    <!--  net.openvpn.v3.sessions       -->
+    <!--                                -->
     <allow send_destination="net.openvpn.v3.netcfg"
            send_interface="org.freedesktop.DBus.Introspectable"
            send_type="method_call"
            send_member="Introspect"/>
+
+    <allow send_destination="net.openvpn.v3.netcfg"
+           send_interface="org.freedesktop.DBus.Peer"
+           send_type="method_call"
+           send_member="Ping"/>
 
     <!--
          Only the "@OPENVPN_USERNAME@" user is allowed to
