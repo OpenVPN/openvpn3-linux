@@ -67,7 +67,21 @@ namespace openvpn {
             Json::Value outdata;
 
             for(const auto& element : *this) {
-                outdata[element.ref(0)] = (element.size() > 1 ? element.ref(1) : "");
+                // Render the complete option line and split out the
+                // first "token" as the option name and the rest as the
+                // option value
+                std::istringstream line(element.render(Option::RENDER_PASS_FMT));
+                std::string optname;
+                line >> optname;
+
+                // Skip the leading whitespace
+                line.seekg(line.tellg()+std::streampos(1));
+                std::ostringstream value;
+                value << line.rdbuf();
+
+                // Put these parts into the Json::Value storage
+                // and trim trailing spaces in value
+                outdata[optname] = value.str().substr(0,value.str().find_last_not_of(" ")+1);
             }
 
             return outdata;
