@@ -62,8 +62,8 @@ The `openvpn3` program is the main and preferred command line user interface.
 
          $ openvpn3 config-import --config my-vpn-config.conf
 
-      This will return a configuration path.  This is needed to interact
-      with this configuration later on.
+      This will return a configuration path.  This path is a unique reference
+      to this specific configuration profile.
 
   2. (Optional) Display all imported configuration profiles
 
@@ -246,9 +246,17 @@ The following dependencies are needed:
   that if possible, otherwise it will test for ``-std=c++11``.  If support
   for neither is found, it will fail.
 
-* mbed TLS 2.4 or newer
+* mbed TLS 2.4 or newer  (not needed if building with OpenSSL)
 
   https://tls.mbed.org/
+
+* OpenSSL 1.0.2 (not needed if building with mbed TLS)
+
+  https://www.openssl.org/
+
+  **NOTE** Currently OpenSSL 1.1 is not supported, due to restrictions in the
+  [OpenVPN 3 Core Library](https://github.com/OpenVPN/openvpn3/).  This is
+  being worked on in the OpenVPN 3 project.
 
 * GLib2 2.50 or newer
 
@@ -272,10 +280,10 @@ The following dependencies are needed:
 
   https://en.wikipedia.org/wiki/Util-linux
 
-* Python 3.4 or newer (optional)
+* (optional) Python 3.4 or newer
 
-  If Python 3.4 or newer is found, the openvpn2 utility and an openvpn3
-  Python module will be built and installed.
+  If Python 3.4 or newer is found, the openvpn2, openvpn3-autoload utilities
+  and an openvpn3 Python module will be built and installed.
 
 * (optional) Python docutils
 
@@ -307,15 +315,47 @@ In addition, this git repository will pull in two git submodules:
 First install the package dependencies needed to run the build.
 
 #### Debian/Ubuntu:
-  ``# apt-get install build-essential git pkg-config autoconf autoconf-archive libglib2.0-dev libjsoncpp-dev uuid-dev libmbedtls-dev liblz4-dev libcap-ng-dev``
+
+- Building with mbed TLS:
+
+    # apt-get install libmbedtls-dev
+
+- Building with OpenSSL:
+
+    # apt-get install libssl1.0-dev libssl1.0
+
+- Generic build requirements:
+
+    # apt-get install build-essential git pkg-config autoconf autoconf-archive libglib2.0-dev libjsoncpp-dev uuid-dev liblz4-dev libcap-ng-dev
 
 #### Fedora:
-  ``# dnf install gcc-c++ git autoconf autoconf-archive automake make pkgconfig mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel libcap-ng-devel selinux-policy-devel``
+
+- Building with mbed TLS:
+
+    # dnf install mbedtls-devel
+
+- Building with OpenSSL:
+
+    # dnf install compat-openssl10-devel compat-openssl10
+
+- Generic build requirements:
+
+    # dnf install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2
 
 #### Red Hat Enterprise Linux / CentOS / Scientific Linux
   First install the ``epel-release`` repository if that is not yet installed.  Then you can run:
 
-  ``# yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig mbedtls-devel glib2-devel jsoncpp-devel libuuid-devel lz4-devel libcap-ng-devel selinux-policy-devel``
+- Building with mbed TLS:
+
+    # yum install mbedtls-devel
+
+- Building with OpenSSL
+
+    # yum install openssl-devel
+
+- Generic build requirements:
+
+    # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel lz4-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2``
 
 
 ### Preparations building from git
@@ -341,6 +381,10 @@ will build the client.
 - Run: ``./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var``
 - Run: ``make``
 - Run: ``make install``
+
+By default, OpenVPN 3 Linux is built using the mbed TLS library.  If you want
+to compile against OpenSSL, add the ``--with-crypto-library=openssl`` argument
+to ``./configure``.
 
 You might need to also reload D-Bus configuration to make D-Bus aware of
 the newly installed service.  On most system this happens automatically
@@ -463,7 +507,7 @@ forward are:
 Both of these services allows introspection.
 
 There exists also a net.openvpn.v3.backends service, but that is restricted
-to be accessible only by the openpn user - and even that users access is
+to be accessible only by the openvpn user - and even that users access is
 locked-down by default and introspection is not possible without modifying
 the D-Bus policy.
 
