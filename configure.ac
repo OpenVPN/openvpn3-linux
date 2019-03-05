@@ -258,8 +258,9 @@ dnl  git submodule).
 dnl
 AC_ARG_VAR([ASIO_SOURCEDIR], [Alternative ASIO library directory])
 if test -z "${ASIO_SOURCEDIR}"; then
-   ASIO_SOURCEDIR="`pwd`/vendor/asio"
+    ASIO_SOURCEDIR="${srcdir}/vendor/asio"
 fi
+AC_MSG_NOTICE([Using ASIO source directory: ${ASIO_SOURCEDIR}])
 ASIO_CXXFLAGS="-I${ASIO_SOURCEDIR}/asio/include -DUSE_ASIO -DASIO_STANDALONE -DASIO_NO_DEPRECATED"
 AC_SUBST([ASIO_CXXFLAGS])
 
