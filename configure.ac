@@ -21,7 +21,7 @@ dnl  Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.69)
 m4_include([version.m4])
 AC_INIT([PRODUCT_NAME], [PRODUCT_VERSION], [PRODUCT_BUGREPORT], [PRODUCT_TARNAME])
-AM_INIT_AUTOMAKE([no-dist-gzip dist-xz tar-pax foreign -Wall -Wportability subdir-objects])
+AM_INIT_AUTOMAKE([no-dist-gzip dist-xz tar-pax foreign subdir-objects -Wall -Wno-portability])
 AM_SILENT_RULES([yes])
 AC_PROG_CXX
 AC_PROG_CC
