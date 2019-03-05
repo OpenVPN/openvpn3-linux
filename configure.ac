@@ -272,11 +272,21 @@ dnl  version in this tree which will be used by default.  The
 dnl  git checkout inside the core/ directory is managed via git
 dnl  submodule.
 dnl
-AC_ARG_VAR([OPENVPN3_CORE_SOURCEDIR], [Alternative OpenVPN 3 core library directory])
+AC_ARG_VAR([OPENVPN3_CORE_SOURCEDIR], [Alternative OpenVPN 3 Core Library directory])
 if test -z "${OPENVPN3_CORE_SOURCEDIR}"; then
-   OPENVPN3_CORE_SOURCEDIR="`pwd`/openvpn3-core"
+   OPENVPN3_CORE_SOURCEDIR="${srcdir}/openvpn3-core"
 fi
-OPENVPN3_CORE_CXXFLAGS="-I${OPENVPN3_CORE_SOURCEDIR}"
+AC_MSG_NOTICE([Using OpenVPN 3 Core Library directory: ${OPENVPN3_CORE_SOURCEDIR}])
+AC_MSG_CHECKING([OpenVPN 3 Core Library version])
+if test -d ".git"; then
+   OPENVPN3_CORE_VERSION="`${OPENVPN3_CORE_SOURCEDIR}/scripts/version`"
+elif test -f ${srcdir}/openvpn3-core-version; then
+   OPENVPN3_CORE_VERSION="`cat ${srcdir}/openvpn3-core-version`"
+else
+   AC_MSG_ERROR([Missing openvpn3-core version information. Corrupt package?])
+fi
+AC_MSG_RESULT([${OPENVPN3_CORE_VERSION}])
+OPENVPN3_CORE_CXXFLAGS="-I${OPENVPN3_CORE_SOURCEDIR} -DOPENVPN_VERSION=\\\"${OPENVPN3_CORE_VERSION}\\\""
 AC_SUBST([OPENVPN3_CORE_CXXFLAGS])
 
 dnl

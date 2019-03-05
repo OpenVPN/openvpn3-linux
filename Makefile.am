@@ -34,6 +34,7 @@ SUBDIRS += src/selinux
 endif
 
 MAINTAINERCLEANFILES = \
+        config-version.h openvpn3-core-version \
         config.log config.status \
         $(srcdir)/Makefile.in \
         $(srcdir)/config.h.in $(srcdir)/config.h.in~ $(srcdir)/configure \
@@ -48,7 +49,7 @@ maintainer-clean-local:
 	-git submodule deinit --all
 
 CLEANFILES = \
-        config-version.h *~
+	*~
 
 DOCUMENTATION = \
 	COPYRIGHT.md \
@@ -59,6 +60,7 @@ DOCUMENTATION = \
 	docs/debugging.md
 
 EXTRA_DIST = \
+	openvpn3-core-version \
 	$(DOCUMENTATION) \
 	src/shell/bash_completion-openvpn3 \
 	openvpn3-core \
@@ -70,9 +72,15 @@ EXTRA_DIST = \
 	src/tests/netcfg/README \
 	src/tests/netcfg/net.openvpn.v3.netcfg-generic-access.conf
 
+# Generate a static version reference to the Core library
+# This is used when distributing a .tar.xz file and the git
+# history inside openvpn3-core/ is not available
+openvpn3-core-version:
+	$(top_srcdir)/openvpn3-core/scripts/version > $@
+
 # Remove openvpn3-core embedded patches which we don't need
 # and makes 'make dist' complain
-dist-hook:
+dist-hook: openvpn3-core-version
 	rm -rf $(distdir)/openvpn3-core/deps/asio/patch/*.patch
 
 #
@@ -507,10 +515,8 @@ config-version.h:
 	@CONFIGURE_GIT_CHFILES="`GIT_DIR=\"$(top_srcdir)/.git\" $(GIT) diff-files --name-status -r --ignore-submodules --quiet -- || echo \"+\"`"; \
 	CONFIGURE_GIT_UNCOMMITTED="`GIT_DIR=\"$(top_srcdir)/.git\" $(GIT) diff-index --cached  --quiet --ignore-submodules HEAD || echo \"*\"`"; \
 	CONFIGURE_GIT_REVISION="`GIT_DIR=\"$(top_srcdir)/.git\" $(GIT) rev-parse --symbolic-full-name HEAD | cut -d/ -f3-`:`GIT_DIR=\"$(top_srcdir)/.git\" $(GIT) rev-parse --short=16 HEAD`"; \
-	OPENVPN_VERSION="`$(top_srcdir)/openvpn3-core/scripts/version`"; \
 	echo "#define CONFIGURE_GIT_REVISION \"$${CONFIGURE_GIT_REVISION}\"" > config-version.h.tmp; \
-	echo "#define CONFIGURE_GIT_FLAGS \"$${CONFIGURE_GIT_CHFILES}$${CONFIGURE_GIT_UNCOMMITTED}\"" >> config-version.h.tmp; \
-	echo "#define OPENVPN_VERSION \"$${OPENVPN_VERSION}\"" >> config-version.h.tmp
+	echo "#define CONFIGURE_GIT_FLAGS \"$${CONFIGURE_GIT_CHFILES}$${CONFIGURE_GIT_UNCOMMITTED}\"" >> config-version.h.tmp;
 
 	@if ! [ -f config-version.h ] || ! cmp -s config-version.h.tmp config-version.h; then \
 		echo "replacing config-version.h"; \
