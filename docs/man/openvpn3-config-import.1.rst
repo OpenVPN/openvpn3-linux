@@ -32,11 +32,11 @@ OPTIONS
                          name.  The default value is the configuration profile
                          file name, but can be amended during import with this
                          option.
--p, --persistent         (Not yet implemented) This will enable the
-                         configuration profile to be automatically loaded when
-                         the configuration manager starts running.  Default is
-                         memory only, where the configuration profile will be
-                         deleted when the configuration manager exists.
+-p, --persistent         By default, the configuration profile is kept in
+                         memory only, and it is wiped when the configuration
+                         manager service restarts.  When adding this option the
+                         profile becomes persistent and will be automatically
+                         loaded each time the configuration manager starts.
 
 SEE ALSO
 ========
