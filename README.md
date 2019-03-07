@@ -318,44 +318,44 @@ First install the package dependencies needed to run the build.
 
 - Building with mbed TLS:
 
-    # apt-get install libmbedtls-dev
+      # apt-get install libmbedtls-dev
 
 - Building with OpenSSL:
 
-    # apt-get install libssl1.0-dev libssl1.0
+      # apt-get install libssl1.0-dev libssl1.0
 
 - Generic build requirements:
 
-    # apt-get install build-essential git pkg-config autoconf autoconf-archive libglib2.0-dev libjsoncpp-dev uuid-dev liblz4-dev libcap-ng-dev
+      # apt-get install build-essential git pkg-config autoconf autoconf-archive libglib2.0-dev libjsoncpp-dev uuid-dev liblz4-dev libcap-ng-dev
 
 #### Fedora:
 
 - Building with mbed TLS:
 
-    # dnf install mbedtls-devel
+      # dnf install mbedtls-devel
 
 - Building with OpenSSL:
 
-    # dnf install compat-openssl10-devel compat-openssl10
+      # dnf install compat-openssl10-devel compat-openssl10
 
 - Generic build requirements:
 
-    # dnf install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2
+      # dnf install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2
 
 #### Red Hat Enterprise Linux / CentOS / Scientific Linux
   First install the ``epel-release`` repository if that is not yet installed.  Then you can run:
 
 - Building with mbed TLS:
 
-    # yum install mbedtls-devel
+      # yum install mbedtls-devel
 
 - Building with OpenSSL
 
-    # yum install openssl-devel
+      # yum install openssl-devel
 
 - Generic build requirements:
 
-    # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel lz4-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2``
+      # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel lz4-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2``
 
 
 ### Preparations building from git
