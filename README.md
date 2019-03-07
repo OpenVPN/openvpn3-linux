@@ -143,13 +143,15 @@ All of the backend services will normally start automatically.  And when they
 are idle for a little while with no data to maintain, they will shutdown
 automatically.
 
-* openvpn3-service-configmgr
+* `openvpn3-service-configmgr`
+   ([man page](docs/man/openvpn3-service-configmgr.8.rst) | [D-Bus documentation](docs/dbus/dbus-service-net.openvpn.v3.configuration.md))
 
   This is the configuration manager.  All configuration profiles will be
   uploaded to this service before a tunnel is started.  This process is
   started as the `openvpn` user.
 
-* openvpn3-service-sessionmgr
+* `openvpn3-service-sessionmgr`
+  ([man page](docs/man/openvpn3-service-sessionmgr.8.rst) | [D-Bus documentation](docs/dbus/dbus-service-net.openvpn.v3.sessions.md))
 
   This manages all VPN tunnels which is about to start or has started.  It
   takes care of communicating with the backend tunnel processes and ensures
@@ -157,12 +159,14 @@ automatically.
   This service is started as the `openvpn` user.
 
 * openvpn3-service-backendstart
+  ([man page](docs/man/openvpn3-service-backendstart.8.rst) | [D-Bus documentation](docs/dbus/dbus-service-net.openvpn.v3.backends.md))
 
   This is more or less a helper service and is only used by the session manager
   The only task this service has is to start a new VPN client backend processes
   (the VPN tunnel instances)
 
 * openvpn3-service-client
+  ([man page](docs/man/openvpn3-service-client.8.rst) | [D-Bus documentation](docs/dbus/dbus-service-net.openvpn.v3.client.md))
 
   This is to be started by the `openvpn3-service-backendstart` only.  One such
   process is started per VPN client.  Once it has started, it registers itself
@@ -173,6 +177,7 @@ automatically.
   configuration.
 
 * openvpn3-service-netcfg
+  ([man page](docs/man/openvpn3-service-netcfg.8.rst) | [D-Bus documentation](docs/dbus/dbus-service-net.openvpn.v3.netcfg.md))
 
   This provides a service similar to a VPN API on other platforms.  It
   is responsible for creating, managing and destroying of TUN interfaces,
@@ -188,6 +193,7 @@ automatically.
   when using `--redirect-method bind-device`.
 
 * openvpn3-service-logger
+  ([man page](docs/man/openvpn3-service-logger.8.rst) | [D-Bus documentation](docs/dbus/dbus-service-net.openvpn.v3.log.md))
 
   This service will listen for log events happening from all the various
   backend services.  It supports writing these events to the console
@@ -197,6 +203,7 @@ automatically.
 To interact with these services, there are three front-end tools provided:
 
 * openvpn3
+  ([man page](docs/man/openvpn3.1.rst))
 
   This is a brand new command line interface which does not look like
   OpenVPN 2.x at all.  It can be used to start, stop, pause, resume tunnels
@@ -205,6 +212,7 @@ To interact with these services, there are three front-end tools provided:
   tunnel statistics for running tunnels.
 
 * openvpn2
+  ([man page](docs/man/openvpn2.1.rst))
 
   This is a simpler interface which tries to look and behave a bit more
   like the classic OpenVPN 2.x versions.  This interface is written in
@@ -217,15 +225,13 @@ To interact with these services, there are three front-end tools provided:
   manage this session.
 
 * openvpn3-admin
+  ([man page](docs/man/openvpn3-admin.8.rst))
 
   This will mostly only work when run as `root`.  This is used to adjust
   some settings or retrieve information from some of the backend services.
 
-More information can be found in the following man-pages:
-[`openvpn3-linux(7)`](docs/man/openvpn3-linux.7.rst),
-[`openvpn3(1)`](docs/man/openvpn3.1.rst),
-[`openvpn2(1)`](docs/man/openvpn2.1.rst) and
-[`openvpn3-admin(8)`](docs/man/openvpn3-admin.8.rst).
+More information can be found in the [`openvpn3-linux(7)`](docs/man/openvpn3-linux.7.rst)
+man page and [OpenVPN 3 D-Bus overview](docs/dbus/dbus-overview.md).
 
 
 Pre-built binaries
