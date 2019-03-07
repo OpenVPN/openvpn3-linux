@@ -136,7 +136,7 @@ Introduction to the OpenVPN 3 Linux architecture
 To interact with the various OpenVPN 3 services running in the background,
 three different utilities are provided.
 
-* openvpn2
+* `openvpn2`
   ([man page](docs/man/openvpn2.1.rst))
 
   This is an interface which tries to look and behave a bit more
@@ -149,7 +149,7 @@ three different utilities are provided.
   VPN session.  This path can be used by the `openvpn3` utility to further
   manage this session.
 
-* openvpn3
+* `openvpn3`
   ([man page](docs/man/openvpn3.1.rst))
 
   This is a brand new command line interface which does not look like
@@ -159,7 +159,7 @@ three different utilities are provided.
   handling access control lists for VPN configuration profiles and running
   VPN sessions.
 
-* openvpn3-admin
+* `openvpn3-admin`
   ([man page](docs/man/openvpn3-admin.8.rst))
 
   This will mostly only work when run as `root`.  This is used to adjust
@@ -195,7 +195,7 @@ with no data to maintain, they will shutdown automatically.
   only users with the right access levels can manage the various tunnels.
   This service is started as the `openvpn` user.
 
-* openvpn3-service-backendstart
+* `openvpn3-service-backendstart`
   ([man page](docs/man/openvpn3-service-backendstart.8.rst) | [D-Bus documentation](docs/dbus/dbus-service-net.openvpn.v3.backends.md))
 
   This is a helper service and is only used by the session manager.
@@ -203,7 +203,7 @@ with no data to maintain, they will shutdown automatically.
   processes (the VPN tunnel instances).  By default this is also started
   as the `openvpn` user.
 
-* openvpn3-service-client
+* `openvpn3-service-client`
   ([man page](docs/man/openvpn3-service-client.8.rst) | [D-Bus documentation](docs/dbus/dbus-service-net.openvpn.v3.client.md))
 
   This is to be started by the `openvpn3-service-backendstart` only.  One such
@@ -214,7 +214,7 @@ with no data to maintain, they will shutdown automatically.
   `openvpn3-service-netcfg` to manage the tun interface and related
   configuration.  This service is also running as the `openvpn` users by default.
 
-* openvpn3-service-netcfg
+* `openvpn3-service-netcfg`
   ([man page](docs/man/openvpn3-service-netcfg.8.rst) | [D-Bus documentation](docs/dbus/dbus-service-net.openvpn.v3.netcfg.md))
 
   This provides a service similar to a VPN API on other platforms.  It
@@ -232,7 +232,7 @@ with no data to maintain, they will shutdown automatically.
   be needed.  The `CAP_NET_RAW` capability is only needed when using
   `--redirect-method bind-device`.
 
-* openvpn3-service-logger
+* `openvpn3-service-logger`
   ([man page](docs/man/openvpn3-service-logger.8.rst) | [D-Bus documentation](docs/dbus/dbus-service-net.openvpn.v3.log.md))
 
   This service will listen for log events happening from all the various
