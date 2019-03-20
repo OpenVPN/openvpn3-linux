@@ -1,8 +1,8 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018      Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2017 - 2019  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2019  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2019  Arne Schwabe <arne@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -773,9 +773,10 @@ namespace openvpn
                 {
                     std::string dbuserr(error->message);
 
-                    if (dbuserr.find("GDBus.Error:org.freedesktop.DBus.Error.AccessDenied:") != std::string::npos)
+                    if ((dbuserr.find("GDBus.Error:org.freedesktop.DBus.Error.AccessDenied:") != std::string::npos)
+                        || (dbuserr.find("GDBus.Error:net.openvpn.v3.error.acl.denied:") != std::string::npos))
                     {
-                        throw DBusProxyAccessDeniedException("method", dbuserr);
+                        throw DBusProxyAccessDeniedException(method, dbuserr);
                     }
 
                     std::stringstream errmsg;
