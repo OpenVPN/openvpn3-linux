@@ -117,7 +117,7 @@ dnl  Provide facility to switch between SSL/TLS library
 dnl
 AC_ARG_WITH(
         [crypto-library],
-        [AS_HELP_STRING([--with-crypto-library=LIB], [build using the given crypto library backend. Valid options: mbedtls (default), openssl])],
+        [AS_HELP_STRING([--with-crypto-library=LIB], [build using the given crypto library backend. Valid options: mbedtls, openssl (default)])],
         [
                 case "${withval}" in
                         mbedtls|openssl)
@@ -127,7 +127,7 @@ AC_ARG_WITH(
                                 ;;
                 esac
         ],
-        [with_crypto_library="mbedtls"]
+        [with_crypto_library="openssl"]
 )
 
 
