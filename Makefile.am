@@ -62,7 +62,7 @@ DOCUMENTATION = \
 EXTRA_DIST = \
 	openvpn3-core-version \
 	$(DOCUMENTATION) \
-	src/shell/bash_completion-openvpn3 \
+	src/shell/bash-completion/openvpn3 \
 	openvpn3-core \
 	vendor \
 	src/common/requiresqueue.hpp \

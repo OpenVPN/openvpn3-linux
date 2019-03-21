@@ -425,7 +425,7 @@ user.
 The `openvpn3` front-end provides an interface for bash-completion to
 retrieve valid sub-commands, options and arguments - including valid
 D-Bus paths.  To enable this feature, copy
-`src/shell/bash_completion-openvpn3` to either `/etc/bash_completion.d`
+`src/shell/bash-completion/openvpn3` to either `/etc/bash_completion.d`
 or `/usr/share/bash-completion/completions` (depending on the Linux
 distribution).
 
