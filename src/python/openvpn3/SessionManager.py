@@ -1,7 +1,7 @@
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
-#  Copyright (C) 2018         OpenVPN Inc. <sales@openvpn.net>
-#  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2018 - 2019  OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -438,6 +438,17 @@ class SessionManager(object):
         for s in self.__manager_intf.FetchAvailableSessions():
             ret.append(Session(self.__dbuscon, s))
         return ret
+
+
+    ##
+    #  Looks up a configuration name to find available session objects
+    #  started with the given configuration name
+    #
+    #  @return Returns a list of D-Bus path objects matching the search
+    #          criteria
+    def LookupConfigName(self, cfgname):
+        self.__ping()
+        return self.__manager_intf.LookupConfigName(cfgname)
 
 
     ##
