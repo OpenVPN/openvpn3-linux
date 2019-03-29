@@ -156,7 +156,6 @@ the proxy username/password unencrypted.
 
     "crypto": {
             "default-key-direction": KEY_DIR,
-            "client-cert-enabled": BOOLEAN,
             "private-key-passphrase": "PASSWORD",
             "force-aes-cbc": BOOLEAN,
             "tls-params": {
@@ -173,13 +172,6 @@ The default (`-1`) is bi-directional mode where both sides uses the
 same key.  Otherwise the client must use either 0 or 1 while the
 server side uses 1 or 0; the local side must use the opposite value of
 what the remote side is configured to use.
-
-#### crypto: client-cert-enabled
-Boolean flag which can disable the requirement of a local client
-certificate.  This effectively disables client authentication based on
-certificates and the server side must also be configured to allow
-this.  In these configurations, username/password authentication or
-other types of out-of-band authentication is required.
 
 #### crypto: private-key-passphrase
 A string containing the password to decrypt the private key, if it is

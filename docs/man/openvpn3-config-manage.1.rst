@@ -78,10 +78,6 @@ OPTIONS
                         If set to true, the client will try to reconnect instead
                         of disconnecting if authentication fails.
 
---no-client-cert true|false
-                        If set to true, the client does not provide any client
-                        certificates to the server.
-
 --allow-compression no|asym|yes
                         This controls whether the client wants to allow
                         compression on traffic between the client to the server.

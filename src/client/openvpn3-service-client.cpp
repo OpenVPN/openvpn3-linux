@@ -914,6 +914,47 @@ private:
                                                                   "pk_passphrase");
         }
 
+        // Parse the configuration profile to an OptionList to be able
+        // to extract certain values from the configuration directly
+        OptionList parsed_opts;
+        try
+        {
+            // Basic profile limits
+            OptionList::Limits limits("profile is too large",
+                                      ProfileParseLimits::MAX_PROFILE_SIZE,
+                                      ProfileParseLimits::OPT_OVERHEAD,
+                                      ProfileParseLimits::TERM_OVERHEAD,
+                                      ProfileParseLimits::MAX_LINE_SIZE,
+                                      ProfileParseLimits::MAX_DIRECTIVE_SIZE);
+
+            parsed_opts.parse_from_config(vpnconfig.content, &limits);
+            parsed_opts.update_map();
+        }
+        catch (const std::exception& excp)
+        {
+            THROW_DBUSEXCEPTION("BackendClientObject",
+                                "Configuration pre-parsing failed: "
+                                + std::string(excp.what()));
+        }
+
+        //
+        // Check if the configuration contains a client certificate or not
+        //
+        // The client_cert_present does now only consider file based
+        // certificates, but is intended to be set also if certificates is
+        // expected to be provided by external PKI
+        //
+        try
+        {
+            Option cert = parsed_opts.get("cert");
+        }
+        catch (...)
+        {
+            // If this happens, the configuration profile does not
+            // contain a client certificate - so we disable it
+            vpnconfig.disableClientCert = true;
+        }
+
         // We need to provide a copy of the vpnconfig object, as vpnclient
         // seems to take ownership
         cfgeval = vpnclient->eval_config(ClientAPI::Config(vpnconfig));
@@ -931,7 +972,7 @@ private:
                                 "Configuration parsing failed: " + cfgeval.message);
         }
 
-        if (cfgeval.externalPki)
+        if (!vpnconfig.disableClientCert && cfgeval.externalPki)
         {
             std::string errmsg = "Failed to parse configuration: "
                 "Configuration requires external PKI which is not implemented yet.";
@@ -1061,11 +1102,6 @@ private:
             else if (override.override.key == "dns-sync-lookup")
             {
                 vpnconfig.synchronousDnsLookup = override.boolValue;
-                valid_override = true;
-            }
-            else if (override.override.key == "no-client-cert")
-            {
-                vpnconfig.disableClientCert = override.boolValue;
                 valid_override = true;
             }
             else if (override.override.key == "auth-fail-retry")

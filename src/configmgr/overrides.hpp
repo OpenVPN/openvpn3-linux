@@ -110,9 +110,6 @@ const ValidOverride configProfileOverrides[] = {
     {"auth-fail-retry", OverrideType::boolean,
      "Should failed authentication be considered a temporary error"},
 
-    {"no-client-cert", OverrideType::boolean,
-     "Disables using cient certificates"},
-
     {"allow-compression", OverrideType::string,
      "Set compression mode",
      [] {return std::string("no asym yes");}},

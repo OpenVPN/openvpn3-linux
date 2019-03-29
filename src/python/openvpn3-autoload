@@ -185,9 +185,6 @@ def parse_autoload_config(autoload):
             if not v:
                 continue
 
-            if 'client-cert-enabled' == k:
-                autoloadcfg['override']['no-client-cert'] = v
-
             elif 'force-aes-cbc' == k:
                 autoloadcfg['override']['force-cipher-aes-cbc'] = v
 

@@ -147,20 +147,12 @@ parameters related to the crypto layers of a VPN session.
 
 |
 |   "crypto": {
-|       "client-cert-enabled": BOOLEAN,
 |       "force-aes-cbc": BOOLEAN,
 |       "tls-params": {
 |           ...
 |       }
 |   }
 |
-
-Attribute: crypto:cert-enabled
-""""""""""""""""""""""""""""""
-*client-cert-enabled* is enabled by default, which requires the VPN profile
-to contain a client certificate.  By setting this to false, the VPN client
-will presume other types of authentication being enabled, such as
-username/password authentication.
 
 Attribute: crypto:force-aes-cbc
 """""""""""""""""""""""""""""""
