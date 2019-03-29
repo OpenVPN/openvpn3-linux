@@ -609,6 +609,13 @@ class ConfigParser():
                              help='On exit/restart, send exit signal to remote '
                              + 'end. Automatically configured with OpenVPN 3')
 
+        ignored.add_argument('--fast-io',
+                             action=ConfigParser.IgnoreArg,
+                             nargs=0,
+                             help='OpenVPN 3 uses a very different socket '
+                             + 'packet process implementation removing the '
+                             + 'need for this feature')
+
         ignored.add_argument('--group',
                              metavar='GROUP',
                              action=ConfigParser.IgnoreArg,
@@ -636,6 +643,16 @@ class ConfigParser():
                              help='Do not re-read key files across connection '
                              + 'restarts. Not needed. OpenVPN 3 keeps keys '
                              + 'as embedded file elements in the configuration')
+
+        ignored.add_argument('--ping-timer-rem',
+                             action=ConfigParser.IgnoreArg,
+                             nargs=0,
+                             help='Feature not available in OpenVPN 3')
+
+        ignored.add_argument('--pull',
+                             action=ConfigParser.IgnoreArg,
+                             nargs=0,
+                             help='Enabled by default in OpenVPN 3')
 
         ignored.add_argument('--rcvbuf',
                              metavar='SIZE',
@@ -665,6 +682,11 @@ class ConfigParser():
                              nargs='+',
                              help='Applies flags to the transport socket. Not '
                              + 'supported in OpenVPN 3')
+
+        ignored.add_argument('--tun-mtu-extra',
+                             action=ConfigParser.IgnoreArg,
+                             nargs=1,
+                             help='Not used by OpenVPN 3')
 
         ignored.add_argument('--user',
                              metavar='USER',
