@@ -1,7 +1,7 @@
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
-#  Copyright (C) 2018         OpenVPN Inc. <sales@openvpn.net>
-#  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2018 - 2019  OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -277,6 +277,18 @@ class ConfigurationManager(object):
         for p in self.__manager_intf.FetchAvailableConfigs():
             ret.append(Configuration(self.__dbuscon, p))
         return ret
+
+
+    ##
+    #  Looks up a configuration name to find available D-Bus paths to
+    #  configuration objects with the given name.
+    #
+    #  @return Returns a list of D-Bus path objects matching the search
+    #          criteria
+    #
+    def LookupConfigName(self, cfgname):
+        self.__ping()
+        return self.__manager_intf.LookupConfigName(cfgname)
 
 
     ##
