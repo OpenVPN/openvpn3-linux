@@ -83,13 +83,7 @@ struct NetCfgOptions {
     }
 
 
-    NetCfgOptions(const NetCfgOptions& origin) noexcept
-    {
-        redirect_method = origin.redirect_method;
-        so_mark = origin.so_mark;
-        signal_broadcast = origin.signal_broadcast;
-    }
-
+    NetCfgOptions(const NetCfgOptions& origin) noexcept = default;
 
     /**
      *  Generate a decoded string of the current options
