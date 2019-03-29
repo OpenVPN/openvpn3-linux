@@ -115,6 +115,23 @@ public:
     std::string gateway;
 };
 
+inline void return_invocation_with_fd(GDBusMethodInvocation *invoc, GVariant *parameters, int fd)
+{
+    GUnixFDList *fdlist;
+    GError *error = nullptr;
+    fdlist = g_unix_fd_list_new();
+    g_unix_fd_list_append(fdlist, fd, &error);
+    close(fd);
+
+    if (error) {
+        throw NetCfgException("Creating fd list failed");
+        }
+
+    // DBus will close the handle on our side after transmitting
+    g_dbus_method_invocation_return_value_with_unix_fd_list(invoc, parameters, fdlist);
+    GLibUtils::unref_fdlist(fdlist);
+}
+
 class NetCfgDevice : public DBusObject,
                      public DBusCredentials
 {
@@ -417,20 +434,7 @@ public:
                 }
                 int fd = tunimpl->establish(*this);
 
-                GUnixFDList *fdlist;
-                GError *error = nullptr;
-                fdlist = g_unix_fd_list_new();
-                g_unix_fd_list_append(fdlist, fd, &error);
-                close(fd);
-
-                if(error)
-                {
-                    throw NetCfgException("Creating fd list failed");
-                }
-
-                // DBus will close the handle on our side after transmitting
-                g_dbus_method_invocation_return_value_with_unix_fd_list(invoc, nullptr, fdlist);
-                GLibUtils::unref_fdlist(fdlist);
+                return_invocation_with_fd(invoc, nullptr, fd);
                 return;
             }
             else if ("Disable" == method_name)
