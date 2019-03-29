@@ -159,3 +159,24 @@ add_executable(openvpn3-service-sessionmgr
         ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
         ${OPENVPN3_LINUX_ROOT}/src/log/dbus-log.hpp
         )
+
+add_executable(cli-netcfg
+        ${OPENVPN3_LINUX_ROOT}/src/tests/netcfg/cli.cpp
+        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg.hpp
+        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-device.hpp
+        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-exception.hpp
+        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-options.hpp
+        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-signals.hpp
+        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-changeevent.hpp
+        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-subscriptions.hpp
+        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-subscriptions.cpp
+        ${OPENVPN3_LINUX_ROOT}/src/netcfg/core-tunbuilder.hpp
+        ${OPENVPN3_LINUX_ROOT}/src/netcfg/dns-direct-file.hpp
+        ${OPENVPN3_LINUX_ROOT}/src/netcfg/dns-resolver-settings.hpp
+        ${OPENVPN3_LINUX_ROOT}/src/common/lookup.cpp
+        ${OPENVPN3_LINUX_ROOT}/src/common/requiresqueue.cpp
+        ${OPENVPN3_LINUX_ROOT}/src/common/timestamp.cpp
+        ${OPENVPN3_LINUX_ROOT}/src/common/utils.cpp
+        ${OPENVPN3_LINUX_ROOT}/src/log/core-dbus-logbase.hpp
+        ${OPENVPN3_LINUX_ROOT}/src/log/dbus-log.hpp
+        )
