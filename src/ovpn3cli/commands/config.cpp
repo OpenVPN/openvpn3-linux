@@ -28,6 +28,7 @@
 #include "config-version.h"
 #endif
 
+#define USE_TUN_BUILDER
 #include <client/ovpncli.cpp>
 
 #include "dbus/core.hpp"
