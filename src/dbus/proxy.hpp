@@ -828,10 +828,10 @@ namespace openvpn
                 g_dbus_proxy_call(prx, method.c_str(), params,
                                   flags,
                                   -1,       // timeout, -1 == default
-                                  NULL,     // GCancellable
-                                  NULL,     // Response callback, not needed here
-                                  NULL);    // user_data, not needed due to no callback
-                return NULL;
+                                  nullptr,     // GCancellable
+                                  nullptr,     // Response callback, not needed here
+                                  nullptr);    // user_data, not needed due to no callback
+                return nullptr;
             }
         }
     };

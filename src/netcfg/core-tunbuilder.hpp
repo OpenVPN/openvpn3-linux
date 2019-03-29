@@ -27,6 +27,7 @@
  */
 
 #pragma once
+
 #include <openvpn/common/rc.hpp>
 #include <string>
 
@@ -51,7 +52,7 @@ namespace openvpn
      * @param remote remote host to lookup
      * @param ipv6 is remote ipv6
      */
-    void protect_socket_binddev(int fd, const std::string & remote, bool ipv6);
+    void protect_socket_binddev(int fd, const std::string& remote, bool ipv6);
 
     /**
      * Function that set the so_mark for socket
@@ -59,9 +60,9 @@ namespace openvpn
      * @param remote remote host to connect to (for logging only)
      * @param somark the value to set SO_MARK to
      */
-    void protect_socket_somark(int fd, const std::string & remote, int somark);
-
+    void protect_socket_somark(int fd, const std::string& remote, int somark);
 
     // Workaround to avoid circular dependencies
-    CoreTunbuilder* getCoreBuilderInstance();
+    CoreTunbuilder *getCoreBuilderInstance();
+
 }
