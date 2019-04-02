@@ -438,7 +438,7 @@ namespace DNS
         std::vector<std::string> dns_servers_new_entries;
         std::vector<std::string> dns_search;
         bool modified = false;
-        unsigned int users;
+        unsigned int users = 0;
 
 
         /**
