@@ -182,6 +182,11 @@ namespace DNS
          */
         void RestoreBackup()
         {
+            if (!backup_active)
+            {
+                // No backup file has been created, so nothing to restore.
+                return;
+            }
             if (backup_filename.empty() || !file_exists(backup_filename))
             {
                 throw NetCfgException("Backup file '" + backup_filename + "'"
