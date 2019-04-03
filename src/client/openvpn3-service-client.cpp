@@ -727,7 +727,6 @@ private:
     ClientAPI::ProvideCreds creds;
     RequiresQueue userinputq;
     std::mutex guard;
-    bool useTunBuilder = true;
 
 
     /**
