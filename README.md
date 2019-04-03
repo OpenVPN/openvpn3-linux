@@ -338,7 +338,13 @@ First install the package dependencies needed to run the build.
 
 - Building with OpenSSL:
 
-      # apt-get install libssl1.0-dev libssl1.0
+  For newer Debian and Ubuntu releases shipping with OpenSSL 1.1 or newer, the compat OpenSSL packages are required.
+
+      # apt-get install libssl1.0-dev libssl1.0.0
+
+  For Ubuntu 16.04 LTS, which ships with OpenSSL 1.0, these `libssl` packages are needed:
+
+      # apt-get install libssl-dev libssl1.0.0
 
 - Generic build requirements:
 
