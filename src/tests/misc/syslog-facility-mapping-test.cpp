@@ -72,7 +72,7 @@ int main()
         {
             try
             {
-                unsigned int r = SyslogWriter::ConvertLogFacility(fac.name);
+                int r = SyslogWriter::ConvertLogFacility(fac.name);
                 if (!fac.should_pass || r < 0)
                 {
                     test_passed = false;
