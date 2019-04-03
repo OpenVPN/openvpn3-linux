@@ -58,7 +58,7 @@ public:
      *
      * @param logev  LogEvent object containing the log message to log.
      */
-    void Log(const LogEvent& logev)
+    void Log(const LogEvent& logev) override
     {
         // Don't log unless the log level filtering allows it
         // The filtering is done against the LogCategory of the message
@@ -81,7 +81,7 @@ public:
      *
      * @param Log message to send to the log subscribers
      */
-    void LogFATAL(std::string msg)
+    void LogFATAL(std::string msg) override
     {
         Log(LogEvent(log_group, LogCategory::FATAL, msg));
         kill(getpid(), SIGHUP);
