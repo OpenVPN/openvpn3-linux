@@ -516,6 +516,22 @@ if test "${enable_debug_core_events}" = "yes"; then
 fi
 
 dnl
+dnl   opt-in debug mode, will add additional logging to the Linux kernel
+dnl   NETLINK API calls
+dnl
+AC_ARG_ENABLE(
+    [debug-netcfg-netlink],
+    [AS_HELP_STRING([--enable-debug-netcfg-netlink],
+                    [enables debug logging of OpenVPN 3 Core NETLINK calls])],
+    [enable_debug_netcfg_netlink="yes"],
+    []
+)
+AC_SUBST([DEBUG_RTNL])
+if test "${enable_debug_netcfg_netlink}" = "yes"; then
+   AC_DEFINE([DEBUG_RTNL], [1], [Debug logging of OpenVPN 3 Core NETLINK calls])
+fi
+
+dnl
 dnl   Debug feature - disables the Session Manager check in backend client
 dnl
 dnl   Disabling this feature is a highly security senstive change and will
