@@ -586,10 +586,12 @@ SingleCommand::Ptr prepare_command_sessions_list()
  */
 static int cmd_session_manage(ParsedArgs args)
 {
-    const unsigned int mode_pause      = 1 << 1;
-    const unsigned int mode_resume     = 1 << 2;
-    const unsigned int mode_restart    = 1 << 3;
-    const unsigned int mode_disconnect = 1 << 4;
+    const unsigned int mode_pause      = 1 << 0;
+    const unsigned int mode_resume     = 1 << 1;
+    const unsigned int mode_restart    = 1 << 2;
+    const unsigned int mode_disconnect = 1 << 3;
+    const unsigned int mode_cleanup    = 1 << 4;
+
     unsigned int mode = 0;
     unsigned int mode_count = 0;
     if (args.Present("pause"))
@@ -612,12 +614,17 @@ static int cmd_session_manage(ParsedArgs args)
         mode |= mode_disconnect;
         mode_count++;
     }
+    if (args.Present("cleanup"))
+    {
+        mode |= mode_cleanup;
+        mode_count++;
+    }
 
     if (0 == mode_count)
     {
         throw CommandException("session-manage",
-                               "One of --pause, --resume, --restart or --disconnect "
-                               "must be present");
+                               "One of --pause, --resume, --restart, "
+                               "--disconnect or --cleanup must be present");
     }
     if (1 < mode_count)
     {
@@ -626,7 +633,9 @@ static int cmd_session_manage(ParsedArgs args)
                                "cannot be used together");
     }
 
-    if (!args.Present("path") && !args.Present("config"))
+    // Only --cleanup does NOT depend on --path or --config
+    if (!args.Present("path") && !args.Present("config")
+        && (mode ^ mode_cleanup) > 0)
     {
         throw CommandException("session-manage",
                                "Missing required session path or config name");
@@ -635,6 +644,77 @@ static int cmd_session_manage(ParsedArgs args)
 
     try
     {
+        if (mode_cleanup == mode)
+        {
+            OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
+                                         OpenVPN3DBus_rootp_sessions);
+
+            // Loop through all open sessions and check if they have a valid
+            // status available.  A valid status means it is not empty nor
+            // unset.  If the status can't be retrieved, it is also
+            // invalid.
+            std::vector<std::string> sesspaths = sessmgr.FetchAvailableSessions();
+            std::cout << "Cleaning up stale sessions - Found "
+                      << std::to_string(sesspaths.size()) << " open sessions "
+                      << "to check" << std::endl;
+
+            unsigned int c = 0;
+            for (const auto &sp : sesspaths)
+            {
+                OpenVPN3SessionProxy s(G_BUS_TYPE_SYSTEM, sp);
+                try
+                {
+                    std::string cfgname = s.GetStringProperty("config_name");
+
+                    std::cout << "Checking:  " << cfgname << " - " << sp
+                              << " ... ";
+
+                    StatusEvent st = s.GetLastStatus();
+                    if (st.Check(StatusMajor::UNSET, StatusMinor::UNSET)
+                        && st.message.empty())
+                    {
+                        // This is an empty and unset status
+                        // These are rare, as it means the
+                        // openvpn3-service-client process is running and
+                        // responsive, but has not even managed to load a
+                        // configuration profile
+                        s.Disconnect();
+                        std::cout << "Removed" << std::endl;
+                        ++c;
+                    }
+                    else
+                    {
+                        std::cout << "Valid, keeping it" << std::endl;
+                    }
+                }
+                catch (const std::exception& e )
+                {
+                    // Errors in this case indicates we cannot retrieve any
+                    // information about the session; thus it is most likely
+                    // not valid any more, so we kill it - and ignore any
+                    // errors while killing it.
+                    //
+                    // When this happens the openvpn3-service-client process
+                    // is most likely already dead.  Calling the Disconnect()
+                    // method basically just cleans up the session in the
+                    // Session Manager only.
+                    try
+                    {
+                        s.Disconnect();
+                    }
+                    catch (...)
+                    {
+                    }
+                    std::cout << "Removed" << std::endl;
+                    ++c;
+                }
+            }
+            std::cout << std::to_string(c) << " session" << (c != 1 ? "s" : "")
+                      << " removed" << std::endl;
+            return 0;
+        }
+
+
         std::string sesspath = "";
         if (args.Present("config"))
         {
@@ -739,6 +819,7 @@ SingleCommand::Ptr prepare_command_session_manage()
     cmd->AddOption("resume", 'R', "Resumes a paused VPN session");
     cmd->AddOption("restart", "Disconnect and reconnect a running VPN session");
     cmd->AddOption("disconnect", 'D', "Disconnects a VPN session");
+    cmd->AddOption("cleanup", 0, "Clean up stale sessions");
 
     return cmd;
 }

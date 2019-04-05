@@ -58,6 +58,11 @@ OPTIONS
                 by itself.  Once disconnected, if connection statistics is
                 available it will be printed to the terminal.
 
+--cleanup
+                Remove all stale sessions which have no VPN client backend
+                process running.  These sessions typically have no status
+                available.
+
 SEE ALSO
 ========
 
