@@ -159,35 +159,14 @@ public:
             {
                 gchar *dev_name = nullptr;
                 g_variant_get(params, "(s)", &dev_name);
+                std::string device_name(dev_name);
+                g_free(dev_name);
 
                 signal.Debug(std::string("CreateVirtualInterface(")
-                             + "'" + std::string(dev_name)+ "')");
-
-                // Create a unique enough device path /(ownpid)-(senderpid)-(sendername)
-                std::string dev_path = OpenVPN3DBus_rootp_netcfg + "/"
-                                     + std::to_string(creds.GetPID(sender))
-                                     + "_" + std::string(dev_name);
-                NetCfgDevice *device = new NetCfgDevice(conn,
-                                              [self=Ptr(this), dev_path]()
-                                               {
-                                                   self->remove_device_object(dev_path);
-                                               },
-                                              creds.GetUID(sender), dev_path,
-                                              dev_name, resolver, subscriptions.get(),
-                                              signal.GetLogLevel(),
-                                              signal.GetLogWriter(),
-                                              options);
+                             + "'" + device_name + "')");
+                std::string dev_path = createVirtualDevice(conn, sender, device_name);
                 retval = g_variant_new("(o)", dev_path.c_str());
 
-                IdleCheck_RefInc();
-                device->IdleCheck_Register(IdleCheck_Get());
-                device->RegisterObject(conn);
-                devices[dev_path] = device;
-
-                signal.LogInfo(std::string("Virtual device '") + dev_name + "'"
-                               + " registered on " + dev_path
-                               + " (owner uid " + std::to_string(creds.GetUID(sender)) + ")");
-                g_free(dev_name);
             }
             else if ("FetchInterfaceList" == method_name)
             {
@@ -336,6 +315,34 @@ public:
             g_dbus_method_invocation_return_gerror(invoc, err);
             g_error_free(err);
         }
+    }
+
+    std::string createVirtualDevice(GDBusConnection *conn, const std::string& sender, const std::string& dev_name)
+    {
+        std::string dev_path = OpenVPN3DBus_rootp_netcfg + "/"
+                               + std::to_string(creds.GetPID(sender))
+                               + "_" + dev_name;
+        NetCfgDevice *device = new NetCfgDevice(conn,
+                                                [self = Ptr(this), dev_path]()
+                                                {
+                                                    self->remove_device_object(dev_path);
+                                                },
+                                                creds.GetUID(sender), dev_path,
+                                                dev_name, resolver, subscriptions.get(),
+                                                signal.GetLogLevel(),
+                                                signal.GetLogWriter(),
+                                           options);
+
+
+        IdleCheck_RefInc();
+        device->IdleCheck_Register(IdleCheck_Get());
+        device->RegisterObject(conn);
+        devices[dev_path] = device;
+
+        signal.LogInfo(std::string("Virtual device '") + dev_name + "'"
+                       + " registered on " + dev_path
+                       + " (owner uid " + std::to_string(creds.GetUID(sender)) + ")");
+        return dev_path;
     }
 
 
