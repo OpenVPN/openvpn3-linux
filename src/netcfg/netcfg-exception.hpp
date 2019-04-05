@@ -133,7 +133,7 @@ public:
 
     }
 
-    ~NetCfgProxyException() = default;
+    ~NetCfgProxyException() override = default;
 
     virtual const char* what() const noexcept
     {
