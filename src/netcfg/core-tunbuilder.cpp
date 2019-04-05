@@ -176,12 +176,20 @@ namespace openvpn
             int ret = establish_tun(*tbc, config, nullptr, std::cout);
             netCfgDevice.set_device_name(config.iface_name);
 
+            doEstablishNotifies(netCfgDevice, config);
+
+            return ret;
+        }
+
+        void doEstablishNotifies(const NetCfgDevice& netCfgDevice,
+                                 const TUN_CLASS_SETUP::Config& config) const
+        {
             // Announce the new interface
             NetCfgChangeEvent dev_ev(NetCfgChangeType::DEVICE_ADDED,
-                                      config.iface_name, {});
+                                     config.iface_name, {});
             netCfgDevice.signal.NetworkChange(dev_ev);
 
-            for (const auto& ipaddr: netCfgDevice.vpnips)
+            for (const auto& ipaddr : netCfgDevice.vpnips)
             {
                 NetCfgChangeEvent chg_ev(NetCfgChangeType::IPADDR_ADDED,
                                          config.iface_name,
@@ -190,7 +198,6 @@ namespace openvpn
                                           {"ip_version", (ipaddr.ipv6 ? "6" : "4")}});
                 netCfgDevice.signal.NetworkChange(chg_ev);
             }
-
 
             // WARNING:  This is NOT optimal
             //           - but should work for most use cases
@@ -215,7 +222,7 @@ namespace openvpn
             }
 
             // Announce routes related to this new interface
-            for (const auto& net: netCfgDevice.networks)
+            for (const auto& net : netCfgDevice.networks)
             {
                 NetCfgChangeType type;
                 type = (net.exclude ? NetCfgChangeType::ROUTE_EXCLUDED
@@ -227,8 +234,8 @@ namespace openvpn
                                           {"gateway", (net.ipv6 ? local6.gateway : local4.gateway)}});
                 netCfgDevice.signal.NetworkChange(chg_ev);
             }
-            return ret;
         }
+
 
         void teardown(const NetCfgDevice& ncdev, bool disconnect) override
         {
