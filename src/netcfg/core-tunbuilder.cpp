@@ -47,7 +47,8 @@ namespace openvpn
 
     class CoreTunbuilderImpl : public CoreTunbuilder
     {
-        TunLinuxSetup::Setup<TUN_LINUX>::Ptr tun = new TUN_CLASS_SETUP();
+        TunLinuxSetup::Setup<TUN_LINUX>::Ptr tun;
+        ActionList::Ptr remove_cmds;
 
         /**
          * Uses Tunbuilder to open a new tun device
@@ -243,6 +244,11 @@ namespace openvpn
             {
                 // the os parameter is not used
                 tun->destroy(std::cerr);
+            }
+
+            if (remove_cmds)
+            {
+                remove_cmds->execute_log();
             }
 
             // Announce the removed routes

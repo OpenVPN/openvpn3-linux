@@ -31,6 +31,7 @@
 
 #include <iostream>
 
+#define USE_TUN_BUILDER
 #include <client/ovpncli.cpp>
 
 #include "common/cmdargparser.hpp"
