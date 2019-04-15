@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2019  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2019  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -1357,7 +1357,33 @@ private:
             // The backend service should exists _before_ we try to
             // communicate with it.
             be_proxy->SetGDBusCallFlags(G_DBUS_CALL_FLAGS_NO_AUTO_START);
-            ping_backend();
+
+            unsigned int attempts = 5;
+            while (attempts > 0)
+            {
+                try
+                {
+                    ping_backend();
+                    attempts = 0;
+                }
+                catch (const DBusException& excp)
+                {
+                    --attempts;
+                    if (attempts > 0)
+                    {
+                        // If we didn't manage to get a Ping response
+                        // it might be the backend client process is a bit
+                        // slow to settle.  So we just wait for another
+                        // second and try again
+                        sleep(1);
+                    }
+                    else
+                    {
+                        // This didn't work, so bail out.
+                        throw;
+                    }
+                }
+            }
 
             // Setup signal listeners from the backend process
             // The SessionStatusChange() handler will use the senders
@@ -1376,11 +1402,13 @@ private:
                                              g_variant_new("(so)",
                                                            backend_token.c_str(),
                                                            config_path.c_str()));
-            if (NULL == res_g) {
+            if (nullptr == res_g)
+            {
                 THROW_DBUSEXCEPTION("SessionObject",
                                     "Failed to extract the result of the "
                                     "RegistrationConfirmation response");
             }
+
             gchar *cfgname_c = nullptr;
             g_variant_get(res_g, "(s)", &cfgname_c);
             if (!cfgname_c)
