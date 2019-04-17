@@ -41,6 +41,64 @@
 using namespace openvpn;
 
 /**
+ *  This provides a more generic interface to generate and process
+ *  the log tags and hashes used to separate log events from various
+ *  attached log senders.
+ */
+struct LogTag
+{
+    /**
+     *  LogTag contstructor
+     *
+     * @param sender     std::string of the D-Bus unique bus name (1:xxxx)
+     * @param interface  std::string of the D-Bus interface sending events
+     *
+     */
+    LogTag(std::string sender, std::string interface)
+    {
+        tag = std::string("[") + sender + "/" + interface + "]";
+
+        // Create a hash of the tag, used as an index
+        std::hash<std::string> hashfunc;
+        hash = hashfunc(tag);
+    }
+
+
+    /**
+     *  Return a std::string containing the tag to be used with log lines
+     *
+     *  The structure is: {tag:xxxxxxxxxxx}
+     *  where xxxxxxxxxxx is a positive number
+     *
+     * @return  Returns a std::string containing the tag this sender and
+     *           interface will use
+     */
+    std::string str() const
+    {
+        return std::string("{tag:") + std::string(std::to_string(hash))
+               + std::string("}");
+    }
+
+
+    /**
+     *  Write a formatted tag string via iostreams
+     *
+     * @param os  std::ostream where to write the data
+     * @param ev  LogEvent to write to the stream
+     *
+     * @return  Returns the provided std::ostream together with the
+     *          decoded LogEvent information
+     */
+    friend std::ostream& operator<<(std::ostream& os , const LogTag& ltag)
+    {
+        return os << "{tag:" << std::to_string(ltag.hash) << "}";
+    }
+
+    std::string tag;  /**<  Contains the string used for the hash generation */
+    size_t hash;      /**<  Contains the hash value for this LogTag */
+};
+
+/**
  *  The LogServiceManager maintains the D-Bus object to be used
  *  when attaching, detaching and otherwise manage the log processing
  *  over D-Bus
@@ -158,29 +216,19 @@ public:
 
             // Extract the interface to operate on.  All D-Bus method
             // calls expects this information.
-            gchar *interface_c = nullptr;
-            g_variant_get (params, "(s)", &interface_c);
-            std::string interface(interface_c);
-            std::string tag = "[" + sender + "/" + interface + "]";
-
-            // Create a hash of the tag, used as an index
-            std::hash<std::string> hashfunc;
-            size_t htag = hashfunc(tag);
-            g_free(interface_c);
-
-            std::stringstream tagstr_;
-            tagstr_ << "{tag:" << std::to_string(htag) << "}";
-            std::string tagstr(tagstr_.str());
+            GLibUtils::checkParams(__func__, params, "(s)", 1);
+            std::string interface(GLibUtils::ExtractValue<std::string>(params, 0));
+            LogTag tag(sender, interface);
 
             if ("Attach" == meth_name)
             {
                 // Subscribe to signals from a new D-Bus service/client
 
                 // Check this has not been already registered
-                if (loggers.find(htag) != loggers.end())
+                if (loggers.find(tag.hash) != loggers.end())
                 {
                     std::stringstream l;
-                    l << "Duplicate: " << tag << " " << tagstr;
+                    l << "Duplicate: " << tag << "  " << tag.tag;
 
                     logwr->AddMeta(meta.str());
                     logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN,
@@ -193,11 +241,11 @@ public:
                     return;
                 }
 
-                loggers[htag].reset(new Logger(dbuscon, logwr, tagstr,
+                loggers[tag.hash].reset(new Logger(dbuscon, logwr, tag.str(),
                                               sender, interface, log_level));
 
                 std::stringstream l;
-                l << "Attached: " << tag << "  " << tagstr;
+                l << "Attached: " << tag << "  " << tag.tag;
 
                 logwr->AddMeta(meta.str());
                 logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2,
@@ -209,10 +257,10 @@ public:
             else if ("Detach" == meth_name)
             {
                 // Ensure the requested logger is truly configured
-                if (loggers.find(htag) == loggers.end())
+                if (loggers.find(tag.hash) == loggers.end())
                 {
                     std::stringstream l;
-                    l << "Not found: " << tag << " " << tagstr;
+                    l << "Not found: " << tag << " " << tag.tag;
 
                     logwr->AddMeta(meta.str());
                     logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN,
@@ -227,12 +275,12 @@ public:
                 }
 
                 // Check this has not been already registered
-                validate_sender(sender, loggers[htag]->GetBusName());
+                validate_sender(sender, loggers[tag.hash]->GetBusName());
 
                 // Unsubscribe from signals from a D-Bus service/client
-                loggers.erase(htag);
+                loggers.erase(tag.hash);
                 std::stringstream l;
-                l << "Detached: " << tag << " " << tagstr;
+                l << "Detached: " << tag << "  " << tag.tag;
 
                 logwr->AddMeta(meta.str());
                 logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2,
