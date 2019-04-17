@@ -208,8 +208,6 @@ int netcfg_main(ParsedArgs args)
 
         // Prepare GLib Main loop
         GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
-        g_unix_signal_add(SIGINT, stop_handler, main_loop);
-        g_unix_signal_add(SIGTERM, stop_handler, main_loop);
 
         // Setup idle-exit logic
         IdleCheck::Ptr idle_exit;
@@ -219,6 +217,13 @@ int netcfg_main(ParsedArgs args)
                                           std::chrono::minutes(idle_wait_min)));
             idle_exit->SetPollTime(std::chrono::seconds(30));
             netcfgsrv.EnableIdleCheck(idle_exit);
+        }
+        else
+        {
+            // If we don't use the IdleChecker, handle these signals
+            // in via the stop_handler instead
+            g_unix_signal_add(SIGINT, stop_handler, main_loop);
+            g_unix_signal_add(SIGTERM, stop_handler, main_loop);
         }
         netcfgsrv.Setup();
 

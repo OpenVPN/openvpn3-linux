@@ -33,8 +33,6 @@ static int config_manager(ParsedArgs args)
     std::cout << get_version(args.GetArgv0()) << std::endl;
 
     GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
-    g_unix_signal_add(SIGINT, stop_handler, main_loop);
-    g_unix_signal_add(SIGTERM, stop_handler, main_loop);
 
     // Enable automatic shutdown if the config manager is
     // idling for 1 minute or more.  By idling, it means
@@ -110,6 +108,13 @@ static int config_manager(ParsedArgs args)
                                       std::chrono::minutes(idle_wait_min)));
         idle_exit->SetPollTime(std::chrono::seconds(30));
         cfgmgr.EnableIdleCheck(idle_exit);
+    }
+    else
+    {
+        // If we don't use the IdleChecker, handle these signals
+        // in via the stop_handler instead
+        g_unix_signal_add(SIGINT, stop_handler, main_loop);
+        g_unix_signal_add(SIGTERM, stop_handler, main_loop);
     }
     cfgmgr.Setup();
 

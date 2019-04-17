@@ -158,8 +158,6 @@ static int logger(ParsedArgs args)
 
         // Prepare the GLib GMainLoop
         GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
-        g_unix_signal_add(SIGINT, stop_handler, main_loop);
-        g_unix_signal_add(SIGTERM, stop_handler, main_loop);
 
         if (args.Present("service"))
         {
@@ -188,13 +186,16 @@ static int logger(ParsedArgs args)
                 std::cout << "Idle exit set to " << idle_wait_min
                           << " minutes" << std::endl;
             }
-#ifdef DEBUG_OPTIONS
             else
             {
+                // If we don't use the IdleChecker, handle these signals
+                // in via the stop_handler instead
+                g_unix_signal_add(SIGINT, stop_handler, main_loop);
+                g_unix_signal_add(SIGTERM, stop_handler, main_loop);
+#ifdef DEBUG_OPTIONS
                 std::cout << "Idle exit is disabled" << std::endl;
-            }
 #endif
-
+            }
             logsrv->Setup();
 
             if (idle_wait_min > 0)
