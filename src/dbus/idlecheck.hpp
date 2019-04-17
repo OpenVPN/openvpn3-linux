@@ -23,6 +23,10 @@
 #include <iostream>
 #include <memory>
 #include <thread>
+#include <mutex>
+#include <condition_variable>
+
+#include <glib-unix.h>
 
 #include <openvpn/common/rc.hpp>
 
@@ -59,13 +63,19 @@ public:
      *                   automatically exiting
      */
     IdleCheck(GMainLoop *mainloop, std::chrono::duration<double> idle_time)
-        : mainloop(mainloop),
+        : signal_caught(false),
+          mainloop(mainloop),
           idle_time(idle_time),
           poll_time(idle_time),
           enabled(false),
           running(false),
           refcount(0)
     {
+            g_unix_signal_add(SIGINT, _cb__idlechecker_sighandler,
+                              (void *) this);
+            g_unix_signal_add(SIGTERM, _cb__idlechecker_sighandler,
+                              (void *) this);
+
             UpdateTimestamp();
     }
 
@@ -130,6 +140,17 @@ public:
 
 
     /**
+     *   Checks if the IdleCheck is enabled or not
+     *
+     * @return  Returns true if IdleCheck is enabled
+     */
+    bool GetEnabled()
+    {
+        return enabled;
+    }
+
+
+    /**
      *   Increases the reference counter by 1
      */
     void RefCountInc()
@@ -168,28 +189,69 @@ public:
     void _cb_idlechecker__loop()
     {
         running = true;
-        while( enabled )
+        while (enabled)
         {
-            // FIXME: Consider to swap sleep_for() with
-            // std::condition_variable::wait_for() which can
-            // unlock on cv.notify_one() call.
-            std::this_thread::sleep_for(poll_time);
-            auto now = std::chrono::system_clock::now();
-            if (0 == refcount && (last_operation + idle_time) < now)
+            // Wait until the timer completes or we get
+            // notification triggered by SIGINT/SIGTERM signals
+            std::unique_lock<std::mutex> exit_lock(exit_cv_mutex);
+            exit_cv.wait_for(exit_lock, idle_time,
+                             [self=Ptr(this)]
+                              {
+                                    // Do not re-trigger the timer
+                                    // if we have received a signal
+                                    return self->signal_caught;
+                              });
+
+#ifdef SHUTDOWN_NOTIF_PROCESS_NAME
+            if (0 == refcount && !signal_caught)
             {
                 // We timed out, start the main loop shutdown
-#ifdef SHUTDOWN_NOTIF_PROCESS_NAME
-            std::cout << SHUTDOWN_NOTIF_PROCESS_NAME
-                      << " starting idle shutdown "
-                      << "(pid: " << std::to_string(getpid()) << ")"
-                      << std::endl;
+                std::cout << SHUTDOWN_NOTIF_PROCESS_NAME
+                                << " starting idle shutdown "
+                                << "(pid: " << std::to_string(getpid()) << ")"
+                                << std::endl;
+            }
 #endif
+
+            // If receiving signals, we exit regardless
+            // of the reference counting state
+            if (0 == refcount || signal_caught)
+            {
                 g_main_loop_quit(mainloop);
                 enabled = false;
             }
         }
         running = false;
     }
+
+
+    /**
+     *  IdleCheck signal handler callback function.
+     *
+     *  This is called whenever the subscribed signals in
+     *  the constructor.  Typically SIGINT and SIGTERM.
+     *
+     * @param  data  Carries a pointer to this IdleCheck object
+     *
+     * @return See @GSourceFunc() declaration in glib2.  We return
+     *         G_SOURCE_CONTINUE as we do not want to remove/disable the
+     *         signal processing.
+     */
+    static int _cb__idlechecker_sighandler(void *data)
+    {
+        IdleCheck *self = (IdleCheck *)data;
+        self->signal_caught = true;
+        self->Disable();
+        return G_SOURCE_CONTINUE;
+    }
+
+
+    // We make this public for simplicity.  Otherwise it would require
+    // both a setter and getter method as it is used by both the
+    // signal handler below and in the wait_for() lambda in the main
+    // IdleCheck loop.
+    bool signal_caught;  /**< Indicates if a signal has been received */
+
 
 private:
     GMainLoop *mainloop;
@@ -200,5 +262,7 @@ private:
     uint16_t refcount;
     std::chrono::time_point<std::chrono::system_clock> last_operation;
     std::unique_ptr<std::thread> idle_checker;
+    std::mutex exit_cv_mutex;
+    std::condition_variable exit_cv;
 };
 #endif // OPENVPN3_DBUS_IDLECHECK_HPP
