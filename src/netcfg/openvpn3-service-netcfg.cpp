@@ -215,7 +215,6 @@ int netcfg_main(ParsedArgs args)
         {
             idle_exit.reset(new IdleCheck(main_loop,
                                           std::chrono::minutes(idle_wait_min)));
-            idle_exit->SetPollTime(std::chrono::seconds(30));
             netcfgsrv.EnableIdleCheck(idle_exit);
         }
         else

@@ -181,7 +181,6 @@ static int logger(ParsedArgs args)
             {
                 idle_exit.reset(new IdleCheck(main_loop,
                                               std::chrono::minutes(idle_wait_min)));
-                idle_exit->SetPollTime(std::chrono::seconds(30));
                 logsrv->EnableIdleCheck(idle_exit);
                 std::cout << "Idle exit set to " << idle_wait_min
                           << " minutes" << std::endl;

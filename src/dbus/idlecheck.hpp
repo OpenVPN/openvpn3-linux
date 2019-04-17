@@ -66,7 +66,6 @@ public:
         : signal_caught(false),
           mainloop(mainloop),
           idle_time(idle_time),
-          poll_time(idle_time),
           enabled(false),
           running(false),
           refcount(0)
@@ -88,12 +87,6 @@ public:
     void UpdateTimestamp()
     {
         last_operation = std::chrono::system_clock::now();
-    }
-
-
-    void SetPollTime(std::chrono::duration<double> pollt)
-    {
-        poll_time = pollt;
     }
 
 
@@ -256,7 +249,6 @@ public:
 private:
     GMainLoop *mainloop;
     std::chrono::duration<double> idle_time;
-    std::chrono::duration<double> poll_time;
     bool enabled;
     bool running;
     uint16_t refcount;

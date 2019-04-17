@@ -538,7 +538,6 @@ int backend_starter(ParsedArgs args)
     {
         idle_exit.reset(new IdleCheck(main_loop,
                                       std::chrono::seconds(idle_wait_sec)));
-        idle_exit->SetPollTime(std::chrono::seconds(10));
         backstart.EnableIdleCheck(idle_exit);
     }
 #ifdef DEBUG_OPTIONS

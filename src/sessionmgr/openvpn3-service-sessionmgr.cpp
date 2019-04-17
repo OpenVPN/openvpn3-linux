@@ -103,7 +103,6 @@ static int session_manager(ParsedArgs args)
     {
         idle_exit.reset(new IdleCheck(main_loop,
                                       std::chrono::minutes(idle_wait_min)));
-        idle_exit->SetPollTime(std::chrono::seconds(30));
         sessmgr.EnableIdleCheck(idle_exit);
     }
     else
