@@ -28,11 +28,36 @@
 
 using namespace openvpn;
 
+/**
+ *   The IdleCheck class instruments a Glib2 based application
+ *   with an automatic exit solution if the program it watches
+ *   runs idle for too long.  How long is too long is defined
+ *   by the parameter given to the constructor.
+ *
+ *   The main program will need to call the UpdateTimestamp()
+ *   method whenever it does something which should reset the
+ *   IdleCheck timer.
+ *
+ *   It also implements a reference counting.  If the reference
+ *   counter is higher than 0, it will not exit regardless of the
+ *   idle timer.
+ *
+ *   This class also setups up handling of SIGTERM and SIGINT
+ *   signals, which will also ensure the program shuts down
+ *   properly.
+ */
 class IdleCheck : public RC<thread_safe_refcount>
 {
 public:
     typedef RCPtr<IdleCheck> Ptr;
 
+    /**
+     *  IdleCheck constructor
+     *
+     * @param mainloop   Glib2 GMainLoop pointer, used to shutdown the app
+     * @param idle_time  Defines how long the program can be idle before
+     *                   automatically exiting
+     */
     IdleCheck(GMainLoop *mainloop, std::chrono::duration<double> idle_time)
         : mainloop(mainloop),
           idle_time(idle_time),
@@ -45,6 +70,11 @@ public:
     }
 
 
+    /**
+     *   This resets the idle check timer.  This ensures
+     *   the program will not exit until the next idle check,
+     *   defined in the constructor.
+     */
     void UpdateTimestamp()
     {
         last_operation = std::chrono::system_clock::now();
@@ -57,6 +87,12 @@ public:
     }
 
 
+    /**
+     *   This enables the IdleCheck
+     *
+     *   The IdleCheck logic runs in a separate and
+     *   independent thread
+     */
     void Enable()
     {
         if (running)
@@ -77,30 +113,58 @@ public:
     }
 
 
+    /**
+     *   Disables the IdleCheck
+     *
+     *   This may also make the program exit if the
+     *   reference counter is 0.
+     */
     void Disable()
     {
         enabled = false;
+        if (running)
+        {
+            exit_cv.notify_all();
+        }
     }
 
 
+    /**
+     *   Increases the reference counter by 1
+     */
     void RefCountInc()
     {
         refcount++;
     }
 
 
+    /**
+     *   Decreases the reference counter by 1
+     */
     void RefCountDec()
     {
         refcount--;
     }
 
 
+    /**
+     *   Calls the join() method on the IdleCheck thread.
+     *
+     *   This is used during shutdown of the application,
+     *   to cleanly shutdown all running threads
+     */
     void Join()
     {
         idle_checker->join();
     }
 
 
+    /**
+     *   Main IdleCheck loop.
+     *
+     *   This is the main loop of the thread performing the
+     *   IdleCheck logic
+     */
     void _cb_idlechecker__loop()
     {
         running = true;
