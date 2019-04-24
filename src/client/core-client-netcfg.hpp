@@ -69,23 +69,10 @@ public:
 
     bool tun_builder_new() override
     {
-        /* Destroy an old that might be still around */
-        tun_builder_teardown(true);
-        try
-        {
-            // Cleanup the old things
-            networks.clear();
+        // Cleanup the old things
+        networks.clear();
 
-            std::string devpath = netcfgmgr.CreateVirtualInterface(session_token);
-            device.reset(netcfgmgr.getVirtualInterface(devpath));
-            return true;
-        }
-        catch (NetCfgProxyException& e)
-        {
-            signal->LogError(std::string("Error creating virtual network device: ")
-                             + e.what());
-            return false;
-        }
+        return true;
     }
 
 
@@ -241,7 +228,7 @@ public:
         }
         else
         {
-           device->Disable();
+            device->Disable();
         }
     }
 
@@ -252,6 +239,12 @@ public:
         return true;
     }
 
+    bool add_bypass_route(const std::string& addr, bool ipv6)
+    {
+        // this method is called before establishing connection, so here
+        // we ensure that device is created and bypass route added
+        return create_device() && device->AddBypassRoute(addr, ipv6);
+    }
 
     bool socket_protect(int socket, std::string remote, bool ipv6) override
     {
@@ -271,6 +264,24 @@ protected:
 
 
 private:
+    bool create_device()
+    {
+        if (device)
+            return true;
+
+        try
+        {
+            std::string devpath = netcfgmgr.CreateVirtualInterface(session_token);
+            device.reset(netcfgmgr.getVirtualInterface(devpath));
+            return true;
+        }
+        catch (NetCfgProxyException& e)
+        {
+            signal->LogError(std::string("Error creating virtual network device: ") + e.what());
+            return false;
+        }
+    }
+
     std::vector<NetCfgProxy::Network> networks;
     NetCfgProxy::Device::Ptr device;
     NetCfgProxy::Manager netcfgmgr;

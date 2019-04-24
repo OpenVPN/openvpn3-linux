@@ -195,15 +195,19 @@ private:
 
     bool socket_protect(int socket, std::string remote, bool ipv6) override
     {
+        bool ret1 = CLIENTBASECLASS::add_bypass_route(remote, ipv6);
+        bool ret2 = true;
+
         if (disabled_socket_protect)
         {
             signal->LogVerb2("Socket Protect has been disabled");
-            return true;
         }
         else
         {
-            return CLIENTBASECLASS::socket_protect(socket, remote, ipv6);
+            ret2 = CLIENTBASECLASS::socket_protect(socket, remote, ipv6);
         }
+
+        return ret1 && ret2;
     }
 
 
