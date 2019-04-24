@@ -166,6 +166,8 @@ D-Bus destination: `net.openvpn.v3.netcfg` \- Object path: `/net/openvpn/v3/netc
 node /net/openvpn/v3/netcfg/${UNIQUE_ID} {
 interface net.openvpn.v3.netcfg {
     methods:
+      AddBypassRoute(in  s ip_address,
+                   in  b ipv6);
       AddIPAddress(in  s ip_address,
                    in  u prefix,
                    in  s gateway,
@@ -200,6 +202,19 @@ interface net.openvpn.v3.netcfg {
   };
 };
 ```
+
+### Method: `net.openvpn.v3.netcfg.AddBypassRoute`
+
+Excludes traffic to remote from tunnel routing. This is the first method called by client
+service before establishing connection and before reconnect.
+
+#### Arguments
+
+| Direction | Name         | Type        | Description                                                                  |
+|-----------|--------------|-------------|------------------------------------------------------------------------------|
+| In        | ip_address   | string      | The IP address in string representation (e.g. 198.51.100.12 or 2001:db8::23) |
+| In        | ipv6         | ipv6        | Is the new IP address IPv6 or IPv4                                           |
+
 
 ### Method: `net.openvpn.v3.netcfg.AddIPAddress`
 

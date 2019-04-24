@@ -47,7 +47,7 @@ namespace openvpn
 
     class CoreTunbuilderImpl : public CoreTunbuilder
     {
-        TunLinuxSetup::Setup<TUN_LINUX>::Ptr tun;
+        TunLinuxSetup::Setup<TUN_LINUX>::Ptr tun = new TUN_CLASS_SETUP();
 
         /**
          * Uses Tunbuilder to open a new tun device
@@ -153,6 +153,10 @@ namespace openvpn
         }
 
     public:
+        void add_bypass_route(const std::string& addr, bool ipv6) override
+        {
+        }
+
         int establish(NetCfgDevice& netCfgDevice) override
         {
             TUN_CLASS_SETUP::Config config;

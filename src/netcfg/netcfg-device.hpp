@@ -158,6 +158,10 @@ public:
         std::stringstream introspect;
         introspect << "<node name='" << objpath << "'>"
                    << "    <interface name='" << OpenVPN3DBus_interf_netcfg << "'>"
+                   << "        <method name='AddBypassRoute'>"
+                   << "            <arg direction='in' type='s' name='address'/>"
+                   << "            <arg direction='in' type='b' name='ipv6'/>"
+                   << "        </method>"
                    << "        <method name='AddIPAddress'>"
                    << "            <arg direction='in' type='s' name='ip_address'/>"
                    << "            <arg direction='in' type='u' name='prefix'/>"
@@ -230,6 +234,23 @@ protected:
 
 
 private:
+
+    void addBypassRoute(GVariant* params)
+    {
+        GLibUtils::checkParams(__func__, params, "(sb)", 2);
+
+        std::string addr(g_variant_get_string(g_variant_get_child_value(params, 0), 0));
+        bool ipv6 = g_variant_get_boolean(g_variant_get_child_value(params, 1));
+
+        if (!tunimpl)
+        {
+            tunimpl.reset(getCoreBuilderInstance());
+        }
+
+        tunimpl->add_bypass_route(addr, ipv6);
+
+        signal.LogInfo("Add bypass route to " + addr + " ipv6: " + (ipv6 ? "yes" : "no"));
+    }
 
     void addIPAddress(GVariant* params)
     {
@@ -321,12 +342,17 @@ public:
             validate_sender(sender);
 
             GVariant *retval = nullptr;
-            if ("AddIPAddress" == method_name)
+
+            if ("AddBypassRoute" == method_name)
+            {
+                addBypassRoute(params);
+            }
+            else if ("AddIPAddress" == method_name)
             {
                 // Adds a single IPv4 address to the virtual device.  If
                 // broadcast has not been provided, calculate it if needed.
                 addIPAddress(params);
-             }
+            }
             else if ("AddNetworks" == method_name)
             {
                 // The caller sends an array of networks to apply

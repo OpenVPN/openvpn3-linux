@@ -288,6 +288,15 @@ namespace NetCfgProxy
         }
 
         /**
+         * Adds bypass route to remote
+         *
+         * @param addr String representation of the IP Address
+         * @param ipv6 Is this Address an IPv6 address
+         * @return true if success
+         */
+        bool AddBypassRoute(const std::string& addr, bool ipv6);
+
+        /**
          *  Adds an IPv4 address to this network device
          *
          * @param ip_address String representation of the IP Address
@@ -428,6 +437,14 @@ namespace NetCfgProxy
         g_variant_unref(r);
     }
 
+    bool Device::AddBypassRoute(const std::string& addr,
+				bool ipv6)
+    {
+        GVariant *r = Call("AddBypassRoute", g_variant_new("(sb)", addr.c_str(), ipv6));
+        g_variant_unref(r);
+        // TODO: handle return value
+        return true;
+    }
 
     void Device::AddIPAddress(const std::string& ip_address,
                               const unsigned int prefix,
