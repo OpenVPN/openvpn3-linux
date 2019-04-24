@@ -40,13 +40,14 @@
 #include "netcfg-device.hpp"
 #include "netcfg-signals.hpp"
 
+#define TUN_CLASS_SETUP TunLinuxSetup::Setup<TUN_LINUX>
 
 namespace openvpn
 {
 
     class CoreTunbuilderImpl : public CoreTunbuilder
     {
-        TUN_LINUX::Setup::Ptr tun;
+        TunLinuxSetup::Setup<TUN_LINUX>::Ptr tun;
 
         /**
          * Uses Tunbuilder to open a new tun device
@@ -60,13 +61,13 @@ namespace openvpn
          * @return An fd that is the newly opened tun device
          */
         int establish_tun(const TunBuilderCapture &tbc,
-                          TunNetlink::Setup::Config &config,
+                          TUN_CLASS_SETUP::Config &config,
                           Stop *stop,
                           std::ostream& os)
         {
             if (!tun)
             {
-                tun.reset(new TUN_LINUX::Setup);
+                tun.reset(new TUN_CLASS_SETUP());
             }
 
             return tun->establish(tbc, &config, nullptr, os);
@@ -154,7 +155,7 @@ namespace openvpn
     public:
         int establish(NetCfgDevice& netCfgDevice) override
         {
-            TunNetlink::Setup::Config config;
+            TUN_CLASS_SETUP::Config config;
             config.layer = Layer::from_value(netCfgDevice.device_type);
             config.txqueuelen = netCfgDevice.txqueuelen;
 
