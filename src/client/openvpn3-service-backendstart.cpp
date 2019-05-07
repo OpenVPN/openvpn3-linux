@@ -302,7 +302,7 @@ private:
             args[i++] = token;
             args[i++] = nullptr;
 
-#ifdef DEBUG_OPTIONS
+#ifdef OPENVPN_DEBUG
             std::cout << "[openvpn3-service-backend] Command line to be started: ";
             for (unsigned int j = 0; j < i; j++)
             {
@@ -459,7 +459,7 @@ int backend_starter(ParsedArgs args)
 
 
     std::vector<std::string> client_args;
-#ifdef DEBUG_OPTIONS
+#ifdef OPENVPN_DEBUG
     if (args.Present("run-via"))
     {
         client_args.push_back(args.GetValue("run-via", 0));
@@ -474,7 +474,7 @@ int backend_starter(ParsedArgs args)
 #endif
 
     client_args.push_back(std::string(LIBEXEC_PATH) + "/openvpn3-service-client");
-#ifdef DEBUG_OPTIONS
+#ifdef OPENVPN_DEBUG
     if (args.Present("client-no-fork"))
     {
         client_args.push_back("--no-fork");
@@ -540,7 +540,7 @@ int backend_starter(ParsedArgs args)
                                       std::chrono::seconds(idle_wait_sec)));
         backstart.EnableIdleCheck(idle_exit);
     }
-#ifdef DEBUG_OPTIONS
+#ifdef OPENVPN_DEBUG
     if (idle_wait_sec > 0)
     {
         std::cout << "Idle exit set to " << idle_wait_sec << " seconds" << std::endl;
@@ -587,7 +587,7 @@ int main(int argc, char **argv)
     cmd.AddOption("idle-exit", "SECONDS", true,
                   "How long to wait before exiting if being idle. "
                   "0 disables it (Default: 10 seconds)");
-#ifdef DEBUG_OPTIONS
+#ifdef OPENVPN_DEBUG
     cmd.AddOption("run-via", 0, "DEBUG_PROGAM", true,
                   "Debug option: Run openvpn3-service-client via provided executable (full path required)");
     cmd.AddOption("debugger-arg", 0, "ARG", true,

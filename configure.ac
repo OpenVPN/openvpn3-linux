@@ -478,9 +478,9 @@ AC_ARG_ENABLE(
      [enable_debug_options="yes"],
      []
 )
-AC_SUBST([DEBUG_OPTIONS])
+AC_SUBST([OPENVPN_DEBUG])
 if test "${enable_debug_options}" = "yes"; then
-   AC_DEFINE([DEBUG_OPTIONS], [1], [add debug command line options to some D-Bus services])
+   AC_DEFINE([OPENVPN_DEBUG], [1], [add debug command line options to some D-Bus services])
 fi
 
 dnl
@@ -536,7 +536,7 @@ dnl   Debug feature - disables the Session Manager check in backend client
 dnl
 dnl   Disabling this feature is a highly security senstive change and will
 dnl   allow other D-Bus clients to manipulate backend VPN clients.  This
-dnl   feature requires DEBUG_OPTIONS to be enabled.
+dnl   feature requires OPENVPN_DEBUG to be enabled.
 dnl
 AC_ARG_ENABLE(
     [debug-disable-sessionmgr-check],

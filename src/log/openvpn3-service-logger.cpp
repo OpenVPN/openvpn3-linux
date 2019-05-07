@@ -191,7 +191,7 @@ static int logger(ParsedArgs args)
                 // in via the stop_handler instead
                 g_unix_signal_add(SIGINT, stop_handler, main_loop);
                 g_unix_signal_add(SIGTERM, stop_handler, main_loop);
-#ifdef DEBUG_OPTIONS
+#ifdef OPENVPN_DEBUG
                 std::cout << "Idle exit is disabled" << std::endl;
 #endif
             }

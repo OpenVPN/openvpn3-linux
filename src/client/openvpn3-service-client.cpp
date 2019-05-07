@@ -1502,7 +1502,7 @@ int client_service(ParsedArgs args)
         log_level = std::atoi(args.GetValue("log-level", 0).c_str());
     }
 
-#ifdef DEBUG_OPTIONS
+#ifdef OPENVPN_DEBUG
     // When debugging, we might not want to do a fork.
     if (args.Present("no-fork"))
     {
@@ -1575,7 +1575,7 @@ int main(int argc, char **argv)
     argparser.AddOption("disable-protect-socket", 0,
                         "Disable the socket protect call on the UDP/TCP socket. "
                         "This is needed on systems not supporting this feature");
-#if DEBUG_OPTIONS
+#if OPENVPN_DEBUG
     argparser.AddOption("no-fork", 0,
                         "Debug option: Do not fork a child to be run in the background.");
     argparser.AddOption("no-setsid", 0,

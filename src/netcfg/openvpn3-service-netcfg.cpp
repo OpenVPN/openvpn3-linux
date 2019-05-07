@@ -65,7 +65,7 @@ static void apply_capabilities(const ParsedArgs& args,
     // Prepare dropping capabilities and user privileges
     //
     capng_clear(CAPNG_SELECT_BOTH);
-#ifdef DEBUG_OPTIONS
+#ifdef OPENVPN_DEBUG
     if (!args.Present("disable-capabilities"))
 #endif
     {
@@ -88,7 +88,7 @@ static void apply_capabilities(const ParsedArgs& args,
 
         }
     }
-#ifdef DEBUG_OPTIONS
+#ifdef OPENVPN_DEBUG
     if (!args.Present("run-as-root"))
 #endif
     {
@@ -280,7 +280,7 @@ int main(int argc, char **argv)
                         "Methods: host-route (default), bind-device, none");
     argparser.AddOption("set-somark", "MARK", true,
                         "Set the specified so mark on all VPN sockets.");
-#if DEBUG_OPTIONS
+#if OPENVPN_DEBUG
     argparser.AddOption("disable-capabilities", 0,
                         "Do not restrcit any process capabilties (INSECURE)");
     argparser.AddOption("run-as-root", 0,
