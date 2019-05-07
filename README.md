@@ -266,13 +266,9 @@ The following dependencies are needed:
 
   https://tls.mbed.org/
 
-* OpenSSL 1.0.2 (not needed if building with mbed TLS)
+* OpenSSL 1.0.2 or newer (not needed if building with mbed TLS)
 
   https://www.openssl.org/
-
-  **NOTE** Currently OpenSSL 1.1 is not supported, due to restrictions in the
-  [OpenVPN 3 Core Library](https://github.com/OpenVPN/openvpn3/).  This is
-  being worked on in the OpenVPN 3 project.
 
 * GLib2 2.50 or newer
 
@@ -338,17 +334,18 @@ First install the package dependencies needed to run the build.
 
 - Building with OpenSSL:
 
-  For newer Debian and Ubuntu releases shipping with OpenSSL 1.1 or newer, the compat OpenSSL packages are required.
+  For newer Debian and Ubuntu releases shipping with OpenSSL 1.1 or newer:
 
-      # apt-get install libssl1.0-dev libssl1.0.0
+      # apt-get install libssl-dev libssl1.1
 
-  For Ubuntu 16.04 LTS, which ships with OpenSSL 1.0, these `libssl` packages are needed:
+  For Ubuntu 16.04 LTS, which ships with OpenSSL 1.0:
 
       # apt-get install libssl-dev libssl1.0.0
 
 - Generic build requirements:
 
       # apt-get install build-essential git pkg-config autoconf autoconf-archive libglib2.0-dev libjsoncpp-dev uuid-dev liblz4-dev libcap-ng-dev
+
 
 #### Fedora:
 
@@ -358,11 +355,12 @@ First install the package dependencies needed to run the build.
 
 - Building with OpenSSL:
 
-      # dnf install compat-openssl10-devel compat-openssl10
+      # dnf install openssl-devel
 
 - Generic build requirements:
 
-      # dnf install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2
+      # dnf install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2 python3-dbus python3-pyOpenSSL
+
 
 #### Red Hat Enterprise Linux / CentOS / Scientific Linux
   First install the ``epel-release`` repository if that is not yet installed.  Then you can run:
@@ -377,7 +375,7 @@ First install the package dependencies needed to run the build.
 
 - Generic build requirements:
 
-      # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel lz4-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2``
+      # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel lz4-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2 python36 python36-dbus python36-gobject python36-pyOpenSSL
 
 
 ### Preparations building from git
@@ -466,8 +464,8 @@ To install and activate this SELinux security module, as root run:
          # semanage boolean --m --on dbus_access_tuntap_device
 
 On Red Hat Enterprise Linux and Fedora, the `openvpn3-service-netcfg` will
-stop running and the OpenVPN 3 Linux client will non-functional if this has
-not been done.  The source code of the policy package can be found in
+stop running and the OpenVPN 3 Linux client will be non-functional if this
+has not been done.  The source code of the policy package can be found in
 [`src/selinux/openvpn3.te`](src/selinux/openvpn3.te).
 
 For users installing the pre-built RPM binaries, this is handled by the RPM
