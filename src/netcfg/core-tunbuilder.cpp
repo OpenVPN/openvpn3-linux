@@ -155,6 +155,7 @@ namespace openvpn
     public:
         void add_bypass_route(const std::string& addr, bool ipv6) override
         {
+            tun->add_bypass_route(addr, ipv6, std::cout);
         }
 
         int establish(NetCfgDevice& netCfgDevice) override
@@ -162,6 +163,7 @@ namespace openvpn
             TUN_CLASS_SETUP::Config config;
             config.layer = Layer::from_value(netCfgDevice.device_type);
             config.txqueuelen = netCfgDevice.txqueuelen;
+            config.add_bypass_routes_on_establish = false;
 
             TunBuilderCapture::Ptr tbc = createTunbuilderCapture(netCfgDevice);
 
