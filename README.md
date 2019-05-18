@@ -403,8 +403,8 @@ will build the client.
 - Run: ``make``
 - Run: ``make install``
 
-By default, OpenVPN 3 Linux is built using the mbed TLS library.  If you want
-to compile against OpenSSL, add the ``--with-crypto-library=openssl`` argument
+By default, OpenVPN 3 Linux is built using the OpenSSL library.  If you want
+to compile against mbed TLS, add the ``--with-crypto-library=mbedtls`` argument
 to ``./configure``.
 
 You might need to also reload D-Bus configuration to make D-Bus aware of
@@ -484,8 +484,8 @@ started manually and must run as the `openvpn` user.  If  being started as
 `--log-file` is provided, it will log to the console (stdout).
 
 This log service can also be managed (even though fairly few options
-to tweak) via `openvpn3 log-service`.  The most important feature here is
-probably to modify the log level.
+to tweak) via `openvpn3-admin log-service`.  The most important feature
+here is probably to modify the log level.
 
 For more information about logging, see the
 [`openvpn3-service-logger(8)`](docs/man/openvpn3-service-logger.8.rst),
@@ -566,11 +566,10 @@ Contribution
 DISCLAIMER
 ----------
 
-The OpenVPN 3 Linux project is BETA quality.  It is fully functional and quite
-stable when running.
+The OpenVPN 3 Linux project is BETA quality.  It is fully functional and
+so far we have few reports about instabilities.
 
-The OpenVPN 3 Core library is also used by the OpenVPN Connect and
-PrivateTunnel clients in addition to the OpenVPN for Android client (need to
-explicitly enable the OpenVPN 3 backend), so the pure VPN tunnel implementation
-should be good to use.  However, this Linux implementation with the D-Bus
-integration is fairly new.
+The OpenVPN 3 Core library this project builds on is used by the
+OpenVPN Connect and Private Tunnel clients in addition to the
+OpenVPN for Android client (need to explicitly enable the OpenVPN 3 backend),
+so the pure VPN tunnel implementation should be good to use.
