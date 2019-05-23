@@ -250,11 +250,19 @@ def start_tunnel(bus, cfgobj, background_mode, verb):
 
                 if connected:
                     # Print important details to the terminal ...
-                    print('Running connection in the background.  To manage '
-                          + 'this connection, use')
-                    print('the openvpn3 command line tool with the session '
-                          + 'path below:')
-                    print('>>> Session path: ' + sessionobj.GetPath())
+                    print('VPN session is running in the background.')
+                    print('Session path: ' + sessionobj.GetPath())
+                    print()
+                    print('Use the \'openvpn3 session-manage\' command line '
+                          + 'tool to manage this session.')
+                    print('See \'openvpn3 session-manage --help\' and '
+                          +'\'openvpn3 sessions-list\' for more details')
+                    print()
+                    print('To disconnect and stop this VPN session run:')
+                    print()
+                    print('    $ openvpn3 session-manage --session-path '
+                          + sessionobj.GetPath() + ' --disconnect')
+                    print()
             done = True
 
         except dbus.exceptions.DBusException as excep:
