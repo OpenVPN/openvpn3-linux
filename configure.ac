@@ -70,6 +70,10 @@ PKG_CHECK_MODULES(
         [have_lz4="yes"],
         [AC_MSG_ERROR([lz4 package not found. Is the development package installed?])]
 )
+AC_SUBST([HAVE_LZ4])
+if test "$have_lz4" = "yes"; then
+        AC_DEFINE([HAVE_LZ4], [1], [liblz4 is found as a system package])
+fi
 
 dnl
 dnl  Check for jsoncpp library
