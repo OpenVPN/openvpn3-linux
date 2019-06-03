@@ -23,6 +23,15 @@ client front-end.  Any language which supports D-Bus bindings can also be
 used.
 
 
+Pre-built binaries
+-----------------
+
+See the instructions on
+https://community.openvpn.net/openvpn/wiki/OpenVPN3Linux how to install
+pre-built OpenVPN 3 Linux packages on Debian, Ubuntu, Fedora,
+Red Hat Enterprise Linux, CentOS and Scientific Linux.
+
+
 Quick start: Using the `openvpn2` front-end
 -----------------------------------------
 
@@ -242,14 +251,6 @@ with no data to maintain, they will shutdown automatically.
 
 More information can be found in the [`openvpn3-linux(7)`](docs/man/openvpn3-linux.7.rst)
 man page and [OpenVPN 3 D-Bus overview](docs/dbus/dbus-overview.md).
-
-
-Pre-built binaries
------------------
-
-There exists installable packages for Fedora, Red Hat Enterprise Linux,
-CentOS and Scientific Linux via a Fedora Copr repository.  See this
-URL for more details:  https://copr.fedorainfracloud.org/coprs/dsommers/openvpn3/
 
 
 How to build openvpn3-linux locally
