@@ -199,7 +199,7 @@ static int cmd_log(ParsedArgs args)
         }
         else
         {
-            session_path = args.GetValue("path", 0);
+            session_path = args.GetValue("session-path", 0);
         }
 
         // Check if the session manager will forward log events for this
