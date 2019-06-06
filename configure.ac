@@ -27,6 +27,7 @@ AC_PROG_CXX
 AC_PROG_CC
 PKG_PROG_PKG_CONFIG
 AC_PROG_CPP
+AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_SED
@@ -554,6 +555,19 @@ if test "${enable_debug_options}" = "yes" -a "${debug_disable_sessmgr_check}" = 
 fi
 
 dnl
+dnl  Build googletest/gtest based unit-tests
+dnl
+AC_ARG_ENABLE(
+     [unit-tests],
+     [AS_HELP_STRING([--disable-unit-tests],
+                     [Disables building and running the unit tests suite])],
+     [],
+     [enable_unit_tests="yes"]
+)
+AM_CONDITIONAL([ENABLE_UNITTESTS], [test "${enable_unit_tests}" = "yes" ])
+AC_SUBST([ENABLE_UNITTESTS])
+
+dnl
 dnl   Make it possible to not build the various test programs by default
 dnl
 AC_ARG_ENABLE(
@@ -563,7 +577,7 @@ AC_ARG_ENABLE(
     ,
     [enable_build_test_progs="yes"]
 )
-AM_CONDITIONAL([BUILD_TESTS], [test "${enable_build_test_progs}" = "yes"])
+AM_CONDITIONAL([BUILD_TEST_PROGS], [test "${enable_build_test_progs}" = "yes"])
 
 dnl
 dnl  Configuring common default autoconf/automake files
@@ -580,5 +594,5 @@ AC_CONFIG_FILES([
         src/selinux/Makefile \
         src/service-autostart/Makefile \
 ])
-
+AC_CONFIG_LINKS([src/policy/syntax-check.sh:src/policy/syntax-check.sh])
 AC_OUTPUT

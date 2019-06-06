@@ -23,6 +23,8 @@ ACLOCAL_AMFLAGS = -I m4
 # Keep these environment variables when running 'make distcheck'
 AM_DISTCHECK_CONFIGURE_FLAGS = CXXFLAGS="${CXXFLAGS}"
 
+TESTS = src/policy/syntax-check.sh
+
 SUBDIRS=
 if HAVE_PYTHON
 SUBDIRS += src/python
@@ -78,10 +80,12 @@ EXTRA_DIST = \
 openvpn3-core-version:
 	$(top_srcdir)/openvpn3-core/scripts/version > $@
 
+dist-hook: openvpn3-core-version
 # Remove openvpn3-core embedded patches which we don't need
 # and makes 'make dist' complain
-dist-hook: openvpn3-core-version
 	rm -rf $(distdir)/openvpn3-core/deps/asio/patch/*.patch
+# Somehow autotools packages these object files not intended for distribution
+	rm -vf $(distdir)/vendor/googletest/googletest/src/*.o
 
 #
 # Compiler flags
@@ -140,8 +144,43 @@ endif
 #
 #   TEST PROGRAMS
 #
-if BUILD_TESTS
-noinst_PROGRAMS = \
+noinst_PROGRAMS =
+
+#
+# Unit tests  -  src/tests/unit
+#
+if ENABLE_UNITTESTS
+TESTS += src/tests/unit/unit-tests
+
+UNIT_TESTS = \
+	src/tests/unit/timestamp.cpp \
+	src/tests/unit/lookup.cpp \
+	src/tests/unit/syslog-facility-mapping.cpp
+
+UNIT_TESTS_DEPS = \
+	src/common/lookup.cpp \
+	src/common/timestamp.cpp
+
+AM_CXXFLAGS += -I$(top_srcdir)/vendor/googletest/googletest \
+        -isystem $(top_srcdir)/vendor/googletest/googletest/include
+
+# Create a static library containig the googletest/gtest code
+noinst_LIBRARIES = src/tests/unit/libgtest.a
+src_tests_unit_libgtest_a_SOURCES = \
+	vendor/googletest/googletest/src/gtest-all.cc \
+	vendor/googletest/googletest/src/gtest_main.cc
+
+noinst_PROGRAMS += src/tests/unit/unit-tests
+src_tests_unit_unit_tests_LDADD = src/tests/unit/libgtest.a
+src_tests_unit_unit_tests_SOURCES = \
+	$(UNIT_TESTS_DEPS) $(UNIT_TESTS)
+else
+src/tests/unit/unit-tests :
+	@echo "Unit tests disabled.  Run ./configure again without --disable-unit-tests"
+endif
+
+if BUILD_TEST_PROGS
+noinst_PROGRAMS += \
 	src/tests/command-parser/cmdparser \
 	src/tests/ovpn3-core/profilemerge-optionlist \
 	src/tests/misc/config-export-json-test \
@@ -181,6 +220,10 @@ noinst_PROGRAMS = \
 	src/tests/dbus/request-queue-client2 \
 	src/tests/dbus/request-queue-service \
 	src/tests/netcfg/clinetcfg
+
+#
+# Other tests
+#
 
 # src/tests/comand-parser
 #

@@ -92,6 +92,10 @@ src/tests/misc/netcfg-dns-direct-file-selftest
 src/tests/misc/syslog-facility-mapping-test
 src/tests/netcfg/clinetcfg
 src/tests/ovpn3-core/profilemerge-optionlist
+src/tests/unit/libgtest.a
+src/tests/unit/unit-tests
+src/tests/unit/unit-tests.log
+src/tests/unit/unit-tests.trs
 src/policy/net.openvpn.v3.conf
 src/python/openvpn3/constants.py
 src/python/openvpn3/gen-python-constants

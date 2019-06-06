@@ -30,8 +30,6 @@ EXTRA_DIST = \
 dbus_system_policy_DATA = \
 	net.openvpn.v3.conf
 
-TESTS = syntax-check.sh
-
 dist_noinst_SCRIPTS = syntax-check.sh
 
 CLEANFILES = $(dbus_system_policy_DATA) *~
