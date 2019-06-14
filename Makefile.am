@@ -154,6 +154,7 @@ TESTS += src/tests/unit/unit-tests
 
 UNIT_TESTS = \
 	src/tests/unit/timestamp.cpp \
+	src/tests/unit/logevent.cpp \
 	src/tests/unit/lookup.cpp \
 	src/tests/unit/netcfg-changeevent.cpp \
 	src/tests/unit/statusevent.cpp \
