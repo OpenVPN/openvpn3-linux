@@ -23,8 +23,7 @@
  * @brief  Command line argument parser for C++.  Built around getopt_long()
  */
 
-#ifndef OPENVPN3_CMDARGPARSER_HPP
-#define OPENVPN3_CMDARGPARSER_HPP
+#pragma once
 
 #include <iomanip>
 #include <iostream>
@@ -62,9 +61,7 @@ public:
     }
 
 
-    virtual ~CommandArgBaseException()
-    {
-    }
+    virtual ~CommandArgBaseException() = default;
 
 
     /**
@@ -182,15 +179,13 @@ public:
      * @param msg     std::string containing the message to present to the user
      */
     OptionException(const std::string option, const std::string msg) noexcept
-                    : CommandArgBaseException("--" + option + ": " + msg),
-                      option(option)
+        : CommandArgBaseException("--" + option + ": " + msg),
+          option(option)
     {
     }
 
 
-    virtual ~OptionException()
-    {
-    }
+    virtual ~OptionException() = default;
 
 
     /**
@@ -383,7 +378,8 @@ using argHelperFunc = std::string (*)();
 class RegisterParsedArgs : public ParsedArgs
 {
 public:
-    RegisterParsedArgs(const std::string arg0) : ParsedArgs(arg0)
+    RegisterParsedArgs(const std::string arg0)
+        : ParsedArgs(arg0)
     {
     }
 
@@ -1671,5 +1667,3 @@ private:
     std::vector<SingleCommand::Ptr> commands;
     ShellCompletion::Ptr shellcompl;
 };
-
-#endif // OPENVPN3_CMDARGPARSER_HPP
