@@ -156,6 +156,7 @@ UNIT_TESTS = \
 	src/tests/unit/timestamp.cpp \
 	src/tests/unit/lookup.cpp \
 	src/tests/unit/netcfg-changeevent.cpp \
+	src/tests/unit/statusevent.cpp \
 	src/tests/unit/syslog-facility-mapping.cpp
 
 UNIT_TESTS_DEPS = \
