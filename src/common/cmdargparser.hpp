@@ -93,6 +93,7 @@ protected:
 };
 
 
+
 /**
  *  Exception class which is thrown whenever any of the command parsing
  *  and related objects have issues.  This is expected to be thrown when there
@@ -149,6 +150,7 @@ private:
 };
 
 
+
 /**
  *  Exception class which is thrown whenever any of the command parsing
  *  and related objects have issues with a specific option.
@@ -203,6 +205,7 @@ public:
 private:
     const std::string option;
 };
+
 
 
 /**
@@ -362,6 +365,8 @@ protected:
     bool completed = false;
 };
 
+
+
 /**
  *  Simplistic internal specification of callback function APIs
  */
@@ -378,8 +383,7 @@ using argHelperFunc = std::string (*)();
 class RegisterParsedArgs : public ParsedArgs
 {
 public:
-    RegisterParsedArgs(const std::string arg0)
-        : ParsedArgs(arg0)
+    RegisterParsedArgs(const std::string arg0) : ParsedArgs(arg0)
     {
     }
 
@@ -392,21 +396,7 @@ public:
      * @param v  char * containing NULL or a pointer to the option value (string)
      *
      */
-    void register_option(const std::string k, const char *v)
-    {
-        if (NULL != v)
-        {
-            key_value[k].push_back(std::string(v));
-        }
-        for (auto const& e : present)
-        {
-            // Don't register duplicates
-            if (e == k) {
-                return;
-            }
-        }
-        present.push_back(k);
-    }
+    void register_option(const std::string k, const char *v);
 
 
     /**
@@ -415,21 +405,16 @@ public:
      *
      * @param e  char * containing the value to put aside
      */
-    void register_extra_args(const char * e)
-    {
-        extra_args.push_back(std::string(e));
-    }
+    void register_extra_args(const char * e);
 
 
     /**
      *  Indicates that the command line parsing completed and the designated
      *  callback function may be run.
      */
-    void set_completed()
-    {
-        completed = true;
-    }
-};
+    void set_completed();
+};  // class RegisterParsedArgs
+
 
 
 /**
@@ -457,14 +442,7 @@ public:
      */
     SingleCommandOption(const std::string longopt,
                         const char shrtopt,
-                        const std::string help_text)
-        : longopt(longopt), shortopt(shrtopt),
-          metavar(""), arg_helper_func(nullptr),
-          help_text(help_text)
-    {
-        update_getopt(longopt, shortopt, no_argument);
-        getopt_alias.name = nullptr;
-    }
+                        const std::string help_text);
 
 
     /**
@@ -488,30 +466,10 @@ public:
                         const std::string metavar,
                         const bool required,
                         const std::string help_text,
-                        const argHelperFunc arg_helper_func = nullptr)
-        : longopt(longopt), shortopt(shrtopt),
-          metavar(metavar),  arg_helper_func(arg_helper_func),
-          help_text(help_text),
-          alias("")
-    {
-        update_getopt(longopt, shortopt,
-                      (required ? required_argument : optional_argument));
-    }
+                        const argHelperFunc arg_helper_func = nullptr);
 
 
-    ~SingleCommandOption()
-    {
-        // We need to override this, as we're allocating this
-        // const char * struct member dynamically while
-        // getopt typically expects this to be static.  This
-        // is allocated in init_getopt()
-        free((char *)getopt_option.name);
-
-        if (getopt_alias.name)
-        {
-            free((char *)getopt_alias.name);
-        }
-    }
+    ~SingleCommandOption();
 
 
     /**
@@ -520,21 +478,7 @@ public:
      *
      * @param optalias  std::string with the alias to use
      */
-    void SetAlias(const std::string& optalias)
-    {
-        if (!alias.empty())
-        {
-            throw CommandException(alias, "Alias already registered");
-        }
-
-        alias = optalias;
-
-        //  Initialise a separate struct option for the alias
-        getopt_alias.name = strdup(alias.c_str());
-        getopt_alias.flag = NULL;
-        getopt_alias.has_arg =  getopt_option.has_arg;
-        getopt_alias.val = 0;
-    }
+    void SetAlias(const std::string& optalias);
 
 
     /**
@@ -544,33 +488,7 @@ public:
      * @return std::string containing the shell completion string for
      *         this option
      */
-    std::string get_option_list_prefixed()
-    {
-        std::stringstream r;
-
-        if (0 != shortopt)
-        {
-            r << "-" << shortopt;
-
-        }
-        if (!longopt.empty())
-        {
-            if (r.tellp() != std::streampos(0))
-            {
-                r << " ";
-            }
-            r << "--" << longopt;
-        }
-        if (!alias.empty())
-        {
-            if (r.tellp() != std::streampos(0))
-            {
-                r << " ";
-            }
-            r << "--" << alias;
-        }
-        return r.str();
-    }
+    std::string get_option_list_prefixed();
 
 
     /**
@@ -582,10 +500,7 @@ public:
      * @return Must return a string of possible values where each value is
      *         separated by space
      */
-    std::string call_argument_helper_callback()
-    {
-            return (nullptr != arg_helper_func ? arg_helper_func() : "");
-    }
+    std::string call_argument_helper_callback();
 
 
     /**
@@ -596,31 +511,7 @@ public:
      * @return  Returns a std::string containing a getopt_long() compatible
      *          optstring describing this particular option.
      */
-    std::string getopt_optstring()
-    {
-        if (0 == shortopt)
-        {
-            return "";
-        }
-
-        std::stringstream ret;
-        ret << shortopt;
-
-        switch (getopt_option.has_arg)
-        {
-        case optional_argument:
-            ret << ":";
-            // The fall-through is by design.
-            // optional arguments should have two colons
-        case required_argument:
-            ret << ":";
-            break;
-        default:
-            break;
-        }
-
-        return ret.str();
-    }
+    std::string getopt_optstring();
 
 
     /**
@@ -630,10 +521,7 @@ public:
      * @param o  const char containing the short option to check
      * @return   Returns true if it is a match, otherwise false
      */
-    bool check_short_option(const char o)
-    {
-        return o == shortopt;
-    }
+    bool check_short_option(const char o);
 
 
     /**
@@ -643,14 +531,7 @@ public:
      * @param o  const char * string containing the long option to check
      * @return   Returns true if it is a match, otherwise false
      */
-    bool check_long_option(const char *o)
-    {
-        if (NULL != o)
-        {
-            return (std::string(o) == longopt || std::string(o) == alias);
-        }
-        return false;
-    }
+    bool check_long_option(const char *o);
 
 
     /**
@@ -658,10 +539,7 @@ public:
      *
      * @return Returns a std::string with this objects long option name.
      */
-    std::string get_option_name()
-    {
-        return longopt;
-    }
+    std::string get_option_name();
 
 
     /**
@@ -669,18 +547,7 @@ public:
      *
      * @return A pointer to a prepared struct option element
      */
-    std::vector<struct option *> get_struct_option()
-    {
-        std::vector<struct option *> ret;
-        ret.push_back(&getopt_option);
-
-        // Add the alias, if configured
-        if (!alias.empty())
-        {
-            ret.push_back(&getopt_alias);
-        }
-        return ret;
-    }
+    std::vector<struct option *> get_struct_option();
 
 
     /**
@@ -695,79 +562,13 @@ public:
      * @return Returns a std::vector<std::string >containing one or more
      *         newline separated lines describing this specific option.
      */
-    std::vector<std::string> gen_help_line(const unsigned int width = 30)
-    {
-        std::vector<std::string> ret;
-        ret.push_back(gen_help_line_generator(shortopt, longopt,
-                                              help_text, width));
-        if (!alias.empty())
-        {
-            std::stringstream alias_help;
-            alias_help << "Alias for --" << longopt;
-            ret.push_back(gen_help_line_generator(0, alias,
-                                                  alias_help.str(), width));
-        }
-        return ret;
-    }
+    std::vector<std::string> gen_help_line(const unsigned int width = 30);
 
 
     std::string gen_help_line_generator(const char opt_short,
                                         const std::string& opt_long,
                                         const std::string& opt_help,
-                                        const unsigned int width)
-    {
-        std::stringstream r;
-
-        // If we don't have a short option, fill out with blanks to
-        // have the long options aligned under each other
-        if (0 == opt_short)
-        {
-            r << "     ";
-        }
-        else  // ... we have a short option, format the output of it
-        {
-            r << "-" << opt_short<< " | ";
-        }
-        r << "--" << opt_long;
-
-        // If this option can process a provided value ...
-        if (!metavar.empty())
-        {
-            // If this value is mandatory, don't include [] around the
-            // the argument value.
-            if (required_argument == getopt_option.has_arg)
-            {
-                r << " " << metavar;
-            }
-            else
-            {
-                // This option is optional, indicate it by embracing the
-                // value description into [].
-                r << " [" << metavar << "]";
-            }
-        }
-
-        // Ensure the description is aligned with the rest of the lines
-        size_t l = r.str().size();
-
-        if ((width - 3) < l)
-        {
-            // If this first line with the long/short option listing gets too
-            // long, then split it up into several lines.
-            r << std::endl;
-
-            // Set the needed spacing to the description column
-            r << std::setw(width) << " ";
-        }
-        else
-        {
-            // Set the needed spacing to the description column
-            r << std::setw(width - l);
-        }
-        r << " - " << opt_help;
-
-        return r.str();
-    }
+                                        const unsigned int width);
 
 private:
     const std::string longopt;
@@ -797,17 +598,9 @@ private:
      *
      */
     void update_getopt(const std::string longopt, const char  shortopt,
-                       const int has_args)
-    {
-        // We need a strdup() as the pointer longopt.c_str() returns on
-        // some systems gets destroyed - rendering garbage in this
-        // struct.  In the destructor, this is free()d again.
-        getopt_option.name = strdup(longopt.c_str());
-        getopt_option.flag = NULL;
-        getopt_option.has_arg =  has_args;
-        getopt_option.val = shortopt;
-    }
-};
+                       const int has_args);
+};  // class SingleCommandOption
+
 
 
 /**
@@ -854,14 +647,7 @@ public:
      */
     SingleCommandOption::Ptr AddOption(const std::string longopt,
                                        const char shortopt,
-                                       const std::string help_text)
-    {
-        SingleCommandOption::Ptr opt = new SingleCommandOption(longopt,
-                                                               shortopt,
-                                                               help_text);
-        options.push_back(opt);
-        return opt;
-    }
+                                       const std::string help_text);
 
 
     /**
@@ -887,17 +673,7 @@ public:
                                        const std::string metavar,
                                        const bool required,
                                        const std::string help_text,
-                                       const argHelperFunc arg_helper = nullptr)
-    {
-        SingleCommandOption::Ptr opt = new SingleCommandOption(longopt,
-                                                               shortopt,
-                                                               metavar,
-                                                               required,
-                                                               help_text,
-                                                               arg_helper);
-        options.push_back(opt);
-        return opt;
-    }
+                                       const argHelperFunc arg_helper = nullptr);
 
 
     /**
@@ -949,11 +725,7 @@ public:
      *  by this class
      *
      */
-    void AddVersionOption(const char shortopt = 0)
-    {
-        (void) AddOption("version", shortopt, "Show version information");
-        opt_version_added = true;
-    }
+    void AddVersionOption(const char shortopt = 0);
 
 
     /**
@@ -965,13 +737,7 @@ public:
      *               binary/command line.  By default, it is set to 20.
      * @return
      */
-    std::string GetCommandHelp(unsigned int width=20)
-    {
-        std::stringstream ret;
-        ret << command << std::setw(width - command.size())
-            << " - " << description << std::endl;
-        return ret.str();
-    }
+    std::string GetCommandHelp(unsigned int width=20);
 
 
     /**
@@ -982,15 +748,7 @@ public:
      * @return Returns a string with all registered options, prefixed with
      *         '-' or '--' and each option is separated by space.
      */
-    std::string GetOptionsList()
-    {
-        std::stringstream r;
-        for (auto const& opt : options)
-        {
-            r << opt->get_option_list_prefixed() << " ";
-        }
-        return r.str();
-    }
+    std::string GetOptionsList();
 
 
     /**
@@ -1003,22 +761,7 @@ public:
      * @return  Returns a string with possible values for the provided option.
      *          Each value is separated by a space.
      */
-    std::string CallArgumentHelper(const std::string option_name)
-    {
-        for (auto const& opt : options)
-        {
-            if (1 == option_name.size()
-                && opt->check_short_option(option_name[0]))
-            {
-                return opt->call_argument_helper_callback();
-            }
-            else if (opt->check_long_option(option_name.c_str()))
-            {
-                return opt->call_argument_helper_callback();
-            }
-        }
-        return "";
-    }
+    std::string CallArgumentHelper(const std::string option_name);
 
 
     /**
@@ -1064,19 +807,7 @@ public:
      * @return  Returns the same exit code as the callback function returned.
      */
     virtual int RunCommand(const std::string arg0, unsigned int skip,
-                           int argc, char **argv)
-    {
-        try {
-            ParsedArgs cmd_args = parse_commandline(arg0, skip, argc, argv);
-
-            // Run the callback function.
-            return cmd_args.GetCompleted() ? command_func(cmd_args) : 0;
-        }
-        catch (...)
-        {
-            throw;
-        }
-    }
+                           int argc, char **argv);
 
 
     /**
@@ -1116,92 +847,9 @@ protected:
      *         parsing did not complete properly; most likely due to
      *         -h or --help.
      */
-    RegisterParsedArgs parse_commandline(const std::string & arg0, unsigned int skip,
-                                 int argc, char **argv)
-    {
-        struct option *long_opts = init_getopt();
-
-        RegisterParsedArgs cmd_args(arg0);
-        int c;
-        optind = 1 + skip; // Skip argv[0] which contains this command name
-        try
-        {
-            while (1)
-            {
-                int optidx = 0;
-                c = getopt_long(argc, argv, shortopts.c_str(), long_opts, &optidx);
-                if (-1 == c)  // Are we done?
-                {
-                    break;
-                }
-
-                // If -h or --help is used, print the help screen and exit
-                if ('h' == c)
-                {
-                    std::cout << gen_help(arg0) << std::endl;
-                    goto exit;
-                }
-
-                // If an unknown option is detected
-                if ('?' == c)
-                {
-                    throw CommandException(command);
-                }
-
-                // Check if this matches an option which has been defined
-                if (0 == c)
-                {
-                    // No match on short option ... search on long option,
-                    // based on optidx
-
-                    if (opt_version_added
-                        && (0 == strncmp("version", long_opts[optidx].name, 7)))
-                    {
-                        std::cout << get_version(arg0) << std::endl;
-                        goto exit;
-                    }
-
-                    for (auto& o : options)
-                    {
-                        if (o->check_long_option(long_opts[optidx].name))
-                        {
-                                cmd_args.register_option(o->get_option_name(), optarg);
-                        }
-                    }
-                }
-                else
-                {
-                    // Match on short option ... search on short option
-                    for (auto& o : options)
-                    {
-                        if (o->check_short_option(c))
-                        {
-                            cmd_args.register_option(o->get_option_name(), optarg);
-                        }
-                    }
-                }
-            }
-
-            // If there are still arguments not parsed, gather them all.
-            if (optind < argc)
-            {
-                // All additional arguments gets saved for further
-                // processing inside the function to be called
-                while (optind < argc)
-                {
-                    cmd_args.register_extra_args(argv[optind++]);
-                }
-            }
-            cmd_args.set_completed();
-        }
-        catch (...)
-        {
-            throw;
-        }
-    exit:
-        free(long_opts); long_opts = nullptr;
-        return cmd_args;
-    }
+    RegisterParsedArgs parse_commandline(const std::string & arg0,
+                                         unsigned int skip,
+                                         int argc, char **argv);
 
 
 private:
@@ -1222,37 +870,7 @@ private:
      * @param result  A struct option pointer to where to save all this
      * information.
      */
-    struct option *init_getopt()
-    {
-        unsigned int idx = 0;
-        shortopts = "";
-        struct option *result = (struct option *) calloc(options.size() + 2,
-                                                         sizeof(struct option));
-        if (result == NULL)
-        {
-            throw CommandException(command, "Failed to allocate memory for option parsing");
-        }
-
-        // Parse through all registered options
-        for (auto const& opt : options)
-        {
-            // Apply the option definition into the pre-defined designated
-            // slot
-            for (const auto& o : opt->get_struct_option())
-            {
-                memcpy(&result[idx], o, sizeof(struct option));
-                idx++;
-            }
-
-            // Collect all we need for the short flags too
-            shortopts += opt->getopt_optstring();
-        }
-
-        // getopt_long() expects the last record in the struct option array
-        // to be an empty/zeroed struct option element
-        result[idx] = {0};
-        return result;
-    }
+    struct option *init_getopt();
 
 
     /**
@@ -1263,22 +881,9 @@ private:
      * @param arg0
      * @return
      */
-    std::string gen_help(const std::string arg0)
-    {
-        std::stringstream r;
-        r << arg0 << ": " << command << " - " << description << std::endl;
-        r << std::endl;
+    std::string gen_help(const std::string arg0);
+};  // class SingleCommand
 
-        for (const auto& opt : options)
-        {
-            for (const auto& l : opt->gen_help_line())
-            {
-                r << "   " << l << std::endl;
-            }
-        }
-        return r.str();
-    }
-};
 
 
 /**
@@ -1318,10 +923,7 @@ public:
      * @param cmd  SingleCommand::Ptr object pointing to the command
      *             to register to the main program.
      */
-    void RegisterCommand(const SingleCommand::Ptr cmd)
-    {
-        commands.push_back(cmd);
-    }
+    void RegisterCommand(const SingleCommand::Ptr cmd);
 
 
     /**
@@ -1332,89 +934,7 @@ public:
      * @param argv
      * @return
      */
-    int ProcessCommandLine(int argc, char **argv)
-    {
-        std::string baseprog = simple_basename(argv[0]);
-
-        if (2 > argc)
-        {
-            std::cout << "Missing command.  See '"
-                      << baseprog <<" help' for details"
-                      << std::endl;
-            return 1;
-        }
-
-        // Implicit declaration of the generic help screen.
-        std::string cmd(argv[1]);
-        if ("help" == cmd|| "--help" == cmd || "-h" == cmd)
-        {
-            print_generic_help(baseprog);
-            return 0;
-        }
-
-        // Link the ShellCompletion helper object with this Commands object
-        // The ShellCompletion sub-class needs access to the commands
-        // std::vector to be able to generate the needed strings to be used
-        // by the shell completion functions outside of the program itself
-        shellcompl->SetMainCommands(this);
-
-        // Find the proper registered command and let that object
-        // continue the command line parsing and run the callback function
-        for (auto& c : commands)
-        {
-            // If we found our command ...
-            if (c->CheckCommandName(cmd))
-            {
-                // Copy over the arguments, skip argv[0] and build another one
-                // instead.  Ideally, this should not be needed - but
-                // getopt_long() needs it for its error reporting.  And
-                // removing the error reporting, things gets much more
-                // complicated and limited.
-                //
-                // Also ensure we have one extra element as a NULL terminator
-                //
-                char **cmdargv = (char **) calloc(sizeof(char *), argc + 1);
-                if (NULL == cmdargv)
-                {
-                    throw CommandException(baseprog, "Could not allocate memory for argument parsing");
-                }
-
-                // Build up the new argv[0] to be used instead
-                const std::string cmdarg0_str = baseprog + "/" + cmd;
-                cmdargv[0] = strdup(cmdarg0_str.c_str());
-                int cmdargc = 1;
-
-                // copy over the arguments, ignoring the initial argv[0]
-                for (int i = 1; i < argc; i++)
-                {
-                    cmdargv[cmdargc++] = argv[i];
-                }
-
-                // Run the command's callback function
-                int ec = 1;
-                try
-                {
-                    ec = c->RunCommand(argv[0], 1, cmdargc, cmdargv);
-                }
-                catch (...)
-                {
-                    // If something happened when running the
-                    // callback function, clean-up and pass the same
-                    // exception further.
-                    free(cmdargv[0]);
-                    free(cmdargv);
-                    throw;
-                }
-                free(cmdargv[0]);
-                free(cmdargv);
-                return ec;
-            }
-        }
-
-        std::cout << argv[0] << ": Unknown command '" << cmd << "'"
-                  << std::endl;
-        return 1;
-    }
+    int ProcessCommandLine(int argc, char **argv);
 
 
     /**
@@ -1425,10 +945,7 @@ public:
      * @return  std::vector<SingleCommand::Ptr>, which represents
      *          smart-pointers to all the registered single command objects.
      */
-    std::vector<SingleCommand::Ptr> GetAllCommandObjects()
-    {
-        return commands;
-    }
+    std::vector<SingleCommand::Ptr> GetAllCommandObjects();
 
 
 private:
@@ -1442,18 +959,7 @@ private:
     public:
         typedef RCPtr<ShellCompletion> Ptr;
 
-        ShellCompletion()
-            : SingleCommand("shell-completion",
-                            "Helper function to provide shell completion data",
-                            nullptr)
-        {
-            AddOption("list-commands",
-                      "List all available commands");
-            AddOption("list-options", "COMMAND", true,
-                      "List all available options for a specific command");
-            AddOption("arg-helper", "OPTION", true,
-                      "Used together with --list-options, lists value hint to an option");
-        }
+        ShellCompletion();
 
         /**
          *  Provide a "back-pointer" to the parent Commands objects.  This
@@ -1463,11 +969,7 @@ private:
          *
          * @param cmds  Commands * to the parent Commands object.
          */
-        void SetMainCommands(Commands * cmds)
-        {
-            commands = cmds;
-        }
-
+        void SetMainCommands(Commands * cmds);
 
         /**
          *   Since this class inherits the SingleCommand class, we implement
@@ -1486,63 +988,7 @@ private:
          *          when generating shell completion strings.
          */
         int RunCommand(const std::string arg0, unsigned int ignored_skip,
-                       int argc, char **argv)
-        {
-            try {
-                ParsedArgs args = parse_commandline(arg0, 1, argc, argv);
-
-                if (!args.GetCompleted())
-                {
-                    return 0;
-                }
-
-                if (args.Present("list-commands")
-                    && args.Present("list-options"))
-                {
-                    throw CommandException("shell-completion",
-                                           "Cannot combine --list-commands and --list-options");
-                }
-
-                if (args.Present("list-options") && args.GetValueLen("list-options") > 1)
-                {
-                    throw CommandException("shell-completion",
-                                           "Can only use --list-options once");
-                }
-
-
-                if (args.Present("arg-helper")
-                    && !args.Present("list-options"))
-                {
-                    throw CommandException("shell-completion",
-                                           "--arg-helper requires --list-options");
-                }
-
-                if (args.Present("list-commands"))
-                {
-                    list_commands();
-                    return 0;
-                }
-
-                if (args.Present("list-options"))
-                {
-                    if (!args.Present("arg-helper"))
-                    {
-                        list_options(args.GetValue("list-options", 0));
-                    }
-                    else
-                    {
-                        call_arg_helper(args.GetValue("list-options", 0),
-                                        args.GetValue("arg-helper", 0));
-                    }
-                }
-            }
-            catch (...)
-            {
-                throw;
-            }
-            return 3;
-        }
-
+                       int argc, char **argv);
 
     private:
         Commands * commands;
@@ -1552,26 +998,7 @@ private:
          *  capable shells.  It lists just all the various available commands.
          *  The result is written straight to stdout.
          */
-        void list_commands()
-        {
-            bool first = true;
-            for (auto &cmd : commands->GetAllCommandObjects())
-            {
-                if (cmd->GetCommand() == GetCommand())
-                {
-                    // Skip myself
-                    continue;
-                }
-                if (!first)
-                {
-                    std::cout << " ";
-                }
-                first = false;
-                std::cout << cmd->GetCommand();
-            }
-            std::cout << std::endl;
-        }
-
+        void list_commands();
 
         /**
          *  Generate the list of options for a specific command.  This
@@ -1582,18 +1009,7 @@ private:
          * @param cmd  std::string containing the command to query for
          *             available options.
          */
-        void list_options(const std::string cmd)
-        {
-            for (auto const& c : commands->GetAllCommandObjects())
-            {
-                if (c->GetCommand() == cmd )
-                {
-                    std::cout << c->GetOptionsList() << std::endl;
-                    return;
-                }
-            }
-        }
-
+        void list_options(const std::string cmd);
 
         /**
          *  The argument helper callback function generates a list of possible
@@ -1606,28 +1022,8 @@ private:
          * @param option  std::string containing the option to query for
          *                possible values.
          */
-        void call_arg_helper(const std::string cmd, const std::string option)
-        {
-            for (auto const& c : commands->GetAllCommandObjects())
-            {
-                if (c->GetCommand() == cmd )
-                {
-                    unsigned int skip = 0;
-                    if ('-' == option[0])
-                    {
-                        skip++;
-                    }
-                    if ('-' == option[1])
-                    {
-                        skip++;
-                    }
-                    std::cout << c->CallArgumentHelper(option.substr(skip))
-                              << std::endl;
-                    return;
-                }
-            }
-        }
-    };
+        void call_arg_helper(const std::string cmd, const std::string option);
+    }; // class Commands::ShellCompletion
 
     /**
      *   Print an initial help screen, providing an overview of all
@@ -1636,34 +1032,11 @@ private:
      * @param arg0  std::string containing the binary name (typically argv[0])
      *
      */
-    void print_generic_help(std::string arg0)
-    {
-        std::cout << arg0 << ": " << progname << std::endl;
-        std::cout << std::setw(arg0.size()+2) << " " << description;
-        std::cout << std::endl << std::endl;
-
-        std::cout << "  Available commands: " << std::endl;
-
-        unsigned int width = 20;
-        std::cout << "    help" << std::setw(width - 7) << " "
-                  << " - This help screen"
-                  << std::endl;
-
-        for (auto &cmd :commands)
-        {
-            std::cout << "    " << cmd->GetCommandHelp(width);
-        }
-        std::cout << std::endl;
-
-        std::cout << "For more information, run: "
-                  << arg0 << " <command> --help"
-                  << std::endl;
-        std::cout << std::endl;
-    }
+    void print_generic_help(std::string arg0);
 
 
     const std::string progname;
     const std::string description;
     std::vector<SingleCommand::Ptr> commands;
     ShellCompletion::Ptr shellcompl;
-};
+};  // class Commands

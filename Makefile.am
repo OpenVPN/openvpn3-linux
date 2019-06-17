@@ -232,12 +232,14 @@ noinst_PROGRAMS += \
 #
 src_tests_command_parser_cmdparser_SOURCES = \
 	src/tests/command-parser/cmdparser.cpp \
+	src/common/cmdargparser.cpp \
 	src/common/utils.cpp
 
 # src/tests/ovpn3-core
 #
 src_tests_ovpn3_core_profilemerge_optionlist_SOURCES = \
 	src/tests/ovpn3-core/profilemerge-optionlist.cpp \
+	src/common/cmdargparser.cpp \
 	src/common/utils.cpp
 
 # src/tests/misc
@@ -329,6 +331,7 @@ src_tests_dbus_logevent_selftest_SOURCES = \
 
 src_tests_dbus_logservice1_SOURCES = \
 	src/tests/dbus/logservice1.cpp \
+	src/common/cmdargparser.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp
 
@@ -427,6 +430,7 @@ src_ovpn3cli_openvpn3_SOURCES = \
 	src/configmgr/overrides.cpp \
 	src/sessionmgr/proxy-sessionmgr.hpp \
 	src/dbus/requiresqueue-proxy.hpp \
+	src/common/cmdargparser.cpp \
 	src/common/cmdargparser.hpp \
 	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
@@ -443,6 +447,7 @@ src_ovpn3cli_openvpn3_admin_SOURCES = \
 	src/ovpn3cli/commands/version.cpp \
 	src/ovpn3cli/commands/log-service.cpp \
 	src/ovpn3cli/commands/netcfg-service.cpp \
+	src/common/cmdargparser.cpp \
 	src/common/utils.cpp
 
 
@@ -457,6 +462,7 @@ src_client_openvpn3_service_client_SOURCES = \
 	src/client/statistics.hpp \
 	src/client/statusevent.hpp \
 	$(DBUS_SOURCES) \
+	src/common/cmdargparser.cpp \
 	src/common/core-extensions.hpp \
 	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
@@ -473,6 +479,7 @@ src_client_openvpn3_service_client_SOURCES = \
 src_client_openvpn3_service_backendstart_SOURCES = \
 	src/client/openvpn3-service-backendstart.cpp \
 	$(DBUS_SOURCES) \
+	src/common/cmdargparser.cpp \
 	src/common/utils.cpp \
 	src/log/dbus-log.hpp
 
@@ -487,6 +494,7 @@ src_configmgr_openvpn3_service_configmgr_SOURCES = \
 	src/configmgr/overrides.hpp \
 	$(DBUS_SOURCES) \
 	src/common/core-extensions.hpp \
+	src/common/cmdargparser.cpp \
 	src/common/lookup.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp \
@@ -501,6 +509,7 @@ src_sessionmgr_openvpn3_service_sessionmgr_SOURCES = \
 	src/sessionmgr/sessionmgr.hpp \
 	src/client/statusevent.hpp \
 	$(DBUS_SOURCES) \
+	src/common/cmdargparser.cpp \
 	src/common/lookup.cpp \
 	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
@@ -527,6 +536,7 @@ src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/netcfg/dns-direct-file.hpp \
 	src/netcfg/dns-resolver-settings.hpp \
 	$(DBUS_SOURCES) \
+	src/common/cmdargparser.cpp \
 	src/common/lookup.cpp \
 	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
@@ -550,6 +560,7 @@ src_log_openvpn3_service_logger_SOURCES = \
 	src/log/logger.hpp \
 	src/log/logwriter.hpp \
 	src/log/service.hpp \
+	src/common/cmdargparser.cpp \
 	src/common/timestamp.cpp \
 	$(DBUS_SOURCES) \
 	src/common/utils.cpp
