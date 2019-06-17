@@ -78,6 +78,10 @@ public:
 
     bool tun_builder_set_remote_address(const std::string& address, bool ipv6) override
     {
+        if (!device)
+        {
+            throw NetCfgProxyException(__func__, "Lost link to device interface");
+        }
         device->SetRemoteAddress(address, ipv6);
         return true;
     }
@@ -92,6 +96,10 @@ public:
         /* We ignore net30 and gateway here for now */
         try
         {
+            if (!device)
+            {
+                throw NetCfgProxyException(__func__, "Lost link to device interface");
+            }
             device->AddIPAddress(address, (unsigned int)prefix_length, gateway, ipv6);
             return true;
         }
@@ -100,7 +108,7 @@ public:
             std::stringstream err;
             err << "Error adding IP address " << address
                 << "/" << std::to_string(prefix_length)
-                << " to " << device->GetDeviceName()
+                << " to " << (device ? device->GetDeviceName() : "[unkown]")
                 << ": " << std::string(e.what());
             signal->LogError(err.str());
             return false;
@@ -110,6 +118,10 @@ public:
 
     bool tun_builder_set_layer(int layer) override
     {
+        if (!device)
+        {
+            throw NetCfgProxyException(__func__, "Lost link to device interface");
+        }
         device->SetLayer(layer);
         return true;
     }
@@ -117,6 +129,10 @@ public:
 
     bool tun_builder_set_mtu(int mtu) override
     {
+        if (!device)
+        {
+            throw NetCfgProxyException(__func__, "Lost link to device interface");
+        }
         device->SetMtu(mtu);
         return true;
     }
@@ -127,6 +143,11 @@ public:
                                 unsigned int flags) override
     {
         const std::vector<NetCfgProxy::Network> defaultRoutes;
+
+        if (!device)
+        {
+            throw NetCfgProxyException(__func__, "Lost link to device interface");
+        }
 
         /*
          * We add default routes and let the other side figure
@@ -178,6 +199,10 @@ public:
         {
             return true;
         }
+        if (!device)
+        {
+            throw NetCfgProxyException(__func__, "Lost link to device interface");
+        }
 
         const std::vector<std::string> dnsserver{{address}};
         device->AddDNS(dnsserver);
@@ -191,6 +216,10 @@ public:
         {
             return true;
         }
+        if (!device)
+        {
+            throw NetCfgProxyException(__func__, "Lost link to device interface");
+        }
 
         const std::vector<std::string> dnsdomain{{domain}};
         device->AddDNSSearch(dnsdomain);
@@ -200,6 +229,11 @@ public:
 
     int tun_builder_establish() override
     {
+        if (!device)
+        {
+            throw NetCfgProxyException(__func__, "Lost link to device interface");
+        }
+
         // Set all routes in one go to avoid calling the function multiple
         // times
         device->AddNetworks(networks);
