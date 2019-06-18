@@ -243,6 +243,10 @@ namespace openvpn
                 {
                     return GetStringProperty("version");
                 }
+                catch(DBusProxyAccessDeniedException& excp)
+                {
+                    throw;
+                }
                 catch (DBusException& excp)
                 {
                     std::string err(excp.what());
