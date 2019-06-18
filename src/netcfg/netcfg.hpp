@@ -101,6 +101,7 @@ public:
                           << "    <property type='u' name='global_dns_servers' access='read'/>"
                           << "    <property type='u' name='global_dns_search' access='read'/>"
                           << "    <property type='u' name='log_level' access='readwrite'/>"
+                          << "    <property type='s' name='version' access='read'/>"
                           << signal.GetLogIntrospection()
                           << "    </interface>"
                           << "</node>";
@@ -389,6 +390,10 @@ public:
                     return GLibUtils::GVariantFromVector(std::vector<std::string>{});
                 }
                 return GLibUtils::GVariantFromVector(resolver->GetDNSSearch());
+            }
+            else if ("version" == property_name)
+            {
+                return g_variant_new_string(package_version);
             }
         }
         catch (...)
