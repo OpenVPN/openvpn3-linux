@@ -29,8 +29,10 @@ available commands have their own set of options.
 COMMANDS
 ========
 
-version
-                Show program version information
+version ``[--services]``
+                Show program version information.  If ``--services`` is
+                provided, it will show the version information for all available
+                OpenVPN 3 D-Bus backend services.
 
 log-service
                 Manage the OpenVPN 3 Log service
