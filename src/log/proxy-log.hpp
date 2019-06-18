@@ -53,7 +53,14 @@ public:
                     OpenVPN3DBus_rootp_log)
     {
         CheckServiceAvail();
-        (void) GetServiceVersion();
+        try
+        {
+            (void) GetServiceVersion();
+        }
+        catch (DBusProxyAccessDeniedException)
+        {
+            // Let this pass - service is available
+        }
     }
 
 
