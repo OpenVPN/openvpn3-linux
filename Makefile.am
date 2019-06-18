@@ -342,7 +342,8 @@ src_tests_dbus_netcfg_changeevent_selftest_SOURCES = \
 	src/tests/dbus/netcfg-changeevent-selftest.cpp
 
 src_tests_dbus_netcfg_proxy_unit_SOURCES = \
-	src/tests/dbus/netcfg-proxy-unit.cpp
+	src/tests/dbus/netcfg-proxy-unit.cpp \
+	src/netcfg/proxy-netcfg.cpp
 
 src_tests_dbus_signal_listener_SOURCES = \
 	src/tests/dbus/signal-listener.cpp \
@@ -389,6 +390,7 @@ src_tests_netcfg_clinetcfg_SOURCES = \
 	src/configmgr/proxy-configmgr.hpp \
 	src/log/dbus-log.hpp \
 	src/log/proxy-log.hpp \
+	src/netcfg/proxy-netcfg.cpp \
 	config-version.h
 endif
 
@@ -448,8 +450,9 @@ src_ovpn3cli_openvpn3_admin_SOURCES = \
 	src/ovpn3cli/commands/log-service.cpp \
 	src/ovpn3cli/commands/netcfg-service.cpp \
 	src/common/cmdargparser.cpp \
-	src/common/utils.cpp
-
+	src/common/utils.cpp \
+	src/netcfg/proxy-netcfg.cpp
+src_ovpn3cli_openvpn3_admin_CXXFLAGS=$(AM_CXXFLAGS) -DOVPN3CLI_OPENVPN3ADMIN
 
 #
 #  openvpn3-service-client: The VPN client process
@@ -471,7 +474,8 @@ src_client_openvpn3_service_client_SOURCES = \
 	src/configmgr/proxy-configmgr.hpp \
 	src/log/dbus-log.hpp \
 	src/log/proxy-log.hpp \
-	src/netcfg/proxy-netcfg.hpp
+	src/netcfg/proxy-netcfg.hpp \
+	src/netcfg/proxy-netcfg.cpp
 
 #
 #  openvpn3-service-backendstart: Service which starts VPN client processes
@@ -514,7 +518,8 @@ src_sessionmgr_openvpn3_service_sessionmgr_SOURCES = \
 	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp \
-	src/log/dbus-log.hpp
+	src/log/dbus-log.hpp \
+	src/netcfg/proxy-netcfg.cpp
 
 
 #
