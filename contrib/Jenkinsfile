@@ -32,6 +32,12 @@ def build_tarball()
                     sh "./configure --prefix=/usr --sysconfdir=/etc --enable-debug-core-events --enable-debug-options --enable-debug-exceptions"
                     sh 'make -j$(nproc)'
                     sh 'make -j$(nproc) distcheck'
+                    try {
+                        sh './src/tests/unit/unit-tests --gtest_output="xml:test_results/openvpn3-linux-tests.xml"'
+                    } catch (Exception e) {
+                        // errors are collected by next step
+                    }
+                    junit 'test_results/*.xml'
                     sh './src/ovpn3cli/openvpn3 version'
                     archiveArtifacts 'openvpn3-linux-*.tar.xz'
                }
