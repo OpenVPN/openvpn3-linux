@@ -537,6 +537,19 @@ static int cmd_sessions_list(ParsedArgs args)
             std::cout << std::endl;
         }
 
+        try
+        {
+            std::string sessname = sprx.GetStringProperty("session_name");
+            if (!sessname.empty())
+            {
+                std::cout << "Session name: " << sessname << std::endl;
+            }
+        }
+        catch (DBusException&)
+        {
+            // Ignore any errors if this property is unavailable
+        }
+
         std::cout << "      Status: " << status << std::endl;
     }
     if (first)
