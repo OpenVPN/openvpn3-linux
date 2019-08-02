@@ -46,7 +46,8 @@ public:
         : disabled_dns_config(false),
           netcfgmgr(dbuscon),
           signal(signal),
-          session_token(session_token)
+          session_token(session_token),
+          session_name("")
     {
     }
 
@@ -289,7 +290,14 @@ public:
     bool tun_builder_set_session_name(const std::string& name) override
     {
         signal->LogVerb2("Session name: '" + name + "'");
+        session_name = std::string(name);
         return true;
+    }
+
+
+    std::string tun_builder_get_session_name()
+    {
+        return session_name;
     }
 
 
@@ -321,4 +329,5 @@ private:
     NetCfgProxy::Manager netcfgmgr;
     BackendSignals *signal;
     std::string session_token;
+    std::string session_name;
 };

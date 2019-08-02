@@ -66,13 +66,22 @@ class DummyTunBuilder: public  ClientAPI::OpenVPNClient
 public:
     DummyTunBuilder(GDBusConnection *dbusconn, BackendSignals *signal,
                     const std::string& session_token) {}
+
     bool socket_protect(int, std::string, bool) override
     {
         return true;
     }
 
+    std::string tun_builder_get_session_name()
+    {
+        return session_name;
+    }
+
 protected:
     bool disabled_dns_config;
+
+private:
+    std::string session_name;
 };
 #endif
 

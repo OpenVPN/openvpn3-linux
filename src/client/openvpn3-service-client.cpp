@@ -128,6 +128,7 @@ public:
                                                                  "UserInputQueueCheck",
                                                                  "UserInputProvide")
                           << "        <property name='log_level' type='u' access='readwrite'/>"
+                          << "        <property name='session_name' type='s' access='read'/>"
                           << signal.GetStatusChangeIntrospection()
                           << signal.GetLogIntrospection()
                           << "        <signal name='AttentionRequired'>"
@@ -636,6 +637,10 @@ public:
             else if ("log_level" == property_name)
             {
                 return g_variant_new_uint32(signal.GetLogLevel());
+            }
+            else if ("session_name" == property_name)
+            {
+                return g_variant_new_string((vpnclient ? vpnclient->tun_builder_get_session_name().c_str() : ""));
             }
         }
         catch (DBusCredentialsException& excp)
