@@ -506,6 +506,7 @@ public:
                           << "        <property type='a{sx}' name='statistics' access='read'/>"
                           << "        <property type='o' name='config_path' access='read'/>"
                           << "        <property type='s' name='config_name' access='read'/>"
+                          << "        <property type='s' name='session_name' access='read'/>"
                           << "        <property type='u' name='backend_pid' access='read'/>"
                           << "        <property type='b' name='restrict_log_access' access='readwrite'/>"
                           << "        <property type='b' name='receive_log_events' access='readwrite'/>"
@@ -1138,6 +1139,19 @@ public:
         else if ("config_name" == property_name)
         {
             ret = g_variant_new_string (config_name.c_str());
+        }
+        else if ("session_name" == property_name)
+        {
+            try
+            {
+                std::string sn(be_proxy->GetStringProperty("session_name"));
+                ret = g_variant_new_string (sn.c_str());
+            }
+            catch (const DBusException& excp)
+            {
+                // Ignore errors in this case; this is informal details
+                return g_variant_new_string("");
+            }
         }
         else if ("backend_pid" == property_name)
         {
