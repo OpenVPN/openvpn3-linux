@@ -37,6 +37,77 @@ import xml.etree.ElementTree as xmlET
 
 
 ##
+#  Challenge/Response based authentication
+#
+#  If the Access Server demands more steps for the authentication,
+#  it will send and error response with a challenge string (CRV1 string).
+#  This needs to be processed locally before the client tries to reconnect
+#  with the proper response.
+#
+#  The CRV1 protocol technically also supports an information passing with
+#  no response back to the server.  This is not properly implemented nor
+#  tested.
+#
+#  This is implemented as an Exception class.  This is due to the server
+#  sends and error message and the server connection is lost.  This made
+#  it simpler to keep a fairly sane programmatic logic when this situation
+#  occurs.
+#
+class CRV1Authentication(Exception):
+    ##
+    #  Constructor
+    #
+    #  @param username  Username of the getting the challenge/response auth
+    #  @param crv1str   The complete CRV1 string which will be parsed and
+    #                   processed by this class
+    def __init__(self, username, crv1str):
+        self.__username = username
+
+        # The CRV1 string contains several fields separated by colon,
+        # but only the last field can contain colon as part of data.
+        # To ensure this is correctly decoded, decode and re-encode
+        # the various fields
+        crv1 = crv1str.split(':')
+        self.__flags = crv1[1].split(',')
+        self.__stateid = crv1[2]
+        self.__challenge = ':'.join(crv1[4:])
+        self.__response = None
+
+
+    ##
+    #  This processes the challenge/response request and will
+    #  both print and request the user for input, according to
+    #  the request.
+    #
+    #  @return Returns True if a response is expected to be
+    #          sent back to the server.
+    #
+    def Process(self):
+        print(self.__challenge, end='', flush=True)
+        if 'R' in self.__flags:
+            if 'E' in self.__flags:
+                self.__response = input(': ')
+            else:
+                self.__response = getpass(': ')
+            return True
+        else:
+            return False
+
+
+    ##
+    #  This generates the response needed according to the
+    #  CRV1 protocol.  This response is expected to be passed
+    #  in the password field in the next connection to the server.
+    #
+    #  @return Retuns a properly formatted CRV1 response string
+    #
+    def GetResponse(self):
+        if 'R' not in self.__flags or self.__response is None:
+            return 'CRV1::%s::' % (self.__stateid,)
+        return 'CRV1::%s::%s' % (self.__stateid, self.__response)
+
+
+##
 #  Fetches a configuration profile from an OpenVPN Access Server
 #  for a specific user.
 #
@@ -91,9 +162,14 @@ def fetch_profile(uri, username, password, autologin):
         errxml = xmlET.fromstring(e.read().decode('utf-8'))
         if 'Error' != errxml.tag:
             raise e
+        typetag = errxml.find('Type')
         msgtag = errxml.find('Message')
-        if msgtag is None:
+        if msgtag is None or typetag is None:
             raise e
+        if 'Authorization Required' == typetag.text:
+            if msgtag.text[:5] == 'CRV1:':
+                raise CRV1Authentication(username, msgtag.text);
+
         raise RuntimeError(msgtag.text)
 
 
@@ -134,12 +210,18 @@ if __name__ == '__main__':
 
     # Retrieve the configuration profile and generate a profile name
     profile_name = opts.name and opts.name or 'AS:' + uri.netloc
-    try:
-        profile = fetch_profile(uri, username, password, opts.autologin)
-    except Exception as e:
-        print('ERROR: Failed to download configuration profile')
-        print('ERROR: %s' % e)
-        sys.exit(2)
+    done = False
+    while not done:
+        try:
+            profile = fetch_profile(uri, username, password, opts.autologin)
+            done = True
+        except CRV1Authentication as crv1auth:
+            if crv1auth.Process():
+                password = crv1auth.GetResponse()
+        except Exception as e:
+            print('ERROR: Failed to download configuration profile')
+            print('ERROR: %s' % e)
+            sys.exit(2)
 
     if profile is None or len(profile) < 1:
         print('ERROR: No configuration profile retrieved')
