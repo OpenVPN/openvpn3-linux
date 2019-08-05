@@ -23,6 +23,7 @@
 MAN_SECTION_1 = \
 	openvpn2.1 \
 	openvpn3.1 \
+	openvpn3-as.1 \
 	openvpn3-config-acl.1 \
 	openvpn3-config-manage.1 \
 	openvpn3-config-import.1 \

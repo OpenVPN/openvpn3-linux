@@ -1,0 +1,156 @@
+#!/usr/bin/python3
+#  OpenVPN 3 Linux client -- Next generation OpenVPN client
+#
+#  Copyright (C) 2019         OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2019         David Sommerseth <davids@openvpn.net>
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, version 3 of the
+#  License.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
+##
+# @file  openvpn3-as
+#
+# @brief  Utility to download and import a configuration profile directly
+#         from an OpenVPN Access Server
+
+import sys
+import os
+import argparse
+from getpass import getpass
+import urllib.parse
+import urllib.request
+import ssl
+import openvpn3
+import dbus
+import xml.etree.ElementTree as xmlET
+
+
+##
+#  Fetches a configuration profile from an OpenVPN Access Server
+#  for a specific user.
+#
+#  @param uri        URL to the OpenVPN Access Server to connect to
+#  @param username   Username to connect as
+#  @param password   Password to use for the authentication
+#  @param autologin  Boolean, if True it will attempt to retrieve the
+#                    auto-login profile.  If this is available for, the
+#                    the user will not be prompted for a credentials when
+#                    connecting to the VPN server
+#
+#  @return Returns a string containing the configuration profile for the user
+#          on success.  Otherwise an exception with the error is thrown.
+#
+def fetch_profile(uri, username, password, autologin):
+    resturi = uri.geturl() + '/rest/' + (autologin and 'GetAutologin' or 'GetUserlogin')
+
+    # Prepare credentials
+    authinfo = urllib.request.HTTPBasicAuthHandler()
+    authinfo.add_password('OpenVPN Access Server',
+                          resturi, username, password)
+
+    # Prepare appropriate handler
+    handler = None
+    if 'https' == uri.scheme:
+        # Setup default SSL context
+        sslctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        sslctx.options &= ~ssl.OP_NO_SSLv3
+        sslctx.options &= ~ssl.OP_NO_SSLv2
+        handler = urllib.request.HTTPSHandler(context=sslctx)
+        if 'OPENVPN3_DEBUG' in os.environ:
+            handler.set_http_debuglevel(1)
+    else:
+        raise RuntimeException('Only the https protocol is supported')
+
+    # Prepare urllib, providing credentials
+    opener = urllib.request.build_opener(handler,
+                                         authinfo,
+                                         urllib.request.CacheFTPHandler)
+    opener.addheaders = [('User-agent',
+                          'openvpn3-linux::openvpn3-as/' + openvpn3.constants.VERSION)]
+    urllib.request.install_opener(opener)
+
+    # Fetch the URI/configuration profile
+    if 'OPENVPN3_DEBUG' in os.environ:
+        print('REST API URL: ' + resturi)
+    try:
+        with  urllib.request.urlopen(resturi) as response:
+            contents = response.read()
+        return contents.decode('utf-8')
+    except urllib.error.URLError as e:
+        errxml = xmlET.fromstring(e.read().decode('utf-8'))
+        if 'Error' != errxml.tag:
+            raise e
+        msgtag = errxml.find('Message')
+        if msgtag is None:
+            raise e
+        raise RuntimeError(msgtag.text)
+
+
+#
+#  MAIN
+#
+if __name__ == '__main__':
+    # Parse the command line
+    cmdparser = argparse.ArgumentParser(description='OpenVPN 3 Access Server profile downloader',
+                                        usage='%(prog)s [options] <https://...>')
+    cmdparser.add_argument('--autologin', action='store_true',
+                           help='Download the auto-login profile (default: user-login profile)')
+
+    cmdparser.add_argument('--impersistent', action='store_true',
+                           help='Do not import the configuration profile as a persistent profile (default: persistent)')
+    cmdparser.add_argument('--name', metavar='CONFIG-NAME',
+                           help='Override the automatically generated profile name (default: AS:$servername)')
+    cmdparser.add_argument('--username', metavar='USERNAME',
+                           help='Username to use for OpenVPN Access Server login')
+
+    cmdparser.add_argument('server', metavar='<https://...>', type=str, nargs=1,
+                           help='URL to OpenVPN Access Server')
+
+    opts = cmdparser.parse_args()
+    if len(opts.server) != 1:
+        print('ERROR: Missing OpenVPN Access Server URL')
+        sys.exit(1)
+
+    # Connect to the D-Bus system bus and establish a link
+    # to the OpenVPN 3 Configuration Manager
+    sysbus = dbus.SystemBus()
+    cfgmgr = openvpn3.ConfigurationManager(sysbus)
+
+    # OpenVPN Access URI and credentials
+    uri = urllib.parse.urlparse(opts.server[0])
+    username = opts.username and opts.username or input('OpenVPN Access Server Username: ')
+    password = getpass('OpenVPN Access Server Password: ')
+
+    # Retrieve the configuration profile and generate a profile name
+    profile_name = opts.name and opts.name or 'AS:' + uri.netloc
+    try:
+        profile = fetch_profile(uri, username, password, opts.autologin)
+    except Exception as e:
+        print('ERROR: Failed to download configuration profile')
+        print('ERROR: %s' % e)
+        sys.exit(2)
+
+    if profile is None or len(profile) < 1:
+        print('ERROR: No configuration profile retrieved')
+        sys.exit(3)
+
+    # Import the configuration profile to the configuration manager
+    cfgobj = cfgmgr.Import(profile_name, profile, False, not opts.impersistent)
+    cfgobj.SetProperty('locked_down', True);
+
+    print('-'*60)
+    print('Profile imported successfully')
+    print('Configuration name: %s' % profile_name)
+    print('Configuration path: %s' % cfgobj.GetPath())
+
