@@ -128,7 +128,7 @@ if __name__ == '__main__':
     cfgmgr = openvpn3.ConfigurationManager(sysbus)
 
     # OpenVPN Access URI and credentials
-    uri = urllib.parse.urlparse(opts.server[0])
+    uri = urllib.parse.urlparse(opts.server[0].rstrip('/'))
     username = opts.username and opts.username or input('OpenVPN Access Server Username: ')
     password = getpass('OpenVPN Access Server Password: ')
 
