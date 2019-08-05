@@ -30,6 +30,7 @@
 #include <tuple>
 #include <vector>
 
+#include "config.h"
 #include "dbus/constants.hpp"
 
 using namespace std;
@@ -80,6 +81,8 @@ int main(int argc, char **argv)
          << "#" << std::endl << std::endl;
 
     cout << "from enum import Enum" << endl << endl;
+
+    cout << "VERSION = '" << PACKAGE_GUIVERSION << "'" << endl << endl;
 
     vector<ConstantMapping<StatusMajor>> maj;
     MAP(StatusMajor, maj, "UNSET", UNSET);
