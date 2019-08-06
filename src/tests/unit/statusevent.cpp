@@ -320,6 +320,9 @@ TEST(StatusEvent, stringstream)
 {
     StatusEvent status(StatusMajor::CONFIG, StatusMinor::CONN_CONNECTING,
                        "In progress");
+#ifdef DEBUG_CORE_EVENTS
+    status.show_numeric_status = false; // DEBUG_CORE_EVENTS enables this by default
+#endif
     std::stringstream chk;
     chk << status;
     std::string expect("Configuration, Client connecting: In progress");
