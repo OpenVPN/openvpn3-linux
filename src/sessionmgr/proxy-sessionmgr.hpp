@@ -142,6 +142,12 @@ public:
      */
     std::string NewTunnel(std::string cfgpath)
     {
+        if (!g_variant_is_object_path(cfgpath.c_str()))
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
+                                "Invalid D-Bus path to configuration profile");
+
+        }
         GVariant *res = Call("NewTunnel",
                              g_variant_new("(o)", cfgpath.c_str()));
         if (NULL == res)

@@ -641,6 +641,11 @@ namespace openvpn
                 THROW_DBUSEXCEPTION("DBusProxy", "Object path cannot be empty");
             }
 
+            if (!g_variant_is_object_path(objp.c_str()))
+            {
+                THROW_DBUSEXCEPTION("DBusProxy", "Invalid D-Bus path");
+            }
+
             // Connect do the D-Bus without a bus name
             // This is safe to call, multiple times - as DBus::Connect()
             // checks if a connection is already established
