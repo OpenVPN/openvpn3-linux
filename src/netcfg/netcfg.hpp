@@ -92,6 +92,7 @@ public:
                           << "        <method name='ProtectSocket'>"
                           << "          <arg type='s' direction='in' name='remote' />"
                           << "          <arg type='b' direction='in' name='ipv6' />"
+                          << "          <arg type='o' direction='in' name='device_path' />"
                           << "          <arg type='b' direction='out' name='succeded'/>"
                           << "        </method>"
                           << NetCfgSubscriptions::GenIntrospection("NotificationSubscribe",
@@ -536,34 +537,61 @@ private:
         // This should generally be true for DBus 1.3, double checking here cannot hurt
         g_assert(g_dbus_connection_get_capabilities(conn) & G_DBUS_CAPABILITY_FLAGS_UNIX_FD_PASSING);
 
-        GLibUtils::checkParams(__func__, params, "(sb)", 2);
+        GLibUtils::checkParams(__func__, params, "(sbo)", 3);
 
         std::string remote(g_variant_get_string(g_variant_get_child_value(params, 0), 0));
         bool ipv6 = g_variant_get_boolean(g_variant_get_child_value(params, 1));
+        std::string dev_path(g_variant_get_string(g_variant_get_child_value(params, 2), 0));
 
         GDBusMessage *dmsg = g_dbus_method_invocation_get_message(invoc);
         GUnixFDList *fdlist = g_dbus_message_get_unix_fd_list(dmsg);
 
         // Get the first FD from the fdlist list
         int fd = -1;
-        GError *error = nullptr;
-        if (fdlist)
+
+        if(fdlist != NULL)
         {
-            fd = g_unix_fd_list_get(fdlist, 0, &error);
+            GError *error = nullptr;
+            if (fdlist)
+            {
+                fd = g_unix_fd_list_get(fdlist, 0, &error);
+            }
+
+            if (!fdlist || error || fd == -1)
+            {
+                throw NetCfgException("Reading fd socket failed");
+            }
         }
 
-        if (!fdlist || error || fd == -1)
-        {
-            throw NetCfgException("Reading fd socket failed");
-        }
+
+
 
         if (options.so_mark >= 0)
         {
+            if (fd == -1)
+            {
+                throw NetCfgException("SO_MARK requested but protect_socket call received no fd");
+            }
             openvpn::protect_socket_somark(fd, remote, options.so_mark);
         }
         if (RedirectMethod::BINDTODEV == options.redirect_method)
         {
+            if (fd == -1)
+            {
+                throw NetCfgException("bind to dev method requested but protect_socket call received no fd");
+            }
             openvpn::protect_socket_binddev(fd, remote, ipv6);
+        }
+        if (options.redirect_method == RedirectMethod::HOST_ROUTE)
+        {
+            std::string dev_name;
+            const auto& it = devices.find(dev_path);
+            if (it != devices.end())
+            {
+                const auto& dev = *it->second;
+                dev_name = dev.get_device_name();
+            }
+            openvpn::protect_socket_hostroute(dev_name, remote, ipv6);
         }
         close(fd);
         return g_variant_new("(b)", true);

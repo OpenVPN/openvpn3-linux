@@ -123,10 +123,6 @@ namespace openvpn
                 switch (netCfgDevice.options.redirect_method)
                 {
                 case RedirectMethod::HOST_ROUTE:
-                    tbc->tun_builder_reroute_gw(netCfgDevice.reroute_ipv4,
-                                                netCfgDevice.reroute_ipv6, 0);
-                    break;
-
                 case RedirectMethod::BINDTODEV:
                     // Add 'def1' style default routes
                     if (netCfgDevice.reroute_ipv4)
@@ -154,11 +150,6 @@ namespace openvpn
         }
 
     public:
-        void add_bypass_route(const std::string& addr, bool ipv6) override
-        {
-            tun->add_bypass_route(addr, ipv6, std::cout);
-        }
-
         int establish(NetCfgDevice& netCfgDevice) override
         {
             TUN_CLASS_SETUP::Config config;
@@ -294,6 +285,24 @@ namespace openvpn
             throw NetCfgException(std::string("Setting SO_MARK failed: ")
                                   + strerror(errno));
         }
+    }
+
+    ActionList::Ptr socket_protect_remove_commands;
+    void protect_socket_hostroute(const std::string& tun_intf, const std::string& remote, bool ipv6)
+    {
+        // TODO: For now we assume that the will only have one socket it needs to protect and remove
+        // the old protection when we get a new one
+        if (socket_protect_remove_commands)
+            socket_protect_remove_commands->execute_log();
+
+        socket_protect_remove_commands.reset(new ActionList());
+        std::vector<IP::Route> rtvec;
+        ActionList add_cmds;
+
+        OPENVPN_LOG("Protecting socket to '" + remote + " by adding host route");
+        TUN_LINUX::TunMethods::add_bypass_route(tun_intf, remote, ipv6, &rtvec, add_cmds, *socket_protect_remove_commands);
+
+        add_cmds.execute_log();
     }
 
 

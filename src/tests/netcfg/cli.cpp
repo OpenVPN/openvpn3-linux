@@ -21,6 +21,7 @@
 
 // OpenVPN 3 test client
 
+#define OPENVPN_USE_SITNL
 #define USE_TUN_BUILDER
 #define USE_NETCFG
 #define OPENVPN3_CORE_CLI_TEST

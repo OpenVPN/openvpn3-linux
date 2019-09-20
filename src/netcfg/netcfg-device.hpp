@@ -174,10 +174,6 @@ public:
         std::stringstream introspect;
         introspect << "<node name='" << objpath << "'>"
                    << "    <interface name='" << OpenVPN3DBus_interf_netcfg << "'>"
-                   << "        <method name='AddBypassRoute'>"
-                   << "            <arg direction='in' type='s' name='address'/>"
-                   << "            <arg direction='in' type='b' name='ipv6'/>"
-                   << "        </method>"
                    << "        <method name='AddIPAddress'>"
                    << "            <arg direction='in' type='s' name='ip_address'/>"
                    << "            <arg direction='in' type='u' name='prefix'/>"
@@ -232,6 +228,11 @@ public:
         IdleCheck_RefDec();
     }
 
+    std::string get_device_name() const noexcept
+    {
+        return device_name;
+    }
+
 
 protected:
     void set_device_name(const std::string& devnam) noexcept
@@ -241,31 +242,7 @@ protected:
     }
 
 
-    std::string get_device_name() const noexcept
-    {
-        return device_name;
-    }
-
-
 private:
-
-    void addBypassRoute(GVariant* params)
-    {
-        GLibUtils::checkParams(__func__, params, "(sb)", 2);
-
-        std::string addr(g_variant_get_string(g_variant_get_child_value(params, 0), 0));
-        bool ipv6 = g_variant_get_boolean(g_variant_get_child_value(params, 1));
-
-        if (!tunimpl)
-        {
-            tunimpl.reset(getCoreBuilderInstance());
-        }
-
-        tunimpl->add_bypass_route(addr, ipv6);
-
-        signal.LogInfo("Add bypass route to " + addr + " ipv6: " + (ipv6 ? "yes" : "no"));
-    }
-
     void addIPAddress(GVariant* params)
     {
         GLibUtils::checkParams(__func__, params, "(susb)", 4);
@@ -357,11 +334,7 @@ public:
 
             GVariant *retval = nullptr;
 
-            if ("AddBypassRoute" == method_name)
-            {
-                addBypassRoute(params);
-            }
-            else if ("AddIPAddress" == method_name)
+            if ("AddIPAddress" == method_name)
             {
                 // Adds a single IPv4 address to the virtual device.  If
                 // broadcast has not been provided, calculate it if needed.
@@ -678,8 +651,6 @@ public:
                                     obj_path, intf_name, property_name,
                                     "Invalid property");
     }
-
-
 
 
 private:

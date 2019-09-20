@@ -96,7 +96,7 @@ namespace NetCfgProxy
     }
 
 
-    bool Manager::ProtectSocket(int socket, const std::string & remote, bool ipv6)
+    bool Manager::ProtectSocket(int socket, const std::string& remote, bool ipv6, const std::string& devpath)
     {
         if (!CheckObjectExists())
         {
@@ -106,11 +106,24 @@ namespace NetCfgProxy
 
         bool ret;
         try {
-            GVariant *res = CallSendFD("ProtectSocket",
-                                       g_variant_new("(sb)",
-                                                     remote.c_str(),
-                                                     ipv6),
-                                       socket);
+            // If protecting socked fd is disabled, we get
+            // a -1 for the socket
+            GVariant* res;
+            if (socket < 0)
+            {
+                 res = Call("ProtectSocket",
+                            g_variant_new("(sbo)",
+                                          remote.c_str(),
+                                          ipv6,
+                                          devpath.c_str()));
+            } else {
+                  res = CallSendFD("ProtectSocket",
+                                   g_variant_new("(sbo)",
+                                                 remote.c_str(),
+                                                 ipv6,
+                                                 devpath.c_str()),
+                                   socket);
+            }
             GLibUtils::checkParams(__func__, res, "(b)", 1);
             ret = GLibUtils::GetVariantValue<bool>(g_variant_get_child_value(res, 0));
             g_variant_unref(res);

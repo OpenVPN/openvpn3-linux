@@ -22,6 +22,7 @@ node /net/openvpn/v3/netcfg {
       FetchInterfaceList(out ao device_paths);
       ProtectSocket(in  s remote,
                     in  b ipv6,
+                    in  o device_path,
                     out b succeded);
       NotificationSubscribe(in  u filter);
       NotificationUnsubscribe(in  s optional_subscriber);
@@ -69,11 +70,13 @@ by command line arguments to the netcfg service process.
 
 This method also
 
-| Direction | Name         | Type        | Description                                                |
-|-----------|--------------|-------------|------------------------------------------------------------|
+| Direction | Name         | Type        | Description                                                           |
+|-----------|--------------|-------------|-----------------------------------------------------------------------|
 | In        |              | fdlist      | File descriptor of the socket to protect [1]. Only the first provided fd is being processed. |
-| In        | remote       | string      | The remote host this socket is connected to.               |
-| In        | ipv6         | boolean     | The initial process ID (PID) of the VPN backend client.    |
+| In        | remote       | string      | The remote host this socket is connected to.                          |
+| In        | ipv6         | boolean     | The initial process ID (PID) of the VPN backend client.               |
+| In        | device_path  | object path | If an tun device is already opened, ignore routes from this device    |
+
 
 [1] Unix file descriptors that are passed are not in the D-Bus method signature
 
@@ -166,8 +169,6 @@ D-Bus destination: `net.openvpn.v3.netcfg` \- Object path: `/net/openvpn/v3/netc
 node /net/openvpn/v3/netcfg/${UNIQUE_ID} {
 interface net.openvpn.v3.netcfg {
     methods:
-      AddBypassRoute(in  s ip_address,
-                   in  b ipv6);
       AddIPAddress(in  s ip_address,
                    in  u prefix,
                    in  s gateway,
@@ -202,19 +203,6 @@ interface net.openvpn.v3.netcfg {
   };
 };
 ```
-
-### Method: `net.openvpn.v3.netcfg.AddBypassRoute`
-
-Excludes traffic to remote from tunnel routing. This is the first method called by client
-service before establishing connection and before reconnect.
-
-#### Arguments
-
-| Direction | Name         | Type        | Description                                                                  |
-|-----------|--------------|-------------|------------------------------------------------------------------------------|
-| In        | ip_address   | string      | The IP address in string representation (e.g. 198.51.100.12 or 2001:db8::23) |
-| In        | ipv6         | ipv6        | Is the new IP address IPv6 or IPv4                                           |
-
 
 ### Method: `net.openvpn.v3.netcfg.AddIPAddress`
 

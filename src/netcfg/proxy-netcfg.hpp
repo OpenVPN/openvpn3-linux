@@ -62,7 +62,7 @@ namespace NetCfgProxy
 
         Device* getVirtualInterface(const std::string & path);
         std::vector<std::string> FetchInterfaceList();
-        bool ProtectSocket(int socket, const std::string& remote, bool ipv6);
+        bool ProtectSocket(int socket, const std::string& remote, bool ipv6, const std::string& devpath);
 
         void NotificationSubscribe(NetCfgChangeType filter_flags);
         void NotificationUnsubscribe(const std::string& subscriber);

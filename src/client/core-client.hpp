@@ -118,7 +118,7 @@ public:
     CoreVPNClient(GDBusConnection *dbusconn, BackendSignals *signal,
                   RequiresQueue *userinputq, const std::string session_token)
             : CLIENTBASECLASS(dbusconn, signal, session_token),
-              disabled_socket_protect(false),
+              disabled_socket_protect_fd(false),
               signal(signal),
               userinputq(userinputq),
               failed_signal_sent(false),
@@ -129,7 +129,7 @@ public:
 
     void disable_socket_protect(bool val)
     {
-        disabled_socket_protect = val;
+        disabled_socket_protect_fd = val;
     }
 
 
@@ -205,7 +205,7 @@ protected:
 private:
     std::string dc_cookie;
     unsigned long evntcount = 0;
-    bool disabled_socket_protect;
+    bool disabled_socket_protect_fd;
     BackendSignals *signal;
     RequiresQueue *userinputq;
     std::mutex event_mutex;
@@ -214,19 +214,13 @@ private:
 
     bool socket_protect(int socket, std::string remote, bool ipv6) override
     {
-        bool ret1 = CLIENTBASECLASS::add_bypass_route(remote, ipv6);
-        bool ret2 = true;
-
-        if (disabled_socket_protect)
+        if (disabled_socket_protect_fd)
         {
-            signal->LogVerb2("Socket Protect has been disabled");
+            socket = -1;
+            signal->LogVerb2("Socket Protect with FD has been disabled");
         }
-        else
-        {
-            ret2 = CLIENTBASECLASS::socket_protect(socket, remote, ipv6);
-        }
+        return CLIENTBASECLASS::socket_protect(socket, remote, ipv6);
 
-        return ret1 && ret2;
     }
 
 

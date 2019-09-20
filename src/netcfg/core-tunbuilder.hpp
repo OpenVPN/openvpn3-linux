@@ -40,7 +40,6 @@ namespace openvpn
     public:
         virtual int establish(NetCfgDevice& netCfgDevice) = 0;
         virtual void teardown(const NetCfgDevice& netCfgDevice, bool disconnect) = 0;
-        virtual void add_bypass_route(const std::string& addr, bool ipv6) = 0;
     };
 
     // Forward declaration to allow friend
@@ -61,6 +60,15 @@ namespace openvpn
      * @param somark the value to set SO_MARK to
      */
     void protect_socket_somark(int fd, const std::string& remote, int somark);
+
+    /**
+     * Function that adds a host route
+     * @param tun_intf Name of the tun interface, will be ignore for calculating the host route
+     * @param fd Socket for the SO_MARK to set
+     * @param remote remote host to connect to (for logging only)
+     */
+    void protect_socket_hostroute(const std::string& tun_intf, const std::string& remote, bool ipv6);
+
 
     // Workaround to avoid circular dependencies
     CoreTunbuilder *getCoreBuilderInstance();

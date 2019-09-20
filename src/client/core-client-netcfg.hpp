@@ -71,9 +71,10 @@ public:
     bool tun_builder_new() override
     {
         // Cleanup the old things
+        tun_builder_teardown(true);
         networks.clear();
 
-        return true;
+        return create_device();
     }
 
 
@@ -274,18 +275,15 @@ public:
         return true;
     }
 
-    bool add_bypass_route(const std::string& addr, bool ipv6)
-    {
-        // this method is called before establishing connection, so here
-        // we ensure that device is created and bypass route added
-        return create_device() && device->AddBypassRoute(addr, ipv6);
-    }
-
     bool socket_protect(int socket, std::string remote, bool ipv6) override
     {
-        return netcfgmgr.ProtectSocket(socket, remote, ipv6);
+        std::string devpath = "/"; // Object paths cannot be empty
+        if (device)
+        {
+            devpath = device->GetProxyPath();
+        }
+        return netcfgmgr.ProtectSocket(socket, remote, ipv6, devpath);
     }
-
 
     bool tun_builder_set_session_name(const std::string& name) override
     {
