@@ -95,6 +95,8 @@ public:
                           << "          <arg type='o' direction='in' name='device_path' />"
                           << "          <arg type='b' direction='out' name='succeded'/>"
                           << "        </method>"
+                          << "        <method name='Cleanup'>"
+                          << "        </method>"
                           << NetCfgSubscriptions::GenIntrospection("NotificationSubscribe",
                                                                    "NotificationUnsubscribe",
                                                                    "NotificationSubscriberList")
@@ -111,7 +113,9 @@ public:
     }
 
 
-    ~NetCfgServiceObject() = default;
+    ~NetCfgServiceObject() override
+    {
+    }
 
 
     /**
@@ -191,7 +195,12 @@ public:
             }
             else if ("ProtectSocket" == method_name)
             {
-                retval = protect_socket(conn, invoc, params);
+                retval = protect_socket(GetPID(sender), conn, invoc, params);
+            }
+            else if ("Cleanup" == method_name)
+            {
+                cleanup_process_resources(GetPID(sender), conn);
+                retval = g_variant_new("()");
             }
             else if ("NotificationSubscribe" == method_name)
             {
@@ -328,7 +337,9 @@ public:
                                                 {
                                                     self->remove_device_object(dev_path);
                                                 },
-                                                creds.GetUID(sender), dev_path,
+                                                creds.GetUID(sender),
+                                                creds.GetPID(sender),
+                                                dev_path,
                                                 dev_name, resolver, subscriptions.get(),
                                                 signal.GetLogLevel(),
                                                 signal.GetLogWriter(),
@@ -342,7 +353,9 @@ public:
 
         signal.LogInfo(std::string("Virtual device '") + dev_name + "'"
                        + " registered on " + dev_path
-                       + " (owner uid " + std::to_string(creds.GetUID(sender)) + ")");
+                       + " (owner uid " + std::to_string(creds.GetUID(sender))
+                       + ", owner pid "+ std::to_string(creds.GetPID(sender)) + ")");
+
         return dev_path;
     }
 
@@ -505,6 +518,33 @@ private:
 
 
     /**
+     * Clean up function that removes all objects that are still around from
+     * a process like registred virtual devices and socket protections
+     */
+    void cleanup_process_resources(pid_t pid, GDBusConnection* conn)
+    {
+        // Just normal loop here, since we delete from the container while modifying it
+        for (auto it = devices.cbegin(); it != devices.cend(); )
+        {
+            auto tundev = it->second;
+            if (tundev->getCreatorPID() == pid)
+            {
+                // The teardown method will also call to the erase method which will
+                // then be a noop but doing the erase here gets us a valid next iterator
+                it = devices.erase(it);
+                tundev->teardown(conn);
+                delete tundev;
+            }
+            else
+            {
+                // normal loop iterate
+                it++;
+            }
+        }
+        openvpn::cleanup_protected_sockets(pid);
+    }
+
+    /**
      * Callback function used by NetCfgDevice instances to remove
      * its object path from the main registry of device objects
      *
@@ -530,7 +570,7 @@ private:
      *          This will always be a boolean true value on success.  In case
      *          of errors, a NetCfgException is thrown.
      */
-    GVariant* protect_socket(GDBusConnection *conn,
+    GVariant* protect_socket(pid_t creator_pid, GDBusConnection *conn,
                              GDBusMethodInvocation *invoc,
                              GVariant *params)
     {
@@ -563,8 +603,22 @@ private:
             }
         }
 
+        // If the devpath is valid we get the device name from it to ignore it in the host route to avoid
+        // routing loops
 
+        std::string tunif;
+        const auto& it = devices.find(dev_path);
+        if (it != devices.end())
+        {
+            const auto& dev = *it->second;
+            tunif = dev.get_device_name();
+        }
 
+        signal.LogInfo(std::string("Socket protect called for socket ")
+                           + std::to_string(fd)
+                           + ", remote: '" + remote
+                           + "', tun: '" + tunif
+                           + "', ipv6: " + (ipv6 ? "yes" : "no"));
 
         if (options.so_mark >= 0)
         {
@@ -584,14 +638,8 @@ private:
         }
         if (options.redirect_method == RedirectMethod::HOST_ROUTE)
         {
-            std::string dev_name;
-            const auto& it = devices.find(dev_path);
-            if (it != devices.end())
-            {
-                const auto& dev = *it->second;
-                dev_name = dev.get_device_name();
-            }
-            openvpn::protect_socket_hostroute(dev_name, remote, ipv6);
+            openvpn::cleanup_protected_sockets(creator_pid);
+            openvpn::protect_socket_hostroute(tunif, remote, ipv6, creator_pid);
         }
         close(fd);
         return g_variant_new("(b)", true);

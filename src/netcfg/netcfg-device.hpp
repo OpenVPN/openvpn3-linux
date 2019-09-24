@@ -2,7 +2,7 @@
 //
 //  Copyright (C) 2018 - 2020  OpenVPN, Inc. <sales@openvpn.net>
 //  Copyright (C) 2018 - 2020  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018 - 2019  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2018 - 2020  Arne Schwabe <arne@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -140,7 +140,8 @@ class NetCfgDevice : public DBusObject,
 public:
     NetCfgDevice(GDBusConnection *dbuscon,
                  std::function<void()> remove_callback,
-                 const uid_t creator, const std::string& objpath,
+                 const uid_t creator, const pid_t creator_pid,
+                 const std::string& objpath,
                  std::string devname,
                  DNS::SettingsManager::Ptr resolver,
                  NetCfgSubscriptions::Ptr subscriptions,
@@ -154,7 +155,8 @@ public:
           mtu(1500), txqueuelen(0),
           signal(dbuscon, LogGroup::NETCFG, objpath, logwr),
           resolver(resolver),
-          options(std::move(options))
+          options(std::move(options)),
+          creatorPid(creator_pid)
     {
         signal.SetLogLevel(log_level);
 
@@ -231,6 +233,15 @@ public:
     std::string get_device_name() const noexcept
     {
         return device_name;
+    }
+
+    /**
+     * Return the pid of the process that created this device
+     * @return pid of the process that created this object
+     */
+    pid_t getCreatorPID()
+    {
+        return creatorPid;
     }
 
 
@@ -444,28 +455,11 @@ public:
 
                 CheckOwnerAccess(sender);
 
-                if (resolver)
-                {
-                    std::stringstream details;
-                    details << dnsconfig;
-
-                    signal.Debug(device_name,
-                                 "Removing DNS/resolver settings: "
-                                 + details.str());
-                    dnsconfig->PrepareRemoval();
-                    resolver->ApplySettings(&signal);
-                    modified = false;
-                }
-
                 std::string sender_name = lookup_username(GetUID(sender));
                 signal.LogVerb1("Device '" + device_name + "' was removed by "
                                + sender_name);
-                RemoveObject(conn);
-                if (tunimpl) {
-                    tunimpl->teardown(*this, true);
-                    tunimpl.reset();
-                }
 
+                teardown(conn);
                 g_dbus_method_invocation_return_value(invoc, nullptr);
                 delete this;
                 return;
@@ -500,6 +494,30 @@ public:
         }
     }
 
+
+    void teardown(GDBusConnection *conn)
+    {
+        if (resolver)
+        {
+            std::stringstream details;
+            details << dnsconfig;
+
+            signal.Debug(device_name,
+                         "Removing DNS/resolver settings: "
+                         + details.str());
+            dnsconfig->PrepareRemoval();
+            resolver->ApplySettings(&signal);
+            modified = false;
+        }
+
+        if (tunimpl)
+        {
+            tunimpl->teardown(*this, true);
+            tunimpl.reset();
+        }
+
+        RemoveObject(conn);
+    }
 
     /**
      *   Callback which is used each time a NetCfgServiceObject D-Bus property
@@ -678,6 +696,7 @@ private:
     NetCfgOptions options;
     bool active = false;
 
+    pid_t creatorPid;
 
     /**
      *  Validate that the sender is allowed to do change the configuration

@@ -66,9 +66,20 @@ namespace openvpn
      * @param tun_intf Name of the tun interface, will be ignore for calculating the host route
      * @param fd Socket for the SO_MARK to set
      * @param remote remote host to connect to (for logging only)
+     * @param remove_cmds Return the commands to undo the protect command
+     *
+     * The remove_cmds is a parameter instead of a return value since the move only
+     * semantics of ActionList prevent returning it without wrapping it in a smartpointer
      */
-    void protect_socket_hostroute(const std::string& tun_intf, const std::string& remote, bool ipv6);
+    void protect_socket_hostroute(const std::string& tun_intf, const std::string& remote, bool ipv6,
+                                  pid_t pid);
 
+
+    /**
+     * Remove all protected sockets that belong to a certain pid
+     * @param pid the pid for which the socket protection to remove for
+     */
+    void cleanup_protected_sockets(pid_t pid);
 
     // Workaround to avoid circular dependencies
     CoreTunbuilder *getCoreBuilderInstance();

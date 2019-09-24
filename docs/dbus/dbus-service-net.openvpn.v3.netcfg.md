@@ -80,6 +80,9 @@ This method also
 
 [1] Unix file descriptors that are passed are not in the D-Bus method signature
 
+## Method: `net.openvpn.v3.netcfg.Cleanup`
+
+This method will remove/cleanup any resources still held by the calling PID.
 
 ### Method: `net.openvpn.v3.netcfg.NotificationSubscribe`
 

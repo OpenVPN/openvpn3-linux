@@ -287,20 +287,35 @@ namespace openvpn
         }
     }
 
-    ActionList::Ptr socket_protect_remove_commands;
-    void protect_socket_hostroute(const std::string& tun_intf, const std::string& remote, bool ipv6)
-    {
-        // TODO: For now we assume that the will only have one socket it needs to protect and remove
-        // the old protection when we get a new one
-        if (socket_protect_remove_commands)
-            socket_protect_remove_commands->execute_log();
 
-        socket_protect_remove_commands.reset(new ActionList());
+    // Although this is not the cleanest approach the include of the action.hpp header
+    // breaks if it is done from core-tunbuilder.hpp, so we keep the management of this list here
+    std::map<pid_t, ActionList> protected_sockets;
+
+    void cleanup_protected_sockets(pid_t pid)
+    {
+        // Execute remove commands for protected sockets
+        auto psocket = protected_sockets.find(pid);
+        if (psocket!= protected_sockets.end())
+        {
+            psocket->second.execute_log();
+            protected_sockets.erase(psocket);
+        }
+    }
+
+    void protect_socket_hostroute(const std::string& tun_intf, const std::string& remote, bool ipv6, pid_t pid)
+    {
         std::vector<IP::Route> rtvec;
         ActionList add_cmds;
 
+
+        // For now we assume that the will only have one socket it needs to protect and remove
+        // the old protection when we get a new one. This can later be extended to supported multiple
+        // sockets per pid if we need to
+        protected_sockets.emplace(std::piecewise_construct, std::make_tuple(pid), std::make_tuple());
+
         OPENVPN_LOG("Protecting socket to '" + remote + " by adding host route");
-        TUN_LINUX::TunMethods::add_bypass_route(tun_intf, remote, ipv6, &rtvec, add_cmds, *socket_protect_remove_commands);
+        TUN_LINUX::TunMethods::add_bypass_route(tun_intf, remote, ipv6, &rtvec, add_cmds, protected_sockets[pid]);
 
         add_cmds.execute_log();
     }

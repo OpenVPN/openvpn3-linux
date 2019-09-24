@@ -135,6 +135,29 @@ namespace NetCfgProxy
         return ret;
     }
 
+    void Manager::Cleanup()
+    {
+        if (!CheckObjectExists())
+        {
+            throw NetCfgProxyException("ProtectSocket",
+                                       "net.openvpn.v3.netcfg service unavailable");
+        }
+        try
+        {
+            Call("Cleanup");
+        }
+        catch (NetCfgProxyException&)
+        {
+            throw;
+        }
+        catch (std::exception& excp)
+        {
+            throw NetCfgProxyException("Cleanup",
+                                       excp.what());
+        }
+
+    }
+
 
     std::vector<std::string> Manager::FetchInterfaceList()
     {

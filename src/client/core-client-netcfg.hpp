@@ -64,6 +64,8 @@ public:
 
     ~NetCfgTunBuilder()
     {
+        // Explicitly call cleanup
+        netcfgmgr.Cleanup();
         delete signal;
     }
 #endif
@@ -311,7 +313,7 @@ public:
     }
 
 
-protected:;
+protected:
     bool disabled_dns_config;
 
 
