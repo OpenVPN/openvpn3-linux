@@ -280,6 +280,10 @@ private:
         {
             signal->LogInfo(ev.info);
         }
+        else if ("COMPRESSION_ENABLED" == ev.name)
+        {
+            signal->LogCritical(ev.info);
+        }
         else if ("GET_CONFIG" == ev.name)
         {
             signal->LogVerb2("Retrieving configuration from server");
