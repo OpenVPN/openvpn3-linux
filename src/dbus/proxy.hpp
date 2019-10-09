@@ -219,6 +219,17 @@ namespace openvpn
             }
         }
 
+        /**
+         *  Retrieve the object path this proxy is accessing
+         *
+         * @return  Returns a std::string of the D-Bus object path
+         *          this proxy is using.
+         */
+        std::string GetProxyPath() const
+        {
+            return object_path;
+        }
+
 
         void SetGDBusCallFlags(GDBusCallFlags flags)
         {
