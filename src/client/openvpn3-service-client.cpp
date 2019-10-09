@@ -142,6 +142,8 @@ public:
                           << "        </signal>"
                           << "        <property type='a{sx}' name='statistics' access='read'/>"
                           << "        <property type='(uus)' name='status' access='read'/>"
+                          << "        <property type='o' name='device_path' access='read'/>"
+                          << "        <property type='s' name='device_name' access='read'/>"
                           <<  "    </interface>"
                           <<  "</node>";
         ParseIntrospectionXML(introspection_xml);
@@ -633,6 +635,14 @@ public:
             else if ("status" == property_name)
             {
                 return signal.GetLastStatusChange();
+            }
+            else if ("device_path" == property_name)
+            {
+                return g_variant_new_string((vpnclient ? vpnclient->netcfg_get_device_path().c_str() : ""));
+            }
+            else if ("device_name" == property_name)
+            {
+                return g_variant_new_string((vpnclient ? vpnclient->netcfg_get_device_name().c_str() : ""));
             }
             else if ("log_level" == property_name)
             {
