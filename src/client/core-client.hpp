@@ -77,6 +77,16 @@ public:
         return session_name;
     }
 
+    std::string netcfg_get_device_path()
+    {
+        return "";
+    }
+
+    std::string netcfg_get_device_name()
+    {
+        return "";
+    }
+
 protected:
     bool disabled_dns_config;
 

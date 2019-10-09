@@ -301,7 +301,19 @@ public:
     }
 
 
-protected:
+    std::string netcfg_get_device_path()
+    {
+        return (device ? device->GetProxyPath() : "");
+    }
+
+
+    std::string netcfg_get_device_name()
+    {
+        return (device ? device->GetDeviceName() : "");
+    }
+
+
+protected:;
     bool disabled_dns_config;
 
 
