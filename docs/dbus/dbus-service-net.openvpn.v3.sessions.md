@@ -323,6 +323,8 @@ documentation](dbus-logging.md) for details on this signal.
 | status        | dictionary       | Read-only  | Contains the last processed StatusChange signal |
 | last_log      | dictionary       | Read-only  | Contains the last Log signal proxied from the backend process |
 | statistics    | dictionary       | Read-only  | Contains tunnel statistics |
+| device_path   | object path      | Read-only  | D-Bus object path to the net.openvpn.v3.netcfg device object related to this session |
+| device_name   | string           | Read-only  | Virtual network interface name used by this session |
 | config_path   | object path      | Read-only  | D-Bus object path to the configuration profile used |
 | backend_pid   | uint             | Read-only  | Process ID of the VPN backend client process |
 | restrict_log_access | boolean    | Read-Write | If set to true, only the session owner can modify receive_log_events and log_verbosity, otherwise all granted users can access the log settings |

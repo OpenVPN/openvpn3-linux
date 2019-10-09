@@ -504,6 +504,8 @@ public:
                           << "        <property type='(uus)' name='status' access='read'/>"
                           << "        <property type='a{sv}' name='last_log' access='read'/>"
                           << "        <property type='a{sx}' name='statistics' access='read'/>"
+                          << "        <property type='s' name='device_path' access='read'/>"
+                          << "        <property type='s' name='device_name' access='read'/>"
                           << "        <property type='o' name='config_path' access='read'/>"
                           << "        <property type='s' name='config_name' access='read'/>"
                           << "        <property type='s' name='session_name' access='read'/>"
@@ -1131,6 +1133,14 @@ public:
                             "Failed retrieving connection statistics");
                 ret = NULL;
             }
+        }
+        else if ("device_path" == property_name)
+        {
+            ret = be_proxy->GetProperty("device_path");
+        }
+        else if ("device_name" == property_name)
+        {
+            ret = be_proxy->GetProperty("device_name");
         }
         else if ("config_path" == property_name)
         {

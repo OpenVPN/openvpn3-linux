@@ -553,6 +553,17 @@ public:
     }
 
 
+    /**
+     *  Retrieve the network interface name used for this tunnel
+     *
+     * @return  Returns a std::string with the device name
+     */
+    std::string GetDeviceName() const
+    {
+        return GetStringProperty("device_name");
+    }
+
+
 private:
     /**
      * Simple wrapper for simple D-Bus method calls not requiring much
