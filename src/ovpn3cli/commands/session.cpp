@@ -505,20 +505,26 @@ static int cmd_sessions_list(ParsedArgs args)
 
         std::cout << "        Path: " << sessp << std::endl;
 
-        std::cout << "     Created: ";
+        std::string created;
         try
         {
             std::time_t sess_created = sprx.GetUInt64Property("session_created");
-            std::cout << std::asctime(std::localtime(&sess_created));
+            created = std::asctime(std::localtime(&sess_created));
         }
         catch (DBusException&)
         {
-            std::cout << "(Not available)" << std::endl;
+            std::cout << "(Not available)";
         }
-
-        std::cout << "       Owner: " << owner << std::setw(43 - owner.size())
-                  << std::setfill(' ') << " PID: "
+        std::cout << "     Created: " << created.substr(0, created.size()-1)
+                  << std::setw(47 - created.size()) << std::setfill(' ')
+                  << " PID: "
                   << (be_pid > 0 ? std::to_string(be_pid) : "(not available)")
+                  << std::endl;
+
+
+        std::string devname = sprx.GetDeviceName();
+        std::cout << "       Owner: " << owner
+                  << std::setw(44 - devname.size()) << "Device: " << devname
                   << std::endl;
 
         std::string cfgname = sprx.GetStringProperty("config_name");
