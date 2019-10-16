@@ -447,7 +447,11 @@ public:
             g_variant_get(r, "{sx}", &key, &val);
             ret.push_back(ConnectionStatDetails(std::string(key), val));
             g_variant_unref(r);
+            g_free(key);
         }
+        g_variant_iter_free(stats_ar);
+        g_variant_unref(statsprops);
+
         return ret;
     }
 
