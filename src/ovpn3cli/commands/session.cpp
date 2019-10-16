@@ -121,19 +121,21 @@ static std::string statistics_json(ConnectionStats& stats)
  */
 static int cmd_session_stats(ParsedArgs args)
 {
-    if (!args.Present("path") && !args.Present("config"))
+    if (!args.Present("path") && !args.Present("config")
+        && !(args.Present("interface")))
     {
         throw CommandException("session-stats",
-                               "Missing required session path or config name");
+                               "Missing required session path, config "
+                               "or interface name");
     }
 
     try
     {
+        OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
+                                     OpenVPN3DBus_rootp_sessions);
         std::string sesspath = "";
         if (args.Present("config"))
         {
-            OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
-                                         OpenVPN3DBus_rootp_sessions);
             std::vector<std::string> paths = sessmgr.LookupConfigName(args.GetValue("config", 0));
             if (0 == paths.size())
             {
@@ -148,6 +150,17 @@ static int cmd_session_stats(ParsedArgs args)
                                        "configuration profile name was found.");
             }
             sesspath = paths.at(0);
+        }
+        else if (args.Present("interface"))
+        {
+            try
+            {
+                sesspath = sessmgr.LookupInterface(args.GetValue("interface", 0));
+            }
+            catch (DBusException& excp)
+            {
+                throw CommandException("session-stats", excp.GetRawError());
+            }
         }
         else
         {
@@ -189,6 +202,10 @@ SingleCommand::Ptr prepare_command_session_stats()
                    "Alternative to --path, where configuration profile name "
                    "is used instead",
                    arghelper_config_names_sessions);
+    cmd->AddOption("interface", 'I', "INTERFACE", true,
+                   "Alternative to --path, where tun interface name is used "
+                   "instead",
+                   arghelper_managed_interfaces);
     cmd->AddOption("json", 'j', "Dump the configuration in JSON format");
 
     return cmd;
@@ -654,7 +671,7 @@ static int cmd_session_manage(ParsedArgs args)
 
     // Only --cleanup does NOT depend on --path or --config
     if (!args.Present("path") && !args.Present("config")
-        && (mode ^ mode_cleanup) > 0)
+        && !args.Present("interface") && (mode ^ mode_cleanup) > 0)
     {
         throw CommandException("session-manage",
                                "Missing required session path or config name");
@@ -663,11 +680,11 @@ static int cmd_session_manage(ParsedArgs args)
 
     try
     {
+        OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
+                                     OpenVPN3DBus_rootp_sessions);
+
         if (mode_cleanup == mode)
         {
-            OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
-                                         OpenVPN3DBus_rootp_sessions);
-
             // Loop through all open sessions and check if they have a valid
             // status available.  A valid status means it is not empty nor
             // unset.  If the status can't be retrieved, it is also
@@ -737,8 +754,6 @@ static int cmd_session_manage(ParsedArgs args)
         std::string sesspath = "";
         if (args.Present("config"))
         {
-            OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
-                                         OpenVPN3DBus_rootp_sessions);
             std::vector<std::string> paths = sessmgr.LookupConfigName(args.GetValue("config", 0));
             if (0 == paths.size())
             {
@@ -753,6 +768,10 @@ static int cmd_session_manage(ParsedArgs args)
                                        "configuration profile name was found.");
             }
             sesspath = paths.at(0);
+        }
+        else if (args.Present("interface"))
+        {
+            sesspath = sessmgr.LookupInterface(args.GetValue("interface", 0));
         }
         else
         {
@@ -834,6 +853,10 @@ SingleCommand::Ptr prepare_command_session_manage()
                    "Alternative to --path, where configuration profile name "
                    "is used instead",
                    arghelper_config_names_sessions);
+    cmd->AddOption("interface", 'I', "INTERFACE", true,
+                   "Alternative to --path, where tun interface name is used "
+                   "instead",
+                   arghelper_managed_interfaces);
     cmd->AddOption("pause", 'P', "Pauses the VPN session");
     cmd->AddOption("resume", 'R', "Resumes a paused VPN session");
     cmd->AddOption("restart", "Disconnect and reconnect a running VPN session");
@@ -868,7 +891,8 @@ SingleCommand::Ptr prepare_command_session_manage()
 static int cmd_session_acl(ParsedArgs args)
 {
     int ret = 0;
-    if (!args.Present("path") && !args.Present("config"))
+    if (!args.Present("path") && !args.Present("config")
+        && !args.Present("interface"))
     {
         throw CommandException("session-acl",
                                "Missing required session path or config name");
@@ -887,11 +911,12 @@ static int cmd_session_acl(ParsedArgs args)
 
     try
     {
+        OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
+                                     OpenVPN3DBus_rootp_sessions);
+
         std::string sesspath = "";
         if (args.Present("config"))
         {
-            OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
-                                         OpenVPN3DBus_rootp_sessions);
             std::vector<std::string> paths = sessmgr.LookupConfigName(args.GetValue("config", 0));
             if (0 == paths.size())
             {
@@ -906,6 +931,10 @@ static int cmd_session_acl(ParsedArgs args)
                                        "configuration profile name was found.");
             }
             sesspath = paths.at(0);
+        }
+        else if (args.Present("interface"))
+        {
+            sesspath = sessmgr.LookupInterface(args.GetValue("interface", 0));
         }
         else
         {
@@ -1096,6 +1125,10 @@ SingleCommand::Ptr prepare_command_session_acl()
                    "Alternative to --path, where configuration profile name "
                    "is used instead",
                    arghelper_config_names_sessions);
+    cmd->AddOption("interface", 'I', "INTERFACE", true,
+                   "Alternative to --path, where tun interface name is used "
+                   "instead",
+                   arghelper_managed_interfaces);
     cmd->AddOption("show", 's',
                    "Show the current access control lists");
     cmd->AddOption("grant", 'G', "<UID | username>", true,

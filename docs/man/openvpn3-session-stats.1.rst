@@ -39,6 +39,10 @@ OPTIONS
                 configuration name which was active when the session was
                 started.
 
+-I INTERFACE, --interface INTERFACE
+                Can be used instead of ``--path`` where the tun interface name
+                managed by OpenVPN 3 is given instead.
+
 -j, --json
                 Format the output as JSON instead of formatted plain text.
 

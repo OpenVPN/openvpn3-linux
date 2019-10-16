@@ -39,6 +39,10 @@ OPTIONS
                 started.  Available configuration names can be found via
                 ``openvpn3 sessions-list``.
 
+-I INTERFACE, --interface INTERFACE
+                Can be used instead of ``--path`` where the tun interface name
+                managed by OpenVPN 3 is given instead.
+
 -P, --pause
                 Suspends/pauses the running VPN session.  This is not a
                 complete shutdown and can be used to temporarily disconnect with

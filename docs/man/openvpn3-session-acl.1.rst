@@ -45,6 +45,10 @@ OPTIONS
                 started.  Available configuration names can be found via
                 ``openvpn3 sessions-list``.
 
+-I INTERFACE, --interface INTERFACE
+                Can be used instead of ``--path`` where the tun interface name
+                managed by OpenVPN 3 is given instead.
+
 -s, --show
                 Shows the currently active ACL.
 
