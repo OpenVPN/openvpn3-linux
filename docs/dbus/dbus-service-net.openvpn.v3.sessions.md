@@ -18,8 +18,11 @@ node /net/openvpn/v3/sessions {
       NewTunnel(in  o config_path,
                 out o session_path);
       FetchAvailableSessions(out ao paths);
+      FetchManagedInterfaces(out as devices);
       LookupConfigName(in  s config_name,
                        out ao session_paths);
+      LookupInterface(in  s device_name,
+                      out o session_path);
       TransferOwnership(in  o path,
                         in  u new_owner_uid);
     signals:
@@ -57,6 +60,18 @@ caller is granted access to.
 | Out       | paths       | object paths | An array of object paths to accessible session objects |
 
 
+### Method: `net.openvpn3.v3.sessions.FetchManagedInterfaces`
+
+This method will return an array of strings containing the virtual network
+interfaces the session manager is handling.  Only interfaces the calling user
+is granted access to manage will be returned.
+
+#### Arguments
+| Direction | Name        | Type         | Description                             |
+|-----------|-------------|--------------|-----------------------------------------|
+| Out       | devices     | strings      | An array of strings of interface names  |
+
+
 ### Method: `net.openvpn.v3.sessions.LookupConfigName`
 
 This method will return an array of paths to session objects the
@@ -70,6 +85,19 @@ started.
 |-----------|--------------|--------------|-----------------------------------------------------------------------|
 | In        | config_name  | string       | String containing the configuration profile name to lookup            | 
 | Out       | config_paths | object paths | An array of object paths to accessible sessions objects               |
+
+
+### Method: `net.openvpn.v3.sessions.LookupInterface`
+
+This method will return the D-Bus path to session object related to the
+virtual network interface name being looked up.  This method will also return
+paths to interfaces not managed by the user.
+
+#### Arguments
+| Direction | Name         | Type         | Description                                                   |
+|-----------|--------------|--------------|---------------------------------------------------------------|
+| In        | device_name  | string       | String containing the interface name to lookup                |
+| Out       | session_path | object path  | An object path to the session managed by the session manager  |
 
 
 ### Method: `net.openvpn3.v3.sessions.TransferOwnership`

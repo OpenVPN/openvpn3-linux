@@ -603,6 +603,23 @@ public:
 
 
     /**
+     *  Retrieve the device name used by the this session.
+     *
+     * @return Returns std::string containing the device string.  If the
+     *         connection to the backend process is not established, an
+     *         empty string is returned.
+     */
+    std::string GetDeviceName() const
+    {
+        if (!be_proxy)
+        {
+            return "";
+        }
+        return be_proxy->GetStringProperty("device_name");
+    }
+
+
+    /**
      *  Callback method called each time signals we have subscribed to
      *  occurs.  For the SessionObject, we care about these signals:
      *
@@ -1651,9 +1668,16 @@ public:
                           << "        <method name='FetchAvailableSessions'>"
                           << "          <arg type='ao' name='paths' direction='out'/>"
                           << "        </method>"
+                          << "        <method name='FetchManagedInterfaces'>"
+                          << "          <arg type='as' name='devices' direction='out'/>"
+                          << "        </method>"
                           << "        <method name='LookupConfigName'>"
                           << "           <arg type='s' name='config_name' direction='in'/>"
                           << "           <arg type='ao' name='session_paths' direction='out'/>"
+                          << "        </method>"
+                          << "        <method name='LookupInterface'>"
+                          << "           <arg type='s' name='device_name' direction='in'/>"
+                          << "           <arg type='o' name='session_path' direction='out'/>"
                           << "        </method>"
                           << "        <method name='TransferOwnership'>"
                           << "           <arg type='o' name='path' direction='in'/>"
@@ -1736,10 +1760,15 @@ public:
             // The backend object will remind "hidden" for the end-user
             g_dbus_method_invocation_return_value(invoc, g_variant_new("(o)", sesspath.c_str()));
         }
-        else if ("FetchAvailableSessions" == method_name)
+        else if ("FetchAvailableSessions" == method_name
+                || "FetchManagedInterfaces" == method_name)
         {
-            // Build up an array of object paths to available session objects
-            GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("ao"));
+            bool ret_iface = ("FetchManagedInterfaces" == method_name);
+
+            // Build up an array of object paths or device list of available
+            // session objects
+            GVariantBuilder *bld;
+            bld = g_variant_builder_new(G_VARIANT_TYPE(ret_iface ? "as" : "ao"));
             for (auto& item : session_objects)
             {
                 try {
@@ -1747,7 +1776,14 @@ public:
                     // session object.  If not, an exception is thrown
                     // and we will just ignore that exception and continue
                     item.second->CheckACL(sender);
-                    g_variant_builder_add(bld, "o", item.first.c_str());
+                    if (ret_iface)
+                    {
+                        g_variant_builder_add(bld, "s", item.second->GetDeviceName().c_str());
+                    }
+                    else
+                    {
+                        g_variant_builder_add(bld, "o", item.first.c_str());
+                    }
                 }
                 catch (DBusCredentialsException& excp)
                 {
@@ -1807,6 +1843,43 @@ public:
                 }
             }
             g_dbus_method_invocation_return_value(invoc, GLibUtils::wrapInTuple(found_paths));
+            return;
+        }
+        else if ("LookupInterface" == method_name)
+        {
+            gchar *iface_c = nullptr;
+            g_variant_get(params, "(s)", &iface_c);
+
+            if (nullptr == iface_c || strlen(iface_c) < 1)
+            {
+                GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.iface",
+                                                              "Invalid interface");
+                g_dbus_method_invocation_return_gerror(invoc, err);
+                g_error_free(err);
+                return;
+            }
+            std::string iface(iface_c);
+            g_free(iface_c);
+
+            GVariant *ret = nullptr;
+            for (const auto& item : session_objects)
+            {
+                if (item.second->GetDeviceName() == iface)
+                {
+                    ret = g_variant_new("(o)", item.first.c_str());
+                    break;
+                }
+            }
+
+            if (nullptr == ret)
+            {
+                GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.iface",
+                                                              "Interface not found");
+                g_dbus_method_invocation_return_gerror(invoc, err);
+                g_error_free(err);
+                return;
+            }
+            g_dbus_method_invocation_return_value(invoc, ret);
             return;
         }
         else if ("TransferOwnership" == method_name)
