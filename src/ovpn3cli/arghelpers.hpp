@@ -50,6 +50,12 @@ std::string arghelper_config_names();
  */
 std::string arghelper_session_paths();
 
+/**
+ * Retrieves a list of managed virtual interfaces
+ *
+ * @return std::string with all available paths, each separated by space
+ */
+std::string arghelper_managed_interfaces();
 
 /**
  * Retrieves a list of all available configuration profile names for

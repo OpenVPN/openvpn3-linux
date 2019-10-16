@@ -123,6 +123,22 @@ std::string arghelper_session_paths()
 }
 
 
+std::string arghelper_managed_interfaces()
+{
+    OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_sessions);
+
+    std::stringstream res;
+    for (const auto& dev : sessmgr.FetchManagedInterfaces())
+    {
+        if (dev.empty())
+        {
+            continue;
+        }
+        res << dev << " ";
+    }
+    return res.str();
+}
+
 /**
  * Retrieves a list of all available configuration profile names for
  * currently running sessions.
