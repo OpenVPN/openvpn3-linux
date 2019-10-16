@@ -197,6 +197,30 @@ public:
     }
 
 
+    std::vector<std::string> FetchManagedInterfaces()
+    {
+        GVariant *res = Call("FetchManagedInterfaces");
+        if (nullptr == res)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
+                                "Failed to retrieve managed interfaces");
+        }
+
+        GVariantIter *device_list = nullptr;
+        g_variant_get(res, "(as)", &device_list);
+
+        GVariant *device = nullptr;
+        std::vector<std::string> ret;
+        while ((device = g_variant_iter_next_value(device_list)))
+        {
+            ret.push_back(std::string(g_variant_get_string(device, nullptr)));
+            g_variant_unref(device);
+        }
+        g_variant_unref(res);
+        g_variant_iter_free(device_list);
+        return ret;
+    }
+
     /**
      *  Lookup all sessions which where started with the given configuration
      *  profile name.
@@ -232,6 +256,36 @@ public:
         return ret;
     }
 
+
+    /**
+     *  Lookup the session path for a specific interface name.
+     *
+     * @param interface  std::string containing the interface name
+     *
+     * @return  Returns a std::string containing the D-Bus path to the session
+     *          this interface is related to.  If not found, and exception
+     *          is thrown.
+     */
+    std::string LookupInterface(std::string interface)
+    {
+        GVariant *res = Call("LookupInterface",
+                             g_variant_new("(s)", interface.c_str()));
+        if (nullptr == res)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
+                                "Failed to lookup interface");
+        }
+
+        std::string ret(GLibUtils::ExtractValue<std::string>(res, 0));
+        g_variant_unref(res);
+
+        if (ret.empty())
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
+                                "No managed interface found");
+        }
+        return ret;
+    }
 
     /**
      *  Makes the VPN backend client process start the connecting to the
