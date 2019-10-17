@@ -57,7 +57,7 @@ public:
         {
             (void) GetServiceVersion();
         }
-        catch (DBusProxyAccessDeniedException)
+        catch (DBusProxyAccessDeniedException&)
         {
             // Let this pass - service is available
         }
