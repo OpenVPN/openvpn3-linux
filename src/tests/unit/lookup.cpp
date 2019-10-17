@@ -43,8 +43,19 @@ TEST(common, lookup_tests)
     ASSERT_EQ(invalid, -1);
 
     std::string root_username = lookup_username(root);
-    std::string nobody_username = lookup_username(nobody);
     ASSERT_EQ(root_username, "root");
-    ASSERT_EQ(nobody_username, "nobody");
+
+    // The 'nobody' user is not available when building
+    // on SUSE via docker, so we expect a different output
+    // in this case.  -1 == 4294967295 as unsigned int.
+    std::string nobody_username = lookup_username(nobody);
+    if (nobody < 4294967295 || nobody > -1)
+    {
+        ASSERT_EQ(nobody_username, "nobody");
+    }
+    else
+    {
+        ASSERT_EQ(nobody_username, "(4294967295)");
+    }
 }
 } // namespace unittest
