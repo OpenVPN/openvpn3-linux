@@ -94,33 +94,14 @@ namespace openvpn {
             for(const auto& element : *this)
             {
                 std::string optname = element.ref(0);
-                std::string params;
-                bool opened = false;
-                for (int i = 1; i < element.size(); i++)
+                if (optparser_inline_file(optname))
                 {
-                    // FIXME: This *is* hacky.  But needed until
-                    // FIXME: ParseClientConfig have been revamped
-                    if (optname == "static-challenge")
-                    {
-                        if ((1 == i && !opened)
-                            || (i == element.size()-1 && opened))
-                        {
-                            params += "\"";
-                            if (opened)
-                            {
-                                params += " ";
-                            }
-                            opened = !opened;
-
-                        }
-                    }
-                    params += element.ref(i);
-                    if (!optparser_inline_file(optname))
-                    {
-                        params += " ";
-                    }
+                    cfgstr << optparser_mkline(optname, element.ref(1)) << std::endl;
                 }
-                cfgstr << optparser_mkline(optname, params);
+                else
+                {
+                    cfgstr << element.escape() << std::endl;
+                }
              }
 
             return cfgstr.str();
