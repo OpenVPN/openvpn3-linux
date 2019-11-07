@@ -204,6 +204,7 @@ noinst_PROGRAMS += \
 	src/tests/dbus/fetch-config2 \
 	src/tests/dbus/get-acl \
 	src/tests/dbus/get-config-overrides \
+	src/tests/dbus/get-service-version-prop \
 	src/tests/dbus/getlastlogevent \
 	src/tests/dbus/getlaststatus \
 	src/tests/dbus/getconnectionstats \
@@ -308,6 +309,9 @@ src_tests_dbus_get_acl_SOURCES = \
 src_tests_dbus_get_config_overrides_SOURCES = \
 	src/tests/dbus/get-config-overrides.cpp \
 	src/configmgr/overrides.cpp
+
+src_tests_dbus_get_service_version_prop_SOURCES = \
+	src/tests/dbus/get-service-version-prop.cpp
 
 src_tests_dbus_getlastlogevent_SOURCES = \
 	src/tests/dbus/getlastlogevent.cpp
