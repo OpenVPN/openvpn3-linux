@@ -1090,7 +1090,7 @@ private:
             }
             else if (override.override.key == "port-override")
             {
-                vpnconfig.serverOverride = override.strValue;
+                vpnconfig.portOverride = override.strValue;
                 valid_override = true;
             }
             else if (override.override.key == "proto-override")
