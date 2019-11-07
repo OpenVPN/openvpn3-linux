@@ -111,7 +111,8 @@ namespace NetCfgProxy
                                                      remote.c_str(),
                                                      ipv6),
                                        socket);
-            g_variant_get(res, "(b)", &ret);
+            GLibUtils::checkParams(__func__, res, "(b)", 1);
+            ret = GLibUtils::GetVariantValue<bool>(g_variant_get_child_value(res, 0));
             g_variant_unref(res);
         }
         catch (NetCfgProxyException&)
