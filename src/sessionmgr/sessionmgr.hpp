@@ -615,7 +615,15 @@ public:
         {
             return "";
         }
-        return be_proxy->GetStringProperty("device_name");
+        try
+        {
+            return be_proxy->GetStringProperty("device_name");
+        }
+        catch (const DBusException& excp)
+        {
+            // Ignore errors, just report an empty device name
+            return "";
+        }
     }
 
 
