@@ -326,7 +326,7 @@ static int cmd_session_start(ParsedArgs args)
                     catch (DBusException& excp)
                     {
                         std::string err(excp.what());
-                        if (err.find("Failed retrieveing property value for 'status'") != std::string::npos)
+                        if (err.find("Failed retrieving property value for 'status'") != std::string::npos)
                         {
                             throw CommandException("session-start",
                                                    "Failed to start session");

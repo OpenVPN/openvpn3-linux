@@ -523,7 +523,7 @@ namespace openvpn
                 }
 
                 std::stringstream errmsg;
-                errmsg << "Failed retrieveing property value for "
+                errmsg << "Failed retrieving property value for "
                        << "'" << property << "': " << error->message;
                 THROW_DBUSEXCEPTION("DBusProxy", errmsg.str());
             }            GVariant * ret = NULL;
