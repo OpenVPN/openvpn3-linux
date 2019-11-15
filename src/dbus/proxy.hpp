@@ -261,9 +261,9 @@ namespace openvpn
                 catch (DBusException& excp)
                 {
                     std::string err(excp.what());
-                    if (err.find("GDBus.Error:org.freedesktop.DBus.Error.UnknownMethod:") == std::string::npos)
+                    if (err.find("No such interface 'org.freedesktop.DBus.Properties' on object") == std::string::npos)
                     {
-                        if (err.find("DBus.Error.InvalidArgs: No such property 'version'") != std::string::npos)
+                        if ((err.find(": No such property 'version'") != std::string::npos))
                         {
                             return std::string("");  // Consider this as an unkwown version but not an error
                         }
@@ -396,6 +396,13 @@ namespace openvpn
                 }
                 catch (DBusException& excp)
                 {
+                    std::string err(excp.what());
+                    if ((err.find("Name \"") != std::string::npos)
+                        && err.find("\" does not exist") != std::string::npos)
+                    {
+                        return false;
+                    }
+
                     --attempts;
                     if (0 == attempts)
                     {
@@ -514,6 +521,7 @@ namespace openvpn
             }
             else if (!response && error)
             {
+                g_dbus_error_strip_remote_error(error);
                 std::string dbuserr(error->message);
 
                 if (dbuserr.find("GDBus.Error:org.freedesktop.DBus.Error.AccessDenied:") != std::string::npos)
@@ -600,6 +608,7 @@ namespace openvpn
             }
             else if (!ret && error)
             {
+                g_dbus_error_strip_remote_error(error);
                 std::string dbuserr(error->message);
 
                 if (dbuserr.find("GDBus.Error:org.freedesktop.DBus.Error.AccessDenied:") != std::string::npos)
@@ -687,6 +696,7 @@ namespace openvpn
                 errmsg << "Failed preparing proxy";
                 if (error)
                 {
+                    g_dbus_error_strip_remote_error(error);
                     errmsg << ": " << error->message;
                 }
                 THROW_DBUSEXCEPTION("DBusProxy", errmsg.str());
@@ -791,6 +801,7 @@ namespace openvpn
                 }
                 else if (!ret && error)
                 {
+                    g_dbus_error_strip_remote_error(error);
                     std::string dbuserr(error->message);
 
                     if ((dbuserr.find("GDBus.Error:org.freedesktop.DBus.Error.AccessDenied:") != std::string::npos)
