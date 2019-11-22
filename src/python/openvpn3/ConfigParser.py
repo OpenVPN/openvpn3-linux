@@ -588,6 +588,13 @@ class ConfigParser():
                                    help='Set log verbosity level.  Log levels '
                                    +'are NOT compatible with OpenVPN 2 --verb')
 
+        self.__parser.add_argument('--verify-x509-name',
+                                   metavar='MATCH [FLAGS]',
+                                   action=ConfigParser.OpenVPNvarArgs,
+                                   min_args= 1,
+                                   help='Accept connections only with a host '
+                                   + 'with a specific X509 subject or CN match '
+                                   + 'string.')
 
         descr = 'The following options are ignored and not processed.  These ' \
         + 'options are not implemented in the OpenVPN 3 Core library ' \
@@ -695,14 +702,6 @@ class ConfigParser():
                              help='Run OpenVPN with USER user credentials. '
                              + 'Not needed with OpenVPN 3 which uses a '
                              + 'different privilege separation approach')
-
-        ignored.add_argument('--verify-x509-name',
-                             metavar='SUBJECT [FLAGS]',
-                             action=ConfigParser.IgnoreArg,
-                             nargs='+',
-                             help='Accept connections only with a host with '
-                             + 'X509 subject.  Not yet implemented in '
-                             + 'OpenVPN 3')
         # ENDFNC: __init_arguments()
 
 
