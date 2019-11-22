@@ -256,7 +256,7 @@ namespace openvpn
                 }
                 catch(DBusProxyAccessDeniedException& excp)
                 {
-                    throw;
+                    return std::string(""); // Consider this an unknown version
                 }
                 catch (DBusException& excp)
                 {
@@ -265,12 +265,15 @@ namespace openvpn
                     {
                         if ((err.find(": No such property 'version'") != std::string::npos))
                         {
-                            return std::string("");  // Consider this as an unkwown version but not an error
+                            return std::string("");  // Consider this as an unknown version but not an error
                         }
-                        throw;
                     }
                     sleep(delay);
                     ++delay;
+                }
+                catch (...)
+                {
+                    throw;
                 }
             }
             THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
