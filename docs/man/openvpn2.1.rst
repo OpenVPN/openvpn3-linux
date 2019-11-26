@@ -49,12 +49,9 @@ OPTIONS
 
 --client              Configures client configuration mode (mandatory)
 
---comp-lzo [MODE]
-                      Use LZO compression (Deprecated, use --compress
-                      instead)
+--comp-lzo <MODE>     Use LZO compression
 
---compress [ALG]
-                      Compress using algorithm ALG
+--compress <ALG>      Compress using algorithm ALG
 
 --config FILE         Read configuration options from file
 
@@ -63,10 +60,9 @@ OPTIONS
 --dev DEV-NAME        tun/tap device to use for VPN tunnel
 
 --dev-type DEV-TYPE   Which device type are we using? tun or tap. Not needed
-                      if --dev starts withtun or tap
+                      if --dev starts with tun or tap
 
---dhcp-option [OPTION [...]]
-                      Set DHCP options which can be pickedup by the OS
+--dhcp-option OPTION  Set DHCP options which can be picked up by the OS
                       configuring DNS, etc
 
 --extra-certs FILE    Specify a file containing one or more PEM certs
@@ -79,29 +75,47 @@ OPTIONS
                       finalize within SEC seconds handshake initiation by
                       any peer. (Default 60 seconds)
 
---http-proxy [SRV PORT [auth] [auth-method]]
-                      Connect to a remote host via an HTTPproxy at address
-                      SRV and port PORT. See manual for auth details
+--http-proxy ARGS
+                      Connect to a remote host via a specified HTTP proxy.
+                      This option takes 2 mandatory options, SERVER and PORT,
+                      which defines the HTTP proxy and port to use.
+
+                      Optional arguments are AUTH-FLAG which can be *auto-nct*
+                      which enables clear-text passwords to be used.
+
+                      OpenVPN 2.x also adds an optional AUTH-METHOD flag
+                      as the last argument, this is auto-detected in
+                      OpenVPN 3.
 
 --http-proxy-user-pass FILE
                       Fetch HTTP proxy credentials from FILE
 
---ifconfig LOCAL NETMASK LOCAL NETMASK
-                      Configure TUN/TAP device with LOCAL for local IPv4
-                      address with netmask NETMASK
+--ifconfig ARGS
+                      Configures the TUN/TAP device for IPv4.  This option
+                      takes two mandatory arguments, the IPv4 address to use
+                      and the netmask for the network.
 
---ifconfig-ipv6 [LOCAL [REMOTE_ENDP] [LOCAL [REMOTE_ENDP] ...]]
-                      Configure TUN/TAP device with LOCAL for local IPv6
-                      address and REMOTE_ENDP as the remote end-point
+--ifconfig-ipv6 ARGS
+                      Configures the TUN/TAP device for IPv6.  This option
+                      takes one mandatory argument, the IPv6 address including
+                      its PREFIX.  An optional REMOTE_ENDPOINT can be given
+                      at the end.
 
---inactive [SECS [BYTES]]
-                      Exit after n seconds of activity on TUN/TAP device. If
-                      BYTES is added, if bytes on the device is less than
-                      BYTES the tunnel will also exit
+--inactive ARGS
+                      This option takes one mandatory argument, SECONDS, which
+                      defines how many seconds the tunnel can idle before
+                      disconnecting.  An optional BYTES argument can be added
+                      which also takes the number of bytes passed over the
+                      tunnel within SECONDS of inactivity.  The traffic must
+                      be higher than this minimum BYTES to keep the tunnel
+                      alive.
 
---keepalive P_SECS R_SECS P_SECS R_SECS
-                      Ping remote every P_SECS second and restart tunnel if
-                      no response within R_SECS seconds
+--keepalive ARGS
+                      Instructs the client to ping the server over the
+                      OpenVPN Control Channel every PING_SECONDS.  An optional
+                      argument defines, RECONNECT_SECONDS how long it should go 
+                      before the client should attempt to reconnect if there
+                      is no response from the server.
 
 --key FILE            Local private key in .pem format
 
@@ -112,7 +126,7 @@ OPTIONS
 
 --lport PORT          TCP/UDP port number for local bind (default 1194)
 
---mode MODE           Operational mode. Only "client" isaccepted
+--mode MODE           Operational mode. Only "client" is accepted
 
 --mssfix BYTES        Set upper bound on TCP MSS (Default tun-mtu size)
 
@@ -132,11 +146,11 @@ OPTIONS
 
 --port PORT           TCP/UDP port number for both local and remote.
 
---profile-override OVERRIDE-KEY OVERRIDE-VALUE
+--profile-override OVERRIDE
                       OpenVPN 3 specific feature, allowing to set some local
-                      overrides or disable some functionality.  Valid
-                      *OVERRIDE-KEY* values and their valid *OVERRIDE-VALUES*
-                      are:
+                      overrides or disable some functionality.  This option
+                      takes two arguments, an *OVERRIDE-KEY* and an
+                      *OVERRIDE-VALUE*.  Valid keys and values are:
 
                       * *server-override*:
                         A server host name
@@ -193,9 +207,15 @@ OPTIONS
                       default gateway.Valid flags: autolocal, def1, bypass-
                       dhcpbypass-dns, block-local, ipv4, !ipv4, ipv6, !ipv6
 
---remote HOST [PORT [PROTO]
-                      Remote host or IP. PORT number and PROTO are optional.
-                      May be provided multiple times.
+--remote ARGS
+                      Defines the remote server to connect to.  One mandatory
+                      argument must be given, containing either an IP address
+                      or an hostname to the server.  An optional PORT number
+                      can be given (default: 1194) and at the very end the
+                      PROTOCOL can be specified (default: udp).  This option
+                      can be given multiple times and the client will try
+                      all remote entries until it is able to establish
+                      a connection.
 
 --remote-cert-eku OID
                       Require the peer certificate to be signed with
@@ -218,20 +238,29 @@ OPTIONS
 --reneg-sec SECS      Renegotiate data channel key after SECS seconds.
                       (Default 3600)
 
---route NETWORK [NETMASK [GATEWAY [METRIC]]
+--route ARGS
                       Add route to routing table after connection is
-                      established. Multiple routes can be specified. Default
-                      NETMASK: 255.255.255.255. Default GATEWAY is taken
-                      from --route-gateway or --ifconfig
+                      established. Multiple routes can be specified.
 
---route-gateway [GW|dhcp]
+                      This option takes one mandatory argument, IP-ADDRESS
+                      to route over the VPN.  The two optional arguments
+                      are NETMASK (default: 255.255.255.255) and the
+                      gateway to use (defaults to use configured
+                      --route-gateway or the VPN server IP address).
+
+
+--route-gateway <GW|dhcp>
                       Specify a default gateway for use with --route. See
                       openvpn\(8) man page for dhcp mode
 
---route-ipv6 NETWORK/PREFIX [GATEWAY [METRIC]]
+--route-ipv6 ARGS
                       Add IPv6 route to routing table after connection is
-                      established. Multiple routes can be specified. Default
-                      GATEWAY is taken from 'remote' in --ifconfig-ipv6
+                      established. Multiple routes can be specified.
+
+                      This option takes one mandatory argument IP-RANGE/PREFIX.
+                      An optional GATEWAY can be set, which overrides the
+                      default server VPN IPv6 address and the second
+                      argument which sets the route METRIC value.
 
 --route-metric METRIC
                       Specify a default metric for use with --route
@@ -242,22 +271,29 @@ OPTIONS
                       How long to wait for a response from a remote server
                       during connection setup (Default 120 seconds)
 
---setenv [NAME [VALUE]]
+--setenv ARGS
                       Set a custom environmental variable to pass to script.
+                      This takes two mandatory arguments, variable NAME
+                      and VALUE.
 
---static-challenge MSG [ECHO]
-                      Enable static challenge/response protocol using
-                      challenge text MSG, with ECHO indicating echo flag
-                      (0|1)
+--static-challenge ARGS
+                      Enable static challenge/response protocol.  This
+                      takes one mandatory option, MESSAGE, which will
+                      be presented to the user before the connection
+                      attempt.  An optional argument, ECHO, indicates
+                      if the user input should be echoed back to the
+                      user during input entry.
 
 --tcp-queue-limit NUM
                       Maximum number of queued TCP output packets
 
---tls-auth FILE [DIR]
-                      Add additional HMAC auth on TLS control channel. FILE
-                      must be a shared secret. DIR is optional and defines
-                      which sub-keys in FILE to use for HMAC signing and
-                      verification
+--tls-auth ARGS
+                      Enables an additional HMAC auth on TLS control channel.
+                      This takes a mandatory argument, FILE, which
+                      must be a shared secret between server and client.
+                      The optional KEY-DIRECTION argument defines
+                      which sub-key pair in FILE to use for HMAC
+                      signing and verification; valid values are *0* or *1*.
 
 --tls-cert-profile PROFILE
                       Sets certificate profile which defines acceptable
@@ -268,7 +304,7 @@ OPTIONS
                       handshake. Implicitly added when using --client
 
 --tls-crypt FILE      Encrypts the TLS control channel with a shared secret
-                      key (FILE). ThisCANNOT be combined with --tls-auth
+                      key (FILE). This CANNOT be combined with --tls-auth
 
 --tls-timeout SECS    Packet retransmit timeout on TLS control channel if no
                       ACK from remote within n seconds (Default 2 seconds
@@ -277,7 +313,7 @@ OPTIONS
                       Recommended: subnet.Valid topologies: subnet, net30
 
 --tran-window SECS    Transition window -- old data channel key can live
-                      this many seconds after newafter new key renegotiation
+                      this many seconds after new after new key renegotiation
                       begins (Default 3600 secs)
 
 --tun-mtu SIZE        Set TUN/TAP device MTU to SIZE and derive TCP/UDP from
@@ -285,6 +321,30 @@ OPTIONS
 
 --verb LEVEL          Set log verbosity level. Log levels are NOT compatible
                       with OpenVPN 2 --verb
+
+--verify-x509-name ARGS
+                     Accept connections only with a host with a specific
+                     X509 subject or CN match string.  This option takes
+                     one mandatory argument, which is a MATCH string and
+                     an optional match FLAG.
+
+                     FLAG can be:
+
+                     * *name*:
+                       Match against complete X.509 Common Name field
+
+                     * *name-prefix*:
+                       The MATCH value must be match the beginning of the
+                       X.509 Common Name field.  If the X.509 certificate
+                       contains 'server-1.example.org', it will be a match
+                       if the MATCH value is 'server-'.  It will not be a
+                       match if values like 'server-2' or '.example.org' is
+                       used.
+
+                     * *subject* (default):
+                       The MATCH value must be the full and complete
+                       X.509 Subject field.
+
 
 
 IGNORED OPTIONS
@@ -298,7 +358,7 @@ existing configurations.
                       applicable with OpenVPN 3, which uses a different
                       execution model.
 
---explicit-exit-notify [ATTEMPTS]
+--explicit-exit-notify <ATTEMPTS>
                         On exit/restart, send exit signal to remote end.
                         Automatically configured with OpenVPN 3
 
@@ -330,10 +390,6 @@ existing configurations.
 --user USER           Run OpenVPN with USER user credentials. Not needed
                       with OpenVPN 3 which uses a different privilege
                       separation approach
-
---verify-x509-name SUBJECT [FLAGS] [SUBJECT [FLAGS] ...]
-                      Accept connections only with a host with X509 subject.
-                      Not yet implemented in OpenVPN 3
 
 
 SEE ALSO
