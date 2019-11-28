@@ -276,9 +276,9 @@ namespace openvpn
                     throw;
                 }
             }
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "Could not establish connection with the "
-                                "Configuration Manager");
+            THROW_DBUSEXCEPTION("DBusProxy",
+                                "Could not establish a connection with "
+                                "'" + bus_name + "'");
         }
 
 
