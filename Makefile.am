@@ -162,7 +162,9 @@ UNIT_TESTS = \
 
 UNIT_TESTS_DEPS = \
 	src/common/lookup.cpp \
-	src/common/timestamp.cpp
+	src/common/timestamp.cpp \
+	src/netcfg/netcfg-changeevent.cpp \
+	src/netcfg/netcfg-changetype.cpp
 
 AM_CXXFLAGS += -I$(top_srcdir)/vendor/googletest/googletest \
         -isystem $(top_srcdir)/vendor/googletest/googletest/include
@@ -269,7 +271,8 @@ src_tests_misc_lookup_tests_SOURCES = \
 
 src_tests_misc_netcfg_dns_direct_file_selftest_SOURCES = \
 	src/tests/misc/netcfg-dns-direct-file-selftest.cpp \
-	src/common/timestamp.cpp
+	src/common/timestamp.cpp \
+	src/netcfg/netcfg-changeevent.cpp
 
 src_tests_misc_syslog_facility_mapping_test_SOURCES = \
 	src/tests/misc/syslog-facility-mapping-test.cpp
@@ -343,7 +346,8 @@ src_tests_dbus_manager_lookupconfigname_SOURCES = \
 	src/tests/dbus/manager-lookupconfigname.cpp
 
 src_tests_dbus_netcfg_changeevent_selftest_SOURCES = \
-	src/tests/dbus/netcfg-changeevent-selftest.cpp
+	src/tests/dbus/netcfg-changeevent-selftest.cpp \
+	src/netcfg/netcfg-changeevent.cpp
 
 src_tests_dbus_netcfg_proxy_unit_SOURCES = \
 	src/tests/dbus/netcfg-proxy-unit.cpp \
@@ -351,7 +355,8 @@ src_tests_dbus_netcfg_proxy_unit_SOURCES = \
 
 src_tests_dbus_signal_listener_SOURCES = \
 	src/tests/dbus/signal-listener.cpp \
-	src/common/utils.cpp
+	src/common/utils.cpp \
+	src/netcfg/netcfg-changeevent.cpp
 
 src_tests_dbus_statusevent_selftest_SOURCES = \
 	src/tests/dbus/statusevent-selftest.cpp
@@ -539,6 +544,8 @@ src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/netcfg/netcfg-signals.hpp \
 	src/netcfg/netcfg-changeevent.cpp \
 	src/netcfg/netcfg-changeevent.hpp \
+	src/netcfg/netcfg-changetype.cpp \
+	src/netcfg/netcfg-changetype.hpp \
 	src/netcfg/netcfg-subscriptions.cpp \
 	src/netcfg/netcfg-subscriptions.hpp \
 	src/netcfg/core-tunbuilder.hpp \
