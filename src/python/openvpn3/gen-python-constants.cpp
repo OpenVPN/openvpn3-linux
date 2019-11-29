@@ -32,9 +32,15 @@
 
 #include "config.h"
 #include "dbus/constants.hpp"
+#include "netcfg/netcfg-changetype.hpp"
 
 using namespace std;
 
+
+enum class FlagType {
+    NONE     = 0,
+    INTFLAG  = 1
+};
 
 template <class T>
 struct ConstantMapping
@@ -49,11 +55,20 @@ struct ConstantMapping
 #define MAP(t, m, n, v)  m.push_back(ConstantMapping<t>(n, t::v))
 
 template <class T>
-void Generator(string name, vector<ConstantMapping<T>> mapping)
+void Generator(string name, vector<ConstantMapping<T>> mapping,
+               FlagType flagtype = FlagType::NONE)
 {
     stringstream c;
 
-    c << "class " << name << "(Enum):" << endl;
+    switch (flagtype)
+    {
+    case FlagType::INTFLAG:
+        c << "class " << name << "(IntFlag):" << endl;
+        break;
+    case FlagType::NONE:
+    default:
+        c << "class " << name << "(Enum):" << endl;
+    }
     for (auto& m : mapping)
     {
          c << "    " << m.name << " = " << (unsigned int)m.value << endl;
@@ -76,11 +91,11 @@ int main(int argc, char **argv)
          << "# file packaged with the project for more details." << std::endl
          << "#" << std::endl
          << "# Do not modify this file.  This file needs to be" << std::endl
-         << "# regenerated each time StatusMajor or StatusMinor" << std::endl
-         << "# constants are modified in dbus/constants.hpp" << std::endl
+         << "# regenerated each time any of the OpenVPN 3 Linux" << std::endl
+         << "# constants are modified." << std::endl
          << "#" << std::endl << std::endl;
 
-    cout << "from enum import Enum" << endl << endl;
+    cout << "from enum import Enum, IntFlag" << endl << endl;
 
     cout << "VERSION = '" << PACKAGE_GUIVERSION << "'" << endl << endl;
 
@@ -143,6 +158,20 @@ int main(int argc, char **argv)
     MAP(ClientAttentionGroup, client_att_group, "PKCS11_DECRYPT", PKCS11_DECRYPT);
     Generator("ClientAttentionGroup", client_att_group);
 
+    vector<ConstantMapping<NetCfgChangeType>> netcfg_changetype;
+    MAP(NetCfgChangeType, netcfg_changetype, "UNSET", UNSET);
+    MAP(NetCfgChangeType, netcfg_changetype, "DEVICE_ADDED", DEVICE_ADDED);
+    MAP(NetCfgChangeType, netcfg_changetype, "DEVICE_REMOVED", DEVICE_REMOVED);
+    MAP(NetCfgChangeType, netcfg_changetype, "IPADDR_ADDED", IPADDR_ADDED);
+    MAP(NetCfgChangeType, netcfg_changetype, "IPADDR_REMOVED", IPADDR_REMOVED);
+    MAP(NetCfgChangeType, netcfg_changetype, "ROUTE_ADDED", ROUTE_ADDED);
+    MAP(NetCfgChangeType, netcfg_changetype, "ROUTE_REMOVED", ROUTE_REMOVED);
+    MAP(NetCfgChangeType, netcfg_changetype, "ROUTE_EXCLUDED", ROUTE_EXCLUDED);
+    MAP(NetCfgChangeType, netcfg_changetype, "DNS_SERVER_", DNS_SERVER_ADDED);
+    MAP(NetCfgChangeType, netcfg_changetype, "DNS_SERVER_REMOVED", DNS_SERVER_REMOVED);
+    MAP(NetCfgChangeType, netcfg_changetype, "DNS_SEARCH_ADDED", DNS_SEARCH_ADDED);
+    MAP(NetCfgChangeType, netcfg_changetype, "DNS_SEARCH_REMOVED", DNS_SEARCH_REMOVED);
+    Generator("NetCfgChangeType", netcfg_changetype, FlagType::INTFLAG);
 
     return 0;
 }
