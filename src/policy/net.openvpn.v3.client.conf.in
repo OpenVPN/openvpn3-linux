@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE busconfig PUBLIC
+ "-//freedesktop//DTD D-BUS Bus Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
+<busconfig>
+    <!--
+        The bus name scope is shared between the openvpn3-service-backendstart
+        and openvpn3-service-client processes.  They all use different
+        well-known bus names, but they share the same prefix - starting
+        with: net.openvpn.v3.backends
+
+        The -backendstart process uses:  net.openvpn.v3.backends
+        while the -client processes uses: net.openvpn.v3.backends.be$PID
+
+        Since the -backendstart process is used to start the -client process,
+        the policy for both of them are defined in this file.
+    -->
+
+  <policy context="default">
+    <allow send_destination="net.openvpn.v3.backend"
+           send_path="/net/openvpn/v3/backends"
+           send_interface="org.freedesktop.DBus.Introspectable"
+           send_type="method_call"
+           send_member="Introspect"/>
+
+    <allow send_destination="net.openvpn.v3.backends"
+           send_path="/net/openvpn/v3/backends"
+           send_interface="org.freedesktop.DBus.Properties"
+           send_type="method_call"
+           send_member="Get"/>
+
+    <allow send_destination="net.openvpn.v3.backends"
+           send_path="/net/openvpn/v3/backends"
+           send_interface="org.freedesktop.DBus.Peer"
+           send_type="method_call"
+           send_member="Ping"/>
+
+    <!--
+         Only the "@OPENVPN_USERNAME@" user is allowed to
+         receive signals from net.openvpn.v3.backend interfaces.
+    -->
+    <deny receive_interface="net.openvpn.v3.backends"
+          receive_type="signal"/>
+  </policy>
+
+  <policy user="@OPENVPN_USERNAME@">
+    <!--                                -->
+    <!--  net.openvpn.v3.backends       -->
+    <!--                                -->
+    <allow own_prefix="net.openvpn.v3.backends"/>
+
+    <!--
+        FIXME: This is fairly broad access, not bound to a specific
+        send_destination.  This is not currently possible, as the backends
+        bus names are net.openvpn.v3.backends.be$PID and the D-Bus policy
+        lacks a send_interface_prefix feature.
+     -->
+    <allow send_interface="net.openvpn.v3.backends"
+           send_path="/net/openvpn/v3/backends"
+           send_type="method_call"
+           send_member="StartClient"/>
+    <allow send_interface="net.openvpn.v3.backends"
+           send_path="/net/openvpn/v3/backends"
+           send_type="method_call"
+           send_member="Ping"/>
+    <allow send_interface="net.openvpn.v3.backends"
+           send_path="/net/openvpn/v3/backends/session"
+           send_type="method_call"
+           send_member="Ping"/>
+    <allow send_interface="net.openvpn.v3.backends"
+           send_path="/net/openvpn/v3/backends/session"
+           send_type="method_call"
+           send_member="RegistrationConfirmation"/>
+    <allow send_interface="net.openvpn.v3.backends"
+           send_path="/net/openvpn/v3/backends/session"
+           send_type="method_call"
+           send_member="Connect"/>
+    <allow send_interface="net.openvpn.v3.backends"
+           send_path="/net/openvpn/v3/backends/session"
+           send_type="method_call"
+           send_member="Pause"/>
+    <allow send_interface="net.openvpn.v3.backends"
+           send_path="/net/openvpn/v3/backends/session"
+           send_type="method_call"
+           send_member="Resume"/>
+    <allow send_interface="net.openvpn.v3.backends"
+           send_path="/net/openvpn/v3/backends/session"
+           send_type="method_call"
+           send_member="Restart"/>
+    <allow send_interface="net.openvpn.v3.backends"
+           send_path="/net/openvpn/v3/backends/session"
+           send_type="method_call"
+           send_member="Disconnect"/>
+    <allow send_interface="net.openvpn.v3.backends"
+           send_path="/net/openvpn/v3/backends/session"
+           send_type="method_call"
+           send_member="ForceShutdown"/>
+    <allow send_interface="net.openvpn.v3.backends"
+           send_path="/net/openvpn/v3/backends/session"
+           send_type="method_call"
+           send_member="Ready"/>
+    <allow send_interface="net.openvpn.v3.backends"
+           send_path="/net/openvpn/v3/backends/session"
+           send_type="method_call"
+           send_member="UserInputQueueGetTypeGroup"/>
+    <allow send_interface="net.openvpn.v3.backends"
+           send_path="/net/openvpn/v3/backends/session"
+           send_type="method_call"
+           send_member="UserInputQueueFetch"/>
+    <allow send_interface="net.openvpn.v3.backends"
+           send_path="/net/openvpn/v3/backends/session"
+           send_type="method_call"
+           send_member="UserInputQueueCheck"/>
+    <allow send_interface="net.openvpn.v3.backends"
+           send_path="/net/openvpn/v3/backends/session"
+           send_type="method_call"
+           send_member="UserInputProvide"/>
+
+    <allow send_destination="net.openvpn.v3.backends"
+           send_interface="org.freedesktop.DBus.Peer"
+           send_type="method_call"
+           send_member="Ping"/>
+
+    <!--
+         Signals sent by backends are allowed for
+         the "@OPENVPN_USERNAME@" user.  This is needed
+         to be able to manage and react to VPN client backend
+         events.  The session manager (running as "@OPENVPN_USERNAME@")
+         will proxy these signals to the proper receiver(s).
+    -->
+    <allow receive_interface="net.openvpn.v3.backends"
+           receive_type="signal"
+           receive_member="AttentionRequired"/>
+    <allow receive_interface="net.openvpn.v3.backends"
+           receive_type="signal"
+           receive_member="Log"/>
+    <allow receive_interface="net.openvpn.v3.backends"
+           receive_type="signal"
+           receive_member="RegistrationRequest"/>
+    <allow receive_interface="net.openvpn.v3.backends"
+           receive_type="signal"
+           receive_member="StatusChange"/>
+  </policy>
+
+  <policy user="root">
+  </policy>
+</busconfig>

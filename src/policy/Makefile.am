@@ -17,18 +17,24 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-net.openvpn.v3.conf : net.openvpn.v3.conf.in Makefile
+%.conf : %.conf.in Makefile
 	$(AM_V_GEN)sed -e 's|\@OPENVPN_USERNAME\@|$(OPENVPN_USERNAME)|' \
 		$< > $@.tmp && mv $@.tmp $@
 
 MAINTAINERCLEANFILES = \
 	Makefile.in
 
-EXTRA_DIST = \
-	net.openvpn.v3.conf.in
+POLICY_FILES = \
+	net.openvpn.v3.conf \
+	net.openvpn.v3.client.conf \
+	net.openvpn.v3.configuration.conf \
+	net.openvpn.v3.log.conf \
+	net.openvpn.v3.netcfg.conf \
+	net.openvpn.v3.sessions.conf
 
-dbus_system_policy_DATA = \
-	net.openvpn.v3.conf
+EXTRA_DIST = $(foreach var,$(POLICY_FILES),$(var).in)
+
+dbus_system_policy_DATA = $(POLICY_FILES)
 
 dist_noinst_SCRIPTS = syntax-check.sh
 

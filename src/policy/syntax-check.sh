@@ -21,5 +21,6 @@ set -eu
 
 for f in "$(dirname $0)"/*.conf;
 do
-	xmllint --format $f > /dev/null
+        echo -n "-- Checking $f ... "
+        xmllint --format $f > /dev/null || exit $? && echo "PASS"
 done
