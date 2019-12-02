@@ -524,7 +524,6 @@ namespace openvpn
             }
             else if (!response && error)
             {
-                g_dbus_error_strip_remote_error(error);
                 std::string dbuserr(error->message);
 
                 if (dbuserr.find("GDBus.Error:org.freedesktop.DBus.Error.AccessDenied:") != std::string::npos)
@@ -533,6 +532,7 @@ namespace openvpn
                                                          dbuserr);
                 }
 
+                g_dbus_error_strip_remote_error(error);
                 std::stringstream errmsg;
                 errmsg << "Failed retrieving property value for "
                        << "'" << property << "': " << error->message;
@@ -611,7 +611,6 @@ namespace openvpn
             }
             else if (!ret && error)
             {
-                g_dbus_error_strip_remote_error(error);
                 std::string dbuserr(error->message);
 
                 if (dbuserr.find("GDBus.Error:org.freedesktop.DBus.Error.AccessDenied:") != std::string::npos)
@@ -620,6 +619,7 @@ namespace openvpn
                                                          dbuserr);
                 }
 
+                g_dbus_error_strip_remote_error(error);
                 std::stringstream errmsg;
                 errmsg << "Failed setting new property value on "
                        << "'" << property << "': " << error->message;
@@ -804,7 +804,6 @@ namespace openvpn
                 }
                 else if (!ret && error)
                 {
-                    g_dbus_error_strip_remote_error(error);
                     std::string dbuserr(error->message);
 
                     if ((dbuserr.find("GDBus.Error:org.freedesktop.DBus.Error.AccessDenied:") != std::string::npos)
@@ -813,6 +812,7 @@ namespace openvpn
                         throw DBusProxyAccessDeniedException(method, dbuserr);
                     }
 
+                    g_dbus_error_strip_remote_error(error);
                     std::stringstream errmsg;
                     errmsg << "Failed calling D-Bus method " << method << ": "
                            << error->message;
