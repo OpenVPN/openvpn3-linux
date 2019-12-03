@@ -148,6 +148,14 @@ public:
                                 "Invalid D-Bus path to configuration profile");
 
         }
+
+        CheckServiceAvail();
+        if (!CheckObjectExists(10, 300))
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
+                                "Failed to connect to session manager");
+        }
+
         GVariant *res = Call("NewTunnel",
                              g_variant_new("(o)", cfgpath.c_str()));
         if (NULL == res)
@@ -632,6 +640,11 @@ private:
      */
     void simple_call(std::string method, std::string errstr)
     {
+        if (!CheckObjectExists(10, 300))
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
+                                errstr + " (object does not exist)");
+        }
         GVariant *res = Call(method);
         if (NULL == res)
         {
