@@ -208,6 +208,10 @@ namespace openvpn
             {
                 THROW_DBUSEXCEPTION("DBus", "D-Bus setup incomplete.  Missing Connect() call?");
             }
+            if (g_dbus_connection_is_closed(dbuscon))
+            {
+                THROW_DBUSEXCEPTION("DBus", "Connection lost");
+            }
             return dbuscon;
         }
 
