@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2019  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2019  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -17,8 +17,7 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#ifndef OPENVPN3_DBUS_IDLECHECK_HPP
-#define OPENVPN3_DBUS_IDLECHECK_HPP
+#pragma once
 
 #include <iostream>
 #include <memory>
@@ -195,23 +194,27 @@ public:
                                     return self->signal_caught;
                               });
 
-#ifdef SHUTDOWN_NOTIF_PROCESS_NAME
-            if (0 == refcount && !signal_caught)
+            if (idle_time + last_operation < std::chrono::system_clock::now()
+                || signal_caught)
             {
-                // We timed out, start the main loop shutdown
-                std::cout << SHUTDOWN_NOTIF_PROCESS_NAME
-                                << " starting idle shutdown "
-                                << "(pid: " << std::to_string(getpid()) << ")"
-                                << std::endl;
-            }
+#ifdef SHUTDOWN_NOTIF_PROCESS_NAME
+                if (0 == refcount && !signal_caught)
+                {
+                    // We timed out, start the main loop shutdown
+                    std::cout << SHUTDOWN_NOTIF_PROCESS_NAME
+                              << " starting idle shutdown "
+                              << "(pid: " << std::to_string(getpid()) << ")"
+                              << std::endl;
+                }
 #endif
 
-            // If receiving signals, we exit regardless
-            // of the reference counting state
-            if (0 == refcount || signal_caught)
-            {
-                g_main_loop_quit(mainloop);
-                enabled = false;
+                // If receiving signals, we exit regardless
+                // of the reference counting state
+                if (0 == refcount || signal_caught)
+                {
+                    g_main_loop_quit(mainloop);
+                    enabled = false;
+                }
             }
         }
         running = false;
@@ -257,4 +260,3 @@ private:
     std::mutex exit_cv_mutex;
     std::condition_variable exit_cv;
 };
-#endif // OPENVPN3_DBUS_IDLECHECK_HPP
