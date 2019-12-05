@@ -469,16 +469,73 @@ static int cmd_sessions_list(ParsedArgs args)
         }
         OpenVPN3SessionProxy sprx(G_BUS_TYPE_SYSTEM, sessp);
 
-        if (first)
+        // Retrieve the name of the configuration profile used
+        std::stringstream config_line;
+        bool config_deleted = false;
+        try
         {
-            std::cout << std::setw(77) << std::setfill('-') << "-" << std::endl;
-        }
-        else
-        {
-            std::cout << std::endl;
-        }
-        first = false;
+            // Retrieve the current configuration profile name from the
+            // configuration manager
+            std::string cfgname_current = "";
+            std::string config_path = sprx.GetStringProperty("config_path");
+            try
+            {
+                OpenVPN3ConfigurationProxy cprx(G_BUS_TYPE_SYSTEM, config_path);
+                if (cprx.CheckObjectExists(10))
+                {
+                    cfgname_current = cprx.GetStringProperty("name");
+                }
+                else
+                {
+                    config_deleted = true;
+                }
+            }
+            catch (...)
+            {
+                // Failure is okay here, the profile may be deleted.
+                config_deleted = true;
+            }
 
+            // Retrieve the configuration profile name used when starting
+            // the VPN sessions
+            std::string cfgname = sprx.GetStringProperty("config_name");
+            if (!cfgname.empty())
+            {
+                config_line << " Config name: " << cfgname;
+                if (config_deleted)
+                {
+                    config_line << "  (Config not available)";
+                }
+                else if (cfgname_current != cfgname)
+                {
+                    config_line << "  (Current name: "
+                              << cfgname_current << ")";
+                }
+                config_line << std::endl;
+            }
+        }
+        catch (DBusException &excp)
+        {
+            // The session has not been initialised properly yet, so
+            // configuration name is not available
+            config_line << "";
+        }
+
+
+        // Retrieve the session start timestamp
+        std::string created;
+        try
+        {
+            std::time_t sess_created = sprx.GetUInt64Property("session_created");
+            std::string c = std::asctime(std::localtime(&sess_created));
+            created = c.substr(0, c.size() - 1);
+        }
+        catch (DBusException&)
+        {
+            created = "(Not available)";
+        }
+
+        // Retrieve session owner information and VPN backend process PID
         std::string owner;
         pid_t be_pid;
         try
@@ -492,89 +549,73 @@ static int cmd_sessions_list(ParsedArgs args)
             be_pid = -1;
         }
 
-        StatusEvent status;
-        std::string cfgname_current = "";
-        bool config_deleted = false;
+        // Retrieve the tun interface name for this session
+        std::string devname;
         try
         {
-            status = sprx.GetLastStatus();
-            std::string config_path = sprx.GetStringProperty("config_path");
-            try
-            {
-                OpenVPN3ConfigurationProxy cprx(G_BUS_TYPE_SYSTEM, config_path);
-                if (cprx.CheckObjectExists(100))
-                {
-                    cfgname_current = cprx.GetStringProperty("name");
-                }
-                else
-                {
-                    config_deleted = true;
-                }
-            }
-            catch (...)
-            {
-                // Failure is okay here, the profile may be deleted.
-            }
-        }
-        catch (DBusException &excp)
-        {
-        }
-
-        std::cout << "        Path: " << sessp << std::endl;
-
-        std::string created;
-        try
-        {
-            std::time_t sess_created = sprx.GetUInt64Property("session_created");
-            created = std::asctime(std::localtime(&sess_created));
+            devname = sprx.GetDeviceName();
         }
         catch (DBusException&)
         {
-            std::cout << "(Not available)";
-        }
-        std::cout << "     Created: " << created.substr(0, created.size()-1)
-                  << std::setw(47 - created.size()) << std::setfill(' ')
-                  << " PID: "
-                  << (be_pid > 0 ? std::to_string(be_pid) : "(not available)")
-                  << std::endl;
-
-
-        std::string devname = sprx.GetDeviceName();
-        std::cout << "       Owner: " << owner
-                  << std::setw(44 - devname.size()) << "Device: " << devname
-                  << std::endl;
-
-        std::string cfgname = sprx.GetStringProperty("config_name");
-        if (!cfgname.empty())
-        {
-            std::cout << " Config name: " << cfgname;
-            if (config_deleted)
-            {
-                std::cout << "  (Config not available)";
-            }
-            else if (cfgname_current != cfgname)
-            {
-                std::cout << "  (Current name: "
-                          << cfgname_current << ")";
-            }
-            std::cout << std::endl;
+            // The session may not have been started yet; the error
+            // in this case isn't that valuable so we just consider
+            // the device name not set.
+            devname = "(None)";
         }
 
+        // Retrieve the session name set by the VPN backend
+        std::stringstream sessionname_line;
         try
         {
             std::string sessname = sprx.GetStringProperty("session_name");
             if (!sessname.empty())
             {
-                std::cout << "Session name: " << sessname << std::endl;
+                sessionname_line << "Session name: " << sessname << std::endl;
             }
         }
         catch (DBusException&)
         {
             // Ignore any errors if this property is unavailable
+            sessionname_line << "";
         }
 
+        StatusEvent status;
+        try
+        {
+            status = sprx.GetLastStatus();
+        }
+        catch (DBusException&)
+        {
+        }
+
+        // Output separator lines
+        if (first)
+        {
+            std::cout << std::setw(77) << std::setfill('-') << "-" << std::endl;
+        }
+        else
+        {
+            std::cout << std::endl;
+        }
+        first = false;
+
+        // Output session information
+        std::cout << "        Path: " << sessp << std::endl;
+        std::cout << "     Created: " << created
+                  << std::setw(47 - created.size()) << std::setfill(' ')
+                  << " PID: "
+                  << (be_pid > 0 ? std::to_string(be_pid) : "-")
+                  << std::endl;
+        std::cout << "       Owner: " << owner
+                  << std::setw(47 - owner.size()) << "Device: " << devname
+                  << std::endl;
+        std::cout << config_line.str();
+        std::cout << sessionname_line.str();
         std::cout << "      Status: " << status << std::endl;
+
     }
+
+    // Output closing separator
     if (first)
     {
         std::cout << "No sessions available" << std::endl;
