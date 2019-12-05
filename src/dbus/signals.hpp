@@ -186,6 +186,19 @@ namespace openvpn
             return bus_name;
         }
 
+
+        std::string GetInterface()
+        {
+            return interface;
+        }
+
+
+        std::string GetObjectPath()
+        {
+            return object_path;
+        }
+
+
         guint GetSignalId(std::string signal_name)
         {
             return subscriptions[signal_name];

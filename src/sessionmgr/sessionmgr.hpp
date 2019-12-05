@@ -556,7 +556,7 @@ public:
         // to be completely independent.  When this last fork() happens,
         // the backend will report back its final PID.
         StatusChange(StatusMajor::SESSION, StatusMinor::PROC_STARTED,
-                             "session_path=" + GetObjectPath()
+                             "session_path=" + DBusObject::GetObjectPath()
                              + ", backend_pid=" + std::to_string(backend_pid));
         Debug("SessionObject registered on '" + OpenVPN3DBus_interf_sessions + "': "
               + objpath + " [backend_token=" + backend_token + "]");
@@ -1304,7 +1304,7 @@ public:
                                     OpenVPN3DBus_interf_backends,
                                     GetUniqueBusID(be_busname),
                                     backend_token,
-                                    GetObjectPath());
+                                    DBusObject::GetObjectPath());
                     sig_logevent->SetLogLevel(default_session_log_level);
                 }
                 else if (!recv_log_events && nullptr != sig_logevent)
@@ -1445,7 +1445,7 @@ private:
             sig_statuschg = new SessionStatusChange(be_conn,
                                                     GetUniqueBusID(be_busname),
                                                     OpenVPN3DBus_interf_backends,
-                                                    GetObjectPath());
+                                                    DBusObject::GetObjectPath());
 
             GVariant *res_g = be_proxy->Call("RegistrationConfirmation",
                                              g_variant_new("(so)",
@@ -1466,9 +1466,9 @@ private:
                 return;
             }
             config_name = std::string(cfgname_c);
-            Debug("New session registered: " + GetObjectPath());
+            Debug("New session registered: " + DBusObject::GetObjectPath());
             StatusChange(StatusMajor::SESSION, StatusMinor::SESS_NEW,
-                         "session_path=" + GetObjectPath()
+                         "session_path=" + DBusObject::GetObjectPath()
                          + " backend_busname=" + be_busname
                          + " backend_path=" + be_path);
             registered = true;
