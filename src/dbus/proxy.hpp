@@ -744,6 +744,9 @@ namespace openvpn
                 THROW_DBUSEXCEPTION("DBusProxy", "Method cannot be empty");
             }
 
+            // Ensure we still have a valid connection
+            (void) GetConnection();
+
             GError *error = nullptr;
             GVariant *ret = nullptr;
             GUnixFDList *out_fdlist = nullptr;
