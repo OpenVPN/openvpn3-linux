@@ -25,10 +25,32 @@
 
 #pragma once
 
+#include <algorithm>
+
 #include <openvpn/common/rc.hpp>
 
 #include "dbus/core.hpp"
 #include "dbus/proxy.hpp"
+#include "dbus/glibutils.hpp"
+
+struct LogSubscriberEntry
+{
+    LogSubscriberEntry(std::string tag,
+                         std::string busname,
+                         std::string interface,
+                         std::string object_path)
+        : tag(tag), busname(busname), interface(interface),
+          object_path(object_path)
+    {
+    }
+
+    std::string tag;
+    std::string busname;
+    std::string interface;
+    std::string object_path;
+};
+
+typedef std::vector<LogSubscriberEntry> LogSubscribers;
 
 /**
  *  Client proxy implementation interacting with a
@@ -181,5 +203,45 @@ public:
     void SetDBusDetailsLogging(bool dbus_details)
     {
         SetProperty("log_dbus_details", dbus_details);
+    }
+
+
+    LogSubscribers GetSubscriberList()
+    {
+        GVariant *l = Call("GetSubscriberList");
+        if (!l)
+        {
+            THROW_DBUSEXCEPTION("LogServiceProxy",
+                                "No subsciber list received");
+        }
+        GLibUtils::checkParams(__func__, l, "(a(ssss))", 1);
+
+        LogSubscribers list;
+        GVariantIter *iter = nullptr;
+        g_variant_get(l, "(a(ssss))", &iter);
+
+        GVariant *val = nullptr;
+        while ((val = g_variant_iter_next_value(iter)))
+        {
+            GLibUtils::checkParams(__func__, val, "(ssss)", 4);
+            LogSubscriberEntry e(GLibUtils::ExtractValue<std::string>(val, 0),
+                                 GLibUtils::ExtractValue<std::string>(val, 1),
+                                 GLibUtils::ExtractValue<std::string>(val, 2),
+                                 GLibUtils::ExtractValue<std::string>(val, 3));
+            list.push_back(e);
+            g_variant_unref(val);
+        }
+        g_variant_iter_free(iter);
+        g_variant_unref(l);
+
+        std::sort(list.begin(), list.end(), logsubscribers_sort);
+        return list;
+    }
+
+private:
+    static bool logsubscribers_sort(const LogSubscriberEntry& lhs,
+                                    const LogSubscriberEntry& rhs)
+    {
+        return lhs.busname < rhs.busname;
     }
 };
