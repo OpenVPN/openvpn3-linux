@@ -45,7 +45,7 @@ using namespace openvpn;
  *  the log tags and hashes used to separate log events from various
  *  attached log senders.
  */
-struct LogTag
+struct LogTag : public RC<thread_unsafe_refcount>
 {
     /**
      *  LogTag contstructor
@@ -149,6 +149,9 @@ public:
         << "        <method name='Detach'>"
         << "            <arg type='s' name='interface' direction='in'/>"
         << "        </method>"
+        << "        <method name='GetSubscriberList'>"
+        << "            <arg type='a(ssss)' name='subscribers' direction='out'/>"
+        << "        </method>"
         << "        <property type='s' name='version' access='read'/>"
         << "        <property name='log_level' type='u' access='readwrite'/>"
         << "        <property name='log_dbus_details' type='b' access='readwrite'/>"
@@ -216,12 +219,17 @@ public:
 
             // Extract the interface to operate on.  All D-Bus method
             // calls expects this information.
-            GLibUtils::checkParams(__func__, params, "(s)", 1);
-            std::string interface(GLibUtils::ExtractValue<std::string>(params, 0));
-            LogTag tag(sender, interface);
+            std::string interface;
+            if ("GetSubscriberList" != meth_name)
+            {
+                GLibUtils::checkParams(__func__, params, "(s)", 1);
+                interface = GLibUtils::ExtractValue<std::string>(params, 0);
+            }
 
             if ("Attach" == meth_name)
             {
+                LogTag tag(sender, interface);
+
                 // Subscribe to signals from a new D-Bus service/client
 
                 // Check this has not been already registered
@@ -256,6 +264,8 @@ public:
             }
             else if ("Detach" == meth_name)
             {
+                LogTag tag(sender, interface);
+
                 // Ensure the requested logger is truly configured
                 if (loggers.find(tag.hash) == loggers.end())
                 {
@@ -287,6 +297,34 @@ public:
                                       l.str()));
                 IdleCheck_RefDec();
                 g_dbus_method_invocation_return_value(invoc, NULL);
+            }
+            else if ("GetSubscriberList" == meth_name)
+            {
+                GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("a(ssss)"));
+
+                if (nullptr == bld)
+                {
+                    GError *err = g_dbus_error_new_for_dbus_error(
+                                    "net.openvpn.v3.error.log",
+                                    "Could not generate subscribers list");
+                    g_dbus_method_invocation_return_gerror(invoc, err);
+                    g_error_free(err);
+                    return;
+                }
+
+                for (const auto& l : loggers)
+                {
+                    Logger::Ptr sub = l.second;
+                    g_variant_builder_add(bld, "(ssss)",
+                                          std::to_string(l.first).c_str(),
+                                          sub->GetBusName().c_str(),
+                                          sub->GetInterface().c_str(),
+                                          sub->GetObjectPath().c_str());
+
+                }
+                g_dbus_method_invocation_return_value(invoc,
+                                                      GLibUtils::wrapInTuple(bld));
+                return;
             }
             else
             {

@@ -26,8 +26,8 @@ The log service can either send Log events to a predefined log file (via
 `--log-file`), to syslog (via `--syslog`) or to the console (default).
 
 When running with `--service`, there are a few tweakable knobs which can
-be managed using the `openvpn3 log-service` command.  This command can only
-be used by the `root` and `openvpn` user accounts.
+be managed using the `openvpn3-admin log-service` command.  This command can
+only be used by the `root` and `openvpn` user accounts.
 
 
 D-Bus destination: `net.openvpn.v3.log` - Object path: `/net/openvpn/v3/log`
@@ -39,6 +39,7 @@ node /net/openvpn/v3/log {
     methods:
       Attach(in  s interface);
       Detach(in  s interface);
+      GetSubscriberList(out a(ssss) subscribers);
     signals:
     properties:
       readwrite u log_level = 4;
@@ -76,6 +77,31 @@ avoided to have too many idling subscriptions.
 | Direction | Name        | Type        | Description                                                           |
 |-----------|-------------|-------------|-----------------------------------------------------------------------|
 | In        | interface   | string      | String containing the service interface to unsubscribe from.  If a service sends `Log` signals with different signals, each of these interfaces must be `Detached` |
+
+
+### Method: `net.openvpn.v3.log.GetSubscriberList`
+
+Retrieve a list of all subscriptions the log service is attached to.  The
+entries listed here are services which have used the `Attach` method in this
+service.  Services calling the `Dettach` method will be unlisted.
+
+#### Arguments
+| Direction | Name        | Type        | Description                                                                |
+|-----------|-------------|-------------|-----------------|
+| out       | subscribers | array       | See note below  |
+
+##### Arguments: subscribers
+
+The result of the `GetSubscriberList` method call is an array of tuples, each
+containing four strings.
+
+|  Field  |  Description                                                              |
+|---------|---------------------------------------------------------------------------|
+|    0    |  String containing a `tag` value which is used in the logs                |
+|    1    |  String containing the bus name the log service is attached to            |
+|    2    |  String containing the D-Bus object interface the subscription is tied to |
+|    3    |  String containing the D-Bus object path the subscription is tied to      |
+
 
 ### `Properties`
 
