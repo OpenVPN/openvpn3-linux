@@ -25,6 +25,7 @@
 
 
 #include "dbus/core.hpp"
+#include "dbus/connection-creds.hpp"
 #include "common/cmdargparser.hpp"
 #include "log/proxy-log.hpp"
 #include "../arghelpers.hpp"
@@ -106,16 +107,59 @@ static int cmd_log_service(ParsedArgs args)
             }
         }
 
-        std::cout << " Attached log subscriptions: "
-                  << logsrvprx.GetNumAttached() << std::endl;
-        std::cout << "             Log timestamps: "
-                  << (newtstamp ? "enabled" : "disabled")
-                  << old_tstamp << std::endl;
-        std::cout << "          Log D-Bus details: "
-                  << (newdbusdetails ? "enabled" : "disabled")
-                  << old_dbusdetails << std::endl;
-        std::cout << "          Current log level: "
-                  << newlev << old_loglev << std::endl;
+        if (args.Present("list-subscriptions"))
+        {
+            DBusConnectionCreds creds(dbus.GetConnection());
+            LogSubscribers list = logsrvprx.GetSubscriberList();
+            if (list.size() == 0)
+            {
+                std::cout << "No attached log subscriptions" << std::endl;
+                return 0;
+            }
+
+            std::cout << "Tag" << std::setw(22) << " "
+                      << "PID" << std::setw(4) << " "
+                      << "Bus name" << std::setw(4) << " "
+                      << "Interface" << std::setw(25) << " "
+                      << "Object path" << std::endl;
+            std::cout <<  std::setw(120) << std::setfill('-')
+                      << "-" << std::endl;
+            std::cout << std::setfill(' ');
+
+            for (const auto& e : list)
+            {
+                std::string pid;
+                try
+                {
+                   pid = std::to_string(creds.GetPID(e.busname));
+                }
+                catch (DBusException&)
+                {
+                    pid = "-";
+                }
+
+                std::cout << e.tag << std::setw(25 - e.tag.length()) << " "
+                          << pid << std::setw(7 - pid.length()) << " "
+                          << e.busname << std::setw(12 - e.busname.length()) << " "
+                          << e.interface << std::setw(34 - e.interface.length()) << " "
+                          << e.object_path << std::endl;
+            }
+            std::cout <<  std::setw(120) << std::setfill('-')
+                      << "-" << std::endl;
+        }
+        else
+        {
+            std::cout << " Attached log subscriptions: "
+                      << logsrvprx.GetNumAttached() << std::endl;
+            std::cout << "             Log timestamps: "
+                      << (newtstamp ? "enabled" : "disabled")
+                      << old_tstamp << std::endl;
+            std::cout << "          Log D-Bus details: "
+                      << (newdbusdetails ? "enabled" : "disabled")
+                      << old_dbusdetails << std::endl;
+            std::cout << "          Current log level: "
+                      << newlev << old_loglev << std::endl;
+        }
     }
     catch (DBusProxyAccessDeniedException& excp)
     {
@@ -147,6 +191,8 @@ SingleCommand::Ptr prepare_command_log_service()
     cmd->AddOption("dbus-details", "true/false", true,
                    "Log D-Bus sender, object path and method details of log sender",
                    arghelper_boolean);
+    cmd->AddOption("list-subscriptions",
+                   "List all subscriptions which has attached to the log service");
 
     return cmd;
 }

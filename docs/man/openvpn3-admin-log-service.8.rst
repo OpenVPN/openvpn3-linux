@@ -49,6 +49,8 @@ OPTIONS
                 only useful when debugging and not recommended for normal
                 production.
 
+--list-subscriptions
+                Lists all the services the log service has subscribed to.
 
 SEE ALSO
 ========
