@@ -400,6 +400,17 @@ class SessionManager(object):
         self.__peer_intf = dbus.Interface(self.__manager_object,
                                           dbus_interface='org.freedesktop.DBus.Peer')
 
+
+    def Introspect(self):
+        intf = dbus.Interface(self.__manager_object,
+                              dbus_interface='org.freedesktop.DBus.Introspectable')
+        return intf.Introspect()
+
+
+    def GetObjectPath(self):
+        return self.__manager_object.object_path
+
+
     ##
     #  Create a new VPN session
     #
