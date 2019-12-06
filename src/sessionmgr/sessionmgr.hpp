@@ -1062,6 +1062,10 @@ public:
         {
             return GetOwner();
         }
+        else if ("device_path" == property_name)
+        {
+            return be_proxy->GetProperty("device_path");
+        }
 
         try
         {
@@ -1158,10 +1162,6 @@ public:
                             "Failed retrieving connection statistics");
                 ret = NULL;
             }
-        }
-        else if ("device_path" == property_name)
-        {
-            ret = be_proxy->GetProperty("device_path");
         }
         else if ("device_name" == property_name)
         {
