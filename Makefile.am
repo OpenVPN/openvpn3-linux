@@ -72,7 +72,8 @@ EXTRA_DIST = \
 	src/common/utils.hpp \
 	src/ovpn3cli/arghelpers.hpp \
 	src/tests/netcfg/README \
-	src/tests/netcfg/net.openvpn.v3.netcfg-generic-access.conf
+	src/tests/netcfg/net.openvpn.v3.netcfg-generic-access.conf \
+	src/tests/python
 
 # Generate a static version reference to the Core library
 # This is used when distributing a .tar.xz file and the git

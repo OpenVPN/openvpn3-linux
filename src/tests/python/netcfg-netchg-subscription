@@ -1,0 +1,75 @@
+#!/usr/bin/python3
+#
+#  OpenVPN 3 Linux client -- Next generation OpenVPN client
+#
+#  Copyright (C) 2019         OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2019         David Sommerseth <davids@openvpn.net>
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, version 3 of the
+#  License.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
+##
+# @file  netcfg-subscription-test
+#
+# @brief Simple test program making use of the openvpn3.NetCfgManager
+#        module to subscribe to certain events.
+#
+#        NOTE: The openvpn3-linux default configuration requires the
+#              the openvpn user account to run this program
+#
+
+import dbus
+from dbus.mainloop.glib import DBusGMainLoop
+from gi.repository import GLib
+import openvpn3
+from openvpn3 import NetCfgChangeType as CT
+
+
+# Simple callback function which prints the NetworkChange event to console
+def netchg_callback(event):
+    print ("Device: %s - Type: %s" % (event.GetDevice(), event.GetType().name))
+    for (k,v) in event.GetAllDetails().items():
+        print ("  - %s: %s" % (str(k), str(v)))
+    print("-----------")
+
+# Simple callback function printing Log events to console
+def log_callback(grp, ctg, msg):
+    print("LOG: [%u:%u] %s" % (grp, ctg, msg))
+
+
+# Prepare the D-Bus connection, it needs to have a mainloop for
+# asynchronous handling
+mainloop = GLib.MainLoop()
+dbusloop = DBusGMainLoop(set_as_default=True)
+sysbus = dbus.SystemBus(mainloop=dbusloop)
+
+# Get a connection to the net.openvpn.v3.netcfg service (NetCfg service)
+nc = openvpn3.NetCfgManager(sysbus)
+
+# Subscribe to log events
+nc.LogCallback(log_callback)
+
+# Subscribe to device, IP address and route related events
+nc.SubscribeNetworkChange(netchg_callback, CT.DEVICE_ADDED | CT.DEVICE_REMOVED | CT.IPADDR_ADDED | CT.IPADDR_REMOVED | CT.ROUTE_ADDED | CT.ROUTE_REMOVED)
+
+# Main loop - wait for events to occur
+try:
+    mainloop.run()
+except KeyboardInterrupt:
+    print("Stopping")
+    pass
+
+# Clean up and unsubscribe
+nc.UnsubscribeNetworkChange()
+

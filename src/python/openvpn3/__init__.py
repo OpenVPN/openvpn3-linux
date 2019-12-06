@@ -25,6 +25,7 @@
 
 __all__ = ['StatusMajor', 'StatusMinor',
            'ClientAttentionType', 'ClientAttentionGroup',
+           'NetCfgChangeType',
            'ConfigParser',
            'PrintSessionStatistics']
 
@@ -32,4 +33,5 @@ __all__ = ['StatusMajor', 'StatusMinor',
 from .constants import *
 from .ConfigParser import ConfigParser
 from .ConfigManager import ConfigurationManager, Configuration
+from .NetCfgManager import NetCfgManager, NetCfgDevice, NetworkChangeSignal
 from .SessionManager import SessionManager, Session

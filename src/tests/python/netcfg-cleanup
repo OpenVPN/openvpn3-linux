@@ -1,0 +1,110 @@
+#  OpenVPN 3 Linux client -- Next generation OpenVPN client
+#
+#  Copyright (C) 2019         OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2019         David Sommerseth <davids@openvpn.net>
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, version 3 of the
+#  License.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
+##
+# @file  netcfg-cleanup
+#
+# @brief  A simple tools which retrieves all running VPN sessions and
+#         all created devices in the netcfg service.  It will then provide
+#         a list of stray devices not in use any more
+
+import sys
+import dbus
+import openvpn3
+import xml.etree.ElementTree as xmlET
+
+
+def retrieve_children_nodes(mgr):
+    mgr_node = xmlET.fromstring(mgr.Introspect())
+    nodelist =  []
+    for n in mgr_node.getchildren():
+        if 'node' == n.tag:
+            n_name = n.get('name')
+            if len(n_name) > 1:
+                nodelist.append('%s/%s' % (mgr.GetObjectPath(), n_name))
+
+    return nodelist
+
+
+def main(args):
+    if "--help" in args or "-h" in args:
+        print("Usage: %s [--remove-devices] [-h|--help]" % args[0])
+        sys.exit(0)
+
+    # Get a connection to the D-Bus system bus
+    sysbus = dbus.SystemBus()
+
+    # Get a connection to the session manager and netcfg manager
+    sesmgr = openvpn3.SessionManager(sysbus)
+    ncfmgr = openvpn3.NetCfgManager(sysbus)
+
+    # Retrieve a list of all running sessions and the devices in use.
+    # Use the introspection approach, as FetchAvailableSessions() will only
+    # return sessions available to the calling user.  The introspection approach
+    # will return all objects paths regardless of ACL; but it doesn't mean
+    # the calling user can manage the session.
+    sessionlist = {}
+    for path in retrieve_children_nodes(sesmgr):
+        session = sesmgr.Retrieve(path)
+        sessionlist[path] = str(session.GetProperty('device_path'))
+
+    # Retrieve a list of all devices configured via netcfg; again use the
+    # introspection approach.
+    devlist = retrieve_children_nodes(ncfmgr)
+
+
+    # Compare all device paths found in the session manager against the
+    # list of configured devices
+    stray_devices = []
+    for devp in devlist:
+        if devp not in sessionlist.values():
+            stray_devices.append(devp)
+
+    # Do a reverse comparison, identify all sessions configured to use
+    # a netcfg device not being available
+    stray_sessions = []
+    for (sesp, devp) in sessionlist.items():
+         if devp not in devlist:
+             stray_sessions.append(sesp);
+
+    if len(stray_devices) > 0:
+        print("Stray NetCfg managed devices - not used by any VPN sessions:")
+        for p in stray_devices:
+            print("\t- %s" % p)
+        print("")
+    else:
+        print("No stray devices found")
+
+    if len(stray_sessions) > 0:
+        print("Registered sessions with no valid NetCfg device:")
+        for p in stray_sessions:
+            print("\t- %s" % p)
+        print("")
+    else:
+        print("No VPN sessions found with invalid NetCfg devices.")
+
+    if "--remove-devices" in args:
+        for p in stray_devices:
+            print("Clean up:  Destroying device %s" % p)
+            dev = ncfmgr.Retrieve(p)
+            dev.Destroy()
+
+
+if __name__ == "__main__":
+    main(sys.argv)

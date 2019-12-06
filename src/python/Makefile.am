@@ -35,6 +35,7 @@ pkgopenvpn3_PYTHON = \
 	openvpn3/__init__.py     \
 	openvpn3/ConfigParser.py \
 	openvpn3/ConfigManager.py \
+	openvpn3/NetCfgManager.py \
 	openvpn3/SessionManager.py
 
 nodist_pkgopenvpn3_PYTHON = \
