@@ -51,7 +51,9 @@ maintainer-clean-local:
 	-git submodule deinit --all
 
 CLEANFILES = \
-	*~
+	*~ \
+	src/shell/bash-completion/*~ \
+	src/tests/python/*~
 
 DOCUMENTATION = \
 	COPYRIGHT.md \
@@ -87,6 +89,8 @@ dist-hook: openvpn3-core-version
 	rm -rf $(distdir)/openvpn3-core/deps/asio/patch/*.patch
 # Somehow autotools packages these object files not intended for distribution
 	rm -vf $(distdir)/vendor/googletest/googletest/src/*.o
+# Remove any backup files
+	find -type f -name *~ | xargs rm -f
 
 #
 # Compiler flags

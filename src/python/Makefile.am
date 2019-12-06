@@ -21,6 +21,7 @@ AM_CXXFLAGS = \
 	-I$(top_srcdir)/src
 
 CLEANFILES = \
+	*~ \
 	openvpn3/*.pyc        \
 	openvpn3/constants.py
 
