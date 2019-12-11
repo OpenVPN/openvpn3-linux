@@ -44,7 +44,9 @@ NetCfgChangeEvent::NetCfgChangeEvent(GVariant *params)
 
     gchar *dev = nullptr;
     GVariantIter *det = nullptr;
-    g_variant_get(params, "(usa{ss})", &type, &dev, &det);
+    guint tmp_type = 0;
+    g_variant_get(params, "(usa{ss})", &tmp_type, &dev, &det);
+    type = (NetCfgChangeType) tmp_type;
 
     device = std::string(dev);
     g_free(dev);
