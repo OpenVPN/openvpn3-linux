@@ -609,10 +609,20 @@ public:
                                      GError **error)
     {
         try {
-            // Only the session manager is allowed to get properties
+            // Some properties can be read without any restrictions ...
+            if ("device_path" == property_name)
+            {
+                return g_variant_new_string((vpnclient ? vpnclient->netcfg_get_device_path().c_str() : ""));
+            }
+            else if ("log_level" == property_name)
+            {
+                return g_variant_new_uint32(signal.GetLogLevel());
+            }
+
+            // ... other properties is restricted to the session manager
             validate_sender(sender);
 
-            // Access to properties are controled by the D-Bus policy.
+            // Access to properties are controlled by the D-Bus policy.
             // Normally only the session manager should have access to
             // to these properties.
             if ("statistics" == property_name)
@@ -636,17 +646,9 @@ public:
             {
                 return signal.GetLastStatusChange();
             }
-            else if ("device_path" == property_name)
-            {
-                return g_variant_new_string((vpnclient ? vpnclient->netcfg_get_device_path().c_str() : ""));
-            }
             else if ("device_name" == property_name)
             {
                 return g_variant_new_string((vpnclient ? vpnclient->netcfg_get_device_name().c_str() : ""));
-            }
-            else if ("log_level" == property_name)
-            {
-                return g_variant_new_uint32(signal.GetLogLevel());
             }
             else if ("session_name" == property_name)
             {
