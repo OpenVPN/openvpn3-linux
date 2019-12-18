@@ -758,14 +758,17 @@ private:
 #if DEBUG_DISABLE_SESSIONMGR_CHECK
         return;
 #endif
-        // Only the session manager is susposed to talk to the
+        // Only the session manager is supposed to talk to the
         // the backend VPN client service
         if (GetUniqueBusID(OpenVPN3DBus_name_sessions) != sender)
         {
+            std::string err = "Caller " + sender
+                            + " (pid " + std::to_string(GetPID(sender))
+                            + ", uid " + std::to_string(GetUID(sender))
+                              + ") is not a session manager";
             throw DBusCredentialsException(GetUID(sender),
                                            "net.openvpn.v3.error.acl.denied",
-                                           "You are not a session manager"
-                                           );
+                                           err);
         }
     }
 
