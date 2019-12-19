@@ -344,6 +344,7 @@ public:
                                                                   "Missing user credentials");
                     g_dbus_method_invocation_return_gerror(invoc, err);
                     g_error_free(err);
+                    return;
                 }
             }
             else if ("Connect" == method_name)
