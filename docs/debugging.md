@@ -35,8 +35,8 @@ services are being started as `root`, they will also switch to `openvpn`
 automatically.
 
 This also means five of backend services can be run via external debug tools
-directly on the command line.   The `openvpn3-service-client` is
-different, as that needs to be started via `openvpn3-service-backendstart`.
+directly on the command line.  The `openvpn3-service-client` is different,
+as that needs to be started via `openvpn3-service-backendstart`.
 
 ## Debugging openvpn3-service-client
 
@@ -82,7 +82,7 @@ tunnel, the terminal with `gdb` running will come back with a prompt where you
 can continue the execution.
 
 ### Caveats with GDB
-D-Bus is fairly sensitive to time-outs.  These time-outs are normally reasonable,
+D-Bus is fairly sensitive to time-outs.  These time-outs are normally reasonable
 but you might hit several time-outs when using this way of debugging.  Further,
 by using `--client-no-fork` it may also happen that various openvpn3
 front-ends will not respond as expected.  In these cases, using the `openvpn3`

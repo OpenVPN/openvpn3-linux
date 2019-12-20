@@ -2,8 +2,8 @@ OpenVPN 3 D-Bus API: Session manager
 ====================================
 
 The session manager keeps track of all the currently running VPN
-tunnels. This is the primary front-end interface for managing VPN
-tunnels. This manager will also proxy metod calls and signals from the
+tunnels.  This is the primary front-end interface for managing VPN
+tunnels.  This manager will also proxy metod calls and signals from the
 independent VPN backend client processes to listening user front-end
 processes.
 
@@ -37,9 +37,9 @@ node /net/openvpn/v3/sessions {
 ### Method: `net.openvpn.v3.sessions.NewTunnel`
 
 This starts a new VPN backend client process for a specific VPN
-configuration profile. This does not start the connection, it just
+configuration profile.  This does not start the connection, it just
 starts a privileged client process and awaits further
-instructions. When this method call returns with a session path, it
+instructions.  When this method call returns with a session path, it
 means the backend process have started.
 
 #### Arguments
@@ -57,6 +57,7 @@ caller is granted access to.
 
 #### Arguments
 | Direction | Name        | Type         | Description                                            |
+|-----------|-------------|--------------|--------------------------------------------------------|
 | Out       | paths       | object paths | An array of object paths to accessible session objects |
 
 
@@ -113,6 +114,7 @@ addition to the hard-coded restriction in the session manager code.
 
 #### Arguments
 | Direction | Name          | Type         | Description                                            |
+|-----------|---------------|--------------|--------------------------------------------------------|
 | In        | path          | object path  | Session object path where to modify the owner property |
 | In        | new_owner_uid | unsigned int | UID value of the new session owner                     |
 
@@ -121,7 +123,7 @@ addition to the hard-coded restriction in the session manager code.
 
 Whenever the session manager want to log something, it issues a Log
 signal which carries a log group, log verbosity level and a string
-with the log message itself. See the separate [logging
+with the log message itself.  See the separate [logging
 documentation](dbus-logging.md) for details on this signal.
 
 
@@ -187,9 +189,9 @@ node /net/openvpn/v3/sessions/${UNIQUE_ID} {
 ### Method: `net.openvpn.v3.sessions.Ready`
 
 This method is to check if the backend VPN client is ready to
-connect. If it is ready, it will return immediately. If it is not, it
+connect.  If it is ready, it will return immediately.  If it is not, it
 will return with a D-Bus error exception providing the reason it is
-not ready. Most commonly it needs some input from the user, such as
+not ready.  Most commonly it needs some input from the user, such as
 user credentials or some challenge token not already provided in the
 configuration.
 
@@ -200,8 +202,8 @@ configuration.
 
 ### Method: `net.openvpn.v3.sessions.Connect`
 
-This method starts the connection process. This requires that all
-credentials needed before contacting the server have been provided. It
+This method starts the connection process.  This requires that all
+credentials needed before contacting the server have been provided.  It
 is always a good idea to first call the
 `net.openvpn.v3.sessions.Ready` method first to ensure the backend is
 ready to connect.
@@ -242,7 +244,7 @@ Completely disconnects and reconnects an active VPN connection
 
 ### Method: `net.openvpn.v3.sessions.Disconnect`
 
-Disconnects a VPN connection. This will shutdown and stop the VPN
+Disconnects a VPN connection.  This will shutdown and stop the VPN
 backend process and the session object will be removed.
 
 #### Arguments
@@ -347,7 +349,7 @@ documentation](dbus-logging.md) for details on this signal.
 | owner         | unsigned integer | Read-only  | The UID value of the user which did the import      |
 | session_created| uint64          | Read-only  | Unix Epoc timestamp of when the session was created |
 | acl           | array(integer)   | Read-only  | An array of UID values granted access               |
-| public_access | boolean          | Read/Write | If set to true, access control is disabled. But only owner may change this property, modify the ACL or delete the configuration |
+| public_access | boolean          | Read/Write | If set to true, access control is disabled.  Only owner may change this property, modify the ACL or delete the configuration |
 | status        | dictionary       | Read-only  | Contains the last processed StatusChange signal |
 | last_log      | dictionary       | Read-only  | Contains the last Log signal proxied from the backend process |
 | statistics    | dictionary       | Read-only  | Contains tunnel statistics |

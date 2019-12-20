@@ -22,7 +22,7 @@ optionally start VPN configuration profiles from a specific directory.
 As the OpenVPN 3 Linux client provides fine grained control on both
 configuration profiles and VPN sessions which are managed outside the
 main configuration profile, the configuration profiles must be accompanied
-by a *.autoload* definition with local site-specific details.
+by a *.autoload* definition with local site-specific settings.
 
 The **openvpn3-autoload** utility is provided with a
 **openvpn3-autoload.service** *systemd* unit file which can be enabled and
@@ -31,7 +31,7 @@ will load configuration profiles located in */etc/openvpn3/autoload*.
 OPTIONS
 =======
 
--h, --help           Prints usage infromation and exits.
+-h, --help           Prints usage information and exits.
 --directory DIR      Required.  Directory to look for configuration
                      profiles
 --ignore-autostart   Optional.  Do not automatically start any VPN sessions
@@ -69,33 +69,34 @@ Main section
 
 The basic layout of an *.autoload* file is like this:
 
-|
-|   {
-|       "autostart": BOOLEAN,
-|       "name": "string value",
-|       "acl": {
-|           ...
-|       },
-|       "crypto": {
-|           ...
-|       },
-|       "remote": {
-|           ...
-|       },
-|       "tunnel": {
-|           ...
-|       },
-|       "user-auth": {
-|           ...
-|       }
-|   }
+::
+
+    {
+       "autostart": BOOLEAN,
+        "name": "string value",
+        "acl": {
+            ...
+        },
+        "crypto": {
+            ...
+        },
+        "remote": {
+            ...
+        },
+        "tunnel": {
+            ...
+        },
+        "user-auth": {
+            ...
+        }
+    }
 
 
 Attribute: autostart
 """"""""""""""""""""
 The *autostart* boolean declares if the configuration profile should be
 started once it has been imported into the OpenVPN 3 Configuration Manager.
-(Default: false)
+(Default: ``false``)
 
 Attribute: name
 """""""""""""""
@@ -111,24 +112,25 @@ Section: acl
 The *acl* section declares several Access Control Level parameters of
 the imported configuration profile.  Valid settings are:
 
-|
-|   "acl": {
-|       "public": BOOLEAN,
-|       "locked-down": BOOLEAN,
-|       "set-owner": UID
-|   }
+::
+
+    "acl": {
+        "public": BOOLEAN,
+        "locked-down": BOOLEAN,
+        "set-owner": UID
+    }
 
 Attribute acl:public
 """"""""""""""""""""
 
 The *public* element declares if this configuration profile is available
-for all users on the system or not.  (Default: false)
+for all users on the system or not.  (Default: ``false``)
 
 Attribute: acl:locked-down
 """"""""""""""""""""""""""
-By setting the *locked-down* element to true, users granted access can
+By setting the *locked-down* element to ``true``, users granted access can
 only start new tunnels with this profile but cannot look look at the
-information stored in the configuration profile. (Default: false)
+information stored in the configuration profile. (Default: ``false``)
 
 Attribute: acl:set-owner
 """"""""""""""""""""""""
@@ -137,7 +139,7 @@ who runs **openvpn3-autoload**.  The root user on the system can re-assign
 the ownership of configuration profiles it imports, like when running this
 utility during the system boot.  By providing the "set-owner" element with
 the UID of the user who should own this configuration profile, the
-ownership will be transfered.  This is a feature only available by root.
+ownership will be transferred.  This is a feature only available by root.
 
 
 Section: crypto
@@ -145,14 +147,15 @@ Section: crypto
 The *crypto* section enables fine-tuning some of the configuration
 parameters related to the crypto layers of a VPN session.
 
-|
-|   "crypto": {
-|       "force-aes-cbc": BOOLEAN,
-|       "tls-params": {
-|           ...
-|       }
-|   }
-|
+::
+
+    "crypto": {
+        "force-aes-cbc": BOOLEAN,
+        "tls-params": {
+            ...
+        }
+    }
+
 
 Attribute: crypto:force-aes-cbc
 """""""""""""""""""""""""""""""
@@ -164,51 +167,52 @@ cipher via the Negotiable Crypto Parameters protocol (NCP).
 
 Sub-Section: crypto:tls-params
 """"""""""""""""""""""""""""""
-The *tls-params* sub-section further controls the TLS protocol parameters:
+The *tls-params* sub-section further controls the TLS protocol parameters.
 
-|
-|   "tls-params": {
-|       "cert-profile": [ "legacy" | "preferred" | "suiteb" ],
-|       "min-version": [ "disabled" | "default" | "tls_1_0" | "tls_1_1" | "tls_1_2" | "tls_1_3" ]
-|   }
+::
+
+    "tls-params": {
+        "cert-profile": [ "legacy" | "preferred" | "suiteb" ],
+        "min-version": [ "disabled" | "default" | "tls_1_0" | "tls_1_1" | "tls_1_2" | "tls_1_3" ]
+    }
 
 Attribute: crypto:tls-params:cert-profile
 """"""""""""""""""""""""""""""""""""""""""
 The *cert-profile* declares the security level of the TLS channel.  Valid
 values are:
 
-   * *legacy*
-     Allows minimum 1024 bits RSA keys with certificates signed with SHA1.
+``legacy``
+    Allows minimum 1024 bits RSA keys with certificates signed with SHA1.
 
-   * *preferred*
-     Allows minimum 2048 bits RSA keys with certificates signed with
-     SHA256 or higher.
+``preferred``
+    Allows minimum 2048 bits RSA keys with certificates signed with
+    SHA256 or higher.
 
-   * *suiteb*
-     This follows the NSA Suite-B specification.
+``suiteb``
+    This follows the NSA Suite-B specification.
 
 Attribute: crypto:tls-params:min-version
 """"""""""""""""""""""""""""""""""""""""
 The *min-version* defines the minimum TLS version being accepted by the
 client.  Valid values are:
 
-   * *disabled*
-     No minimum version is defined nor required
+``disabled``
+    No minimum version is defined nor required
 
-   * *default*
-     Uses the default minimum version the SSL library defines
+``default``
+    Uses the default minimum version the SSL library defines
 
-   * *tls_1_0*
-     Requires at least TLSv1.0
+``tls_1_0``
+    Requires at least TLSv1.0
 
-   * *tls_1_1*
-     Requires at least TLSv1.1
+``tls_1_1``
+    Requires at least TLSv1.1
 
-   * *tls_1_2*
-     Requires at least TLSv1.2
+``tls_1_2``
+    Requires at least TLSv1.2
 
-   * *tls_1_3*
-     Requires at least TLSv1.3
+``tls_1_3``
+    Requires at least TLSv1.3
 
 
 Section: remote
@@ -218,16 +222,17 @@ server.  It does not support different settings per remote server but
 is shared for all the remote servers enlisted in the main
 configuration file.
 
-|
-|    "remote": {
-|            "proto-override": [ "udp" | "tcp" ],
-|            "port-override": PORT_NUM,
-|            "timeout": SECONDS,
-|            "compression": [ "no" | "yes" | "asym" ],
-|            "proxy": {
-|                ...
-|            }
-|    }
+::
+
+     "remote": {
+             "proto-override": [ "udp" | "tcp" ],
+             "port-override": PORT_NUM,
+             "timeout": SECONDS,
+             "compression": [ "no" | "yes" | "asym" ],
+             "proxy": {
+                 ...
+             }
+     }
 
 Attribute: remote:protocol-override
 """""""""""""""""""""""""""""""""""
@@ -248,15 +253,15 @@ Attribute: remote:compression
 """""""""""""""""""""""""""""
 Controls how compression settings for the data channel.  Valid values are:
 
-   * *no*
-     Compression is disabled
+``no``
+    Compression is disabled
 
-   * *yes*
-     Compressoin is enanbled in both directions
+``yes``
+    Compression is enabled in both directions
 
-   * *asym*
-     Compression is only enabled for traffic sent from the remote side to
-     the local side.
+``asym``
+    Compression is only enabled for traffic sent from the remote side to
+    the local side.
 
 
 Sub-section: remote:proxy
@@ -264,14 +269,15 @@ Sub-section: remote:proxy
 This sub-section configures the client to start the connection via an HTTP
 proxy server.
 
-|
-|            "proxy": {
-|                    "host": "proxy-server-name",
-|                    "port": "proxy-port",
-|                    "username": "proxy-username",
-|                    "password": "proxy-password",
-|                    "allow-plain-text": BOOLEAN
-|            }
+::
+
+             "proxy": {
+                     "host": "proxy-server-name",
+                     "port": "proxy-port",
+                     "username": "proxy-username",
+                     "password": "proxy-password",
+                     "allow-plain-text": BOOLEAN
+             }
 
 Attribute: remote:proxy:host
 """"""""""""""""""""""""""""
@@ -296,7 +302,7 @@ a string with the password to use.
 Attribute: remote:proxy:allow-plain-text
 """"""""""""""""""""""""""""""""""""""""
 Boolean flag enabling or disabling the OpenVPN 3 client to transport
-the proxy username/password unencrypted.  Default: false
+the proxy username/password unencrypted.  Default: ``false``
 
 
 Section: tunnel
@@ -306,13 +312,14 @@ On some platforms this interacts directly with a tun/tap interface
 while other platforms may pass these settings via VPN API provided by
 the platform.
 
-|
-|    "tunnel": {
-|            "ipv6": [ "yes" | "no" | "default" ],
-|            "persist": BOOLEAN,
-|            "dns-fallback": [ "google" ],
-|            "dns-setup-disabled": BOOLEAN
-|        }
+::
+
+     "tunnel": {
+             "ipv6": [ "yes" | "no" | "default" ],
+             "persist": BOOLEAN,
+             "dns-fallback": [ "google" ],
+             "dns-setup-disabled": BOOLEAN
+         }
 
 Attribute: tunnel:ipv6
 """"""""""""""""""""""
@@ -320,15 +327,15 @@ Attribute: tunnel:ipv6
 Enable or disable the IPv6 capability on the tunnel interface.  This
 can be a string which must contain one of these values:
 
-  * *yes*
+``yes``
     IPv6 capability is enabled and will be configured if
     the server sends IPv6 configuration details
 
-  * *no*
+``no``
     IPv6 capability is disabled and will not be configured,
     regardless of what the server provides of IPv6 configuration details
 
-  * *default*
+``default``
     Make use of IPv6 if the platform supports it
 
 Attribute: tunnel:persist
@@ -336,14 +343,14 @@ Attribute: tunnel:persist
 Boolean flag which enables the persistent tunnel interface behaviour.  This
 is related to whether the tunnel interface will be torn down and
 re-established during re-connections or restarts of the VPN tunnel.
-If set to true, the tunnel interface is preserved during such events.
+If set to ``true``, the tunnel interface is preserved during such events.
 
 Attribute: tunnel:dns-fallback
 """"""""""""""""""""""""""""""
 This makes the VPN client configure an additional fallback DNS
 server on the system.  Valid strings are:
 
-  * *google*
+``google``
     Configures the system to use 8.8.8.8 and 8.8.4.4 as fallback
     DNS servers
 
@@ -351,31 +358,32 @@ Attribute: dns-setup-disabled
 """""""""""""""""""""""""""""
 Controls whether DNS configurations in the VPN configuration profile or
 DNS settings sent from the server will be applied on the system or not.
-(Default: false)
+(Default: ``false``)
 
 
 Section: user-auth
 ~~~~~~~~~~~~~~~~~~
 This section is only important if the server uses user authentication
 methods other than certificate based authentication and this section is
-only used if the *autostart* attribute is set to *true*.  This is used
+only used if the *autostart* attribute is set to ``true``.  This is used
 to automate the client connection as much as possible.
 
-|
-|    "user-auth": {
-|        "autologin": BOOLEAN,
-|        "username": "string value",
-|        "password": "string value",
-|        "pk_passphrase": "string value",
-|        "dynamic_challenge": "string value"
-|    }
+::
+
+     "user-auth": {
+         "autologin": BOOLEAN,
+         "username": "string value",
+         "password": "string value",
+         "pk_passphrase": "string value",
+         "dynamic_challenge": "string value"
+     }
 
 
 Attribute: user-auth:autologin
 """"""""""""""""""""""""""""""
-If set to *true*, the client will not ask for username/password as it is
+If set to ``true``, the client will not ask for username/password as it is
 expected that the VPN configuration profile carries the needed settings
-providing the identity towards the server.  (Default: false)
+providing the identity towards the server.  (Default: ``false``)
 
 Attribute: user-auth:username
 """""""""""""""""""""""""""""

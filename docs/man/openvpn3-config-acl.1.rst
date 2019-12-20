@@ -48,24 +48,29 @@ OPTIONS
 
 -s, --show              Show the currently active ACL.
 
--G UID|USERNAME, --grant UID|USERNAME
-                        Grant the given user ID (UID) or username read-only
-                        access to this configuration profile.
+-G USER, --grant USER
+                        Grant the given user read-only access to this
+                        configuration profile.  The USER argument can be either
+                        UID or username belonging to the system.
 
--R UID|USERNAME, --revoke UID|USERNAME
-                        Revoke access to this configuration profile from the
-                        given user ID (UID) or username.
+-R USER, --revoke USER
+                        Revoke access on this configuration profile for the
+                        given user.  The USER argument can be either UID or
+                        username belonging to the system.
 
---public-access true|false
+--public-access BOOL
                         Grant all users on the system read-only access to
                         this configuration profile.  This effectively disables
                         the more fine-grained access control provided via
-                        ``--grant``.
+                        ``--grant``.  Valid argument values: ``true``,
+                        ``false``
 
---lock-down true|false  Locks down the configuration profile so it can only
+--lock-down BOOL
+                        Locks down the configuration profile so it can only
                         be used to start new VPN sessions by users granted
                         access.  Only the configuration profile owner can now
                         show the profile contents via ``openvpn3 config-show``.
+                        Valid argument values: ``true``, ``false``
 
 -S, --seal              This seals the configuration profile for everyone,
                         making the configuration profile effectively read-only,

@@ -50,37 +50,45 @@ OPTIONS
                         Override the remote server port to connect against.
                         Valid values: 1-65535.
 
---proto-override tcp|udp
+--proto-override PROTO
                         Override the connection protocol.  Valid values are
                         ``tcp`` and ``udp``.
 
---ipv6 yes|no|default
-                        Sets the IPv6 connect policy for the client.
+--ipv6 ARG
+                        Sets the IPv6 connect policy for the client.  Valid
+                        values are ``yes``, ``no`` and ``default``
 
---persist-tun true|false
+--persist-tun BOOL
                         Overrides the --persist-tun argument in the
                         configuration profile.  If set to true, the tun
                         adapter will persist during the reconnect.  If false,
                         the tun adapter will be torn down before reconnects.
+                        Valid values are: ``true``, ``false``
 
---dns-fallback-google true|false
+--dns-fallback-google BOOL
                         If set to true, the DNS resolver settings will include
-                        Google DNS servers.
+                        Google DNS servers.  Valid values are: ``true``,
+                        ``false``
 
---dns-setup-disabled true|false
+
+--dns-setup-disabled BOOL
                         If set to true, DNS settings will not be configured
-                        on the system.
+                        on the system.  Valid values are: ``true``, ``false``
 
---dns-sync-lookup true|false
+
+--dns-sync-lookup BOOL
                         If set to true, DNS lookups will happen synchronously.
+                        Valid values are: ``true``, ``false``
 
---auth-fail-retry true|false
+--auth-fail-retry BOOL
                         If set to true, the client will try to reconnect instead
-                        of disconnecting if authentication fails.
+                        of disconnecting if authentication fails.  Valid values
+                        are: ``true``, ``false``
 
---allow-compression no|asym|yes
+--allow-compression ARG
                         This controls whether the client wants to allow
                         compression on traffic between the client to the server.
+                        Valid argument values:
 
                         * *no*:
                           Do not compress at all
@@ -91,15 +99,16 @@ OPTIONS
                         * *yes*:
                           Both client and server can use compression
 
---force-cipher-aes-cbc true|false
+--force-cipher-aes-cbc BOOL
                         Override ``--cipher`` and disable cipher negotiation
-                        and force AES-CBC cipher to be used.
+                        and force AES-CBC cipher to be used.  Valid values
+                        are: ``true``, ``false``
 
---tls-version-min tls_1_0|tls_1_1|tls_1_2|tls_1_3
+--tls-version-min ARG
                         Sets the minimum TLS version for the control channel.
                         For this to be functional, the SSL/TLS library in use
                         needs to support this restriction on both server and
-                        client.
+                        client.  Valid argument values are:
 
                         * *tls_1_0*:
                           Enforce minimum TLSv1.0
@@ -115,8 +124,9 @@ OPTIONS
                           supported by OpenSSL 1.1.1.
 
 
---tls-cert-profile legacy|preferred|suiteb
+--tls-cert-profile ARG
                         This sets the acceptable certificate and key parameters.
+                        Valid argument values are:
 
                         * *legacy*:
                           Allows minimum 1024 bits RSA keys with certificates
@@ -142,12 +152,13 @@ OPTIONS
 --proxy-password PROXY-PASSWORD
                         Password to use for the HTTP proxy connection
 
---proxy-auth-cleartext true|false
+--proxy-auth-cleartext BOOL
                         Allow HTTP proxy authentication to happen in clear-text.
+                        Valid values are: ``true``, ``false``
 
 --unset-override OVERRIDE
                         This removes an override setting from the configuration
-                        profile.  The ``OVERRIDE`` value is the the setting
+                        profile.  The ``OVERRIDE`` value is the setting
                         arguments enlisted here but without the leading ``--``.
                         For example, if ``--tls-cert-profile suiteb`` was set,
                         it can be unset with

@@ -52,24 +52,27 @@ OPTIONS
 -s, --show
                 Shows the currently active ACL.
 
--G UID|USERNAME, --grant UID|USERNAME
-                Grant the given user ID (UID) or username access to this VPN
-                session.
+-G USER, --grant USER
+                Grant the given user read-only access to this VPN session.
+                The USER argument can be either UID or username belonging
+                to the system.
 
--R UID|USERNAME, --revoke UID|USERNAME
-                Revoke access from this VPN session for the given user ID (UID)
-                or username.
+-R USER, --revoke USER
+                Revoke access on this VPN session for the given user.  The
+                USER argument can be either UID or username belonging to
+                the system.
 
---public-access true|false
+--public-access BOOL
                 Grant all users on the system access to manage this VPN session.
                 This effectively disables the more fine-grained access control
-                provided via ``--grant``.
+                provided via ``--grant``.  Valid argument values: ``true``,
+                ``false``
 
---allow-log-access true|false
+--allow-log-access BOOL
                 By default, users granted access will not have access to the
                 session log.  By setting this option to *true*, users granted
                 access can use ``openvpn3 log`` to retrieve real-time log events
-                as they occur.
+                as they occur.  Valid argument values: ``true``, ``false``
 
 
 SEE ALSO

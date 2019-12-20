@@ -43,9 +43,10 @@ OPTIONS
                 ``openvpn3 sessions-list``.
 
 --log-level LEVEL
-                Sets the log verbosity for the log events.  Valid values are
-                *0* to *6*.  The higher value, the more verbose the log events
-                will be.  Log level *6* will retrieve all debug events.
+                Sets the log verbosity for the log events.  Valid values
+                are ``0`` to ``6``.  The higher value, the more verbose the
+                log events will be.  Log level ``6`` will include all debug
+                events.
 
 --config-events
                 Retrieve log events from the configuration manager.  For this

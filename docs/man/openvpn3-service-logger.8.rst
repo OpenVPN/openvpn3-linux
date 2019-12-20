@@ -98,6 +98,10 @@ OPTIONS
                 are *0* to *6*.  The higher value, the more verbose the log
                 events will be.  Log level *6* will retrieve all debug events.
 
+--log-file FILE
+                This will write all log events to *FILE* instead of the
+                terminal.
+
 --syslog
                 This will make all log events be sent to the generic system
                 logger via the ``syslog(3)`` function.
@@ -106,10 +110,6 @@ OPTIONS
                 To be used together with --syslog.  The default *LOG-FACILITY*
                 is *LOG_DAEMON*.  For other valid facilities, see the
                 *facility* section in ``syslog(3)``.
-
- --log-file FILE
-                This will write all log events to *FILE* instead of the
-                terminal.
 
 --service
                 This will start ``openvpn3-service-logger`` as a D-Bus service,
@@ -120,7 +120,7 @@ OPTIONS
 --service-log-dbus-details
                 Each log event contains some more detailed meta-data of the
                 sender of the log event.  This is disabled by default, but when
-                enabled it will add an additional line on the log destination
+                enabled it will add a line on the log destination
                 before the log event itself with this meta-data.  This is mostly
                 only useful when debugging and not recommended for normal
                 production.
@@ -137,7 +137,7 @@ OPTIONS
                 settings in a file inside this directory.  This is used to
                 preserve the log settings across process restarts, for example
                 if the ``--idle-exit`` kicks in or the host is rebooted.  The
-                contents of this file is not expected to be modified directly,
+                contents of this file is not expected to be modified directly
                 but rather use the ``openvpn3 log-service`` as the configuration
                 tool.
 

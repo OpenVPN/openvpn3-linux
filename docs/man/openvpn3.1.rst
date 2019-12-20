@@ -33,34 +33,46 @@ version           - Show OpenVPN 3 version information
 
 Configuration management
 ------------------------
-config-import     - Import configuration profiles
+``config-import``
+    Import configuration profiles
 
-config-manage     - Manage configuration properties
+``config-manage``
+    Manage configuration properties
 
-config-acl        - Manage access control lists for configurations
+``config-acl``
+    Manage access control lists for configurations
 
-config-show       - Show/dump a configuration profile
+``config-show``
+    Show/dump a configuration profile
 
-config-remove     - Remove an available configuration profile
+``config-remove``
+    Remove an available configuration profile
 
-configs-list      - List all available configuration profiles
+``configs-list``
+    List all available configuration profiles
 
 Session management
 ------------------
-session-start     - Start a new VPN session
+``session-start``
+    Start a new VPN session
 
-session-manage    - Manage VPN sessions
+``session-manage``
+    Manage VPN sessions
 
-session-acl       - Manage access control lists for sessions
+``session-acl``
+    Manage access control lists for sessions
 
-session-stats     - Show session statistics
+``session-stats``
+    Show session statistics
 
-sessions-list     - List available VPN sessions
+``sessions-list``
+    List available VPN sessions
 
 
 Log commands
 ------------
-log               - Receive log events as they occur
+``log``
+    Receive log events as they occur
 
 SEE ALSO
 ========

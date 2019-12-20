@@ -6,7 +6,7 @@ attempts to be as site/host independent as possible.  Options found
 here should be functional across any device using the configuration.
 In OpenVPN 2.x there are several options which also covers these
 environment specific settings; while OpenVPN 3 tries to move as much
-of these options outside of the the main configuration file.
+of these options outside of the main configuration file.
 
 This new autoloader file format targets these environment specific
 options and is to be used when configuration files are automatically
@@ -22,7 +22,7 @@ An `.autoload` file consists of several sections and all sections and
 properties within any section are optional.
 
 ## WARNING!
-This spec is under development and it may change rapidly.
+This spec is under development and it may change.
 The reference implementation at any time will be the
 `openvpn3-autoload` Python script.  And there might be features
 described in this document which is not implemented yet.
@@ -364,6 +364,6 @@ loaded it.
 #### acl: locked-down
 A boolean flag allowing the access to this configuration to be far
 more restrictive.  A locked down profile will effectively only make
-other users start and stop the the tunnel.  It may retrieve some of
+other users start and stop the tunnel.  It may retrieve some of
 the insensitive `.autoload` settings but will not have access to the
 main configuration file directly.

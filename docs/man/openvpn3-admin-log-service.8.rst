@@ -32,22 +32,22 @@ OPTIONS
                 Sets the system wide log verbosity for the log events being
                 logged to file or any other log destination
                 ``openvpn3-service-logger`` is configured to use.  Valid values
-                are *0* to *6*.  The higher value, the more verbose the log
-                events will be.  Log level *6* will retrieve all debug events.
+                are ``0`` to ``6``.  The higher value, the more verbose the log
+                events will be.  Log level ``6`` will contain all debug events.
 
---timestamp true|false
+--timestamp BOOL
                 Some of the log destinations supported by
                 ``openvpn3-service-logger`` may allow to log with or without
                 timestamps.  This option enables or disables timestamps attached
-                to log events.
+                to log events.  Valid arguments: ``true``, ``false``.
 
---dbus-details true|false
+--dbus-details BOOL
                 Each log event contains some more detailed meta-data of the
                 sender of the log event.  This is disabled by default, but when
-                enabled it will add an additional line on the log destination
+                enabled it will add a line on the log destination
                 before the log event itself with this meta-data.  This is mostly
                 only useful when debugging and not recommended for normal
-                production.
+                production.  Valid arguments: ``true``, ``false``
 
 --list-subscriptions
                 Lists all the services the log service has subscribed to.
