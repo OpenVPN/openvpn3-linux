@@ -23,6 +23,8 @@
 #include <exception>
 #include <sstream>
 
+#include <glib.h>
+
 #include "config.h"
 
 namespace openvpn
