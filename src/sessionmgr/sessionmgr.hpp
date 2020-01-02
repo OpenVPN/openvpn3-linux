@@ -1064,7 +1064,18 @@ public:
         }
         else if ("device_path" == property_name)
         {
-            return be_proxy->GetProperty("device_path");
+            try
+            {
+                return be_proxy->GetProperty("device_path");
+            }
+            catch (DBusException&)
+            {
+                g_set_error(error,
+                            G_IO_ERROR,
+                            G_IO_ERROR_PENDING,
+                            "Device path not available");
+                return NULL;
+            }
         }
 
         try
@@ -1165,7 +1176,18 @@ public:
         }
         else if ("device_name" == property_name)
         {
-            ret = be_proxy->GetProperty("device_name");
+            try
+            {
+                ret = be_proxy->GetProperty("device_name");
+            }
+            catch (DBusException&)
+            {
+                g_set_error(error,
+                            G_IO_ERROR,
+                            G_IO_ERROR_PENDING,
+                            "Device path not available");
+                return NULL;
+            }
         }
         else if ("config_path" == property_name)
         {
