@@ -38,7 +38,8 @@
 
 #include "netcfg.hpp"
 #include "netcfg-options.hpp"
-#include "dns-resolver-settings.hpp"
+#include "netcfg/dns/settings-manager.hpp"
+#include "netcfg/dns/resolvconf-file.hpp"
 
 using namespace NetCfg;
 
@@ -180,11 +181,13 @@ int netcfg_main(ParsedArgs args)
         idle_wait_min = std::atoi(args.GetValue("idle-exit", 0).c_str());
     }
 
-    DNS::ResolverSettings::Ptr resolver = nullptr;
+    DNS::SettingsManager::Ptr resolvmgr = nullptr;
+    DNS::ResolvConfFile::Ptr resolvconf = nullptr;
     if (args.Present("resolv-conf"))
     {
         std::string rsc =  args.GetValue("resolv-conf", 0);
-        resolver.reset(new DNS::ResolvConfFile(rsc, rsc + ".ovpn3bak"));
+        resolvconf = new DNS::ResolvConfFile(rsc, rsc + ".ovpn3bak");
+        resolvmgr = new DNS::SettingsManager(resolvconf);
     }
 
     LogServiceProxy::Ptr logservice;
@@ -209,7 +212,7 @@ int netcfg_main(ParsedArgs args)
 
         std::cout << get_version(args.GetArgv0()) << std::endl;
 
-        NetworkCfgService netcfgsrv(dbus.GetConnection(), resolver.get(),
+        NetworkCfgService netcfgsrv(dbus.GetConnection(), resolvmgr,
                                     logwr.get(), netcfgopts);
         if (log_level > 0)
         {

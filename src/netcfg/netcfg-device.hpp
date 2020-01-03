@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2020  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2020  David Sommerseth <davids@openvpn.net>
 //  Copyright (C) 2018 - 2019  Arne Schwabe <arne@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
@@ -39,7 +39,8 @@
 #include "dbus/object-property.hpp"
 #include "common/lookup.hpp"
 #include "core-tunbuilder.hpp"
-#include "./dns-direct-file.hpp"
+#include "netcfg/dns/resolver-settings.hpp"
+#include "netcfg/dns/settings-manager.hpp"
 #include "netcfg-options.hpp"
 #include "netcfg-changeevent.hpp"
 #include "netcfg-signals.hpp"
@@ -124,7 +125,7 @@ public:
                  std::function<void()> remove_callback,
                  const uid_t creator, const std::string& objpath,
                  std::string devname,
-                 DNS::ResolverSettings *resolver,
+                 DNS::SettingsManager::Ptr resolver,
                  NetCfgSubscriptions::Ptr subscriptions,
                  const unsigned int log_level, LogWriter *logwr,
                  NetCfgOptions options)
@@ -146,8 +147,6 @@ public:
         }
 
         properties.AddBinding(new PropertyType<std::string>(this, "device_name", "read", false, device_name));
-        properties.AddBinding(new PropertyType<decltype(dns_servers)>(this, "dns_servers", "read", false, dns_servers));
-        properties.AddBinding(new PropertyType<decltype(dns_search)>(this, "dns_search", "read", false, dns_search));
         properties.AddBinding(new PropertyType<unsigned int>(this, "mtu", "readwrite", false, mtu));
         properties.AddBinding(new PropertyType<unsigned int>(this, "layer", "readwrite", false, device_type));
         properties.AddBinding(new PropertyType<unsigned int>(this, "txqueuelen", "readwrite", false, txqueuelen));
@@ -181,9 +180,6 @@ public:
                    << "        <method name='AddDNSSearch'>"
                    << "            <arg direction='in' type='as' name='domains'/>"
                    << "        </method>"
-                   << "        <method name='RemoveDNSSearch'>"
-                   << "            <arg direction='in' type='as' name='domains'/>"
-                   << "        </method>"
                    << "        <method name='Establish'/>"
                                 /* Note: Although Establish returns a unix_fd,
                                  * it does not belong in the method
@@ -198,19 +194,19 @@ public:
                    << "        <property type='au' name='acl' access='read'/>"
                    << "        <property type='b'  name='active' access='read'/>"
                    << "        <property type='b'  name='modified' access='read'/>"
+                   << "        <property type='as'  name='dns_name_servers' access='read'/>"
+                   << "        <property type='as'  name='dns_search_domains' access='read'/>"
                    << properties.GetIntrospectionXML()
                    << signal.GetLogIntrospection()
                    << NetCfgChangeEvent::IntrospectionXML()
                    << "    </interface>"
                    << "</node>";
         ParseIntrospectionXML(introspect);
-        signal.LogVerb2("Network device '" + devname + "' prepared");
 
-        // Increment the device reference counter in the resolver
-        if (resolver)
-        {
-            resolver->IncDeviceCount();
-        }
+        // Prepare the DNS ResolverSettings object for this interface
+        dnsconfig = resolver->NewResolverSettings();
+
+        signal.LogVerb2("Network device '" + devname + "' prepared");
     }
 
     ~NetCfgDevice()
@@ -223,6 +219,7 @@ public:
 protected:
     void set_device_name(const std::string& devnam) noexcept
     {
+        signal.Debug(devnam, "Device name changed from '" + device_name + "'");
         device_name = devnam;
     }
 
@@ -376,35 +373,11 @@ public:
                     throw NetCfgException("No resolver configured");
                 }
 
-                // Adds DNS servers
-                auto added = resolver->AddDNSServers(params);
-
-                // Keep track of DNS servers provided by this interface
-                dns_servers.insert(dns_servers.end(),
-                                   std::make_move_iterator(added.begin()),
-                                   std::make_move_iterator(added.end()));
-             }
-            else if ("RemoveDNS" == method_name)
-            {
-                if (!resolver)
-                {
-                    throw NetCfgException("No resolver configured");
-                }
-
-                // Removes DNS servers
-                auto removed = resolver->RemoveDNSServers(params);
-
-                // Remove local tracking of DNS servers provided by
-                // this interface
-                for (const auto& e : removed)
-                {
-                    dns_servers.erase(std::remove(dns_servers.begin(),
-                                                  dns_servers.end(),
-                                                  e.c_str()),
-                                      dns_servers.end());
-
-                }
-             }
+                // Adds DNS name servers
+                std::string added = dnsconfig->AddNameServers(params);
+                signal.Debug(device_name, "Added DNS name servers: " + added);
+                modified = true;
+            }
             else if ("AddDNSSearch" == method_name)
             {
                 if (!resolver)
@@ -413,31 +386,8 @@ public:
                 }
 
                 // Adds DNS search domains
-                auto added = resolver->AddDNSSearch(params);
-
-                // Keep track of DNS search domains added by this interface
-                dns_search.insert(dns_search.end(),
-                                  std::make_move_iterator(added.begin()),
-                                  std::make_move_iterator(added.end()));
-            }
-            else if ("RemoveDNSSearch" == method_name)
-            {
-                if (!resolver)
-                {
-                    throw NetCfgException("No resolver configured");
-                }
-
-                // Removes DNS search domains
-                auto removed = resolver->RemoveDNSSearch(params);
-
-                // Remove local tracking of DNS search domains provided
-                // by this interface
-                for (const auto& e : removed)
-                {
-                    dns_search.erase(std::remove(dns_search.begin(),
-                                                 dns_search.end(), e.c_str()),
-                                    dns_search.end());
-                }
+                dnsconfig->AddSearchDomains(params);
+                modified = true;
             }
             else if ("Establish" == method_name)
             {
@@ -448,9 +398,18 @@ public:
                 // The virtual device has not yet been created on the host,
                 // but all settings which has been queued up will be activated
                 // when this method is called.
-                if (resolver && resolver->GetModified())
+                if (resolver)
                 {
-                    resolver->Apply(&signal);
+                    dnsconfig->Enable();
+
+                    std::stringstream details;
+                    details << dnsconfig;
+                    signal.Debug(device_name,
+                                 "Activating DNS/resolver settings: "
+                                 + details.str());
+
+                    resolver->ApplySettings();
+                    modified = false;
                 }
                 if (!tunimpl)
                 {
@@ -476,25 +435,24 @@ public:
             }
             else if ("Disable" == method_name)
             {
-                if (false) // FIXME
+                if (resolver)
                 {
-                    // This tears down and disables a virtual device but
-                    // enables the device to be re-activated again with the
-                    // same settings by calling the 'Activate' method again
+                    std::stringstream details;
+                    details << dnsconfig;
 
-                    // Only restore the resolv.conf file if this is the last
-                    // device using these ResolverSettings object
-                    if (resolver && resolver->GetDeviceCount() <= 1)
-                    {
-                        try
-                        {
-                            resolver->Restore();
-                        }
-                        catch (const NetCfgException& excp)
-                        {
-                            signal.LogCritical(excp.what());
-                        }
-                    }
+                    signal.Debug(device_name,
+                                 "Disabling DNS/resolver settings: "
+                                 + details.str());
+
+                    dnsconfig->Disable();
+                    resolver->ApplySettings();
+
+                    // We need to clear these settings, as the CoreVPNClient
+                    // will re-add them upon activation again.
+                    dnsconfig->ClearNameServers();
+                    dnsconfig->ClearSearchDomains();
+
+                    modified = false;
                 }
                 if (tunimpl)
                 {
@@ -511,34 +469,16 @@ public:
 
                 if (resolver)
                 {
-                    // Clean up DNS servers and search domans we've added
-                    for (const auto& s : dns_servers)
-                    {
-                        resolver->RemoveDNSServer(s);
-                    }
-                    for (const auto& s : dns_search)
-                    {
-                        resolver->RemoveDNSSearch(s);
-                    }
+                    std::stringstream details;
+                    details << dnsconfig;
 
-                    resolver->DecDeviceCount();
-                    if (resolver->GetDeviceCount() == 0)
-                    {
-                        try
-                        {
-                            resolver->Restore();
-                        }
-                        catch (const NetCfgException& excp)
-                        {
-                            signal.LogCritical(excp.what());
-                        }
-                    }
-                    else
-                    {
-                        // If there are more interfaces using the resolver,
-                        // update the resolver config to the current state
-                        resolver->Apply(&signal);
-                    }
+                    signal.Debug(device_name,
+                                 "Removing DNS/resolver settings: "
+                                 + details.str());
+                    dnsconfig->Disable();
+                    resolver->RemoveResolverSettings(dnsconfig);
+                    resolver->ApplySettings();
+                    modified = false;
                 }
 
                 std::string sender_name = lookup_username(GetUID(sender));
@@ -632,12 +572,15 @@ public:
             }
             else if ("modified" == property_name)
             {
-                bool modified = false;
-                if (resolver)
-                {
-                    modified |= resolver->GetModified();
-                }
                 return g_variant_new_boolean(modified);
+            }
+            else if ("dns_name_servers" == property_name)
+            {
+                return GLibUtils::GVariantFromVector(dnsconfig->GetNameServers());
+            }
+            else if ("dns_search_domains" == property_name)
+            {
+                return GLibUtils::GVariantFromVector(dnsconfig->GetSearchDomains());
             }
             else if (properties.Exists(property_name))
             {
@@ -743,8 +686,6 @@ private:
     PropertyCollection properties;
     unsigned int device_type = NetCfgDeviceType::UNSET;
     std::string device_name;
-    std::vector<std::string> dns_servers;
-    std::vector<std::string> dns_search;
     std::vector<Network> networks;
     std::vector<VPNAddress> vpnips;
     IPAddr remote;
@@ -757,7 +698,9 @@ private:
 
     RCPtr<CoreTunbuilder> tunimpl;
     NetCfgSignals signal;
-    DNS::ResolverSettings * resolver = nullptr;
+    DNS::SettingsManager::Ptr resolver;
+    DNS::ResolverSettings::Ptr dnsconfig;
+    bool modified = false;
     NetCfgOptions options;
     bool active = false;
 

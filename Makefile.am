@@ -564,8 +564,13 @@ src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/netcfg/netcfg-subscriptions.cpp \
 	src/netcfg/netcfg-subscriptions.hpp \
 	src/netcfg/core-tunbuilder.hpp \
-	src/netcfg/dns-direct-file.hpp \
-	src/netcfg/dns-resolver-settings.hpp \
+	src/netcfg/dns/resolvconf-file.cpp \
+	src/netcfg/dns/resolvconf-file.hpp \
+	src/netcfg/dns/resolver-backend-interface.hpp \
+	src/netcfg/dns/resolver-settings.cpp \
+	src/netcfg/dns/resolver-settings.hpp \
+	src/netcfg/dns/settings-manager.cpp \
+	src/netcfg/dns/settings-manager.hpp \
 	$(DBUS_SOURCES) \
 	src/common/cmdargparser.cpp \
 	src/common/lookup.cpp \

@@ -192,8 +192,8 @@ interface net.openvpn.v3.netcfg {
       readonly au acl;
       readonly b active;
       readonly b modified;
-      readonly as dns_search;
-      readonly as dns_servers;
+      readonly as dns_name_servers;
+      readonly as dns_search_domains;
       readwrite u layer;
       readwrite u mtu;
       readwrite b reroute_ipv4;
@@ -364,8 +364,8 @@ not providing any details are not mentioned.
 | acl           | array(integer)   | Read-only  | An array of UID values granted access                         |
 | log_level     | unsigned integer | read-write | Controls the log verbosity of messages intended to be proxied to the user front-end. **Note:** Not currently implemented |
 | active        | boolean          | Read-only  | If the VPN is active (Establish has been successfully called) |
-| dns_servers   | array of strings | Read-only  | Return the array of DNS servers                               |
-| dns_search    | array of strings | Read-only  | Return the array of DNS search domains                        |
+| dns_name_servers | array of strings | Read-only  | Return the array of DNS name servers                          |
+| dns_search_domains | array of strings | Read-only  | Return the array of DNS search domains                        |
 | layer         | unsigned integer             | Read-write | Sets the layer for the VPN to use, 3 for IP (tun device). Setting to 2 (tap device) is currently not implemented |
 | mtu           | unsigned integer | Read-write | Sets the MTU for the tun device. Default is 1500              |
 | reroute_ipv4  | boolean          | Read-write | Setting this to true, tells the service that the default route should be pointed to the VPN and that mechanism to avoid routing loops should be taken |

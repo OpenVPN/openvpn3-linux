@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2020  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2020  David Sommerseth <davids@openvpn.net>
 //  Copyright (C) 2018 - 2019  Arne Schwabe <arne@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
@@ -37,7 +37,7 @@
 #include "dbus/path.hpp"
 #include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"
-#include "dns-resolver-settings.hpp"
+#include "dns/settings-manager.hpp"
 #include "netcfg-signals.hpp"
 #include "netcfg-subscriptions.hpp"
 #include "netcfg-device.hpp"
@@ -67,7 +67,7 @@ public:
      */
     NetCfgServiceObject(GDBusConnection *conn,
                         const unsigned int default_log_level,
-                        DNS::ResolverSettings *resolver,
+                        DNS::SettingsManager::Ptr resolver,
                         LogWriter *logwr,
                         NetCfgOptions options)
         : DBusObject(OpenVPN3DBus_rootp_netcfg),
@@ -377,7 +377,7 @@ public:
                     // instead of an error when reading this property
                     return GLibUtils::GVariantFromVector(std::vector<std::string>{});
                 }
-                return GLibUtils::GVariantFromVector(resolver->GetDNSServers());
+                return GLibUtils::GVariantFromVector(resolver->GetDNSservers());
             }
             else if ("global_dns_search" == property_name)
             {
@@ -387,7 +387,7 @@ public:
                     // instead of an error when reading this property
                     return GLibUtils::GVariantFromVector(std::vector<std::string>{});
                 }
-                return GLibUtils::GVariantFromVector(resolver->GetDNSSearch());
+                return GLibUtils::GVariantFromVector(resolver->GetSearchDomains());
             }
             else if ("version" == property_name)
             {
@@ -467,7 +467,7 @@ public:
 
 private:
     NetCfgSignals signal;
-    DNS::ResolverSettings *resolver;
+    DNS::SettingsManager::Ptr resolver;
     DBusConnectionCreds creds;
     std::map<std::string, NetCfgDevice *> devices;
     NetCfgOptions options;
@@ -576,7 +576,7 @@ public:
      *
      */
     NetworkCfgService(GDBusConnection *dbuscon,
-                      DNS::ResolverSettings *resolver,
+                      DNS::SettingsManager::Ptr resolver,
                       LogWriter *logwr,
                       NetCfgOptions options)
         : DBus(dbuscon,
@@ -648,10 +648,9 @@ public:
         {
             signal->LogVerb2(resolver->GetBackendInfo());
 
-            // Fetch the current contents of the system DNS resolver
-            // settings.  Beware, this resolver object is shared between
-            // all interfaces managed by netcfg.
-            resolver->Fetch();
+            // Do a ApplySettings() call now, which will only fetch the
+            // current system settings and initialize the resolver backend
+            resolver->ApplySettings();
         }
 
         if (nullptr != idle_checker)
@@ -700,7 +699,7 @@ public:
 
 
 private:
-    DNS::ResolverSettings *resolver;
+    DNS::SettingsManager::Ptr resolver;
     LogWriter *logwr;
 
     unsigned int default_log_level;
