@@ -164,13 +164,18 @@ UNIT_TESTS = \
 	src/tests/unit/lookup.cpp \
 	src/tests/unit/netcfg-changeevent.cpp \
 	src/tests/unit/statusevent.cpp \
-	src/tests/unit/syslog-facility-mapping.cpp
+	src/tests/unit/syslog-facility-mapping.cpp \
+	src/tests/unit/dns-settings-manager-test.cpp \
+	src/tests/unit/dns-resolver-settings.cpp
 
 UNIT_TESTS_DEPS = \
 	src/common/lookup.cpp \
 	src/common/timestamp.cpp \
 	src/netcfg/netcfg-changeevent.cpp \
-	src/netcfg/netcfg-changetype.cpp
+	src/netcfg/netcfg-changetype.cpp \
+	src/netcfg/dns/resolver-settings.cpp \
+	src/netcfg/dns/settings-manager.cpp
+
 
 AM_CXXFLAGS += -I$(top_srcdir)/vendor/googletest/googletest \
         -isystem $(top_srcdir)/vendor/googletest/googletest/include
