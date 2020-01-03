@@ -283,7 +283,11 @@ src_tests_misc_lookup_tests_SOURCES = \
 src_tests_misc_netcfg_dns_direct_file_selftest_SOURCES = \
 	src/tests/misc/netcfg-dns-direct-file-selftest.cpp \
 	src/common/timestamp.cpp \
+	src/netcfg/dns/resolvconf-file.cpp \
+	src/netcfg/dns/resolver-settings.cpp \
+	src/netcfg/dns/settings-manager.cpp \
 	src/netcfg/netcfg-changeevent.cpp
+src_tests_misc_netcfg_dns_direct_file_selftest_CXXFLAGS=$(AM_CXXFLAGS) -DENABLE_DEBUG
 
 src_tests_misc_syslog_facility_mapping_test_SOURCES = \
 	src/tests/misc/syslog-facility-mapping-test.cpp
