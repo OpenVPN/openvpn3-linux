@@ -65,11 +65,13 @@ add_executable(openvpn3-service-client
         ${OPENVPN3_LINUX_ROOT}/src/common/requiresqueue.cpp
         ${OPENVPN3_LINUX_ROOT}/src/common/timestamp.cpp
         ${OPENVPN3_LINUX_ROOT}/src/common/utils.cpp
+        ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
         ${OPENVPN3_LINUX_ROOT}/src/configmgr/proxy-configmgr.hpp
         ${OPENVPN3_LINUX_ROOT}/src/configmgr/overrides.cpp
         ${OPENVPN3_LINUX_ROOT}/src/log/dbus-log.hpp
         ${OPENVPN3_LINUX_ROOT}/src/log/proxy-log.hpp
         ${OPENVPN3_LINUX_ROOT}/src/netcfg/proxy-netcfg.hpp
+        ${OPENVPN3_LINUX_ROOT}/src/netcfg/proxy-netcfg.cpp
         )
 
 add_executable(openvpn3-service-configmgr
@@ -80,6 +82,7 @@ add_executable(openvpn3-service-configmgr
         ${OPENVPN3_LINUX_ROOT}/src/common/lookup.cpp
         ${OPENVPN3_LINUX_ROOT}/src/common/timestamp.cpp
         ${OPENVPN3_LINUX_ROOT}/src/common/utils.cpp
+        ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
         ${OPENVPN3_LINUX_ROOT}/src/log/dbus-log.hpp
         )
 
@@ -93,6 +96,7 @@ add_executable(openvpn3
         ${OPENVPN3_LINUX_ROOT}/src/ovpn3cli/arghelpers.hpp
         ${OPENVPN3_LINUX_ROOT}/src/common/lookup.cpp
         ${OPENVPN3_LINUX_ROOT}/src/common/lookup.hpp
+        ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
         ${OPENVPN3_LINUX_ROOT}/src/configmgr/proxy-configmgr.hpp
         ${OPENVPN3_LINUX_ROOT}/src/configmgr/overrides.hpp
         ${OPENVPN3_LINUX_ROOT}/src/configmgr/overrides.cpp
@@ -122,6 +126,7 @@ add_executable(openvpn3-service-netcfg
         ${OPENVPN3_LINUX_ROOT}/src/common/requiresqueue.cpp
         ${OPENVPN3_LINUX_ROOT}/src/common/timestamp.cpp
         ${OPENVPN3_LINUX_ROOT}/src/common/utils.cpp
+        ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
         ${OPENVPN3_LINUX_ROOT}/src/log/core-dbus-logbase.hpp
         ${OPENVPN3_LINUX_ROOT}/src/log/dbus-log.hpp
         src/netcfg/netcfg-changeevent.cpp)
@@ -140,6 +145,7 @@ add_executable(openvpn3-service-logger
         ${OPENVPN3_LINUX_ROOT}/src/log/service.hpp
         ${OPENVPN3_LINUX_ROOT}/src/common/timestamp.cpp
         ${OPENVPN3_LINUX_ROOT}/src/common/utils.cpp
+        ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
         )
 
 add_executable(openvpn3-service-sessionmgr
@@ -150,5 +156,6 @@ add_executable(openvpn3-service-sessionmgr
         ${OPENVPN3_LINUX_ROOT}/src/common/requiresqueue.cpp
         ${OPENVPN3_LINUX_ROOT}/src/common/timestamp.cpp
         ${OPENVPN3_LINUX_ROOT}/src/common/utils.cpp
+        ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
         ${OPENVPN3_LINUX_ROOT}/src/log/dbus-log.hpp
         )
