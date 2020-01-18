@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017 - 2018  OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017 - 2018  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2020  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2020  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -426,7 +426,18 @@ public:
                 //
                 try
                 {
-                    if (GetUID(sender) == lookup_uid(OPENVPN_USERNAME))
+                    uid_t ovpn_uid;
+                    try
+                    {
+                        ovpn_uid = lookup_uid(OPENVPN_USERNAME);
+                    }
+                    catch (const LookupException& excp)
+                    {
+                        excp.SetDBusError(invoc);
+                        return;
+                    }
+
+                    if (GetUID(sender) == ovpn_uid)
                     {
                         // If this config is tagged as single-use only then we delete this
                         // config from memory.

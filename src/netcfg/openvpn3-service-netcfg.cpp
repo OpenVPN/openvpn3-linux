@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2020  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2020  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -44,8 +44,18 @@ using namespace NetCfg;
 
 static void drop_root_ng()
 {
-    uid_t uid = lookup_uid(OPENVPN_USERNAME);
-    gid_t gid = lookup_gid(OPENVPN_GROUP);
+    uid_t uid;
+    gid_t gid;
+    try
+    {
+        uid = lookup_uid(OPENVPN_USERNAME);
+        gid = lookup_gid(OPENVPN_GROUP);
+    }
+    catch (const LookupException& excp)
+    {
+        throw CommandException("openvpn3-service-netcfg", excp.str());
+    }
+
     capng_flags_t flags = (capng_flags_t) (CAPNG_DROP_SUPP_GRP | CAPNG_CLEAR_BOUNDING);
     int res = capng_change_id(uid, gid, flags);
     if (0 != res)

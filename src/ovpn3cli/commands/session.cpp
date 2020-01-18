@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2020  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2020  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -993,17 +993,9 @@ static int cmd_session_acl(ParsedArgs args)
         {
             for (auto const& user : args.GetAllValues("grant"))
             {
-                uid_t uid = get_userid(user);
-                // If uid == -1, something is wrong
-                if (-1 == uid)
+                try
                 {
-                    std::cerr << "** ERROR ** --grant " << user
-                              << " does not map to a valid user account"
-                              << std::endl;
-                }
-                else
-                {
-                    // We have a UID ... now grant the access
+                    uid_t uid = get_userid(user);
                     try
                     {
                         session.AccessGrant(uid);
@@ -1021,6 +1013,12 @@ static int cmd_session_acl(ParsedArgs args)
                         ret = 3;
                     }
                 }
+                catch (const LookupException&)
+                {
+                    std::cerr << "** ERROR ** --grant " << user
+                              << " does not map to a valid user account"
+                              << std::endl;
+                }
             }
         }
 
@@ -1028,20 +1026,13 @@ static int cmd_session_acl(ParsedArgs args)
         {
             for (auto const& user : args.GetAllValues("revoke"))
             {
-                uid_t uid = get_userid(user);
-                // If uid == -1, something is wrong
-                if (-1 == uid)
+                try
                 {
-                    std::cerr << "** ERROR ** --grant " << user
-                              << " does not map to a valid user account"
-                              << std::endl;
-                }
-                else {
-                    // We have a UID ... now grant the access
+                    uid_t uid = get_userid(user);
                     try
                     {
                         session.AccessRevoke(uid);
-                        std::cout << "Access revoked from "
+                        std::cout << "Revoked access from "
                                   << lookup_username(uid)
                                   << " (uid " << uid << ")"
                                   << std::endl;
@@ -1054,7 +1045,12 @@ static int cmd_session_acl(ParsedArgs args)
                                   << std::endl;
                         ret = 3;
                     }
-
+                }
+                catch (const LookupException&)
+                {
+                    std::cerr << "** ERROR ** --revoke " << user
+                              << " does not map to a valid user account"
+                              << std::endl;
                 }
             }
         }
