@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2020  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2020  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -28,11 +28,13 @@
 #include <string>
 #include <cstring>
 #include <algorithm>
+#include <exception>
 #include <unistd.h>
 #include <sys/types.h>
 #include <pwd.h>
 #include <grp.h>
 
+#include "lookup.hpp"
 
 /**
  *  Checks if the input string is a number or a string
@@ -83,7 +85,8 @@ std::string lookup_username(uid_t uid)
  *  Looks up a specific uid_t based on the provided username.
  *
  * @param username  std::string containing the username to lookup
- * @return An uid_t integer is returned on success, otherwise -1 on failure
+ * @return An uid_t integer is returned on success
+ * @throws LookupException if username is not found
  */
 uid_t lookup_uid(std::string username)
 {
@@ -103,7 +106,7 @@ uid_t lookup_uid(std::string username)
     }
     else
     {
-        ret =  -1;
+        throw LookupException("User '" + username + "' not found");
     }
     free(buf);
     return ret;
@@ -117,8 +120,8 @@ uid_t lookup_uid(std::string username)
  *
  * @param input  std::string containing a username or a uid
 
- * @return Returns a uid_t representation of the username or uid.  If username
- *         lookup fails, it will return -1;
+ * @return Returns a uid_t representation of the username or uid.
+ * @throws LookupException if username is not found
  */
 uid_t get_userid(const std::string input)
 {
@@ -139,7 +142,8 @@ uid_t get_userid(const std::string input)
  *  Looks up a specific gid_t based on the provided group name.
  *
  * @param groupname  std::string containing the group name to lookup
- * @return An gid_t integer is returned on success, otherwise -1 on failure
+ * @return An gid_t integer is returned on success
+ * @throws LookupException if group is not found
  */
 gid_t lookup_gid(const std::string& groupname)
 {
@@ -158,7 +162,7 @@ gid_t lookup_gid(const std::string& groupname)
     }
     else
     {
-        ret =  -1;
+        throw LookupException("Group '" + groupname + "' not found");
     }
     free(buf);
     return ret;

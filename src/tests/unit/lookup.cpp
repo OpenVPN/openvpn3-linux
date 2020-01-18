@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2020  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2020  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -18,7 +18,7 @@
 //
 
 /**
- * @file   lookup-tests.cpp
+ * @file   lookup.cpp
  *
  * @brief  Simple unit tests which checks lookup_uid() and lookup_username()
  *
@@ -33,29 +33,66 @@
 namespace unittest
 {
 
-TEST(common, lookup_tests)
+TEST(lookup, root_username)
 {
     uid_t root = lookup_uid("root");
-    uid_t nobody = lookup_uid("nobody");
-    uid_t invalid = lookup_uid("nonexiting_user");
-
     ASSERT_EQ(root, 0);
-    ASSERT_EQ(invalid, -1);
+}
 
-    std::string root_username = lookup_username(root);
-    ASSERT_EQ(root_username, "root");
-
-    // The 'nobody' user is not available when building
-    // on SUSE via docker, so we expect a different output
-    // in this case.  -1 == 4294967295 as unsigned int.
-    std::string nobody_username = lookup_username(nobody);
-    if (nobody < 4294967295 || nobody > -1)
+TEST(lookup, nobody_username)
+{
+    uid_t nobody;
+    try
     {
-        ASSERT_EQ(nobody_username, "nobody");
+        nobody = lookup_uid("nobody");
     }
-    else
+    catch (const LookupException&)
     {
-        ASSERT_EQ(nobody_username, "(4294967295)");
+        GTEST_SKIP() << "User nobody does not exist on this system";
+    }
+    ASSERT_NE(nobody, 0);
+}
+
+TEST(lookup, nonexisting_username)
+{
+    EXPECT_THROW(lookup_uid("nonexiting_user"), LookupException);
+}
+
+TEST(lookup, uid_0)
+{
+    std::string root_username = lookup_username(0);
+    ASSERT_EQ(root_username, "root");
+}
+
+TEST(lookup, root_groupname)
+{
+    gid_t root_gid = lookup_gid("root");
+    ASSERT_EQ(root_gid, 0);
+}
+
+
+TEST(lookup, nonexisting_groupname)
+{
+    EXPECT_THROW(lookup_gid("nonexisting_group"), LookupException);
+}
+
+TEST(lookup, nobody_groupname)
+{
+    try
+    {
+        ASSERT_NE(lookup_gid("nobody"), 0);
+    }
+    catch (const LookupException&)
+    {
+        try
+        {
+            ASSERT_NE(lookup_gid("nogroup"), 0);
+        }
+        catch (const LookupException&)
+        {
+            GTEST_SKIP() << "Neither nobody nor nogroup groups exists on this system";
+            return;
+        }
     }
 }
 } // namespace unittest

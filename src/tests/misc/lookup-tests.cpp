@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2020  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2020  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -36,12 +36,21 @@ int main(int argc, char **argv)
         std::cout << ">> Username -> UID lookups" << std::endl;
         uid_t root = lookup_uid("root");
         uid_t nobody = lookup_uid("nobody");
-        uid_t invalid = lookup_uid("nonexiting_user");
+
+        bool nonexist_fail = false;
+        try
+        {
+            (void) lookup_uid("nonexiting_user");
+        }
+        catch (const LookupException& excp)
+        {
+            nonexist_fail = true;
+        }
 
         std::cout << "     root uid: " << root << std::endl;
         std::cout << "   nobody uid: " << nobody << std::endl;
         std::cout << "      invalid: "
-                  << (-1 == invalid ? "(correct, not found)" : "**ERROR**")
+                  << (nonexist_fail ? "(correct, not found)" : "**ERROR**")
                   << std::endl;
         std::cout << std::endl;
 
@@ -56,7 +65,7 @@ int main(int argc, char **argv)
 
         if (("root" == root_username)
             && ("nobody" == nobody_username)
-            && (-1 == invalid))
+            && nonexist_fail)
         {
             std::cout << "** Result: All tests passed" << std::endl;
             return 0;
@@ -66,9 +75,9 @@ int main(int argc, char **argv)
     }
     else
     {
-        uid_t uid = get_userid(argv[1]);
-
-        if (-1 != uid) {
+        try
+        {
+            uid_t uid = get_userid(argv[1]);
             std::string username = lookup_username(uid);
 
             if ('(' != username[0])
@@ -81,9 +90,9 @@ int main(int argc, char **argv)
                 std::cout << "UID " << uid << " was not found" << std::endl;
             }
         }
-        else
+        catch (const LookupException& excp)
         {
-                std::cout << "Username '" << argv[1] << "' not found" << std::endl;
+            std::cout << "** ERROR ** " << excp.str() << std::endl;
         }
     }
     return 0;
