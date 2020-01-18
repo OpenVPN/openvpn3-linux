@@ -104,12 +104,13 @@ AM_CXXFLAGS = \
 	$(LIBJSONCPP_CFLAGS) \
 	$(LIBLZ4_CFLAGS) \
 	$(LIBUUID_CFLAGS) \
+	$(LIBCAPNG_CFLAGS) \
 	-DLIBEXECDIR=\"$(libexecdir)\"
 
 #
 # Linker flags
 #
-AM_LDFLAGS = \
+LDADD = \
 	$(CRYPTO_LIBS) \
 	$(LIBGLIBGIO_LIBS) \
 	$(LIBJSONCPP_LIBS) \
@@ -181,7 +182,7 @@ src_tests_unit_libgtest_a_SOURCES = \
 	vendor/googletest/googletest/src/gtest_main.cc
 
 noinst_PROGRAMS += src/tests/unit/unit-tests
-src_tests_unit_unit_tests_LDADD = src/tests/unit/libgtest.a
+src_tests_unit_unit_tests_LDADD = src/tests/unit/libgtest.a $(LIBGLIBGIO_LIBS) $(LIBJSONCPP_LIBS)
 src_tests_unit_unit_tests_SOURCES = \
 	$(UNIT_TESTS_DEPS) $(UNIT_TESTS)
 else
@@ -564,8 +565,7 @@ src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/common/utils.cpp \
 	src/log/core-dbus-logbase.hpp \
 	src/log/dbus-log.hpp
-src_netcfg_openvpn3_service_netcfg_CXXFLAGS = $(LIBCAPNG_CFLAGS) $(AM_CXXFLAGS)
-src_netcfg_openvpn3_service_netcfg_LDFLAGS = $(LIBCAPNG_LIBS) $(AM_LDFLAGS)
+src_netcfg_openvpn3_service_netcfg_LDADD = $(LIBCAPNG_LIBS) $(LIBGLIBGIO_LIBS) $(LIBJSONCPP_LIBS) $(LIBUUID_LIBS)
 
 
 #
