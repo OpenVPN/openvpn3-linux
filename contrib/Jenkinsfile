@@ -23,7 +23,7 @@ def build_tarball()
 {
    stage("Building tarball") {
        timeout(time:120) {
-           node('linux_slave') {
+           node('ec2_openvpn3_linux') {
                step([$class: 'WsCleanup'])
                withEnv(["CXXFLAGS=-g -O2 -grecord-gcc-switches -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -mtune=generic"]) {
                dir("${WORKSPACE}/openvpn3-linux") {
