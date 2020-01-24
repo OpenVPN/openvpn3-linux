@@ -108,7 +108,7 @@ class ConfigParser():
 
 
     def GetLogVerbosity(self):
-        return self.__opts['verb'][0]
+        return self.__opts['verb'] is not None and self.__opts['verb'][0] or 2
 
 
     def GetPersistTun(self):
