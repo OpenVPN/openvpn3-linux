@@ -28,7 +28,6 @@
 #include <string>
 #include <cstring>
 #include <algorithm>
-#include <exception>
 #include <unistd.h>
 #include <sys/types.h>
 #include <pwd.h>

@@ -27,6 +27,8 @@
 
 #pragma once
 
+#include <exception>
+
 class LookupException : public std::exception
 {
 public:
