@@ -81,7 +81,7 @@ public:
      */
     RequiresQueueException(std::string errname, std::string errmsg);
 
-    virtual ~RequiresQueueException() noexcept {}
+    virtual ~RequiresQueueException() noexcept = default;
 
     virtual const char* what() const noexcept;
 

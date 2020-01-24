@@ -78,9 +78,7 @@ namespace DNS
         }
 
 
-        virtual ~FileGenerator()
-        {
-        }
+        virtual ~FileGenerator() = default;
 
 
         FileGenerator(const FileGenerator& origin) noexcept
@@ -270,9 +268,7 @@ namespace DNS
         }
 
 
-        virtual ~ResolvConfFile()
-        {
-        }
+        virtual ~ResolvConfFile() = default;
 
 
         virtual std::string GetBackendInfo()

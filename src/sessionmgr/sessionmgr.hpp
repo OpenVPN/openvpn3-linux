@@ -77,9 +77,7 @@ public:
         }
     }
 
-    virtual ~SessionManagerSignals()
-    {
-    }
+    virtual ~SessionManagerSignals() = default;
 
 
     bool GetSignalBroadcast()

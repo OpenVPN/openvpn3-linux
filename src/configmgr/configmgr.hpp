@@ -79,9 +79,7 @@ public:
     }
 
 
-    virtual ~ConfigManagerSignals()
-    {
-    }
+    virtual ~ConfigManagerSignals() = default;
 
 
     LogWriter *GetLogWriterPtr()

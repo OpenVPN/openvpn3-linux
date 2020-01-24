@@ -38,9 +38,7 @@ public:
     {
     }
 
-    ~NetCfgException()
-    {
-    }
+    ~NetCfgException() = default;
 
     virtual const char* what() const noexcept
     {

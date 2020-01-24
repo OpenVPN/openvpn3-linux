@@ -162,9 +162,7 @@ public:
         ParseIntrospectionXML(introspection_xml);
     }
 
-    ~LogServiceManager()
-    {
-    }
+    ~LogServiceManager() = default;
 
 
     /**

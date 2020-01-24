@@ -45,13 +45,8 @@ class LogWriter
 public:
     typedef std::unique_ptr<LogWriter> Ptr;
 
-    LogWriter()
-    {
-    }
-
-    virtual ~LogWriter()
-    {
-    }
+    LogWriter() = default;
+    virtual ~LogWriter() = default;
 
 
     /**
@@ -279,9 +274,8 @@ public:
     {
     }
 
-    virtual ~ColourStreamWriter()
-    {
-    }
+    virtual ~ColourStreamWriter() = default;
+
 
     /*
      * Explicity tells the compiler that we want to not to override an

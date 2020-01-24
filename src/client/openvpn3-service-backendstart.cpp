@@ -69,9 +69,7 @@ public:
         SetLogLevel(log_level);
     }
 
-    virtual ~BackendStarterSignals()
-    {
-    }
+    virtual ~BackendStarterSignals() = default;
 
 
     /**

@@ -138,9 +138,8 @@ namespace openvpn
         {
         }
 
-        virtual ~LogSender()
-        {
-        }
+        virtual ~LogSender() = default;
+
 
         virtual const std::string GetLogIntrospection()
         {

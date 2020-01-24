@@ -110,9 +110,7 @@ public:
     }
 
 
-    ~NetCfgServiceObject()
-    {
-    }
+    ~NetCfgServiceObject() = default;
 
 
     /**
@@ -595,10 +593,7 @@ public:
     }
 
 
-    ~NetworkCfgService()
-    {
-    }
-
+    ~NetworkCfgService() = default;
 
 
     /**

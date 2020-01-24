@@ -56,7 +56,7 @@ class LogException : public std::exception
 #endif
         }
 
-        virtual ~LogException() noexcept {}
+        virtual ~LogException() noexcept = default;
 
         virtual const char* what() const noexcept
         {

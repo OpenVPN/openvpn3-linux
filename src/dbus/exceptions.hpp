@@ -49,7 +49,7 @@ namespace openvpn
         }
 
 
-        virtual ~DBusException() noexcept {}
+        virtual ~DBusException() noexcept = default;
 
 
         virtual const char* what() const noexcept
@@ -178,7 +178,7 @@ namespace openvpn
         }
 
 
-        virtual ~DBusPropertyException() noexcept {}
+        virtual ~DBusPropertyException() noexcept = default;
 
 
         virtual const char* what() const noexcept
