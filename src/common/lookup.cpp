@@ -105,6 +105,7 @@ uid_t lookup_uid(std::string username)
     }
     else
     {
+        free(buf);
         throw LookupException("User '" + username + "' not found");
     }
     free(buf);
@@ -161,8 +162,10 @@ gid_t lookup_gid(const std::string& groupname)
     }
     else
     {
+        free(buf);
         throw LookupException("Group '" + groupname + "' not found");
     }
+
     free(buf);
     return ret;
 }
