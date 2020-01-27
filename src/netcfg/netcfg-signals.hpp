@@ -55,6 +55,20 @@ public:
     }
 
 
+    void Debug(std::string msg) override
+    {
+        Log(LogEvent(log_group, LogCategory::DEBUG, msg));
+    }
+
+
+    void Debug(std::string dev, std::string msg)
+    {
+        std::stringstream m;
+        m << "[" << dev << "] " << msg;
+        Debug(m.str());
+    }
+
+
     void AddSubscriptionList(NetCfgSubscriptions::Ptr subs)
     {
         subscriptions = subs;
