@@ -92,6 +92,17 @@ namespace DNS
          */
         bool GetEnabled() const noexcept;
 
+
+        /**
+         *  Check if there are resolver changes available.  If neither
+         *  DNS resolver servers or search domains has been set, it will
+         *  return false.
+         *
+         * @return  Returns true if there are changes present, otherwise false
+         */
+        bool ChangesAvailable() const noexcept;
+
+
         /**
          *  Adds a new single DNS name server
          *

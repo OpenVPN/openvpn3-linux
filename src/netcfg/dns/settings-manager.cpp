@@ -82,7 +82,10 @@ void SettingsManager::ApplySettings()
 {
     for (auto rslv = resolvers.rbegin(); rslv != resolvers.rend(); rslv++)
     {
-        backend->Apply(rslv->second);
+        if (rslv->second->ChangesAvailable())
+        {
+            backend->Apply(rslv->second);
+        }
     }
     backend->Commit();
 }

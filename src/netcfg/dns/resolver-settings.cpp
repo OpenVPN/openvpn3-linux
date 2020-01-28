@@ -71,6 +71,12 @@ namespace DNS
     }
 
 
+    bool ResolverSettings::ChangesAvailable() const noexcept
+    {
+        return (name_servers.size() > 0 || search_domains.size() > 0);
+    }
+
+
     void ResolverSettings::AddNameServer(const std::string& server)
     {
         name_servers.push_back(server);
