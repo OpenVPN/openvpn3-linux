@@ -251,6 +251,9 @@ void ResolvConfFile::Apply(const ResolverSettings::Ptr settings)
 
 void ResolvConfFile::Commit()
 {
+    // Add a lock guard here, to avoid potentially multiple calls colliding
+    std::lock_guard<std::mutex> guard(change_guard);
+
     // Read and parse the current resolv.conf file
     Read();
     parse();
@@ -531,4 +534,5 @@ void ResolvConfFile::generate()
     // DNS SettingsManager
     vpn_name_servers.clear();
     vpn_search_domains.clear();
+    unprocessed_lines.clear();
 }

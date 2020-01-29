@@ -29,6 +29,7 @@
 
 #pragma once
 
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -222,6 +223,7 @@ namespace DNS
 
 
     private:
+        std::mutex change_guard;
         std::vector<std::string> unprocessed_lines;
         std::vector<std::string> vpn_name_servers;
         std::vector<std::string> vpn_name_servers_removed;
