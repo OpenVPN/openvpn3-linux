@@ -281,6 +281,11 @@ void ResolvConfFile::Commit()
 }
 
 
+void ResolvConfFile::Restore()
+{
+    RestoreBackup();
+}
+
 #ifdef ENABLE_DEBUG
 /**
  *  Do a forceful read of the resolv.conf file and parse it

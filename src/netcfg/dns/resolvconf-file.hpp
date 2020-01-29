@@ -202,6 +202,12 @@ namespace DNS
         void Commit() override;
 
 
+        /**
+         *  Restore the backup resolv.conf file if present
+         */
+        void Restore();
+
+
 #ifdef ENABLE_DEBUG
         /**
          *  Misc debug methods used by test programs

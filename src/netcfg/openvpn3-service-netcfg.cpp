@@ -191,6 +191,7 @@ int netcfg_main(ParsedArgs args)
     }
 
     LogServiceProxy::Ptr logservice;
+    int exit_code = 0;
     try
     {
         DBus dbus(G_BUS_TYPE_SYSTEM);
@@ -264,10 +265,28 @@ int netcfg_main(ParsedArgs args)
     catch (std::exception& excp)
     {
         std::cout << "FATAL ERROR: " << excp.what() << std::endl;
-        return 3;
+        exit_code = 3;
     }
 
-    return 0;
+    // Explicitly restore the resolv.conf file, if configured
+    try
+    {
+        if (resolvconf)
+        {
+            resolvconf->Restore();
+        }
+    }
+    catch (std::exception& e2)
+    {
+        std::cout << "** ERROR ** Failed restoring resolv.conf: "
+                  << e2.what() << std::endl;
+        if (0 == exit_code)
+        {
+            exit_code = 4;
+        }
+    }
+
+    return exit_code;
 }
 
 int main(int argc, char **argv)
