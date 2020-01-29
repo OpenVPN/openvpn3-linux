@@ -249,7 +249,7 @@ void ResolvConfFile::Apply(const ResolverSettings::Ptr settings)
 }
 
 
-void ResolvConfFile::Commit()
+void ResolvConfFile::Commit(NetCfgSignals *signal)
 {
     // Add a lock guard here, to avoid potentially multiple calls colliding
     std::lock_guard<std::mutex> guard(change_guard);

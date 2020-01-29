@@ -650,7 +650,7 @@ public:
 
             // Do a ApplySettings() call now, which will only fetch the
             // current system settings and initialize the resolver backend
-            resolver->ApplySettings();
+            resolver->ApplySettings(signal.get());
         }
 
         if (nullptr != idle_checker)

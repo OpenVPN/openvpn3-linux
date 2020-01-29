@@ -30,6 +30,7 @@
 
 #include <openvpn/common/rc.hpp>
 
+#include "netcfg/netcfg-signals.hpp"
 #include "netcfg/dns/resolver-settings.hpp"
 #include "netcfg/dns/resolver-backend-interface.hpp"
 
@@ -89,7 +90,7 @@ namespace DNS
             /**
              *   Apply all configured DNS settings
              */
-            void ApplySettings();
+            void ApplySettings(NetCfgSignals *signal);
 
             /**
              *  Retrieve the full list of all configured DNS servers

@@ -29,6 +29,7 @@ using namespace openvpn;
 
 #include "dbus/core.hpp"
 #include "netcfg/netcfg-exception.hpp"
+#include "netcfg/netcfg-signals.hpp"
 #include "netcfg/dns/resolver-backend-interface.hpp"
 #include "netcfg/dns/settings-manager.hpp"
 
@@ -78,7 +79,7 @@ void SettingsManager::RemoveResolverSettings(ResolverSettings::Ptr settings)
 }
 
 
-void SettingsManager::ApplySettings()
+void SettingsManager::ApplySettings(NetCfgSignals *signal)
 {
     for (auto rslv = resolvers.rbegin(); rslv != resolvers.rend(); rslv++)
     {
@@ -87,7 +88,7 @@ void SettingsManager::ApplySettings()
             backend->Apply(rslv->second);
         }
     }
-    backend->Commit();
+    backend->Commit(signal);
 }
 
 

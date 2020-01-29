@@ -76,7 +76,7 @@ protected:
         domains.insert(domains.end(), dmns.begin(), dmns.end());
     }
 
-    void Commit() override
+    void Commit(NetCfgSignals *not_used) override
     {
         std::stringstream srv;
 
@@ -140,13 +140,13 @@ TEST_F(DNSSettingsManager_SingleSetup, SingleServerDomain)
     con1->AddNameServer("1.1.1.1");
     con1->AddSearchDomain("con1.example.org");
     con1->Enable();
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
 
     ASSERT_STREQ(test_backend->ServerList(), "1.1.1.1");
     ASSERT_STREQ(test_backend->DomainList(), "con1.example.org");
 
     dnsmgr->RemoveResolverSettings(con1);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
 
     ASSERT_STREQ(test_backend->ServerList(), "");
     ASSERT_STREQ(test_backend->DomainList(), "");
@@ -160,13 +160,13 @@ TEST_F(DNSSettingsManager_SingleSetup, DoubleServerDomain)
     con1->AddSearchDomain("con1.example.org");
     con1->AddSearchDomain("con1b.example.org");
     con1->Enable();
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
 
     ASSERT_STREQ(test_backend->ServerList(), "1.1.1.1, 1.1.2.2");
     ASSERT_STREQ(test_backend->DomainList(), "con1.example.org, con1b.example.org");
 
     dnsmgr->RemoveResolverSettings(con1);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
 
     ASSERT_STREQ(test_backend->ServerList(), "");
     ASSERT_STREQ(test_backend->DomainList(), "");
@@ -188,7 +188,7 @@ protected:
         {
             dnsmgr->RemoveResolverSettings(c);
         }
-        dnsmgr->ApplySettings();
+        dnsmgr->ApplySettings(nullptr);
     }
 
     void Configure(unsigned int num, unsigned int numsrv = 1,
@@ -245,7 +245,7 @@ public:
 TEST_F(DNSSettingsManager_MultipleSessions, TwoEntires)
 {
     Configure(2);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
 
     // ResolverSettings are processed in the reverse order
     ASSERT_STREQ(test_backend->ServerList(), "2.2.2.2, 1.1.1.1");
@@ -255,11 +255,11 @@ TEST_F(DNSSettingsManager_MultipleSessions, TwoEntires)
 TEST_F(DNSSettingsManager_MultipleSessions, TwoEntires_DelFirst)
 {
     Configure(2);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
 
     // Delete the first (1.1.1.1) settings
     RemoveConfig(0);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
 
     ASSERT_STREQ(test_backend->ServerList(), "2.2.2.2");
     ASSERT_STREQ(test_backend->DomainList(), "con2.example.org");
@@ -269,11 +269,11 @@ TEST_F(DNSSettingsManager_MultipleSessions, TwoEntires_DelFirst)
 TEST_F(DNSSettingsManager_MultipleSessions, TwoEntires_DelLast)
 {
     Configure(2);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
 
     // Delete the last (2.2.2.2) settings
     RemoveConfig(1);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
 
     ASSERT_STREQ(test_backend->ServerList(), "1.1.1.1");
     ASSERT_STREQ(test_backend->DomainList(), "con1.example.org");
@@ -283,11 +283,11 @@ TEST_F(DNSSettingsManager_MultipleSessions, TwoEntires_DelLast)
 TEST_F(DNSSettingsManager_MultipleSessions, ThreeEntires_DelMiddle)
 {
     Configure(3);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
 
     // Delete the middle (2.2.2.2) settings
     RemoveConfig(1);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
 
     ASSERT_STREQ(test_backend->ServerList(), "3.3.3.3, 1.1.1.1");
     ASSERT_STREQ(test_backend->DomainList(), "con3.example.org, con1.example.org");
@@ -296,11 +296,11 @@ TEST_F(DNSSettingsManager_MultipleSessions, ThreeEntires_DelMiddle)
 TEST_F(DNSSettingsManager_MultipleSessions, ThreeEntires_DelMiddle_2)
 {
     Configure(3, 2);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
 
     // Delete the middle (2.2.2.2, 2.2.3.3) settings
     RemoveConfig(1);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
 
     ASSERT_STREQ(test_backend->ServerList(), "3.3.3.3, 3.3.4.4, 1.1.1.1, 1.1.2.2");
     ASSERT_STREQ(test_backend->DomainList(), "con3.example.org, con1.example.org");
@@ -310,50 +310,50 @@ TEST_F(DNSSettingsManager_MultipleSessions, ThreeEntires_DelMiddle_2)
 TEST_F(DNSSettingsManager_MultipleSessions, MultipleEvents)
 {
     Configure(2, 1, 1);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
 
     // Sanity check
     ASSERT_STREQ(test_backend->ServerList(), "2.2.2.2, 1.1.1.1");
     ASSERT_STREQ(test_backend->DomainList(), "con2.example.org, con1.example.org");
 
     Configure(1, 1, 3);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
     ASSERT_STREQ(test_backend->ServerList(), "3.3.3.3, 2.2.2.2, 1.1.1.1");
     ASSERT_STREQ(test_backend->DomainList(), "con3.example.org, con2.example.org, con1.example.org");
 
     RemoveConfig(1);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
     ASSERT_STREQ(test_backend->ServerList(), "3.3.3.3, 1.1.1.1");
     ASSERT_STREQ(test_backend->DomainList(), "con3.example.org, con1.example.org");
 
     Configure(2, 2, 4);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
     ASSERT_STREQ(test_backend->ServerList(), "5.5.5.5, 5.5.6.6, 4.4.4.4, 4.4.5.5, 3.3.3.3, 1.1.1.1");
     ASSERT_STREQ(test_backend->DomainList(), "con5.example.org, con4.example.org, con3.example.org, con1.example.org");
 
     RemoveConfig(2);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
     ASSERT_STREQ(test_backend->ServerList(), "5.5.5.5, 5.5.6.6, 4.4.4.4, 4.4.5.5, 1.1.1.1");
     ASSERT_STREQ(test_backend->DomainList(), "con5.example.org, con4.example.org, con1.example.org");
 
     Configure(1, 1, 6);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
     ASSERT_STREQ(test_backend->ServerList(), "6.6.6.6, 5.5.5.5, 5.5.6.6, 4.4.4.4, 4.4.5.5, 1.1.1.1");
     ASSERT_STREQ(test_backend->DomainList(), "con6.example.org, con5.example.org, con4.example.org, con1.example.org");
 
     RemoveConfig(3);
     RemoveConfig(4);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
     ASSERT_STREQ(test_backend->ServerList(), "6.6.6.6, 1.1.1.1");
     ASSERT_STREQ(test_backend->DomainList(), "con6.example.org, con1.example.org");
 
     RemoveConfig(0);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
     ASSERT_STREQ(test_backend->ServerList(), "6.6.6.6");
     ASSERT_STREQ(test_backend->DomainList(), "con6.example.org");
 
     RemoveConfig(5);
-    dnsmgr->ApplySettings();
+    dnsmgr->ApplySettings(nullptr);
     ASSERT_STREQ(test_backend->ServerList(), "");
     ASSERT_STREQ(test_backend->DomainList(), "");
 }

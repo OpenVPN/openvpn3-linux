@@ -37,6 +37,7 @@
 
 using namespace openvpn;
 
+#include "netcfg/netcfg-signals.hpp"
 #include "netcfg/dns/resolver-settings.hpp"
 #include "netcfg/dns/resolver-backend-interface.hpp"
 
@@ -199,8 +200,11 @@ namespace DNS
         /**
          *  Completes the DNS resolver configuration by performing the
          *  changes on the system.
+         *
+         *  @param signal  Pointer to a NetCfgSignals object where
+         *                 "NetworkChange" signals will be issued
          */
-        void Commit() override;
+        void Commit(NetCfgSignals *signal) override;
 
 
         /**

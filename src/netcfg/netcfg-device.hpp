@@ -408,7 +408,7 @@ public:
                                  "Activating DNS/resolver settings: "
                                  + details.str());
 
-                    resolver->ApplySettings();
+                    resolver->ApplySettings(&signal);
                     modified = false;
                 }
                 if (!tunimpl)
@@ -445,7 +445,7 @@ public:
                                  + details.str());
 
                     dnsconfig->Disable();
-                    resolver->ApplySettings();
+                    resolver->ApplySettings(&signal);
 
                     // We need to clear these settings, as the CoreVPNClient
                     // will re-add them upon activation again.
@@ -477,7 +477,7 @@ public:
                                  + details.str());
                     dnsconfig->Disable();
                     resolver->RemoveResolverSettings(dnsconfig);
-                    resolver->ApplySettings();
+                    resolver->ApplySettings(&signal);
                     modified = false;
                 }
 

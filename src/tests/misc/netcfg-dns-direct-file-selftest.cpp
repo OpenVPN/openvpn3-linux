@@ -116,7 +116,7 @@ int main()
     std::cout << "DUMP OF backuptest_start [1] " << std::endl << backuptest_start->Dump();
     backuptest_start->Apply(settings2);
     std::cout << "DUMP OF backuptest_start [2] " << std::endl << backuptest_start->Dump();
-    backuptest_start->Commit();
+    backuptest_start->Commit(nullptr);
 
     std::cout << "Backup file created? "
               << (file_exists("backuptest-backup.conf") ? "yes" : "NO!!!")

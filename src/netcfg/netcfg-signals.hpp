@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "dbus/core.hpp"
 #include "log/dbus-log.hpp"
 #include "netcfg-changeevent.hpp"
 #include "netcfg-subscriptions.hpp"

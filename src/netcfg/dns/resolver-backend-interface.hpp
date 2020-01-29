@@ -28,6 +28,7 @@
 
 #include <openvpn/common/rc.hpp>
 
+#include "netcfg/netcfg-signals.hpp"
 #include "netcfg/dns/resolver-settings.hpp"
 
 using namespace openvpn;
@@ -70,8 +71,12 @@ namespace DNS
 
         /**
          *  Apply all resolver settings registered via the Apply() call
+         *
+         *  @param signals   Pointer to a NetCfgSignals object which will
+         *                   send "NetworkChange" notifications for DNS
+         *                   resolver changes
          */
-        virtual void Commit() = 0;
+        virtual void Commit(NetCfgSignals *signals) = 0;
     };
 }
 }
