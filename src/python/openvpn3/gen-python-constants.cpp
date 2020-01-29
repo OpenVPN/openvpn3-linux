@@ -167,7 +167,7 @@ int main(int argc, char **argv)
     MAP(NetCfgChangeType, netcfg_changetype, "ROUTE_ADDED", ROUTE_ADDED);
     MAP(NetCfgChangeType, netcfg_changetype, "ROUTE_REMOVED", ROUTE_REMOVED);
     MAP(NetCfgChangeType, netcfg_changetype, "ROUTE_EXCLUDED", ROUTE_EXCLUDED);
-    MAP(NetCfgChangeType, netcfg_changetype, "DNS_SERVER_", DNS_SERVER_ADDED);
+    MAP(NetCfgChangeType, netcfg_changetype, "DNS_SERVER_ADDED", DNS_SERVER_ADDED);
     MAP(NetCfgChangeType, netcfg_changetype, "DNS_SERVER_REMOVED", DNS_SERVER_REMOVED);
     MAP(NetCfgChangeType, netcfg_changetype, "DNS_SEARCH_ADDED", DNS_SEARCH_ADDED);
     MAP(NetCfgChangeType, netcfg_changetype, "DNS_SEARCH_REMOVED", DNS_SEARCH_REMOVED);
