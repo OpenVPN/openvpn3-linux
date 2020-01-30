@@ -31,7 +31,7 @@ def build_tarball()
                     sh "./bootstrap.sh"
                     sh "./configure --prefix=/usr --sysconfdir=/etc --enable-debug-core-events --enable-debug-options --enable-debug-exceptions"
                     sh 'make -j$(nproc)'
-                    sh 'make -j$(nproc) distcheck'
+                    sh 'MAKEFLAGS=-j$(nproc) make distcheck'
                     try {
                         sh './src/tests/unit/unit-tests --gtest_output="xml:test_results/openvpn3-linux-tests.xml"'
                     } catch (Exception e) {
