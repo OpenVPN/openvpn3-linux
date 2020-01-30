@@ -35,6 +35,7 @@ int cmd_netcfg_service(ParsedArgs args)
     DBus dbuscon(G_BUS_TYPE_SYSTEM);
     dbuscon.Connect();
     NetCfgProxy::Manager prx(dbuscon.GetConnection());
+    DBusConnectionCreds creds(dbuscon.GetConnection());
 
     try
     {
@@ -51,7 +52,11 @@ int cmd_netcfg_service(ParsedArgs args)
 
             for (const auto& sub : prx.NotificationSubscriberList())
             {
-                std::cout << "- " << sub.first << ": " << std::endl;
+                std::cout << "- " << sub.first
+                          << " (PID "
+                          << std::to_string(creds.GetPID(sub.first)) << ")"
+                          << std::endl;
+
                 for (const auto& e : NetCfgChangeEvent::FilterMaskList(sub.second))
                 {
                     std::cout << "        " << e << std::endl;
