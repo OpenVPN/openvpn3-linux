@@ -232,17 +232,41 @@ void ResolvConfFile::Apply(const ResolverSettings::Ptr settings)
     {
         vpn_name_servers.insert(vpn_name_servers.end(),
                                 srvs.begin(), srvs.end());
+        for (const auto& e : srvs)
+        {
+            NetCfgChangeEvent ev(NetCfgChangeType::DNS_SERVER_ADDED,
+                                 "", {{"dns_server", e}});
+            notification_queue.push_back(ev);
+        }
 
         vpn_search_domains.insert(vpn_search_domains.end(),
                                   dmns.begin(), dmns.end());
+        for (const auto& e : dmns)
+        {
+            NetCfgChangeEvent ev(NetCfgChangeType::DNS_SEARCH_ADDED,
+                                 "", {{"search_domain", e}});
+            notification_queue.push_back(ev);
+        }
     }
     else
     {
         vpn_name_servers_removed.insert(vpn_name_servers_removed.end(),
                                         srvs.begin(), srvs.end());
+        for (const auto& e : srvs)
+        {
+            NetCfgChangeEvent ev(NetCfgChangeType::DNS_SERVER_REMOVED,
+                                 "", {{"dns_server", e}});
+            notification_queue.push_back(ev);
+        }
 
         vpn_search_domains_removed.insert(vpn_search_domains_removed.end(),
                                           dmns.begin(), dmns.end());
+        for (const auto& e : dmns)
+        {
+            NetCfgChangeEvent ev(NetCfgChangeType::DNS_SEARCH_REMOVED,
+                                 "", {{"search_domain", e}});
+            notification_queue.push_back(ev);
+        }
     }
 
     ++modified_count;
@@ -280,6 +304,17 @@ void ResolvConfFile::Commit(NetCfgSignals *signal)
         sys_name_servers.clear();
         sys_search_domains.clear();
     }
+
+    // Send all NetworkChange events in the notification queue
+    if (signal)
+    {
+        for (const auto& ev : notification_queue)
+        {
+            signal->NetworkChange(ev);
+        }
+    }
+    notification_queue.clear();
+
     modified_count = 0;
 }
 

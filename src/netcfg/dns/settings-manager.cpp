@@ -72,6 +72,59 @@ void SettingsManager::ApplySettings(NetCfgSignals *signal)
         }
     }
     backend->Commit(signal);
+
+    std::vector<NetCfgChangeEvent> notif; // NetworkChange notification queue
+    std::vector<ssize_t> remove_list;
+    for (auto rslv : resolvers)
+    {
+        ResolverSettings::Ptr settings = rslv.second;
+        if (!settings->GetRemovable())
+        {
+            break;
+        }
+
+        ssize_t idx = settings->GetIndex();
+        if (idx >= 0)
+        {
+            // If we have a NetCfgSignal object available, use that to
+            // send NetworkChange events with the removed DNS resolver settings
+            if (signal)
+            {
+                std::vector<std::string> name_servers = settings->GetNameServers(true);
+                if (name_servers.size() > 0)
+                {
+                    for (const auto& s : name_servers)
+                    {
+                        notif.push_back(NetCfgChangeEvent(NetCfgChangeType::DNS_SERVER_REMOVED,
+                                                          "", {{"dns_server", s}}));
+                    }
+                }
+
+                std::vector<std::string> search_domains = settings->GetSearchDomains(true);
+                if (search_domains.size() > 0)
+                {
+                    for (const auto& s : search_domains)
+                    {
+                        notif.push_back(NetCfgChangeEvent(NetCfgChangeType::DNS_SEARCH_REMOVED,
+                                                          "", {{"search_domain", s}}));
+                    }
+                }
+
+                // Send all NetworkChange events in the notification queue
+                for (const auto& ev : notif)
+                {
+                    signal->NetworkChange(ev);
+                }
+            }
+            remove_list.push_back(idx);
+        }
+    }
+
+    for (const auto idx : remove_list)
+    {
+        resolvers.erase(idx);
+    }
+
 }
 
 

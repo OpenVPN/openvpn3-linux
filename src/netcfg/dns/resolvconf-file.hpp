@@ -235,6 +235,7 @@ namespace DNS
         std::vector<std::string> vpn_search_domains_removed;
         std::vector<std::string> sys_name_servers;
         std::vector<std::string> sys_search_domains;
+        std::vector<NetCfgChangeEvent> notification_queue;
         unsigned int modified_count = 0;
 
 
