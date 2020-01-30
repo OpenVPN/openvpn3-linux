@@ -76,7 +76,7 @@ class LogException : public std::exception
  * Log groups is used to classify the source of log events
  */
 const uint8_t LogGroupCount = 10;
-enum class LogGroup : std::uint_fast8_t {
+enum class LogGroup : std::uint8_t {
         UNDEFINED,              /**< Default - should not be used in code, but is here to detect errors */
         MASTERPROC,             /**< Master process (main openvpn-manager) */
         CONFIGMGR,              /**< Configuration Manager process (child of openvpn-manager)*/
@@ -102,7 +102,7 @@ const std::array<const std::string, LogGroupCount> LogGroup_str = {{
         "External Service"
 }};
 
-enum class LogCategory : uint_fast8_t {
+enum class LogCategory : uint8_t {
         UNDEFINED,              /**< Undefined/not set */
         DEBUG,                  /**< Debug messages */
         VERB2,                  /**< Even more details */
@@ -128,7 +128,7 @@ const std::array<const std::string, 9> LogCategory_str = {{
 
 inline const std::string LogPrefix(LogGroup group, LogCategory catg)
 {
-        if ((uint_fast8_t) group >= LogGroupCount) {
+        if ((uint8_t) group >= LogGroupCount) {
             THROW_LOGEXCEPTION("Invalid Log Group value");
         }
 

@@ -77,7 +77,7 @@ const std::string OpenVPN3DBus_interf_netcfg = "net.openvpn.v3.netcfg";
  */
 
 const uint8_t StatusMajorCount = 6;
-enum class StatusMajor : std::uint_fast8_t {
+enum class StatusMajor : std::uint8_t {
         UNSET,                      /**< Invalid status major code, used for initialization */
         CONFIG,                     /**< Status is related to configuration */
         CONNECTION,                 /**< Status is related to an OpenVPN connection */
@@ -96,7 +96,7 @@ const std::array<const std::string, StatusMajorCount> StatusMajor_str = {{
 }};
 
 const uint8_t StatusMinorCount = 30;
-enum class  StatusMinor : std::uint_fast16_t {
+enum class  StatusMinor : std::uint16_t {
         UNSET,                       /**< An invalid result code, used for initialization */
 
         CFG_ERROR,                   /**< Failed parsing configuration */
@@ -174,7 +174,7 @@ const std::array<const std::string, StatusMinorCount> StatusMinor_str = {{
 
 
 const uint8_t ClientAttentionTypeCount = 4;
-enum class ClientAttentionType : std::uint_fast8_t {
+enum class ClientAttentionType : std::uint8_t {
     UNSET,
     CREDENTIALS,
     PKCS11,
@@ -189,7 +189,7 @@ const std::array<const std::string, ClientAttentionTypeCount> ClientAttentionTyp
 }};
 
 const uint8_t ClientAttentionGroupCount = 7;
-enum class ClientAttentionGroup : std::uint_fast8_t {
+enum class ClientAttentionGroup : std::uint8_t {
     UNSET,
     USER_PASSWORD,
     PK_PASSPHRASE,

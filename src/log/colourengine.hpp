@@ -51,7 +51,7 @@ public:
     /**
      *  Supported colours
      */
-    enum class Colour : std::uint_fast8_t {
+    enum class Colour : std::uint8_t {
         NONE,
         BLACK,   BRIGHT_BLACK,
         RED,     BRIGHT_RED,
