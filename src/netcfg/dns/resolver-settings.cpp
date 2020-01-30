@@ -71,6 +71,18 @@ namespace DNS
     }
 
 
+    void ResolverSettings::PrepareRemoval() noexcept
+    {
+        prepare_removal = true;
+    }
+
+
+    bool ResolverSettings::GetRemovable() const noexcept
+    {
+        return prepare_removal;
+    }
+
+
     bool ResolverSettings::ChangesAvailable() const noexcept
     {
         return (name_servers.size() > 0 || search_domains.size() > 0);
@@ -87,9 +99,9 @@ namespace DNS
         name_servers.clear();
     }
 
-    std::vector<std::string> ResolverSettings::GetNameServers() const noexcept
+    std::vector<std::string> ResolverSettings::GetNameServers(bool removable) const noexcept
     {
-        return name_servers;
+        return (!prepare_removal || removable ? name_servers : std::vector<std::string>{});
     }
 
     void ResolverSettings::AddSearchDomain(const std::string& domain)
@@ -102,9 +114,9 @@ namespace DNS
         search_domains.clear();
     }
 
-    std::vector<std::string> ResolverSettings::GetSearchDomains() const noexcept
+    std::vector<std::string> ResolverSettings::GetSearchDomains(bool removable) const noexcept
     {
-        return search_domains;
+        return (!prepare_removal || removable ? search_domains : std::vector<std::string>{});
     }
 
 

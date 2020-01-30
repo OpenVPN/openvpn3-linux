@@ -145,7 +145,7 @@ TEST_F(DNSSettingsManager_SingleSetup, SingleServerDomain)
     ASSERT_STREQ(test_backend->ServerList(), "1.1.1.1");
     ASSERT_STREQ(test_backend->DomainList(), "con1.example.org");
 
-    dnsmgr->RemoveResolverSettings(con1);
+    con1->PrepareRemoval();
     dnsmgr->ApplySettings(nullptr);
 
     ASSERT_STREQ(test_backend->ServerList(), "");
@@ -165,11 +165,43 @@ TEST_F(DNSSettingsManager_SingleSetup, DoubleServerDomain)
     ASSERT_STREQ(test_backend->ServerList(), "1.1.1.1, 1.1.2.2");
     ASSERT_STREQ(test_backend->DomainList(), "con1.example.org, con1b.example.org");
 
-    dnsmgr->RemoveResolverSettings(con1);
+    con1->PrepareRemoval();
     dnsmgr->ApplySettings(nullptr);
 
     ASSERT_STREQ(test_backend->ServerList(), "");
     ASSERT_STREQ(test_backend->DomainList(), "");
+}
+
+TEST_F(DNSSettingsManager_SingleSetup, PrepareRemoval)
+{
+    ResolverSettings::Ptr con1 = dnsmgr->NewResolverSettings();
+    con1->AddNameServer("1.2.3.4");
+    con1->AddNameServer("5.6.7.8");
+    con1->AddSearchDomain("prepremoval.example.org");
+    con1->Enable();
+    dnsmgr->ApplySettings(nullptr);
+
+    ASSERT_STREQ(test_backend->ServerList(), "1.2.3.4, 5.6.7.8");
+    ASSERT_STREQ(test_backend->DomainList(), "prepremoval.example.org");
+
+    con1->PrepareRemoval();
+    dnsmgr->ApplySettings(nullptr);
+    ASSERT_STREQ(test_backend->ServerList(), "");
+    ASSERT_STREQ(test_backend->DomainList(), "");
+
+    std::vector<std::string> chk = con1->GetNameServers();
+    ASSERT_EQ(chk.size(), 0);
+    chk = con1->GetNameServers(true);
+    ASSERT_EQ(chk.size(), 2);
+    chk = con1->GetNameServers(false);
+    ASSERT_EQ(chk.size(), 0);
+
+    chk = con1->GetSearchDomains();
+    ASSERT_EQ(chk.size(), 0);
+    chk = con1->GetSearchDomains(true);
+    ASSERT_EQ(chk.size(), 1);
+    chk = con1->GetSearchDomains(false);
+    ASSERT_EQ(chk.size(), 0);
 }
 
 
@@ -186,7 +218,7 @@ protected:
     {
         for (const auto& c : cfgs)
         {
-            dnsmgr->RemoveResolverSettings(c);
+            c->PrepareRemoval();
         }
         dnsmgr->ApplySettings(nullptr);
     }
@@ -213,7 +245,7 @@ protected:
         {
             if (c && c->GetIndex() == num)
             {
-                dnsmgr->RemoveResolverSettings(c);
+                c->PrepareRemoval();
                 cfgs.erase(std::remove(cfgs.begin(),
                                        cfgs.end(), c),
                                        cfgs.end());

@@ -80,7 +80,6 @@ namespace DNS
          */
         void Disable() noexcept;
 
-
         /**
          *  Retrieve the activation status of this settings object
          *
@@ -92,6 +91,25 @@ namespace DNS
          */
         bool GetEnabled() const noexcept;
 
+        /**
+         *  Prepare this ResolverSettings object for removal and deletion.
+         *  This object will be deleted when SettingsManager::ApplySettings()
+         *  is being executed.
+         *
+         *  This delay is needed to allow the SettingsManager to issue
+         *  NetworkChange notification events of removed DNS resolver
+         *  settings.
+         */
+        void PrepareRemoval() noexcept;
+
+        /**
+         *  Retrieve the "PrepareRemoval" state.  If @PrepareRemoval()
+         *  has been called, this will return true.
+         *
+         * @return  Returns true if this settings object is slated for
+         *          removal.
+         */
+        bool GetRemovable() const noexcept;
 
         /**
          *  Check if there are resolver changes available.  If neither
@@ -118,10 +136,16 @@ namespace DNS
         /**
          *  Retrieve the current list of DNS name servers
          *
-         * @return  Returns a std::vector<std::string> of all registered
+         * @param  removable   Boolean flag to enable retrieval of
+         *                     name servers even if this object is flagged
+         *                     as removable.  Default is false, which will
+         *                     return an empty list if this object is queued
+         *                     for deletion.
+         *
+         * @return  Returns a std::vector<std::string> of registered
          *          DNS name servers
          */
-        std::vector<std::string> GetNameServers() const noexcept;
+        std::vector<std::string> GetNameServers(bool removable = false) const noexcept;
 
         /**
          *  Adds a new single DNS search domain
@@ -138,10 +162,16 @@ namespace DNS
         /**
          *  Retrieve the current list of DNS search domains
          *
+         * @param  removable   Boolean flag to enable retrieval o
+         *                     search domains even if this object is flagged
+         *                     as removable.  Default is false, which will
+         *                     return an empty list if this object is queued
+         *                     for deletion.
+         *
          * @return  Returns a std::vector<std::string> of all registered
          *          DNS search domains
          */
-        std::vector<std::string> GetSearchDomains() const noexcept;
+        std::vector<std::string> GetSearchDomains(bool removable = false) const noexcept;
 
 
         /**
@@ -158,7 +188,8 @@ namespace DNS
         friend std::ostream& operator<<(std::ostream& os,
                                         const ResolverSettings& rs)
         {
-            if (rs.name_servers.empty() && rs.search_domains.empty())
+            if ((rs.name_servers.empty() && rs.search_domains.empty())
+                || rs.prepare_removal)
             {
                 return os << "(No DNS resolver settings)";
             }
@@ -223,6 +254,7 @@ namespace DNS
     private:
         ssize_t index = -1;
         bool enabled = false;
+        bool prepare_removal = false;
         std::vector<std::string> name_servers;
         std::vector<std::string> search_domains;
     };

@@ -62,28 +62,11 @@ ResolverSettings::Ptr SettingsManager::NewResolverSettings()
 }
 
 
-void SettingsManager::RemoveResolverSettings(ResolverSettings::Ptr settings)
-{
-    if (!settings)
-    {
-        throw NetCfgException("RemoveResolverSettings(): Invalid ResolverSettings");
-    }
-
-    ssize_t idx = settings->GetIndex();
-    if (idx < 0)
-    {
-        throw NetCfgException(
-                        "RemoveResolverSettings: Invalid settings");
-    }
-    resolvers.erase(idx);
-}
-
-
 void SettingsManager::ApplySettings(NetCfgSignals *signal)
 {
     for (auto rslv = resolvers.rbegin(); rslv != resolvers.rend(); rslv++)
     {
-        if (rslv->second->ChangesAvailable())
+        if (rslv->second->ChangesAvailable() && !rslv->second->GetRemovable())
         {
             backend->Apply(rslv->second);
         }

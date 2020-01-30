@@ -79,15 +79,6 @@ namespace DNS
 
 
             /**
-             *  Removes the DNS settings from the current system configuration
-             *
-             *  This operation is transaction oriented and will not be applied
-             *  until the ApplySettings() method has been called.
-             *
-             */
-            void RemoveResolverSettings(ResolverSettings::Ptr settings);
-
-            /**
              *   Apply all configured DNS settings
              */
             void ApplySettings(NetCfgSignals *signal);

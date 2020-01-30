@@ -475,8 +475,7 @@ public:
                     signal.Debug(device_name,
                                  "Removing DNS/resolver settings: "
                                  + details.str());
-                    dnsconfig->Disable();
-                    resolver->RemoveResolverSettings(dnsconfig);
+                    dnsconfig->PrepareRemoval();
                     resolver->ApplySettings(&signal);
                     modified = false;
                 }
