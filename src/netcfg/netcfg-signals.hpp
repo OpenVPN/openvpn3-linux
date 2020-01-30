@@ -61,7 +61,7 @@ public:
     }
 
 
-    void NetworkChange(NetCfgChangeEvent& ev) const
+    void NetworkChange(const NetCfgChangeEvent& ev) const
     {
         GVariant *e = ev.GetGVariant();
         if (subscriptions)
