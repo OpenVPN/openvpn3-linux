@@ -27,6 +27,7 @@
 
 #pragma once
 
+#include <string>
 #include <map>
 
 enum class NetCfgChangeType : std::uint16_t {

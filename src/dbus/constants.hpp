@@ -21,6 +21,7 @@
 #define OPENVPN3_DBUS_CONSTANTS_HPP
 
 #include <cstdint>
+#include <string>
 #include <array>
 
 /*
