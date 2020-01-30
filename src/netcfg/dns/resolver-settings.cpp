@@ -25,6 +25,7 @@
  *         resolver settings
  */
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -91,7 +92,14 @@ namespace DNS
 
     void ResolverSettings::AddNameServer(const std::string& server)
     {
-        name_servers.push_back(server);
+        // Avoid adding duplicated entries
+        auto needle = std::find(name_servers.begin(),
+                                name_servers.end(),
+                                server);
+        if (std::end(name_servers) == needle)
+        {
+            name_servers.push_back(server);
+        }
     }
 
     void ResolverSettings::ClearNameServers()
@@ -106,7 +114,14 @@ namespace DNS
 
     void ResolverSettings::AddSearchDomain(const std::string& domain)
     {
-        search_domains.push_back(domain);
+        // Avoid adding duplicated entries
+        auto needle = std::find(search_domains.begin(),
+                                search_domains.end(),
+                                domain);
+        if (std::end(search_domains) == needle)
+        {
+            search_domains.push_back(domain);
+        }
     }
 
     void ResolverSettings::ClearSearchDomains()
@@ -142,8 +157,17 @@ namespace DNS
         {
             gsize len;
             std::string v(g_variant_get_string(srv, &len));
-            name_servers.push_back(v);
+
+            // Avoid adding duplicated entries
+            auto needle = std::find(name_servers.begin(),
+                                    name_servers.end(),
+                                    v);
+            if (std::end(name_servers) == needle)
+            {
+                name_servers.push_back(v);
+            }
             ret += (!first ? std::string(", ") : std::string("")) + v;
+
             g_variant_unref(srv);
         }
         g_variant_iter_free(srvlist);
@@ -167,12 +191,21 @@ namespace DNS
             throw NetCfgException("[AddSearchDomain] Failed to extract parameters");
         }
 
-        GVariant *srchdom = nullptr;;
+        GVariant *srchdom = nullptr;
         while ((srchdom = g_variant_iter_next_value(srchlist)))
         {
             gsize len;
             std::string v(g_variant_get_string(srchdom, &len));
-            search_domains.push_back(v);
+
+            // Avoid adding duplicated entries
+            auto needle = std::find(search_domains.begin(),
+                                    search_domains.end(),
+                                    v);
+            if (std::end(search_domains) == needle)
+            {
+                search_domains.push_back(v);
+            }
+
             g_variant_unref(srchdom);
         }
         g_variant_iter_free(srchlist);

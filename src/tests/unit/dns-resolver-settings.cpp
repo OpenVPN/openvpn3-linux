@@ -121,6 +121,27 @@ TEST(DNSResolverSettings, MultipleEntries)
 }
 
 
+TEST(DNSResolverSettings, DuplicatedEntries)
+{
+    ResolverSettings::Ptr r1 = new ResolverSettings(12);
+    r1->AddNameServer("9.9.9.9");
+    ASSERT_EQ(r1->GetNameServers().size(), 1);
+    r1->AddNameServer("8.7.6.5");
+    ASSERT_EQ(r1->GetNameServers().size(), 2);
+    r1->AddNameServer("9.9.9.9");
+    ASSERT_EQ(r1->GetNameServers().size(), 2);
+
+    ASSERT_EQ(r1->GetSearchDomains().size(), 0);
+    r1->AddSearchDomain("test1.example.site");
+    ASSERT_EQ(r1->GetSearchDomains().size(), 1);
+    r1->AddSearchDomain("test2.example.site");
+    r1->AddSearchDomain("test3.example.site");
+    ASSERT_EQ(r1->GetSearchDomains().size(), 3);
+    r1->AddSearchDomain("test2.example.site");
+    ASSERT_EQ(r1->GetSearchDomains().size(), 3);
+}
+
+
 TEST(DNSResolverSettings, ClearEntries)
 {
     ResolverSettings::Ptr r1 = new ResolverSettings(6);
@@ -273,4 +294,20 @@ TEST(DNSResolverSettings, GVariantTests_MultipleEntries)
                  "DNS resolvers: 10.0.0.1, 10.0.2.2, 10.0.3.3 - "
                  "Search domains: sub1.example.net, sub2.example.com, "
                  "sub3.example.org, sub4.test.example");
+}
+
+
+TEST(DNSResolverSettings, GVariantTests_DuplicatedEntries)
+{
+    ResolverSettings::Ptr r1 = new ResolverSettings(13);
+
+    // Insert a single name server and search domain
+    std::vector<std::string> ns = {{"10.0.0.1", "10.0.0.2", "10.0.0.2"}};
+    r1->AddNameServers(GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(ns)));
+    ASSERT_EQ(r1->GetNameServers().size(), 2);
+
+    std::vector<std::string> sd = {{"sub1.example.net", "sub2.example.com",
+                                    "sub1.example.net", "sub2.example.com"}};
+    r1->AddSearchDomains(GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(sd)));
+    ASSERT_EQ(r1->GetSearchDomains().size(), 2);
 }
