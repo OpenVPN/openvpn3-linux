@@ -235,7 +235,9 @@ TEST(DNSResolverSettings, GVariantTests_SingleNameServer)
 
     // Insert a single name server and search domain
     std::vector<std::string> ns = {{"9.9.9.9"}};
-    r1->AddNameServers(GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(ns)));
+    GVariant* d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(ns));
+    r1->AddNameServers(d);
+    g_variant_unref(d);
 
     std::vector<std::string> chk = r1->GetNameServers();
     ASSERT_EQ(chk.size(), 1);
@@ -255,7 +257,9 @@ TEST(DNSResolverSettings, GVariantTests_SingleSearchDomain)
 
     // Insert a single name server and search domain
     std::vector<std::string> sd = {{"sub0.example.net"}};
-    r1.AddSearchDomains(GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(sd)));
+    GVariant* d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(sd));
+    r1.AddSearchDomains(d);
+    g_variant_unref(d);
 
     std::vector<std::string> chk = r1.GetSearchDomains();
     ASSERT_EQ(chk.size(), 1);
@@ -275,11 +279,15 @@ TEST(DNSResolverSettings, GVariantTests_MultipleEntries)
 
     // Insert a single name server and search domain
     std::vector<std::string> ns = {{"10.0.0.1", "10.0.2.2", "10.0.3.3"}};
-    r1->AddNameServers(GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(ns)));
+    GVariant* d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(ns));
+    r1->AddNameServers(d);
+    g_variant_unref(d);
 
     std::vector<std::string> sd = {{"sub1.example.net", "sub2.example.com",
                                     "sub3.example.org", "sub4.test.example"}};
-    r1->AddSearchDomains(GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(sd)));
+    d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(sd));
+    r1->AddSearchDomains(d);
+    g_variant_unref(d);
 
     std::vector<std::string> chk_ns = r1->GetNameServers();
     ASSERT_EQ(chk_ns.size(), 3);
@@ -303,11 +311,15 @@ TEST(DNSResolverSettings, GVariantTests_DuplicatedEntries)
 
     // Insert a single name server and search domain
     std::vector<std::string> ns = {{"10.0.0.1", "10.0.0.2", "10.0.0.2"}};
-    r1->AddNameServers(GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(ns)));
+    GVariant* d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(ns));
+    r1->AddNameServers(d);
+    g_variant_unref(d);
     ASSERT_EQ(r1->GetNameServers().size(), 2);
 
     std::vector<std::string> sd = {{"sub1.example.net", "sub2.example.com",
                                     "sub1.example.net", "sub2.example.com"}};
-    r1->AddSearchDomains(GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(sd)));
+    d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(sd));
+    r1->AddSearchDomains(d);
+    g_variant_unref(d);
     ASSERT_EQ(r1->GetSearchDomains().size(), 2);
 }
