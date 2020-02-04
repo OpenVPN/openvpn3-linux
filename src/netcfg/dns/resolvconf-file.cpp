@@ -89,6 +89,7 @@ const std::string FileGenerator::GetBackupFilename() const noexcept
 void FileGenerator::Read()
 {
     std::ifstream input(filename);
+    file_contents.clear();
     for (std::string line; std::getline(input, line);)
     {
         file_contents.push_back(line);
