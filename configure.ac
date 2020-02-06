@@ -53,14 +53,7 @@ AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != :])
 dnl
 dnl  Minor Default CXXFLAGS
 dnl
-CXXFLAGS="${CXXFLAGS} -Wall -Wno-maybe-uninitialized"
-
-
-dnl case "${CXXFLAGS}" in
-dnl   *-std=*) ;;
-dnl  *)       CXXFLAGS="${CXXFLAGS} -std=c++14" ;;
-dnl esac
-
+CXXFLAGS="${CXXFLAGS} -Wall"
 
 dnl
 dnl  Check for LZ4 library
