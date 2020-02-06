@@ -432,6 +432,81 @@ existing configurations.
                       separation approach
 
 
+NOTES
+=====
+
+SCRIPT EXECUTION
+----------------
+
+OpenVPN 3 does not implement any support for running external scripts or program
+during its life cycle.  This is by design.  Running scripts is a security risk,
+and needs to be handled carefully.  In classic OpenVPN 2.x setups, scripts are
+run with the same privileges as the ``openvpn``\(8) process.  If the process is
+started as root, the script may be run as root.  Which is why the
+``--script-security`` option is available and by default disabling running most
+external programs.
+
+This does not mean it is impossible to trigger programs to perform operations
+when certain OpenVPN events occur.  OpenVPN 3 Linux is using D-Bus actively and
+it issues several signals as the state changes.  It also means you can write
+your own front-end doing its own calls how you prefer while starting and
+managing the VPN session at the same time.  This allows a much better
+flexibility and allows to adopt VPN session management into the execution flow
+which is needed.  And the implementation can do its own security assessments on
+how it will tackle these scenarios.
+
+There are at least three ways how to adopt to the OpenVPN 3 model:
+
+#### 1.  Watching D-Bus StateChange signals for your own sessions
+
+When a session is started, it is possible to subscribe to signals issued by the
+VPN client process over D-Bus.  It is only possible to subscribe to signals
+related to the session owner's own sessions.  These signals are sent by the
+Session Manager (``net.openvpn.v3.sessions``,
+``openvpn3-service-sessionmgr``\(8))
+
+Example:
+
+    $ dbus-monitor --system --monitor sender=net.openvpn.v3.sessions,interface=net.openvpn.v3.sessions,member=StatusChange
+
+
+#### 2.  Manage the life cycle of VPN sessions on your own
+
+This means wrapping the starting of VPN sessions on your own.  Either you wrap
+``openvpn3 session-start`` or ``openvpn2`` calls in your own scripts, or you can
+connect directly to the Configuration Manager (``net.openvpn.v3.configuration``,
+``openvpn3-service-configmgr``\(8)) and Session Manager
+(``net.openvpn.v3.sessions``, ``openvpn3-service-sessionmgr``\(8)) to import
+configuration profiles and start/stop VPN sessions as needed, as well as
+subscribing to D-Bus signals as well to handle various the states a VPN session
+will go through.  This is fairly simple to do using the already available
+openvpn3 Python module.  Example code can be found in the
+[OpenVPN 3 Linux source tree](https://github.com/OpenVPN/openvpn3-linux/tree/master/src/tests/python)
+or by studying the source code of ``openvpn2``\(1) and ``openvpn3-autoload``\(8),
+which both are Python scripts.
+
+Configurations and sessions managed via D-Bus by your own scripts can still be
+further managed by the ``openvpn3``\(1) command line interface.
+
+
+#### 3.  Subscribing to NetworkChange signals from [net.openvpn.v3.netcfg](https://github.com/OpenVPN/openvpn3-linux/blob/master/docs/dbus/dbus-service-net.openvpn.v3.netcfg.md)
+
+This is also a scripting possibility, which is more useful for system wide
+script triggering.  A program or script can subscribe to specific network change
+events caused by OpenVPN sessions.  These signals contains information about
+virtual network interfaces which has been created or removed, IP addresses added
+or removed from devices, routing configuration as well as DNS resolver changes.
+
+For an example how to do this, see the [example script]( https://github.com/OpenVPN/openvpn3-linux/blob/master/src/tests/python/netcfg-netchg-subscription)
+in the OpenVPN 3 Linux source directory.
+
+**Please note** that, by default, this script must be run as ``root`` or the
+``openvpn`` user on the system.  It is possible to allow other users or groups
+this privilege, by extending the D-Bus policy for the ``net.openvpn.v3.netcfg``
+service.  But granting this privilege too widely may result in unwanted
+information leakage related to VPN interface configurations.
+
+
 SEE ALSO
 ========
 
