@@ -995,9 +995,17 @@ class ConfigParser():
     #  and never passed on further for the following parsing
     class IgnoreArg(argparse.Action):
         def __init__(self, option_strings, dest, nargs=None, **kwargs):
+            if 'warn' in kwargs:
+                self.__warn = kwargs.pop('warn')
+            else:
+                self.__warn = False
             super(ConfigParser.IgnoreArg, self).__init__(option_strings, dest, nargs, **kwargs)
 
         def __call__(self, parser, namespace, values, options_string):
+            if self.__warn is True:
+                print("** WARNING ** Ignoring option: %s %s" % (
+                    self.option_strings[0], " ".join(values)))
+
             # Ensure this option/argument is not preserved
             delattr(namespace, self.dest)
-# ENDCLASS: ConfigParser
+    # ENDCLASS: ConfigParser
