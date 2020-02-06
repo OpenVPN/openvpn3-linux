@@ -87,12 +87,19 @@ class ConfigParser():
                 for v in opt_val:
                     cfg.append('%s %s' %(key, v))
             elif opt_val is not None:
+                processed = False
                 if key in ('ca', 'cert', 'extra-certs', 'http-proxy-user-pass',
-                           'key', 'tls-auth', 'tls-crypt'):
+                           'key', 'tls-auth', 'tls-crypt', 'auth-user-pass'):
                     # Embedded files should not be prefixed by the key value
-                    cfg.append(opt_val)
-                else:
+                    #
+                    # First, check if it is an embedded file here
+                    if len(opt_val) > 0 and opt_val[0] == '<' and opt_val[-1:] == '>':
+                        cfg.append(opt_val)
+                        processed = True
+
+                if not processed:
                     cfg.append('%s %s' % (key, opt_val))
+
         return '\n'.join(cfg)
 
 
@@ -158,9 +165,10 @@ class ConfigParser():
                                    +' message digest algorithm alg'
                                    +' (default=SHA1)')
 
-        # FIXME: Need to tackle loading creds from file, which is optional
-        self.__parser.add_argument('--auth-user-pass',
-                                   action='store_true',
+        self.__parser.add_argument('--auth-user-pass', metavar='[USER-PASS-FILE]',
+                                   action=ConfigParser.EmbedFile,
+                                   embed_tag = 'auth-user-pass',
+                                   ignore_missing_filename=True,
                                    help='Authenticate with server using '
                                    + 'username/password')
 
@@ -911,21 +919,39 @@ class ConfigParser():
                 self.__tag = kwargs.pop('embed_tag')
             else:
                 self.__tag = dest
-            super(ConfigParser.EmbedFile, self).__init__(option_strings, dest, nargs, **kwargs)
+
+            if 'ignore_missing_filename' in kwargs:
+                self.__ignore_missing_filename = kwargs.pop('ignore_missing_filename')
+            else:
+                self.__ignore_missing_filename = False
+
+            super(ConfigParser.EmbedFile, self).__init__(option_strings, dest, '*', **kwargs)
 
         def __call__(self, parser, namespace, values, option_string=None):
             """Loads the given file and generates an embedded option of it"""
 
-            try:
-                fp = open(values, 'r')
-                ret = '<%s>\n' % self.__tag
-                ret += '\n'.join([l.strip() for l in fp.readlines()])
-                ret += '\n</%s>' % self.__tag
-                fp.close()
-                setattr(namespace, self.dest, ret)
-            except IOError as e:
-                err = str(e.strerror) + " '" + values + "'"
+            if len(values) != 1 and not self.__ignore_missing_filename:
+                err = '%s needs a filename' % (self.option_strings[0])
                 raise argparse.ArgumentError(self, err)
+
+            if len(values) > 0:
+                # When a filename is present, embed
+                # the file into the proper tags
+                try:
+                    fp = open(values[0], 'r')
+                    ret = '<%s>\n' % self.__tag
+                    ret += '\n'.join([l.strip() for l in fp.readlines()])
+                    ret += '\n</%s>' % self.__tag
+                    fp.close()
+                    setattr(namespace, self.dest, ret)
+                except IOError as e:
+                    err = str(e.strerror) + " '" + values[0] + "'"
+                    raise argparse.ArgumentError(self, err)
+            else:
+                # If no filename is available, but
+                # this is allowed (ignore_missing_filename=True),
+                # just add this as an option without arguments.
+                setattr(namespace, self.dest, '')
 
     # ENDCLASS: EmbedFile
 
