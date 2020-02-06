@@ -609,6 +609,20 @@ class ConfigParser():
                              + 'initialization. Not applicable with OpenVPN 3, '
                              + 'which uses a different execution model.')
 
+        ignored.add_argument('--down',
+                             metavar='SCRIPT',
+                             action=ConfigParser.IgnoreArg,
+                             nargs=1, warn=True,
+                             help='Run script after tunnel has been '
+                             + 'torn down.  This is solved differently with '
+                             + 'OpenVPN 3.')
+
+        ignored.add_argument('--down-pre',
+                             action=ConfigParser.IgnoreArg,
+                             nargs=0,
+                             help='Makes --down scripts run before the '
+                             + 'disconnect.  Not supported by OpenVPN 3.')
+
         ignored.add_argument('--explicit-exit-notify',
                              metavar='[ATTEMPTS]',
                              action=ConfigParser.IgnoreArg,
@@ -676,6 +690,14 @@ class ConfigParser():
                              + 'retry resolve for n seconds before failing. '
                              + 'Not supported by OpenVPN 3')
 
+        ignored.add_argument('--script-security',
+                             metavar='LEVEL',
+                             action=ConfigParser.IgnoreArg,
+                             nargs=1,
+                             help='Sets the security level for scripts which '
+                             + 'will be run by OpenVPN.  Running scripts are '
+                             + 'not supported by OpenVPN 3.')
+
         ignored.add_argument('--sndbuf',
                              metavar='SIZE',
                              action=ConfigParser.IgnoreArg,
@@ -694,6 +716,14 @@ class ConfigParser():
                              action=ConfigParser.IgnoreArg,
                              nargs=1,
                              help='Not used by OpenVPN 3')
+
+        ignored.add_argument('--up',
+                             metavar='SCRIPT',
+                             action=ConfigParser.IgnoreArg,
+                             nargs=1, warn=True,
+                             help='Run script after tunnel has been '
+                             + 'established.  This is solved differently with '
+                             + 'OpenVPN 3.')
 
         ignored.add_argument('--user',
                              metavar='USER',

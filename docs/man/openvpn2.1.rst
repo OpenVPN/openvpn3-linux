@@ -380,6 +380,15 @@ existing configurations.
                       applicable with OpenVPN 3, which uses a different
                       execution model.
 
+--down                Run a script after the tunnel has been torn down.
+                      Running scripts via OpenVPN 3 is not supported, and
+                      using this option will display a warning.  See the
+                      NOTES section below for details.
+
+--down-pre            This is related to when the ``--down`` script is being
+                      run during the disconnection.  See the NOTES section
+                      below regarding script execution in OpenVPN 3.
+
 --explicit-exit-notify <ATTEMPTS>
                         On exit/restart, send exit signal to remote end.
                         Automatically configured with OpenVPN 3
@@ -402,12 +411,21 @@ existing configurations.
                       resolve for n seconds before failing.  Not supported
                       by OpenVPN 3.
 
+--script-security LEVEL
+                      This option is ignored, as OpenVPN 3 itself does not
+                      execute any external scripts.
+
 --sndbuf SIZE         Set the TCP/UDP send buffer size.  Not supported in
                       OpenVPN 3.
 
 --socket-flags FLAGS
                       Applies flags to the transport socket.  Not supported
                       in OpenVPN 3.
+
+--up                  Run a script after the tunnel has been established.
+                      Running scripts via OpenVPN 3 is not supported, and
+                      using this option will display a warning.  See the
+                      NOTES section below for details.
 
 --user USER           Run OpenVPN with USER user credentials.  Not needed
                       with OpenVPN 3 which uses a different privilege
