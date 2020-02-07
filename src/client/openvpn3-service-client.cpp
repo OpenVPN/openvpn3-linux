@@ -634,10 +634,13 @@ public:
                 // Returns an array of a string (description) and an int64
                 // containing the statistics value.
                 GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sx}"));
-                for (auto& sd : vpnclient->GetStats())
+                if (vpnclient)
                 {
-                    g_variant_builder_add (b, "{sx}",
-                                           sd.key.c_str(), sd.value);
+                    for (auto& sd : vpnclient->GetStats())
+                    {
+                        g_variant_builder_add (b, "{sx}",
+                                               sd.key.c_str(), sd.value);
+                    }
                 }
                 GVariant *ret = g_variant_builder_end(b);
                 g_variant_builder_unref(b);
