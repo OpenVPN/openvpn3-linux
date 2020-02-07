@@ -103,7 +103,7 @@ namespace openvpn
          *                   error classification.  Look up G_IO_ERROR_*
          *                   entries in glib-2.0/gio/gioenums.h for details.
          */
-        virtual void SetDBusError(GError **dbuserror, GQuark domain, gint code)
+        virtual void SetDBusError(GError **dbuserror, GQuark domain, gint code) const
         {
             g_set_error (dbuserror, domain, code, "%s", errorstr.c_str());
         }
