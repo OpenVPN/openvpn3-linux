@@ -1,3 +1,8 @@
+# This file is supposed to be linked from the root of openvpn3-linux
+# ln -s contrib/cmake-clion/CMakeLists.txt
+# You should still run ./configure to generate a valid config.h before
+# utilizing CMake
+
 cmake_minimum_required(VERSION 3.10)
 project(openvpn3_linux C CXX)
 set(CMAKE_CXX_STANDARD 14)
@@ -17,9 +22,8 @@ set(OPENVPN3_LINUX_CONFIG_DEFINES
         -DUSE_ASIO
         -DASIO_STANDALONE
         -DOPENVPN_USERNAME="openvpn"
-        -DPACKAGE_GUIVERSION="2"
-        -DOPENVPN_GROUP="openvpn"
-        -DPACKAGE_NAME="openvpn3-linux")
+        -DLIBEXECDIR="/usr/libexec"
+    )
 add_definitions(${OPENVPN3_LINUX_CONFIG_DEFINES})
 
 set(OPENVPN3_LINUX_LIBS
@@ -52,7 +56,6 @@ if(hasParent)
     set(OPENVPN3_LINUX_INCLUDE_DIRS ${OPENVPN3_LINUX_INCLUDE_DIRS} PARENT_SCOPE)
 endif()
 
-file(WRITE config.h "")
 
 add_executable(openvpn3-service-client
         src/client/openvpn3-service-client.cpp
@@ -74,6 +77,8 @@ add_executable(openvpn3-service-client
         src/netcfg/proxy-netcfg.hpp
         src/netcfg/proxy-netcfg.cpp
         )
+
+target_link_libraries(openvpn3-service-client lz4)
 
 add_executable(openvpn3-service-configmgr
         src/configmgr/openvpn3-service-configmgr.cpp
@@ -112,6 +117,7 @@ add_executable(openvpn3
         src/common/utils.cpp
 
         )
+target_link_libraries(openvpn3 lz4)
 
 add_executable(openvpn3-service-netcfg
         src/netcfg/openvpn3-service-netcfg.cpp
@@ -201,5 +207,6 @@ add_executable(cli-netcfg
         src/log/core-dbus-logbase.hpp
         src/log/dbus-log.hpp
         )
+target_link_libraries(cli-netcfg lz4)
 
 add_subdirectory(addons/aws)
