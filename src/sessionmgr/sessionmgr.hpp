@@ -1086,6 +1086,22 @@ public:
             excp.SetDBusError(error, G_IO_ERROR, G_IO_ERROR_FAILED);
             return NULL;
         }
+        catch (const DBusException& excp)
+        {
+            std::string err(excp.what());
+
+            if (err.find("Could not get UID of name") != std::string::npos)
+            {
+                g_set_error(error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                            "Backend service unavailable");
+            }
+            else
+            {
+                LogCritical(excp.what());
+                excp.SetDBusError(error, G_IO_ERROR, G_IO_ERROR_BROKEN_PIPE);
+            }
+            return NULL;
+        }
 
 
         /*
