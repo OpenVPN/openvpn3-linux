@@ -55,139 +55,151 @@ endif()
 file(WRITE config.h "")
 
 add_executable(openvpn3-service-client
-        ${OPENVPN3_LINUX_ROOT}/src/client/openvpn3-service-client.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/client/core-client.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/client/core-client-netcfg.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/client/backend-signals.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/client/statistics.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/client/statusevent.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/core-extensions.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/requiresqueue.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/timestamp.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/utils.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/configmgr/proxy-configmgr.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/configmgr/overrides.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/log/dbus-log.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/log/proxy-log.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/proxy-netcfg.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/proxy-netcfg.cpp
+        src/client/openvpn3-service-client.cpp
+        src/client/core-client.hpp
+        src/client/core-client-netcfg.hpp
+        src/client/backend-signals.hpp
+        src/client/statistics.hpp
+        src/client/statusevent.hpp
+        src/common/core-extensions.hpp
+        src/common/cmdargparser.cpp
+        src/common/requiresqueue.cpp
+        src/common/timestamp.cpp
+        src/common/utils.cpp
+        src/common/cmdargparser.cpp
+        src/configmgr/proxy-configmgr.hpp
+        src/configmgr/overrides.cpp
+        src/log/dbus-log.hpp
+        src/log/proxy-log.hpp
+        src/netcfg/proxy-netcfg.hpp
+        src/netcfg/proxy-netcfg.cpp
         )
 
 add_executable(openvpn3-service-configmgr
-        ${OPENVPN3_LINUX_ROOT}/src/configmgr/openvpn3-service-configmgr.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/configmgr/configmgr.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/configmgr/overrides.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/core-extensions.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/lookup.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/timestamp.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/utils.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/log/dbus-log.hpp
+        src/configmgr/openvpn3-service-configmgr.cpp
+        src/configmgr/configmgr.hpp
+        src/configmgr/overrides.cpp
+        src/common/cmdargparser.hpp
+        src/common/cmdargparser.cpp
+        src/common/core-extensions.hpp
+        src/common/lookup.cpp
+        src/common/timestamp.cpp
+        src/common/utils.cpp
+        src/common/cmdargparser.cpp
+        src/log/dbus-log.hpp
         )
 
 add_executable(openvpn3
-        ${OPENVPN3_LINUX_ROOT}/src/ovpn3cli/openvpn3.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/ovpn3cli/arghelpers.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/ovpn3cli/commands/version.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/ovpn3cli/commands/config.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/ovpn3cli/commands/session.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/ovpn3cli/commands/log.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/ovpn3cli/arghelpers.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/lookup.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/lookup.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/configmgr/proxy-configmgr.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/configmgr/overrides.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/configmgr/overrides.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/sessionmgr/proxy-sessionmgr.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/dbus/requiresqueue-proxy.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/requiresqueue.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/timestamp.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/utils.cpp
+        src/ovpn3cli/openvpn3.cpp
+        src/ovpn3cli/arghelpers.cpp
+        src/ovpn3cli/commands/version.cpp
+        src/ovpn3cli/commands/config.cpp
+        src/ovpn3cli/commands/session.cpp
+        src/ovpn3cli/commands/log.cpp
+        src/ovpn3cli/arghelpers.hpp
+        src/common/lookup.cpp
+        src/common/lookup.hpp
+        src/common/cmdargparser.cpp
+        src/configmgr/proxy-configmgr.hpp
+        src/configmgr/overrides.hpp
+        src/configmgr/overrides.cpp
+        src/sessionmgr/proxy-sessionmgr.hpp
+        src/dbus/requiresqueue-proxy.hpp
+        src/common/cmdargparser.hpp
+        src/common/cmdargparser.cpp
+        src/common/requiresqueue.cpp
+        src/common/timestamp.cpp
+        src/common/utils.cpp
 
         )
 
 add_executable(openvpn3-service-netcfg
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/openvpn3-service-netcfg.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/core-tunbuilder.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-device.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-exception.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-options.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-signals.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-changeevent.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-subscriptions.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-subscriptions.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/dns/resolvconf-file.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/dns/resolver-settings.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/dns/settings-manager.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/core-tunbuilder.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/lookup.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/requiresqueue.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/timestamp.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/utils.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/log/core-dbus-logbase.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/log/dbus-log.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-changeevent.cpp)
+        src/netcfg/openvpn3-service-netcfg.cpp
+        src/netcfg/core-tunbuilder.cpp
+        src/netcfg/netcfg.hpp
+        src/netcfg/netcfg-device.hpp
+        src/netcfg/netcfg-exception.hpp
+        src/netcfg/netcfg-options.hpp
+        src/netcfg/netcfg-signals.hpp
+        src/netcfg/netcfg-changeevent.hpp
+        src/netcfg/netcfg-subscriptions.hpp
+        src/netcfg/netcfg-subscriptions.cpp
+        src/netcfg/dns/resolvconf-file.cpp
+        src/netcfg/dns/resolver-settings.cpp
+        src/netcfg/dns/settings-manager.cpp
+        src/netcfg/core-tunbuilder.hpp
+        src/common/cmdargparser.cpp
+        src/common/lookup.cpp
+        src/common/requiresqueue.cpp
+        src/common/timestamp.cpp
+        src/common/utils.cpp
+        src/common/cmdargparser.cpp
+        src/log/core-dbus-logbase.hpp
+        src/log/dbus-log.hpp
+        src/netcfg/netcfg-changeevent.cpp)
 
 find_library(CAPNG cap-ng)
 target_link_libraries(openvpn3-service-netcfg ${CAPNG})
 
 add_executable(openvpn3-service-logger
-        ${OPENVPN3_LINUX_ROOT}/src/log/openvpn3-service-logger.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/log/ansicolours.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/log/colourengine.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/log/dbus-log.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/log/log-helpers.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/log/logevent.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/log/logger.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/log/logwriter.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/log/service.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/timestamp.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/utils.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
+        src/log/openvpn3-service-logger.cpp
+        src/log/ansicolours.hpp
+        src/log/colourengine.hpp
+        src/log/dbus-log.hpp
+        src/log/log-helpers.hpp
+        src/log/logevent.hpp
+        src/log/logger.hpp
+        src/log/logwriter.hpp
+        src/log/service.hpp
+        src/common/timestamp.cpp
+        src/common/utils.cpp
+        src/common/cmdargparser.cpp
         )
 
 add_executable(openvpn3-service-sessionmgr
-        ${OPENVPN3_LINUX_ROOT}/src/sessionmgr/openvpn3-service-sessionmgr.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/sessionmgr/sessionmgr.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/client/statusevent.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/lookup.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/requiresqueue.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/timestamp.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/utils.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/log/dbus-log.hpp
+        src/sessionmgr/openvpn3-service-sessionmgr.cpp
+        src/sessionmgr/sessionmgr.hpp
+        src/client/statusevent.hpp
+        src/common/cmdargparser.cpp
+        src/common/lookup.cpp
+        src/common/requiresqueue.cpp
+        src/common/timestamp.cpp
+        src/common/utils.cpp
+        src/common/cmdargparser.cpp
+        src/log/dbus-log.hpp
+        )
+
+add_executable(openvpn3-service-backendstart
+        src/client/openvpn3-service-backendstart.cpp
+        src/client/statusevent.hpp
+        src/common/cmdargparser.cpp
+        src/common/lookup.cpp
+        src/common/requiresqueue.cpp
+        src/common/timestamp.cpp
+        src/common/utils.cpp
+        src/common/cmdargparser.cpp
+        src/log/dbus-log.hpp
         )
 
 add_executable(cli-netcfg
-        ${OPENVPN3_LINUX_ROOT}/src/tests/netcfg/cli.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-device.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-exception.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-options.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/proxy-netcfg.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/proxy-netcfg.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-signals.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-changeevent.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-subscriptions.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-subscriptions.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/core-tunbuilder.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/lookup.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/requiresqueue.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/timestamp.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/common/utils.cpp
-        ${OPENVPN3_LINUX_ROOT}/src/log/core-dbus-logbase.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/log/dbus-log.hpp
+        src/tests/netcfg/cli.cpp
+        src/netcfg/netcfg.hpp
+        src/netcfg/netcfg-device.hpp
+        src/netcfg/netcfg-exception.hpp
+        src/netcfg/netcfg-options.hpp
+        src/netcfg/proxy-netcfg.hpp
+        src/netcfg/proxy-netcfg.cpp
+        src/netcfg/netcfg-signals.hpp
+        src/netcfg/netcfg-changeevent.hpp
+        src/netcfg/netcfg-subscriptions.hpp
+        src/netcfg/netcfg-subscriptions.cpp
+        src/netcfg/core-tunbuilder.hpp
+        src/common/lookup.cpp
+        src/common/requiresqueue.cpp
+        src/common/timestamp.cpp
+        src/common/utils.cpp
+        src/log/core-dbus-logbase.hpp
+        src/log/dbus-log.hpp
         )
 
 add_subdirectory(addons/aws)
