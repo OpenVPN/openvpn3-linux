@@ -95,7 +95,26 @@ int main(int argc, char **argv)
          << "# constants are modified." << std::endl
          << "#" << std::endl << std::endl;
 
-    cout << "from enum import Enum, IntFlag" << endl << endl;
+    // The IntFlag extension in enum arrived in Python 3.6,
+    // older Python releases need to pick this from the
+    // aenum module available via pip3
+    double pyver = ::atof(PYTHON_VERSION);
+    if (pyver > 3.5)
+    {
+        cout << "from enum import Enum, IntFlag" << endl << endl;
+    }
+    else
+    {
+        cout << "# Python version during build time was older than 3.6; "
+             << "using enum workaround" << endl;
+        cout << "try:" << endl
+             << "    from aenum import Enum, IntFlag" << endl
+             << "except ImportError:" << endl
+             << "    import sys" << endl
+             << "    print('** ERROR **  The openvpn3 module requires the "
+             << "aenum module on this platform.  Install via pip3.')" << endl
+             << "    sys.exit(8)" << endl << endl;
+    }
 
     cout << "VERSION = '" << PACKAGE_GUIVERSION << "'" << endl << endl;
 

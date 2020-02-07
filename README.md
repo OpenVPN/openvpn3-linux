@@ -343,6 +343,16 @@ First install the package dependencies needed to run the build.
 
       # apt-get install libssl-dev libssl1.0.0
 
+- Additional Ubuntu 16.04 Python requirements
+
+  The ``openvpn3`` Python module requires the ``IntFlag`` extension from the
+  `enum`` module.  This was introduced in the Python 3.6 distribution.
+  OpenVPN 3 Linux implements a workaround for this in distributions which can
+  install the ``aenum`` module via ``pip3``
+
+  # apt-get install python3-pip
+  # pip3 install aenum
+
 - Generic build requirements:
 
       # apt-get install build-essential git pkg-config autoconf autoconf-archive libglib2.0-dev libjsoncpp-dev uuid-dev liblz4-dev libcap-ng-dev

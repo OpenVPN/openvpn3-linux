@@ -49,6 +49,7 @@ dnl  If Python is not found, the Python modules will not be installed
 dnl
 AM_PATH_PYTHON([3.5],, [:])
 AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != :])
+AC_DEFINE_UNQUOTED([PYTHON_VERSION], ["${PYTHON_VERSION}"], [Python version found during build])
 
 dnl
 dnl  Minor Default CXXFLAGS
