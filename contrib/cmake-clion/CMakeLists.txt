@@ -124,9 +124,10 @@ add_executable(openvpn3-service-netcfg
         ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-changeevent.hpp
         ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-subscriptions.hpp
         ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-subscriptions.cpp
+        ${OPENVPN3_LINUX_ROOT}/src/netcfg/dns/resolvconf-file.cpp
+        ${OPENVPN3_LINUX_ROOT}/src/netcfg/dns/resolver-settings.cpp
+        ${OPENVPN3_LINUX_ROOT}/src/netcfg/dns/settings-manager.cpp
         ${OPENVPN3_LINUX_ROOT}/src/netcfg/core-tunbuilder.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/dns-direct-file.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/dns-resolver-settings.hpp
         ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
         ${OPENVPN3_LINUX_ROOT}/src/common/lookup.cpp
         ${OPENVPN3_LINUX_ROOT}/src/common/requiresqueue.cpp
@@ -135,7 +136,8 @@ add_executable(openvpn3-service-netcfg
         ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
         ${OPENVPN3_LINUX_ROOT}/src/log/core-dbus-logbase.hpp
         ${OPENVPN3_LINUX_ROOT}/src/log/dbus-log.hpp
-        src/netcfg/netcfg-changeevent.cpp)
+        ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-changeevent.cpp)
+
 find_library(CAPNG cap-ng)
 target_link_libraries(openvpn3-service-netcfg ${CAPNG})
 
@@ -180,8 +182,6 @@ add_executable(cli-netcfg
         ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-subscriptions.hpp
         ${OPENVPN3_LINUX_ROOT}/src/netcfg/netcfg-subscriptions.cpp
         ${OPENVPN3_LINUX_ROOT}/src/netcfg/core-tunbuilder.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/dns-direct-file.hpp
-        ${OPENVPN3_LINUX_ROOT}/src/netcfg/dns-resolver-settings.hpp
         ${OPENVPN3_LINUX_ROOT}/src/common/lookup.cpp
         ${OPENVPN3_LINUX_ROOT}/src/common/requiresqueue.cpp
         ${OPENVPN3_LINUX_ROOT}/src/common/timestamp.cpp
