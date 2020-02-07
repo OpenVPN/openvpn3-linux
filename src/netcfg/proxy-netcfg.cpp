@@ -139,7 +139,7 @@ namespace NetCfgProxy
     {
         if (!CheckObjectExists())
         {
-            throw NetCfgProxyException("ProtectSocket",
+            throw NetCfgProxyException("Cleanup",
                                        "net.openvpn.v3.netcfg service unavailable");
         }
         try

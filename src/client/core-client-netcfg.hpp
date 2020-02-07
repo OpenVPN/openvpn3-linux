@@ -61,14 +61,16 @@ public:
                                     nullptr);
         signal->SetLogLevel(6);
     }
+#endif
 
     ~NetCfgTunBuilder()
     {
         // Explicitly call cleanup
         netcfgmgr.Cleanup();
+#ifdef OPENVPN3_CORE_CLI_TEST
         delete signal;
-    }
 #endif
+    }
 
     bool tun_builder_new() override
     {

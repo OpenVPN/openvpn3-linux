@@ -523,6 +523,9 @@ private:
      */
     void cleanup_process_resources(pid_t pid, GDBusConnection* conn)
     {
+        signal.LogInfo(std::string("Cleaning up resources for PID ")
+                           + std::to_string(pid) + ".");
+
         // Just normal loop here, since we delete from the container while modifying it
         for (auto it = devices.cbegin(); it != devices.cend(); )
         {
