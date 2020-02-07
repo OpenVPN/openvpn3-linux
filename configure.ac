@@ -47,7 +47,7 @@ dnl  This projects provide some Python based utilities, check if the
 dnl  right Python version is available.  For now enforce Python 3.4 or newer.
 dnl  If Python is not found, the Python modules will not be installed
 dnl
-AM_PATH_PYTHON([3.4],, [:])
+AM_PATH_PYTHON([3.5],, [:])
 AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != :])
 
 dnl

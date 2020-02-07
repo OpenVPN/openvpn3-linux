@@ -293,9 +293,9 @@ The following dependencies are needed:
 
   https://en.wikipedia.org/wiki/Util-linux
 
-* (optional) Python 3.4 or newer
+* (optional) Python 3.5 or newer
 
-  If Python 3.4 or newer is found, the openvpn2, openvpn3-autoload utilities
+  If Python 3.5 or newer is found, the openvpn2, openvpn3-autoload utilities
   and an openvpn3 Python module will be built and installed.
 
 * (optional) Python docutils
