@@ -1,7 +1,7 @@
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
-#  Copyright (C) 2018      OpenVPN Inc. <sales@openvpn.net>
-#  Copyright (C) 2018      David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2018 - 2020  OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2018 - 2020  David Sommerseth <davids@openvpn.net>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -25,7 +25,7 @@ HEADERDIR = ${selinux_devel_path}/include
 include $(HEADERDIR)/Makefile
 endif
 
-SELINUX_POLICIES = openvpn3.pp
+SELINUX_POLICIES = openvpn3.pp.bz2
 
 MAINTAINERCLEANFILES = Makefile Makefile.in $(SELINUX_POLICIES)
 
@@ -34,6 +34,12 @@ EXTRA_DIST = \
 	openvpn3.if \
 	openvpn3.fc
 
-install-data-local :
-	$(MKDIR_P) "$(DESTDIR)$(openvpn3_configdir)/selinux"
-	$(INSTALL_DATA) $(SELINUX_POLICIES) "$(DESTDIR)$(openvpn3_configdir)/selinux"
+%.pp.bz2 : %.pp
+	$(AM_V_GEN) bzip2 -f9 $<
+
+install-data-local : $(SELINUX_POLICIES)
+	$(MKDIR_P) "$(DESTDIR)$(prefix)/share/selinux/packages"
+	$(INSTALL_DATA) $(SELINUX_POLICIES) "$(DESTDIR)$(prefix)/share/selinux/packages"
+
+clean-local :
+	-rm -f $(SELINUX_POLICIES)
