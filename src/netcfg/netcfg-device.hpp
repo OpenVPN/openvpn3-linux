@@ -402,24 +402,35 @@ public:
                 // The virtual device has not yet been created on the host,
                 // but all settings which has been queued up will be activated
                 // when this method is called.
-                if (resolver && dnsconfig)
+                if (resolver && dnsconfig
+                    && DNS::ApplySettingsMode::MODE_PRE == resolver->GetApplyMode())
                 {
                     dnsconfig->Enable();
+                    resolver->ApplySettings(&signal);
+                }
+
+                if (!tunimpl)
+                {
+                    tunimpl.reset(getCoreBuilderInstance());
+                }
+                int fd = tunimpl->establish(*this);
+
+                if (resolver && dnsconfig)
+                {
+                    if (DNS::ApplySettingsMode::MODE_POST == resolver->GetApplyMode())
+                    {
+                        dnsconfig->SetDeviceName(device_name);
+                        dnsconfig->Enable();
+                        resolver->ApplySettings(&signal);
+                    }
 
                     std::stringstream details;
                     details << dnsconfig;
                     signal.Debug(device_name,
                                  "Activating DNS/resolver settings: "
                                  + details.str());
-
-                    resolver->ApplySettings(&signal);
                     modified = false;
                 }
-                if (!tunimpl)
-                {
-                    tunimpl.reset(getCoreBuilderInstance());
-                }
-                int fd = tunimpl->establish(*this);
 
                 return_invocation_with_fd(invoc, nullptr, fd);
                 return;
