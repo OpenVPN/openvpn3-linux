@@ -90,6 +90,18 @@ namespace DNS
     }
 
 
+    void ResolverSettings::SetDeviceName(const std::string& devname) noexcept
+    {
+        device_name = devname;
+    }
+
+
+    std::string ResolverSettings::GetDeviceName() const noexcept
+    {
+        return device_name;
+    }
+
+
     void ResolverSettings::AddNameServer(const std::string& server)
     {
         // Avoid adding duplicated entries

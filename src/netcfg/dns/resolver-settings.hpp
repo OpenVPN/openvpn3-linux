@@ -120,6 +120,21 @@ namespace DNS
          */
         bool ChangesAvailable() const noexcept;
 
+        /**
+         *  Set the device name the settings in this object is attached to
+         *
+         *  @param devname  std::string with the human readable device name
+         */
+        void SetDeviceName(const std::string& devname) noexcept;
+
+        /**
+         *  Retrieve the tun device name the settings in this object
+         *  is attached to
+         *
+         * @return Returns std::string of the device name
+         */
+        std::string GetDeviceName() const noexcept;
+
 
         /**
          *  Adds a new single DNS name server
@@ -255,6 +270,7 @@ namespace DNS
         ssize_t index = -1;
         bool enabled = false;
         bool prepare_removal = false;
+        std::string device_name;
         std::vector<std::string> name_servers;
         std::vector<std::string> search_domains;
     };
