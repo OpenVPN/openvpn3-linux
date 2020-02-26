@@ -46,6 +46,11 @@ public:
         return "TestBackend: DNS configuration tester";
     }
 
+    const ApplySettingsMode GetApplyMode() const noexcept override
+    {
+        return ApplySettingsMode::MODE_PRE;  // Not relevant in this test
+    }
+
     const char *ServerList() const
     {
         return server_list.c_str();

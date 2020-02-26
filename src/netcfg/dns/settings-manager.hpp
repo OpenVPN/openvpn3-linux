@@ -62,6 +62,8 @@ namespace DNS
              */
             const std::string GetBackendInfo() const;
 
+            const ApplySettingsMode GetApplyMode() const;
+
             /**
              *  Allocate a new set of DNS settings for the DNS resolver.
              *

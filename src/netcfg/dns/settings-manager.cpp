@@ -54,6 +54,12 @@ const std::string SettingsManager::GetBackendInfo() const
 }
 
 
+const ApplySettingsMode SettingsManager::GetApplyMode() const
+{
+    return backend->GetApplyMode();
+}
+
+
 ResolverSettings::Ptr SettingsManager::NewResolverSettings()
 {
     ResolverSettings::Ptr settings = new ResolverSettings(++resolver_idx);

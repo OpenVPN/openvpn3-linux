@@ -187,6 +187,19 @@ namespace DNS
          */
         const std::string GetBackendInfo() const noexcept override;
 
+        /**
+         *  Retrieve when the backend can apply the DNS resolver settings.
+         *  Normally it is applied before the tun interface configuration,
+         *  but some backends may need information about the device to
+         *  complete the configuration.
+         *
+         *  For the ResolvConfFile implementaion, this will always return
+         *  MODE_PRE, where resolver settings will be applied before the
+         *  tun interface is configured.
+         *
+         * @returns NetCfg::DNS:ApplySettingsMode
+         */
+        const ApplySettingsMode GetApplyMode() const noexcept override;
 
         /**
          *  Add new DNS resolver settings.  This may be called multiple times

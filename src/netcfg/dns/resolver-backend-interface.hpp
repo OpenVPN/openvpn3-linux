@@ -38,6 +38,18 @@ namespace NetCfg
 namespace DNS
 {
     /**
+     *  Modes of operations when applying DNS resolver settings.  Depending
+     *  on the the backend, they can be applied before or after the tun
+     *  interface has been configured.
+     */
+    enum class ApplySettingsMode
+    {
+        MODE_PRE,  ///<  Settings are applied before device config
+        MODE_POST  ///<  Settings are applied after device config
+    };
+
+
+    /**
       *  Definition of the basic API for resolver settings implementations.
       *
       *  This implementation needs to account for one such object per
@@ -59,6 +71,18 @@ namespace DNS
          * @return  Returns a std::string with the information.
          */
         virtual const std::string GetBackendInfo() const noexcept = 0;
+
+
+        /**
+         *  Retrieve when the backend can apply the DNS resolver settings.
+         *  Normally it is applied before the tun interface configuration,
+         *  but some backends may need information about the device to
+         *  complete the configuration.
+         *
+         * @returns NetCfg::DNS:ApplySettingsMode
+         */
+        virtual const ApplySettingsMode GetApplyMode() const noexcept = 0;
+
 
         /**
          *  Register DNS resolver settings for a particular VPN session

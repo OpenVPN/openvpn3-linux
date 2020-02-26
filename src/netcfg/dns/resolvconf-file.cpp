@@ -203,6 +203,12 @@ ResolvConfFile::~ResolvConfFile()
 }
 
 
+const ApplySettingsMode ResolvConfFile::GetApplyMode() const noexcept
+{
+    return ApplySettingsMode::MODE_PRE;
+}
+
+
 const std::string ResolvConfFile::GetBackendInfo() const noexcept
 {
     std::string ret = std::string("ResolvConf file backend. Using: ")
