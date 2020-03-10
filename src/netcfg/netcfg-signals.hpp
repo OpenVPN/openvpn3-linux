@@ -49,7 +49,7 @@ public:
      *
      * @param Log message to send to the log subscribers
      */
-    void LogFATAL(std::string msg)
+    void LogFATAL(std::string msg) override
     {
         Log(LogEvent(log_group, LogCategory::FATAL, msg));
         kill(getpid(), SIGTERM);

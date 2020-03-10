@@ -150,7 +150,7 @@ public:
                               const std::string intf_name,
                               const std::string method_name,
                               GVariant *params,
-                              GDBusMethodInvocation *invoc)
+                              GDBusMethodInvocation *invoc) override
     {
         try
         {
@@ -381,7 +381,7 @@ public:
                                      const std::string obj_path,
                                      const std::string intf_name,
                                      const std::string property_name,
-                                     GError **error)
+                                     GError **error) override
     {
         try
         {
@@ -447,7 +447,7 @@ public:
                                             const std::string intf_name,
                                             const std::string property_name,
                                             GVariant *value,
-                                            GError **error)
+                                            GError **error) override
     {
         try
         {

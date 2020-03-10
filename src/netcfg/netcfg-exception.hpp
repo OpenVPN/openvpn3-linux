@@ -135,7 +135,7 @@ public:
 
     ~NetCfgProxyException() override = default;
 
-    virtual const char* what() const noexcept
+    virtual const char* what() const noexcept override
     {
         return user_error.c_str();
     }
