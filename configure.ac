@@ -76,7 +76,7 @@ dnl
 PKG_CHECK_MODULES(
         [LIBJSONCPP],
         [jsoncpp],
-        [have_jsoncpp="yes"],
+        [AC_DEFINE_UNQUOTED([HAVE_JSONCPP], [1], [Using jsoncpp library])],
         [AC_MSG_ERROR([jsoncpp package not found. Is the development package installed?])]
 )
 
@@ -403,6 +403,73 @@ fi
 AC_SUBST([ENABLE_SELINUX_BUILD])
 AM_CONDITIONAL([ENABLE_SELINUX_BUILD], [test "$enable_selinux_build" = "yes"])
 
+
+dnl
+dnl  Add-ons: AWS VPC support
+dnl
+dnl  This enables building of AWS addon, which enables communication
+dnl  between VPC and VPN networks.
+dnl
+AC_ARG_ENABLE(
+     [addons-aws],
+     [AS_HELP_STRING([--enable-addons-aws],
+                     [Enable building AWS add-on])],
+     [enable_addons_aws="yes"]
+)
+AM_CONDITIONAL([BUILD_ADDONS_AWS], [test "${enable_addons_aws}" = "yes"])
+
+if test "${enable_addons_aws}" = "yes"; then
+    PKG_CHECK_MODULES(
+        [LIBTINYXML2],
+        [tinyxml2],
+        [
+            AC_LANG([C++])
+            LIBS="${LIBS} ${TINYXML2_LIBS}"
+            AC_MSG_CHECKING([presence of XMLDocument::ErrorName])
+            AC_COMPILE_IFELSE(
+                [AC_LANG_PROGRAM(
+                    [[
+#include <tinyxml2.h>
+                    ]],
+                    [[
+tinyxml2::XMLDocument doc;
+doc.ErrorName();
+                    ]]
+                )],
+                [
+                    AC_MSG_RESULT([yes])
+                    AC_DEFINE([OVPN_TINYXML2_HAS_ERROR_NAME], [1], [TinyXML2 has XMLDocument::ErrorName method])
+                ],
+                [
+                    AC_MSG_RESULT([no])
+                ]
+            )
+
+            AC_MSG_CHECKING([presence of XMLDocument::ErrorStr])
+            AC_COMPILE_IFELSE(
+                [AC_LANG_PROGRAM(
+                    [[
+#include <tinyxml2.h>
+                    ]],
+                    [[
+tinyxml2::XMLDocument doc;
+doc.ErrorStr();
+                    ]]
+                )],
+                [
+                    AC_MSG_RESULT([yes])
+                    AC_DEFINE([OVPN_TINYXML2_HAS_ERROR_STR], [1], [TinyXML2 has XMLDocument::ErrorStr method])
+                ],
+                [
+                    AC_MSG_RESULT([no])
+                ]
+            )
+        ],
+        [AC_MSG_ERROR([tinyxml2 package not found.])]
+    )
+fi
+
+
 dnl
 dnl  OpenVPN 3 Linux state directory
 dnl
@@ -583,7 +650,7 @@ dnl
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
         Makefile \
-        distro/systemd/Makefile
+        distro/systemd/Makefile \
         doxygen/Makefile \
         doxygen/openvpn3-linux.doxy \
         docs/man/Makefile \
@@ -591,6 +658,8 @@ AC_CONFIG_FILES([
         src/python/Makefile \
         src/selinux/Makefile \
         src/service-autostart/Makefile \
+        addons/aws/policy/Makefile \
+        addons/aws/systemd/Makefile \
 ])
 AC_CONFIG_LINKS([src/policy/syntax-check.sh:src/policy/syntax-check.sh])
 AC_OUTPUT

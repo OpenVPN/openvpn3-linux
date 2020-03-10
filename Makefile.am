@@ -31,6 +31,10 @@ SUBDIRS += src/python
 endif
 SUBDIRS += distro/systemd src/service-autostart src/policy doxygen docs/man
 
+if BUILD_ADDONS_AWS
+SUBDIRS += addons/aws/policy addons/aws/systemd
+endif
+
 if ENABLE_SELINUX_BUILD
 SUBDIRS += src/selinux
 endif
@@ -599,6 +603,29 @@ src_log_openvpn3_service_logger_SOURCES = \
 	src/common/timestamp.cpp \
 	$(DBUS_SOURCES) \
 	src/common/utils.cpp
+
+#
+# Add-ons: Amazon Web Service integration
+#
+addons_aws_openvpn3_service_aws_SOURCES = \
+    addons/aws/openvpn3-service-aws.cpp \
+    src/netcfg/netcfg-changeevent.cpp \
+    src/netcfg/proxy-netcfg.cpp \
+    src/netcfg/netcfg-changetype.cpp \
+    src/common/utils.cpp
+addons_aws_openvpn3_service_aws_CXXFLAGS = \
+    $(AM_CXXFLAGS) \
+    $(LIBTINYXML2_CFLAGS) \
+    $(LIBJSONCPP_CFLAGS)
+addons_aws_openvpn3_service_aws_LDADD = \
+    $(OPENSSL_LIBS) \
+    $(LIBGLIBGIO_LIBS) \
+    $(LIBJSONCPP_LIBS) \
+    $(LIBTINYXML2_LIBS)
+
+if BUILD_ADDONS_AWS
+pkglibexec_PROGRAMS += addons/aws/openvpn3-service-aws
+endif
 
 #
 #  Track git referenes of the check-out

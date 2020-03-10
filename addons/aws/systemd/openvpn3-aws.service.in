@@ -1,0 +1,12 @@
+[Unit]
+Description=OpenVPN 3 Linux AWS VPC integration
+After=network.target dbus.service
+Before=openvpn3-autoload.service
+
+[Service]
+Type=dbus
+BusName=net.openvpn.v3.aws
+ExecStart=@LIBEXEC_PATH@/openvpn3-service-aws
+
+[Install]
+WantedBy=multi-user.target

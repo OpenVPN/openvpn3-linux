@@ -23,6 +23,9 @@ configure.h
 depcomp
 .deps
 .dirstamp
+addons/aws/openvpn3-service-aws
+addons/aws/policy/net.openvpn.v3.aws.conf
+addons/aws/systemd/openvpn3-aws.service
 distro/systemd/openvpn3-autoload.service
 docs/man/*.1
 docs/man/*.7

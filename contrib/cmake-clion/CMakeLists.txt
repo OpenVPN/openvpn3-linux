@@ -189,3 +189,5 @@ add_executable(cli-netcfg
         ${OPENVPN3_LINUX_ROOT}/src/log/core-dbus-logbase.hpp
         ${OPENVPN3_LINUX_ROOT}/src/log/dbus-log.hpp
         )
+
+add_subdirectory(addons/aws)
