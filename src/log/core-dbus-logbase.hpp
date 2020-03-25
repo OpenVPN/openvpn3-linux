@@ -55,13 +55,16 @@ public:
     /**
      *  Initializes the Core library D-Bus logging
      *
-     * @param dbuscon  GDBusConnection where to send Log signals
-     * @param logwr    LogWriter object to handle local logging
+     * @param dbuscon   GDBusConnection where to send Log signals
+     * @param interface String containing the interface messages will be
+     *                  tagged with
+     * @param lgrp      LogGroup to use when sending log events
+     * @param logwr     LogWriter object to handle local logging
      */
     CoreDBusLogBase(GDBusConnection *dbuscon,
-                    std::string interface,
+                    std::string interface, LogGroup lgrp,
                     LogWriter *logwr)
-        : LogSender(dbuscon, LogGroup::NETCFG,
+        : LogSender(dbuscon, lgrp,
                     interface,
                     OpenVPN3DBus_rootp_netcfg, logwr),
           log_context(this)

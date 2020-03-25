@@ -208,6 +208,7 @@ int netcfg_main(ParsedArgs args)
         // Initialize logging in the OpenVPN 3 Core library
         openvpn::CoreDBusLogBase corelog(dbus.GetConnection(),
                                          OpenVPN3DBus_interf_netcfg + ".core",
+                                         LogGroup::NETCFG,
                                          logwr.get());
         corelog.SetLogLevel(log_level);
 
