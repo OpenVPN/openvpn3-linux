@@ -26,7 +26,6 @@
 
 // Needs to be included before openvpn3-core library
 // It provides needed logging facility used by Core lib.
-// FIXME: This is not properly instantiated
 #include "log/core-dbus-logbase.hpp"
 
 #include <openvpn/random/randapi.hpp>
@@ -38,6 +37,8 @@
 #include "common/utils.hpp"
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
+#include "log/logwriter.hpp"
+#include "log/ansicolours.hpp"
 #include "log/proxy-log.hpp"
 #include "netcfg/netcfg-changeevent.hpp"
 #include "netcfg/proxy-netcfg.hpp"
@@ -46,6 +47,7 @@
 
 using namespace openvpn;
 
+#define OPENVPN3_AWS_CONFIG "/etc/openvpn3/openvpn3-aws.json"
 static const std::string OpenVPN3DBus_interf_aws = "net.openvpn.v3.aws";
 static const std::string OpenVPN3DBus_path_aws = "/net/openvpn/v3/aws";
 
@@ -56,14 +58,23 @@ class AWSObject : public RC<thread_safe_refcount>,
 public:
     typedef  RCPtr<AWSObject> Ptr;
 
-    AWSObject(GDBusConnection *conn, const std::string &objpath)
+    AWSObject(GDBusConnection* conn, const std::string& objpath,
+              const std::string& config_file,
+              LogWriter* logwr, unsigned int log_level, bool signal_broadcast)
           : DBusObject(objpath),
             DBusSignalSubscription(conn, "", "", "", "NetworkChange"),
             netcfgmgr(conn),
             vpcRoutes {},
             log_sender(conn, LogGroup::EXTSERVICE,
-                       OpenVPN3DBus_interf_aws, objpath)
+                       OpenVPN3DBus_interf_aws, objpath, logwr)
     {
+        log_sender.SetLogLevel(log_level);
+        if (!signal_broadcast)
+        {
+            DBusConnectionCreds credsprx(conn);
+            log_sender.AddTargetBusName(credsprx.GetUniqueBusID(OpenVPN3DBus_name_log));
+
+        }
         std::stringstream introspection_xml;
         introspection_xml << "<node name='" << objpath << "'>"
                           << "    <interface name='"
@@ -72,8 +83,13 @@ public:
         ParseIntrospectionXML(introspection_xml);
 
         // Retrieve AWS role credentials and retrieve needed VPC info
-        role_name = read_role_name();
-        log_sender.LogInfo("Fetching credentials from role " + role_name);
+        role_name = read_role_name(config_file);
+        if (role_name.empty())
+        {
+            THROW_DBUSEXCEPTION("AWSObject", "No role defined");
+        }
+        log_sender.LogInfo("Fetching credentials from role '"
+                            + role_name + "'");
 
         auto route_context = prepare_route_context(role_name);
         AWS::Route::Info route_info { *route_context };
@@ -212,7 +228,7 @@ public:
                                             GVariant *value,
                                             GError **error) override
     {
-        THROW_DBUSEXCEPTION("ConfigManagerAlias", "set property not implemented");
+        THROW_DBUSEXCEPTION("AWSDBus", "set property not implemented");
     }
 
 
@@ -236,11 +252,11 @@ private:
     std::set<VpcRoute> vpcRoutes;
     LogSender log_sender;
 
-    std::string read_role_name()
+    std::string read_role_name(const std::string& config_file)
     {
         try
         {
-            auto json_content = json::read_fast("/etc/openvpn3/openvpn3-aws.json");
+            auto json_content = json::read_fast(config_file);
             return json::get_string(json_content, "role");
         }
         catch (const std::exception & ex)
@@ -270,13 +286,17 @@ private:
 class AWSDBus : public DBus
 {
 public:
-    explicit AWSDBus(GDBusConnection *conn)
+    explicit AWSDBus(GDBusConnection* conn, const std::string& config_file,
+                     LogWriter* logwr, unsigned int log_level, bool sig_brdc)
         : DBus(conn,
                OpenVPN3DBus_interf_aws,
                OpenVPN3DBus_path_aws,
-               OpenVPN3DBus_interf_aws)
+               OpenVPN3DBus_interf_aws),
+           config_file{config_file},
+           logwr{logwr},
+           log_level{log_level},
+           signal_broadcast{sig_brdc}
     {
-
     }
 
     /**
@@ -288,8 +308,10 @@ public:
         auto root_path = GetRootPath();
         if (root_path.empty())
             THROW_DBUSEXCEPTION("AWSDBus",
-                                "callback_bus_acquired() - empty root_path for AWSObject, consider upgrading glib");
-        aws.reset(new AWSObject(GetConnection(), root_path));
+                                "callback_bus_acquired() - "
+                                "empty root_path for AWSObject, consider upgrading glib");
+        aws.reset(new AWSObject(GetConnection(), root_path, config_file,
+                                logwr, log_level, signal_broadcast));
         aws->RegisterObject(GetConnection());
     }
 
@@ -324,16 +346,100 @@ public:
     }
 
 private:
+    std::string config_file;
+    LogWriter* logwr;
+    unsigned int log_level;
+    bool signal_broadcast;
     AWSObject::Ptr aws;
 };
 
 
-int main(int argc, char **argv)
+int aws_main(ParsedArgs args)
 {
     // This program does not require root privileges,
     // so if used - drop those privileges
     drop_root();
 
+    //
+    // Open a log destination, if requested
+    //
+    // This is opened before dropping privileges, to more easily tackle
+    // scenarios where logging goes to a file in /var/log or other
+    // directories where only root has access
+    //
+    std::ofstream logfs;
+    std::ostream  *logfile = nullptr;
+    LogWriter::Ptr logwr = nullptr;
+    ColourEngine::Ptr colourengine = nullptr;
+
+    if (args.Present("log-file"))
+    {
+        std::string fname = args.GetValue("log-file", 0);
+
+        if ("stdout:" != fname)
+        {
+            logfs.open(fname.c_str(), std::ios_base::app);
+            logfile = &logfs;
+        }
+        else
+        {
+            logfile = &std::cout;
+        }
+
+        if (args.Present("colour"))
+        {
+            colourengine.reset(new ANSIColours());
+            logwr.reset(new ColourStreamWriter(*logfile,
+                                               colourengine.get()));
+        }
+        else
+        {
+            logwr.reset(new StreamLogWriter(*logfile));
+        }
+    }
+
+    DBus dbus(G_BUS_TYPE_SYSTEM);
+    dbus.Connect();
+
+    unsigned int log_level = 3;
+    if (args.Present("log-level"))
+    {
+        log_level = std::atoi(args.GetValue("log-level", 0).c_str());
+    }
+
+    // Initialize logging in the OpenVPN 3 Core library
+    openvpn::CoreDBusLogBase corelog(dbus.GetConnection(),
+                                     OpenVPN3DBus_interf_aws + ".core",
+                                     logwr.get());
+    corelog.SetLogLevel(log_level);
+
+
+    bool signal_broadcast = args.Present("signal-broadcast");
+    LogServiceProxy::Ptr logsrvprx = nullptr;
+    if (!signal_broadcast)
+    {
+        try
+        {
+            LogServiceProxy::Ptr log_service(new LogServiceProxy(dbus.GetConnection()));
+            log_service->Attach(OpenVPN3DBus_interf_aws);
+            log_service->Attach(OpenVPN3DBus_interf_aws + ".core");
+        }
+        catch (const DBusProxyAccessDeniedException& exc)
+        {
+            std::stringstream err;
+            err << "** ERROR **  Could not attach to OpenVPN 3 log service"
+                << " (" << std::string(exc.what()) << ")";
+            throw CommandException("AWS", err.str());
+        }
+    }
+
+    std::string config_file{OPENVPN3_AWS_CONFIG};
+    if (args.Present("config"))
+    {
+        config_file = args.GetValue("config", 0);
+    }
+
+    // Initialize Core library
     InitProcess::init();
 
     // Prepare the GLib GMainLoop
@@ -341,19 +447,56 @@ int main(int argc, char **argv)
     g_unix_signal_add(SIGINT, stop_handler, main_loop);
     g_unix_signal_add(SIGTERM, stop_handler, main_loop);
 
-    DBus dbus(G_BUS_TYPE_SYSTEM);
-    dbus.Connect();
+    try
+    {
+        // Prepare the net.openvpn.v3.aws D-Bus service
+        AWSDBus aws(dbus.GetConnection(), config_file,
+                    logwr.get(), log_level, signal_broadcast);
+        aws.Setup();
 
-    LogServiceProxy::Ptr log_service(new LogServiceProxy(dbus.GetConnection()));
-    log_service->Attach(OpenVPN3DBus_interf_aws);
+        // Start the main program loop
+        g_main_loop_run(main_loop);
 
-    AWSDBus aws(dbus.GetConnection());
-
-    aws.Setup();
-
-    g_main_loop_run(main_loop);
-
-    InitProcess::uninit();
+        // Clean up before exit
+        g_main_loop_unref(main_loop);
+        if (logsrvprx)
+        {
+            logsrvprx->Detach(OpenVPN3DBus_interf_backends);
+        }
+        InitProcess::uninit();
+    }
+    catch (const DBusException& exc)
+    {
+        throw CommandException("AWS", exc.what());
+    }
 
     return 0;
+}
+
+
+int main(int argc, char **argv)
+{
+    SingleCommand cmd(argv[0], "OpenVPN 3 AWS VPC integration service",
+                             aws_main);
+    cmd.AddVersionOption();
+    cmd.AddOption("config", 'c', "FILE", true,
+                  "AWS VPC configuration file (default: " OPENVPN3_AWS_CONFIG ")");
+    cmd.AddOption("log-file", "FILE" , true,
+                  "Write log data to FILE.  Use 'stdout:' for console logging.");
+    cmd.AddOption("log-level", "LOG-LEVEL", true,
+                  "Log verbosity level (valid values 0-6, default 3)");
+    cmd.AddOption("colour", 0,
+                        "Make the log lines colourful");
+    cmd.AddOption("signal-broadcast", 0,
+                  "Broadcast all D-Bus signals from openvpn3-service-aws");
+    try
+    {
+        return cmd.RunCommand(simple_basename(argv[0]), argc, argv);
+    }
+    catch (CommandException& excp)
+    {
+        std::cout << cmd.GetCommand() << ": " << excp.what() << std::endl;
+        return 2;
+    }
+
 }

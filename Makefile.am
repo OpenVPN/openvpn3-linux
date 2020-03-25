@@ -609,6 +609,8 @@ src_log_openvpn3_service_logger_SOURCES = \
 #
 addons_aws_openvpn3_service_aws_SOURCES = \
     addons/aws/openvpn3-service-aws.cpp \
+    src/common/cmdargparser.cpp \
+    src/common/timestamp.cpp \
     src/netcfg/netcfg-changeevent.cpp \
     src/netcfg/proxy-netcfg.cpp \
     src/netcfg/netcfg-changetype.cpp \
