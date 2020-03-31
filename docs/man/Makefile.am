@@ -1,7 +1,7 @@
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
-#  Copyright (C) 2018      OpenVPN Inc. <sales@openvpn.net>
-#  Copyright (C) 2018      David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2018 - 2020  OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2018 - 2020  David Sommerseth <davids@openvpn.net>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -20,6 +20,24 @@
 % : %.rst Makefile
 	$(AM_V_GEN)rst2man $< > $@
 
+# This keeps track of all man pages for addons we must always package
+ADDONS_MAN_PACKAGE =
+
+# This keeps track of all man pages for addons which are conditionaly built
+ADDONS_SECTION_8 =
+
+#
+# Add-ons man page: openvpn3-service-aws
+#
+ADDONS_AWS_SECTION_8 = openvpn3-service-aws.8
+ADDONS_MAN_PACKAGE += $(ADDONS_AWS_SECTION_8)
+if BUILD_ADDONS_AWS
+ADDONS_SECTION_8 += $(ADDONS_AWS_SECTION_8)
+endif
+
+#
+# Default OpenVPN 3 Linux man pages
+#
 MAN_SECTION_1 = \
 	openvpn2.1 \
 	openvpn3.1 \
@@ -51,12 +69,15 @@ MAN_SECTION_8 = \
 	openvpn3-service-configmgr.8 \
 	openvpn3-service-logger.8 \
 	openvpn3-service-netcfg.8 \
-	openvpn3-service-sessionmgr.8
+	openvpn3-service-sessionmgr.8 \
+	$(ADDONS_SECTION_8)
 
 EXTRA_DIST = \
 	$(foreach var,$(MAN_SECTION_1),$(var).rst) \
 	$(foreach var,$(MAN_SECTION_7),$(var).rst) \
-	$(foreach var,$(MAN_SECTION_8),$(var).rst)
+	$(foreach var,$(MAN_SECTION_8),$(var).rst) \
+	$(foreach var,$(ADDONS_MAN_PACKAGE),$(var).rst)
+
 
 if HAVE_RST2MAN
 man1_MANS = $(MAN_SECTION_1)
