@@ -17,10 +17,9 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-policy_module(openvpn3, 1.0.1);
+policy_module(openvpn3, 1.0.2);
 
-gen_require(` type tun_tap_device_t, system_dbusd_t; ')
-
+gen_require(` type system_dbusd_t; ')
 
 ## <desc>
 ## <p>
@@ -32,6 +31,6 @@ gen_require(` type tun_tap_device_t, system_dbusd_t; ')
 gen_tunable(dbus_access_tuntap_device, false)
 
 tunable_policy(`dbus_access_tuntap_device',`
-        allow system_dbusd_t tun_tap_device_t:chr_file { read write };
+        corenet_rw_tun_tap_dev(system_dbusd_t)
 ')
 
