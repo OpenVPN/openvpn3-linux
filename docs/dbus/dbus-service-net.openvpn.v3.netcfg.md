@@ -24,6 +24,7 @@ node /net/openvpn/v3/netcfg {
                     in  b ipv6,
                     in  o device_path,
                     out b succeded);
+      Cleanup();
       NotificationSubscribe(in  u filter);
       NotificationUnsubscribe(in  s optional_subscriber);
       NotificationSubscriberList(out a(su) subscriptions);
@@ -32,7 +33,10 @@ node /net/openvpn/v3/netcfg {
           u level,
           s message);
     properties:
+       readonly u global_dns_servers;
+       readonly u global_dns_search;
        readwrite u log_level;
+       readonly u version;
   };
 };
 ```
@@ -80,7 +84,7 @@ This method also
 
 [1] Unix file descriptors that are passed are not in the D-Bus method signature
 
-## Method: `net.openvpn.v3.netcfg.Cleanup`
+### Method: `net.openvpn.v3.netcfg.Cleanup`
 
 This method will remove/cleanup any resources still held by the calling PID.
 
@@ -116,24 +120,24 @@ subscription filter value will then be `12`.
 
 #### Arguments
 
-| Direction | Name         | Type             | Description                                                |
-|-----------|--------------|------------------|------------------------------------------------------------|
+| Direction | Name         | Type             | Description                                                                                         |
+|-----------|--------------|------------------|-----------------------------------------------------------------------------------------------------|
 | In        | filter       | unsigned integer | A filter mask defining which NetworkChange events to subscribe to.  Valid values are `1`  to `2047` |
 
 
-### Method: `net.openvpn.v3.netcfg.NotificationUnubscribe`
+### Method: `net.openvpn.v3.netcfg.NotificationUnsubscribe`
 
 Any services who has subscribed to NetworkChange signals must unsubscribe
 before disconnecting from the D-Bus.  This is done by calling this method.
 
 The subscriber argument this method needs should always be an empty string.
 Processes running as `root` can send the the unique D-Bus name to forcefully
-subscribe a specific subscription.
+unsubscribe a specific subscription.
 
 #### Arguments
 
-| Direction | Name                | Type    | Description                                                |
-|-----------|---------------------|---------|------------------------------------------------------------|
+| Direction | Name                | Type    | Description                                                                                |
+|-----------|---------------------|---------|--------------------------------------------------------------------------------------------|
 | In        | optional_subscriber | string  | This should be empty for non-root users.  Must otherwise contain a valid unique D-Bus name |
 
 
@@ -146,22 +150,25 @@ This method is restricted to the `root` user.
 
 #### Arguments
 
-| Direction | Name           | Type                        | Description                                                |
-|-----------|----------------|-----------------------------|------------------------------------------------------------|
+| Direction | Name           | Type                        | Description                                                                                                    |
+|-----------|----------------|-----------------------------|----------------------------------------------------------------------------------------------------------------|
 | Out       | subscriptions  | array(string, unsigned int) | An array of tuples with the subscribers unique D-Bus name (string) and the attached filter mask (unsigned int) |
 
 
 ### Signal: `net.openvpn.v3.netcfg.Log`
 
-Whenever the backend process starter needs to log something, it issues
-a Log signal which carries a log group, log verbosity level and a
-string with the log message itself. See the separate [logging
-documentation](dbus-logging.md) for details on this signal.
+Whenever the network configuration service needs to log something,
+it issues a Log signal which carries a log group, log verbosity
+level and a string with the log message itself. See the separate
+[logging documentation](dbus-logging.md) for details on this signal.
 
 ### `Properties`
-| Name          | Type             | Read/Write | Description                                         |
-|---------------|------------------|:----------:|-----------------------------------------------------|
-| log_level     | unsigned integer | read-write | Controls the log verbosity of messages intended to be proxied to the user front-end. **Note:** Not currently implemented |
+| Name               | Type             | Read/Write | Description                                              |
+|--------------------|------------------|:----------:|----------------------------------------------------------|
+| global_dns_servers | array(string)    | read-only  | DNS servers in use, pushed from all VPN sessions         |
+| global_dns_search  | array(string)    | read-only  | DNS search domains in used, pushed from all VPN sessions |
+| log_level          | unsigned integer | read-write | Controls the log verbosity of messages intended to be proxied to the user front-end. **Note:** Not currently implemented |
+| version            | string           | read-only  | Version information about the running service            |
 
 
 D-Bus destination: `net.openvpn.v3.netcfg` \- Object path: `/net/openvpn/v3/netcfg/${UNIQUE_ID}`
@@ -192,12 +199,14 @@ interface net.openvpn.v3.netcfg {
                     s device,
                     s details);
     properties:
+      readwrite u log_level;
       readonly u owner;
       readonly au acl;
       readonly b active;
       readonly b modified;
       readonly as dns_name_servers;
       readonly as dns_search_domains;
+      readonly s device_name;
       readwrite u layer;
       readwrite u mtu;
       readwrite b reroute_ipv4;
@@ -213,12 +222,12 @@ Adds a new local IP Address to the VPN configuration of the virtual interface
 
 #### Arguments
 
-| Direction | Name         | Type        | Description                                                                  |
-|-----------|--------------|-------------|------------------------------------------------------------------------------|
-| In        | ip_address   | string      | The IP address in string representation (e.g. 198.51.100.12 or 2001:db8::23) |
+| Direction | Name         | Type             | Description                                                                  |
+|-----------|--------------|------------------|------------------------------------------------------------------------------|
+| In        | ip_address   | string           | The IP address in string representation (e.g. 198.51.100.12 or 2001:db8::23) |
 | In        | prefix       | unsigned integer | The prefix length. (e.g. /24 or /64)                                         |
-| In        | gateway      | string      | The IP address in string representation of the remote gateway inside the VPN |
-| In        | ipv6         | ipv6        | Is the new IP address IPv6 or IPv4                                           |
+| In        | gateway      | string           | The IP address in string representation of the remote gateway inside the VPN |
+| In        | ipv6         | ipv6             | Is the new IP address IPv6 or IPv4                                           |
 
 
 ### Method: `net.openvpn.v3.netcfg.SetRemoteAddress`
@@ -247,12 +256,12 @@ are resolved in the usual longest-prefix matching fashion.
 
 A network is specified in the following way:
 
- | Name         | Type        | Description                                                                  |
- |--------------|-------------|------------------------------------------------------------------------------|
- | ip_address   | string      | The network IP address (the first IP in the network)                         |
+ | Name         | Type             | Description                                                                  |
+ |--------------|------------------|------------------------------------------------------------------------------|
+ | ip_address   | string           | The network IP address (the first IP in the network)                         |
  | prefix       | unsigned integer | The prefix of the network (e.g. /24 or /64)                                  |
- | ipv6         | boolean     | Is this a IPv6 or IPv4 network specification                                 |
- | exclude      | boolean     | If true, exclude (do not route) otherwise include (do route) this network over the VPN |
+ | ipv6         | boolean          | Is this a IPv6 or IPv4 network specification                                 |
+ | exclude      | boolean          | If true, exclude (do not route) otherwise include (do route) this network over the VPN |
 
 
 ### Method: `net.openvpn.v3.netcfg.AddDNS`
@@ -310,11 +319,11 @@ This signal indicates that something has changed in the systems network
 configuration.  These signals will be tied to the interface which triggered
 this change.
 
-| Name      | Type       | Description                                     |
-|-----------|------------|-------------------------------------------------|
+| Name      | Type       | Description                                             |
+|-----------|------------|---------------------------------------------------------|
 | type      | uint       | `NetCfgChangeType` reference of the request. See [`src/netcfg/netcfg-changeevent.hpp`](src/netcfg/netcfg-changeevent.hpp) for details.  |
 | device    | string     | The virtual network device name related to this change. |
-| details   | dictionary | Structured details of the change event |
+| details   | dictionary | Structured details of the change event                  |
 
 The contents of the `details` dictionary depends on the change type.  Below
 will the different change types which provides information be listed.  Events
@@ -349,16 +358,18 @@ not providing any details are not mentioned.
 
 
 ### `Properties`
-| Name          | Type             | Read/Write | Description                                                   |
-|---------------|------------------|:----------:|---------------------------------------------------------------|
-| owner         | unsigned integer | Read-only  | The UID value of the user which did the import                |
-| acl           | array(integer)   | Read-only  | An array of UID values granted access                         |
-| log_level     | unsigned integer | read-write | Controls the log verbosity of messages intended to be proxied to the user front-end. **Note:** Not currently implemented |
-| active        | boolean          | Read-only  | If the VPN is active (Establish has been successfully called) |
-| dns_name_servers | array of strings | Read-only  | Return the array of DNS name servers                          |
-| dns_search_domains | array of strings | Read-only  | Return the array of DNS search domains                        |
-| layer         | unsigned integer             | Read-write | Sets the layer for the VPN to use, 3 for IP (tun device). Setting to 2 (tap device) is currently not implemented |
-| mtu           | unsigned integer | Read-write | Sets the MTU for the tun device. Default is 1500              |
-| reroute_ipv4  | boolean          | Read-write | Setting this to true, tells the service that the default route should be pointed to the VPN and that mechanism to avoid routing loops should be taken |
-| reroute_ipv6  | boolean          | Read-Write | As reroute_ipv4 but for IPv6                                  |
-| txqueuelen    | unsigned integer | Read-Write | Set the TX queue length of the tun device. If set to 0 or unset, the default from the operating system is used instead |
+| Name                | Type             | Read/Write | Description                                                                                                              |
+|---------------------|------------------|:----------:|--------------------------------------------------------------------------------------------------------------------------|
+| log_level           | unsigned integer | read-write | Controls the log verbosity of messages intended to be proxied to the user front-end. **Note:** Not currently implemented |
+| owner               | unsigned integer | Read-only  | The UID value of the user which created the interface                                                                    |
+| acl                 | array(integer)   | Read-only  | An array of UID values granted access                                                                                    |
+| active              | boolean          | Read-only  | If the VPN is active (Establish has been successfully called)                                                            |
+| modified            | boolean          | Read-only  |                                                                                                                          |
+| dns_name_servers    | array(string)    | Read-only  | List of DNS name servers pushed by the VPN server                                                                        |
+| dns_search_domains  | array(string)    | Read-only  | List of DNS search domains pushed by the VPN server                                                                      |
+| device_name         | string           | Read-only  | Virtual device name used by the session.  This may change if the interface needs to be completely reconfigured           |
+| layer               | unsigned integer | Read-write | OSI layer for the VPN to use, 3 for IP (tun device). Setting to 2 (tap device) is currently not implemented              |
+| mtu                 | unsigned integer | Read-write | Sets the MTU for the tun device. Default is 1500                                                                         |
+| reroute_ipv4        | boolean          | Read-write | Setting this to true, tells the service that the default route should be pointed to the VPN and that mechanism to avoid routing loops should be taken |
+| reroute_ipv6        | boolean          | Read-Write | As reroute_ipv4 but for IPv6                                                                                             |
+| txqueuelen          | unsigned integer | Read-Write | Set the TX queue length of the tun device. If set to 0 or unset, the default from the operating system is used instead   |
