@@ -617,6 +617,14 @@ class ConfigParser():
                              + 'initialization. Not applicable with OpenVPN 3, '
                              + 'which uses a different execution model.')
 
+        ignored.add_argument('--dev-node',
+                             metavar='NODE',
+                             action=ConfigParser.IgnoreArg,
+                             nargs=1,
+                             help='Explicit set the device node instead of'
+                             + 'using /dev/net/tun. This is setting is not '
+                             + 'configurable in OpenVPN 3 Linux front-ends.')
+
         ignored.add_argument('--down',
                              metavar='SCRIPT',
                              action=ConfigParser.IgnoreArg,

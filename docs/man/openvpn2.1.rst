@@ -380,6 +380,13 @@ existing configurations.
                       applicable with OpenVPN 3, which uses a different
                       execution model.
 
+--dev-node NODE       OpenVPN 2.x will use /dev/net/tun, /dev/tun, /dev/tap,
+                      etc by default when creating the tun/tap interface.  This
+                      is handled differently in OpenVPN 3 Linux and is not
+                      configurable by front-ends like ``openvpn2`` or
+                      ``openvpn3``, since the virtual network interface creation
+                      is handled by the ``openvpn3-service-netcfg``\(8) service.
+
 --down                Run a script after the tunnel has been torn down.
                       Running scripts via OpenVPN 3 is not supported, and
                       using this option will display a warning.  See the
