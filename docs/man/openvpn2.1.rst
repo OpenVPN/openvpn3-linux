@@ -464,7 +464,8 @@ how it will tackle these scenarios.
 
 There are at least three ways how to adopt to the OpenVPN 3 model:
 
-#### 1.  Watching D-Bus StateChange signals for your own sessions
+1.  Watching D-Bus StateChange signals for your own sessions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When a session is started, it is possible to subscribe to signals issued by the
 VPN client process over D-Bus.  It is only possible to subscribe to signals
@@ -474,10 +475,13 @@ Session Manager (``net.openvpn.v3.sessions``,
 
 Example:
 
+::
+
     $ dbus-monitor --system --monitor sender=net.openvpn.v3.sessions,interface=net.openvpn.v3.sessions,member=StatusChange
 
 
-#### 2.  Manage the life cycle of VPN sessions on your own
+2.  Manage the life cycle of VPN sessions on your own
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This means wrapping the starting of VPN sessions on your own.  Either you wrap
 ``openvpn3 session-start`` or ``openvpn2`` calls in your own scripts, or you can
@@ -488,7 +492,7 @@ configuration profiles and start/stop VPN sessions as needed, as well as
 subscribing to D-Bus signals as well to handle various the states a VPN session
 will go through.  This is fairly simple to do using the already available
 openvpn3 Python module.  Example code can be found in the
-[OpenVPN 3 Linux source tree](https://github.com/OpenVPN/openvpn3-linux/tree/master/src/tests/python)
+`OpenVPN 3 Linux source tree`_ [#srctree]_
 or by studying the source code of ``openvpn2``\(1) and ``openvpn3-autoload``\(8),
 which both are Python scripts.
 
@@ -496,7 +500,8 @@ Configurations and sessions managed via D-Bus by your own scripts can still be
 further managed by the ``openvpn3``\(1) command line interface.
 
 
-#### 3.  Subscribing to NetworkChange signals from [net.openvpn.v3.netcfg](https://github.com/OpenVPN/openvpn3-linux/blob/master/docs/dbus/dbus-service-net.openvpn.v3.netcfg.md)
+3.  Subscribing to NetworkChange signals from `net.openvpn.v3.netcfg`_ [#netcfgsrv]_
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is also a scripting possibility, which is more useful for system wide
 script triggering.  A program or script can subscribe to specific network change
@@ -504,7 +509,7 @@ events caused by OpenVPN sessions.  These signals contains information about
 virtual network interfaces which has been created or removed, IP addresses added
 or removed from devices, routing configuration as well as DNS resolver changes.
 
-For an example how to do this, see the [example script]( https://github.com/OpenVPN/openvpn3-linux/blob/master/src/tests/python/netcfg-netchg-subscription)
+For an example how to do this, see the `example script`_ [#examplescript]_
 in the OpenVPN 3 Linux source directory.
 
 **Please note** that, by default, this script must be run as ``root`` or the
@@ -520,3 +525,10 @@ SEE ALSO
 ``openvpn``\(8)
 ``openvpn3``\(1)
 ``openvpn3-config-manage``\(1)
+
+.. [#srctree] https://github.com/OpenVPN/openvpn3-linux/tree/master/src/tests/python
+.. [#netcfgsrv] https://github.com/OpenVPN/openvpn3-linux/blob/master/docs/dbus/dbus-service-net.openvpn.v3.netcfg.md
+.. [#examplescript] https://github.com/OpenVPN/openvpn3-linux/blob/master/src/tests/python/netcfg-netchg-subscription
+.. _OpenVPN 3 Linux source tree: https://github.com/OpenVPN/openvpn3-linux/tree/master/src/tests/python
+.. _net.openvpn.v3.netcfg: https://github.com/OpenVPN/openvpn3-linux/blob/master/docs/dbus/dbus-service-net.openvpn.v3.netcfg.md
+.. _example script: https://github.com/OpenVPN/openvpn3-linux/blob/master/src/tests/python/netcfg-netchg-subscription
