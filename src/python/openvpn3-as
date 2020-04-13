@@ -123,7 +123,7 @@ class CRV1Authentication(Exception):
 #          on success.  Otherwise an exception with the error is thrown.
 #
 def fetch_profile(uri, username, password, autologin):
-    resturi = uri.geturl() + '/rest/' + (autologin and 'GetAutologin' or 'GetUserlogin')
+    resturi = uri.geturl() + '/rest/' + (autologin and 'GetAutologin' or 'GetUserlogin') + "?tls-cryptv2=1"
 
     # Prepare credentials
     authinfo = urllib.request.HTTPBasicAuthHandler()
