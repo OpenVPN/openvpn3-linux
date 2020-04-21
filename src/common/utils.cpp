@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <grp.h>
 #include <pwd.h>
+#include <termios.h>
 
 #include <glib.h>
 
@@ -147,4 +148,26 @@ int stop_handler(void *loop)
 #endif
     g_main_loop_quit((GMainLoop *)loop);
     return G_SOURCE_CONTINUE;
+}
+
+
+/**
+ *  Enables or disables the terminal input echo flag.  This
+ *  is used to mask password input.
+ *
+ * @param echo  Boolean, if true the console input will be echoed to console
+ */
+void set_console_echo(bool echo)
+{
+    struct termios console;
+    tcgetattr(STDIN_FILENO, &console);
+    if (echo)
+    {
+        console.c_lflag |= ECHO;
+    }
+    else
+    {
+        console.c_lflag &= ~ECHO;
+    }
+    tcsetattr(STDIN_FILENO, TCSANOW, &console);
 }

@@ -30,6 +30,7 @@
 #include "common/cmdargparser.hpp"
 #include "common/lookup.hpp"
 #include "common/requiresqueue.hpp"
+#include "common/utils.hpp"
 #include "configmgr/proxy-configmgr.hpp"
 #include "sessionmgr/proxy-sessionmgr.hpp"
 #include "../arghelpers.hpp"
@@ -281,19 +282,18 @@ static void start_session(OpenVPN3SessionProxy& session,
                     session.QueueFetchAll(reqslots, type, group);
                     for (auto& r : reqslots)
                     {
-                        std::string response;
-                        if (!r.hidden_input)
+                        std::cout << r.user_description << ": ";
+                        if (r.hidden_input)
                         {
-                            std::cout << r.user_description << ": ";
-                            std::cin >> response;
+                            set_console_echo(false);
                         }
-                        else
+                        std::cin >> r.value;
+                        if (r.hidden_input)
                         {
-                            std::string prompt = r.user_description + ": ";
-                            char *pass = getpass(prompt.c_str());
-                            response = std::string(pass);
+                            std::cout << std::endl;
+                            set_console_echo(true);
+
                         }
-                        r.value = response;
                         session.ProvideResponse(r);
                     }
                 }
@@ -307,7 +307,6 @@ static void start_session(OpenVPN3SessionProxy& session,
             throw SessionException(errm.str());
         }
     }
-
 }
 
 /**
