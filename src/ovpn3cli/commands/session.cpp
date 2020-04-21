@@ -23,6 +23,7 @@
  * @brief  Commands to start and manage VPN sessions
  */
 
+#include <csignal>
 #include <json/json.h>
 
 #include "dbus/core.hpp"
@@ -121,6 +122,19 @@ static std::string statistics_json(ConnectionStats& stats)
     return res.str();
 }
 
+bool sigint_received = false; /**< Global flag indicating SIGINT event */
+/**
+ *  Signal handler called on SIGINT events.  This just sets
+ *  an internal flag which needs to be checked later on.
+ *
+ * @param sig  signal received; this is ignored.
+ */
+static void sigint_handler(int sig)
+{
+    sigint_received = true;
+    std::cout << "!!" << std::endl;
+}
+
 
 /**
  *  Defines which start modes used by @start_session()
@@ -150,6 +164,14 @@ enum class SessionStartMode : std::uint8_t {
 static void start_session(OpenVPN3SessionProxy& session,
                           SessionStartMode initial_mode)
 {
+    // Prepare the SIGINT signal handling
+    struct sigaction sact;
+    sact.sa_handler = sigint_handler;
+    sact.sa_flags = 0;
+    sigemptyset(&sact.sa_mask);
+    sigaction(SIGINT, &sact, NULL);
+
+    // Start or restart the session
     SessionStartMode mode = initial_mode;
     unsigned int loops = 10;
     while (loops > 0)
@@ -214,6 +236,23 @@ static void start_session(OpenVPN3SessionProxy& session,
                 else if (s.minor == StatusMinor::CFG_REQUIRE_USER)
                 {
                     break;
+                }
+
+                // Check if an SIGINT / CTRL-C event has occurred.
+                // If it has, disconnect the connection attempt and abort.
+                if (sigint_received)
+                {
+                    attempts = 0;
+                    try
+                    {
+                        session.Disconnect();
+                    }
+                    catch (...)
+                    {
+                        // Ignore any errors in this case
+                    }
+                    std::cout << std::endl;
+                    throw SessionException("CTRL-C caught - Session stopped");
                 }
 
                 sleep(1);  // If not yet connected, wait for 1 second
