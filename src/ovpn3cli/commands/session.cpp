@@ -33,6 +33,17 @@
 #include "sessionmgr/proxy-sessionmgr.hpp"
 #include "../arghelpers.hpp"
 
+
+class SessionException : public CommandArgBaseException
+{
+public:
+    SessionException(const std::string msg)
+        : CommandArgBaseException(msg)
+    {
+    }
+};
+
+
 /**
  *  Fetches all the gathered statistics for a specific session
  *
@@ -110,6 +121,155 @@ static std::string statistics_json(ConnectionStats& stats)
     return res.str();
 }
 
+
+/**
+ *  Defines which start modes used by @start_session()
+ */
+enum class SessionStartMode : std::uint8_t {
+    NONE,    /**< Undefined */
+    START,   /**< Call the Connect() method */
+    RESUME,  /**< Call the Resume() method */
+    RESTART  /**< Call the Restart() method */
+};
+
+
+/**
+ *  Start, resume or restart a VPN session
+ *
+ *  This code is shared among all the start methods to ensure the
+ *  user gets a chance to provide user input if the remote server
+ *  wants that for re-authentication.
+ *
+ * @param session       OpenVPN3SessionProxy to the session object to
+ *                      operate on
+ * @param initial_mode  SessionStartMode defining how this tunnel is
+ *                      to be (re)started
+ *
+ * @throws SessionException if any issues related to the session itself.
+ */
+static void start_session(OpenVPN3SessionProxy& session,
+                          SessionStartMode initial_mode)
+{
+    SessionStartMode mode = initial_mode;
+    unsigned int loops = 10;
+    while (loops > 0)
+    {
+        loops--;
+        try
+        {
+            session.Ready();  // If not, an exception will be thrown
+            switch (mode)
+            {
+            case SessionStartMode::START:
+                session.Connect();
+                break;
+
+            case SessionStartMode::RESUME:
+                session.Resume();
+                mode = SessionStartMode::START;
+                break;
+
+            case SessionStartMode::RESTART:
+                session.Restart();
+                mode = SessionStartMode::START;
+                break;
+
+            default:
+                // This should never be triggered
+                throw SessionException("Unknown SessionStartMode");
+            }
+
+            // Allow approx 30 seconds to establish connection; one loop
+            // will take about 1.3 seconds.
+            unsigned int attempts = 23;
+            StatusEvent s;
+            while (attempts > 0)
+            {
+                attempts--;
+                usleep(300000);  // sleep 0.3 seconds - avg setup time
+                try
+                {
+                    s = session.GetLastStatus();
+                }
+                catch (DBusException& excp)
+                {
+                    std::string err(excp.what());
+                    if (err.find("Failed retrieving property value for 'status'") != std::string::npos)
+                    {
+                        throw SessionException("Failed to start session");
+                    }
+                    throw;
+                }
+                if (s.minor == StatusMinor::CONN_CONNECTED)
+                {
+                    std::cout << "Connected" << std::endl;
+                    return;
+                }
+                else if (s.minor == StatusMinor::CONN_DISCONNECTED
+                        || s.minor == StatusMinor::CONN_AUTH_FAILED)
+                {
+                    attempts = 0;
+                    break;
+                }
+                else if (s.minor == StatusMinor::CFG_REQUIRE_USER)
+                {
+                    break;
+                }
+
+                sleep(1);  // If not yet connected, wait for 1 second
+            }
+            if (attempts < 1)
+            {
+                std::stringstream err;
+                err << "Failed to connect: " << s << std::endl;
+                session.Disconnect();
+                throw SessionException(err.str());
+            }
+        }
+        catch (ReadyException& err)
+        {
+            // If the ReadyException is thrown, it means the backend
+            // needs more from the front-end side
+            for (auto& type_group : session.QueueCheckTypeGroup())
+            {
+                ClientAttentionType type;
+                ClientAttentionGroup group;
+                std::tie(type, group) = type_group;
+
+                if (ClientAttentionType::CREDENTIALS == type)
+                {
+                    std::vector<struct RequiresSlot> reqslots;
+                    session.QueueFetchAll(reqslots, type, group);
+                    for (auto& r : reqslots)
+                    {
+                        std::string response;
+                        if (!r.hidden_input)
+                        {
+                            std::cout << r.user_description << ": ";
+                            std::cin >> response;
+                        }
+                        else
+                        {
+                            std::string prompt = r.user_description + ": ";
+                            char *pass = getpass(prompt.c_str());
+                            response = std::string(pass);
+                        }
+                        r.value = response;
+                        session.ProvideResponse(r);
+                    }
+                }
+            }
+        }
+        catch (DBusException& err)
+        {
+            std::stringstream errm;
+            errm << "Failed to start new session: "
+                 << err.GetRawError();
+            throw SessionException(errm.str());
+        }
+    }
+
+}
 
 /**
  *  openvpn3 session-stats command
@@ -296,114 +456,18 @@ static int cmd_session_start(ParsedArgs args)
             cfgprx.SetOverride(vo, true);
         }
 
+        // Create a new tunnel session
         std::string sessionpath = sessmgr.NewTunnel(cfgpath);
 
         sleep(1);  // Allow session to be established (FIXME: Signals?)
         std::cout << "Session path: " << sessionpath << std::endl;
         OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, sessionpath);
-
-        unsigned int loops = 10;
-        while (loops > 0)
-        {
-            loops--;
-            try
-            {
-                session.Ready();  // If not, an exception will be thrown
-                session.Connect();
-
-                // Allow approx 30 seconds to establish connection; one loop
-                // will take about 1.3 seconds.
-                unsigned int attempts = 23;
-                StatusEvent s;
-                while (attempts > 0)
-                {
-                    attempts--;
-                    usleep(300000);  // sleep 0.3 seconds - avg setup time
-                    try
-                    {
-                        s = session.GetLastStatus();
-                    }
-                    catch (DBusException& excp)
-                    {
-                        std::string err(excp.what());
-                        if (err.find("Failed retrieving property value for 'status'") != std::string::npos)
-                        {
-                            throw CommandException("session-start",
-                                                   "Failed to start session");
-                        }
-                        throw;
-                    }
-                    if (s.minor == StatusMinor::CONN_CONNECTED)
-                    {
-                        std::cout << "Connected" << std::endl;
-                        return 0;
-                    }
-                    else if (s.minor == StatusMinor::CONN_DISCONNECTED
-                            || s.minor == StatusMinor::CONN_AUTH_FAILED)
-                    {
-                        attempts = 0;
-                        break;
-                    }
-                    else if (s.minor == StatusMinor::CFG_REQUIRE_USER)
-                    {
-                        break;
-                    }
-                    sleep(1);  // If not yet connected, wait for 1 second
-                }
-
-                if (attempts < 1)
-                {
-                    // FIXME: Look into using exceptions here, catch more
-                    // fine grained connection issues from the backend
-                    std::cout << "Failed to connect: " << s << std::endl;
-                    session.Disconnect();
-                    return 3;
-                }
-            }
-            catch (ReadyException& err)
-            {
-                // If the ReadyException is thrown, it means the backend
-                // needs more from the front-end side
-                for (auto& type_group : session.QueueCheckTypeGroup())
-                {
-                    ClientAttentionType type;
-                    ClientAttentionGroup group;
-                    std::tie(type, group) = type_group;
-
-                    if (ClientAttentionType::CREDENTIALS == type)
-                    {
-                        std::vector<struct RequiresSlot> reqslots;
-                        session.QueueFetchAll(reqslots, type, group);
-                        for (auto& r : reqslots)
-                        {
-                            std::string response;
-                            if (!r.hidden_input)
-                            {
-                                std::cout << r.user_description << ": ";
-                                std::cin >> response;
-                            }
-                            else
-                            {
-                                std::string prompt = r.user_description + ": ";
-                                char *pass = getpass(prompt.c_str());
-                                response = std::string(pass);
-                            }
-                            r.value = response;
-                            session.ProvideResponse(r);
-                        }
-                    }
-                }
-            }
-            catch (DBusException& err)
-            {
-                std::stringstream errm;
-                errm << "Failed to start new session: "
-                     << err.GetRawError();
-                throw CommandException("session-start", errm.str());
-            }
-        }
-
+        start_session(session, SessionStartMode::START);
         return 0;
+    }
+    catch (const SessionException& excp)
+    {
+        throw CommandException("session-start", excp.what());
     }
     catch (...)
     {
@@ -837,15 +901,15 @@ static int cmd_session_manage(ParsedArgs args)
             return 0;
 
         case mode_resume:
-            session.Resume();
-            std::cout << "Initiated session resume: " << sesspath
+            std::cout << "Resuming session: " << sesspath
                       << std::endl;
+            start_session(session, SessionStartMode::RESUME);
             return 0;
 
         case mode_restart:
-            session.Restart();
-            std::cout << "Initiated session restart: " << sesspath
-                      << std::endl;
+            std::cout << "Restarting session: " << sesspath
+            << std::endl;
+            start_session(session, SessionStartMode::RESTART);
             return 0;
 
         case mode_disconnect:
@@ -864,6 +928,10 @@ static int cmd_session_manage(ParsedArgs args)
             break;
         }
         return 0;
+    }
+    catch (const SessionException& excp)
+    {
+        throw CommandException("session-manage", excp.what());
     }
     catch (...)
     {
