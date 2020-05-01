@@ -967,6 +967,10 @@ static int cmd_session_manage(ParsedArgs args)
         }
         return 0;
     }
+    catch (const DBusException& excp)
+    {
+        throw CommandException("session-manage", excp.GetRawError());
+    }
     catch (const SessionException& excp)
     {
         throw CommandException("session-manage", excp.what());
@@ -1237,6 +1241,10 @@ static int cmd_session_acl(ParsedArgs args)
             }
         }
         return ret;
+    }
+    catch (const DBusException& excp)
+    {
+        throw CommandException("session-acl", excp.GetRawError());
     }
     catch (...)
     {
