@@ -337,13 +337,13 @@ static int cmd_session_stats(ParsedArgs args)
             std::vector<std::string> paths = sessmgr.LookupConfigName(args.GetValue("config", 0));
             if (0 == paths.size())
             {
-                throw CommandException("session-manage",
+                throw CommandException("session-stats",
                                        "No sessions started with the "
                                        "configuration profile name was found");
             }
             else if (1 < paths.size())
             {
-                throw CommandException("session-manage",
+                throw CommandException("session-stats",
                                        "More than one session with the given "
                                        "configuration profile name was found.");
             }
