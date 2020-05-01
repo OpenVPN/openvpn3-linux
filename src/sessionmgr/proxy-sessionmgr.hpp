@@ -69,6 +69,13 @@ private:
     std::string errorstr;
 };
 
+class TunInterfaceException : public DBusException
+{
+public:
+    TunInterfaceException(const std::string classname, const std::string msg)
+        : DBusException(classname, msg, __FILE__, __LINE__, __FUNCTION__)
+    {}
+};
 
 
 /**
@@ -276,23 +283,41 @@ public:
      */
     std::string LookupInterface(std::string interface)
     {
-        GVariant *res = Call("LookupInterface",
-                             g_variant_new("(s)", interface.c_str()));
-        if (nullptr == res)
+        try
         {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                "Failed to lookup interface");
+            GVariant *res = Call("LookupInterface",
+                                 g_variant_new("(s)", interface.c_str()));
+            if (nullptr == res)
+            {
+                throw TunInterfaceException("LookupInterface",
+                                            "Failed to lookup interface");
+            }
+
+            std::string ret(GLibUtils::ExtractValue<std::string>(res, 0));
+            g_variant_unref(res);
+
+            if (ret.empty())
+            {
+                throw TunInterfaceException("LookupInterface",
+                                            "No managed interface found");
+            }
+            return ret;
         }
-
-        std::string ret(GLibUtils::ExtractValue<std::string>(res, 0));
-        g_variant_unref(res);
-
-        if (ret.empty())
+        catch (const TunInterfaceException&)
         {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                "No managed interface found");
+            throw;
         }
-        return ret;
+        catch (const DBusException& rawerr)
+        {
+            std::string err(rawerr.what());
+            size_t p = err.find("GDBus.Error:net.openvpn.v3.error.iface:");
+            if (p != std::string::npos)
+            {
+                throw TunInterfaceException("LookupInterface",
+                                            err.substr(err.rfind(":")+2));
+            }
+            throw;
+        }
     }
 
     /**
