@@ -27,6 +27,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <type_traits>
 
 namespace GLibUtils
 {
@@ -43,7 +44,14 @@ namespace GLibUtils
         return "u";
     }
 
-    template<> inline const char* GetDBusDataType<int32_t>()
+    /*
+     * Since long and int are separate types and int32_t is most times defined as
+     * int on ILP32 platform, do we do this template magic to match all signed 32 bit
+     * types instead of just int32_t
+     */
+    template<typename T>
+    inline typename std::enable_if<sizeof(T)==4 && std::is_signed<T>::value,const char*>::type
+    GetDBusDataType()
     {
         return "i";
     }
@@ -98,7 +106,14 @@ namespace GLibUtils
         return g_variant_get_uint32(v);
     }
 
-    template<> inline int32_t GetVariantValue<int32_t>(GVariant *v)
+    /*
+     * Since long and int are separate types and int32_t is most times defined as
+     * int on ILP32 platform, do we do this template magic to match all signed 32 bit
+     * types instead of just int32_t
+     */
+    template<typename T>
+    inline typename std::enable_if<sizeof(T)==4 && std::is_signed<T>::value,int32_t>::type
+    GetVariantValue(GVariant *v)
     {
         return g_variant_get_int32(v);
     }
