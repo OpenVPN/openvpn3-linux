@@ -73,7 +73,26 @@ public:
                          const std::string object_path,
                          const LogEvent& logev)
     {
-        std::cout << GetTimestamp() << logev << std::endl;
+        std::stringstream msg;
+        msg << logev;
+        std::vector<std::string> lines;
+        std::string line;
+        while(getline(msg, line, '\n'))
+        {
+            lines.push_back(line);
+        }
+
+        bool first = true;
+        std::cout << GetTimestamp() << lines[0] << std::endl;
+        for (const auto& l : lines)
+        {
+            if (first)
+            {
+                first = false;
+                continue;
+            }
+            std::cout << "     " << l << std::endl;
+        }
     }
 };
 
