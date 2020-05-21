@@ -55,6 +55,7 @@ struct LogEvent
              const std::string& msg)
         : group(grp), category(ctg), message(msg)
     {
+        remove_trailing_nl();
     }
 
     /**
@@ -69,6 +70,7 @@ struct LogEvent
         : group(grp), category(ctg),
           session_token(session_token), message(msg)
     {
+        remove_trailing_nl();
     }
 
 
@@ -76,6 +78,7 @@ struct LogEvent
         : group(logev.group), category(logev.category),
           session_token(session_token), message(logev.message)
     {
+        remove_trailing_nl();
     }
 
 
@@ -110,6 +113,7 @@ struct LogEvent
             {
                 THROW_LOGEXCEPTION("LogEvent: Invalid LogEvent data type");
             }
+            remove_trailing_nl();
         }
     }
 
@@ -254,6 +258,12 @@ struct LogEvent
 
 
 private:
+    void remove_trailing_nl()
+    {
+        message.erase(message.find_last_not_of("\n") + 1);
+    }
+
+
     /**
      *  Parses a GVariant object containing a Log signal.  The input
      *  GVariant needs to be of 'a{sv}' which is a named dictionary.  It
