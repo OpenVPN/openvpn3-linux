@@ -42,6 +42,10 @@ OPTIONS
                 Available configuration names can be found via
                 ``openvpn3 sessions-list``.
 
+-I INTERFACE, --interface INTERFACE
+                Can be used instead of ``--session-path`` where the tun
+                interface name managed by OpenVPN 3 is given instead.
+
 --log-level LEVEL
                 Sets the log verbosity for the log events.  Valid values
                 are ``0`` to ``6``.  The higher value, the more verbose the

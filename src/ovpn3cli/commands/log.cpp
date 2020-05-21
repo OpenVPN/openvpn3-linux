@@ -175,11 +175,12 @@ static int cmd_log(ParsedArgs args)
 {
     if (!args.Present("session-path")
         && !args.Present("config")
+        && !args.Present("interface")
         && !args.Present("config-events"))
     {
         throw CommandException("log",
-                               "Either --session-path, --config or "
-                               "--config-events must be provided");
+                               "Either --session-path, --config, --interface "
+                               "or --config-events must be provided");
     }
 
     // Prepare the main loop which will listen for Log events and process them
@@ -194,14 +195,21 @@ static int cmd_log(ParsedArgs args)
     DBus dbuscon(G_BUS_TYPE_SYSTEM);
     dbuscon.Connect();
 
-    if (args.Present("session-path") || args.Present("config"))
+    if (args.Present("session-path") || args.Present("config")
+        || args.Present("interface"))
     {
         std::string session_path = "";
+        std::unique_ptr<OpenVPN3SessionProxy> sessmgr;
+
+        if (args.Present("config") || args.Present("interface"))
+        {
+            sessmgr.reset(new OpenVPN3SessionProxy(G_BUS_TYPE_SYSTEM,
+                                                   OpenVPN3DBus_rootp_sessions));
+        }
+
         if (args.Present("config"))
         {
-            OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
-                                         OpenVPN3DBus_rootp_sessions);
-            std::vector<std::string> paths = sessmgr.LookupConfigName(args.GetValue("config", 0));
+            std::vector<std::string> paths = sessmgr->LookupConfigName(args.GetValue("config", 0));
             if (0 == paths.size())
             {
                 throw CommandException("log",
@@ -216,10 +224,16 @@ static int cmd_log(ParsedArgs args)
             }
             session_path = paths.at(0);
         }
+        else if (args.Present("interface"))
+        {
+            session_path = sessmgr->LookupInterface(args.GetValue("interface", 0));
+        }
         else
         {
             session_path = args.GetValue("session-path", 0);
         }
+
+        std::cout << "Attaching to session " << session_path << std::endl;
 
         // Check if the session manager will forward log events for this
         // session.  If not, we must enable it - and if we do this, we
@@ -305,6 +319,10 @@ SingleCommand::Ptr prepare_command_log()
                    "Alternative to --session-path, where configuration "
                    "profile name is used instead",
                    arghelper_config_names_sessions);
+    cmd->AddOption("interface", 'I', "INTERFACE", true,
+                   "Alternative to --session-path, where tun interface name "
+                   "is used instead",
+                   arghelper_managed_interfaces);
     cmd->AddOption("log-level", "LOG-LEVEL", true,
                    "Set the log verbosity level of messages to be shown (default: 4)",
                    arghelper_log_levels);
