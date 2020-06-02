@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017 - 2019  OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017 - 2019  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2020  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2020  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -320,6 +320,17 @@ namespace openvpn
             g_variant_unref(params);  // Now params can be released and freed
 
         }
+
+
+        void Broadcast(const std::string interf,
+                       const std::string objpath,
+                       const std::string signal_name,
+                       GVariant *params) const
+        {
+            g_variant_ref_sink(params);
+            send_signal("", interf, objpath, signal_name, params);
+        }
+
 
         void Send(const std::string busn,
                          const std::string interf,

@@ -29,6 +29,9 @@ node /net/openvpn/v3/sessions {
       Log(u group,
           u level,
           s message);
+      SessionManagerEvent(o path,
+                          q type,
+                          u owner);
     properties:
   };
 };
@@ -125,6 +128,30 @@ Whenever the session manager want to log something, it issues a Log
 signal which carries a log group, log verbosity level and a string
 with the log message itself.  See the separate [logging
 documentation](dbus-logging.md) for details on this signal.
+
+
+### Signal: `net.openvpn.v3.sessions.SessionManagerEvent`
+
+This signals is sent each time there is a change in regards to active VPN
+sessions on the system.  This is a broadcast signal which is sent to all users
+on the system containing a bare minimum of details of the related VPN session
+object.
+
+| Name      | Type        | Description                                             |
+|-----------|-------------|---------------------------------------------------------|
+| path      | object path | D-Bus object path to the session this signal relates to |
+| type      | uint16      | SessionManager::EventType of the change type            |
+| owner     | uint32      | UID of the owner of the session object                  |
+
+#### SessionManager::EventType
+
+For details, see `src/sessionmgr/sessionmgr-events.hpp`.
+
+| Name           | Value | Description                                                            |
+|-------------- -|-------|------------------------------------------------------------------------|
+| UNSET          |   0   | Should not be used, identifies an uninitialised object or an error     |
+| SESS_CREATED   |   1   | A new VPN session was created.  It might not yet be started.           |
+| SESS_DESTROYED |   2   | An existing session object was destroyed, the session was disconnected |
 
 
 D-Bus destination: `net.openvpn.v3.sessions` \- Object path: `/net/openvpn/v3/sessions/${UNIQUE_ID`}

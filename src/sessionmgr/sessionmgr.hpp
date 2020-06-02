@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017 - 2019  OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017 - 2019  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2020  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2020  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -50,6 +50,8 @@
 #include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"
 #include "client/statusevent.hpp"
+#include "sessionmgr-exceptions.hpp"
+#include "sessionmgr-events.hpp"
 
 using namespace openvpn;
 
@@ -1739,6 +1741,7 @@ public:
                           << "        </method>"
                           << "        <property type='s' name='version' access='read'/>"
                           << GetLogIntrospection()
+                          << SessionManager::Event::GetIntrospection()
                           << "    </interface>"
                           << "</node>";
         ParseIntrospectionXML(introspection_xml);
@@ -1793,7 +1796,7 @@ public:
             std::string sesspath = generate_path_uuid(OpenVPN3DBus_rootp_sessions, 's');
 
             // Create the new object and register it in D-Bus
-            auto callback = [self=Ptr(this), sesspath](void)
+            auto callback = [self=Ptr(this), sesspath]()
                             {
                                 self->remove_session_object(sesspath);
                             };
@@ -1809,6 +1812,14 @@ public:
             session->IdleCheck_Register(IdleCheck_Get());
             session->RegisterObject(conn);
             session_objects[sesspath] = session;
+            SessionManager::Event ev{sesspath,
+                                     SessionManager::EventType::SESS_CREATED,
+                                     creds.GetUID(sender)
+                                     };
+            Broadcast(OpenVPN3DBus_interf_sessions,
+                      OpenVPN3DBus_rootp_sessions,
+                      "SessionManagerEvent",
+                      ev.GetGVariant());
 
             // Return the path to the new session object object to the caller
             // The backend object will remind "hidden" for the end-user
@@ -2059,7 +2070,16 @@ private:
 
     void remove_session_object(const std::string sesspath)
     {
+        uid_t owner = session_objects[sesspath]->GetOwnerUID();
         session_objects.erase(sesspath);
+
+        SessionManager::Event ev{sesspath,
+                                 SessionManager::EventType::SESS_DESTROYED,
+                                 owner};
+        Broadcast(OpenVPN3DBus_interf_sessions,
+                  OpenVPN3DBus_rootp_sessions,
+                  "SessionManagerEvent",
+                  ev.GetGVariant());
     }
 };
 

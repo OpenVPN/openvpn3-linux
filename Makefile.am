@@ -542,6 +542,9 @@ src_configmgr_openvpn3_service_configmgr_SOURCES = \
 src_sessionmgr_openvpn3_service_sessionmgr_SOURCES = \
 	src/sessionmgr/openvpn3-service-sessionmgr.cpp \
 	src/sessionmgr/sessionmgr.hpp \
+	src/sessionmgr/sessionmgr-events.hpp \
+	src/sessionmgr/sessionmgr-events.cpp \
+	src/sessionmgr/sessionmgr-exceptions.hpp \
 	src/client/statusevent.hpp \
 	$(DBUS_SOURCES) \
 	src/common/cmdargparser.cpp \
