@@ -462,6 +462,7 @@ src_ovpn3cli_openvpn3_SOURCES = \
 	src/configmgr/proxy-configmgr.hpp \
 	src/configmgr/overrides.cpp \
 	src/sessionmgr/proxy-sessionmgr.hpp \
+	src/sessionmgr/sessionmgr-events.cpp \
 	src/dbus/requiresqueue-proxy.hpp \
 	src/common/cmdargparser.cpp \
 	src/common/cmdargparser.hpp \
