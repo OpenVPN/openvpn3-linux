@@ -1353,8 +1353,18 @@ public:
             else if (("log_verbosity" == property_name) && be_conn && sig_logevent)
             {
                 unsigned int log_verb = g_variant_get_uint32(value);
-                sig_logevent->SetLogLevel(log_verb);
-                SetLogLevel(log_verb);
+                try
+                {
+                    sig_logevent->SetLogLevel(log_verb);
+                    SetLogLevel(log_verb);
+                }
+                catch (const LogException& excp)
+                {
+                    throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
+                                                obj_path, intf_name,
+                                                property_name,
+                                                excp.what());
+                }
 
                 // FIXME: Proxy log level to the OpenVPN3 Core client
                 return build_set_property_response(property_name,
