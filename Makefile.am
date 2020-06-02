@@ -167,6 +167,7 @@ UNIT_TESTS = \
 	src/tests/unit/logevent.cpp \
 	src/tests/unit/lookup.cpp \
 	src/tests/unit/netcfg-changeevent.cpp \
+	src/tests/unit/sessionmgr-events.cpp \
 	src/tests/unit/statusevent.cpp \
 	src/tests/unit/syslog-facility-mapping.cpp \
 	src/tests/unit/dns-settings-manager-test.cpp \
@@ -178,7 +179,8 @@ UNIT_TESTS_DEPS = \
 	src/netcfg/netcfg-changeevent.cpp \
 	src/netcfg/netcfg-changetype.cpp \
 	src/netcfg/dns/resolver-settings.cpp \
-	src/netcfg/dns/settings-manager.cpp
+	src/netcfg/dns/settings-manager.cpp \
+	src/sessionmgr/sessionmgr-events.cpp
 
 
 AM_CXXFLAGS += -I$(top_srcdir)/vendor/googletest/googletest \
@@ -375,7 +377,8 @@ src_tests_dbus_netcfg_proxy_unit_SOURCES = \
 src_tests_dbus_signal_listener_SOURCES = \
 	src/tests/dbus/signal-listener.cpp \
 	src/common/utils.cpp \
-	src/netcfg/netcfg-changeevent.cpp
+	src/netcfg/netcfg-changeevent.cpp \
+	src/sessionmgr/sessionmgr-events.cpp
 
 src_tests_dbus_statusevent_selftest_SOURCES = \
 	src/tests/dbus/statusevent-selftest.cpp

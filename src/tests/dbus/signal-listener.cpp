@@ -35,6 +35,7 @@
 #include "common/utils.hpp"
 #include "log/log-helpers.hpp"
 #include "netcfg/netcfg-changeevent.hpp"
+#include "sessionmgr/sessionmgr-events.hpp"
 
 using namespace openvpn;
 
@@ -159,6 +160,17 @@ public:
                       << ": [" << std::to_string((std::uint8_t) ev.type)
                       << "] " << ev
                       << std::endl;
+        }
+        else if (signal_name == "SessionManagerEvent")
+        {
+            SessionManager::Event ev(parameters);
+
+            std::cout << "-- SessionManagerEvent: "
+                            << "[sender=" << sender_name
+                            << ", interface=" << interface_name
+                            << ", path=" << object_path
+                            << "] " << ev
+                            << std::endl;
         }
         else
         {
