@@ -1,8 +1,8 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018      Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2017 - 2020  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2020  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2020  Arne Schwabe <arne@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -1479,6 +1479,7 @@ int client_service(ParsedArgs args)
     // Open a log destination, if requested
     std::ofstream logfs;
     std::streambuf * logstream;
+    std::unique_ptr<std::ostream> logfile;
     LogWriter::Ptr logwr = nullptr;
     ColourEngine::Ptr colourengine = nullptr;
 
@@ -1495,16 +1496,16 @@ int client_service(ParsedArgs args)
             logstream = std::cout.rdbuf();
         }
 
-        std::ostream logfile(logstream);
+        logfile.reset(new std::ostream{logstream});
         if (args.Present("colour"))
         {
             colourengine.reset(new ANSIColours());
-             logwr.reset(new ColourStreamWriter(logfile,
+             logwr.reset(new ColourStreamWriter(*logfile,
                                                 colourengine.get()));
         }
         else
         {
-            logwr.reset(new StreamLogWriter(logfile));
+            logwr.reset(new StreamLogWriter(*logfile));
         }
     }
 
