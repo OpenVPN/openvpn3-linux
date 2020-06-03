@@ -21,57 +21,72 @@ def checkout_git() {
 
 def build_tarball()
 {
-   stage("Building tarball") {
-       timeout(time:120) {
-           node('ec2_openvpn3_linux') {
-               step([$class: 'WsCleanup'])
-               withEnv(["CXXFLAGS=-g -O2 -grecord-gcc-switches -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -mtune=generic"]) {
-               dir("${WORKSPACE}/openvpn3-linux") {
-                   checkout_git()
-                    sh "./bootstrap.sh"
-                    sh "./configure --prefix=/usr --sysconfdir=/etc --enable-debug-core-events --enable-debug-options --enable-debug-exceptions"
-                    sh 'make -j$(nproc)'
-                    sh 'MAKEFLAGS=-j$(nproc) make distcheck'
-                    try {
-                        sh './src/tests/unit/unit-tests --gtest_output="xml:test_results/openvpn3-linux-tests.xml"'
-                    } catch (Exception e) {
-                        // errors are collected by next step
+    timeout(time:120) {
+        stage('Prepare node allocation')
+        {
+            // Empty stage to make it show up nicer in blue ocean jenkins ui
+        }
+        node('ec2_openvpn3_linux') {
+            step([$class: 'WsCleanup'])
+            withEnv(["CXXFLAGS=-g -O2 -grecord-gcc-switches -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -mtune=generic"]) {
+                dir("${WORKSPACE}/openvpn3-linux") {
+                    stage('Checkout') {
+                        checkout_git()
                     }
-                    junit 'test_results/*.xml'
-                    sh './src/ovpn3cli/openvpn3 version'
-                    archiveArtifacts 'openvpn3-linux-*.tar.xz'
-               }
-           }
-       }
-     }
-   }
-}
-
-stage('build') {
-    try {
-        bitbucketStatusNotify(buildState: 'INPROGRESS')
-        echo "build parameters ${params}"
-
-        build_tarball()
-
-        currentBuild.result = 'SUCCESS'
-        bitbucketStatusNotify(buildState: 'SUCCESSFUL')
-    }
-    catch (Exception e) {
-        currentBuild.result = 'FAILURE'
-        bitbucketStatusNotify(buildState: 'FAILED')
-        throw e
-    }
-    finally {
-        // send mail on first build, failure or status change
-        if ((currentBuild.previousBuild == null) ||
-            (currentBuild.result == 'FAILURE') ||
-            ((currentBuild.previousBuild != null) && (currentBuild.previousBuild.result != currentBuild.result))) {
-                emailext(
-                    body: '$DEFAULT_CONTENT',
-                    subject: '$DEFAULT_SUBJECT',
-                    recipientProviders: [[$class: 'RequesterRecipientProvider'], [$class: 'CulpritsRecipientProvider']]
-                )
+                    stage('Build') {
+                        sh "./bootstrap.sh"
+                        sh "./configure --prefix=/usr --sysconfdir=/etc --enable-debug-core-events --enable-debug-options --enable-debug-exceptions"
+                        sh 'make -j$(nproc)'
+                    }
+                    stage('Checks') {
+                        try {
+                            sh 'MAKEFLAGS=-j$(nproc) make distcheck'
+                        } catch (Exception e){
+                            echo "Failed: ${e}"
+                            currentBuild.result = 'FAILURE'
+                        }
+                        archiveArtifacts artifacts:'test-suite.log',allowEmptyArchive:true
+                        try {
+                            sh './src/tests/unit/unit-tests --gtest_output="xml:test_results/openvpn3-linux-tests.xml"'
+                        } catch (Exception e) {
+                            // errors are collected by next step
+                        }
+                        junit 'test_results/*.xml'
+                    }
+                    stage('Build tar') {
+                        sh './src/ovpn3cli/openvpn3 version'
+                        archiveArtifacts 'openvpn3-linux-*.tar.xz'
+                    }
+                 }
+            }
         }
     }
 }
+
+
+try {
+    bitbucketStatusNotify(buildState: 'INPROGRESS')
+    echo "build parameters ${params}"
+    build_tarball()
+
+    currentBuild.result = 'SUCCESS'
+    bitbucketStatusNotify(buildState: 'SUCCESSFUL')
+}
+catch (Exception e) {
+    currentBuild.result = 'FAILURE'
+    bitbucketStatusNotify(buildState: 'FAILED')
+    throw e
+}
+finally {
+    // send mail on first build, failure or status change
+    if ((currentBuild.previousBuild == null) ||
+        (currentBuild.result == 'FAILURE') ||
+        ((currentBuild.previousBuild != null) && (currentBuild.previousBuild.result != currentBuild.result))) {
+            emailext(
+                body: '$DEFAULT_CONTENT',
+                subject: '$DEFAULT_SUBJECT',
+                recipientProviders: [[$class: 'RequesterRecipientProvider'], [$class: 'CulpritsRecipientProvider']]
+            )
+    }
+}
+
