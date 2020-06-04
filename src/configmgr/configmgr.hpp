@@ -215,6 +215,7 @@ public:
           valid(false),
           readonly(false),
           single_use(false),
+          dco(false),
           properties(this),
           persistent_file("")
     {
@@ -264,6 +265,7 @@ public:
         readonly = profile["readonly"].asBool();
         single_use = profile["single_use"].asBool();
         used_count = profile["used_count"].asUInt();
+        dco = profile["dco"].asBool();
         valid = profile["valid"].asBool();
 
         SetPublicAccess(profile["public_access"].asBool());
@@ -343,6 +345,7 @@ public:
         ret["used_count"] = used_count;
         ret["valid"] = valid;
         ret["profile"] = options.json_export();
+        ret["dco"] = dco;
 
         ret["public_access"] = GetPublicAccess();
         for (const auto& e : GetAccessList())
@@ -1023,6 +1026,7 @@ public:
         properties.AddBinding(new PropertyType<unsigned int>(this, "used_count", "read", false, used_count));
         properties.AddBinding(new PropertyType<bool>(this, "valid", "read", false, valid));
         properties.AddBinding(new PropertyType<decltype(override_list)>(this, "overrides", "read", true, override_list));
+        properties.AddBinding(new PropertyType<bool>(this, "dco", "readwrite", true, dco));
 
         std::string introsp_xml ="<node name='" + GetObjectPath() + "'>"
             "    <interface name='net.openvpn.v3.configuration'>"
@@ -1089,6 +1093,7 @@ private:
     bool readonly;
     bool single_use;
     bool locked_down;
+    bool dco; // data channel offload
     PropertyCollection properties;
     std::string persistent_file;
     OptionListJSON options;

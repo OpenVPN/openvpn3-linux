@@ -303,6 +303,10 @@ static int config_manage_show(OpenVPN3ConfigurationProxy& conf,
                   << (conf.GetBoolProperty("readonly") ? "Yes" : "No") << std::endl
                   << std::setw(32) << "     Persistent config: "
                   << (conf.GetBoolProperty("persistent") ? "Yes" : "No") << std::endl;
+#ifdef ENABLE_OVPNDCO
+        std::cout << std::setw(32) << "  Data Channel Offload: "
+                  << (conf.GetDCO() ? "Yes" : "No") << std::endl;
+#endif
 
         std::cout << std::endl << "  Overrides: ";
         auto overrides = conf.GetOverrides();
@@ -375,12 +379,19 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
     }
 
     if (!args->Present("rename") && !args->Present("show")
+#ifdef ENABLE_OVPNDCO
+        && !args->Present("dco")
+#endif
         && !override_present && !args->Present("unset-override"))
     {
         throw CommandException("config-manage",
                                "An operation argument is required "
-                               "(--rename, --show"
+                               "(--rename, --show, "
                                "--<overrideName>, --unset-override"
+#ifdef ENABLE_OVPNDCO
+                               " or --dco"
+#endif
+                               ")"
                                );
     }
 
@@ -406,6 +417,18 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
             std::cout << "Configuration renamed" << std::endl;
             valid_option = true;
         }
+
+#ifdef ENABLE_OVPNDCO
+        if (args->Present("dco"))
+        {
+            bool dco = args->GetBoolValue("dco", false);
+            conf.SetDCO(dco);
+
+            std::cout << "Kernel based data channel offload support is "
+                      << (dco ? "enabled" : "disabled") << std::endl;
+            valid_option = true;
+        }
+#endif
 
         for (const ValidOverride& vo: configProfileOverrides)
         {
@@ -527,6 +550,11 @@ SingleCommand::Ptr prepare_command_config_manage()
                    "Renames the configuration");
     cmd->AddOption("show", 's',
                     "Show current configuration options");
+#ifdef ENABLE_OVPNDCO
+    cmd->AddOption("dco", "<true|false>", true,
+                   "Set/unset the kernel data channel offload flag",
+                   arghelper_boolean);
+#endif
 
     // Generating options for all configuration profile overrides
     // as defined in overrides.hpp

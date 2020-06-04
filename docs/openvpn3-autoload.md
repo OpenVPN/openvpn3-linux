@@ -213,6 +213,7 @@ the platform.
     "tunnel": {
             "ipv6": "IPV6_SETTING",
             "persist": BOOLEAN,
+            "dco": BOOLEAN,
             "dns-fallback": "PROVIDER",
             "dns-setup-disabled": BOOLEAN
 	}
@@ -234,6 +235,18 @@ is related to whether the tunnel interface should be torn down and
 re-established during re-connections or restarts of the VPN tunnel.
 If set to true, the tunnel interface is preserved during such events.
 This setting may not be supported on all platforms.
+
+#### tunnel: dco
+Boolean flag enabling the Data Channel Offload (DCO).  This moves the
+encryption and decryption of packets sent to the VPN tunnel to be
+processed in kernel space instead of being transported to user space
+before being sent to the remote side or put on the local tunnel
+interface.
+
+**PLEASE NOTE!** Data Channel Offload is only available on
+Linux and requires a specific DCO kernel module to be loaded to be
+functional.  Without this kernel module the configuration will not
+start properly if `dco` is enabled.
 
 #### tunnel: dns-fallback
 This makes the VPN client to configure an additional fallback DNS

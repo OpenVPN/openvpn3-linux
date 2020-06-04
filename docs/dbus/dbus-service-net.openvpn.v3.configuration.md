@@ -135,6 +135,7 @@ node /net/openvpn/v3/configuration/${UNIQUE_ID} {
       readonly b readonly;
       readonly b single_use;
       readonly u used_count;
+      readwrite b dco;
       readonly b valid;
   };
 };
@@ -248,6 +249,7 @@ success. If an error occurs, a D-Bus error is returned.
 | readonly      | boolean          | Read-only  | If set to true, the configuration have been sealed and can no longer be modified |
 | single_use    | boolean          | Read-only  | If set to true, this configuration profile will be automatically removed after the first `Fetch` call. This is intended to be used by command line clients providing a similar user experience as the OpenVPN 2.x versions provides. |
 | used_count    | unsigned integer | Read-only  | Number of times Fetch has been called [1]           |
+| dco           | boolean          | Read/Write | If set to true, the VPN tunnel will make use of the kernel accellerated Data Channel Offload feature (requires kernel support) |
 | valid         | boolean          | Read-only  | Contains an indication if the configuration profile is considered functional for a VPN session |
 
   [1] It will track/count ``Fetch`` usage only if the calling user is ``openvpn``

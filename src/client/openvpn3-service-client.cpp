@@ -1060,6 +1060,7 @@ private:
             // GetConfig().  If the configuration is tagged as a single-shot
             // config, we cannot query it for more details after the first
             // GetConfig() call.
+            bool dco = cfg_proxy.GetDCO();
             std::vector<OverrideValue> overrides = cfg_proxy.GetOverrides();
 
             // Parse the configuration
@@ -1070,6 +1071,7 @@ private:
             vpnconfig.guiVersion = get_guiversion();
             vpnconfig.info = true;
             vpnconfig.content = pm.profile_content();
+            vpnconfig.dco = dco;
             set_overrides(overrides);
         }
         catch (std::exception& e)

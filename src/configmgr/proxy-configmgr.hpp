@@ -266,6 +266,30 @@ public:
     }
 
 
+    /**
+     *  Sets the data-channel offload capability flag
+     *
+     * @param dco    Boolean flag.  If set to true, the kernel accelerator
+     *               will be used for data channel offloading.
+     */
+    void SetDCO(bool dco)
+    {
+        SetProperty("dco", dco);
+    }
+
+
+    /**
+     *   Retrieve the data-channel offloading (DCO) capability setting.  If
+     *   set to true, the kernel accelerator will be used.
+     *
+     * @return Returns true if DCO is enabled
+     */
+    bool GetDCO()
+    {
+        return GetBoolProperty("dco");
+    }
+
+
     void Seal()
     {
         GVariant *res = Call("Seal");
