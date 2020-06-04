@@ -112,7 +112,8 @@ AM_CXXFLAGS = \
 	$(LIBLZ4_CFLAGS) \
 	$(LIBUUID_CFLAGS) \
 	$(LIBCAPNG_CFLAGS) \
-	-DLIBEXECDIR=\"$(libexecdir)\"
+	-DLIBEXECDIR=\"$(libexecdir)\" \
+	$(DCO_CXXFLAGS)
 
 #
 # Linker flags
@@ -124,6 +125,9 @@ LDADD = \
 	$(LIBLZ4_LIBS) \
 	$(LIBUUID_LIBS)
 
+if ENABLE_OVPNDCO
+LDADD += $(LIBNL_GENL_LIBS)
+endif
 
 #
 #  OpenVPN 3 specific D-Bus library
@@ -624,6 +628,9 @@ src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/log/dbus-log.hpp
 src_netcfg_openvpn3_service_netcfg_LDADD = $(LIBCAPNG_LIBS) $(LIBGLIBGIO_LIBS) $(LIBJSONCPP_LIBS) $(LIBUUID_LIBS)
 
+if ENABLE_OVPNDCO
+src_netcfg_openvpn3_service_netcfg_LDADD += $(LIBNL_GENL_LIBS)
+endif
 
 #
 #  openvpn3-service-logger: D-Bus based log fetcher
@@ -658,6 +665,7 @@ addons_aws_openvpn3_service_aws_SOURCES = \
     src/common/utils.cpp
 addons_aws_openvpn3_service_aws_CXXFLAGS = \
     $(AM_CXXFLAGS) \
+    -UENABLE_OVPNDCO \
     $(LIBTINYXML2_CFLAGS) \
     $(LIBJSONCPP_CFLAGS)
 addons_aws_openvpn3_service_aws_LDADD = \

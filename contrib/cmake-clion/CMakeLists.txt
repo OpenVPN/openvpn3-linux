@@ -17,6 +17,8 @@ pkg_check_modules(JSONCPP REQUIRED jsoncpp)
 pkg_check_modules(GLIB2 REQUIRED glib-2.0)
 pkg_check_modules(GIO2 REQUIRED gio-2.0)
 
+option(ENABLE_OVPNDCO "Enable OpenVPN data channel offloading")
+
 set(OPENVPN3_LINUX_CONFIG_DEFINES
         -DUSE_OPENSSL
         -DUSE_ASIO
@@ -24,6 +26,9 @@ set(OPENVPN3_LINUX_CONFIG_DEFINES
         -DOPENVPN_USERNAME="openvpn"
         -DLIBEXECDIR="/usr/libexec"
     )
+if (${ENABLE_OVPNDCO})
+    list(APPEND OPENVPN3_LINUX_CONFIG_DEFINES -DENABLE_OVPNDCO)
+endif()
 add_definitions(${OPENVPN3_LINUX_CONFIG_DEFINES})
 
 set(OPENVPN3_LINUX_LIBS
@@ -33,6 +38,13 @@ set(OPENVPN3_LINUX_LIBS
         ${OPENSSL_LIBRARIES}
         ${JSONCPP_LIBRARIES}
         ${UUID})
+
+if (${ENABLE_OVPNDCO})
+    find_package(PkgConfig)
+    pkg_search_module(LIBNL REQUIRED libnl-genl-3.0)
+    list(APPEND OPENVPN3_LINUX_LIBS ${LIBNL_LIBRARIES})
+endif()
+
 link_libraries(${OPENVPN3_LINUX_LIBS})
 
 if(NOT DEFINED OPENVPN3_LINUX_ROOT)
@@ -46,6 +58,19 @@ set(OPENVPN3_LINUX_INCLUDE_DIRS
         ${GLIB2_INCLUDE_DIRS}
         ${JSONCPP_INCLUDE_DIRS}
         ${OPENVPN3_LINUX_ROOT}/vendor/asio/asio/include)
+
+if (${ENABLE_OVPNDCO})
+    find_path(
+        LIBNL_INCLUDE_DIR
+        PATH_SUFFIXES
+            include/libnl3
+        NAMES
+            netlink/version.h
+    )
+    list(APPEND OPENVPN3_LINUX_INCLUDE_DIRS
+        ${LIBNL_INCLUDE_DIR}
+        ${OPENVPN3_LINUX_ROOT}/ovpn-dco/include/uapi)
+endif()
 include_directories(${OPENVPN3_LINUX_INCLUDE_DIRS})
 
 get_directory_property(hasParent PARENT_DIRECTORY)

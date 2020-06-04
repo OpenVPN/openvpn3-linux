@@ -329,6 +329,52 @@ else
 fi
 AC_SUBST([systemd_unitdir])
 
+dnl
+dnl  Enables support for the ovpn-dco kernel module data channel offload (DCO)
+dnl
+dnl  When this option is enabled, OpenVPN 3 will try to use the ovpn-dco kernel
+dnl  module to offload data channel operations to the kernel.
+dnl
+AC_ARG_ENABLE(
+    [dco],
+    [AS_HELP_STRING([--enable-dco],
+                    [enable building support for ovpn-dco kernel module offload])],
+    [enable_dco="$enableval"],
+    [enable_dco="no"]
+)
+
+dnl
+dnl  Configure path for the ovpn-dco kernel module source directory.
+dnl
+dnl  This is similar to the core librariy, there is an embedded
+dnl  version in this tree which will be used by default.  The
+dnl  git checkout inside the ovpn-dco/ directory is managed via git
+dnl  submodule.
+dnl
+AC_ARG_VAR([DCO_SOURCEDIR], [Alternative ovpn-dco kernel module source directory])
+if test -z "${DCO_SOURCEDIR}"; then
+    DCO_SOURCEDIR="${srcdir}/ovpn-dco"
+fi
+AC_MSG_NOTICE([Using ovpn-dco source directory: ${DCO_SOURCEDIR}])
+AC_SUBST([DCO_SOURCEDIR])
+
+dnl
+dnl Include generic netlink library used by core library code which talks to ovpn-dco
+dnl
+if test "$enable_dco" = "yes"; then
+    PKG_CHECK_MODULES(
+        [LIBNL_GENL],
+        [libnl-genl-3.0],
+        [have_libnl="yes"],
+        [AC_MSG_ERROR([libnl-genl-3.0 package not found. Is the development package installed?])]
+    )
+
+    DCO_CXXFLAGS="-I${DCO_SOURCEDIR}/include/uapi -DENABLE_OVPNDCO ${LIBNL_GENL_CFLAGS}"
+else
+    DCO_CXXFLAGS=""
+fi
+AM_CONDITIONAL([ENABLE_OVPNDCO], [test "${enable_dco}" = "yes"])
+AC_SUBST([DCO_CXXFLAGS])
 
 dnl
 dnl  D-Bus system policy path
