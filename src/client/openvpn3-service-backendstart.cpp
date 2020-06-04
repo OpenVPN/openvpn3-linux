@@ -497,9 +497,15 @@ int backend_starter(ParsedArgs::Ptr args)
             client_args.push_back(a);
         }
     }
+    if (args->Present("client-path"))
+    {
+        client_args.push_back(args->GetValue("client-path", 0));
+    }
+    else
 #endif
-
-    client_args.push_back(std::string(LIBEXEC_PATH) + "/openvpn3-service-client");
+    {
+        client_args.push_back(std::string(LIBEXEC_PATH) + "/openvpn3-service-client");
+    }
 #ifdef OPENVPN_DEBUG
     if (args->Present("client-no-fork"))
     {
@@ -632,6 +638,8 @@ int main(int argc, char **argv)
                   "Debug option: Adds the --no-fork argument to openvpn3-service-client");
     cmd.AddOption("client-no-setsid", 0,
                   "Debug option: Adds the --no-setsid argument to openvpn3-service-client");
+    cmd.AddOption("client-path", 0, "CLIENT-PATH", true,
+                  "Debug option: Path to openvpn3-service-client binary");
     cmd.AddOption("client-setenv", "ENVVAR=VALUE", true,
                   "Debug option: Sets an environment variable passed to the openvpn3-service-client. "
                   "Can be used multiple times.");
