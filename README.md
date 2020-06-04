@@ -355,7 +355,7 @@ First install the package dependencies needed to run the build.
 
 - Generic build requirements:
 
-      # apt-get install build-essential git pkg-config autoconf autoconf-archive libglib2.0-dev libjsoncpp-dev uuid-dev liblz4-dev libcap-ng-dev
+      # apt-get install build-essential git pkg-config autoconf autoconf-archive libglib2.0-dev libjsoncpp-dev uuid-dev liblz4-dev libcap-ng-dev libxml2-utils
 
 
 #### Fedora:
