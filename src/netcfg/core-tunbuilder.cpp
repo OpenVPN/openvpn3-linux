@@ -33,8 +33,6 @@
 //        it breaks if included after tuncli.hpp
 #include "common/utils.hpp"
 
-#define OPENVPN_USE_SITNL
-
 #include "core-tunbuilder.hpp"
 #include <openvpn/tun/linux/client/tuncli.hpp>
 #include "netcfg-device.hpp"

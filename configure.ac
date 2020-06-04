@@ -290,6 +290,11 @@ OPENVPN3_CORE_CXXFLAGS="-I${OPENVPN3_CORE_SOURCEDIR} -DOPENVPN_VERSION=\\\"${OPE
 AC_SUBST([OPENVPN3_CORE_CXXFLAGS])
 
 dnl
+dnl  Make sure we use SITNL
+dnl
+AC_DEFINE_UNQUOTED([OPENVPN_USE_SITNL], [1], [Using sitnl (wrapper over netlink) to manipulate network settings])
+
+dnl
 dnl  System wide OpenVPN 3 Configuration directory
 dnl
 AC_ARG_VAR([OPENVPN3_CONFIGDIR], [OpenVPN 3 Linux configuration directory (default ${sysconfdir}/openvpn3)])
