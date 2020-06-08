@@ -219,7 +219,10 @@ public:
         ParseIntrospectionXML(introspect);
 
         // Prepare the DNS ResolverSettings object for this interface
-        dnsconfig = resolver->NewResolverSettings();
+        if (resolver)
+        {
+            dnsconfig = resolver->NewResolverSettings();
+        }
 
         signal.LogVerb2("Network device '" + devname + "' prepared");
     }
@@ -369,7 +372,7 @@ public:
             }
             else if ("AddDNS" == method_name)
             {
-                if (!resolver)
+                if (!resolver || !dnsconfig)
                 {
                     throw NetCfgException("No resolver configured");
                 }
@@ -381,7 +384,7 @@ public:
             }
             else if ("AddDNSSearch" == method_name)
             {
-                if (!resolver)
+                if (!resolver || !dnsconfig)
                 {
                     throw NetCfgException("No resolver configured");
                 }
@@ -399,7 +402,7 @@ public:
                 // The virtual device has not yet been created on the host,
                 // but all settings which has been queued up will be activated
                 // when this method is called.
-                if (resolver)
+                if (resolver && dnsconfig)
                 {
                     dnsconfig->Enable();
 
@@ -423,7 +426,7 @@ public:
             }
             else if ("Disable" == method_name)
             {
-                if (resolver)
+                if (resolver && dnsconfig)
                 {
                     std::stringstream details;
                     details << dnsconfig;
@@ -497,7 +500,7 @@ public:
 
     void teardown(GDBusConnection *conn)
     {
-        if (resolver)
+        if (resolver && dnsconfig)
         {
             std::stringstream details;
             details << dnsconfig;
@@ -570,11 +573,25 @@ public:
             }
             else if ("dns_name_servers" == property_name)
             {
-                return GLibUtils::GVariantFromVector(dnsconfig->GetNameServers());
+                if (dnsconfig)
+                {
+                    return GLibUtils::GVariantFromVector(dnsconfig->GetNameServers());
+                }
+                else
+                {
+                    return GLibUtils::GVariantFromVector(std::vector<std::string>{});
+                }
             }
             else if ("dns_search_domains" == property_name)
             {
-                return GLibUtils::GVariantFromVector(dnsconfig->GetSearchDomains());
+                if (dnsconfig)
+                {
+                    return GLibUtils::GVariantFromVector(dnsconfig->GetSearchDomains());
+                }
+                else
+                {
+                    return GLibUtils::GVariantFromVector(std::vector<std::string>{});
+                }
             }
             else if (properties.Exists(property_name))
             {
