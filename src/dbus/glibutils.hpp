@@ -281,15 +281,16 @@ namespace GLibUtils
      *                 used if an exception is thrown
      * @param params   GVariant* containing the parameters
      * @param format   C string containing the expected data type string
-     * @param num      Number of child elements in the GVariant object
+     * @param num      Number of child elements in the GVariant object.
+     *                 If 0, element count will not be considered.
      *
      * @throws THROW_DBUSEXCEPTION
      */
     inline void checkParams(const char* func, GVariant* params,
-                            const char* format, unsigned int num)
+                            const char* format, unsigned int num = 0)
     {
         std::string typestr = std::string(g_variant_get_type_string(params));
-        if (format != typestr || num != g_variant_n_children(params))
+        if (format != typestr || (num > 0 && num != g_variant_n_children(params)))
         {
             THROW_DBUSEXCEPTION(func, "Incorrect parameter format: "
                                 + typestr + ", expected " + format);
