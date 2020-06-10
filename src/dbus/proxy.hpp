@@ -308,8 +308,8 @@ namespace openvpn
                                                    G_DBUS_CALL_FLAGS_NONE);
                     if (r)
                     {
-                        guint res = 0;
-                        g_variant_get(r, "(u)", &res);
+                        GLibUtils::checkParams(__func__, r, "(u)", 1);
+                        guint res = GLibUtils::ExtractValue<unsigned int>(r, 0);
                         g_variant_unref(r);
 
                         if (2 == res) // DBUS_START_REPLY_ALREADY_RUNNING
@@ -537,8 +537,11 @@ namespace openvpn
                 errmsg << "Failed retrieving property value for "
                        << "'" << property << "': " << error->message;
                 THROW_DBUSEXCEPTION("DBusProxy", errmsg.str());
-            }            GVariant * ret = NULL;
-            g_variant_get(response, "(v)", &ret);
+            }
+
+            GVariant* chld = g_variant_get_child_value(response, 0);
+            GVariant* ret = g_variant_get_variant(chld);
+            g_variant_unref(chld);
             g_variant_unref(response);
             return ret;
         }
