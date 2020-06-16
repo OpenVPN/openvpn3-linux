@@ -591,25 +591,8 @@ private:
         bool ipv6 = g_variant_get_boolean(g_variant_get_child_value(params, 1));
         std::string dev_path(g_variant_get_string(g_variant_get_child_value(params, 2), 0));
 
-        GDBusMessage *dmsg = g_dbus_method_invocation_get_message(invoc);
-        GUnixFDList *fdlist = g_dbus_message_get_unix_fd_list(dmsg);
-
         // Get the first FD from the fdlist list
-        int fd = -1;
-
-        if(fdlist != NULL)
-        {
-            GError *error = nullptr;
-            if (fdlist)
-            {
-                fd = g_unix_fd_list_get(fdlist, 0, &error);
-            }
-
-            if (!fdlist || error || fd == -1)
-            {
-                throw NetCfgException("Reading fd socket failed");
-            }
-        }
+        int fd = GLibUtils::get_fd_from_invocation(invoc);
 
         // If the devpath is valid we get the device name from it to ignore it in the host route to avoid
         // routing loops

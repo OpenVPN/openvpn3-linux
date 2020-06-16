@@ -261,6 +261,10 @@ public:
             return;
         }
 
+#ifdef ENABLE_OVPNDCO
+        dco.reset();
+#endif
+
         if (disconnect)
         {
             device->Destroy();
@@ -314,6 +318,36 @@ public:
         return (device ? device->GetDeviceName() : "");
     }
 
+#ifdef ENABLE_OVPNDCO
+    int tun_builder_dco_enable(int transport_fd,
+                               const std::string& dev_name) override
+    {
+        if (!device)
+        {
+            throw NetCfgProxyException(__func__, "Lost link to device interface");
+        }
+
+        if (!dco)
+        {
+            dco.reset(device->EnableDCO(transport_fd, dev_name));
+        }
+
+        return dco->GetPipeFD();
+    }
+
+    virtual void tun_builder_dco_new_peer(const std::string& local_ip,
+                                          unsigned int local_port,
+                                          const std::string& remote_ip,
+                                          unsigned int remote_port)
+    {
+        if (!dco)
+        {
+            NetCfgProxyException(__func__, "Lost link to DCO device");
+        }
+
+        dco->NewPeer(local_ip, local_port, remote_ip, remote_port);
+    }
+#endif  // ENABLE_OVPNDCO
 
 protected:
     bool disabled_dns_config;
@@ -340,6 +374,9 @@ private:
 
     std::vector<NetCfgProxy::Network> networks;
     NetCfgProxy::Device::Ptr device;
+#ifdef ENABLE_OVPNDCO
+    NetCfgProxy::DCO::Ptr dco;
+#endif
     NetCfgProxy::Manager netcfgmgr;
     BackendSignals *signal;
     std::string session_token;

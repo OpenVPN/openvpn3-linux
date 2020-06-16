@@ -77,7 +77,7 @@ This method also
 
 | Direction | Name         | Type        | Description                                                           |
 |-----------|--------------|-------------|-----------------------------------------------------------------------|
-| In        |              | fdlist      | File descriptor of the socket to protect [1]. Only the first provided fd is being processed. |
+| In        |              | fdlist      | File descriptor of the socket to protect [^1]. Only the first provided fd is being processed. |
 | In        | remote       | string      | The remote host this socket is connected to.                          |
 | In        | ipv6         | boolean     | The initial process ID (PID) of the VPN backend client.               |
 | In        | device_path  | object path | If an tun device is already opened, ignore routes from this device    |
@@ -190,6 +190,7 @@ interface net.openvpn.v3.netcfg {
       AddNetworks(in  a(subb) networks);
       AddDNS(in  as server_list);
       AddDNSSearch(in  as domains);
+      EnableDCO(out  o dco_device_path);
       Establish();
       Disable();
       Destroy();
@@ -288,6 +289,17 @@ of DNS search to the network.
 | In        | domains      | array of strings  | An array of DNS domains                                  |
 
 
+### Method: `net.openvpn.v3.netcfg.EnableDCO`
+
+Instantiates DCO device object, which handles DCO functionality.
+
+#### Arguments
+| Direction | Name            | Type              | Description                                              |
+|-----------|-----------------|-------------------|----------------------------------------------------------|
+| In        | dev_name        | string            | A name for net device to be created                      |
+| Out       | dco_device_path | object path       | A unique D-Bus object path for DCO device                |
+
+
 ### Method: `net.openvpn.v3.netcfg.Establish`
 
 Uses all the information provided to the interface to setup a tun device
@@ -297,9 +309,7 @@ is returned to the caller.
 #### Arguments
 | Direction | Name         | Type              | Description                                                |
 |-----------|--------------|-------------------|------------------------------------------------------------|
-| Out       |              | fdlist            | The file descriptor corresponding to the new tun device [1]|
-
-[1] Unix file descriptors that are passed are not in the D-Bus method signature.
+| Out       |              | fdlist            | The file descriptor corresponding to the new tun device[^1]|
 
 
 ### Method: `net.openvpn.v3.netcfg.Disable`
@@ -375,3 +385,46 @@ not providing any details are not mentioned.
 | reroute_ipv4        | boolean          | Read-write | Setting this to true, tells the service that the default route should be pointed to the VPN and that mechanism to avoid routing loops should be taken |
 | reroute_ipv6        | boolean          | Read-Write | As reroute_ipv4 but for IPv6                                                                                             |
 | txqueuelen          | unsigned integer | Read-Write | Set the TX queue length of the tun device. If set to 0 or unset, the default from the operating system is used instead   |
+
+
+D-Bus destination: `net.openvpn.v3.netcfg` \- Object path: `/net/openvpn/v3/netcfg/${UNIQUE_ID}/dco`
+--------------------------------------------------------------------------------------------------------------
+
+
+```
+node /net/openvpn/v3/netcfg/${UNIQUE_ID}/dco {
+interface net.openvpn.v3.netcfg {
+    methods:
+      NewPeer(in  s local_ip,
+              in  u local_port,
+              in  s remote_ip,
+              in  u remote_port);
+      GetPipeFD();
+  };
+};
+```
+
+### Method: `net.openvpn.v3.netcfg.NewPeer`
+
+Creates a new peer inside ovpn-dco kernel module. Typically client creates socket, establishes connection
+and passes local and remote endpoint properties to this method.
+
+#### Arguments
+| Direction | Name         | Type         | Description                                                      |
+|-----------|--------------|--------------|------------------------------------------------------------------|
+| In        | local_ip     | string       | IP address of local endpoint                                     |
+| In        | local_port   | unsigned int | Port of local endpoint                                           |
+| In        | remote_ip    | string       | IP address of remote endpoint                                    |
+| In        | remote_port  | unsigned int | Port of remote endpoint                                          |
+
+
+### Method: `net.openvpn.v3.netcfg.GetPipeFD`
+
+Returns file descriptor used for bidirection generic netlink-based communication with ovpn-dco kernel module
+
+#### Arguments
+| Direction | Name         | Type              | Description                                                        |
+|-----------|--------------|-------------------|--------------------------------------------------------------------|
+| Out       |              | fdlist            | The file descriptor for bidirectional communication to ovpn-dco [1]|
+
+[^1]: Unix file descriptors that are passed are not in the D-Bus method signature.

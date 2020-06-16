@@ -136,6 +136,7 @@ add_executable(openvpn3
         src/configmgr/overrides.hpp
         src/configmgr/overrides.cpp
         src/sessionmgr/proxy-sessionmgr.hpp
+        src/sessionmgr/sessionmgr-events.hpp
         src/sessionmgr/sessionmgr-events.cpp
         src/dbus/requiresqueue-proxy.hpp
         src/common/cmdargparser.hpp
@@ -152,6 +153,8 @@ add_executable(openvpn3-service-netcfg
         src/netcfg/core-tunbuilder.cpp
         src/netcfg/netcfg.hpp
         src/netcfg/netcfg-device.hpp
+        src/netcfg/netcfg-dco.hpp
+        src/netcfg/netcfg-dco.cpp
         src/netcfg/netcfg-exception.hpp
         src/netcfg/netcfg-options.hpp
         src/netcfg/netcfg-signals.hpp
@@ -197,6 +200,7 @@ add_executable(openvpn3-service-logger
 add_executable(openvpn3-service-sessionmgr
         src/sessionmgr/openvpn3-service-sessionmgr.cpp
         src/sessionmgr/sessionmgr.hpp
+        src/sessionmgr/sessionmgr-events.hpp
         src/sessionmgr/sessionmgr-events.cpp
         src/client/statusevent.hpp
         src/common/cmdargparser.cpp

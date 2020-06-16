@@ -44,6 +44,10 @@ namespace NetCfgProxy
 {
     class Device;
 
+#ifdef ENABLE_OVPNDCO
+    class DCO;
+#endif
+
     class Manager : public DBusProxy,
                     public RC<thread_unsafe_refcount>
     {
@@ -172,6 +176,17 @@ namespace NetCfgProxy
          */
         void RemoveDNSSearch(const std::vector<std::string>& domains);
 
+#ifdef ENABLE_OVPNDCO
+        /**
+         * Enables DCO functionality. This requires ovpn-dco kernel module.
+         *
+         * @param transport_fd fd of transport socket, provided by client
+         * @param dev_name name of net device to create
+         * @return DCO* DCO proxy object
+         */
+        DCO* EnableDCO(int transport_fd, const std::string& dev_name);
+#endif
+
         /**
          *  Creates and applies a configuration to this virtual interface.
          *
@@ -221,6 +236,7 @@ namespace NetCfgProxy
          * @param value if it should be enabled for this protocol
          */
         void SetRerouteGw(bool ipv6, bool value);
+
         /*
          *  Generic functions for processing various properties
          */
@@ -244,4 +260,33 @@ namespace NetCfgProxy
 
         void SetRemoteAddress(const std::string& remote, bool ipv6);
     };
+
+#ifdef ENABLE_OVPNDCO
+    class DCO : public DBusProxy, public RC<thread_unsafe_refcount>
+    {
+    public:
+        typedef RCPtr<DCO> Ptr;
+
+        DCO(GDBusConnection *dbuscon, const std::string& dcopath);
+
+        /**
+         * Returns file descriptor used by unprivileged process to
+         * communicate to kernel module.
+         *
+         * @return int file descriptor, -1 for failure
+         */
+        int GetPipeFD();
+
+        /**
+         * @brief Creates a new peer in ovpn-dco kernel module.
+         *
+         * @param local_ip    local ip address
+         * @param local_port  local port
+         * @param remote_ip   remote ip address
+         * @param remote_port remote port
+         */
+        void NewPeer(const std::string& local_ip, unsigned int local_port,
+                     const std::string& remote_ip, unsigned int remote_port);
+    };
+#endif  // ENABLE_OVPNDCO
 } // namespace NetCfgProxy

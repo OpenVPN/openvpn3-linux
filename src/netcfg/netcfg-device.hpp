@@ -46,6 +46,10 @@
 #include "netcfg-signals.hpp"
 #include "netcfg-subscriptions.hpp"
 
+#ifdef ENABLE_OVPNDCO
+#include "netcfg-dco.hpp"
+#endif
+
 using namespace openvpn;
 using namespace NetCfg;
 
@@ -115,7 +119,7 @@ public:
     std::string gateway;
 };
 
-inline void return_invocation_with_fd(GDBusMethodInvocation *invoc, GVariant *parameters, int fd)
+inline void prepare_invocation_fd_results(GDBusMethodInvocation *invoc, GVariant *parameters, int fd)
 {
     GUnixFDList *fdlist;
     GError *error = nullptr;
@@ -123,9 +127,10 @@ inline void return_invocation_with_fd(GDBusMethodInvocation *invoc, GVariant *pa
     g_unix_fd_list_append(fdlist, fd, &error);
     close(fd);
 
-    if (error) {
+    if (error)
+    {
         throw NetCfgException("Creating fd list failed");
-        }
+    }
 
     // DBus will close the handle on our side after transmitting
     g_dbus_method_invocation_return_value_with_unix_fd_list(invoc, parameters, fdlist);
@@ -195,6 +200,12 @@ public:
                    << "        <method name='AddDNSSearch'>"
                    << "            <arg direction='in' type='as' name='domains'/>"
                    << "        </method>"
+#ifdef ENABLE_OVPNDCO
+                   << "        <method name='EnableDCO'>"
+                   << "            <arg direction='in' type='s' name='dev_name'/>"
+                   << "            <arg type='o' direction='out' name='dco_device_path'/>"
+                   << "        </method>"
+#endif
                    << "        <method name='Establish'/>"
                                 /* Note: Although Establish returns a unix_fd,
                                  * it does not belong in the method
@@ -393,6 +404,29 @@ public:
                 dnsconfig->AddSearchDomains(params);
                 modified = true;
             }
+#ifdef ENABLE_OVPNDCO
+            else if ("EnableDCO" == method_name)
+            {
+                GLibUtils::checkParams(__func__, params, "(s)", 1);
+                std::string dev_name{g_variant_get_string(g_variant_get_child_value(params, 0), 0)};
+                set_device_name(dev_name);
+
+                int transport_fd = GLibUtils::get_fd_from_invocation(invoc);
+                dco_device.reset(new NetCfgDCO(conn,
+                                               obj_path,
+                                               dev_name,
+                                               transport_fd,
+                                               creatorPid,
+                                               signal.GetLogWriter()));
+
+                dco_device->RegisterObject(conn);
+
+
+                auto path = dco_device->GetObjectPath();
+                retval = g_variant_new("(o)", path.c_str());
+
+            }
+#endif
             else if ("Establish" == method_name)
             {
                 // This should generally be true for DBus 1.3,
@@ -432,7 +466,7 @@ public:
                     modified = false;
                 }
 
-                return_invocation_with_fd(invoc, nullptr, fd);
+                prepare_invocation_fd_results(invoc, nullptr, fd);
                 return;
             }
             else if ("Disable" == method_name)
@@ -530,6 +564,13 @@ public:
             tunimpl.reset();
         }
 
+#ifdef ENABLE_OVPNDCO
+        if (dco_device)
+        {
+            dco_device->RemoveObject(conn);
+            dco_device.reset();
+        }
+#endif
         RemoveObject(conn);
     }
 
@@ -725,6 +766,10 @@ private:
     bool active = false;
 
     pid_t creatorPid;
+
+#ifdef ENABLE_OVPNDCO
+    NetCfgDCO::Ptr dco_device = nullptr;
+#endif
 
     /**
      *  Validate that the sender is allowed to do change the configuration

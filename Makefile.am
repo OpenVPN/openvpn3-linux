@@ -596,6 +596,8 @@ src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/netcfg/netcfg.hpp \
 	src/netcfg/netcfg-configfile.hpp \
 	src/netcfg/netcfg-device.hpp \
+	src/netcfg/netcfg-dco.hpp \
+	src/netcfg/netcfg-dco.cpp \
 	src/netcfg/netcfg-exception.hpp \
 	src/netcfg/netcfg-options.hpp \
 	src/netcfg/netcfg-signals.hpp \

@@ -393,6 +393,20 @@ namespace NetCfgProxy
     }
 
 
+#ifdef ENABLE_OVPNDCO
+    DCO* Device::EnableDCO(int transport_fd, const std::string& dev_name)
+    {
+        GVariant *res = CallSendFD("EnableDCO", g_variant_new("(s)", dev_name.c_str()), transport_fd);
+        gchar *path = nullptr;
+        g_variant_get(res, "(o)", &path);
+        std::string dcopath{path};
+        g_free(path);
+        g_variant_unref(res);
+        return new DCO(GetConnection(), dcopath);
+    }
+#endif  // ENABLE_OVPNDCO
+
+
     int Device::Establish()
     {
         gint fd = -1;
@@ -543,4 +557,27 @@ namespace NetCfgProxy
         std::vector<std::string> ret;
         return ret;
     }
+
+#ifdef ENABLE_OVPNDCO
+    DCO::DCO(GDBusConnection *dbuscon, const std::string& dcopath)
+        : DBusProxy(dbuscon,
+                    OpenVPN3DBus_name_netcfg,
+                    OpenVPN3DBus_interf_netcfg,
+                    dcopath) { }
+
+    int DCO::GetPipeFD()
+    {
+        gint fd = -1;
+        GVariant *res = CallGetFD("GetPipeFD", fd);
+        g_variant_unref(res);
+        return fd;
+    }
+
+    void DCO::NewPeer(const std::string& local_ip, unsigned int local_port,
+                      const std::string& remote_ip, unsigned int remote_port)
+    {
+        Call("NewPeer", g_variant_new("(susu)", local_ip.c_str(), local_port,
+                                      remote_ip.c_str(), remote_port));
+    }
+#endif  // ENABLE_OVPNDCO
 } // namespace NetCfgProxy

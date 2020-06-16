@@ -364,4 +364,29 @@ namespace GLibUtils
         g_object_unref((GVariant*) fdlist);
     }
 
+    inline int get_fd_from_invocation(GDBusMethodInvocation *invoc)
+    {
+        GDBusMessage *dmsg = g_dbus_method_invocation_get_message(invoc);
+        GUnixFDList *fdlist = g_dbus_message_get_unix_fd_list(dmsg);
+
+        // Get the first FD from the fdlist list
+        int fd = -1;
+
+        if(fdlist != NULL)
+        {
+            GError *error = nullptr;
+            if (fdlist)
+            {
+                fd = g_unix_fd_list_get(fdlist, 0, &error);
+            }
+
+            if (!fdlist || error || fd == -1)
+            {
+                THROW_DBUSEXCEPTION("GLibUtils", "Reading fd socket failed");
+            }
+        }
+
+        return fd;
+    }
+
 } // namespace GLibUtils
