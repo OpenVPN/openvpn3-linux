@@ -324,7 +324,8 @@ public:
     {
         if (!device)
         {
-            throw NetCfgProxyException(__func__, "Lost link to device interface");
+            throw NetCfgProxyException(__func__,
+                                       "Lost link to device interface");
         }
 
         if (!dco)
@@ -356,6 +357,22 @@ public:
         }
 
         dco->NewKey(key_slot, kc);
+    }
+
+    void tun_builder_dco_establish() override
+    {
+        if (!device)
+        {
+            throw NetCfgProxyException(__func__, "Lost link to device interface");
+        }
+
+        if (!dco)
+        {
+            NetCfgProxyException(__func__, "Lost link to DCO device");
+        }
+
+        device->AddNetworks(networks);
+        device->EstablishDCO();
     }
 #endif  // ENABLE_OVPNDCO
 

@@ -185,6 +185,12 @@ namespace NetCfgProxy
          * @return DCO* DCO proxy object
          */
         DCO* EnableDCO(int transport_fd, const std::string& dev_name);
+
+        /**
+         * Applies configuration to DCO interface.
+         *
+         */
+        void EstablishDCO();
 #endif
 
         /**
@@ -236,6 +242,7 @@ namespace NetCfgProxy
          * @param value if it should be enabled for this protocol
          */
         void SetRerouteGw(bool ipv6, bool value);
+
 
         /*
          *  Generic functions for processing various properties

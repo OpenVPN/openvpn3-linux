@@ -155,16 +155,30 @@ namespace openvpn
             config.txqueuelen = netCfgDevice.txqueuelen;
             config.add_bypass_routes_on_establish = false;
 
+#ifdef ENABLE_OVPNDCO
+            if (netCfgDevice.dco_device)
+            {
+                config.dco = true;
+                config.iface_name = netCfgDevice.device_name;
+            }
+#endif
+
             TunBuilderCapture::Ptr tbc = createTunbuilderCapture(netCfgDevice);
 
             //
-            // We currently do not set config.iface_name to open the first
-            // available tun device.
+            // For non-DCO, we currently do not set config.iface_name to
+            // open the first available tun device.
             //
             // config.ifname is a return value rather than an argument
             //
             int ret = establish_tun(*tbc, config, nullptr, std::cout);
-            netCfgDevice.set_device_name(config.iface_name);
+
+#ifdef ENABLE_OVPNDCO
+            if (!netCfgDevice.dco_device)
+            {
+                netCfgDevice.set_device_name(config.iface_name);
+            }
+#endif
 
             doEstablishNotifies(netCfgDevice, config);
 

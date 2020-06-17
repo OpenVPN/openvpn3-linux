@@ -410,6 +410,14 @@ namespace NetCfgProxy
         g_variant_unref(res);
         return new DCO(GetConnection(), dcopath);
     }
+
+
+    void Device::EstablishDCO()
+    {
+        // same as Device::Establish() but without return value
+        GVariant *res = Call("Establish");
+        g_variant_unref(res);
+    }
 #endif  // ENABLE_OVPNDCO
 
 

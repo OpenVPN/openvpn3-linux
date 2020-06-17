@@ -1,3 +1,4 @@
+
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
 //  Copyright (C) 2018 - 2020  OpenVPN, Inc. <sales@openvpn.net>
@@ -207,10 +208,10 @@ public:
                    << "        </method>"
 #endif
                    << "        <method name='Establish'/>"
-                                /* Note: Although Establish returns a unix_fd,
-                                 * it does not belong in the method
-                                 * signature, since glib/dbus abstraction is
-                                 * paper thin and it is handled almost like
+                                /* Note: Although in non-DCO mode Establish
+                                 * returns a unix_fd, it does not belong in the
+                                 * method signature, since glib/dbus abstraction
+                                 * is paper thin and it is handled almost like
                                  * in recv/sendmsg as auxiliary data
                                  */
                    << "        <method name='Disable'/>"
@@ -433,9 +434,9 @@ public:
                 // double checking here cannot hurt
                 g_assert(g_dbus_connection_get_capabilities(conn) & G_DBUS_CAPABILITY_FLAGS_UNIX_FD_PASSING);
 
-                // The virtual device has not yet been created on the host,
-                // but all settings which has been queued up will be activated
-                // when this method is called.
+                // The virtual device has not yet been created on the host (for
+                // non-DCO case), but all settings which has been queued up
+                // will be activated when this method is called.
                 if (resolver && dnsconfig
                     && DNS::ApplySettingsMode::MODE_PRE == resolver->GetApplyMode())
                 {
@@ -466,8 +467,22 @@ public:
                     modified = false;
                 }
 
+#ifdef ENABLE_OVPNDCO
+                // in DCO case don't return anything
+                if (dco_device)
+                {
+                    g_dbus_method_invocation_return_value(invoc, nullptr);
+                }
+                else
+                {
+                    // If DCO is not enabled, the tun device FD is returned
+                    prepare_invocation_fd_results(invoc, nullptr, fd);
+                }
+                return;
+#else  // Without DCO support compiled in, a FD to the tun device is always returned
                 prepare_invocation_fd_results(invoc, nullptr, fd);
                 return;
+#endif  // ENABLE_OVPNDCO
             }
             else if ("Disable" == method_name)
             {
