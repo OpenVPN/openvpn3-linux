@@ -98,6 +98,11 @@ service or client.  The most verbose debug logging is gained with using
 `G_DBUS_DEBUG=all`.  For more details see the upstream Glib2
 [Running GIO applications: GIO Reference Manual](https://developer.gnome.org/gio/stable/running-gio-apps.html) documentation.
 
+To pass the `G_DBUS_DEBUG` variable to the `openvpn3-service-client` process,
+the `openvpn3-service-backendstart` need to be started with
+`--client-setenv G_DBUS_DEBUG=all`, which will dump all D-Bus operations the
+openvpn3-service-client process handles to the console.
+
 
 ## More fine grained session management control
 

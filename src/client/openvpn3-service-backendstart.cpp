@@ -111,12 +111,14 @@ public:
     BackendStarterObject(GDBusConnection *dbuscon, const std::string busname,
                          const std::string objpath,
                          const std::vector<std::string> client_args,
+                         const std::vector<std::string> client_envvars,
                          unsigned int log_level,
                          bool signal_broadcast)
         : DBusObject(objpath),
           BackendStarterSignals(dbuscon, objpath, log_level),
           dbuscon(dbuscon),
-          client_args(client_args)
+          client_args(client_args),
+          client_envvars(client_envvars)
     {
         if (!signal_broadcast)
         {
@@ -268,6 +270,7 @@ public:
 private:
     GDBusConnection *dbuscon;
     const std::vector<std::string> client_args;
+    std::vector<std::string> client_envvars;
 
     /**
      * Forks out a child thread which starts the openvpn3-service-client
@@ -309,7 +312,17 @@ private:
             std::cout << std::endl << std::endl;
 #endif
 
-            execve(args[0], args, NULL);
+            char * env[client_envvars.size()];
+            unsigned int idx = 0;
+            for (const auto& ev : client_envvars)
+            {
+                env[idx] = (char *) ev.c_str();
+                ++idx;
+            }
+            env[idx] = nullptr;
+
+
+            execve(args[0], args, env);
 
             // If execve() succeedes, the line below will not be executed
             // at all.  So if we come here, there must be an error.
@@ -387,6 +400,12 @@ public:
     }
 
 
+    void AddClientEnvVariable(const std::string& envvar)
+    {
+        client_envvars.push_back(envvar);
+    }
+
+
     /**
      *  This callback is called when the service was successfully registered
      *  on the D-Bus.
@@ -395,6 +414,7 @@ public:
     {
         mainobj.reset(new BackendStarterObject(GetConnection(), GetBusName(),
                                                GetRootPath(), client_args,
+                                               client_envvars,
                                                log_level, signal_broadcast));
         mainobj->RegisterObject(GetConnection());
 
@@ -443,6 +463,7 @@ private:
     bool signal_broadcast = true;
     ProcessSignalProducer::Ptr procsig;
     std::vector<std::string> client_args;
+    std::vector<std::string> client_envvars;
 };
 
 
@@ -481,6 +502,7 @@ int backend_starter(ParsedArgs args)
     {
         client_args.push_back("--no-setsid");
     }
+
 #endif
     if (args.Present("client-log-level"))
     {
@@ -547,6 +569,15 @@ int backend_starter(ParsedArgs args)
     {
         std::cout << "Idle exit is disabled" << std::endl;
     }
+
+    if (args.Present("client-setenv"))
+    {
+        for (const auto& ev : args.GetAllValues("client-setenv"))
+        {
+            backstart.AddClientEnvVariable(ev);
+        }
+    }
+
 #endif
     backstart.Setup();
 
@@ -594,6 +625,9 @@ int main(int argc, char **argv)
                   "Debug option: Adds the --no-fork argument to openvpn3-service-client");
     cmd.AddOption("client-no-setsid", 0,
                   "Debug option: Adds the --no-setsid argument to openvpn3-service-client");
+    cmd.AddOption("client-setenv", "ENVVAR=VALUE", true,
+                  "Debug option: Sets an environment variable passed to the openvpn3-service-client. "
+                  "Can be used multiple times.");
 #endif
     cmd.AddOption("client-log-level", "LEVEL", true,
                   "Adds the --log-level LEVEL argument to openvpn3-service-client");
