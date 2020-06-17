@@ -287,6 +287,17 @@ namespace NetCfgProxy
          */
         void NewPeer(const std::string& local_ip, unsigned int local_port,
                      const std::string& remote_ip, unsigned int remote_port);
+
+
+        /**
+         * Pass crypto configuration into kernel module.
+         *
+         * @param remote_peer_id peer id
+         * @param kc        KeyConfig struct, which contains enc/dec keys,
+         *                  cipher algorithm, cipher key size, nonces (for gcm),
+         *                  hmac algorithm, hmacs and hmac key size (for cbc)
+         */
+        void NewKey(unsigned int key_slot, const KoRekey::KeyConfig* kc);
     };
 #endif  // ENABLE_OVPNDCO
 } // namespace NetCfgProxy

@@ -30,6 +30,9 @@
 
 #include <openvpn/common/rc.hpp>
 
+#define OPENVPN_EXTERN extern
+#include <openvpn/common/base64.hpp>
+
 #include "dbus/core.hpp"
 #include "dbus/proxy.hpp"
 #include "dbus/glibutils.hpp"
@@ -37,6 +40,9 @@
 #include "netcfg-device.hpp"
 #include "netcfg-exception.hpp"
 #include "netcfg-subscriptions.hpp"
+#ifdef ENABLE_OVPNDCO
+#include "dco-keyconfig.pb.h"
+#endif
 
 using namespace openvpn;
 
@@ -578,6 +584,31 @@ namespace NetCfgProxy
     {
         Call("NewPeer", g_variant_new("(susu)", local_ip.c_str(), local_port,
                                       remote_ip.c_str(), remote_port));
+    }
+
+    void DCO::NewKey(unsigned int key_slot, const KoRekey::KeyConfig* kc_arg)
+    {
+        DcoKeyConfig kc;
+
+        kc.set_key_id(kc_arg->key_id);
+        kc.set_remote_peer_id(kc_arg->remote_peer_id);
+        kc.set_cipher_alg(kc_arg->cipher_alg);
+        kc.set_hmac_alg(kc_arg->hmac_alg);
+
+        auto copyKeyDirection = [](const KoRekey::KeyDirection& src, DcoKeyConfig_KeyDirection* dst) {
+            dst->set_cipher_key(src.cipher_key, src.cipher_key_size);
+            dst->set_hmac_key(src.hmac_key, src.hmac_key_size);
+            dst->set_nonce_tail(src.nonce_tail, 12);
+            dst->set_cipher_key_size(src.cipher_key_size);
+            dst->set_hmac_key_size(src.hmac_key_size);
+        };
+
+        copyKeyDirection(kc_arg->encrypt, kc.mutable_encrypt());
+        copyKeyDirection(kc_arg->decrypt, kc.mutable_decrypt());
+
+        auto str = base64->encode(kc.SerializeAsString());
+
+        Call("NewKey", g_variant_new("(us)", key_slot, str.c_str()));
     }
 #endif  // ENABLE_OVPNDCO
 } // namespace NetCfgProxy

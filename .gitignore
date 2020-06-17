@@ -58,6 +58,8 @@ src/client/openvpn3-service-client
 src/configmgr/openvpn3-service-configmgr
 src/log/openvpn3-service-logger
 src/netcfg/openvpn3-service-netcfg
+src/netcfg/dco-keyconfig.pb.cc
+src/netcfg/dco-keyconfig.pb.h
 src/ovpn3cli/openvpn3
 src/ovpn3cli/openvpn3-admin
 src/selinux/openvpn3.pp

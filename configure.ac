@@ -364,12 +364,23 @@ dnl
 if test "$enable_dco" = "yes"; then
     PKG_CHECK_MODULES(
         [LIBNL_GENL],
-        [libnl-genl-3.0],
+        [libnl-genl-3.0 >= 3.2.29],
         [have_libnl="yes"],
-        [AC_MSG_ERROR([libnl-genl-3.0 package not found. Is the development package installed?])]
+        [AC_MSG_ERROR([libnl-genl-3.0 package not found or too old. Is the development package installed? Must be version 3.4.0 or newer])]
     )
+    PKG_CHECK_MODULES(
+        [PROTOBUF],
+        [protobuf >= 2.4.0],
+        [],
+        [AC_MSG_ERROR([protobuf package not found. Is the development package installed?])]
+    )
+    AC_SUBST(PROTOBUF_LIBS)
 
     DCO_CXXFLAGS="-I${DCO_SOURCEDIR}/include/uapi -DENABLE_OVPNDCO ${LIBNL_GENL_CFLAGS}"
+    AC_CHECK_PROG([PROTOC], [protoc], [protoc])
+    if test -z "${PROTOC}"; then
+       AC_MSG_ERROR([ProtoBuf compiler "protoc" not found.])
+    fi
 else
     DCO_CXXFLAGS=""
 fi

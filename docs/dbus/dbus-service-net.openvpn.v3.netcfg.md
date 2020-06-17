@@ -400,6 +400,13 @@ interface net.openvpn.v3.netcfg {
               in  s remote_ip,
               in  u remote_port);
       GetPipeFD();
+      NewKey(in  u remote_peer_id,
+             in  u key_slot,
+             in  u key_id,
+             in  s enc_key,
+             in  s enc_nonce,
+             in  s dec_key,
+             in  s dec_nonce);
   };
 };
 ```
@@ -426,5 +433,16 @@ Returns file descriptor used for bidirection generic netlink-based communication
 | Direction | Name         | Type              | Description                                                        |
 |-----------|--------------|-------------------|--------------------------------------------------------------------|
 | Out       |              | fdlist            | The file descriptor for bidirectional communication to ovpn-dco [1]|
+
+
+### Method: `net.openvpn.v3.netcfg.NewKey`
+
+Pass a new symmetric encryption key, NONCE and HMAC values used for the data channel. This is used when encrypting and decrypting the tunneled network traffic. See src/netcfg/dco-keyconfig.proto for DcoKeyConfig protobuf object specification.
+
+#### Arguments
+| Direction | Name                | Type         | Description                                                              |
+|-----------|---------------------|--------------|--------------------------------------------------------------------------|
+| In        | key_slot            | unsigned int | key slot (OVPN_KEY_SLOT_PRIMARY or OVPN_KEY_SLOT_SECONDARY)              |
+| In        | key_config          | string       | base64-encoded DcoKeyConfig object                                          |
 
 [^1]: Unix file descriptors that are passed are not in the D-Bus method signature.

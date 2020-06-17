@@ -347,6 +347,16 @@ public:
 
         dco->NewPeer(local_ip, local_port, remote_ip, remote_port);
     }
+
+    void tun_builder_dco_new_key(unsigned int key_slot, const KoRekey::KeyConfig* kc) override
+    {
+        if (!dco)
+        {
+            NetCfgProxyException(__func__, "Lost link to DCO device");
+        }
+
+        dco->NewKey(key_slot, kc);
+    }
 #endif  // ENABLE_OVPNDCO
 
 protected:

@@ -15,6 +15,8 @@ add_executable(openvpn3-service-aws
     ${OPENVPN3_LINUX_ROOT}/src/common/timestamp.cpp
     ${OPENVPN3_LINUX_ROOT}/src/common/configfileparser.cpp
     ${OPENVPN3_LINUX_ROOT}/openvpn3-core/openvpn/aws/awsroute.hpp
+    ${OPENVPN3_LINUX_ROOT}/src/netcfg/dco-keyconfig.proto
+    ${CMAKE_BINARY_DIR}/src/netcfg/dco-keyconfig.pb.cc
 )
 
 target_compile_definitions(
@@ -30,6 +32,7 @@ find_library(TINYXML2 tinyxml2)
 target_link_libraries(
     openvpn3-service-aws
     ${TINYXML2}
+    ${PROTOBUF_LIBRARIES}
 )
 
 set(CMAKE_MODULE_PATH "${OPENVPN3_LINUX_ROOT}/openvpn3-core/cmake;${CMAKE_MODULE_PATH}")

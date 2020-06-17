@@ -28,6 +28,8 @@
 #include "log/proxy-log.hpp"
 #include "common/cmdargparser.hpp"
 
+#include <openvpn/common/base64.hpp>
+
 using namespace openvpn;
 
 static int session_manager(ParsedArgs::Ptr args)

@@ -27,6 +27,8 @@
 #include <cap-ng.h>
 #include <cassert>
 
+#include <openvpn/common/base64.hpp>
+
 #include "common/utils.hpp"
 #include "common/lookup.hpp"
 #include "common/cmdargparser.hpp"
@@ -137,6 +139,8 @@ int netcfg_main(ParsedArgs::Ptr args)
     std::ostream  *logfile = nullptr;
     LogWriter::Ptr logwr = nullptr;
     ColourEngine::Ptr colourengine = nullptr;
+
+    openvpn::base64_init_static();
 
     if (args->Present("log-file"))
     {
@@ -305,6 +309,8 @@ int netcfg_main(ParsedArgs::Ptr args)
         std::cout << "FATAL ERROR: " << excp.what() << std::endl;
         exit_code = 3;
     }
+
+    openvpn::base64_uninit_static();
 
     return exit_code;
 }

@@ -21,6 +21,10 @@
 #include <openvpn/log/logsimple.hpp>
 #include "netcfg-dco.hpp"
 #include "netcfg-device.hpp"
+#include "dco-keyconfig.pb.h"
+
+#define OPENVPN_EXTERN extern
+#include <openvpn/common/base64.hpp>
 
 #include <openvpn/tun/linux/client/tunmethods.hpp>
 
@@ -45,6 +49,10 @@ NetCfgDCO::NetCfgDCO(GDBusConnection *dbuscon, const std::string& objpath,
                << "          <arg type='u' direction='in' name='remote_port'/>"
                << "        </method>"
                << "        <method name='GetPipeFD'/>"
+               << "        <method name='NewKey'>"
+               << "          <arg type='u' direction='in' name='key_slot'/>"
+               << "          <arg type='s' direction='in' name='key_config'/>"
+               << "        </method>"
                << "    </interface>"
                << "</node>";
     ParseIntrospectionXML(introspect);
@@ -188,6 +196,9 @@ void NetCfgDCO::callback_method_call(GDBusConnection *conn,
                 );
 
             retval = g_variant_new("()");
+        } else if ("NewKey" == method_name)
+        {
+            new_key(params);
         }
 
         g_dbus_method_invocation_return_value(invoc, retval);
@@ -213,5 +224,42 @@ void NetCfgDCO::callback_method_call(GDBusConnection *conn,
         g_dbus_method_invocation_return_gerror(invoc, err);
         g_error_free(err);
     }
+}
+
+void NetCfgDCO::new_key(GVariant* params)
+{
+    GLibUtils::checkParams(__func__, params, "(us)", 2);
+
+    int key_slot = g_variant_get_uint32(g_variant_get_child_value(params, 0));
+
+    DcoKeyConfig dco_kc;
+    dco_kc.ParseFromString(base64->decode(g_variant_get_string(g_variant_get_child_value(params, 1), 0)));
+
+    auto copyKeyDirection = [](const DcoKeyConfig_KeyDirection& src, KoRekey::KeyDirection& dst)
+        {
+            dst.cipher_key = reinterpret_cast<const unsigned char*>(src.cipher_key().data());
+            dst.hmac_key = reinterpret_cast<const unsigned char*>(src.hmac_key().data());
+            std::memcpy(dst.nonce_tail, src.nonce_tail().data(), 12);
+            dst.cipher_key_size = src.cipher_key_size();
+            dst.hmac_key_size = src.hmac_key_size();
+        };
+
+    openvpn_io::post(io_context, [=, self=Ptr(this)]()
+                                 {
+                                     KoRekey::KeyConfig kc;
+                                     std::memset(&kc, 0, sizeof(kc));
+                                     kc.key_id = dco_kc.key_id();
+                                     kc.remote_peer_id = dco_kc.remote_peer_id();
+                                     kc.cipher_alg = dco_kc.cipher_alg();
+                                     kc.hmac_alg = dco_kc.hmac_alg();
+
+                                     copyKeyDirection(dco_kc.encrypt(),
+                                                      kc.encrypt);
+                                     copyKeyDirection(dco_kc.decrypt(),
+                                                      kc.decrypt);
+
+                                     self->genl->new_key(key_slot, &kc);
+                                 }
+        );
 }
 #endif  // ENABLE_OVPNDCO

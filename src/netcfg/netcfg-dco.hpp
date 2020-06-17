@@ -84,6 +84,8 @@ public:
     void callback_destructor() override;
 
 private:
+    void new_key(GVariant *params);
+
     struct PacketFrom {
         typedef std::unique_ptr<PacketFrom> SPtr;
         BufferAllocated buf;

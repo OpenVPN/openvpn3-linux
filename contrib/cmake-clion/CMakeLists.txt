@@ -45,6 +45,8 @@ if (${ENABLE_OVPNDCO})
     list(APPEND OPENVPN3_LINUX_LIBS ${LIBNL_LIBRARIES})
 endif()
 
+find_package(Protobuf REQUIRED)
+
 link_libraries(${OPENVPN3_LINUX_LIBS})
 
 if(NOT DEFINED OPENVPN3_LINUX_ROOT)
@@ -69,7 +71,10 @@ if (${ENABLE_OVPNDCO})
     )
     list(APPEND OPENVPN3_LINUX_INCLUDE_DIRS
         ${LIBNL_INCLUDE_DIR}
-        ${OPENVPN3_LINUX_ROOT}/ovpn-dco/include/uapi)
+        ${OPENVPN3_LINUX_ROOT}/ovpn-dco/include/uapi
+        ${CMAKE_BINARY_DIR}
+        ${CMAKE_BINARY_DIR}/src/netcfg # for protobuf generated files
+        )
 endif()
 include_directories(${OPENVPN3_LINUX_INCLUDE_DIRS})
 
@@ -102,9 +107,10 @@ add_executable(openvpn3-service-client
         src/log/proxy-log.hpp
         src/netcfg/proxy-netcfg.hpp
         src/netcfg/proxy-netcfg.cpp
+        src/netcfg/dco-keyconfig.proto
         )
-
-target_link_libraries(openvpn3-service-client lz4)
+protobuf_generate(TARGET openvpn3-service-client)
+target_link_libraries(openvpn3-service-client lz4 ${PROTOBUF_LIBRARIES})
 
 add_executable(openvpn3-service-configmgr
         src/configmgr/openvpn3-service-configmgr.cpp
@@ -176,10 +182,13 @@ add_executable(openvpn3-service-netcfg
         src/common/configfileparser.cpp
         src/log/core-dbus-logbase.hpp
         src/log/dbus-log.hpp
-        src/netcfg/netcfg-changeevent.cpp)
+        src/netcfg/netcfg-changeevent.cpp
+        src/netcfg/dco-keyconfig.proto
+        )
 
 find_library(CAPNG cap-ng)
-target_link_libraries(openvpn3-service-netcfg ${CAPNG})
+protobuf_generate(TARGET openvpn3-service-netcfg)
+target_link_libraries(openvpn3-service-netcfg ${CAPNG} ${PROTOBUF_LIBRARIES})
 
 add_executable(openvpn3-service-logger
         src/log/openvpn3-service-logger.cpp
@@ -245,7 +254,9 @@ add_executable(cli-netcfg
         src/common/utils.cpp
         src/log/core-dbus-logbase.hpp
         src/log/dbus-log.hpp
+        src/netcfg/dco-keyconfig.proto
         )
-target_link_libraries(cli-netcfg lz4)
+target_link_libraries(cli-netcfg lz4 ${PROTOBUF_LIBRARIES})
+protobuf_generate(TARGET cli-netcfg)
 
 add_subdirectory(addons/aws)
