@@ -328,12 +328,19 @@ public:
                                        "Lost link to device interface");
         }
 
-        if (!dco)
+        try
         {
-            dco.reset(device->EnableDCO(transport_fd, dev_name));
+            if (!dco)
+            {
+                dco.reset(device->EnableDCO(transport_fd, dev_name));
+            }
+            return dco->GetPipeFD();
         }
-
-        return dco->GetPipeFD();
+        catch(const std::exception& e)
+        {
+            signal->LogError(e.what());
+            return -1;
+        }
     }
 
     virtual void tun_builder_dco_new_peer(const std::string& local_ip,

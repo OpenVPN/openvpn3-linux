@@ -30,7 +30,7 @@
 #include "dbus/core.hpp"
 #include "netcfg-signals.hpp"
 
-class NetCfgDCO : public DBusObject, public RC<thread_unsafe_refcount>
+class NetCfgDCO : public DBusObject, public RC<thread_safe_refcount>
 {
 public:
     typedef RCPtr<NetCfgDCO> Ptr;

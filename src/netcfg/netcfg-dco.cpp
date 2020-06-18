@@ -62,11 +62,29 @@ NetCfgDCO::NetCfgDCO(GDBusConnection *dbuscon, const std::string& objpath,
     socketpair(AF_UNIX, SOCK_DGRAM, 0, fds);
 
     std::ostringstream os;
-    TunNetlink::iface_new(os, dev_name, "ovpn-dco");
+    if (TunNetlink::iface_new(os, dev_name, "ovpn-dco") != 0)
+    {
+        throw NetCfgException("Error creating ovpn-dco device: " + os.str());
+    }
 
     pipe.reset(new openvpn_io::posix::stream_descriptor(io_context, fds[1]));
 
     asio_work.reset(new AsioWork(io_context));
+
+    try
+    {
+        genl.reset(new GeNLImpl(io_context,
+                                if_nametoindex(dev_name.c_str()),
+                                this)
+                   );
+    }
+    catch (const std::exception& ex)
+    {
+        std::string err{"Error initializing GeNL: " + std::string{ex.what()}};
+        signal.LogError(err);
+        teardown();
+        throw NetCfgException(err);
+    }
 
     th.reset(new std::thread([self=Ptr(this)]()
                              {
@@ -74,10 +92,6 @@ NetCfgDCO::NetCfgDCO(GDBusConnection *dbuscon, const std::string& objpath,
                              }
                             )
         );
-
-    genl.reset(new GeNLImpl(io_context,
-                            if_nametoindex(dev_name.c_str()),
-                            this));
 
     openvpn_io::post(io_context, [transport_fd, self=Ptr(this)]()
                                  {
@@ -91,15 +105,30 @@ void NetCfgDCO::teardown()
 {
     ::close(fds[0]); // fds[1] will be closed by pipe dctor
 
-    genl->stop();
-    pipe->close();
-    asio_work.reset();
+    if (genl)
+    {
+        genl->stop();
+    }
+
+    if (pipe)
+    {
+        pipe->close();
+    }
+
+    if (asio_work)
+    {
+        asio_work.reset();
+    }
+
     io_context.stop();
 
     std::ostringstream os;
     TunNetlink::iface_del(os, dev_name);
 
-    th->join();
+    if (th && th->joinable())
+    {
+        th->join();
+    }
 }
 
 void NetCfgDCO::queue_read_pipe(PacketFrom *pkt)
@@ -129,6 +158,7 @@ void NetCfgDCO::callback_destructor()
 NetCfgDCO::~NetCfgDCO()
 {
 #ifdef OPENVPN_DEBUG
+    // this can be called from worker thread
     signal.Debug("NetCfgDCO::~NetCfgDCO");
 #endif
 }
