@@ -25,19 +25,11 @@
 
 #pragma once
 
-#include "config.h"
-#ifdef HAVE_CONFIG_VERSION_H
-#include "config-version.h"
-#endif
-
-#ifndef CONFIGURE_GIT_REVISION
-constexpr char package_version[] = PACKAGE_GUIVERSION;
-#else
-constexpr char package_version[] = "git:" CONFIGURE_GIT_REVISION CONFIGURE_GIT_FLAGS;
-#endif
+const char * package_version();
 
 void drop_root();
 std::string get_version(std::string component);
+const std::string get_guiversion();
 int stop_handler(void *loop);
 void set_console_echo(bool echo);
 

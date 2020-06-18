@@ -1069,11 +1069,7 @@ private:
                                       ProfileMerge::FOLLOW_NONE,
                                       ProfileParseLimits::MAX_LINE_SIZE,
                                       ProfileParseLimits::MAX_PROFILE_SIZE);
-#ifdef CONFIGURE_GIT_REVISION
-            vpnconfig.guiVersion = openvpn::platform_string(PACKAGE_NAME, "git:" CONFIGURE_GIT_REVISION CONFIGURE_GIT_FLAGS);
-#else
-            vpnconfig.guiVersion = openvpn::platform_string(PACKAGE_NAME, PACKAGE_GUIVERSION);
-#endif
+            vpnconfig.guiVersion = get_guiversion();
             vpnconfig.info = true;
             vpnconfig.content = pm.profile_content();
             set_overrides(overrides);

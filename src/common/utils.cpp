@@ -32,10 +32,27 @@
 
 #include <glib.h>
 
+#include "config.h"
+#ifdef HAVE_CONFIG_VERSION_H
+#include "config-version.h"
+#endif
+
 #include "utils.hpp"
 
 #include <openvpn/legal/copyright.hpp>
 #include <openvpn/common/platform_string.hpp>
+
+
+#ifndef CONFIGURE_GIT_REVISION
+constexpr char package_version_str[] = PACKAGE_GUIVERSION;
+#else
+constexpr char package_version_str[] = "git:" CONFIGURE_GIT_REVISION CONFIGURE_GIT_FLAGS;
+#endif
+
+const char * package_version()
+{
+    return package_version_str;
+}
 
 void drop_root()
 {
@@ -108,7 +125,7 @@ std::string get_version(std::string component)
 {
     std::stringstream ver;
 
-    ver << PACKAGE_NAME << " " << package_version;
+    ver << PACKAGE_NAME << " " << package_version_str;
 
     //  Simplistic basename() approach, extracting just the filename
     //  of the binary from argv[0]
@@ -128,6 +145,15 @@ std::string get_version(std::string component)
     return ver.str();
 }
 
+
+const std::string get_guiversion()
+{
+#ifdef CONFIGURE_GIT_REVISION
+    return openvpn::platform_string(PACKAGE_NAME, "git:" CONFIGURE_GIT_REVISION CONFIGURE_GIT_FLAGS);
+#else
+    return openvpn::platform_string(PACKAGE_NAME, PACKAGE_GUIVERSION);
+#endif
+}
 
 /**
  *  GLib2 interrupt/signal handler.  This is used to gracefully shutdown

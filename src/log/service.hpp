@@ -375,7 +375,7 @@ public:
 
             if ("version" == property_name)
             {
-                return g_variant_new_string(package_version);
+                return g_variant_new_string(package_version());
             }
             else if ("log_level" == property_name)
             {

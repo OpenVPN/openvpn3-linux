@@ -25,9 +25,6 @@
  */
 
 #include "config.h"
-#ifdef HAVE_CONFIG_VERSION_H
-#include "config-version.h"
-#endif
 
 #include <iostream>
 

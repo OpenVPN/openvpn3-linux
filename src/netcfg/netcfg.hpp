@@ -412,7 +412,7 @@ public:
             }
             else if ("version" == property_name)
             {
-                return g_variant_new_string(package_version);
+                return g_variant_new_string(package_version());
             }
         }
         catch (...)

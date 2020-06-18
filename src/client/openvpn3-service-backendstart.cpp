@@ -223,7 +223,7 @@ public:
 
         if ("version" == property_name)
         {
-            ret = g_variant_new_string(package_version);
+            ret = g_variant_new_string(package_version());
         }
         else
         {

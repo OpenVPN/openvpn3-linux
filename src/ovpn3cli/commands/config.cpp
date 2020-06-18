@@ -24,9 +24,6 @@
  */
 
 #include "config.h"
-#ifdef HAVE_CONFIG_VERSION_H
-#include "config-version.h"
-#endif
 
 #define USE_TUN_BUILDER
 #include <client/ovpncli.cpp>
