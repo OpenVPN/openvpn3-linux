@@ -165,6 +165,8 @@ public:
 
     ~BackendClientObject()
     {
+        if (client_thread && client_thread->joinable())
+            client_thread->join();
         CoreVPNClient::uninit_process();
     }
 
