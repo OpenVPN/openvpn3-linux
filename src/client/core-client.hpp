@@ -396,6 +396,14 @@ private:
             failed_signal_sent = true;
             signal->LogCritical("Proxy " + ev.info);
         }
+        else if ("CLIENT_HALT" == ev.name)
+        {
+            signal->LogCritical("Client Halt: " + ev.info);
+            signal->StatusChange(StatusMajor::CONNECTION,
+                                 StatusMinor::CONN_FAILED,
+                                 "Client disconnected by server");
+            run_status = StatusMinor::CONN_FAILED;
+        }
         else if (!failed_signal_sent && "DISCONNECTED" == ev.name)
         {
             if (StatusMinor::CONN_AUTH_FAILED != run_status
