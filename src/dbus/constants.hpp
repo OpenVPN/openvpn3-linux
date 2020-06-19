@@ -109,8 +109,8 @@ enum class  StatusMinor : std::uint16_t {
         CONN_CONNECTED,              /**< Client have connected successfully */
         CONN_DISCONNECTING,          /**< Client started disconnect process */
         CONN_DISCONNECTED,           /**< Client completed disconnecting */
-        CONN_FAILED,                 /**< Client failed to get a connection */
-        CONN_AUTH_FAILED,            /**< Client failed to get a connection */
+        CONN_FAILED,                 /**< Client connection failed, disconnected */
+        CONN_AUTH_FAILED,            /**< Client authentication failed, disconnected */
         CONN_RECONNECTING,           /**< Client needed to reconnect */
         CONN_PAUSING,                /**< Client started to pause the connection */
         CONN_PAUSED,                 /**< Client connection is paused */
