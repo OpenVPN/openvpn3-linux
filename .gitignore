@@ -105,6 +105,7 @@ src/policy/net.openvpn.v3.client.conf
 src/policy/net.openvpn.v3.configuration.conf
 src/policy/net.openvpn.v3.log.conf
 src/policy/net.openvpn.v3.netcfg.conf
+src/policy/net.openvpn.v3.rules
 src/policy/net.openvpn.v3.sessions.conf
 src/python/openvpn3/constants.py
 src/python/openvpn3/gen-python-constants

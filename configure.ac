@@ -361,6 +361,18 @@ AC_SUBST([dbus_system_servicedir])
 
 
 dnl
+dnl  Polkit - Policy rules
+dnl
+AC_ARG_VAR([POLKIT_RULES_DIR], [Polkit rules directory (default: ${datarootdir}/polkit-1/rules.d )])
+if test -n "${POLKIT_RULES_DIR}"; then
+   polkit_rulesdir="${POLKIT_RULES_DIR}"
+else
+   polkit_rulesdir="${datarootdir}/polkit-1/rules.d"
+fi
+AC_SUBST([polkit_rulesdir])
+
+
+dnl
 dnl  SELinux support
 dnl
 dnl  By default, the SELinux policy will be built if the needed

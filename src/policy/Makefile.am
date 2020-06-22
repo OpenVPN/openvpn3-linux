@@ -21,10 +21,14 @@
 	$(AM_V_GEN)sed -e 's|\@OPENVPN_USERNAME\@|$(OPENVPN_USERNAME)|' \
 		$< > $@.tmp && mv $@.tmp $@
 
+%.rules : %.rules.in Makefile
+	$(AM_V_GEN)sed -e 's|\@OPENVPN_USERNAME\@|$(OPENVPN_USERNAME)|' \
+		$< > $@.tmp && mv $@.tmp $@
+
 MAINTAINERCLEANFILES = \
 	Makefile.in
 
-POLICY_FILES = \
+DBUS_POLICY_FILES = \
 	net.openvpn.v3.conf \
 	net.openvpn.v3.client.conf \
 	net.openvpn.v3.configuration.conf \
@@ -32,11 +36,17 @@ POLICY_FILES = \
 	net.openvpn.v3.netcfg.conf \
 	net.openvpn.v3.sessions.conf
 
-EXTRA_DIST = $(foreach var,$(POLICY_FILES),$(var).in)
+POLKIT_POLICY_FILES = \
+	net.openvpn.v3.rules
 
-dbus_system_policy_DATA = $(POLICY_FILES)
+EXTRA_DIST = $(foreach var,$(DBUS_POLICY_FILES),$(var).in) \
+	$(foreach var,$(POLKIT_POLICY_FILES), $(var).in)
+
+dbus_system_policy_DATA = $(DBUS_POLICY_FILES)
+
+polkit_rules_DATA = $(POLKIT_POLICY_FILES)
 
 dist_noinst_SCRIPTS = syntax-check.sh
 
-CLEANFILES = $(dbus_system_policy_DATA) *~
+CLEANFILES = $(dbus_system_policy_DATA) $(polkit_rules_DATA) *~
 
