@@ -53,6 +53,7 @@ NetCfgDCO::NetCfgDCO(GDBusConnection *dbuscon, const std::string& objpath,
                << "          <arg type='u' direction='in' name='key_slot'/>"
                << "          <arg type='s' direction='in' name='key_config'/>"
                << "        </method>"
+               << "        <method name='SwapKeys'/>"
                << "    </interface>"
                << "</node>";
     ParseIntrospectionXML(introspect);
@@ -229,6 +230,9 @@ void NetCfgDCO::callback_method_call(GDBusConnection *conn,
         } else if ("NewKey" == method_name)
         {
             new_key(params);
+        } else if ("SwapKeys" == method_name)
+        {
+            swap_keys();
         }
 
         g_dbus_method_invocation_return_value(invoc, retval);
@@ -291,5 +295,13 @@ void NetCfgDCO::new_key(GVariant* params)
                                      self->genl->new_key(key_slot, &kc);
                                  }
         );
+}
+
+void NetCfgDCO::swap_keys()
+{
+    openvpn_io::post(io_context, [self=Ptr(this)]()
+    {
+        self->genl->swap_keys();
+    });
 }
 #endif  // ENABLE_OVPNDCO

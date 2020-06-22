@@ -299,12 +299,19 @@ namespace NetCfgProxy
         /**
          * Pass crypto configuration into kernel module.
          *
-         * @param remote_peer_id peer id
+         * @param key_slot  key slot (OVPN_KEY_SLOT_PRIMARY or
+         *                  OVPN_KEY_SLOT_SECONDARY)
          * @param kc        KeyConfig struct, which contains enc/dec keys,
          *                  cipher algorithm, cipher key size, nonces (for gcm),
          *                  hmac algorithm, hmacs and hmac key size (for cbc)
          */
         void NewKey(unsigned int key_slot, const KoRekey::KeyConfig* kc);
+
+        /**
+         * Swaps primary key with secondary key
+         *
+         */
+        void SwapKeys();
     };
 #endif  // ENABLE_OVPNDCO
 } // namespace NetCfgProxy

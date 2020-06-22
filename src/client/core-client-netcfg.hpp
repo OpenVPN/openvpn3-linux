@@ -381,6 +381,16 @@ public:
         device->AddNetworks(networks);
         device->EstablishDCO();
     }
+
+    void tun_builder_dco_swap_keys() override
+    {
+        if (!dco)
+        {
+            NetCfgProxyException(__func__, "Lost link to DCO device");
+        }
+
+        dco->SwapKeys();
+    }
 #endif  // ENABLE_OVPNDCO
 
 protected:

@@ -86,6 +86,8 @@ public:
 private:
     void new_key(GVariant *params);
 
+    void swap_keys();
+
     struct PacketFrom {
         typedef std::unique_ptr<PacketFrom> SPtr;
         BufferAllocated buf;

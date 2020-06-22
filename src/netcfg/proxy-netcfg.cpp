@@ -618,5 +618,11 @@ namespace NetCfgProxy
 
         Call("NewKey", g_variant_new("(us)", key_slot, str.c_str()));
     }
+
+    void DCO::SwapKeys()
+    {
+        GVariant *res = Call("SwapKeys");
+        g_variant_unref(res);
+    }
 #endif  // ENABLE_OVPNDCO
 } // namespace NetCfgProxy

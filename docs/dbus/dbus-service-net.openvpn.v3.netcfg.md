@@ -407,6 +407,7 @@ interface net.openvpn.v3.netcfg {
              in  s enc_nonce,
              in  s dec_key,
              in  s dec_nonce);
+      SwapKeys();
   };
 };
 ```
@@ -444,5 +445,11 @@ Pass a new symmetric encryption key, NONCE and HMAC values used for the data cha
 |-----------|---------------------|--------------|--------------------------------------------------------------------------|
 | In        | key_slot            | unsigned int | key slot (OVPN_KEY_SLOT_PRIMARY or OVPN_KEY_SLOT_SECONDARY)              |
 | In        | key_config          | string       | base64-encoded DcoKeyConfig object                                          |
+
+### Method: `net.openvpn.v3.netcfg.SwapKeys`
+
+Swaps the primary and secondary encryption keys used by the data channel for the tunneled network traffic. This call triggers
+the DCO kernel module to perform this swap in kernel memory. This is used to rotate and add new symmetric encryption keys
+during the lifetime of a VPN session. See the OpenVPN documentation related to key renegotiation options for more details.
 
 [^1]: Unix file descriptors that are passed are not in the D-Bus method signature.
