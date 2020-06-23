@@ -29,6 +29,8 @@ SELINUX_POLICIES = openvpn3.pp.bz2
 
 MAINTAINERCLEANFILES = Makefile Makefile.in $(SELINUX_POLICIES)
 
+CLEANFILES = $(SELINUX_POLICIES)
+
 EXTRA_DIST = \
 	openvpn3.te \
 	openvpn3.if \
@@ -42,4 +44,7 @@ install-data-local : $(SELINUX_POLICIES)
 	$(INSTALL_DATA) $(SELINUX_POLICIES) "$(DESTDIR)$(prefix)/share/selinux/packages"
 
 clean-local :
-	-rm -f $(SELINUX_POLICIES)
+	-rm -rf tmp/
+
+uninstall-local :
+	@for f in `echo $(SELINUX_POLICIES)`; do rm -vf "$(DESTDIR)$(prefix)/share/selinux/packages/$$f" ; done
