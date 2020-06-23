@@ -232,6 +232,7 @@ noinst_PROGRAMS += \
 	src/tests/dbus/manager-lookupconfigname \
 	src/tests/dbus/netcfg-changeevent-selftest \
 	src/tests/dbus/netcfg-proxy-unit \
+	src/tests/dbus/netcfg-systemd-resolved-basic \
 	src/tests/dbus/signal-listener \
 	src/tests/dbus/statusevent-selftest \
 	src/tests/dbus/proc-wait-for \
@@ -371,6 +372,14 @@ src_tests_dbus_netcfg_changeevent_selftest_SOURCES = \
 src_tests_dbus_netcfg_proxy_unit_SOURCES = \
 	src/tests/dbus/netcfg-proxy-unit.cpp \
 	src/netcfg/proxy-netcfg.cpp
+
+src_tests_dbus_netcfg_systemd_resolved_basic_SOURCES = \
+	src/tests/dbus/netcfg-systemd-resolved-basic.cpp \
+	$(DBUS_SOURCES) \
+	src/common/cmdargparser.cpp \
+	src/common/utils.cpp \
+	src/netcfg/dns/proxy-systemd-resolved.cpp \
+	src/netcfg/dns/proxy-systemd-resolved.hpp
 
 src_tests_dbus_signal_listener_SOURCES = \
 	src/tests/dbus/signal-listener.cpp \
