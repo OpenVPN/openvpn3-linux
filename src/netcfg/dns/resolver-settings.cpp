@@ -140,14 +140,14 @@ namespace DNS
         std::string params_type(g_variant_get_type_string(params));
         if ("(as)" != params_type)
         {
-            throw NetCfgException("[AddResolveServers] Invalid D-Bus data type");
+            throw NetCfgException("[AddNameServers] Invalid D-Bus data type");
         }
 
         GVariantIter *srvlist = nullptr;
         g_variant_get(params, "(as)", &srvlist);
         if (nullptr == srvlist)
         {
-            throw NetCfgException("[AddResolveServers] Failed to extract parameters");
+            throw NetCfgException("[AddNameServers] Failed to extract parameters");
         }
 
         GVariant *srv = nullptr;
