@@ -40,6 +40,7 @@
 #include "netcfg-options.hpp"
 #include "netcfg/dns/settings-manager.hpp"
 #include "netcfg/dns/resolvconf-file.hpp"
+#include "netcfg/dns/systemd-resolved.hpp"
 
 using namespace NetCfg;
 
@@ -181,15 +182,6 @@ int netcfg_main(ParsedArgs args)
         idle_wait_min = std::atoi(args.GetValue("idle-exit", 0).c_str());
     }
 
-    DNS::SettingsManager::Ptr resolvmgr = nullptr;
-    DNS::ResolvConfFile::Ptr resolvconf = nullptr;
-    if (args.Present("resolv-conf"))
-    {
-        std::string rsc =  args.GetValue("resolv-conf", 0);
-        resolvconf = new DNS::ResolvConfFile(rsc, rsc + ".ovpn3bak");
-        resolvmgr = new DNS::SettingsManager(resolvconf);
-    }
-
     LogServiceProxy::Ptr logservice;
     int exit_code = 0;
     try
@@ -213,6 +205,42 @@ int netcfg_main(ParsedArgs args)
         corelog.SetLogLevel(log_level);
 
         std::cout << get_version(args.GetArgv0()) << std::endl;
+
+        //
+        // DNS resolver integrations
+        //
+
+        if (args.Present("resolv-conf") && args.Present("systemd-resolved"))
+        {
+            throw CommandException("openvpn3-service-netcfg",
+                                   "It is not possible to use both --resolv-conf"
+                                   " and --systemd-resolved at the same time.");
+        }
+
+        DNS::ResolverBackendInterface::Ptr resolver_be = nullptr;
+
+        DNS::ResolvConfFile::Ptr resolvconf = nullptr;
+        if (args.Present("resolv-conf"))
+        {
+            std::string rsc =  args.GetValue("resolv-conf", 0);
+
+            // We need to preserve a ResolvConfFile pointer to be able
+            // to access the DNS::ResolvConfFile::Restore() method
+            // when shutting down.
+            resolvconf = new DNS::ResolvConfFile(rsc, rsc + ".ovpn3bak");
+            resolver_be = resolvconf;
+        }
+
+        if (args.Present("systemd-resolved"))
+        {
+            resolver_be = new DNS::SystemdResolved(dbus.GetConnection());
+        }
+
+        DNS::SettingsManager::Ptr resolvmgr = nullptr;
+        if (resolver_be)
+        {
+            resolvmgr = new DNS::SettingsManager(resolver_be);
+        }
 
         NetworkCfgService netcfgsrv(dbus.GetConnection(), resolvmgr,
                                     logwr.get(), netcfgopts);
@@ -262,29 +290,29 @@ int netcfg_main(ParsedArgs args)
             idle_exit->Disable();
             idle_exit->Join();
         }
+
+        // Explicitly restore the resolv.conf file, if configured
+        try
+        {
+            if (resolvconf)
+            {
+                resolvconf->Restore();
+            }
+        }
+        catch (std::exception& e2)
+        {
+            std::cout << "** ERROR ** Failed restoring resolv.conf: "
+                      << e2.what() << std::endl;
+            if (0 == exit_code)
+            {
+                exit_code = 4;
+            }
+        }
     }
     catch (std::exception& excp)
     {
         std::cout << "FATAL ERROR: " << excp.what() << std::endl;
         exit_code = 3;
-    }
-
-    // Explicitly restore the resolv.conf file, if configured
-    try
-    {
-        if (resolvconf)
-        {
-            resolvconf->Restore();
-        }
-    }
-    catch (std::exception& e2)
-    {
-        std::cout << "** ERROR ** Failed restoring resolv.conf: "
-                  << e2.what() << std::endl;
-        if (0 == exit_code)
-        {
-            exit_code = 4;
-        }
     }
 
     return exit_code;
@@ -308,6 +336,8 @@ int main(int argc, char **argv)
                         "0 disables it (Default: 5 minutes)");
     argparser.AddOption("resolv-conf", "FILE", true,
                         "Use file based resolv.conf management, based using FILE");
+    argparser.AddOption("systemd-resolved", 0,
+                        "Use systemd-resolved for configuring DNS resolver settings");
     argparser.AddOption("redirect-method", "METHOD", true,
                         "Method to use if --redirect-gateway is in use for VPN server redirect. "
                         "Methods: host-route (default), bind-device, none");

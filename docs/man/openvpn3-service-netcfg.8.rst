@@ -72,13 +72,6 @@ OPTIONS
                 being idle, it means no active virtual network interfaces is
                 being managed by this service.
 
---resolv-conf RESOLV-CONF-FILE
-                This enables DNS configuration, where it will take ownership
-                of *RESOLV-CONF-FILE* and update it as needed, with both DNS
-                servers and search domains.  It will also preserve the contents
-                of it as well as having a backup file which will be restored
-                when no DNS settings from VPN tunnels are needed.
-
 --redirect-method METHOD
                 This defines how to handle route configurations which involves
                 changing the default gateway.  This primarily controls how
@@ -110,6 +103,33 @@ OPTIONS
                 by itself or in combination with any ``--redirect-method``
                 settings, unless ``openvpn3-service-client`` is started with
                 ``--disable-protect-socket``.
+
+
+DNS Resolver Configuration
+--------------------------
+The ``openvpn3-service-netcfg`` service is capable of configuring the DNS
+resolver based on what the running VPN sessions have been pushed from the
+OpenVPN servers.  The OpenVPN 3 Network Configuration service supports
+multiple approaches, but only one of them can be enabled.
+
+--resolv-conf RESOLV-CONF-FILE
+         This method will modify the provided *RESOLV-CONF-FILE* directly.
+         The file will typically point at :code:`/etc/resolv.conf`.  But
+         beware that this approach may not be fail-safe in all scenarios
+         and other network service may overwrite changes OpenVPN has
+         applied or OpenVPN may overwrite changes outside of its control.
+
+         OpenVPN will keep a backup file when it has modified it and will
+         automatically restore the content when no running OpenVPN sessions
+         has received any DNS configurations.
+
+--systemd-resolved
+         This will enable integration with the `systemd-resolved`\(8)
+         service.  The system must be preconfigured to use this service
+         for OpenVPN's changes to fully take effect.  This is the
+         preferred way, as the DNS resolver settings are fully managed
+         by `systemd-resolved`\(8).  This approach will currently
+         enable split-DNS by default.
 
 
 SEE ALSO
