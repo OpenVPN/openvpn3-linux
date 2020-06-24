@@ -29,7 +29,8 @@ commands have their own set of options.
 COMMANDS
 ========
 
-version           - Show OpenVPN 3 version information
+``version``
+    Show OpenVPN 3 version information
 
 Configuration management
 ------------------------

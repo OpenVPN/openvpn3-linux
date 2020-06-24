@@ -36,7 +36,7 @@ OPTIONS
 --unsubscribe DBUS-UNIQUE-NAME
                 This can forcefully unsubscribe a service from receiving
                 NetworkChange signals.  The argument must be the unique
-                D-Bus name (typically **:1.xxxx** where **x** denotes an
+                D-Bus name (typically :code:`:1.xxxx` where **x** denotes an
                 integer).
 
 SEE ALSO

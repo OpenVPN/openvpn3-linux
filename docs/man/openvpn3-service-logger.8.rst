@@ -79,8 +79,8 @@ OPTIONS
                 from specific VPN sessions.  This extends the
                 ``--session-manager`` subscription to also include log events
                 it would proxy as well.  This will only happen for VPN sessions
-                which has the boolean *receive_log_events* flag set in the
-                D-Bus session object.
+                which has the boolean :code:`receive_log_events` flag set in
+                the D-Bus session object.
 
 --vpn-backend
                 This is used when running as a stand-alone program.  This will
@@ -98,24 +98,33 @@ OPTIONS
                 are *0* to *6*.  The higher value, the more verbose the log
                 events will be.  Log level *6* will retrieve all debug events.
 
+                Sets the system wide log verbosity for log events being logged
+                to file or any other log destination
+                ``openvpn3-service-logger`` is configured to use.
+                The default is :code:`3`.  Valid values are :code:`0` to
+                :code:`6`.  Higher log levels results in more verbose logs and
+                log level :code:`6` will contain all debug log events.
+                This log-level can setting can be modified at runtime via
+                ``openvpn3-admin log-service`` if running with ``--service``.
+
 --log-file FILE
                 This will write all log events to *FILE* instead of the
                 terminal.
 
 --syslog
                 This will make all log events be sent to the generic system
-                logger via the ``syslog(3)`` function.
+                logger via the ``syslog``\(3) function.
 
 --syslog-facility LOG-FACILITY
                 To be used together with --syslog.  The default *LOG-FACILITY*
                 is *LOG_DAEMON*.  For other valid facilities, see the
-                *facility* section in ``syslog(3)``.
+                *facility* section in ``syslog``\(3).
 
 --service
                 This will start ``openvpn3-service-logger`` as a D-Bus service,
                 which log senders can attach their log streams to.  In this
                 mode, further adjustments to the running behaviour can be
-                managed via ``openvpn3 log-service``.
+                managed via ``openvpn3-admin log-service``.
 
 --service-log-dbus-details
                 Each log event contains some more detailed meta-data of the
@@ -138,12 +147,12 @@ OPTIONS
                 preserve the log settings across process restarts, for example
                 if the ``--idle-exit`` kicks in or the host is rebooted.  The
                 contents of this file is not expected to be modified directly
-                but rather use the ``openvpn3 log-service`` as the configuration
-                tool.
+                but rather use the ``openvpn3-admin log-service`` as the
+                configuration tool.
 
 SEE ALSO
 ========
 
 ``openvpn3``\(1)
-``openvpn3-log-service``\(1)
+``openvpn3-admin-log-service``\(1)
 ``syslog``\(3)

@@ -57,17 +57,17 @@ setting up these various options without any direct user interaction.
 FILE FORMAT
 ===========
 The file format is based on JSON formatting and will carry the
-*.autoload* extension instead of *.ovpn* or *.conf*.  The *.autoload*
-file is to be located in the same directory as the main configuration
-file.  The base part of filename must be identical with the
-*.ovpn*/*.conf* file.  Example: If the configuration profile is named
-*vpn-client.conf*, the *.autoload* file must be named
-*vpn-client.autoload*.
+:code:`.autoload` extension instead of :code:`.ovpn` or :code:`.conf`.
+The :code:`.autoload` file must be located in the same directory as the
+main configuration file.  The base part of filename must be identical with the
+:code:`.ovpn`/:code:`.conf` file.  Example: If the configuration profile is
+named :code:`vpn-client.conf`, the :code:`.autoload` file must be named
+:code:`vpn-client.autoload`.
 
 Main section
 ~~~~~~~~~~~~~
 
-The basic layout of an *.autoload* file is like this:
+The basic layout of an :code:`.autoload` file is like this:
 
 ::
 
@@ -94,24 +94,23 @@ The basic layout of an *.autoload* file is like this:
 
 Attribute: autostart
 """"""""""""""""""""
-The *autostart* boolean declares if the configuration profile should be
+The :code:`autostart` boolean declares if the configuration profile should be
 started once it has been imported into the OpenVPN 3 Configuration Manager.
-(Default: ``false``)
+(Default: :code:`false`)
 
 Attribute: name
 """""""""""""""
 By default, all automatically imported configuration profiles will use the
-complete profile filename, including the *.conf* or *.ovpn* file extension.
-If this attribute is set, this string will be used for the profile name
-instead of the filename on the filesystem.  Beware that the configuration
+complete profile filename, including the :code:`.conf` or :code:`.ovpn` file
+extension.  If this attribute is set, this string will be used for the profile
+name instead of the filename on the filesystem.  Beware that the configuration
 manager will accept duplicate profile names.
 
 Section: acl
 ~~~~~~~~~~~~
 
-The *acl* section declares several Access Control Level parameters of
+The :code:`acl` section declares several Access Control Level parameters of
 the imported configuration profile.  Valid settings are:
-
 ::
 
     "acl": {
@@ -123,28 +122,28 @@ the imported configuration profile.  Valid settings are:
 Attribute acl:public
 """"""""""""""""""""
 
-The *public* element declares if this configuration profile is available
-for all users on the system or not.  (Default: ``false``)
+The :code:`public` element declares if this configuration profile is available
+for all users on the system or not.  (Default: :code:`false`)
 
 Attribute: acl:locked-down
 """"""""""""""""""""""""""
-By setting the *locked-down* element to ``true``, users granted access can
-only start new tunnels with this profile but cannot look look at the
-information stored in the configuration profile. (Default: ``false``)
+By setting the :code:`locked-down` element to :code:`true`, users granted
+access can only start new tunnels with this profile but cannot look look at
+the information stored in the configuration profile. (Default: :code:`false`)
 
 Attribute: acl:set-owner
 """"""""""""""""""""""""
 By default all processed configuration profiles will be owned by the user
 who runs **openvpn3-autoload**.  The root user on the system can re-assign
 the ownership of configuration profiles it imports, like when running this
-utility during the system boot.  By providing the "set-owner" element with
-the UID of the user who should own this configuration profile, the
+utility during the system boot.  By providing the :code:`set-owner` element
+with the UID of the user who should own this configuration profile, the
 ownership will be transferred.  This is a feature only available by root.
 
 
 Section: crypto
 ~~~~~~~~~~~~~~~
-The *crypto* section enables fine-tuning some of the configuration
+The :code:`crypto` section enables fine-tuning some of the configuration
 parameters related to the crypto layers of a VPN session.
 
 ::
@@ -159,7 +158,7 @@ parameters related to the crypto layers of a VPN session.
 
 Attribute: crypto:force-aes-cbc
 """""""""""""""""""""""""""""""
-The *force-aes-cbc* elements enforces the use of the AES-CBC cipher
+The :code:`force-aes-cbc` elements enforces the use of the AES-CBC cipher
 algorithm.  This is disabled by default, which allows the configuration
 profile to control the cipher, or can allow the server to change the
 cipher via the Negotiable Crypto Parameters protocol (NCP).
@@ -167,7 +166,7 @@ cipher via the Negotiable Crypto Parameters protocol (NCP).
 
 Sub-Section: crypto:tls-params
 """"""""""""""""""""""""""""""
-The *tls-params* sub-section further controls the TLS protocol parameters.
+The :code:`tls-params` sub-section further controls the TLS protocol parameters.
 
 ::
 
@@ -178,40 +177,40 @@ The *tls-params* sub-section further controls the TLS protocol parameters.
 
 Attribute: crypto:tls-params:cert-profile
 """"""""""""""""""""""""""""""""""""""""""
-The *cert-profile* declares the security level of the TLS channel.  Valid
+The :code:`cert-profile` declares the security level of the TLS channel.  Valid
 values are:
 
-``legacy``
+:code:`legacy`
     Allows minimum 1024 bits RSA keys with certificates signed with SHA1.
 
-``preferred``
+:code:`preferred`
     Allows minimum 2048 bits RSA keys with certificates signed with
     SHA256 or higher.
 
-``suiteb``
+:code:`suiteb`
     This follows the NSA Suite-B specification.
 
 Attribute: crypto:tls-params:min-version
 """"""""""""""""""""""""""""""""""""""""
-The *min-version* defines the minimum TLS version being accepted by the
+The :code:`min-version` defines the minimum TLS version being accepted by the
 client.  Valid values are:
 
-``disabled``
+:code:`disabled`
     No minimum version is defined nor required
 
-``default``
+:code:`default`
     Uses the default minimum version the SSL library defines
 
-``tls_1_0``
+:code:`tls_1_0`
     Requires at least TLSv1.0
 
-``tls_1_1``
+:code:`tls_1_1`
     Requires at least TLSv1.1
 
-``tls_1_2``
+:code:`tls_1_2`
     Requires at least TLSv1.2
 
-``tls_1_3``
+:code:`tls_1_3`
     Requires at least TLSv1.3
 
 
@@ -237,12 +236,13 @@ configuration file.
 Attribute: remote:protocol-override
 """""""""""""""""""""""""""""""""""
 This forces the VPN client to connect using the given protocol.  Valid
-values are *tcp* or *udp*.
+values are :code:`tcp` or :code:`udp`.
 
 Attribute remote:port-override
 """"""""""""""""""""""""""""""
 Port number to use instead of the port number defined in the VPN
-configuration profile.  It must be an integer between *0* and *65535*.
+configuration profile.  It must be an integer between :code:`0` and
+:code:`65535`.
 
 Attribute: remote:timeout
 """""""""""""""""""""""""
@@ -253,13 +253,13 @@ Attribute: remote:compression
 """""""""""""""""""""""""""""
 Controls how compression settings for the data channel.  Valid values are:
 
-``no``
+:code:`no`
     Compression is disabled
 
-``yes``
+:code:`yes`
     Compression is enabled in both directions
 
-``asym``
+:code:`asym`
     Compression is only enabled for traffic sent from the remote side to
     the local side.
 
@@ -302,7 +302,7 @@ a string with the password to use.
 Attribute: remote:proxy:allow-plain-text
 """"""""""""""""""""""""""""""""""""""""
 Boolean flag enabling or disabling the OpenVPN 3 client to transport
-the proxy username/password unencrypted.  Default: ``false``
+the proxy username/password unencrypted.  Default: :code:`false`
 
 
 Section: tunnel
@@ -323,19 +323,18 @@ the platform.
 
 Attribute: tunnel:ipv6
 """"""""""""""""""""""
-
 Enable or disable the IPv6 capability on the tunnel interface.  This
 can be a string which must contain one of these values:
 
-``yes``
+:code:`yes`
     IPv6 capability is enabled and will be configured if
     the server sends IPv6 configuration details
 
-``no``
+:code:`no`
     IPv6 capability is disabled and will not be configured,
     regardless of what the server provides of IPv6 configuration details
 
-``default``
+:code:`default`
     Make use of IPv6 if the platform supports it
 
 Attribute: tunnel:persist
@@ -343,30 +342,30 @@ Attribute: tunnel:persist
 Boolean flag which enables the persistent tunnel interface behaviour.  This
 is related to whether the tunnel interface will be torn down and
 re-established during re-connections or restarts of the VPN tunnel.
-If set to ``true``, the tunnel interface is preserved during such events.
+If set to :code:`true`, the tunnel interface is preserved during such events.
 
 Attribute: tunnel:dns-fallback
 """"""""""""""""""""""""""""""
 This makes the VPN client configure an additional fallback DNS
 server on the system.  Valid strings are:
 
-``google``
-    Configures the system to use 8.8.8.8 and 8.8.4.4 as fallback
-    DNS servers
+:code:`google`
+    Configures the system to use :code:`8.8.8.8` and :code:`8.8.4.4`
+    as fallback DNS servers
 
 Attribute: dns-setup-disabled
 """""""""""""""""""""""""""""
 Controls whether DNS configurations in the VPN configuration profile or
 DNS settings sent from the server will be applied on the system or not.
-(Default: ``false``)
+(Default: :code:`false`)
 
 
 Section: user-auth
 ~~~~~~~~~~~~~~~~~~
 This section is only important if the server uses user authentication
 methods other than certificate based authentication and this section is
-only used if the *autostart* attribute is set to ``true``.  This is used
-to automate the client connection as much as possible.
+only used if the :code:`autostart` attribute is set to :code:`true`.
+This is used to automate the client connection as much as possible.
 
 ::
 
@@ -381,9 +380,9 @@ to automate the client connection as much as possible.
 
 Attribute: user-auth:autologin
 """"""""""""""""""""""""""""""
-If set to ``true``, the client will not ask for username/password as it is
+If set to :code:`true`, the client will not ask for username/password as it is
 expected that the VPN configuration profile carries the needed settings
-providing the identity towards the server.  (Default: ``false``)
+providing the identity towards the server.  (Default: :code:`false`)
 
 Attribute: user-auth:username
 """""""""""""""""""""""""""""
@@ -403,7 +402,7 @@ Attribute: user-auth:dynamic_challenge
 The server might ask the client for a dynamic challenge.  If the expected
 response is static, the static response can be put here.  If the server
 expects an OTP token code or similarly dynamic changing input, the
-VPN configuration profile is not suitable for *autostart*.
+VPN configuration profile is not suitable for :code:`autostart`.
 
 
 SEE ALSO

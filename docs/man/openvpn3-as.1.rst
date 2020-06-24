@@ -29,19 +29,19 @@ OPTIONS
 -h, --help            show this help message and exit
 
 --autologin
-                      Download the auto-login profile (default: user-login
-                      profile).  The auto-login profile will not ask the
-                      user for credentials before connecting to the Access
-                      Server, but this feature may not be available for all
-                      user profiles.
+                      Download the auto-login profile (default:
+                      ``user-login`` profile).  The auto-login profile will
+                      not ask the user for credentials before connecting
+                      to the Access Server, but this feature may not be
+                      available for all user profiles.
 
 --impersistent
                       Do not import the configuration profile as a persistent
-                      profile (default: persistent)
+                      profile (default: ``persistent``)
 
 --name CONFIG-NAME
                       Override the automatically generated profile name
-                      (default: AS:$servername)
+                      (default: :code:`AS:$servername`)
 
 --username USERNAME
                       Username to use for OpenVPN Access Server login

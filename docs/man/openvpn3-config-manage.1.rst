@@ -48,61 +48,62 @@ OPTIONS
 
 --port-override PORT
                         Override the remote server port to connect against.
-                        Valid values: 1-65535.
+                        Valid values: :code:`1` to :code:`65535`.
 
 --proto-override PROTO
                         Override the connection protocol.  Valid values are
-                        ``tcp`` and ``udp``.
+                        :code:`tcp` and :code:`udp`.
 
 --ipv6 ARG
                         Sets the IPv6 connect policy for the client.  Valid
-                        values are ``yes``, ``no`` and ``default``
+                        values are :code:`yes`, :code:`no` and :code:`default`
 
 --persist-tun BOOL
-                        Overrides the --persist-tun argument in the
+                        Overrides the ``--persist-tun`` argument in the
                         configuration profile.  If set to true, the tun
                         adapter will persist during the reconnect.  If false,
                         the tun adapter will be torn down before reconnects.
-                        Valid values are: ``true``, ``false``
+                        Valid values are: :code:`true`, :code:`false`
 
 --dns-fallback-google BOOL
                         If set to true, the DNS resolver settings will include
-                        Google DNS servers.  Valid values are: ``true``,
-                        ``false``
+                        Google DNS servers.  Valid values are: :code:`true`,
+                        :code:`false`
 
 
 --dns-setup-disabled BOOL
                         If set to true, DNS settings will not be configured
-                        on the system.  Valid values are: ``true``, ``false``
+                        on the system.  Valid values are: :code:`true`,
+                        :code:`false`
 
 
 --dns-sync-lookup BOOL
                         If set to true, DNS lookups will happen synchronously.
-                        Valid values are: ``true``, ``false``
+                        Valid values are: :code:`true`, :code:`false`
 
 --auth-fail-retry BOOL
                         If set to true, the client will try to reconnect instead
                         of disconnecting if authentication fails.  Valid values
-                        are: ``true``, ``false``
+                        are: :code:`true`, :code:`false`
 
 --allow-compression ARG
                         This controls whether the client wants to allow
                         compression on traffic between the client to the server.
                         Valid argument values:
 
-                        * *no*:
+                        :code:`no`:
                           Do not compress at all
 
-                        * *asym*:
+                        :code:`asym`:
                           Only allow server to send compressed data
 
-                        * *yes*:
+                        :code:`yes`:
                           Both client and server can use compression
 
 --force-cipher-aes-cbc BOOL
                         Override ``--cipher`` and disable cipher negotiation
                         and force AES-CBC cipher to be used.  Valid values
-                        are: ``true``, ``false``
+                        are: :code:`true`, :code:`false`
 
 --tls-version-min ARG
                         Sets the minimum TLS version for the control channel.
@@ -110,16 +111,16 @@ OPTIONS
                         needs to support this restriction on both server and
                         client.  Valid argument values are:
 
-                        * *tls_1_0*:
+                        :code:`tls_1_0`:
                           Enforce minimum TLSv1.0
 
-                        * *tls_1_1*:
+                        :code:`tls_1_1`:
                           Enforce minimum TLSv1.1
 
-                        * *tls_1_2*:
+                        :code:`tls_1_2`:
                           Enforce minimum TLSv1.2
 
-                        * *tls_1_3*:
+                        :code:`tls_1_3`:
                           Enforce minimum TLSv1.3.  This is currently only
                           supported by OpenSSL 1.1.1.
 
@@ -128,15 +129,15 @@ OPTIONS
                         This sets the acceptable certificate and key parameters.
                         Valid argument values are:
 
-                        * *legacy*:
+                        :code:`legacy`:
                           Allows minimum 1024 bits RSA keys with certificates
                           signed with SHA1.
 
-                        * *preferred*:
+                        :code:`preferred`:
                           Allows minimum 2048 bits RSA keys with certificates
                           signed with SHA256 or higher. (default)
 
-                        * *suiteb*:
+                        :code:`suiteb`:
                           This follows the NSA Suite-B specification.
 
 
@@ -154,7 +155,7 @@ OPTIONS
 
 --proxy-auth-cleartext BOOL
                         Allow HTTP proxy authentication to happen in clear-text.
-                        Valid values are: ``true``, ``false``
+                        Valid values are: :code:`true`, :code:`false`
 
 --unset-override OVERRIDE
                         This removes an override setting from the configuration

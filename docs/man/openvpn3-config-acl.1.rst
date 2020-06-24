@@ -62,15 +62,15 @@ OPTIONS
                         Grant all users on the system read-only access to
                         this configuration profile.  This effectively disables
                         the more fine-grained access control provided via
-                        ``--grant``.  Valid argument values: ``true``,
-                        ``false``
+                        ``--grant``.  Valid argument values: :code:`true`,
+                        :code:`false`
 
 --lock-down BOOL
                         Locks down the configuration profile so it can only
                         be used to start new VPN sessions by users granted
                         access.  Only the configuration profile owner can now
                         show the profile contents via ``openvpn3 config-show``.
-                        Valid argument values: ``true``, ``false``
+                        Valid argument values: :code:`true`, :code:`false`
 
 -S, --seal              This seals the configuration profile for everyone,
                         making the configuration profile effectively read-only,

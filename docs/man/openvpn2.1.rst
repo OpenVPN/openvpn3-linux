@@ -58,11 +58,11 @@ OPTIONS
 --daemon              Run the VPN tunnel in the background
 
 --dev DEV-NAME        Virtual interface name to use for VPN tunnel.
-                      Defaults to **tun**.  Usually ignored, as the
+                      Defaults to :code:`tun`.  Usually ignored, as the
                       interface name is created on-the-fly in OpenVPN 3.
 
---dev-type DEV-TYPE   Defines the virtual interface type.  Only **tun** is
-                      supported, which is the default.
+--dev-type DEV-TYPE   Defines the virtual interface type.  Only
+                      :code:`tun` is supported, which is the default.
 
 --dhcp-option OPTION  Set DHCP options which can be picked up by the OS
                       configuring DNS, etc.
@@ -124,13 +124,13 @@ OPTIONS
 
 --key-direction DIR
                       Set key direction for static keys.
-                      Valid values: ``0``, ``1``
+                      Valid values: :code:`0`, :code:`1`
 
 --local HOST
                       Local host name or IP address to to bind against on
                       local side
 
---lport PORT          TCP/UDP port number for local bind (default ``1194``)
+--lport PORT          TCP/UDP port number for local bind (default :code:`1194`)
 
 --mode MODE           Operational mode.  Only ``client`` is accepted.
 
@@ -139,7 +139,7 @@ OPTIONS
 --ns-cert-type TYPE   (DEPRECATED) Require that peer certificate is signed
                       with an explicit nsCertType designation.  Migrate to
                       ``--remote-cert-tls`` as soon as possible.  Valid
-                      values: ``client``, ``server``
+                      values: :code:`client`, :code:`server`
 
 --persist-tun         Keep tun/tap device open across connection restarts
 
@@ -159,77 +159,79 @@ OPTIONS
                       takes two arguments, an *OVERRIDE-KEY* and an
                       *OVERRIDE-VALUE*.  Valid keys and values are:
 
-                      ``server-override``
-                        A server host name
+                      :code:`server-override`
+                          A server host name
 
-                      ``port-override``
-                        A port number
+                      :code:`port-override`
+                          A port number
 
-                      ``proto-override``
-                        Override connection protocol.
-                        Valid values: ``tcp`` or ``udp``
+                      :code:`proto-override`
+                          Override connection protocol.
+                          Valid values: :code:`tcp` or :code:`udp`
 
-                      ``ipv6``
-                        Enable or disable IPv6 inside the tunnel.
-                        Valid values: ``yes``, ``no`` or ``default``
+                      :code:`ipv6`
+                          Enable or disable IPv6 inside the tunnel.
+                          Valid values: :code:`yes`, :code:`no` or :code:`default`
 
-                      ``dns-setup-disabled``
-                        Disable configuring pushed DNS settings.
-                        Valid values: ``true`` or ``false``
+                      :code:`dns-setup-disabled`
+                          Disable configuring pushed DNS settings.
+                          Valid values: :code:`true` or :code:`false`
 
-                      ``dns-sync-lookup``
-                        Do synchronous DNS lookup instead of the default,
-                        asynchronous.
-                        Valid values: ``true`` or ``false``
+                      :code:`dns-sync-lookup`
+                          Do synchronous DNS lookup instead of the default,
+                          asynchronous.
+                          Valid values: :code:`true` or :code:`false`
 
-                      ``auth-fail-retry``
-                        Try to reconnect even if the server rejected the
-                        connection due to authentication failure.
-                        Valid values: ``true`` or ``false``
+                      :code:`auth-fail-retry`
+                          Try to reconnect even if the server rejected the
+                          connection due to authentication failure.
+                          Valid values: :code:`true` or :code:`false`
 
-                      ``proxy-host``
-                        Proxy server host name for the VPN tunnel
+                      :code:`proxy-host`
+                          Proxy server host name for the VPN tunnel
 
-                      ``proxy-port``
+                      :code:`proxy-port`
                         Proxy server port number
 
-                      ``proxy-username``
+                      :code:`proxy-username`
                         Username used for proxy authentication
 
-                      ``proxy-password``
+                      :code:`proxy-password`
                         Password used for proxy authentication
 
-                      ``proxy-auth-cleartext``
-                        Valid values: ``true`` or ``false``
+                      :code:`proxy-auth-cleartext`
+                        Valid values: :code:`true` or :code:`false`
 
                       These overrides are described further in
                       ``openvpn3-config-manage``\(1)
 
 --proto PROTO         Use protocol PROTO for communicating with peer.
-                      Valid values: udp, tcp
+                      Valid values: :code:`udp`, :code:`tcp`
 
 --push-peer-info      Push client info to server
 
 --redirect-gateway FLAGS
                       Automatically execute routing commands to redirect all
                       outgoing IP traffic through the VPN.  Valid flags:
-                      ``autolocal``, ``def1``, ``bypass-dhcp``, ``bypass-dns``,
-                      ``block-local``, ``ipv4``, ``!ipv4``, ``ipv6``, ``!ipv6``
+                      :code:`autolocal`, :code:`def1`, :code:`bypass-dhcp`,
+                      :code:`bypass-dns`, :code:`block-local`, :code:`ipv4`,
+                      :code:`!ipv4`, :code:`ipv6`, :code:`!ipv6`
 
 --redirect-private FLAGS
                       Like ``--redirect-gateway``, but omit actually changing
-                      default gateway.  Valid flags: ``autolocal``, ``def1``,
-                      ``bypass-dhcp``, ``bypass-dns``, ``block-local``,
-                      ``ipv4``, ``!ipv4``, ``ipv6``, ``!ipv6``
+                      default gateway.  Valid flags: :code:`autolocal`,
+                      :code:`def1`, :code:`bypass-dhcp`, :code:`bypass-dns`,
+                      :code:`block-local`, :code:`ipv4`, :code:`!ipv4`,
+                      :code:`ipv6`, :code:`!ipv6`
 
 --remote ARGS
                       Defines the remote server to connect to.  One
                       mandatory argument must be given, containing either
                       an *IP address* or an *hostname* to the server.  An
                       optional *PORT* number can be given
-                      (default: ``1194``) and at the end the *PROTOCOL* can
-                      be specified (default: ``udp``).  This option can be
-                      given multiple times and the client will try all
+                      (default: :code:`1194`) and at the end the *PROTOCOL*
+                      can be specified (default: ``udp``).  This option can
+                      be given multiple times and the client will try all
                       remote entries until it is able to establish a
                       connection.  The order of arguments are: *HOST/IP*,
                       *PORT* and *PROTOCOL*
@@ -247,13 +249,13 @@ OPTIONS
 --remote-cert-tls TYPE
                       Require that peer certificate is signed with explicit
                       key usage and extended key usage based RFC3280 rules.
-                      Valid values: ``client``, ``server``
+                      Valid values: :code:`client`, :code:`server`
 
 --remote-random       If multiple ``--remote`` options specified, choose one
                       randomly
 
 --reneg-sec SECS      Renegotiate data channel key after SECS seconds.
-                      (Default: ``3600``)
+                      (Default: :code:`3600`)
 
 --route ARGS
                       Add route to routing table after connection is
@@ -261,14 +263,13 @@ OPTIONS
 
                       This option takes one mandatory argument, IP-ADDRESS
                       to route over the VPN.  The two optional arguments
-                      are NETMASK (default: ``255.255.255.255``) and the
+                      are NETMASK (default: :code:`255.255.255.255`) and the
                       gateway to use (defaults to use configured
                       ``--route-gateway`` or the VPN server IP address).
 
-
 --route-gateway <GW|dhcp>
                       Specify a default gateway for use with ``--route``.
-                      See openvpn\(8) man page for dhcp mode
+                      See ``openvpn``\(8) man page for dhcp mode
 
 --route-ipv6 ARGS
                       Add IPv6 route to routing table after connection is
@@ -311,7 +312,7 @@ OPTIONS
                       and client.  The optional *KEY-DIRECTION* argument
                       defines which sub-key pair in *FILE* to use for HMAC
                       signing and verification.
-                      Valid values are ``0`` or ``1``.
+                      Valid values are :code:`0` or :code:`1`.
 
 --tls-cert-profile PROFILE
                       Sets certificate profile which defines acceptable
@@ -328,14 +329,14 @@ OPTIONS
                       no ACK from remote within n seconds.
                       (Default: *2* seconds)
 
---topology TYPE       Set tunnel topology type.  Default is ``net30``.
-                      Recommended: ``subnet``, but this must match the
+--topology TYPE       Set tunnel topology type.  Default is :code:`net30`.
+                      Recommended: :code:`subnet`, but this must match the
                       server setting.
-                      Valid topologies: ``subnet``, ``net30``
+                      Valid topologies: :code:`subnet`, :code:`net30`
 
 --tran-window SECS    Transition window -- old data channel key can live
                       this many seconds after new after new key renegotiation
-                      begins.  (Default: ``3600`` secs)
+                      begins.  (Default: :code:`3600` secs)
 
 --tun-mtu SIZE        Set TUN/TAP device MTU to SIZE and derive TCP/UDP from
                       it (default is 1500)
@@ -351,20 +352,20 @@ OPTIONS
 
                      FLAG can be:
 
-                     ``name``
+                     :code:`name`
                        Match against complete X.509 Common Name field
 
 
-                     ``name-prefix``
+                     :code:`name-prefix`
                        The MATCH value must be match the beginning of the
                        X.509 Common Name field.  If the X.509 certificate
-                       contains 'server-1.example.org', it will be a match
-                       if the MATCH value is 'server-'.  It will not be a
-                       match if values like 'server-2' or '.example.org' is
-                       used.
+                       contains :code:`server-1.example.org`, it will be a
+                       match if the MATCH value is :code:`server-`.  It will
+                       not be a match if values like :code:`server-2` or
+                       :code:`.example.org` is used.
 
 
-                     ``subject``
+                     :code:`subject`
                        The MATCH value must be the full and complete
                        X.509 Subject field.  This is the default behaviour.
 
@@ -474,7 +475,6 @@ Session Manager (``net.openvpn.v3.sessions``,
 ``openvpn3-service-sessionmgr``\(8))
 
 Example:
-
 ::
 
     $ dbus-monitor --system --monitor sender=net.openvpn.v3.sessions,interface=net.openvpn.v3.sessions,member=StatusChange

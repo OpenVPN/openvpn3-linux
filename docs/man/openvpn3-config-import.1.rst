@@ -27,11 +27,14 @@ OPTIONS
 =======
 
 -h, --help               Print  usage and help details to the terminal
+
 -c FILE, --config FILE   File name of the configuration profile to import
+
 -n NAME, --name NAME     Each configuration profile carries a human readable
                          name.  The default value is the configuration profile
                          file name, but can be amended during import with this
                          option.
+
 -p, --persistent         By default, the configuration profile is kept in
                          memory only, and it is wiped when the configuration
                          manager service restarts.  When adding this option the

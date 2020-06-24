@@ -65,14 +65,15 @@ OPTIONS
 --public-access BOOL
                 Grant all users on the system access to manage this VPN session.
                 This effectively disables the more fine-grained access control
-                provided via ``--grant``.  Valid argument values: ``true``,
-                ``false``
+                provided via ``--grant``.  Valid argument values: :code:`true`,
+                :code:`false`.
 
 --allow-log-access BOOL
                 By default, users granted access will not have access to the
                 session log.  By setting this option to *true*, users granted
                 access can use ``openvpn3 log`` to retrieve real-time log events
-                as they occur.  Valid argument values: ``true``, ``false``
+                as they occur.  Valid argument values: :code:`true:`,
+                :code:`false`.
 
 
 SEE ALSO
