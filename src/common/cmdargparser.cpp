@@ -198,6 +198,22 @@ void Commands::ShellCompletion::call_arg_helper(const std::string cmd, const std
 
 
 //
+//  ParsedArgs implementation
+//
+
+bool ParsedArgs::parse_bool_value(const std::string& k, const std::string& value) const
+{
+    if (("false" != value) && ("true" != value )
+        && ("no" != value) && ("yes" != value))
+    {
+        throw OptionException(k, "Boolean options must be either 'false' or 'true'");
+    }
+    return "true" == value || "yes" == value;
+}
+
+
+
+//
 //  RegisterParsedArgs implementation
 //
 

@@ -319,21 +319,46 @@ public:
 
 
     /**
+     *  Retrieve the last value of a specific option name
+     *
+     *   This is useful when you only care about the last time an
+     *   option argument was given.  This ensures the last option usage
+     *   overrides the prior settings.
+     *
+     * @param k   std::string containing the option name to look-up
+     * @return    Returns a std::string with the collected value
+     */
+    std::string GetLastValue(const std::string& k) const
+    {
+        return key_value.at(k).back();
+    }
+
+
+    /**
      *  Retrieve a specific boolean option, based on option name and value
      *  index
      *
-     * @param k    std::string containing the option name to look-up
      * @param idx  unsigned int of the value element to retrieve
+     * @param k    std::string containing the option name to look-up
      * @return  Returns a bool with the collected value
      */
     bool GetBoolValue(const std::string k, const unsigned int idx) const
     {
-        std::string value = key_value.at(k).at(idx);
-        if (("false" != value) && ("true" != value ) && (value != "no") && (value != "yes"))
-        {
-            throw OptionException(k, "Boolean options must be either 'false' or 'true'");
-        }
-        return "true" == value || "yes" == value;
+        return parse_bool_value(k, key_value.at(k).at(idx));
+    }
+
+
+    /**
+     *  Retrieve the last booleen value of a specific option name
+     *
+     *  This is the boolean variant of @GetLastValue()
+     *
+     * @param k    std::string containing the option name to look-up
+     * @return  Returns a bool with the collected value
+     */
+    bool GetLastBoolValue(const std::string& k)
+    {
+        return parse_bool_value(k, key_value.at(k).back());
     }
 
 
@@ -369,6 +394,10 @@ protected:
     std::vector<std::string> present;
     std::vector<std::string> extra_args;
     bool completed = false;
+
+
+private:
+    bool parse_bool_value(const std::string& k, const std::string& value) const;
 };
 
 
