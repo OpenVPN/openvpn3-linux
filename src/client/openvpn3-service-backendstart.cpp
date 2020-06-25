@@ -312,15 +312,22 @@ private:
             std::cout << std::endl << std::endl;
 #endif
 
-            char * env[client_envvars.size()];
-            unsigned int idx = 0;
-            for (const auto& ev : client_envvars)
+            char** env = {0};
+            if (client_envvars.size() > 0)
             {
-                env[idx] = (char *) ev.c_str();
-                ++idx;
+                env = (char **) std::calloc(client_envvars.size(), sizeof(char *));
+                unsigned int idx = 0;
+                for (const auto& ev : client_envvars)
+                {
+                    env[idx] = (char *) ev.c_str();
+                    ++idx;
+                }
+                env[idx] = nullptr;
             }
-            env[idx] = nullptr;
-
+            else
+            {
+                env = nullptr;
+            }
 
             execve(args[0], args, env);
 
