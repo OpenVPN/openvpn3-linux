@@ -35,9 +35,9 @@
 
 using namespace openvpn;
 
-int cmd_pm_optlist_test(ParsedArgs args)
+int cmd_pm_optlist_test(ParsedArgs::Ptr args)
 {
-    if (!args.Present("config") || !args.Present("option"))
+    if (!args->Present("config") || !args->Present("option"))
     {
         throw CommandException("pm+optlist-test", "Missing --config and/or --option");
     }
@@ -46,7 +46,7 @@ int cmd_pm_optlist_test(ParsedArgs args)
     // The ProfileMerge will ensure that all needed
     // files are embedded into the configuration we
     // send to and store in the Configuration Manager
-    ProfileMerge pm(args.GetValue("config", 0), "", "",
+    ProfileMerge pm(args->GetValue("config", 0), "", "",
                     ProfileMerge::FOLLOW_FULL,
                     ProfileParseLimits::MAX_LINE_SIZE,
                     ProfileParseLimits::MAX_PROFILE_SIZE);
@@ -65,7 +65,7 @@ int cmd_pm_optlist_test(ParsedArgs args)
         OptionList opts;
         opts.parse_from_config(pm.profile_content(), &limits);
         opts.update_map();
-        Option pt = opts.get(args.GetValue("option", 0));
+        Option pt = opts.get(args->GetValue("option", 0));
         std::cout << "FOUND: " << pt.printable_directive() << std::endl;
         return 0;
     }

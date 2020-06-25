@@ -50,11 +50,11 @@ struct NetCfgOptions {
     /** Will signals be broadcast to all users? */
     bool signal_broadcast = false;
 
-    NetCfgOptions(ParsedArgs& args)
+    NetCfgOptions(ParsedArgs::Ptr args)
     {
-        if (args.Present("redirect-method"))
+        if (args->Present("redirect-method"))
         {
-            std::string method = args.GetValue("redirect-method", 0);
+            std::string method = args->GetValue("redirect-method", 0);
             if ("none" == method)
             {
                 redirect_method = RedirectMethod::NONE;
@@ -74,12 +74,12 @@ struct NetCfgOptions {
             }
         }
 
-        if (args.Present("set-somark"))
+        if (args->Present("set-somark"))
         {
-            so_mark = std::atoi(args.GetValue("set-somark", 0).c_str());
+            so_mark = std::atoi(args->GetValue("set-somark", 0).c_str());
         }
 
-        signal_broadcast = args.Present("signal-broadcast");
+        signal_broadcast = args->Present("signal-broadcast");
     }
 
 

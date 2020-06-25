@@ -70,7 +70,7 @@ static void drop_root_ng()
 }
 
 
-static void apply_capabilities(const ParsedArgs& args,
+static void apply_capabilities(ParsedArgs::Ptr args,
                                const NetCfgOptions& opts)
 {
     //
@@ -78,7 +78,7 @@ static void apply_capabilities(const ParsedArgs& args,
     //
     capng_clear(CAPNG_SELECT_BOTH);
 #ifdef OPENVPN_DEBUG
-    if (!args.Present("disable-capabilities"))
+    if (!args->Present("disable-capabilities"))
 #endif
     {
         // Need this capability to configure network and routing.
@@ -86,7 +86,7 @@ static void apply_capabilities(const ParsedArgs& args,
                       CAP_NET_ADMIN);
 
         // CAP_DAC_OVERRIDE is needed to be allowed to overwrite /etc/resolv.conf
-        if (args.Present("resolv-conf"))
+        if (args->Present("resolv-conf"))
         {
             capng_update(CAPNG_ADD, (capng_type_t) (CAPNG_EFFECTIVE|CAPNG_PERMITTED),
                          CAP_DAC_OVERRIDE);
@@ -101,7 +101,7 @@ static void apply_capabilities(const ParsedArgs& args,
         }
     }
 #ifdef OPENVPN_DEBUG
-    if (!args.Present("run-as-root"))
+    if (!args->Present("run-as-root"))
 #endif
     {
         // With the capapbility set, no root account access is needed
@@ -111,7 +111,7 @@ static void apply_capabilities(const ParsedArgs& args,
 }
 
 
-int netcfg_main(ParsedArgs args)
+int netcfg_main(ParsedArgs::Ptr args)
 {
     if (0 != getegid() || 0 != geteuid())
     {
@@ -131,9 +131,9 @@ int netcfg_main(ParsedArgs args)
     LogWriter::Ptr logwr = nullptr;
     ColourEngine::Ptr colourengine = nullptr;
 
-    if (args.Present("log-file"))
+    if (args->Present("log-file"))
     {
-        std::string fname = args.GetValue("log-file", 0);
+        std::string fname = args->GetValue("log-file", 0);
 
         if ("stdout:" != fname)
         {
@@ -145,7 +145,7 @@ int netcfg_main(ParsedArgs args)
             logfile = &std::cout;
         }
 
-        if (args.Present("colour"))
+        if (args->Present("colour"))
         {
             colourengine.reset(new ANSIColours());
              logwr.reset(new ColourStreamWriter(*logfile,
@@ -168,18 +168,18 @@ int netcfg_main(ParsedArgs args)
     apply_capabilities(args, netcfgopts);
 
     int log_level = -1;
-    if (args.Present("log-level"))
+    if (args->Present("log-level"))
     {
-        log_level = std::atoi(args.GetValue("log-level", 0).c_str());
+        log_level = std::atoi(args->GetValue("log-level", 0).c_str());
     }
 
     // Enable automatic shutdown if the config manager is
     // idling for 1 minute or more.  By idling, it means
     // no configuration files is stored in memory.
     unsigned int idle_wait_min = 5;
-    if (args.Present("idle-exit"))
+    if (args->Present("idle-exit"))
     {
-        idle_wait_min = std::atoi(args.GetValue("idle-exit", 0).c_str());
+        idle_wait_min = std::atoi(args->GetValue("idle-exit", 0).c_str());
     }
 
     LogServiceProxy::Ptr logservice;
@@ -204,13 +204,13 @@ int netcfg_main(ParsedArgs args)
                                          logwr.get());
         corelog.SetLogLevel(log_level);
 
-        std::cout << get_version(args.GetArgv0()) << std::endl;
+        std::cout << get_version(args->GetArgv0()) << std::endl;
 
         //
         // DNS resolver integrations
         //
 
-        if (args.Present("resolv-conf") && args.Present("systemd-resolved"))
+        if (args->Present("resolv-conf") && args->Present("systemd-resolved"))
         {
             throw CommandException("openvpn3-service-netcfg",
                                    "It is not possible to use both --resolv-conf"
@@ -220,9 +220,9 @@ int netcfg_main(ParsedArgs args)
         DNS::ResolverBackendInterface::Ptr resolver_be = nullptr;
 
         DNS::ResolvConfFile::Ptr resolvconf = nullptr;
-        if (args.Present("resolv-conf"))
+        if (args->Present("resolv-conf"))
         {
-            std::string rsc =  args.GetValue("resolv-conf", 0);
+            std::string rsc =  args->GetValue("resolv-conf", 0);
 
             // We need to preserve a ResolvConfFile pointer to be able
             // to access the DNS::ResolvConfFile::Restore() method
@@ -231,7 +231,7 @@ int netcfg_main(ParsedArgs args)
             resolver_be = resolvconf;
         }
 
-        if (args.Present("systemd-resolved"))
+        if (args->Present("systemd-resolved"))
         {
             resolver_be = new DNS::SystemdResolved(dbus.GetConnection());
         }

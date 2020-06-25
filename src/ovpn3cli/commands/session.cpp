@@ -317,10 +317,10 @@ static void start_session(OpenVPN3SessionProxy& session,
  * @param args  ParsedArgs object containing all related options and arguments
  * @return Returns the exit code which will be returned to the calling shell
  */
-static int cmd_session_stats(ParsedArgs args)
+static int cmd_session_stats(ParsedArgs::Ptr args)
 {
-    if (!args.Present("path") && !args.Present("config")
-        && !(args.Present("interface")))
+    if (!args->Present("path") && !args->Present("config")
+        && !(args->Present("interface")))
     {
         throw CommandException("session-stats",
                                "Missing required session path, config "
@@ -332,9 +332,9 @@ static int cmd_session_stats(ParsedArgs args)
         OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
                                      OpenVPN3DBus_rootp_sessions);
         std::string sesspath = "";
-        if (args.Present("config"))
+        if (args->Present("config"))
         {
-            std::vector<std::string> paths = sessmgr.LookupConfigName(args.GetValue("config", 0));
+            std::vector<std::string> paths = sessmgr.LookupConfigName(args->GetValue("config", 0));
             if (0 == paths.size())
             {
                 throw CommandException("session-stats",
@@ -349,11 +349,11 @@ static int cmd_session_stats(ParsedArgs args)
             }
             sesspath = paths.at(0);
         }
-        else if (args.Present("interface"))
+        else if (args->Present("interface"))
         {
             try
             {
-                sesspath = sessmgr.LookupInterface(args.GetValue("interface", 0));
+                sesspath = sessmgr.LookupInterface(args->GetValue("interface", 0));
             }
             catch (DBusException& excp)
             {
@@ -362,12 +362,12 @@ static int cmd_session_stats(ParsedArgs args)
         }
         else
         {
-            sesspath = args.GetValue("path", 0);
+            sesspath = args->GetValue("path", 0);
         }
 
         ConnectionStats stats = fetch_stats(sesspath);
 
-        std::cout << (args.Present("json") ? statistics_json(stats)
+        std::cout << (args->Present("json") ? statistics_json(stats)
                                            : statistics_plain(stats));
         return 0;
     }
@@ -428,19 +428,19 @@ std::string import_config(const std::string filename,
  * @param args
  * @return
  */
-static int cmd_session_start(ParsedArgs args)
+static int cmd_session_start(ParsedArgs::Ptr args)
 {
-    if (!args.Present("config-path") && !args.Present("config"))
+    if (!args->Present("config-path") && !args->Present("config"))
     {
         throw CommandException("session-start",
                                "Either --config or --config-path must be provided");
     }
-    if (args.Present("config-path") && args.Present("config"))
+    if (args->Present("config-path") && args->Present("config"))
     {
         throw CommandException("session-start",
                                "--config and --config-path cannot be used together");
     }
-    if (args.Present("persist-tun") && !args.Present("config"))
+    if (args->Present("persist-tun") && !args->Present("config"))
     {
         throw CommandException("session-start",
                                "--persist-tun can only be used with --config");
@@ -453,14 +453,14 @@ static int cmd_session_start(ParsedArgs args)
         sessmgr.Ping();
 
         std::string cfgpath;
-        if (args.Present("config"))
+        if (args->Present("config"))
         {
             // This will first lookup the configuration name in the
             // Configuration Manager before attempting to load a local file.
             // If multiple configurations carry the same configuration name,
             // it will fail as we do not support handling this scenario.  It
 
-            std::string cfgname = args.GetValue("config", 0);
+            std::string cfgname = args->GetValue("config", 0);
             try
             {
                 cfgpath = retrieve_config_path("session-start", cfgname);
@@ -481,13 +481,13 @@ static int cmd_session_start(ParsedArgs args)
         }
         else
         {
-            cfgpath = args.GetValue("config-path", 0);
+            cfgpath = args->GetValue("config-path", 0);
         }
 
         // If --persist-tun is given on the command line, enforce this
         // feature on this connection.  This can only be provided when using
         // --config, not --config-path.
-        if (args.Present("persist-tun"))
+        if (args->Present("persist-tun"))
         {
             OpenVPN3ConfigurationProxy cfgprx(G_BUS_TYPE_SYSTEM, cfgpath);
             const ValidOverride& vo = cfgprx.LookupOverride("persist-tun");
@@ -556,7 +556,7 @@ SingleCommand::Ptr prepare_command_session_start()
  * @param args  ParsedArgs object containing all related options and arguments
  * @return Returns the exit code which will be returned to the calling shell
  */
-static int cmd_sessions_list(ParsedArgs args)
+static int cmd_sessions_list(ParsedArgs::Ptr args)
 {
     OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
                                  OpenVPN3DBus_rootp_sessions);
@@ -763,7 +763,7 @@ SingleCommand::Ptr prepare_command_sessions_list()
  * @param args  ParsedArgs object containing all related options and arguments
  * @return Returns the exit code which will be returned to the calling shell
  */
-static int cmd_session_manage(ParsedArgs args)
+static int cmd_session_manage(ParsedArgs::Ptr args)
 {
     const unsigned int mode_pause      = 1 << 0;
     const unsigned int mode_resume     = 1 << 1;
@@ -773,27 +773,27 @@ static int cmd_session_manage(ParsedArgs args)
 
     unsigned int mode = 0;
     unsigned int mode_count = 0;
-    if (args.Present("pause"))
+    if (args->Present("pause"))
     {
         mode |= mode_pause;
         mode_count++;
     }
-    if (args.Present("resume"))
+    if (args->Present("resume"))
     {
         mode |= mode_resume;
         mode_count++;
     }
-    if (args.Present("restart"))
+    if (args->Present("restart"))
     {
         mode |= mode_restart;
         mode_count++;
     }
-    if (args.Present("disconnect"))
+    if (args->Present("disconnect"))
     {
         mode |= mode_disconnect;
         mode_count++;
     }
-    if (args.Present("cleanup"))
+    if (args->Present("cleanup"))
     {
         mode |= mode_cleanup;
         mode_count++;
@@ -813,8 +813,8 @@ static int cmd_session_manage(ParsedArgs args)
     }
 
     // Only --cleanup does NOT depend on --path or --config
-    if (!args.Present("path") && !args.Present("config")
-        && !args.Present("interface") && (mode ^ mode_cleanup) > 0)
+    if (!args->Present("path") && !args->Present("config")
+        && !args->Present("interface") && (mode ^ mode_cleanup) > 0)
     {
         throw CommandException("session-manage",
                                "Missing required session path or config name");
@@ -895,9 +895,9 @@ static int cmd_session_manage(ParsedArgs args)
 
 
         std::string sesspath = "";
-        if (args.Present("config"))
+        if (args->Present("config"))
         {
-            std::vector<std::string> paths = sessmgr.LookupConfigName(args.GetValue("config", 0));
+            std::vector<std::string> paths = sessmgr.LookupConfigName(args->GetValue("config", 0));
             if (0 == paths.size())
             {
                 throw CommandException("session-manage",
@@ -912,13 +912,13 @@ static int cmd_session_manage(ParsedArgs args)
             }
             sesspath = paths.at(0);
         }
-        else if (args.Present("interface"))
+        else if (args->Present("interface"))
         {
-            sesspath = sessmgr.LookupInterface(args.GetValue("interface", 0));
+            sesspath = sessmgr.LookupInterface(args->GetValue("interface", 0));
         }
         else
         {
-            sesspath = args.GetValue("path", 0);
+            sesspath = args->GetValue("path", 0);
         }
 
         OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, sesspath);
@@ -1039,23 +1039,23 @@ SingleCommand::Ptr prepare_command_session_manage()
  * @return Returns the exit code which will be returned to the calling shell
  *
  */
-static int cmd_session_acl(ParsedArgs args)
+static int cmd_session_acl(ParsedArgs::Ptr args)
 {
     int ret = 0;
-    if (!args.Present("path") && !args.Present("config")
-        && !args.Present("interface"))
+    if (!args->Present("path") && !args->Present("config")
+        && !args->Present("interface"))
     {
         throw CommandException("session-acl",
                                "Missing required session path or config name");
     }
 
-    if (!args.Present("show")
-        && !args.Present("grant")
-        && !args.Present("revoke")
-        && !args.Present("public-access")
-        && !args.Present("allow-log-access")
-        && !args.Present("lock-down")
-        && !args.Present("seal"))
+    if (!args->Present("show")
+        && !args->Present("grant")
+        && !args->Present("revoke")
+        && !args->Present("public-access")
+        && !args->Present("allow-log-access")
+        && !args->Present("lock-down")
+        && !args->Present("seal"))
     {
         throw CommandException("session-acl", "No operation option provided");
     }
@@ -1066,9 +1066,9 @@ static int cmd_session_acl(ParsedArgs args)
                                      OpenVPN3DBus_rootp_sessions);
 
         std::string sesspath = "";
-        if (args.Present("config"))
+        if (args->Present("config"))
         {
-            std::vector<std::string> paths = sessmgr.LookupConfigName(args.GetValue("config", 0));
+            std::vector<std::string> paths = sessmgr.LookupConfigName(args->GetValue("config", 0));
             if (0 == paths.size())
             {
                 throw CommandException("session-acl",
@@ -1083,13 +1083,13 @@ static int cmd_session_acl(ParsedArgs args)
             }
             sesspath = paths.at(0);
         }
-        else if (args.Present("interface"))
+        else if (args->Present("interface"))
         {
-            sesspath = sessmgr.LookupInterface(args.GetValue("interface", 0));
+            sesspath = sessmgr.LookupInterface(args->GetValue("interface", 0));
         }
         else
         {
-            sesspath = args.GetValue("path", 0);
+            sesspath = args->GetValue("path", 0);
         }
 
         OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, sesspath);
@@ -1099,9 +1099,9 @@ static int cmd_session_acl(ParsedArgs args)
                                    "Session not found");
         }
 
-        if (args.Present("grant"))
+        if (args->Present("grant"))
         {
-            for (auto const& user : args.GetAllValues("grant"))
+            for (auto const& user : args->GetAllValues("grant"))
             {
                 try
                 {
@@ -1132,9 +1132,9 @@ static int cmd_session_acl(ParsedArgs args)
             }
         }
 
-        if (args.Present("revoke"))
+        if (args->Present("revoke"))
         {
-            for (auto const& user : args.GetAllValues("revoke"))
+            for (auto const& user : args->GetAllValues("revoke"))
             {
                 try
                 {
@@ -1164,9 +1164,9 @@ static int cmd_session_acl(ParsedArgs args)
                 }
             }
         }
-        if (args.Present("public-access"))
+        if (args->Present("public-access"))
         {
-            std::string ld = args.GetValue("public-access", 0);
+            std::string ld = args->GetValue("public-access", 0);
             if (("false" == ld) || ("true" == ld ))
             {
                 session.SetPublicAccess("true" == ld);
@@ -1192,9 +1192,9 @@ static int cmd_session_acl(ParsedArgs args)
             }
         }
 
-        if (args.Present("allow-log-access"))
+        if (args->Present("allow-log-access"))
         {
-            bool ala = args.GetBoolValue("allow-log-access", 0);
+            bool ala = args->GetBoolValue("allow-log-access", 0);
             session.SetRestrictLogAccess(!ala);
             if (ala)
             {
@@ -1209,7 +1209,7 @@ static int cmd_session_acl(ParsedArgs args)
         }
 
 
-        if (args.Present("show"))
+        if (args->Present("show"))
         {
             std::string owner = lookup_username(session.GetOwner());
             std::cout << "                    Owner: ("

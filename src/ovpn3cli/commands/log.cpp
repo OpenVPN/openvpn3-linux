@@ -432,12 +432,12 @@ private:
  * @return Returns the exit code which will be returned to the calling shell
  *
  */
-static int cmd_log(ParsedArgs args)
+static int cmd_log(ParsedArgs::Ptr args)
 {
-    if (!args.Present("session-path")
-        && !args.Present("config")
-        && !args.Present("interface")
-        && !args.Present("config-events"))
+    if (!args->Present("session-path")
+        && !args->Present("config")
+        && !args->Present("interface")
+        && !args->Present("config-events"))
     {
         throw CommandException("log",
                                "Either --session-path, --config, --interface "
@@ -454,32 +454,32 @@ static int cmd_log(ParsedArgs args)
     DBus dbuscon(G_BUS_TYPE_SYSTEM);
     dbuscon.Connect();
 
-    if (args.Present("session-path") || args.Present("config")
-        || args.Present("interface"))
+    if (args->Present("session-path") || args->Present("config")
+        || args->Present("interface"))
     {
         std::string session_path = "";
         logattach.reset(new LogAttach (main_loop, dbuscon.GetConnection()));
 
-        if (args.Present("log-level"))
+        if (args->Present("log-level"))
         {
-            logattach->SetLogLevel(std::stoi(args.GetValue("log-level", 0)));
+            logattach->SetLogLevel(std::stoi(args->GetValue("log-level", 0)));
         }
 
-        if (args.Present("config"))
+        if (args->Present("config"))
         {
-            logattach->AttchByConfig(args.GetValue("config", 0));
+            logattach->AttchByConfig(args->GetValue("config", 0));
         }
-        else if (args.Present("interface"))
+        else if (args->Present("interface"))
         {
-            logattach->AttachByInterface(args.GetValue("interface", 0));
+            logattach->AttachByInterface(args->GetValue("interface", 0));
         }
         else
         {
-            logattach->AttachByPath(args.GetValue("session-path", 0));
+            logattach->AttachByPath(args->GetValue("session-path", 0));
         }
     }
 
-    if (args.Present("config-events"))
+    if (args->Present("config-events"))
     {
         // Set up a generic logger for configuration management related
         // Log events.  We don't provide an object path, as all events

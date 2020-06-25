@@ -31,15 +31,15 @@
 
 #include "common/cmdargparser.hpp"
 
-int cmd_dump_arg_test(ParsedArgs args)
+int cmd_dump_arg_test(ParsedArgs::Ptr args)
 {
     std::cout << "===> cmd_dump_arg_test()" << std::endl << std::endl;;
 
-    for (auto const& key : args.GetOptionNames())
+    for (auto const& key : args->GetOptionNames())
     {
         std::cout << "[cmd_test1] Argument: " << key << " = [";
         int i = 0;
-        for (auto const& val : args.GetAllValues(key))
+        for (auto const& val : args->GetAllValues(key))
         {
             if (i > 0)
             {
@@ -50,10 +50,10 @@ int cmd_dump_arg_test(ParsedArgs args)
         }
         std::cout << "]" << std::endl;
     }
-    auto extra = args.GetAllExtraArgs();
+    auto extra = args->GetAllExtraArgs();
     std::cout << "[cmd_test1] Extra argument counts: "
               << extra.size() << std::endl;
-    for (auto const& a : args.GetAllExtraArgs())
+    for (auto const& a : args->GetAllExtraArgs())
     {
         std::cout << "[cmd_test1] Extra: " << a << std::endl;
     }
@@ -61,20 +61,20 @@ int cmd_dump_arg_test(ParsedArgs args)
 }
 
 
-int cmd_multiply(ParsedArgs args)
+int cmd_multiply(ParsedArgs::Ptr args)
 {
     std::cout << "===> cmd_multiply() test" << std::endl << std::endl;
 
-    if (args.Present("bool-test"))
+    if (args->Present("bool-test"))
     {
         std::cout << "Boolean test: "
-                  << (args.GetBoolValue("bool-test", 0) ? "true" : "false")
+                  << (args->GetBoolValue("bool-test", 0) ? "true" : "false")
                   << std::endl;
     };
 
     unsigned long long res = 0;
     std::cout << "Multiplying ... ";
-    for (auto const& v : args.GetAllValues("multiply"))
+    for (auto const& v : args->GetAllValues("multiply"))
     {
         if (0 == res)
         {

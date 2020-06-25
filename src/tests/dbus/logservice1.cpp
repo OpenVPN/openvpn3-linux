@@ -32,25 +32,25 @@
 #include "log/proxy-log.hpp"
 
 
-int cmd_props(ParsedArgs args)
+int cmd_props(ParsedArgs::Ptr args)
 {
     DBus dbus(G_BUS_TYPE_SYSTEM);
     dbus.Connect();
     LogServiceProxy logsrvprx(dbus.GetConnection());
 
-    if (args.Present("log-level"))
+    if (args->Present("log-level"))
     {
-        logsrvprx.SetLogLevel(std::atoi(args.GetValue("log-level", 0).c_str()));
+        logsrvprx.SetLogLevel(std::atoi(args->GetValue("log-level", 0).c_str()));
     }
 
-    if (args.Present("timestamp"))
+    if (args->Present("timestamp"))
     {
-        logsrvprx.SetTimestampFlag(args.GetBoolValue("timestamp", 0));
+        logsrvprx.SetTimestampFlag(args->GetBoolValue("timestamp", 0));
     }
 
-    if (args.Present("dbus-details"))
+    if (args->Present("dbus-details"))
     {
-        logsrvprx.SetDBusDetailsLogging(args.GetBoolValue("dbus-details", 0));
+        logsrvprx.SetDBusDetailsLogging(args->GetBoolValue("dbus-details", 0));
     }
 
     std::cout << "Number of attached loggers: " << logsrvprx.GetNumAttached() << std::endl;
@@ -62,27 +62,27 @@ int cmd_props(ParsedArgs args)
 }
 
 
-int cmd_send(ParsedArgs args)
+int cmd_send(ParsedArgs::Ptr args)
 {
     DBus dbus(G_BUS_TYPE_SYSTEM);
     dbus.Connect();
 
-    if (!args.Present("group"))
+    if (!args->Present("group"))
     {
         throw CommandException("send", "Missing required --group");
     }
-    unsigned int lgrp = std::atoi(args.GetValue("group", 0).c_str());
+    unsigned int lgrp = std::atoi(args->GetValue("group", 0).c_str());
 
-    if (!args.Present("category"))
+    if (!args->Present("category"))
     {
         throw CommandException("send", "Missing required --category");
     }
-    unsigned int lctg = std::atoi(args.GetValue("category", 0).c_str());
+    unsigned int lctg = std::atoi(args->GetValue("category", 0).c_str());
 
-    std::string path = (args.Present("object-path") ? args.GetValue("object-path", 0) : "/net/openvpn/v3/logtest");
-    std::string intf = (args.Present("interface") ? args.GetValue("interface", 0) : "net.openvpn.v3.logtest");
+    std::string path = (args->Present("object-path") ? args->GetValue("object-path", 0) : "/net/openvpn/v3/logtest");
+    std::string intf = (args->Present("interface") ? args->GetValue("interface", 0) : "net.openvpn.v3.logtest");
 
-    auto extra = args.GetAllExtraArgs();
+    auto extra = args->GetAllExtraArgs();
     std::string msg = "(empty message)";
     if (extra.size() > 0)
     {
@@ -98,7 +98,7 @@ int cmd_send(ParsedArgs args)
     try
     {
         LogServiceProxy logsrvprx(dbus.GetConnection());
-        if (args.Present("attach"))
+        if (args->Present("attach"))
         {
             std::cout << "Attatching log" << std::endl;
             logsrvprx.Attach(intf);
@@ -109,7 +109,7 @@ int cmd_send(ParsedArgs args)
         sig.Send("Log", g_variant_new("(uus)", lgrp, lctg, msg.c_str()));
         std::cout << "Log signal sent" << std::endl;
 
-        if (args.Present("attach"))
+        if (args->Present("attach"))
         {
             sleep(1); // Wait for the logger to process the Log signal
             std::cout << "Detaching log" << std::endl;

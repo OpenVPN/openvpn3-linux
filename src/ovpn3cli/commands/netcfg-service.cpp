@@ -30,7 +30,7 @@
 #include "netcfg/netcfg-changeevent.hpp"
 #include "netcfg/proxy-netcfg.hpp"
 
-int cmd_netcfg_service(ParsedArgs args)
+int cmd_netcfg_service(ParsedArgs::Ptr args)
 {
     DBus dbuscon(G_BUS_TYPE_SYSTEM);
     dbuscon.Connect();
@@ -39,14 +39,14 @@ int cmd_netcfg_service(ParsedArgs args)
 
     try
     {
-        if (args.Present("unsubscribe"))
+        if (args->Present("unsubscribe"))
         {
-            std::string sub = args.GetValue("unsubscribe", 0);
+            std::string sub = args->GetValue("unsubscribe", 0);
             prx.NotificationUnsubscribe(sub);
             std::cout << "Unsubscribed '" << sub << "'" << std::endl;
         }
 
-        if (args.Present("list-subscribers"))
+        if (args->Present("list-subscribers"))
         {
             std::cout << "Current subsribers: " << std::endl;
 

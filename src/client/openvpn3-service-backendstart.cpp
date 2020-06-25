@@ -475,9 +475,9 @@ private:
 
 
 
-int backend_starter(ParsedArgs args)
+int backend_starter(ParsedArgs::Ptr args)
 {
-    std::cout << get_version(args.GetArgv0()) << std::endl;
+    std::cout << get_version(args->GetArgv0()) << std::endl;
 
     GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
     g_unix_signal_add(SIGINT, stop_handler, main_loop);
@@ -486,13 +486,13 @@ int backend_starter(ParsedArgs args)
 
     std::vector<std::string> client_args;
 #ifdef OPENVPN_DEBUG
-    if (args.Present("run-via"))
+    if (args->Present("run-via"))
     {
-        client_args.push_back(args.GetValue("run-via", 0));
+        client_args.push_back(args->GetValue("run-via", 0));
     }
-    if (args.Present("debugger-arg"))
+    if (args->Present("debugger-arg"))
     {
-        for (const auto& a : args.GetAllValues("debugger-arg"))
+        for (const auto& a : args->GetAllValues("debugger-arg"))
         {
             client_args.push_back(a);
         }
@@ -501,55 +501,55 @@ int backend_starter(ParsedArgs args)
 
     client_args.push_back(std::string(LIBEXEC_PATH) + "/openvpn3-service-client");
 #ifdef OPENVPN_DEBUG
-    if (args.Present("client-no-fork"))
+    if (args->Present("client-no-fork"))
     {
         client_args.push_back("--no-fork");
     }
-    if (args.Present("client-no-setsid"))
+    if (args->Present("client-no-setsid"))
     {
         client_args.push_back("--no-setsid");
     }
 
 #endif
-    if (args.Present("client-log-level"))
+    if (args->Present("client-log-level"))
     {
         client_args.push_back("--log-level");
-        client_args.push_back(args.GetValue("client-log-level", 0));
+        client_args.push_back(args->GetValue("client-log-level", 0));
     }
-    if (args.Present("client-log-file"))
+    if (args->Present("client-log-file"))
     {
         client_args.push_back("--log-file");
-        client_args.push_back(args.GetValue("client-log-file", 0));
+        client_args.push_back(args->GetValue("client-log-file", 0));
     }
-    if (args.Present("client-colour"))
+    if (args->Present("client-colour"))
     {
         client_args.push_back("--colour");
     }
-    if (args.Present("client-disable-protect-socket"))
+    if (args->Present("client-disable-protect-socket"))
     {
         client_args.push_back("--disable-protect-socket");
     }
-    if (args.Present("client-signal-broadcast"))
+    if (args->Present("client-signal-broadcast"))
     {
         client_args.push_back("--signal-broadcast");
     }
 
     unsigned int log_level = 3;
-    if (args.Present("log-level"))
+    if (args->Present("log-level"))
     {
-        log_level = std::atoi(args.GetValue("log-level", 0).c_str());
+        log_level = std::atoi(args->GetValue("log-level", 0).c_str());
     }
 
     unsigned int idle_wait_sec = 3;
-    if (args.Present("idle-exit"))
+    if (args->Present("idle-exit"))
     {
-        idle_wait_sec = std::atoi(args.GetValue("idle-exit", 0).c_str());
+        idle_wait_sec = std::atoi(args->GetValue("idle-exit", 0).c_str());
     }
 
     DBus dbus(G_BUS_TYPE_SYSTEM);
     dbus.Connect();
 
-    bool signal_broadcast = args.Present("signal-broadcast");
+    bool signal_broadcast = args->Present("signal-broadcast");
     LogServiceProxy::Ptr logsrvprx = nullptr;
     if (!signal_broadcast)
     {
@@ -577,9 +577,9 @@ int backend_starter(ParsedArgs args)
         std::cout << "Idle exit is disabled" << std::endl;
     }
 
-    if (args.Present("client-setenv"))
+    if (args->Present("client-setenv"))
     {
-        for (const auto& ev : args.GetAllValues("client-setenv"))
+        for (const auto& ev : args->GetAllValues("client-setenv"))
         {
             backstart.AddClientEnvVariable(ev);
         }

@@ -35,14 +35,14 @@
 using namespace openvpn;
 
 
-static int logger(ParsedArgs args)
+static int logger(ParsedArgs::Ptr args)
 {
     int ret = 0;
 
     unsigned int log_level = 3;
-    if (args.Present("log-level"))
+    if (args->Present("log-level"))
     {
-        log_level = std::atoi(args.GetValue("log-level", 0).c_str());
+        log_level = std::atoi(args->GetValue("log-level", 0).c_str());
         if (log_level > 6)
         {
             throw CommandException("openvpn3-service-logger",
@@ -50,11 +50,11 @@ static int logger(ParsedArgs args)
         }
     }
 
-    if (args.Present("system")
-        && (args.Present("vpn-backend")
-            || args.Present("session-manager")
-            || args.Present("session-manager-client-proxy")
-            || args.Present("config-manager")))
+    if (args->Present("system")
+        && (args->Present("vpn-backend")
+            || args->Present("session-manager")
+            || args->Present("session-manager-client-proxy")
+            || args->Present("config-manager")))
     {
         std::stringstream err;
         err << "--system cannot be combined with --config-manager, "
@@ -63,22 +63,22 @@ static int logger(ParsedArgs args)
         throw CommandException("openvpn3-service-logger", err.str());
     }
 
-    if (args.Present("syslog") && args.Present("log-file"))
+    if (args->Present("syslog") && args->Present("log-file"))
     {
         std::stringstream err;
         err << "--syslog and --log-file cannot be combined.";
         throw CommandException("openvpn3-service-logger", err.str());
     }
 
-    if (args.Present("syslog") && args.Present("colour"))
+    if (args->Present("syslog") && args->Present("colour"))
     {
         std::stringstream err;
         err << "--syslog and --colour cannot be combined.";
         throw CommandException("openvpn3-service-logger", err.str());
     }
 
-    if ((args.Present("idle-exit") || args.Present("state-dir"))
-        && !args.Present("service"))
+    if ((args->Present("idle-exit") || args->Present("state-dir"))
+        && !args->Present("service"))
     {
         throw CommandException("openvpn3-service-logger",
                                "--idle-exit or --state-dir cannot be used "
@@ -96,9 +96,9 @@ static int logger(ParsedArgs args)
     // Open a log destination
     std::ofstream logfs;
     std::streambuf * logstream;
-    if (args.Present("log-file"))
+    if (args->Present("log-file"))
     {
-        logfs.open(args.GetValue("log-file", 0).c_str(), std::ios_base::app);
+        logfs.open(args->GetValue("log-file", 0).c_str(), std::ios_base::app);
         logstream = logfs.rdbuf();
     }
     else
@@ -111,13 +111,13 @@ static int logger(ParsedArgs args)
     // Prepare the appropriate log writer
     LogWriter::Ptr logwr = nullptr;
     ColourEngine::Ptr colourengine = nullptr;
-    if (args.Present("syslog"))
+    if (args->Present("syslog"))
      {
         int facility = LOG_DAEMON;
-        if (args.Present("syslog-facility"))
+        if (args->Present("syslog-facility"))
         {
             try {
-                std::string f = args.GetValue("syslog-facility", 0);
+                std::string f = args->GetValue("syslog-facility", 0);
                 facility = SyslogWriter::ConvertLogFacility(f);
             }
             catch (SyslogException& excp)
@@ -126,9 +126,9 @@ static int logger(ParsedArgs args)
                                        excp.what());
             }
         }
-        logwr.reset(new SyslogWriter(args.GetArgv0().c_str(), facility));
+        logwr.reset(new SyslogWriter(args->GetArgv0().c_str(), facility));
      }
-     else if (args.Present("colour"))
+     else if (args->Present("colour"))
      {
          colourengine.reset(new ANSIColours());
          logwr.reset(new ColourStreamWriter(logfile,
@@ -138,28 +138,28 @@ static int logger(ParsedArgs args)
      {
          logwr.reset(new StreamLogWriter(logfile));
      }
-     logwr->EnableTimestamp(args.Present("timestamp"));
-     logwr->EnableLogMeta(args.Present("service-log-dbus-details"));
+     logwr->EnableTimestamp(args->Present("timestamp"));
+     logwr->EnableLogMeta(args->Present("service-log-dbus-details"));
 
      // Enable automatic shutdown if the logger is
      // idling for 10 minute or more.  By idling, it means
      // no services are attached to this log service
      IdleCheck::Ptr idle_exit;
      unsigned int idle_wait_min = 10;
-     if (args.Present("idle-exit"))
+     if (args->Present("idle-exit"))
      {
-         idle_wait_min = std::atoi(args.GetValue("idle-exit", 0).c_str());
+         idle_wait_min = std::atoi(args->GetValue("idle-exit", 0).c_str());
      }
 
      // Setup the log receivers
     try
     {
-        logfile << get_version(args.GetArgv0()) << std::endl;
+        logfile << get_version(args->GetArgv0()) << std::endl;
 
         // Prepare the GLib GMainLoop
         GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
 
-        if (args.Present("service"))
+        if (args->Present("service"))
         {
             //  openvpn3-logger-service runs as a D-Bus log service
             //  where log senders request this service to subscribe to
@@ -173,9 +173,9 @@ static int logger(ParsedArgs args)
 
             logsrv.reset(new LogService(dbusconn, logwr.get(), log_level));
 
-            if (args.Present("state-dir"))
+            if (args->Present("state-dir"))
             {
-                logsrv->SetStateDirectory(args.GetValue("state-dir", 0));
+                logsrv->SetStateDirectory(args->GetValue("state-dir", 0));
             }
             if (idle_wait_min > 0)
             {
@@ -213,7 +213,7 @@ static int logger(ParsedArgs args)
             //  information by default.
 
             unsigned int subscribers = 0;
-            if (args.Present("vpn-backend"))
+            if (args->Present("vpn-backend"))
             {
                 be_subscription.reset(new Logger(dbusconn, logwr.get(),
                                                  "[B]", "",
@@ -222,15 +222,15 @@ static int logger(ParsedArgs args)
                 ++subscribers;
             }
 
-            if (args.Present("session-manager")
-                || args.Present("session-manager-client-proxy"))
+            if (args->Present("session-manager")
+                || args->Present("session-manager-client-proxy"))
             {
                 session_subscr = new Logger(dbusconn, logwr.get(),
                                             "[S]", "",
                                             OpenVPN3DBus_interf_sessions,
                                             log_level);
                 ++subscribers;
-                if (!args.Present("session-manager-client-proxy"))
+                if (!args->Present("session-manager-client-proxy"))
                 {
                     // Don't forward log messages from the backend client which
                     // are proxied by the session manager.  Unless the
@@ -241,7 +241,7 @@ static int logger(ParsedArgs args)
                 }
             }
 
-            if (args.Present("config-manager"))
+            if (args->Present("config-manager"))
             {
                 config_subscr = new Logger(dbusconn, logwr.get(),
                                            "[C]", "",

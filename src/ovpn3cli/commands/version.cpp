@@ -74,10 +74,10 @@ static std::string RetrieveServiceVersion(DBusProxy prx)
  *
  * @return Returns the exit code which will be returned to the calling shell
  */
-int cmd_version(ParsedArgs args)
+int cmd_version(ParsedArgs::Ptr args)
 {
 #ifdef OVPN3CLI_OPENVPN3ADMIN
-    if (args.Present("services"))
+    if (args->Present("services"))
     {
 
         std::cout << "OpenVPN 3 D-Bus services:" << std::endl << std::endl;
@@ -131,7 +131,7 @@ int cmd_version(ParsedArgs args)
         return 0;
     }
 #endif
-    std::cout << get_version("/" + args.GetArgv0()) << std::endl;
+    std::cout << get_version("/" + args->GetArgv0()) << std::endl;
     return 0;
 }
 

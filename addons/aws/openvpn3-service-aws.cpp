@@ -354,7 +354,7 @@ private:
 };
 
 
-int aws_main(ParsedArgs args)
+int aws_main(ParsedArgs::Ptr args)
 {
     // This program does not require root privileges,
     // so if used - drop those privileges
@@ -372,9 +372,9 @@ int aws_main(ParsedArgs args)
     LogWriter::Ptr logwr = nullptr;
     ColourEngine::Ptr colourengine = nullptr;
 
-    if (args.Present("log-file"))
+    if (args->Present("log-file"))
     {
-        std::string fname = args.GetValue("log-file", 0);
+        std::string fname = args->GetValue("log-file", 0);
 
         if ("stdout:" != fname)
         {
@@ -386,7 +386,7 @@ int aws_main(ParsedArgs args)
             logfile = &std::cout;
         }
 
-        if (args.Present("colour"))
+        if (args->Present("colour"))
         {
             colourengine.reset(new ANSIColours());
             logwr.reset(new ColourStreamWriter(*logfile,
@@ -402,9 +402,9 @@ int aws_main(ParsedArgs args)
     dbus.Connect();
 
     unsigned int log_level = 3;
-    if (args.Present("log-level"))
+    if (args->Present("log-level"))
     {
-        log_level = std::atoi(args.GetValue("log-level", 0).c_str());
+        log_level = std::atoi(args->GetValue("log-level", 0).c_str());
     }
 
     // Initialize logging in the OpenVPN 3 Core library
@@ -415,7 +415,7 @@ int aws_main(ParsedArgs args)
     corelog.SetLogLevel(log_level);
 
 
-    bool signal_broadcast = args.Present("signal-broadcast");
+    bool signal_broadcast = args->Present("signal-broadcast");
     LogServiceProxy::Ptr logsrvprx = nullptr;
     if (!signal_broadcast)
     {
@@ -435,9 +435,9 @@ int aws_main(ParsedArgs args)
     }
 
     std::string config_file{OPENVPN3_AWS_CONFIG};
-    if (args.Present("config"))
+    if (args->Present("config"))
     {
-        config_file = args.GetValue("config", 0);
+        config_file = args->GetValue("config", 0);
     }
 
     // Initialize Core library

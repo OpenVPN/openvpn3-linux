@@ -134,20 +134,20 @@ std::string import_config(const std::string filename,
  * @return Returns the exit code which will be returned to the calling shell
  *
  */
-static int cmd_config_import(ParsedArgs args)
+static int cmd_config_import(ParsedArgs::Ptr args)
 {
-    if (!args.Present("config"))
+    if (!args->Present("config"))
     {
         throw CommandException("config-import", "Missing required --config option");
     }
     try
     {
-        std::string name = (args.Present("name") ? args.GetValue("name", 0)
-                                                : args.GetValue("config", 0));
-        std::string path = import_config(args.GetValue("config", 0),
+        std::string name = (args->Present("name") ? args->GetValue("name", 0)
+                                                : args->GetValue("config", 0));
+        std::string path = import_config(args->GetValue("config", 0),
                                          name,
                                          false,
-                                         args.Present("persistent"));
+                                         args->Present("persistent"));
         std::cout << "Configuration imported.  Configuration path: "
                   << path
                   << std::endl;
@@ -202,7 +202,7 @@ SingleCommand::Ptr prepare_command_config_import()
  * @return Returns the exit code which will be returned to the calling shell
  *
  */
-static int cmd_configs_list(ParsedArgs args)
+static int cmd_configs_list(ParsedArgs::Ptr args)
 {
     OpenVPN3ConfigurationProxy confmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration );
     confmgr.Ping();
@@ -350,9 +350,9 @@ static int config_manage_show(OpenVPN3ConfigurationProxy& conf,
  * @return Returns the exit code which will be returned to the calling shell
  *
  */
-static int cmd_config_manage(ParsedArgs args)
+static int cmd_config_manage(ParsedArgs::Ptr args)
 {
-    if (!args.Present("path") && !args.Present("config"))
+    if (!args->Present("path") && !args->Present("config"))
     {
         throw CommandException("config-manage", "No configuration provided "
                                "(--path, --config)");
@@ -360,22 +360,22 @@ static int cmd_config_manage(ParsedArgs args)
     bool override_present = false;
     for (const ValidOverride& vo : configProfileOverrides)
     {
-        if (args.Present(vo.key)
-            && (args.Present("unset-override") && args.GetValue("unset-override", 0) == vo.key))
+        if (args->Present(vo.key)
+            && (args->Present("unset-override") && args->GetValue("unset-override", 0) == vo.key))
         {
             throw CommandException("config-manage",
                                    "Cannot provide both --" + vo.key +" and "
                                    + "--unset-" + vo.key
                                    + " at the same time.");
         }
-        if (args.Present(vo.key))
+        if (args->Present(vo.key))
         {
             override_present = true;
         }
     }
 
-    if (!args.Present("rename") && !args.Present("show")
-        && !override_present && !args.Present("unset-override"))
+    if (!args->Present("rename") && !args->Present("show")
+        && !override_present && !args->Present("unset-override"))
     {
         throw CommandException("config-manage",
                                "An operation argument is required "
@@ -387,10 +387,10 @@ static int cmd_config_manage(ParsedArgs args)
     try
     {
 
-        std::string path = (args.Present("config")
+        std::string path = (args->Present("config")
                              ? retrieve_config_path("config-manage",
-                                                    args.GetValue("config", 0))
-                             : args.GetValue("path", 0));
+                                                    args->GetValue("config", 0))
+                             : args->GetValue("path", 0));
         OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path);
         if (!conf.CheckObjectExists())
         {
@@ -400,27 +400,27 @@ static int cmd_config_manage(ParsedArgs args)
 
         bool valid_option = false;
 
-        if (args.Present("rename"))
+        if (args->Present("rename"))
         {
-            conf.SetName(args.GetValue("rename", 0));
+            conf.SetName(args->GetValue("rename", 0));
             std::cout << "Configuration renamed" << std::endl;
             valid_option = true;
         }
 
         for (const ValidOverride& vo: configProfileOverrides)
         {
-            if (args.Present(vo.key))
+            if (args->Present(vo.key))
             {
                 if (OverrideType::boolean == vo.type)
                 {
-                    bool value = args.GetBoolValue(vo.key, 0);
+                    bool value = args->GetBoolValue(vo.key, 0);
                     conf.SetOverride(vo, value);
                     std::cout << "Override '" + vo.key + "' is " + (value ? "enabled" : "disabled")
                               << std::endl;
                 }
                 else if (OverrideType::string == vo.type)
                 {
-                    std::string value = args.GetValue(vo.key, 0);
+                    std::string value = args->GetValue(vo.key, 0);
                     conf.SetOverride(vo, value);
                     std::cout << "Set override '" + vo.key + "' to '" + value +"'"
                               << std::endl;
@@ -429,9 +429,9 @@ static int cmd_config_manage(ParsedArgs args)
             }
         }
 
-        if (args.Present("unset-override"))
+        if (args->Present("unset-override"))
         {
-            for (const auto& key : args.GetAllValues("unset-override"))
+            for (const auto& key : args->GetAllValues("unset-override"))
             {
                 const ValidOverride& override = GetConfigOverride(key, true);
 
@@ -464,7 +464,7 @@ static int cmd_config_manage(ParsedArgs args)
             }
         }
 
-        if (args.Present("show"))
+        if (args->Present("show"))
         {
             if (valid_option)
             {
@@ -580,32 +580,32 @@ SingleCommand::Ptr prepare_command_config_manage()
  * @return Returns the exit code which will be returned to the calling shell
  *
  */
-static int cmd_config_acl(ParsedArgs args)
+static int cmd_config_acl(ParsedArgs::Ptr args)
 {
     int ret = 0;
-    if (!args.Present("path") && !args.Present("config"))
+    if (!args->Present("path") && !args->Present("config"))
     {
         throw CommandException("config-acl",
                                "No configuration profile provided "
                                "(--config, --path)");
     }
 
-    if (!args.Present("show")
-        && !args.Present("grant")
-        && !args.Present("revoke")
-        && !args.Present("public-access")
-        && !args.Present("lock-down")
-        && !args.Present("seal"))
+    if (!args->Present("show")
+        && !args->Present("grant")
+        && !args->Present("revoke")
+        && !args->Present("public-access")
+        && !args->Present("lock-down")
+        && !args->Present("seal"))
     {
         throw CommandException("config-acl", "No operation option provided");
     }
 
     try
     {
-        std::string path = (args.Present("config")
+        std::string path = (args->Present("config")
                              ? retrieve_config_path("config-acl",
-                                                    args.GetValue("config", 0))
-                             : args.GetValue("path", 0));
+                                                    args->GetValue("config", 0))
+                             : args->GetValue("path", 0));
         OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path);
         if (!conf.CheckObjectExists())
         {
@@ -613,9 +613,9 @@ static int cmd_config_acl(ParsedArgs args)
                                    "Configuration does not exist");
         }
 
-        if (args.Present("grant"))
+        if (args->Present("grant"))
         {
-            for (auto const& user : args.GetAllValues("grant"))
+            for (auto const& user : args->GetAllValues("grant"))
             {
                 try
                 {
@@ -646,9 +646,9 @@ static int cmd_config_acl(ParsedArgs args)
             }
         }
 
-        if (args.Present("revoke"))
+        if (args->Present("revoke"))
         {
-            for (auto const& user : args.GetAllValues("revoke"))
+            for (auto const& user : args->GetAllValues("revoke"))
             {
                 try
                 {
@@ -679,9 +679,9 @@ static int cmd_config_acl(ParsedArgs args)
             }
         }
 
-        if (args.Present("lock-down"))
+        if (args->Present("lock-down"))
         {
-            bool ld = args.GetBoolValue("lock-down", 0);
+            bool ld = args->GetBoolValue("lock-down", 0);
             conf.SetLockedDown(ld);
             if (ld)
             {
@@ -697,9 +697,9 @@ static int cmd_config_acl(ParsedArgs args)
         }
 
 
-        if (args.Present("public-access"))
+        if (args->Present("public-access"))
         {
-            bool ld = args.GetBoolValue("public-access", 0);
+            bool ld = args->GetBoolValue("public-access", 0);
             conf.SetPublicAccess(ld);
             if (ld)
             {
@@ -715,7 +715,7 @@ static int cmd_config_acl(ParsedArgs args)
             }
         }
 
-        if (args.Present("seal"))
+        if (args->Present("seal"))
         {
             std::cout << "This operation CANNOT be undone and makes this "
                       << "configuration profile read-only."
@@ -737,7 +737,7 @@ static int cmd_config_acl(ParsedArgs args)
             }
         }
 
-        if (args.Present("show"))
+        if (args->Present("show"))
         {
             std::cout << "    Configuration name: "
                       << conf.GetStringProperty("name")
@@ -843,9 +843,9 @@ SingleCommand::Ptr prepare_command_config_acl()
  * @return Returns the exit code which will be returned to the calling shell
  *
  */
-static int cmd_config_show(ParsedArgs args)
+static int cmd_config_show(ParsedArgs::Ptr args)
 {
-    if (!args.Present("path") && !args.Present("config"))
+    if (!args->Present("path") && !args->Present("config"))
     {
         throw CommandException("config-show",
                                "No configuration profile provided "
@@ -854,10 +854,10 @@ static int cmd_config_show(ParsedArgs args)
 
     try
     {
-        std::string path = (args.Present("config")
+        std::string path = (args->Present("config")
                              ? retrieve_config_path("config-show",
-                                                    args.GetValue("config", 0))
-                             : args.GetValue("path", 0));
+                                                    args->GetValue("config", 0))
+                             : args->GetValue("path", 0));
         OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path);
         if (!conf.CheckObjectExists())
         {
@@ -866,7 +866,7 @@ static int cmd_config_show(ParsedArgs args)
         }
 
 
-        if (!args.Present("json"))
+        if (!args->Present("json"))
         {
             std::cout << conf.GetConfig() << std::endl;
         }
@@ -927,9 +927,9 @@ SingleCommand::Ptr prepare_command_config_show()
  * @return Returns the exit code which will be returned to the calling shell
  *
  */
-static int cmd_config_remove(ParsedArgs args)
+static int cmd_config_remove(ParsedArgs::Ptr args)
 {
-    if (!args.Present("path") && !args.Present("config"))
+    if (!args->Present("path") && !args->Present("config"))
     {
         throw CommandException("config-remove",
                                "No configuration profile provided "
@@ -938,13 +938,13 @@ static int cmd_config_remove(ParsedArgs args)
 
     try
     {
-        std::string path = (args.Present("config")
+        std::string path = (args->Present("config")
                              ? retrieve_config_path("config-remove",
-                                                    args.GetValue("config", 0))
-                             : args.GetValue("path", 0));
+                                                    args->GetValue("config", 0))
+                             : args->GetValue("path", 0));
 
         std::string response;
-        if (!args.Present("force"))
+        if (!args->Present("force"))
         {
             std::cout << "This operation CANNOT be undone and removes this"
                       << "configuration profile completely."
@@ -955,7 +955,7 @@ static int cmd_config_remove(ParsedArgs args)
             std::cin >> response;
         }
 
-        if ("YES" == response || args.Present("force"))
+        if ("YES" == response || args->Present("force"))
         {
             OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path);
             if (!conf.CheckObjectExists())

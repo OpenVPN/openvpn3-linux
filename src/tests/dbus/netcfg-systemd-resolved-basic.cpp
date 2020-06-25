@@ -60,9 +60,9 @@ void print_details(resolved::Link::Ptr link)
 }
 
 
-int program(ParsedArgs args)
+int program(ParsedArgs::Ptr args)
 {
-    std::vector<std::string> exargs = args.GetAllExtraArgs();
+    std::vector<std::string> exargs = args->GetAllExtraArgs();
     if (exargs.size() != 1)
     {
         throw CommandException("", "Only one device name can be used");
@@ -76,9 +76,9 @@ int program(ParsedArgs args)
 
 
     std::cout << "systemd-resolved path: " << link->GetPath() << std::endl;
-    bool mods = args.Present("add-resolver") || args.Present("reset-resolver")
-              || args.Present("add-search") || args.Present("reset-search")
-              || args.Present("set-default-route") || args.Present("revert");
+    bool mods = args->Present("add-resolver") || args->Present("reset-resolver")
+              || args->Present("add-search") || args->Present("reset-search")
+              || args->Present("set-default-route") || args->Present("revert");
     if (mods)
     {
         std::cout << "Before changes: " << std::endl;
@@ -86,14 +86,14 @@ int program(ParsedArgs args)
 
     print_details(link);
 
-    if (args.Present("add-resolver") || args.Present("reset-resolver"))
+    if (args->Present("add-resolver") || args->Present("reset-resolver"))
     {
         // Set a new DNS resolver server
         resolved::ResolverRecord::List rslv;
 
-        if (args.Present("add-resolver"))
+        if (args->Present("add-resolver"))
         {
-            for (const auto& ip : args.GetAllValues("add-resolver"))
+            for (const auto& ip : args->GetAllValues("add-resolver"))
             {
                 rslv.push_back(resolved::ResolverRecord(AF_INET, ip));
             }
@@ -101,16 +101,16 @@ int program(ParsedArgs args)
         link->SetDNSServers(rslv);
     }
 
-    if (args.Present("add-search") || args.Present("reset-search"))
+    if (args->Present("add-search") || args->Present("reset-search"))
     {
         // Set DNS search domains
         resolved::SearchDomain::List srchs;
 
-        if (args.Present("add-search"))
+        if (args->Present("add-search"))
         {
-            bool routing = args.Present("search-routing");
+            bool routing = args->Present("search-routing");
 
-            for (const auto& s : args.GetAllValues("add-search"))
+            for (const auto& s : args->GetAllValues("add-search"))
             {
                 srchs.push_back(resolved::SearchDomain(s, routing));
             }
@@ -118,12 +118,12 @@ int program(ParsedArgs args)
         link->SetDomains(srchs);
     }
 
-    if (args.Present("set-default-route"))
+    if (args->Present("set-default-route"))
     {
-        link->SetDefaultRoute(args.GetBoolValue("set-default-route", 0));
+        link->SetDefaultRoute(args->GetBoolValue("set-default-route", 0));
     }
 
-    if (args.Present("revert"))
+    if (args->Present("revert"))
     {
         link->Revert();
     }

@@ -28,6 +28,7 @@
 #include <iomanip>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -220,11 +221,16 @@ private:
 class ParsedArgs
 {
 public:
+    typedef std::shared_ptr<ParsedArgs> Ptr;
+
+    ParsedArgs() : argv0("") {}
+
     ParsedArgs(const std::string argv0)
         : argv0(argv0)
     {
     }
 
+    virtual ~ParsedArgs() = default;
 
     /**
      *  Check if the command line parser completed parsing all options and
@@ -370,7 +376,7 @@ protected:
 /**
  *  Simplistic internal specification of callback function APIs
  */
-using commandPtr = int (*)(ParsedArgs);
+using commandPtr = int (*)(ParsedArgs::Ptr);
 using argHelperFunc = std::string (*)();
 
 
@@ -383,10 +389,13 @@ using argHelperFunc = std::string (*)();
 class RegisterParsedArgs : public ParsedArgs
 {
 public:
+    typedef std::shared_ptr<RegisterParsedArgs> Ptr;
+
     RegisterParsedArgs(const std::string arg0) : ParsedArgs(arg0)
     {
     }
 
+    ~RegisterParsedArgs() = default;
 
     /**
      *  Registers an option with an optional value.  If value is NULL,
@@ -840,16 +849,16 @@ protected:
      *               mimics the standard C/C++ way of argument passing
      * @param argv   char ** string array with all the privded arguments.
      *
-     * @return Returns a ParsedArgs object with all the various parsed options
+     * @return Returns a ParsedArgs::Ptr with all the various parsed options
      *         accessible in a structured way.  Always check the result of
      *         the GetCompleted() method in this object.  If this does not
      *         return true, the execution should stop as the command line
      *         parsing did not complete properly; most likely due to
      *         -h or --help.
      */
-    RegisterParsedArgs parse_commandline(const std::string & arg0,
-                                         unsigned int skip,
-                                         int argc, char **argv);
+    RegisterParsedArgs::Ptr parse_commandline(const std::string & arg0,
+                                              unsigned int skip,
+                                              int argc, char **argv);
 
 
 private:

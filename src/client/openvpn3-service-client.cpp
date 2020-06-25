@@ -1462,12 +1462,12 @@ void start_client_thread(pid_t start_pid, const std::string argv0,
 }
 
 
-int client_service(ParsedArgs args)
+int client_service(ParsedArgs::Ptr args)
 {
-    auto extra = args.GetAllExtraArgs();
+    auto extra = args->GetAllExtraArgs();
     if (extra.size() != 1)
     {
-        std::cout << "** ERROR ** Invalid usage: " << args.GetArgv0()
+        std::cout << "** ERROR ** Invalid usage: " << args->GetArgv0()
                   << " <session registration token>" << std::endl;
         std::cout << std::endl;
         std::cout << "            This program is not intended to be called manually from the command line" << std::endl;
@@ -1481,9 +1481,9 @@ int client_service(ParsedArgs args)
     LogWriter::Ptr logwr = nullptr;
     ColourEngine::Ptr colourengine = nullptr;
 
-    if (args.Present("log-file"))
+    if (args->Present("log-file"))
     {
-        std::string fname = args.GetValue("log-file", 0);
+        std::string fname = args->GetValue("log-file", 0);
         if ("stdout:" != fname)
         {
             logfs.open(fname.c_str(), std::ios_base::app);
@@ -1495,7 +1495,7 @@ int client_service(ParsedArgs args)
         }
 
         logfile.reset(new std::ostream{logstream});
-        if (args.Present("colour"))
+        if (args->Present("colour"))
         {
             colourengine.reset(new ANSIColours());
              logwr.reset(new ColourStreamWriter(*logfile,
@@ -1513,27 +1513,27 @@ int client_service(ParsedArgs args)
 
     // Get a new process session ID, unless we're debugging
     // and --no-setsid is used.  This can make gdb debugging simpler.
-    if (!args.Present("no-setsid") && (-1 == setsid()))
+    if (!args->Present("no-setsid") && (-1 == setsid()))
     {
         std::cerr << "** ERROR ** Failed getting a new process session ID:" << strerror(errno) << std::endl;
         return 3;
     }
 
     int log_level = -1;
-    if (args.Present("log-level"))
+    if (args->Present("log-level"))
     {
-        log_level = std::atoi(args.GetValue("log-level", 0).c_str());
+        log_level = std::atoi(args->GetValue("log-level", 0).c_str());
     }
 
 #ifdef OPENVPN_DEBUG
     // When debugging, we might not want to do a fork.
-    if (args.Present("no-fork"))
+    if (args->Present("no-fork"))
     {
         try
         {
-            start_client_thread(getpid(), args.GetArgv0(), extra[0],
-                                args.Present("disable-protect-socket"),
-                                log_level, args.Present("signal-broadcast"),
+            start_client_thread(getpid(), args->GetArgv0(), extra[0],
+                                args->Present("disable-protect-socket"),
+                                log_level, args->Present("signal-broadcast"),
                                 logwr.get());
             return 0;
         }
@@ -1557,9 +1557,9 @@ int client_service(ParsedArgs args)
     {
         try
         {
-            start_client_thread(start_pid, args.GetArgv0(), extra[0],
-                                args.Present("disable-protect-socket"),
-                                log_level, args.Present("signal-broadcast"),
+            start_client_thread(start_pid, args->GetArgv0(), extra[0],
+                                args->Present("disable-protect-socket"),
+                                log_level, args->Present("signal-broadcast"),
                                 logwr.get());
             return 0;
         }

@@ -75,50 +75,50 @@ int Commands::ShellCompletion::RunCommand(const std::string arg0, unsigned int i
                int argc, char **argv)
 {
     try {
-        ParsedArgs args = parse_commandline(arg0, 1, argc, argv);
+        ParsedArgs::Ptr args = parse_commandline(arg0, 1, argc, argv);
 
-        if (!args.GetCompleted())
+        if (!args->GetCompleted())
         {
             return 0;
         }
 
-        if (args.Present("list-commands")
-            && args.Present("list-options"))
+        if (args->Present("list-commands")
+            && args->Present("list-options"))
         {
             throw CommandException("shell-completion",
                                    "Cannot combine --list-commands and --list-options");
         }
 
-        if (args.Present("list-options") && args.GetValueLen("list-options") > 1)
+        if (args->Present("list-options") && args->GetValueLen("list-options") > 1)
         {
             throw CommandException("shell-completion",
                                    "Can only use --list-options once");
         }
 
 
-        if (args.Present("arg-helper")
-            && !args.Present("list-options"))
+        if (args->Present("arg-helper")
+            && !args->Present("list-options"))
         {
             throw CommandException("shell-completion",
                                    "--arg-helper requires --list-options");
         }
 
-        if (args.Present("list-commands"))
+        if (args->Present("list-commands"))
         {
             list_commands();
             return 0;
         }
 
-        if (args.Present("list-options"))
+        if (args->Present("list-options"))
         {
-            if (!args.Present("arg-helper"))
+            if (!args->Present("arg-helper"))
             {
-                list_options(args.GetValue("list-options", 0));
+                list_options(args->GetValue("list-options", 0));
             }
             else
             {
-                call_arg_helper(args.GetValue("list-options", 0),
-                                args.GetValue("arg-helper", 0));
+                call_arg_helper(args->GetValue("list-options", 0),
+                                args->GetValue("arg-helper", 0));
             }
         }
     }
@@ -559,10 +559,10 @@ int SingleCommand::RunCommand(const std::string arg0, unsigned int skip,
                               int argc, char **argv)
 {
     try {
-        ParsedArgs cmd_args = parse_commandline(arg0, skip, argc, argv);
+        ParsedArgs::Ptr cmd_args = parse_commandline(arg0, skip, argc, argv);
 
         // Run the callback function.
-        return cmd_args.GetCompleted() ? command_func(cmd_args) : 0;
+        return cmd_args->GetCompleted() ? command_func(cmd_args) : 0;
     }
     catch (...)
     {
@@ -571,13 +571,14 @@ int SingleCommand::RunCommand(const std::string arg0, unsigned int skip,
 }
 
 
-RegisterParsedArgs SingleCommand::parse_commandline(const std::string & arg0,
-                                                    unsigned int skip,
-                                                    int argc, char **argv)
+RegisterParsedArgs::Ptr SingleCommand::parse_commandline(const std::string & arg0,
+                                                         unsigned int skip,
+                                                         int argc, char **argv)
 {
     struct option *long_opts = init_getopt();
 
-    RegisterParsedArgs cmd_args(arg0);
+    RegisterParsedArgs::Ptr cmd_args;
+    cmd_args.reset(new RegisterParsedArgs(arg0));
     int c;
     optind = 1 + skip; // Skip argv[0] which contains this command name
     try
@@ -621,7 +622,7 @@ RegisterParsedArgs SingleCommand::parse_commandline(const std::string & arg0,
                 {
                     if (o->check_long_option(long_opts[optidx].name))
                     {
-                            cmd_args.register_option(o->get_option_name(), optarg);
+                            cmd_args->register_option(o->get_option_name(), optarg);
                     }
                 }
             }
@@ -632,7 +633,7 @@ RegisterParsedArgs SingleCommand::parse_commandline(const std::string & arg0,
                 {
                     if (o->check_short_option(c))
                     {
-                        cmd_args.register_option(o->get_option_name(), optarg);
+                        cmd_args->register_option(o->get_option_name(), optarg);
                     }
                 }
             }
@@ -645,10 +646,10 @@ RegisterParsedArgs SingleCommand::parse_commandline(const std::string & arg0,
             // processing inside the function to be called
             while (optind < argc)
             {
-                cmd_args.register_extra_args(argv[optind++]);
+                cmd_args->register_extra_args(argv[optind++]);
             }
         }
-        cmd_args.set_completed();
+        cmd_args->set_completed();
     }
     catch (...)
     {

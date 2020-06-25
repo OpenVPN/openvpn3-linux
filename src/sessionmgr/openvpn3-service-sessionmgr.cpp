@@ -30,9 +30,9 @@
 
 using namespace openvpn;
 
-static int session_manager(ParsedArgs args)
+static int session_manager(ParsedArgs::Ptr args)
 {
-    std::cout << get_version(args.GetArgv0()) << std::endl;
+    std::cout << get_version(args->GetArgv0()) << std::endl;
 
     GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
 
@@ -40,9 +40,9 @@ static int session_manager(ParsedArgs args)
     // idling for 1 minute or more.  By idling, it means
     // no VPN sessions are registered.
     unsigned int idle_wait_min = 3;
-    if (args.Present("idle-exit"))
+    if (args->Present("idle-exit"))
     {
-        idle_wait_min = std::atoi(args.GetValue("idle-exit", 0).c_str());
+        idle_wait_min = std::atoi(args->GetValue("idle-exit", 0).c_str());
     }
 
     // Open a log destination, if requested
@@ -51,9 +51,9 @@ static int session_manager(ParsedArgs args)
     LogWriter::Ptr logwr = nullptr;
     ColourEngine::Ptr colourengine = nullptr;
 
-    if (args.Present("log-file"))
+    if (args->Present("log-file"))
     {
-        std::string fname = args.GetValue("log-file", 0);
+        std::string fname = args->GetValue("log-file", 0);
 
         if ("stdout:" != fname)
         {
@@ -65,7 +65,7 @@ static int session_manager(ParsedArgs args)
             logfile = &std::cout;
         }
 
-        if (args.Present("colour"))
+        if (args->Present("colour"))
         {
             colourengine.reset(new ANSIColours());
              logwr.reset(new ColourStreamWriter(*logfile,
@@ -77,7 +77,7 @@ static int session_manager(ParsedArgs args)
         }
     }
 
-    bool signal_broadcast = args.Present("signal-broadcast");
+    bool signal_broadcast = args->Present("signal-broadcast");
     DBus dbus(G_BUS_TYPE_SYSTEM);
     dbus.Connect();
 
@@ -92,9 +92,9 @@ static int session_manager(ParsedArgs args)
     }
 
     unsigned int log_level = 3;
-    if (args.Present("log-level"))
+    if (args->Present("log-level"))
     {
-        log_level = std::atoi(args.GetValue("log-level", 0).c_str());
+        log_level = std::atoi(args->GetValue("log-level", 0).c_str());
     }
     sessmgr.SetManagerLogLevel(log_level);
 

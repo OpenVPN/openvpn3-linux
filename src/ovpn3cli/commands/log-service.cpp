@@ -42,7 +42,7 @@
  * @return Returns the exit code which will be returned to the calling shell
  *
  */
-static int cmd_log_service(ParsedArgs args)
+static int cmd_log_service(ParsedArgs::Ptr args)
 {
     try
     {
@@ -53,9 +53,9 @@ static int cmd_log_service(ParsedArgs args)
         std::string old_loglev("");
         unsigned int curlev = logsrvprx.GetLogLevel();
         unsigned int newlev = curlev;
-        if (args.Present("log-level"))
+        if (args->Present("log-level"))
         {
-            newlev = std::atoi(args.GetValue("log-level", 0).c_str());
+            newlev = std::atoi(args->GetValue("log-level", 0).c_str());
             if ( curlev != newlev )
             {
                 std::stringstream t;
@@ -68,9 +68,9 @@ static int cmd_log_service(ParsedArgs args)
         std::string old_tstamp("");
         bool curtstamp = logsrvprx.GetTimestampFlag();
         bool newtstamp = curtstamp;
-        if (args.Present("timestamp"))
+        if (args->Present("timestamp"))
         {
-            newtstamp = args.GetBoolValue("timestamp", 0);
+            newtstamp = args->GetBoolValue("timestamp", 0);
             if ( curtstamp != newtstamp)
             {
                 std::stringstream t;
@@ -89,9 +89,9 @@ static int cmd_log_service(ParsedArgs args)
         std::string old_dbusdetails("");
         bool curdbusdetails = logsrvprx.GetDBusDetailsLogging();
         bool newdbusdetails = curdbusdetails;
-        if (args.Present("dbus-details"))
+        if (args->Present("dbus-details"))
         {
-            newdbusdetails = args.GetBoolValue("dbus-details", 0);
+            newdbusdetails = args->GetBoolValue("dbus-details", 0);
             if ( curdbusdetails != newdbusdetails)
             {
                 std::stringstream t;
@@ -107,7 +107,7 @@ static int cmd_log_service(ParsedArgs args)
             }
         }
 
-        if (args.Present("list-subscriptions"))
+        if (args->Present("list-subscriptions"))
         {
             DBusConnectionCreds creds(dbus.GetConnection());
             LogSubscribers list = logsrvprx.GetSubscriberList();
