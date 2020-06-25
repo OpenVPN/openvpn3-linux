@@ -35,7 +35,7 @@ def build_tarball()
                     }
                     stage('Build') {
                         sh "./bootstrap.sh"
-                        sh "./configure --prefix=/usr --sysconfdir=/etc --enable-debug-core-events --enable-debug-options --enable-debug-exceptions --enable-addons-aws"
+                        sh "./configure --prefix=/usr --sysconfdir=/etc --enable-debug-core-events --enable-debug-options --enable-debug-exceptions --enable-addons-aws --enable-dco"
                         sh 'make -j$(nproc)'
                     }
                     stage('Checks') {
