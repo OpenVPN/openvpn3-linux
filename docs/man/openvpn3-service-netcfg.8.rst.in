@@ -103,6 +103,11 @@ OPTIONS
                 settings, unless ``openvpn3-service-client`` is started with
                 ``--disable-protect-socket``.
 
+--state-dir DIRECTORY
+                This option will define a directory where
+                ``openvpn3-service-netcfg`` will read configuration data from.
+                This configuration file is JSON based and will override the
+                options from the command line.
 
 DNS Resolver Configuration
 --------------------------
@@ -131,10 +136,70 @@ multiple approaches, but only one of them can be enabled.
          enable split-DNS by default.
 
 
+Configuration file
+------------------
+The default location for the configuration file is under
+:code:`@OPENVPN_STATEDIR@`.  This is a plain JSON configuration file which
+only considers a few fields:
+::
+
+        {
+                "log_level": LEVEL,
+                "log_file": FILENAME,
+                "idle_exit": MINUTES,
+                "resolv_conf_file": FILENAME,
+                "systemd_resolved": "",
+                "redirect_method": ["host-route" | "bind-device" | "none" ],
+                "set_somark": MARK
+         }
+
+Only used settings need to be present.  If not set, the command line options
+will be able to set these options.
+
+Attribute: log_level
+""""""""""""""""""""
+This is the equivalent of the ``--log-level`` command line argument.  Valid
+``LEVEL`` values are :code:`0` to :code:`6`.
+
+Attribute: log_file
+"""""""""""""""""""
+This is the equivalent of the ``--log-file`` command line argument.  Must
+be a filename where to write log files.  It also supports :code:`stdout:` to
+write log data to the console/tty.  Logging will also be sent to the
+``openvpn3-service-logger``\(8) service regardless of this setting.
+
+Attribute: idle_exit
+""""""""""""""""""""
+This is the equivalent of the ``--idle-exit`` command line argument.  This
+overrides the default automatic exit logic.  The argument it takes is a
+positive integer of how many minutes it will be allow to run idle, not managing
+any OpenVPN network devices before it shuts down automatically.
+
+Attribute: resolv_conf_file
+"""""""""""""""""""""""""""
+This is used to enable the :code:`resolv.conf` DNS resolver configuration
+integration.  See ``--resolv-conf``  for details.
+
+Attribute: systemd_resolved
+"""""""""""""""""""""""""""
+This is used to enable the ``systemd-resolved``\(8) DNS resolver configuration
+integratoin.  See ``--systemd-resolved`` for details.
+
+Attribute: redirect_method
+""""""""""""""""""""""""""
+This is the equivalent of the ``--redirect-method`` option.  See that option
+for details.
+
+Attribute: set_somark
+"""""""""""""""""""""
+This is the equivalent of ``--set-somark``.  See that option for details.
+
+
 SEE ALSO
 ========
 
 ``dbus-daemon``\(1)
 ``openvpn3``\(1)
 ``openvpn3-service-client``\(8)
+``openvpn3-service-logger``\(8)
 

@@ -50,8 +50,38 @@ struct NetCfgOptions {
     /** Will signals be broadcast to all users? */
     bool signal_broadcast = false;
 
-    NetCfgOptions(ParsedArgs::Ptr args)
+    /** Configuration file to use, if --state-dir is given */
+    std::string config_file = "";
+
+
+    NetCfgOptions(ParsedArgsConfig::Ptr args)
     {
+        if (args->Present("state-dir"))
+        {
+            config_file = args->GetLastValue("state-dir") + "/netcfg.json";
+            args->SetConfigArgsMapping({{"log_level", "log-level"},
+                                       {"log_file", "log-file"},
+                                       {"idle_exit", "idle-exit"},
+                                       {"resolv_conf_file", "resolv-conf"},
+                                       {"systemd_resolved", "systemd-resolved"},
+                                       {"redirect_method", "redirect-method"},
+                                       {"set_somark", "set-somark"}});
+
+            std::cout << "Loading configuration file: " << config_file
+                      << std::endl;
+            args->LoadConfig(config_file);
+        }
+
+        try
+        {
+            args->CheckExclusiveOptions({{"resolv-conf", "systemd-resolved"}});
+        }
+        catch (const ExclusiveOptionError& excp)
+        {
+            throw CommandException("openvpn3-service-netcfg",
+                                   excp.what());
+        }
+
         if (args->Present("redirect-method"))
         {
             std::string method = args->GetValue("redirect-method", 0);
@@ -83,7 +113,7 @@ struct NetCfgOptions {
     }
 
 
-    NetCfgOptions(const NetCfgOptions& origin) noexcept = default;
+    NetCfgOptions(const NetCfgOptions& origin) = default;
 
     /**
      *  Generate a decoded string of the current options

@@ -25,6 +25,7 @@
 
 #include <string>
 #include <cap-ng.h>
+#include <cassert>
 
 #include "common/utils.hpp"
 #include "common/lookup.hpp"
@@ -111,13 +112,20 @@ static void apply_capabilities(ParsedArgs::Ptr args,
 }
 
 
-int netcfg_main(ParsedArgs::Ptr args)
+int netcfg_main(ParsedArgs::Ptr fncargs)
 {
+    ParsedArgsConfig::Ptr args = std::dynamic_pointer_cast<ParsedArgsConfig>(fncargs);
+    assert(nullptr != args);
+
     if (0 != getegid() || 0 != geteuid())
     {
         throw CommandException("openvpn3-service-netcfg",
                                "This program must be started as root");
     }
+
+    // Parse options which will be passed to the
+    // NetCfg manager or device objects
+    NetCfgOptions netcfgopts(args);
 
     //
     // Open a log destination, if requested
@@ -133,7 +141,7 @@ int netcfg_main(ParsedArgs::Ptr args)
 
     if (args->Present("log-file"))
     {
-        std::string fname = args->GetValue("log-file", 0);
+        std::string fname = args->GetLastValue("log-file");
 
         if ("stdout:" != fname)
         {
@@ -157,11 +165,6 @@ int netcfg_main(ParsedArgs::Ptr args)
         }
     }
 
-
-    // Parse options which will be passed to the
-    // NetCfg manager or device objects
-    NetCfgOptions netcfgopts(args);
-
     //
     // Prepare dropping capabilities and user privileges
     //
@@ -170,7 +173,7 @@ int netcfg_main(ParsedArgs::Ptr args)
     int log_level = -1;
     if (args->Present("log-level"))
     {
-        log_level = std::atoi(args->GetValue("log-level", 0).c_str());
+        log_level = std::atoi(args->GetLastValue("log-level").c_str());
     }
 
     // Enable automatic shutdown if the config manager is
@@ -179,7 +182,7 @@ int netcfg_main(ParsedArgs::Ptr args)
     unsigned int idle_wait_min = 5;
     if (args->Present("idle-exit"))
     {
-        idle_wait_min = std::atoi(args->GetValue("idle-exit", 0).c_str());
+        idle_wait_min = std::atoi(args->GetLastValue("idle-exit").c_str());
     }
 
     LogServiceProxy::Ptr logservice;
@@ -209,20 +212,12 @@ int netcfg_main(ParsedArgs::Ptr args)
         //
         // DNS resolver integrations
         //
-
-        if (args->Present("resolv-conf") && args->Present("systemd-resolved"))
-        {
-            throw CommandException("openvpn3-service-netcfg",
-                                   "It is not possible to use both --resolv-conf"
-                                   " and --systemd-resolved at the same time.");
-        }
-
         DNS::ResolverBackendInterface::Ptr resolver_be = nullptr;
 
         DNS::ResolvConfFile::Ptr resolvconf = nullptr;
         if (args->Present("resolv-conf"))
         {
-            std::string rsc =  args->GetValue("resolv-conf", 0);
+            std::string rsc =  args->GetLastValue("resolv-conf");
 
             // We need to preserve a ResolvConfFile pointer to be able
             // to access the DNS::ResolvConfFile::Restore() method
@@ -343,6 +338,8 @@ int main(int argc, char **argv)
                         "Methods: host-route (default), bind-device, none");
     argparser.AddOption("set-somark", "MARK", true,
                         "Set the specified so mark on all VPN sockets.");
+    argparser.AddOption("state-dir", 0, "DIRECTORY", true,
+                        "Directory where to save the runtime configuration settings");
 #if OPENVPN_DEBUG
     argparser.AddOption("disable-capabilities", 0,
                         "Do not restrcit any process capabilties (INSECURE)");
