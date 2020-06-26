@@ -210,6 +210,47 @@ private:
 
 
 /**
+ *  Exception class used by @ParsedArgs::CheckExclusiveOptions()
+ *  If an option used in a non-exclusive way, this will generate an
+ *  error message explaining the details.
+ */
+class ExclusiveOptionError : public CommandArgBaseException
+{
+public:
+    ExclusiveOptionError(const std::string& opt,
+                    const std::vector<std::string> group)
+        : CommandArgBaseException(generate_error(opt, group))
+    {
+    }
+
+private:
+    std::string generate_error(const std::string& opt,
+                               const std::vector<std::string>& group) const
+    {
+        std::stringstream msg;
+        msg << "Option '" << opt << "'"
+            << " cannot be combined with: ";
+        bool first = true;
+        for (const auto& o : group)
+        {
+            if (opt == o)
+            {
+                continue;
+            }
+            if (!first)
+            {
+                msg << ", ";
+                first = false;
+            }
+            msg << o;
+        }
+        return std::string(msg.str());
+    }
+};
+
+
+
+/**
  *  This class is sent to the callback functions which is called
  *  when parsing the arguments and options.  A ParsedArgs object contains
  *  all the parsed options and their arguments through a simple API.
@@ -222,6 +263,7 @@ class ParsedArgs
 {
 public:
     typedef std::shared_ptr<ParsedArgs> Ptr;
+    typedef std::vector<std::vector<std::string>> ExclusiveGroups;
 
     ParsedArgs() : argv0("") {}
 
@@ -252,6 +294,37 @@ public:
     {
         return argv0;
     }
+
+
+    /**
+     *  Check if parsed options are exclusive according to the ExclusiveGroups
+     *
+     *  The ExclusiveGroups is essentially an array of grouped options, where
+     *  each group is processed independently but the option inside a single
+     *  group will trigger an exception.
+     *
+     *  Example:
+     *
+     *      CheckExclusiveOptions({{"arg-1", "arg-2", "arg-3"},
+     *                             {"opt-A", "opt-B", "opt-C"}});
+     *
+     *  If a program is started with the following list, it is fine:
+     *        --arg-2 --opt-C --verbose --bla-bla
+     *
+     *  Any of the examples below will throw an exception (one line is
+     *  one example)
+     *
+     *        --arg-1 --arg-3
+     *        --arg-2 --arg-4 --opt-B --opt-A
+     *        --arg-1 --arg-2 --arg-3
+     *
+     * @param args_exclusive  ExclusiveGroups containing groups of options
+     *                        which cannot be combined.
+     *
+     * @throws ExclusiveOptionError if an option is not exclusive
+     */
+    void CheckExclusiveOptions(const ExclusiveGroups& args_exclusive) const;
+
     /**
      *  Checks if a specific option name has been parsed.  This is
      *  useful for options which does not take any additional argument.  This

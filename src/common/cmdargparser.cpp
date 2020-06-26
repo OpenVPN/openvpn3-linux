@@ -23,6 +23,7 @@
  * @brief  Command line argument parser for C++.  Built around getopt_long()
  */
 
+#include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <map>
@@ -200,6 +201,45 @@ void Commands::ShellCompletion::call_arg_helper(const std::string cmd, const std
 //
 //  ParsedArgs implementation
 //
+
+void ParsedArgs::CheckExclusiveOptions(const ExclusiveGroups& args_exclusive) const
+{
+    // Check if processed options is listed as an exclusive argument
+    for (const auto& arg : present)
+    {
+        for (const auto& group : args_exclusive)
+        {
+            // Is this argument listed in this group of exclusive args?
+            if (std::find(group.begin(), group.end(), arg) == group.end())
+            {
+                // Not found in this group, continue to next group
+                continue;
+            }
+
+            // This argument was found to be in an exclusiveness group.
+            // Now we need to see if any of the other arguments in this
+            // group has been used already.
+            for (const auto& x : group)
+            {
+                if (arg == x)
+                {
+                    // Don't check against itself
+                    continue;
+                }
+
+                // Check if any of the other options in this group in
+                // the exclusiveness list has been used already
+                if (std::find(present.begin(),
+                              present.end(),
+                              x) != present.end())
+                {
+                    throw ExclusiveOptionError(arg, group);
+                }
+            }
+        }
+    }  // End of exclusiveness check
+}
+
 
 bool ParsedArgs::parse_bool_value(const std::string& k, const std::string& value) const
 {
