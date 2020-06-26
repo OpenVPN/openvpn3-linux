@@ -20,6 +20,13 @@
 % : %.rst Makefile
 	$(AM_V_GEN)rst2man $< > $@
 
+% : %.in
+	$(AM_V_GEN)sed -e 's|\@LIBEXEC_PATH\@|$(pkglibexecdir)|' \
+		       -e 's|\@OPENVPN_USERNAME\@|$(OPENVPN_USERNAME)|' \
+		       -e 's|\@OPENVPN_STATEDIR\@|$(openvpn3_statedir)|' \
+		$< > $@.tmp && mv $@.tmp $@
+
+
 # This keeps track of all man pages for addons we must always package
 ADDONS_MAN_PACKAGE =
 

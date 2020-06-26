@@ -30,6 +30,13 @@ distro/systemd/openvpn3-autoload.service
 docs/man/*.1
 docs/man/*.7
 docs/man/*.8
+docs/man/openvpn3-admin-log-service.8.rst
+docs/man/openvpn3-service-aws.8.rst
+docs/man/openvpn3-service-backendstart.8.rst
+docs/man/openvpn3-service-client.8.rst
+docs/man/openvpn3-service-configmgr.8.rst
+docs/man/openvpn3-service-netcfg.8.rst
+docs/man/openvpn3-service-sessionmgr.8.rst
 doxygen/openvpn3-linux.doxy
 doxygen/doxy-warnings.log
 doxygen/html

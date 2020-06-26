@@ -25,7 +25,7 @@ adds/deletes VPN routes to/from VPC subnet using Amazon EC2 API.
 
 This service is normally started automatically on boot, which is achieved by enabling it
 with provided **openvpn3-aws.service** *systemd* unit file.  Alternatively service could
-be started manually on the command line.  This process should run as the *openvpn* user
+be started manually on the command line.  This process should run as the *@OPENVPN_USERNAME@* user
 and will automatically switch to this user account if it has the needed privileges to do so.
 Beware that changing this to another user account also requires updating the D-Bus policy
 for the ``net.openvpn.v3.aws`` service as well.

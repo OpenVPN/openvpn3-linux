@@ -30,8 +30,8 @@ This service is normally started automatically when needed, via the
 ``dbus-daemon``\(1), but can also be started manually on the command line.  This
 service must start as *root*, but as soon as it has requested the needed
 privileges for its operations, it will drop the rest of the privileges and
-switch to the *openvpn* user.  Beware that changing this to another user
-account also requires updating the D-Bus policy as well.
+switch to the *@OPENVPN_USERNAME@* user.  Beware that changing this to another
+user account also requires updating the D-Bus policy as well.
 
 
 OPTIONS

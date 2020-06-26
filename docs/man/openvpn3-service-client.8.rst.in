@@ -27,12 +27,12 @@ It will run one ``openvpn3-service-client`` per active VPN session.
 
 This service must be started by the ``openvpn3-service-backendstart`` process,
 as it gather more information from the session manager before starting the
-client process with the given arguments.  This process must run as the *openvpn*
+client process with the given arguments.  This process must run as the *@OPENVPN_USERNAME@*
 user and requires no privileges.  All privileged operations, like creating and
 configuring the virtual network adapter, IP addresses, routes and DNS, is
 handled by a the ``openvpn3-service-netcfg`` service.
 
-Beware that running this with another user account than *openvpn* also requires
+Beware that running this with another user account than *@OPENVPN_USERNAME@* also requires
 updating the D-Bus policy as well.
 
 

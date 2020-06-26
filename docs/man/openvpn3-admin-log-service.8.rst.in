@@ -19,8 +19,8 @@ DESCRIPTION
 ===========
 This manages a few adjustable knobs available in the ``openvpn3-service-logger``
 when run as a D-Bus service.  The access control for this command is managed in
-the D-Bus policy, which by default is only allowed for the *root* and *openvpn*
-user accounts.
+the D-Bus policy, which by default is only allowed for the *root* and
+*@OPENVPN_USERNAME@* user accounts.
 
 
 OPTIONS

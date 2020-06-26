@@ -26,7 +26,7 @@ to it so it can register itself against a session object in the
 This service is normally started automatically when needed, via the
 *net.openvpn.v3.backendstart.service* auto-start configuration by the
 ``dbus-daemon``\(1), but can also be started manually on the command line.  Beware
-that running this with another user account than *openvpn* also requires
+that running this with another user account than *@OPENVPN_USERNAME@* also requires
 updating the D-Bus policy as well.
 
 
