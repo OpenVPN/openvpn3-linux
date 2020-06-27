@@ -208,6 +208,15 @@ private:
 };
 
 
+class OptionNotFound : public CommandArgBaseException
+{
+public:
+    OptionNotFound() noexcept
+        : CommandArgBaseException("")
+    {
+    }
+};
+
 
 /**
  *  Exception class used by @ParsedArgs::CheckExclusiveOptions()
@@ -344,6 +353,28 @@ public:
             }
         }
         return false;
+    }
+
+
+    /**
+     *  Extension of @Present(const std::string&) which will parse a list
+     *  of options to see if one of them are present.  It will return on the
+     *  first match.
+     *
+     * @param  optlist  std::vector<std::string> of options to check for
+     * @return Returns std::string of the first matching option.
+     * @throws OptionsNotFound if no option was found
+     */
+    const std::string Present(const std::vector<std::string> optlist) const
+    {
+        for (const auto& k : optlist)
+        {
+            if (Present(k))
+            {
+                return k;
+            }
+        }
+        throw OptionNotFound();
     }
 
 
