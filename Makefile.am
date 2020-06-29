@@ -161,6 +161,7 @@ if ENABLE_UNITTESTS
 TESTS += src/tests/unit/unit-tests
 
 UNIT_TESTS = \
+	src/tests/unit/configfileparser.cpp \
 	src/tests/unit/timestamp.cpp \
 	src/tests/unit/logevent.cpp \
 	src/tests/unit/lookup.cpp \
@@ -172,6 +173,8 @@ UNIT_TESTS = \
 	src/tests/unit/dns-resolver-settings.cpp
 
 UNIT_TESTS_DEPS = \
+	src/common/configfileparser.cpp \
+	src/common/configfileparser.hpp \
 	src/common/lookup.cpp \
 	src/common/timestamp.cpp \
 	src/netcfg/netcfg-changeevent.cpp \

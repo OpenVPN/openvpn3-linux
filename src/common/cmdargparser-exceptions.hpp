@@ -198,6 +198,21 @@ public:
         : CommandArgBaseException("")
     {
     }
+
+    OptionNotFound(const std::string key) noexcept
+        : CommandArgBaseException("Option '" + key + "' was not found")
+    {
+    }
+};
+
+
+class OptionNotPresent : public CommandArgBaseException
+{
+public:
+    OptionNotPresent(const std::string key) noexcept
+        : CommandArgBaseException("Option '" + key + "' value is not present")
+    {
+    }
 };
 
 
@@ -241,4 +256,37 @@ private:
 };
 
 
+/**
+ *  Exception class used by the @ConfigFile class when parsing
+ *  configuration files and mapping the content to command line
+ *  arguments.
+ */
+class ConfigFileException : public CommandArgBaseException
+{
+public:
+    ConfigFileException(const std::string& msg)
+        : CommandArgBaseException(generate_error("", msg))
+    {
+    }
 
+    ConfigFileException(const std::string& cfgfile,
+                        const std::string& msg)
+        : CommandArgBaseException(generate_error(cfgfile, msg))
+    {
+    }
+
+private:
+    std::string generate_error(const std::string& cfgfile,
+                               const std::string& msg)
+    {
+        if (!cfgfile.empty())
+        {
+            return std::string("Configuration file error in "
+                            + std::string(cfgfile) + ": " + msg);
+        }
+        else
+        {
+            return std::string("Configuration file setup error: ") + msg;
+        }
+    }
+};
