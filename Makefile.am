@@ -473,6 +473,7 @@ src_ovpn3cli_openvpn3_SOURCES = \
 	src/dbus/requiresqueue-proxy.hpp \
 	src/common/cmdargparser.cpp \
 	src/common/cmdargparser.hpp \
+	src/common/cmdargparser-exceptions.hpp \
 	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp
