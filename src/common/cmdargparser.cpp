@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2020  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2020  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -42,6 +42,31 @@ using namespace openvpn;
 
 #include "common/utils.hpp"
 #include "common/cmdargparser.hpp"
+#include "common/configfileparser.hpp"
+
+//
+//  ParsedArgs implementation
+//
+
+void ParsedArgs::ImportConfigFile(Configuration::File::Ptr config)
+{
+    for (const auto& opt : config->GetOptions())
+    {
+        if (config->IsPresent(opt))
+        {
+            key_value[opt].push_back(config->GetValue(opt));
+
+            // Update the list of processed options
+            if (std::find(present.begin(),
+                          present.end(),
+                          opt) == present.end())
+            {
+                present.push_back(opt);
+            }
+        }
+    }
+}
+
 
 //
 //  Commands::ShellCompletion implementation

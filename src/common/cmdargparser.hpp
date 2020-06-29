@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2020  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2020  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -41,6 +41,7 @@
 using namespace openvpn;
 
 #include "common/cmdargparser-exceptions.hpp"
+#include "common/configfileparser.hpp"
 #include "common/utils.hpp"
 
 
@@ -79,6 +80,14 @@ public:
     {
         return completed;
     }
+
+    /**
+     *   Import option settings from a configuration file
+     *
+     * @param config  Configuration::File::Ptr to the configuration
+     *                file parser
+     */
+    void ImportConfigFile(Configuration::File::Ptr config);
 
     /**
      *  Get the program name (argv[0])

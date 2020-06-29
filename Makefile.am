@@ -255,6 +255,7 @@ noinst_PROGRAMS += \
 src_tests_command_parser_cmdparser_SOURCES = \
 	src/tests/command-parser/cmdparser.cpp \
 	src/common/cmdargparser.cpp \
+	src/common/configfileparser.cpp \
 	src/common/utils.cpp
 
 # src/tests/ovpn3-core
@@ -262,6 +263,7 @@ src_tests_command_parser_cmdparser_SOURCES = \
 src_tests_ovpn3_core_profilemerge_optionlist_SOURCES = \
 	src/tests/ovpn3-core/profilemerge-optionlist.cpp \
 	src/common/cmdargparser.cpp \
+	src/common/configfileparser.cpp \
 	src/common/utils.cpp
 
 # src/tests/misc
@@ -362,6 +364,7 @@ src_tests_dbus_logevent_selftest_SOURCES = \
 src_tests_dbus_logservice1_SOURCES = \
 	src/tests/dbus/logservice1.cpp \
 	src/common/cmdargparser.cpp \
+	src/common/configfileparser.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp
 
@@ -380,6 +383,7 @@ src_tests_dbus_netcfg_systemd_resolved_basic_SOURCES = \
 	src/tests/dbus/netcfg-systemd-resolved-basic.cpp \
 	$(DBUS_SOURCES) \
 	src/common/cmdargparser.cpp \
+	src/common/configfileparser.cpp \
 	src/common/utils.cpp \
 	src/netcfg/dns/proxy-systemd-resolved.cpp \
 	src/netcfg/dns/proxy-systemd-resolved.hpp
@@ -477,6 +481,8 @@ src_ovpn3cli_openvpn3_SOURCES = \
 	src/common/cmdargparser.cpp \
 	src/common/cmdargparser.hpp \
 	src/common/cmdargparser-exceptions.hpp \
+	src/common/configfileparser.cpp \
+	src/common/configfileparser.hpp \
 	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp
@@ -493,6 +499,8 @@ src_ovpn3cli_openvpn3_admin_SOURCES = \
 	src/ovpn3cli/commands/log-service.cpp \
 	src/ovpn3cli/commands/netcfg-service.cpp \
 	src/common/cmdargparser.cpp \
+	src/common/configfileparser.cpp \
+	src/common/configfileparser.hpp \
 	src/common/utils.cpp \
 	src/netcfg/proxy-netcfg.cpp
 src_ovpn3cli_openvpn3_admin_CXXFLAGS=$(AM_CXXFLAGS) -DOVPN3CLI_OPENVPN3ADMIN
@@ -509,6 +517,7 @@ src_client_openvpn3_service_client_SOURCES = \
 	src/client/statusevent.hpp \
 	$(DBUS_SOURCES) \
 	src/common/cmdargparser.cpp \
+	src/common/configfileparser.cpp \
 	src/common/core-extensions.hpp \
 	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
@@ -527,6 +536,7 @@ src_client_openvpn3_service_backendstart_SOURCES = \
 	src/client/openvpn3-service-backendstart.cpp \
 	$(DBUS_SOURCES) \
 	src/common/cmdargparser.cpp \
+	src/common/configfileparser.cpp \
 	src/common/utils.cpp \
 	src/log/dbus-log.hpp
 
@@ -542,6 +552,7 @@ src_configmgr_openvpn3_service_configmgr_SOURCES = \
 	$(DBUS_SOURCES) \
 	src/common/core-extensions.hpp \
 	src/common/cmdargparser.cpp \
+	src/common/configfileparser.cpp \
 	src/common/lookup.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp \
@@ -560,6 +571,7 @@ src_sessionmgr_openvpn3_service_sessionmgr_SOURCES = \
 	src/client/statusevent.hpp \
 	$(DBUS_SOURCES) \
 	src/common/cmdargparser.cpp \
+	src/common/configfileparser.cpp \
 	src/common/lookup.cpp \
 	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
@@ -599,6 +611,7 @@ src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/netcfg/dns/systemd-resolved.hpp \
 	$(DBUS_SOURCES) \
 	src/common/cmdargparser.cpp \
+	src/common/configfileparser.cpp \
 	src/common/lookup.cpp \
 	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
@@ -622,6 +635,7 @@ src_log_openvpn3_service_logger_SOURCES = \
 	src/log/logwriter.hpp \
 	src/log/service.hpp \
 	src/common/cmdargparser.cpp \
+	src/common/configfileparser.cpp \
 	src/common/timestamp.cpp \
 	$(DBUS_SOURCES) \
 	src/common/utils.cpp
@@ -632,6 +646,7 @@ src_log_openvpn3_service_logger_SOURCES = \
 addons_aws_openvpn3_service_aws_SOURCES = \
     addons/aws/openvpn3-service-aws.cpp \
     src/common/cmdargparser.cpp \
+    src/common/configfileparser.cpp \
     src/common/timestamp.cpp \
     src/netcfg/netcfg-changeevent.cpp \
     src/netcfg/proxy-netcfg.cpp \
