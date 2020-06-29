@@ -301,55 +301,6 @@ private:
 
 
 /**
- *  An extended @ParsedArgs class which will also load a JSON formatted
- *  config file and apply the contents of this file as options and arguments
- *  to the parsed values.
- *
- *  If options exists on both command line and in the config file, the options
- *  and their values from the config file will be added to the end of the
- *  argument values list.
- *
- *  To parse a JSON file, a mapping between the field names in the JSON file
- *  and the command line option name must be given.  JSON fields not enlisted
- *  in this mapping table will be ignored silently.
- */
-class ParsedArgsConfig : public virtual ParsedArgs
-{
-public:
-    typedef std::shared_ptr<ParsedArgsConfig> Ptr;
-
-    ParsedArgsConfig(const std::string argv0)
-        : ParsedArgs(argv0)
-    {
-    }
-    ~ParsedArgsConfig() = default;
-
-    /**
-     *  Provide the mapping of JSON field names and command line options.
-     *  This is implemented using a std::map<std::string, std::string> where
-     *  the first element is the JSON field name and the second element is
-     *  the command line option to register it under.
-     *
-     * @param map  std::map<std::string, std::string> map table
-     */
-    void SetConfigArgsMapping(const std::map<std::string, std::string>& map);
-
-
-    /**
-     * Loads and parses a configuration JSON file
-     *
-     * @param cfgfile std::string containing the filename to load and parse.
-     */
-    void LoadConfig(const std::string& cfgfile);
-
-
-private:
-    std::map<std::string, std::string> args_config_map;
-};
-
-
-
-/**
  *  Simplistic internal specification of callback function APIs
  */
 using commandPtr = int (*)(ParsedArgs::Ptr);
@@ -362,12 +313,12 @@ using argHelperFunc = std::string (*)();
  *   the provided callback functions with a ParsedArgs object of the parsed
  *   options and arguments.
  */
-class RegisterParsedArgs : public virtual ParsedArgsConfig
+class RegisterParsedArgs : public virtual ParsedArgs
 {
 public:
     typedef std::shared_ptr<RegisterParsedArgs> Ptr;
 
-    RegisterParsedArgs(const std::string arg0) : ParsedArgsConfig(arg0)
+    RegisterParsedArgs(const std::string arg0) : ParsedArgs(arg0)
     {
     }
 

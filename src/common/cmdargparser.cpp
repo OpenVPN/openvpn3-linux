@@ -281,71 +281,6 @@ bool ParsedArgs::parse_bool_value(const std::string& k, const std::string& value
 
 
 //
-//  ParsedArgsConfig implementation
-//
-
-void ParsedArgsConfig::SetConfigArgsMapping(const std::map<std::string, std::string>& map)
-{
-    args_config_map = map;
-}
-
-
-void ParsedArgsConfig::LoadConfig(const std::string& cfgfile)
-{
-    std::ifstream cfgs(cfgfile);
-    if (cfgs.eof() || cfgs.fail())
-    {
-        // We ignore errors. If the config does not exist,
-        // continue with plain parsed arguments
-        return;
-    }
-
-    // Parse the configuration file
-    std::string line;
-    std::stringstream buf;
-    while (std::getline(cfgs, line))
-    {
-        buf << line << std::endl;
-    }
-
-    Json::Value jcfg;
-    try
-    {
-        buf >> jcfg;
-    }
-    catch (const Json::Exception& excp)
-    {
-        throw CommandArgBaseException("Failed parsing configuration file:"
-                                      + std::string(excp.what()));
-    }
-
-    // Parse the contents of the config file and use the mapping
-    // to update the proper values
-    for (const auto& mn : jcfg.getMemberNames())
-    {
-        auto it = args_config_map.find(mn);
-        if (it == args_config_map.end())
-        {
-            // This item has not been mapped, ignore it
-            continue;
-        }
-
-        //  Save the value from the config file
-        key_value[it->second].push_back(jcfg[mn].asString());
-
-        // Update the list of processed options
-        if (std::find(present.begin(),
-                      present.end(),
-                      it->second) == present.end())
-        {
-            present.push_back(it->second);
-        }
-    }
-}
-
-
-
-//
 //  RegisterParsedArgs implementation
 //
 
@@ -707,7 +642,7 @@ int SingleCommand::RunCommand(const std::string arg0, unsigned int skip,
                               int argc, char **argv)
 {
     try {
-        ParsedArgsConfig::Ptr cmd_args = parse_commandline(arg0, skip, argc, argv);
+        ParsedArgs::Ptr cmd_args = parse_commandline(arg0, skip, argc, argv);
 
         // Run the callback function.
         return cmd_args->GetCompleted() ? command_func(cmd_args) : 0;
