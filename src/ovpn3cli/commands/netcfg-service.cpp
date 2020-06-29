@@ -26,9 +26,13 @@
 #include "dbus/core.hpp"
 
 #include "common/cmdargparser.hpp"
+#include "common/configfileparser.hpp"
 #include "common/lookup.hpp"
 #include "netcfg/netcfg-changeevent.hpp"
+#include "netcfg/netcfg-configfile.hpp"
 #include "netcfg/proxy-netcfg.hpp"
+
+
 
 int cmd_netcfg_service(ParsedArgs::Ptr args)
 {
@@ -39,6 +43,10 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
 
     try
     {
+        args->CheckExclusiveOptions({{"unsubscribe", "list-subscribers",
+                                      "config-show", "config-set",
+                                      "config-unset"}});
+
         if (args->Present("unsubscribe"))
         {
             std::string sub = args->GetValue("unsubscribe", 0);
@@ -64,6 +72,91 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
                 std::cout << std::endl;
             }
         }
+
+        //
+        // Options for managing the netcfg configuration file
+        //
+        try
+        {
+            std::string cfgmode;
+            std::vector<std::string> cfgopts = {"config-show",
+                                                "config-set", "config-unset"};
+            cfgmode = args->Present(cfgopts);
+            NetCfgConfigFile config;
+
+            try
+            {
+                config.Load(prx.GetConfigFile());
+            }
+            catch (const ConfigFileException& excp)
+            {
+                if ("config-show" == cfgmode)
+                {
+                    std::cout << excp.what()
+                              << std::endl;
+                    return 2;
+                }
+            }
+
+            if ("config-show" == cfgmode)
+            {
+                if (!config.empty())
+                {
+                    std::cout << config;
+                }
+                else
+                {
+                    std::cout << "Configuration file is empty" << std::endl;
+                }
+            }
+            else if ("config-set" == cfgmode
+                     || "config-unset" == cfgmode)
+            {
+                std::string optname = args->GetLastValue(cfgmode);
+                std::vector<std::string> values = args->GetAllExtraArgs();
+                std::string new_value{""};
+
+                // Simple sanity to retrieve the new config value
+                if ("config-set" == cfgmode && values.size() == 0)
+                {
+                    throw CommandException("netcfg-service",
+                                           "A value must be given to --"
+                                           + cfgmode + " " + optname);
+                }
+                else if ("config-unset" == cfgmode && values.size() > 0)
+                {
+                    throw CommandException("netcfg-service",
+                                           "No value can be given to --"
+                                           + cfgmode + " " + optname);
+                }
+                else if (values.size() > 1)
+                {
+                    throw CommandException("netcfg-service",
+                                           "Only a single value can be given to --"
+                                           + cfgmode + " " + optname);
+                }
+                else if (values.size() == 1)
+                {
+                    new_value = values.at(0);
+                }
+
+                // Update the configuration and save the file.
+                config.SetValue(optname, new_value);
+                config.Save(prx.GetConfigFile());
+                std::cout << "Configuration file updated.  "
+                          << "Changes will be activated next time "
+                          << "openvpn3-service-netcfg restarts"
+                          << std::endl;
+            }
+        }
+        catch (const OptionNotFound&)
+        {
+            // Nothing to do; options not present
+        }
+    }
+    catch (const ExclusiveOptionError& excp)
+    {
+        throw CommandException("netcfg-service", excp.what());
     }
     catch (const DBusException& excp)
     {
@@ -108,6 +201,18 @@ std::string arghelper_netcfg_subscribers()
 }
 
 
+std::string arghelper_netcfg_config_keys()
+{
+    NetCfgConfigFile cfg;
+    std::stringstream r;
+    for (const auto& o : cfg.GetOptions(true))
+    {
+        r << o << " ";
+    }
+    return r.str();
+}
+
+
 SingleCommand::Ptr prepare_command_netcfg_service()
 {
     SingleCommand::Ptr cmd;
@@ -115,6 +220,14 @@ SingleCommand::Ptr prepare_command_netcfg_service()
                                 "Management of net.openvpn.v3.netcfg "
                                 "(requires root)",
                                 cmd_netcfg_service));
+    cmd->AddOption("config-show",
+                   "Show the current configuration file used by netcfg-service");
+    cmd->AddOption("config-set", 0, "CONFIG-KEY", true,
+                   "Sets a configuration option and saves it in the config file",
+                   arghelper_netcfg_config_keys);
+    cmd->AddOption("config-unset", 0, "CONFIG-KEY", true,
+                   "Removes a configuration option and updates the config file",
+                   arghelper_netcfg_config_keys);
     cmd->AddOption("list-subscribers",
                    "List all D-Bus services subscribed to "
                    "NetworkChange signals");
