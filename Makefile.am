@@ -587,6 +587,7 @@ src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/netcfg/openvpn3-service-netcfg.cpp \
 	src/netcfg/core-tunbuilder.cpp \
 	src/netcfg/netcfg.hpp \
+	src/netcfg/netcfg-configfile.hpp \
 	src/netcfg/netcfg-device.hpp \
 	src/netcfg/netcfg-exception.hpp \
 	src/netcfg/netcfg-options.hpp \

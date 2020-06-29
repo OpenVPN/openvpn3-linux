@@ -27,6 +27,7 @@
 #pragma once
 
 #include "common/cmdargparser.hpp"
+#include "netcfg/netcfg-configfile.hpp"
 
 
 enum class RedirectMethod : std::uint8_t
@@ -36,11 +37,11 @@ enum class RedirectMethod : std::uint8_t
     BINDTODEV    //<  Bind the UDP/TCP socket to the default gw interface
 };
 
-
 /**
  * struct to hold the setting for the Netcfg service
  */
-struct NetCfgOptions {
+struct NetCfgOptions
+{
     /** Decides wether use the tun-builder redirect functionality */
     RedirectMethod redirect_method = RedirectMethod::HOST_ROUTE;
 
@@ -54,22 +55,22 @@ struct NetCfgOptions {
     std::string config_file = "";
 
 
-    NetCfgOptions(ParsedArgsConfig::Ptr args)
+    NetCfgOptions(ParsedArgs::Ptr args, NetCfgConfigFile::Ptr config)
     {
-        if (args->Present("state-dir"))
+        if (config && args->Present("state-dir"))
         {
             config_file = args->GetLastValue("state-dir") + "/netcfg.json";
-            args->SetConfigArgsMapping({{"log_level", "log-level"},
-                                       {"log_file", "log-file"},
-                                       {"idle_exit", "idle-exit"},
-                                       {"resolv_conf_file", "resolv-conf"},
-                                       {"systemd_resolved", "systemd-resolved"},
-                                       {"redirect_method", "redirect-method"},
-                                       {"set_somark", "set-somark"}});
-
-            std::cout << "Loading configuration file: " << config_file
-                      << std::endl;
-            args->LoadConfig(config_file);
+            try
+            {
+                std::cout << "Loading configuration file: "
+                          << config_file << std::endl;
+                config->Load(config_file);
+                args->ImportConfigFile(config);
+            }
+            catch (const ConfigFileException&)
+            {
+                // Ignore errors related to configuration file
+            }
         }
 
         try

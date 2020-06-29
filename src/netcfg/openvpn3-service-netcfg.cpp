@@ -112,11 +112,8 @@ static void apply_capabilities(ParsedArgs::Ptr args,
 }
 
 
-int netcfg_main(ParsedArgs::Ptr fncargs)
+int netcfg_main(ParsedArgs::Ptr args)
 {
-    ParsedArgsConfig::Ptr args = std::dynamic_pointer_cast<ParsedArgsConfig>(fncargs);
-    assert(nullptr != args);
-
     if (0 != getegid() || 0 != geteuid())
     {
         throw CommandException("openvpn3-service-netcfg",
@@ -125,7 +122,9 @@ int netcfg_main(ParsedArgs::Ptr fncargs)
 
     // Parse options which will be passed to the
     // NetCfg manager or device objects
-    NetCfgOptions netcfgopts(args);
+    NetCfgConfigFile::Ptr netcfg_config;
+    netcfg_config.reset(new NetCfgConfigFile{});
+    NetCfgOptions netcfgopts(args, netcfg_config);
 
     //
     // Open a log destination, if requested
