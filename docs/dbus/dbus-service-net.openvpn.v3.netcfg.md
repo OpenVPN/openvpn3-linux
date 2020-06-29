@@ -36,6 +36,7 @@ node /net/openvpn/v3/netcfg {
        readonly u global_dns_servers;
        readonly u global_dns_search;
        readwrite u log_level;
+       readonly s config_file;
        readonly u version;
   };
 };
@@ -168,6 +169,7 @@ level and a string with the log message itself. See the separate
 | global_dns_servers | array(string)    | read-only  | DNS servers in use, pushed from all VPN sessions         |
 | global_dns_search  | array(string)    | read-only  | DNS search domains in used, pushed from all VPN sessions |
 | log_level          | unsigned integer | read-write | Controls the log verbosity of messages intended to be proxied to the user front-end. **Note:** Not currently implemented |
+| config_file        | string           | read-only  | Filename of the config file netcfg has parsed at start-up. |
 | version            | string           | read-only  | Version information about the running service            |
 
 

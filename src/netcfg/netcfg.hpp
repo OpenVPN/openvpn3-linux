@@ -104,6 +104,7 @@ public:
                           << "    <property type='u' name='global_dns_servers' access='read'/>"
                           << "    <property type='u' name='global_dns_search' access='read'/>"
                           << "    <property type='u' name='log_level' access='readwrite'/>"
+                          << "    <property type='s' name='config_file' access='read'/>"
                           << "    <property type='s' name='version' access='read'/>"
                           << signal.GetLogIntrospection()
                           << "    </interface>"
@@ -389,6 +390,10 @@ public:
             if ("log_level" == property_name)
             {
                 return g_variant_new_uint32(signal.GetLogLevel());
+            }
+            else if ("config_file" == property_name)
+            {
+                return g_variant_new_string(options.config_file.c_str());
             }
             else if ("global_dns_servers" == property_name)
             {

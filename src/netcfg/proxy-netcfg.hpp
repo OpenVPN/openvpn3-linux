@@ -58,6 +58,8 @@ namespace NetCfgProxy
          */
         Manager(GDBusConnection *dbuscon);
 
+        const std::string GetConfigFile();
+
         const std::string CreateVirtualInterface(const std::string& device_name);
 
         Device* getVirtualInterface(const std::string & path);

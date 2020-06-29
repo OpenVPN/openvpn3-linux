@@ -56,6 +56,16 @@ namespace NetCfgProxy
     }
 
 
+    const std::string Manager::GetConfigFile()
+    {
+        if (!CheckObjectExists())
+        {
+            throw NetCfgProxyException("GetConfigFile",
+                                       "net.openvpn.v3.netcfg service unavailable");
+        }
+        return GetStringProperty("config_file");
+    }
+
     const std::string Manager::CreateVirtualInterface(const std::string& device_name)
     {
         Ping();
