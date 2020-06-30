@@ -169,7 +169,7 @@ int netcfg_main(ParsedArgs::Ptr args)
     //
     apply_capabilities(args, netcfgopts);
 
-    int log_level = -1;
+    int log_level = 4;
     if (args->Present("log-level"))
     {
         log_level = std::atoi(args->GetLastValue("log-level").c_str());
@@ -238,10 +238,7 @@ int netcfg_main(ParsedArgs::Ptr args)
 
         NetworkCfgService netcfgsrv(dbus.GetConnection(), resolvmgr,
                                     logwr.get(), netcfgopts);
-        if (log_level > 0)
-        {
-            netcfgsrv.SetDefaultLogLevel(log_level);
-        }
+        netcfgsrv.SetDefaultLogLevel(log_level);
 
         // Prepare GLib Main loop
         GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
