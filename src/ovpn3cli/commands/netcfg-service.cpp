@@ -130,6 +130,26 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
                 }
             }
 
+            // Report any issues with the configuration file, regardless
+            // of operation
+            try
+            {
+                config.CheckExclusiveOptions();
+            }
+            catch (const ExclusiveOptionError& err)
+            {
+                std::cerr << std::endl
+                          << "==================================="
+                          << "==================================="
+                          << std::endl;
+                std::cerr << "An error was found in the configuration file:"
+                          << std::endl;
+                std::cerr << " *** " << err.what() << std::endl;
+                std::cerr << "==================================="
+                          << "==================================="
+                          << std::endl << std::endl;
+            }
+
             if ("config-show" == cfgmode)
             {
                 if (!config.empty())
@@ -174,11 +194,22 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
 
                 // Update the configuration and save the file.
                 config.SetValue(optname, new_value);
-                config.Save(config_file);
-                std::cout << "Configuration file updated.  "
-                          << "Changes will be activated next time "
-                          << "openvpn3-service-netcfg restarts"
-                          << std::endl;
+                try
+                {
+                    config.CheckExclusiveOptions();
+                    config.Save(config_file);
+                    std::cout << "Configuration file updated.  "
+                              << "Changes will be activated next time "
+                              << "openvpn3-service-netcfg restarts"
+                              << std::endl;
+                }
+                catch (const ExclusiveOptionError& err)
+                {
+                    std::cerr << "Configuration NOT changed due to the "
+                              << "following error:" << std::endl << std::endl;
+                    std::cerr << " *** " << err.what() << std::endl
+                              << std::endl;
+                }
             }
         }
         catch (const OptionNotFound&)
