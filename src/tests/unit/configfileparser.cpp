@@ -429,4 +429,22 @@ TEST_F(ConfigurationFile, check_exclusive_fail_2)
     EXPECT_THROW(testfile->CheckExclusiveOptions(), ExclusiveOptionError);
 }
 
+TEST_F(ConfigurationFile, get_related_group)
+{
+    std::vector<std::string> related = testfile->GetRelatedExclusiveOptions("group-2-optA");
+    ASSERT_EQ(related.size(), 2) << "Not all expected related options found";
+
+    auto s1 = std::find(related.begin(), related.end(), "group-2-optA");
+    ASSERT_TRUE(s1 == related.end())
+        << "Found group-2-optA in group2, should not be there";
+
+    auto s2= std::find(related.begin(), related.end(), "group-2-optB");
+    EXPECT_FALSE(s2 == related.end())
+        << "Did not locate group-2-optB in group2";
+
+    auto s3= std::find(related.begin(), related.end(), "group-2-optC");
+    EXPECT_FALSE(s3 == related.end())
+        << "Did not locate grgrp2optCp2optC in group2";
+}
+
 } // namespace unittests

@@ -252,6 +252,45 @@ void File::CheckExclusiveOptions()
 }
 
 
+std::vector<std::string> File::GetRelatedExclusiveOptions(const std::string option)
+{
+    configure_mapping();
+
+    std::vector<std::string> ret{};
+
+    // Find the option in the mapping
+    auto s = std::find_if(map.begin(), map.end(),
+                          [option](OptionMapEntry e)
+                          {
+                            return option == e.option;
+                          });
+
+    if (map.end() == s || s->exclusive_group.empty())
+    {
+        // Option not found => no related options
+        return ret;
+    }
+
+    // Find all other options in the same option group as
+    // the option just looked up
+    for (const auto& m : map)
+    {
+        // Ignore empty exclusive_groups or itself
+        if (m.exclusive_group.empty() || m.option == option)
+        {
+            continue;
+        }
+
+        // If it is the same exclusive option group ...
+        if (s->exclusive_group == m.exclusive_group)
+        {
+            ret.push_back(m.option);
+        }
+    }
+    return ret;
+}
+
+
 Json::Value File::Generate()
 {
     configure_mapping();

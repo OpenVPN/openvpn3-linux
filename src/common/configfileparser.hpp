@@ -187,6 +187,16 @@ public:
     void CheckExclusiveOptions();
 
     /**
+     *  Returns a list of other options in the same exclusive option group
+     *  as the given option
+     *
+     * @param option  std::string of the option to check
+     * @return Returns a std::vector<std::string> containing other options in
+     *         tagged with the same exclusive_group
+     */
+    std::vector<std::string> GetRelatedExclusiveOptions(const std::string option);
+
+    /**
      *  Generates a Json::Value based configuration file based on the values
      *  already set.
      *
