@@ -27,6 +27,8 @@
 #include <algorithm>
 #include <fstream>
 #include <sstream>
+#include <string>
+#include <vector>
 
 #include "common/configfileparser.hpp"
 
@@ -43,10 +45,20 @@ using namespace Configuration;
 OptionMapEntry::OptionMapEntry(std::string option, std::string field_label,
                                std::string description, OptionValueType type)
     : option(option), field_label(field_label), description(description),
+      exclusive_group(""),
       type(type), present(false), value("")
 {
 }
 
+
+OptionMapEntry::OptionMapEntry(std::string option, std::string field_label,
+                               std::string exclusive_group,
+                               std::string description, OptionValueType type)
+    : option(option), field_label(field_label), description(description),
+      exclusive_group(exclusive_group),
+      type(type), present(false), value("")
+{
+}
 
 
 //
@@ -196,6 +208,47 @@ void File::SetValue(const std::string& key, const std::string& value)
         it->present = !value.empty();
     }
     return;
+}
+
+
+void File::CheckExclusiveOptions()
+{
+
+    //  Create a map of all exclusive groups and
+    //  which options each belongs to
+    std::map<std::string, std::vector<std::string>> groups;
+    for (const auto& e : map)
+    {
+        if (e.exclusive_group.empty())
+        {
+            // Ignore empty group values
+            continue;
+        }
+        groups[e.exclusive_group].push_back(e.option);
+    }
+
+    //  Go through each option in each group and
+    //  check if a value is present for that option
+    for (const auto& grp : groups)
+    {
+        std::vector<std::string> used;
+        for (const auto& opt : grp.second)
+        {
+            if (IsPresent(opt))
+            {
+                // track each option which is
+                // used in this exclusive group
+                used.push_back(opt);
+            }
+        }
+
+        // If more than one option has been used
+        // in this exclusive group, complain
+        if (used.size() > 1)
+        {
+            throw ExclusiveOptionError(used);
+        }
+    }
 }
 
 

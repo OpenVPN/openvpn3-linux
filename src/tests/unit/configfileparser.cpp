@@ -127,7 +127,19 @@ protected:
             OptionMapEntry{"string-option", "str_opt",
                            "Test Option - String", OptionValueType::String},
             OptionMapEntry{"present-option", "present_opt",
-                           "Test Option - Present", OptionValueType::Present}
+                           "Test Option - Present", OptionValueType::Present},
+
+            OptionMapEntry{"group-1-opt1", "grp1opt1", "group1",
+                           "Test Group 1 Option 1", OptionValueType::Int},
+            OptionMapEntry{"group-1-opt2", "grp1opt2", "group1",
+                           "Test Group 1 Option 2", OptionValueType::Int},
+
+            OptionMapEntry{"group-2-optA", "grp2optA", "group2",
+                           "Test Group 2 Option A", OptionValueType::String},
+            OptionMapEntry{"group-2-optB", "grp2optB", "group2",
+                           "Test Group 2 Option B", OptionValueType::String},
+            OptionMapEntry{"group-2-optC", "grp2optC", "group2",
+                           "Test Group 2 Option C", OptionValueType::Present}
         };
     }
 };
@@ -388,6 +400,33 @@ TEST_F(ConfigurationFile, load_file_additional)
         << "Could not find 'unexpected' in generated JSON data";
 
     unlink("/tmp/unit-test-config-parser-file-3.json");
+}
+
+TEST_F(ConfigurationFile, check_exclusive_valid)
+{
+    Json::Value data1;
+    data1["grp1opt1"] = "123";
+    data1["grp2opt1"] = "Valid test 1";
+    testfile->Parse(data1);
+    testfile->CheckExclusiveOptions();
+}
+
+TEST_F(ConfigurationFile, check_exclusive_fail_1)
+{
+    Json::Value data1;
+    data1["grp1opt1"] = "123";
+    data1["grp1opt2"] = "456";
+    testfile->Parse(data1);
+    EXPECT_THROW(testfile->CheckExclusiveOptions(), ExclusiveOptionError);
+}
+
+TEST_F(ConfigurationFile, check_exclusive_fail_2)
+{
+    Json::Value data2;
+    data2["grp2optB"] = "Test string 2";
+    data2["grp2optC"] = "";
+    testfile->Parse(data2);
+    EXPECT_THROW(testfile->CheckExclusiveOptions(), ExclusiveOptionError);
 }
 
 } // namespace unittests

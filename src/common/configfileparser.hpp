@@ -57,6 +57,10 @@ struct OptionMapEntry
     OptionMapEntry(std::string option, std::string file_label,
                    std::string description, OptionValueType type);
 
+    OptionMapEntry(std::string option, std::string file_label,
+                   std::string exclusive_group,
+                   std::string description, OptionValueType type);
+
 
     friend std::ostream& operator<<(std::ostream& os, const OptionMapEntry& e)
     {
@@ -84,6 +88,7 @@ struct OptionMapEntry
     std::string option;            ///< Command line option name
     std::string field_label;       ///< Configuration file entry label
     std::string description;       ///< User friendly description
+    std::string exclusive_group;   ///< Belongs to a group with only one can be used
     OptionValueType type;          ///< Data type of this value
     bool present;                  ///< Has this option been set?
     std::string value;             ///< Value of the setting
@@ -170,6 +175,16 @@ public:
      *              unset/reset.
      */
     void SetValue(const std::string& key, const std::string& value);
+
+
+    /**
+     *  Run a check in all options to see if options belonging to the same
+     *  group of exclusive options are only used once.
+     *
+     *  @throws ExclusiveOptionError if two or more options within the
+     *          same exclusive_group is found.
+     */
+    void CheckExclusiveOptions();
 
     /**
      *  Generates a Json::Value based configuration file based on the values

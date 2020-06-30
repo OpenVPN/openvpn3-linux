@@ -225,8 +225,13 @@ class ExclusiveOptionError : public CommandArgBaseException
 {
 public:
     ExclusiveOptionError(const std::string& opt,
-                    const std::vector<std::string> group)
+                         const std::vector<std::string> group)
         : CommandArgBaseException(generate_error(opt, group))
+    {
+    }
+
+    ExclusiveOptionError(const std::vector<std::string> group)
+        : CommandArgBaseException(generate_error("", group))
     {
     }
 
@@ -235,8 +240,16 @@ private:
                                const std::vector<std::string>& group) const
     {
         std::stringstream msg;
-        msg << "Option '" << opt << "'"
-            << " cannot be combined with: ";
+        if (!opt.empty())
+        {
+            msg << "Option '" << opt << "'"
+                << " cannot be combined with: ";
+        }
+        else
+        {
+            msg << "These options cannot be combined: ";
+        }
+
         bool first = true;
         for (const auto& o : group)
         {
