@@ -78,15 +78,25 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
         //
         try
         {
-            std::string cfgmode;
             std::vector<std::string> cfgopts = {"config-show",
                                                 "config-set", "config-unset"};
-            cfgmode = args->Present(cfgopts);
+            std::string cfgmode = args->Present(cfgopts);
+            std::string config_file{};
             NetCfgConfigFile config;
 
             try
             {
-                config.Load(prx.GetConfigFile());
+                if (!args->Present("config-file-override"))
+                {
+                    config_file = prx.GetConfigFile();
+                }
+                else
+                {
+                    config_file = args->GetLastValue("config-file-override");
+                }
+                std::cout << "Loading configuration file: " << config_file
+                          << std::endl;
+                config.Load(config_file);
             }
             catch (const ConfigFileException& excp)
             {
@@ -142,7 +152,7 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
 
                 // Update the configuration and save the file.
                 config.SetValue(optname, new_value);
-                config.Save(prx.GetConfigFile());
+                config.Save(config_file);
                 std::cout << "Configuration file updated.  "
                           << "Changes will be activated next time "
                           << "openvpn3-service-netcfg restarts"
@@ -153,6 +163,7 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
         {
             // Nothing to do; options not present
         }
+        return 0;
     }
     catch (const ExclusiveOptionError& excp)
     {
@@ -166,7 +177,6 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
     {
         throw CommandException("netcfg-service", excp.what());
     }
-    return 0;
 }
 
 
@@ -228,6 +238,9 @@ SingleCommand::Ptr prepare_command_netcfg_service()
     cmd->AddOption("config-unset", 0, "CONFIG-KEY", true,
                    "Removes a configuration option and updates the config file",
                    arghelper_netcfg_config_keys);
+    cmd->AddOption("config-file-override", 0, "CONFIG-FILE", true,
+                   "Overrides the default configuration file (default file "
+                   "provivded by openvpn3-service-netcfg)");
     cmd->AddOption("list-subscribers",
                    "List all D-Bus services subscribed to "
                    "NetworkChange signals");
