@@ -65,7 +65,7 @@ struct NetCfgOptions
                 std::cout << "Loading configuration file: "
                           << config_file << std::endl;
                 config->Load(config_file);
-                args->ImportConfigFile(config);
+                args->ImportConfigFile(config, true);
             }
             catch (const ConfigFileException&)
             {
