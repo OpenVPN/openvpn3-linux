@@ -544,6 +544,11 @@ class ConfigParser():
                                    + 'Valid profiles: '
                                    + ', '.join(cert_profiles))
 
+        self.__parser.add_argument('--tls-cipher', metavar='CIPHER-STRING',
+                                   action='store',
+                                   help='Sets the accepted cipher list for '
+                                   + 'the TLS based OpenVPN control channel')
+
         self.__parser.add_argument('--tls-client',
                                    action='store_true',
                                    help='Enable TLS and assume client role '
