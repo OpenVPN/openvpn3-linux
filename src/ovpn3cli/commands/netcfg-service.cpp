@@ -38,11 +38,30 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
 {
     DBus dbuscon(G_BUS_TYPE_SYSTEM);
     dbuscon.Connect();
-    NetCfgProxy::Manager prx(dbuscon.GetConnection());
-    DBusConnectionCreds creds(dbuscon.GetConnection());
+    NetCfgProxy::Manager::Ptr prx;
 
     try
     {
+        prx = new NetCfgProxy::Manager(dbuscon.GetConnection());
+    }
+    catch(const DBusException&)
+    {
+        // If --config-file-override is present, we expect
+        // the user to want to do configuration changes directly
+        // and do not depend on a connection to the
+        // netcfg D-Bus service
+        if (!args->Present("config-file-override"))
+        {
+            std::cerr << "Could not connect to the OpenVPN 3 "
+                      << "Network Configuration service"
+                      << std::endl;
+            return 3;
+        }
+    }
+
+    try
+    {
+        DBusConnectionCreds creds(dbuscon.GetConnection());
         args->CheckExclusiveOptions({{"unsubscribe", "list-subscribers",
                                       "config-show", "config-set",
                                       "config-unset"}});
@@ -50,15 +69,17 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
         if (args->Present("unsubscribe"))
         {
             std::string sub = args->GetValue("unsubscribe", 0);
-            prx.NotificationUnsubscribe(sub);
+            prx->NotificationUnsubscribe(sub);
             std::cout << "Unsubscribed '" << sub << "'" << std::endl;
+
+            return 0;
         }
 
         if (args->Present("list-subscribers"))
         {
             std::cout << "Current subsribers: " << std::endl;
 
-            for (const auto& sub : prx.NotificationSubscriberList())
+            for (const auto& sub : prx->NotificationSubscriberList())
             {
                 std::cout << "- " << sub.first
                           << " (PID "
@@ -71,6 +92,7 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
                 }
                 std::cout << std::endl;
             }
+            return 0;
         }
 
         //
@@ -88,7 +110,7 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
             {
                 if (!args->Present("config-file-override"))
                 {
-                    config_file = prx.GetConfigFile();
+                    config_file = prx->GetConfigFile();
                 }
                 else
                 {
