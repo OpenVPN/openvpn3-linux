@@ -500,6 +500,12 @@ static int cmd_log(ParsedArgs::Ptr args)
 }
 
 
+std::string arghelper_log_config_names()
+{
+    return arghelper_config_names() + arghelper_config_names_sessions();
+}
+
+
 SingleCommand::Ptr prepare_command_log()
 {
     //
@@ -515,7 +521,7 @@ SingleCommand::Ptr prepare_command_log()
     cmd->AddOption("config", 'c', "CONFIG-NAME", true,
                    "Alternative to --session-path, where configuration "
                    "profile name is used instead",
-                   arghelper_config_names_sessions);
+                   arghelper_log_config_names);
     cmd->AddOption("interface", 'I', "INTERFACE", true,
                    "Alternative to --session-path, where tun interface name "
                    "is used instead",
