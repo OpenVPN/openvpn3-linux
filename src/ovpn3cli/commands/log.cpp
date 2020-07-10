@@ -199,7 +199,7 @@ public:
     }
 
 
-    void AttchByConfig(const std::string config)
+    void AttachByConfig(const std::string config)
     {
         config_name = config;
         lookup_config_name(config_name);
@@ -467,7 +467,7 @@ static int cmd_log(ParsedArgs::Ptr args)
 
         if (args->Present("config"))
         {
-            logattach->AttchByConfig(args->GetValue("config", 0));
+            logattach->AttachByConfig(args->GetValue("config", 0));
         }
         else if (args->Present("interface"))
         {
