@@ -1,0 +1,6 @@
+[Normal OpenVPN 3 Network Configuration Service access to systemd-resolved]
+Identity=unix-user:@OPENVPN_USERNAME@
+Action=org.freedesktop.resolve1.set-dns-servers;org.freedesktop.resolve1.set-domains;org.freedesktop.resolve1.set-default-route;org.freedesktop.resolve1.revert
+ResultAny=yes
+ResultInactive=yes
+ResultActive=yes

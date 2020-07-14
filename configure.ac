@@ -371,6 +371,29 @@ else
 fi
 AC_SUBST([polkit_rulesdir])
 
+dnl
+dnl  Polkit - Legacy Local Authority policy files
+dnl           This policy is only needed on Debian/Ubuntu which ships an old
+dnl           polkit release which does not support the new .rules approach
+dnl
+
+AC_ARG_VAR([POLKIT_PKLA_DIR], [Legacy Polkit PKLA directory (default:  ${localstatedir}/lib/polkit-1/localauthority/10-vendor.d/ )])
+if test -n "${POLKIT_PKLA_DIR}"; then
+   polkit_pkladir="${POLKIT_PKLA_DIR}"
+else
+   polkit_pkladir="${localstatedir}/lib/polkit-1/localauthority/10-vendor.d/"
+fi
+AC_SUBST([polkit_pkladir])
+
+AC_ARG_ENABLE(
+    [legacy-polkit-pkla],
+    [AS_HELP_STRING([--enable-legacy-polkit-pkla],
+                    [Installs the legacy PKLA based polkit local authority policy files])],
+    [enable_polkit_pkla="yes"],
+    []
+)
+AM_CONDITIONAL([ENABLE_POLKIT_PKLA], [test "$enable_polkit_pkla" = "yes"])
+AC_SUBST([ENABLE_POLKIT_PKLA])
 
 dnl
 dnl  SELinux support

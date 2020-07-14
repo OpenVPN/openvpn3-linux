@@ -25,6 +25,10 @@
 	$(AM_V_GEN)sed -e 's|\@OPENVPN_USERNAME\@|$(OPENVPN_USERNAME)|' \
 		$< > $@.tmp && mv $@.tmp $@
 
+%.pkla : %.pkla.in Makefile
+	$(AM_V_GEN)sed -e 's|\@OPENVPN_USERNAME\@|$(OPENVPN_USERNAME)|' \
+		$< > $@.tmp && mv $@.tmp $@
+
 MAINTAINERCLEANFILES = \
 	Makefile.in
 
@@ -39,14 +43,22 @@ DBUS_POLICY_FILES = \
 POLKIT_POLICY_FILES = \
 	net.openvpn.v3.rules
 
+POLKIT_PKLA_FILES = \
+	openvpn3-linux.pkla
+
 EXTRA_DIST = $(foreach var,$(DBUS_POLICY_FILES),$(var).in) \
-	$(foreach var,$(POLKIT_POLICY_FILES), $(var).in)
+	$(foreach var,$(POLKIT_POLICY_FILES), $(var).in) \
+	$(foreach var,$(POLKIT_PKLA_FILES), $(var).in)
 
 dbus_system_policy_DATA = $(DBUS_POLICY_FILES)
 
 polkit_rules_DATA = $(POLKIT_POLICY_FILES)
 
+if ENABLE_POLKIT_PKLA
+polkit_pkla_DATA = $(POLKIT_PKLA_FILES)
+endif
+
 dist_noinst_SCRIPTS = syntax-check.sh
 
-CLEANFILES = $(dbus_system_policy_DATA) $(polkit_rules_DATA) *~
+CLEANFILES = $(dbus_system_policy_DATA) $(polkit_rules_DATA) $(polkit_pkla_DATA) *~
 

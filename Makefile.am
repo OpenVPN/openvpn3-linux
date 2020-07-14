@@ -21,7 +21,7 @@ AUTOMAKE_OPTIONS = foreign 1.9
 ACLOCAL_AMFLAGS = -I m4
 
 # Keep these environment variables when running 'make distcheck'
-AM_DISTCHECK_CONFIGURE_FLAGS = CXXFLAGS="${CXXFLAGS}"
+AM_DISTCHECK_CONFIGURE_FLAGS = CXXFLAGS="${CXXFLAGS}" --enable-legacy-polkit-pkla
 
 TESTS = src/policy/syntax-check.sh
 
