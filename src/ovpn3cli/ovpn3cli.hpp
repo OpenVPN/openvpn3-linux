@@ -29,6 +29,7 @@
  *         OVPN3CLI_COMMANDS_LIST to be defined in advance.
  */
 
+#include "dbus/proxy.hpp"
 #include "common/cmdargparser.hpp"
 
 
@@ -47,6 +48,16 @@ int main(int argc, char **argv)
     try
     {
         return cmds.ProcessCommandLine(argc, argv);
+    }
+    catch (const DBusProxyAccessDeniedException& e)
+    {
+        std::cerr << "** ERROR **  " <<  e.what() << std::endl;
+
+        if (std::getenv("OPENVPN_DEBUG") != nullptr)
+        {
+            std::cerr << "DEBUG: " << std::endl << e.getDebug() << std::endl;
+        }
+        return 7;
     }
     catch (CommandException& e)
     {
