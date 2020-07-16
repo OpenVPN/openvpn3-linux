@@ -23,6 +23,7 @@
 
 #include <gio-unix-2.0/gio/gunixfdlist.h>
 
+#include "dbus/connection.hpp"
 #include "glibutils.hpp"
 
 namespace openvpn

@@ -29,6 +29,9 @@
 #include <string>
 #include <type_traits>
 
+#include "dbus/exceptions.hpp"
+
+
 namespace GLibUtils
 {
     /*
