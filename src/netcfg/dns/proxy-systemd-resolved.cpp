@@ -189,9 +189,10 @@ namespace resolved {
 
     const std::string Link::GetCurrentDNSServer() const
     {
-        GVariant* r = GetProperty("CurrentDNSServer");
+        GVariant* r = nullptr;
         try
         {
+            r = GetProperty("CurrentDNSServer");
             struct ResolverRecord d(r);
             g_variant_unref(r);
             return d.server;
@@ -201,6 +202,10 @@ namespace resolved {
             // Ignore exceptions and instead return an empty server
             // in this case
             g_variant_unref(r);
+            return "";
+        }
+        catch (const DBusException&)
+        {
             return "";
         }
     }
@@ -242,11 +247,18 @@ namespace resolved {
 
     bool Link::GetDefaultRoute() const
     {
-        GVariant* r = GetProperty("DefaultRoute");
-        GLibUtils::checkParams(__func__, r, "b", 0);
-        bool ret = g_variant_get_boolean(r);
-        g_variant_unref(r);
-        return ret;
+        try
+        {
+            GVariant* r = GetProperty("DefaultRoute");
+            GLibUtils::checkParams(__func__, r, "b", 0);
+            bool ret = g_variant_get_boolean(r);
+            g_variant_unref(r);
+            return ret;
+        }
+        catch (const DBusException& excp)
+        {
+            throw Exception("Could not extract DefaultRoute");
+        }
     }
 
 

@@ -36,20 +36,59 @@ using namespace NetCfg::DNS;
 
 void print_details(resolved::Link::Ptr link)
 {
-    std::cout << "Current DNS server: " << link->GetCurrentDNSServer()
+    std::string curr_dns_srv{""};
+    std::string default_route{""};
+    std::vector<std::string> dns_srvs;
+    resolved::SearchDomain::List srch;
+
+    try
+    {
+        curr_dns_srv = link->GetCurrentDNSServer();
+    }
+    catch (const DBusException& excp)
+    {
+        std::cout << "** ERROR **  " << excp.what() << std::endl;
+    }
+
+    try
+    {
+        default_route = (link->GetDefaultRoute() ? "true" : " false");
+    }
+    catch (const std::exception& excp)
+    {
+        std::cout << "** ERROR **  " << excp.what() << std::endl;
+        default_route = "(unknown)";
+    }
+
+    try
+    {
+        dns_srvs = link->GetDNSServers();
+    }
+    catch (const DBusException& excp)
+    {
+        std::cout << "** ERROR **  " << excp.what() << std::endl;
+    }
+
+    try
+    {
+        srch = link->GetDomains();
+    }
+    catch (const DBusException& excp)
+    {
+        std::cout << "** ERROR **  " << excp.what() << std::endl;
+    }
+
+    std::cout << "Current DNS server: " << curr_dns_srv
               << std::endl;
 
-    std::cout << "Default route: "
-              << (link->GetDefaultRoute() ? "true" : " false")
+    std::cout << "Default route: " << default_route
               << std::endl;
 
-    std::vector<std::string> dns_srvs = link->GetDNSServers();
     for (const auto& srv : dns_srvs)
     {
         std::cout << "DNS server: " << srv << std::endl;
     }
 
-    resolved::SearchDomain::List srch = link->GetDomains();
     for (const auto& dom : srch)
     {
         std::cout << "Domain: " << dom.search
