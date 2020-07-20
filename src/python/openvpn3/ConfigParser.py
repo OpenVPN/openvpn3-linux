@@ -1,7 +1,7 @@
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
-#  Copyright (C) 2017 - 2018  OpenVPN Inc. <sales@openvpn.net>
-#  Copyright (C) 2017 - 2018  David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2017 - 2020  OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2017 - 2020  David Sommerseth <davids@openvpn.net>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -58,8 +58,26 @@ class ConfigParser():
     #  needs to be handled elsewhere
     #
     class __ovpnArgParser(argparse.ArgumentParser):
+        shcompletion_data = {'options': [], 'argvalues': {}}
+
         def error(self, message):
             raise Exception("%s: error: %s"  % (self.prog, message))
+
+
+        def add_argument(self, *args, **kwargs):
+            # Wrapper around ArgumentParser.add_argument
+            # which collects data useful for bash-completion
+            self.shcompletion_data['options'].append(args[0])
+            if ('choices' in kwargs):
+                self.shcompletion_data['argvalues'][args[0]] = kwargs['choices']
+            elif ('completion_suggestions' in kwargs):
+                self.shcompletion_data['argvalues'][args[0]] = kwargs.pop('completion_suggestions')
+
+            argparse.ArgumentParser.add_argument(self, *args, **kwargs)
+
+
+        def RetrieveShellCompletionData(self):
+            return self.shcompletion_data
 
 
     def __init__(self, args, descr):
@@ -131,6 +149,9 @@ class ConfigParser():
             return {}
         return self.__opts['profile_override']
 
+    def RetrieveShellCompletionData(self):
+        return self.__parser.RetrieveShellCompletionData()
+
 
     ##
     #  Checks if we have at least the pure minimum of options and arguments
@@ -160,6 +181,8 @@ class ConfigParser():
     def __init_arguments(self):
         self.__parser.add_argument('--auth', metavar='ALG',
                                    action='store',
+                                   completion_suggestions=['SHA1', 'SHA256', 'SHA384',
+                                                 'SHA512'],
                                    nargs=1,
                                    help='Authenticate packets with HMAC using'
                                    +' message digest algorithm alg'
@@ -191,6 +214,8 @@ class ConfigParser():
 
         self.__parser.add_argument('--cipher', metavar='ALG',
                                    action='store',
+                                   completion_suggestions=['AES-128-CBC', 'AES-192-CBC', 'AES-256-CBC',
+                                                           'AES-128-GCM', 'AES-192-GCM', 'AES-256-GCM'],
                                    help='Encrypt packets with cipher '
                                    +' algorithm alg'
                                    +' (default=BF-CBC)')
@@ -202,11 +227,13 @@ class ConfigParser():
 
         self.__parser.add_argument('--comp-lzo', metavar='[MODE]',
                                    action=ConfigParser.OpenVPNvarArgs,
+                                   completion_suggestions=['yes', 'no', 'adaptive'],
                                    help='Use LZO compression '
                                    + '(Deprecated, use --compress instead)')
 
         self.__parser.add_argument('--compress', metavar='[ALG]',
                                    action=ConfigParser.OpenVPNvarArgs,
+                                   completion_suggestions=['lzo', 'lz4', 'lz4-v2', 'stub', 'stub-v2'],
                                    help='Compress using algorithm ALG')
 
         self.__parser.add_argument('--config', metavar='FILE',
@@ -224,6 +251,7 @@ class ConfigParser():
 
         self.__parser.add_argument('--dev-type', metavar='DEV-TYPE',
                                    action='store',
+                                   choices=['tun'],
                                    nargs=1,
                                    help='Which device type are we using? tun '
                                    + 'or tap. Not needed if --dev starts with'

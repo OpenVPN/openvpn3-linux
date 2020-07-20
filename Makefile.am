@@ -57,6 +57,7 @@ maintainer-clean-local:
 CLEANFILES = \
 	*~ \
 	src/shell/bash-completion/*~ \
+	src/shell/bash-completion/openvpn2 \
 	src/tests/python/*~
 
 DOCUMENTATION = \
@@ -70,6 +71,7 @@ DOCUMENTATION = \
 EXTRA_DIST = \
 	openvpn3-core-version \
 	$(DOCUMENTATION) \
+	src/shell/bash-completion/gen-openvpn2-completion.py \
 	src/shell/bash-completion/openvpn3 \
 	openvpn3-core \
 	vendor \
@@ -666,6 +668,17 @@ addons_aws_openvpn3_service_aws_LDADD = \
 if BUILD_ADDONS_AWS
 pkglibexec_PROGRAMS += addons/aws/openvpn3-service-aws
 endif
+
+
+#
+#  Misc utilities
+#
+src/shell/bash-completion/openvpn2:
+if HAVE_PYTHON
+	$(AM_V_GEN)src/shell/bash-completion/gen-openvpn2-completion.py --python-source-dir $(top_srcdir)/src/python > $@
+endif
+
+all-local: src/shell/bash-completion/openvpn2
 
 #
 #  Track git referenes of the check-out

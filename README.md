@@ -303,6 +303,11 @@ The following dependencies are needed:
   http://docutils.sourceforge.net/
   This is needed for the `rst2man` utility, used to generate the man pages.
 
+* (optional) Python Jinja2 template engine
+
+   https://palletsprojects.com/p/jinja/
+   Used to generate the bash-completion script for openvpn2.
+
 * (optional) selinux-policy-devel
 
   For Linux distributions running with SELinux in enforced mode (like Red Hat
