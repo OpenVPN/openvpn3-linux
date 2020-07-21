@@ -68,10 +68,12 @@ const ApplySettingsMode SystemdResolved::GetApplyMode() const noexcept
 
 void SystemdResolved::Apply(const ResolverSettings::Ptr settings)
 {
-    if (settings->GetEnabled())
+    SystemdResolved::updateQueueEntry upd;
+    upd.link = RetrieveLink(settings->GetDeviceName());
+    upd.enable = settings->GetEnabled();
+
+    if (upd.enable)
     {
-        SystemdResolved::updateQueueEntry upd;
-        upd.link = RetrieveLink(settings->GetDeviceName());
 
         for (const auto& r : settings->GetNameServers())
         {
@@ -97,8 +99,8 @@ void SystemdResolved::Apply(const ResolverSettings::Ptr settings)
         //        This should be configurable.
         upd.search.push_back(SearchDomain(".", true));
 
-        update_queue.push_back(upd);
     }
+    update_queue.push_back(upd);
 }
 
 
@@ -108,12 +110,19 @@ void SystemdResolved::Commit(NetCfgSignals *signal)
     {
         try
         {
-            signal->LogVerb2("systemd-resolved: [" + upd.link->GetPath()
-                             + "] Committing DNS servers");
-            upd.link->SetDNSServers(upd.resolver);
-            signal->LogVerb2("systemd-resolved: [" + upd.link->GetPath()
-                             + "] Committing DNS search domains");
-            upd.link->SetDomains(upd.search);
+            if (upd.enable)
+            {
+                signal->LogVerb2("systemd-resolved: [" + upd.link->GetPath()
+                                 + "] Committing DNS servers");
+                upd.link->SetDNSServers(upd.resolver);
+                signal->LogVerb2("systemd-resolved: [" + upd.link->GetPath()
+                                 + "] Committing DNS search domains");
+                upd.link->SetDomains(upd.search);
+            }
+            else
+            {
+                upd.link->Revert();
+            }
         }
         catch (const DBusException& excp)
         {
