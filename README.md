@@ -306,7 +306,8 @@ The following dependencies are needed:
 * (optional) Python Jinja2 template engine
 
    https://palletsprojects.com/p/jinja/
-   Used to generate the bash-completion script for openvpn2.
+   Required when enabling the bash-completion support; used to generate the
+   bash-completion script for openvpn2.
 
 * (optional) selinux-policy-devel
 

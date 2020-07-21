@@ -440,6 +440,29 @@ AM_CONDITIONAL([ENABLE_SELINUX_BUILD], [test "$enable_selinux_build" = "yes"])
 
 
 dnl
+dnl  bash-completion support
+dnl
+dnl  Enabling this will also install the shell-completion scripts
+dnl
+AC_ARG_ENABLE(
+     [bash-completion],
+     [AS_HELP_STRING([--enable-bash-completion],
+                     [Enable installing bash-completion scripts])],
+     [enable_bash_completion="yes"]
+)
+AC_SUBST([ENABLE_BASH_COMPLETION])
+AM_CONDITIONAL([ENABLE_BASH_COMPLETION], [test "${enable_bash_completion}" = "yes"])
+
+AC_ARG_VAR([BASH_COMPLETION_DIR], [Installation directory for bash-completion scripts (default: ${datarootdir}/bash-completion)])
+if test -n "${BASH_COMPLETION_DIR}"; then
+        bash_completion_dir="${BASH_COMPLETION_DIR}"
+else
+        bash_completion_dir="${datarootdir}/bash-completion/completions"
+fi
+AC_SUBST([bash_completion_dir])
+
+
+dnl
 dnl  Add-ons: AWS VPC support
 dnl
 dnl  This enables building of AWS addon, which enables communication
