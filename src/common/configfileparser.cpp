@@ -311,12 +311,11 @@ Json::Value File::Generate()
 
 void File::Save(const std::string cfgfname)
 {
-    if (empty())
-    {
-        return;
-    }
     std::ofstream cfgfile(cfgfname);
-    cfgfile << Generate() << std::endl;
+    if (!empty())
+    {
+        cfgfile << Generate() << std::endl;
+    }
     cfgfile.close();
 }
 

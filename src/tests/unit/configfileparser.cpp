@@ -246,8 +246,11 @@ TEST_F(ConfigurationFile, write_empty)
     testfile->Save("/tmp/empty-unit-test-file.json");
 
     struct stat fs;
-    ASSERT_EQ(stat("/tmp/empty-unit-test-file.json", &fs), -1)
+    ASSERT_EQ(stat("/tmp/empty-unit-test-file.json", &fs), 0)
         << "Empty configuration file created";
+    ASSERT_EQ(fs.st_size, 0)
+        << "Saved configuration file is not empty (0 bytes)";
+    unlink("/tmp/empty-unit-test-file.json");
 }
 
 
@@ -445,6 +448,45 @@ TEST_F(ConfigurationFile, get_related_group)
     auto s3= std::find(related.begin(), related.end(), "group-2-optC");
     EXPECT_FALSE(s3 == related.end())
         << "Did not locate grgrp2optCp2optC in group2";
+}
+
+TEST_F(ConfigurationFile, single_entry_present)
+{
+    unlink("/tmp/unit-test-config-parser-single-entry.json");
+    testfile->SetValue("present-option", "1");
+    testfile->Save("/tmp/unit-test-config-parser-single-entry.json");
+
+    // First, validate that we only have a single entry in the saved
+    // JSON file
+
+    // Parse the written JSON file
+    std::ifstream infile("/tmp/unit-test-config-parser-single-entry.json");
+    std::string line;
+    std::stringstream buf;
+    while (std::getline(infile, line))
+    {
+        buf << line << std::endl;
+    }
+    infile.close();
+
+    Json::Value data;
+    buf >> data;
+
+    std::string fields_exp{"present_opt:"};
+    ASSERT_EQ(get_json_member_names(data), fields_exp)
+        << "Unexpected JSON members found";
+
+    // Now, remove that entry and save the file again
+    testfile->SetValue("present-option", "0");
+    testfile->Save("/tmp/unit-test-config-parser-single-entry.json");
+
+    // Validate that this config has now been deleted
+    struct stat fs;
+    ASSERT_EQ(stat("/tmp/unit-test-config-parser-single-entry.json", &fs), 0)
+        << "Empty configuration file created";
+    ASSERT_EQ(fs.st_size, 0)
+        << "Saved configuration file is not empty (0 bytes)";
+    unlink("/tmp/unit-test-config-parser-single-entry.json");
 }
 
 } // namespace unittests
