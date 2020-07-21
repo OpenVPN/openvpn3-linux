@@ -314,7 +314,7 @@ The following dependencies are needed:
   For Linux distributions running with SELinux in enforced mode (like Red Hat
   Enterprise Linux and Fedora), this is required.
 
-In addition, this git repository will pull in two git submodules:
+In addition, this git repository will pull in these git submodules:
 
 * openvpn3
 
@@ -330,6 +330,11 @@ In addition, this git repository will pull in two git submodules:
 
   This openvpn3-linux git repository will pull in the appropriate ASIO
   library as a git submodule.
+
+* googletest
+
+  https://github.com/google/googletest
+  Used by the OpenVPN 3 Linux unit-tests
 
 First install the package dependencies needed to run the build.
 
