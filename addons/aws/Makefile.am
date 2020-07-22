@@ -31,6 +31,17 @@ systemd/%.service : systemd/%.service.in Makefile
 	$(AM_V_GEN)sed -e 's|\@LIBEXEC_PATH\@|$(pkglibexecdir)|' \
 		$< > $@.tmp && mv $@.tmp $@
 
+aws_certsdir = $(openvpn3_configdir)/awscerts
+
+aws_certificates = \
+	af_south_1.crt \
+	ap_east_1.crt \
+	default.crt \
+	eu_south_1.crt \
+	me_south_1.crt \
+	us_gov.crt
+
+aws_certs_DATA = $(foreach var,$(aws_certificates),certs/$(var))
 
 dbus_system_policy_DATA = \
 	policy/net.openvpn.v3.aws.conf
@@ -39,6 +50,7 @@ systemd_unit_DATA = \
 	systemd/openvpn3-aws.service
 
 EXTRA_DIST = \
+	$(aws_certs_DATA) \
 	$(dbus_system_policy_DATA) $(systemd_unit_DATA)
 
 
