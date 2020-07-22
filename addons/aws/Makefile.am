@@ -24,11 +24,13 @@
 #
 
 policy/%.conf : policy/%.conf.in Makefile
-	$(AM_V_GEN)sed -e 's|\@OPENVPN_USERNAME\@|$(OPENVPN_USERNAME)|' \
+	$(AM_V_GEN)$(MKDIR_P) $$(dirname $@) ; \
+		sed -e 's|\@OPENVPN_USERNAME\@|$(OPENVPN_USERNAME)|' \
 		$< > $@.tmp && mv $@.tmp $@
 
 systemd/%.service : systemd/%.service.in Makefile
-	$(AM_V_GEN)sed -e 's|\@LIBEXEC_PATH\@|$(pkglibexecdir)|' \
+	$(AM_V_GEN)$(MKDIR_P) $$(dirname $@) ; \
+		sed -e 's|\@LIBEXEC_PATH\@|$(pkglibexecdir)|' \
 		$< > $@.tmp && mv $@.tmp $@
 
 aws_certsdir = $(openvpn3_configdir)/awscerts
