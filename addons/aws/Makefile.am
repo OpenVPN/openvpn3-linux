@@ -53,8 +53,8 @@ systemd_unit_DATA = \
 
 EXTRA_DIST = \
 	$(aws_certs_DATA) \
-	$(dbus_system_policy_DATA) $(systemd_unit_DATA)
-
+	$(foreach var,$(dbus_system_policy_DATA),$(var).in) \
+	$(foreach var,$(systemd_unit_DATA),$(var).in)
 
 MAINTAINERCLEANFILES = \
 	Makefile.in
