@@ -716,8 +716,7 @@ AC_CONFIG_FILES([
         src/python/Makefile \
         src/selinux/Makefile \
         src/service-autostart/Makefile \
-        addons/aws/policy/Makefile \
-        addons/aws/systemd/Makefile \
+        addons/aws/Makefile
 ])
 AC_CONFIG_LINKS([src/policy/syntax-check.sh:src/policy/syntax-check.sh])
 AC_OUTPUT

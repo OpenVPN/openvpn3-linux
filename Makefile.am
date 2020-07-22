@@ -32,7 +32,7 @@ endif
 SUBDIRS += distro/systemd src/service-autostart src/policy doxygen docs/man
 
 if BUILD_ADDONS_AWS
-SUBDIRS += addons/aws/policy addons/aws/systemd
+SUBDIRS += addons/aws
 endif
 
 if ENABLE_SELINUX_BUILD

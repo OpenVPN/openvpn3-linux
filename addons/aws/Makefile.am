@@ -1,7 +1,8 @@
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
-#  Copyright (C) 2017-2018 OpenVPN Inc. <sales@openvpn.net>
-#  Copyright (C) 2020      Lev Stipakov <lev@openvpn.net>
+#  Copyright (C) 2020         OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2020         Lev Stipakov <lev@openvpn.net>
+#  Copyright (C) 2020         David Sommerseth <davids@openvpn.net>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -17,17 +18,31 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-%.service : %.service.in Makefile
+#
+# The main program is declared in ../../Makefile.am
+# This file only handles data files related to openvpn3-service-aws
+#
+
+policy/%.conf : policy/%.conf.in Makefile
+	$(AM_V_GEN)sed -e 's|\@OPENVPN_USERNAME\@|$(OPENVPN_USERNAME)|' \
+		$< > $@.tmp && mv $@.tmp $@
+
+systemd/%.service : systemd/%.service.in Makefile
 	$(AM_V_GEN)sed -e 's|\@LIBEXEC_PATH\@|$(pkglibexecdir)|' \
 		$< > $@.tmp && mv $@.tmp $@
+
+
+dbus_system_policy_DATA = \
+	policy/net.openvpn.v3.aws.conf
+
+systemd_unit_DATA = \
+	systemd/openvpn3-aws.service
+
+EXTRA_DIST = \
+	$(dbus_system_policy_DATA) $(systemd_unit_DATA)
+
 
 MAINTAINERCLEANFILES = \
 	Makefile.in
 
-EXTRA_DIST = \
-	openvpn3-aws.service.in
-
-systemd_unit_DATA = \
-	openvpn3-aws.service
-
-CLEANFILES = $(systemd_unit_DATA) *~
+CLEANFILES = $(dbus_system_policy_DATA) $(systemd_unit_DATA) *~
