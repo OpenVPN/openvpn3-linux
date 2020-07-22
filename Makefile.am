@@ -694,6 +694,14 @@ endif
 	popd
 endif
 
+uninstall-local :
+if ENABLE_BASH_COMPLETION
+	-for f in openvpn2 openvpn3 openvpn3-admin; do \
+		rm -vf  ${DESTDIR}/${bash_completion_dir}/$$f; \
+	done
+endif
+
+
 #
 #  Track git referenes of the check-out
 #
