@@ -48,6 +48,7 @@
 using namespace openvpn;
 
 #define OPENVPN3_AWS_CONFIG "/etc/openvpn3/openvpn3-aws.json"
+#define OPENVPN3_AWS_CERTS "/etc/openvpn3/awscerts"
 static const std::string OpenVPN3DBus_interf_aws = "net.openvpn.v3.aws";
 static const std::string OpenVPN3DBus_path_aws = "/net/openvpn/v3/aws";
 
@@ -272,7 +273,7 @@ private:
         AWS::PCQuery::Info ii;
 
         WS::ClientSet::run_synchronous([&](WS::ClientSet::Ptr cs) {
-            AWS::PCQuery::Ptr awspc(new AWS::PCQuery(cs, role_name));
+            AWS::PCQuery::Ptr awspc(new AWS::PCQuery(cs, role_name, OPENVPN3_AWS_CERTS));
             awspc->start([&](AWS::PCQuery::Info info) {
                 if (info.is_error())
                 {
