@@ -274,6 +274,10 @@ private:
         WS::ClientSet::run_synchronous([&](WS::ClientSet::Ptr cs) {
             AWS::PCQuery::Ptr awspc(new AWS::PCQuery(cs, role_name));
             awspc->start([&](AWS::PCQuery::Info info) {
+                if (info.is_error())
+                {
+                    THROW_DBUSEXCEPTION("AWSObject", "Error preparing route context: " + info.error);
+                }
                 ii = std::move(info);
             });
         }, nullptr, rng.get());
