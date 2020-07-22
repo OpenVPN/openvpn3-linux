@@ -13,6 +13,7 @@ add_executable(openvpn3-service-aws
     ${OPENVPN3_LINUX_ROOT}/src/common/utils.hpp
     ${OPENVPN3_LINUX_ROOT}/src/common/cmdargparser.cpp
     ${OPENVPN3_LINUX_ROOT}/src/common/timestamp.cpp
+    ${OPENVPN3_LINUX_ROOT}/src/common/configfileparser.cpp
     ${OPENVPN3_LINUX_ROOT}/openvpn3-core/openvpn/aws/awsroute.hpp
 )
 

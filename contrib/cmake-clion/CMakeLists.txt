@@ -70,6 +70,7 @@ add_executable(openvpn3-service-client
         src/common/timestamp.cpp
         src/common/utils.cpp
         src/common/cmdargparser.cpp
+        src/common/configfileparser.cpp
         src/configmgr/proxy-configmgr.hpp
         src/configmgr/overrides.cpp
         src/log/dbus-log.hpp
@@ -91,6 +92,7 @@ add_executable(openvpn3-service-configmgr
         src/common/timestamp.cpp
         src/common/utils.cpp
         src/common/cmdargparser.cpp
+        src/common/configfileparser.cpp
         src/log/dbus-log.hpp
         )
 
@@ -109,13 +111,14 @@ add_executable(openvpn3
         src/configmgr/overrides.hpp
         src/configmgr/overrides.cpp
         src/sessionmgr/proxy-sessionmgr.hpp
+        src/sessionmgr/sessionmgr-events.cpp
         src/dbus/requiresqueue-proxy.hpp
         src/common/cmdargparser.hpp
         src/common/cmdargparser.cpp
         src/common/requiresqueue.cpp
         src/common/timestamp.cpp
         src/common/utils.cpp
-
+        src/common/configfileparser.cpp
         )
 target_link_libraries(openvpn3 lz4)
 
@@ -133,6 +136,8 @@ add_executable(openvpn3-service-netcfg
         src/netcfg/dns/resolvconf-file.cpp
         src/netcfg/dns/resolver-settings.cpp
         src/netcfg/dns/settings-manager.cpp
+        src/netcfg/dns/systemd-resolved.cpp
+        src/netcfg/dns/proxy-systemd-resolved.cpp
         src/netcfg/core-tunbuilder.hpp
         src/common/cmdargparser.cpp
         src/common/lookup.cpp
@@ -140,6 +145,7 @@ add_executable(openvpn3-service-netcfg
         src/common/timestamp.cpp
         src/common/utils.cpp
         src/common/cmdargparser.cpp
+        src/common/configfileparser.cpp
         src/log/core-dbus-logbase.hpp
         src/log/dbus-log.hpp
         src/netcfg/netcfg-changeevent.cpp)
@@ -160,11 +166,13 @@ add_executable(openvpn3-service-logger
         src/common/timestamp.cpp
         src/common/utils.cpp
         src/common/cmdargparser.cpp
+        src/common/configfileparser.cpp
         )
 
 add_executable(openvpn3-service-sessionmgr
         src/sessionmgr/openvpn3-service-sessionmgr.cpp
         src/sessionmgr/sessionmgr.hpp
+        src/sessionmgr/sessionmgr-events.cpp
         src/client/statusevent.hpp
         src/common/cmdargparser.cpp
         src/common/lookup.cpp
@@ -172,6 +180,7 @@ add_executable(openvpn3-service-sessionmgr
         src/common/timestamp.cpp
         src/common/utils.cpp
         src/common/cmdargparser.cpp
+        src/common/configfileparser.cpp
         src/log/dbus-log.hpp
         )
 
@@ -184,6 +193,7 @@ add_executable(openvpn3-service-backendstart
         src/common/timestamp.cpp
         src/common/utils.cpp
         src/common/cmdargparser.cpp
+        src/common/configfileparser.cpp
         src/log/dbus-log.hpp
         )
 
