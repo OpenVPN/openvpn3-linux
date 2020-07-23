@@ -237,6 +237,16 @@ TEST_F(ConfigurationFile, load_non_existent_file)
 }
 
 
+TEST_F(ConfigurationFile, load_empty)
+{
+    unlink("/tmp/empty-unit-test-file.json");
+    std::ofstream efile("/tmp/empty-unit-test-file.json");
+    testfile->Load("/tmp/empty-unit-test-file.json");
+    ASSERT_TRUE(testfile->empty()) << "Empty file resulted in parsed data";
+    unlink("/tmp/empty-unit-test-file.json");
+}
+
+
 TEST_F(ConfigurationFile, write_empty)
 {
     // Ensure we don't have this file

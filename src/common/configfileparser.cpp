@@ -102,7 +102,7 @@ void File::Load(const std::string& cfgfile)
         throw ConfigFileException(cfgfile, "Could not open file");
     }
 
-    // Parse the configuration file
+    // Read the configuration file
     std::string line;
     std::stringstream buf;
     while (std::getline(cfgs, line))
@@ -110,6 +110,13 @@ void File::Load(const std::string& cfgfile)
         buf << line << std::endl;
     }
 
+    // Don't try to parse an empty file
+    if (0 == buf.tellp())
+    {
+        return;
+    }
+
+    // Parse the configuration file
     Json::Value jcfg;
     try
     {
