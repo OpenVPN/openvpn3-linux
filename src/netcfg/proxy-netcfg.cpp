@@ -53,6 +53,7 @@ namespace NetCfgProxy
                     OpenVPN3DBus_interf_netcfg,
                     OpenVPN3DBus_rootp_netcfg)
     {
+        CheckServiceAvail();
     }
 
 
