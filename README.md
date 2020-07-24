@@ -8,7 +8,7 @@ currently only a pure client-only implementation.
 The biggest change from the classic OpenVPN 2.x generation is that it does
 not need to be started by a root or otherwise privileged account any more.
 By default, all users on the system will have access to start and manage
-their own VPN tunnels.  It will also support configuring DNS out-of-the-box.
+their own VPN tunnels.  It will also support configuring DNS out-of-the-box
 
 The same OpenVPN 3 Core library which is used in the OpenVPN Connect clients
 is also used in this OpenVPN 3 client.  This implementation does not support
@@ -185,7 +185,7 @@ requires.
 As mentioned, there are various D-Bus services running behind the scenes.
 There are six services which is good to beware of.  All of these services
 will normally start automatically.  And when they are idle for a while
-with no data to maintain, they will shutdown automatically.
+with no data to maintain, they will shut-down automatically.
 
 * `openvpn3-service-configmgr`
    ([man page](docs/man/openvpn3-service-configmgr.8.rst) | [D-Bus documentation](docs/dbus/dbus-service-net.openvpn.v3.configuration.md))
@@ -231,15 +231,20 @@ with no data to maintain, they will shutdown automatically.
   configure them as well as handle the DNS configuration provided by the
   VPN server.  This is the most privileged process which only have a few
   capabilities enabled (such as `CAP_NET_ADMIN` and possibly `CAP_DAC_OVERRIDE`
-  or `CAP_NET_RAW`) by default.  With these capabilities, the service can run
+  or `CAP_NET_RAW`).  With these capabilities, the service can run
   as the `openvpn` user.
 
   Currently DNS configuration is done by manipulating `/etc/resolv.conf`
-  directly, but can be extended to support better methods (systemd-resolved and
-  NetworkManager are being investigated as potential solutions).  When
-  integrating with other services, the `CAP_DAC_OVERRIDE` privilege might not
-  be needed.  The `CAP_NET_RAW` capability is only needed when using
-  `--redirect-method bind-device`.
+  directly.  Support for systemd-resolved has been added, and will require
+  enabling this feature by running the following command as root:
+
+      # openvpn3-admin netcfg-service --config-set systemd-resolved 1
+
+  Next time the ``openvpn3-service-netcfg`` service restarts, systemd-resovled
+  support will be used instead.  Note, this requires at least **systemd v243**
+  or newer (or a distribution which has back-ported a newer version).  This works
+  now with CentOS 8, Fedora 31 and newer, Red Hat Enterprise Linux 8 or
+  Ubuntu 20.04.
 
 * `openvpn3-service-logger`
   ([man page](docs/man/openvpn3-service-logger.8.rst) | [D-Bus documentation](docs/dbus/dbus-service-net.openvpn.v3.log.md))
@@ -256,20 +261,33 @@ man page and [OpenVPN 3 D-Bus overview](docs/dbus/dbus-overview.md).
 How to build openvpn3-linux locally
 -----------------------------------
 
+The primary Linux distributions targeted and regularly tested are:
+
+  - CentOS 7 and 8
+  - Debian 9 and 10
+  - Fedora 31, 32 and Rawhide
+  - Red Hat Enterprise Linux (RHEL) 7 and 8
+  - Scientific Linux 7
+  - Ubuntu 18.04 and 20.04
+
+This list is not an exclusive list, and it will most likely work
+on all other distributions with recent enough dependencies.
+
 The following dependencies are needed:
 
 * A C++ compiler capable of at least ``-std=c++11``.  The ``./configure``
   script will try to detect if ``-std=c++14`` is available and switch to
   that if possible, otherwise it will test for ``-std=c++11``.  If support
-  for neither is found, it will fail.
+  for neither is found, it will fail.  RHEL-7 users may prefer to use
+  ``-std=c++1y``.
 
-* mbed TLS 2.4 or newer  (not needed if building with OpenSSL)
-
-  https://tls.mbed.org/
-
-* OpenSSL 1.0.2 or newer (not needed if building with mbed TLS)
+* OpenSSL 1.0.2 or newer (recommended, not needed if building with mbed TLS)
 
   https://www.openssl.org/
+
+* mbed TLS 2.13 or newer  (not needed if building with OpenSSL)
+
+  https://tls.mbed.org/
 
 * GLib2 2.50 or newer
 
@@ -293,10 +311,16 @@ The following dependencies are needed:
 
   https://en.wikipedia.org/wiki/Util-linux
 
+* (optional) tinyxml2 2.1.0 or newer
+
+  https://github.com/leethomason/tinyxml2
+
+  This is only needed if you want to include the AWS-VPC integration.
+
 * (optional) Python 3.5 or newer
 
   If Python 3.5 or newer is found, the openvpn2, openvpn3-autoload utilities
-  and an openvpn3 Python module will be built and installed.
+  and the openvpn3 Python module will be built and installed.
 
 * (optional) Python docutils
 
@@ -340,11 +364,7 @@ First install the package dependencies needed to run the build.
 
 #### Debian/Ubuntu:
 
-- Building with mbed TLS:
-
-      # apt-get install libmbedtls-dev
-
-- Building with OpenSSL:
+- Building with OpenSSL (recommended):
 
   For newer Debian and Ubuntu releases shipping with OpenSSL 1.1 or newer:
 
@@ -354,50 +374,69 @@ First install the package dependencies needed to run the build.
 
       # apt-get install libssl-dev libssl1.0.0
 
-- Additional Ubuntu 16.04 Python requirements
+- Building with mbed TLS (alternative):
 
-  The ``openvpn3`` Python module requires the ``IntFlag`` extension from the
+      # apt-get install libmbedtls-dev
+
+- Additional Debian 9 and Ubuntu 16.04 Python requirements
+
+  The ``openvpn3`` Python module requires the ``IntFlag`` extension in the
   `enum`` module.  This was introduced in the Python 3.6 distribution.
   OpenVPN 3 Linux implements a workaround for this in distributions which can
   install the ``aenum`` module via ``pip3``
 
-  # apt-get install python3-pip
-  # pip3 install aenum
+      # apt-get install python3-pip
+      # pip3 install aenum
 
 - Generic build requirements:
 
-      # apt-get install build-essential git pkg-config autoconf autoconf-archive libglib2.0-dev libjsoncpp-dev uuid-dev liblz4-dev libcap-ng-dev libxml2-utils
+      # apt-get install build-essential git pkg-config autoconf autoconf-archive libglib2.0-dev libjsoncpp-dev uuid-dev liblz4-dev libcap-ng-dev libxml2-utils python3-minimal python3-dbus python3-docutils python3-jinja2 libxml2-utils libtinyxml2-dev
 
 
 #### Fedora:
 
-- Building with mbed TLS:
-
-      # dnf install mbedtls-devel
-
-- Building with OpenSSL:
-
-      # dnf install openssl-devel
-
-- Generic build requirements:
-
-      # dnf install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2 python3-dbus python3-pyOpenSSL
-
-
-#### Red Hat Enterprise Linux / CentOS / Scientific Linux
-  First install the ``epel-release`` repository if that is not yet installed.  Then you can run:
-
-- Building with mbed TLS:
-
-      # yum install mbedtls-devel
-
-- Building with OpenSSL
+- Building with OpenSSL (recommended):
 
       # yum install openssl-devel
 
+- Building with mbed TLS (alternative):
+
+      # yum install mbedtls-devel
+
 - Generic build requirements:
 
-      # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel lz4-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2 python36 python36-dbus python36-gobject python36-pyOpenSSL
+      # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2 tinyxml2-devel python3-dbus python3-gobject python3-pyOpenSSL python3-jinja2 python3-docutils python3-dbus
+
+
+#### Red Hat Enterprise Linux / CentOS / Scientific Linux
+  First install the ``epel-release`` repository if that is not yet installed.
+
+  **NOTE**
+     For Red Hat Enterprise Linux 8 and CentOS 8, use the package lists used in Fedora.
+
+  Then you can run:
+
+- (Optional) Installing ``tinyxml2`` and ``tinyxml2-devel``
+  If you want to use ``--enable-addons-aws``, you will need the tinyxml2
+  development packages.  If you cannot find these packages in your normal
+  repositories, they are also available in the ``openvpn3`` Fedora Copr
+  repository
+
+      # yum install yum-plugin-copr
+      # yum copr enable dsommers/openvpn3
+      # yum install tinyxml2 tinyxml2-devel
+
+- Building with OpenSSL (recommended)
+
+      # yum install openssl-devel
+
+- Building with mbed TLS (alternative):
+
+      # yum install mbedtls-devel
+
+- Generic build requirements:
+
+      # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel lz4-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2 python-docutils python36 python36-dbus python36-gobject python36-pyOpenSSL
 
 
 ### Preparations building from git
@@ -447,13 +486,17 @@ With everything built and installed, it should be possible to run both the
 user.
 
 
+#### Enable AWS-VPC integration
+
+If you want to enable the AWS-VPC integration, add ``--enable-addons-aws``
+to the ``./configure`` command.
+
+
 #### Auto-completion helper for bash/zsh
-The `openvpn3` front-end provides an interface for bash-completion to
-retrieve valid sub-commands, options and arguments - including valid
-D-Bus paths.  To enable this feature, copy
-`src/shell/bash-completion/openvpn3` to either `/etc/bash_completion.d`
-or `/usr/share/bash-completion/completions` (depending on the Linux
-distribution).
+
+If you want to also install the bash-completion scripts for the
+``openvpn2`` and ``openvpn3`` commands, add ``--enable-bash-completion``
+to the ``./configure`` command.
 
 
 #### SELinux
