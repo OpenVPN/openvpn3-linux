@@ -29,7 +29,7 @@ VERSION="$(git describe --always --tags)"
 
 #  Only accept explicit tag references, not a reference
 #  derived from a tag reference, such as "v3_beta-36-gcd68aee"
-echo ${VERSION} | grep -qE "^v[[:digit:]](|_[[:alnum:]]+)$"
+echo ${VERSION} | grep -qE "^v[[:digit:]]+(|_[[:alnum:]]+)$"
 ec=$?
 set -eu
 if [ $ec -ne 0  ]; then
