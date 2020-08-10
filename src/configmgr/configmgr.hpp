@@ -1201,6 +1201,11 @@ public:
             {
                 import_persistent_configuration(fname);
             }
+            catch (const openvpn::option_error& excp)
+            {
+                LogCritical("Could not import configuration profile " +
+                            fname + ": " + std::string(excp.what()));
+            }
             catch (const DBusException& excp)
             {
                 std::string err(excp.what());
@@ -1212,6 +1217,11 @@ public:
                 {
                     throw;
                 }
+            }
+            catch (const std::exception& excp)
+            {
+                LogCritical("Invalid persistent configuration file " + fname
+                            + ": " + std::string(excp.what()));
             }
         }
     }
@@ -1245,21 +1255,35 @@ public:
             // Import the configuration
             std::string cfgpath = generate_path_uuid(OpenVPN3DBus_rootp_configuration, 'x');
             ConfigurationObject *cfgobj;
-            cfgobj = new ConfigurationObject(dbuscon,
-                                             [self=Ptr(this), cfgpath]()
-                                             {
-                                                self->remove_config_object(cfgpath);
-                                             },
-                                             cfgpath,
-                                             GetLogLevel(),
-                                             GetLogWriterPtr(),
-                                             GetSignalBroadcast(),
-                                             creds.GetUID(sender),
-                                             state_dir,
-                                             params);
 
-            register_config_object(cfgobj, "created");
-            g_dbus_method_invocation_return_value(invoc, g_variant_new("(o)", cfgpath.c_str()));
+            try
+            {
+                cfgobj = new ConfigurationObject(dbuscon,
+                                                 [self=Ptr(this), cfgpath]()
+                                                 {
+                                                    self->remove_config_object(cfgpath);
+                                                 },
+                                                 cfgpath,
+                                                 GetLogLevel(),
+                                                 GetLogWriterPtr(),
+                                                 GetSignalBroadcast(),
+                                                 creds.GetUID(sender),
+                                                 state_dir,
+                                                 params);
+
+                register_config_object(cfgobj, "created");
+                g_dbus_method_invocation_return_value(invoc, g_variant_new("(o)", cfgpath.c_str()));
+            }
+            catch (const openvpn::option_error& excp)
+            {
+                std::string em{"Invalid configuration profile: "};
+                em += std::string(excp.what());
+                GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.import",
+                                                              em.c_str());
+                g_dbus_method_invocation_return_gerror(invoc, err);
+                g_error_free(err);
+                return;
+            }
         }
         else if ("FetchAvailableConfigs" == method_name)
         {
