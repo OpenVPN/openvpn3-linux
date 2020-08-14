@@ -54,6 +54,10 @@ NetCfgDCO::NetCfgDCO(GDBusConnection *dbuscon, const std::string& objpath,
                << "          <arg type='s' direction='in' name='key_config'/>"
                << "        </method>"
                << "        <method name='SwapKeys'/>"
+               << "        <method name='SetPeer'>"
+               << "          <arg type='u' direction='in' name='keepalive_interval'/>"
+               << "          <arg type='u' direction='in' name='keepalive_timeout'/>"
+               << "        </method>"
                << "    </interface>"
                << "</node>";
     ParseIntrospectionXML(introspect);
@@ -233,6 +237,22 @@ void NetCfgDCO::callback_method_call(GDBusConnection *conn,
         } else if ("SwapKeys" == method_name)
         {
             swap_keys();
+        }
+        else if ("SetPeer" == method_name)
+        {
+            int keepalive_interval, keepalive_timeout;
+            g_variant_get(params, "(uu)",
+                          &keepalive_interval, &keepalive_timeout);
+
+            openvpn_io::post(io_context, [keepalive_interval,
+                                          keepalive_timeout,
+                                          self=Ptr(this)]()
+                             {
+                                     self->genl->set_peer(keepalive_interval,
+                                                          keepalive_timeout);
+                             });
+
+            retval = g_variant_new("()");
         }
 
         g_dbus_method_invocation_return_value(invoc, retval);

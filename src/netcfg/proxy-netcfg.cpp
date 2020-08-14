@@ -624,5 +624,14 @@ namespace NetCfgProxy
         GVariant *res = Call("SwapKeys");
         g_variant_unref(res);
     }
+
+    void DCO::SetPeer(int keepalive_interval, int keepalive_timeout)
+    {
+        GVariant *res = Call("SetPeer",
+                             g_variant_new("(uu)",
+                                           keepalive_interval,
+                                           keepalive_timeout));
+        g_variant_unref(res);
+    }
 #endif  // ENABLE_OVPNDCO
 } // namespace NetCfgProxy

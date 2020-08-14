@@ -391,6 +391,16 @@ public:
 
         dco->SwapKeys();
     }
+
+    void tun_builder_dco_set_peer(int keepalive_interval, int keepalive_timeout) override
+    {
+        if (!dco)
+        {
+            NetCfgProxyException(__func__, "Lost link to DCO device");
+        }
+
+        dco->SetPeer(keepalive_interval, keepalive_timeout);
+    }
 #endif  // ENABLE_OVPNDCO
 
 protected:

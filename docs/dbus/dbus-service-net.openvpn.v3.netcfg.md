@@ -452,4 +452,16 @@ Swaps the primary and secondary encryption keys used by the data channel for the
 the DCO kernel module to perform this swap in kernel memory. This is used to rotate and add new symmetric encryption keys
 during the lifetime of a VPN session. See the OpenVPN documentation related to key renegotiation options for more details.
 
+
+### Method: `net.openvpn.v3.netcfg.SetPeer`
+
+Set peer properties inside ovpn-dco kernel module.
+
+#### Arguments
+| Direction | Name                | Type         | Description                                                              |
+|-----------|---------------------|--------------|--------------------------------------------------------------------------|
+| In        | keepalive_interval  | unsigned int | how often to send ping packets when connection is idling                 |
+| In        | keepalive_timeout   | unsigned int | how long to wait after receiving last packet before triggering timeout   |
+
+
 [^1]: Unix file descriptors that are passed are not in the D-Bus method signature.

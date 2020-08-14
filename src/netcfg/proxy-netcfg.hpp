@@ -312,6 +312,14 @@ namespace NetCfgProxy
          *
          */
         void SwapKeys();
+
+        /**
+         * @brief Sets properties of peer
+         *
+         * @param keepalive_interval keepalive interval
+         * @param keepalive_timeout keepalive timeout
+         */
+        void SetPeer(int keepalive_interval, int keepalive_timeout);
     };
 #endif  // ENABLE_OVPNDCO
 } // namespace NetCfgProxy
