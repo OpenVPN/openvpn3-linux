@@ -100,7 +100,7 @@ namespace openvpn {
                 }
                 else
                 {
-                    cfgstr << element.escape() << std::endl;
+                    cfgstr << element.escape(false) << std::endl;
                 }
              }
 
