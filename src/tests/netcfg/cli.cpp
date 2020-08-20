@@ -28,4 +28,5 @@
 #ifdef HAVE_CONFIG_VERSION_H
 #include "config-version.h"
 #endif
+#include "config.h"
 #include <test/ovpncli/cli.cpp>
