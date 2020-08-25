@@ -8,3 +8,7 @@
 	path = vendor/googletest
 	url = git://github.com/google/googletest.git
 	ignore = untracked
+[submodule "ovpn-dco"]
+	path = ovpn-dco
+	url = https://gitlab.com/openvpn/ovpn-dco.git
+	ignore = untracked

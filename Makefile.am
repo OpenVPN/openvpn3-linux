@@ -74,6 +74,7 @@ EXTRA_DIST = \
 	src/shell/bash-completion/gen-openvpn2-completion.py \
 	src/shell/bash-completion/openvpn3 \
 	openvpn3-core \
+	ovpn-dco/include/uapi/linux/ovpn_dco.h \
 	vendor \
 	src/common/requiresqueue.hpp \
 	src/common/timestamp.hpp \
