@@ -98,9 +98,6 @@ public:
           ignore_dns_cfg(false),
           client_thread(nullptr)
     {
-        // Initialize the VPN Core
-        CoreVPNClient::init_process();
-
         signal.SetLogLevel(default_log_level);
 
         std::stringstream introspection_xml;
@@ -167,7 +164,6 @@ public:
     {
         if (client_thread && client_thread->joinable())
             client_thread->join();
-        CoreVPNClient::uninit_process();
     }
 
 
@@ -1438,6 +1434,7 @@ void start_client_thread(pid_t start_pid, const std::string argv0,
                         int log_level, bool signal_broadcast,
                         LogWriter *logwr)
 {
+    InitProcess::Init init;
     std::cout << get_version(argv0) << std::endl;
 
     BackendClientDBus backend_service(start_pid, G_BUS_TYPE_SYSTEM,

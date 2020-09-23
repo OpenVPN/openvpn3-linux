@@ -446,7 +446,7 @@ int aws_main(ParsedArgs::Ptr args)
     }
 
     // Initialize Core library
-    InitProcess::init();
+    InitProcess::Init init;
 
     // Prepare the GLib GMainLoop
     GMainLoop *main_loop = g_main_loop_new(nullptr, FALSE);
@@ -469,7 +469,6 @@ int aws_main(ParsedArgs::Ptr args)
         {
             logsrvprx->Detach(OpenVPN3DBus_interf_backends);
         }
-        InitProcess::uninit();
     }
     catch (const DBusException& exc)
     {
