@@ -347,7 +347,6 @@ SingleCommandOption::SingleCommandOption(const std::string longopt,
       help_text(help_text)
 {
     update_getopt(longopt, shortopt, no_argument);
-    getopt_alias.name = nullptr;
 }
 
 
@@ -582,6 +581,9 @@ void SingleCommandOption::update_getopt(const std::string longopt, const char  s
     getopt_option.flag = NULL;
     getopt_option.has_arg =  has_args;
     getopt_option.val = shortopt;
+
+    // Ensure the alias is properly initialized
+    getopt_alias.name = nullptr;
 }
 
 
