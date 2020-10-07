@@ -169,7 +169,8 @@ namespace openvpn
             // For non-DCO, we currently do not set config.iface_name to
             // open the first available tun device.
             //
-            // config.ifname is a return value rather than an argument
+            // The config object below is a return value rather than
+            // an argument
             //
             int ret = establish_tun(*tbc, config, nullptr, std::cout);
 
@@ -178,6 +179,8 @@ namespace openvpn
             {
                 netCfgDevice.set_device_name(config.iface_name);
             }
+#else
+            netCfgDevice.set_device_name(config.iface_name);
 #endif
 
             doEstablishNotifies(netCfgDevice, config);
