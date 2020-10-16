@@ -87,13 +87,23 @@ namespace openvpn {
             return outdata;
         }
 
-        std::string string_export()
+        std::string string_export(bool dco=false)
         {
             std::stringstream cfgstr;
+            bool devtype_found = false;
 
             for(const auto& element : *this)
             {
                 std::string optname = element.ref(0);
+                if (dco && "dev" == optname)
+                {
+                    cfgstr << "dev ovpn" << std::endl;
+                    continue;
+                }
+                if (dco && "dev-type" == optname)
+                {
+                    devtype_found = true;
+                }
                 if (optparser_inline_file(optname))
                 {
                     cfgstr << optparser_mkline(optname, element.ref(1)) << std::endl;
@@ -103,7 +113,10 @@ namespace openvpn {
                     cfgstr << element.escape(false) << std::endl;
                 }
              }
-
+            if (dco && !devtype_found)
+            {
+                cfgstr << "dev-type tun" << std::endl;
+            }
             return cfgstr.str();
         }
     };

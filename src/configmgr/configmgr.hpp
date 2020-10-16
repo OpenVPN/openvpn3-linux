@@ -416,7 +416,7 @@ public:
                 }
                 g_dbus_method_invocation_return_value(invoc,
                                                       g_variant_new("(s)",
-                                                                    options.string_export().c_str()));
+                                                                    options.string_export(dco).c_str()));
 
                 // If the fetching user is openvpn (which
                 // openvpn3-service-client runs as), we consider this
