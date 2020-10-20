@@ -281,6 +281,18 @@ The following dependencies are needed:
   for neither is found, it will fail.  RHEL-7 users may prefer to use
   ``-std=c++1y``.
 
+* GNU autoconf 2.69 or newer
+
+  https://www.gnu.org/software/autoconf/
+
+* GNU autoconf-archive (2017.03.21 has been tested)
+
+  https://www.gnu.org/software/autoconf-archive/
+
+* GNU automake 1.11 or newer
+
+  https://www.gnu.org/software/automake/
+
 * OpenSSL 1.0.2 or newer (recommended, not needed if building with mbed TLS)
 
   https://www.openssl.org/
@@ -310,6 +322,18 @@ The following dependencies are needed:
 * libuuid 2.23.2 or newer
 
   https://en.wikipedia.org/wiki/Util-linux
+
+* (optional) libnl3 3.2.29 or newer
+
+  http://www.infradead.org/~tgr/libnl/
+
+  Only needed when building with DCO support
+
+* (optional) protobuf 2.4.0 or newer
+
+  http://code.google.com/p/protobuf/
+
+  Only needed when building with DCO support
 
 * (optional) tinyxml2 2.1.0 or newer
 
@@ -392,6 +416,10 @@ First install the package dependencies needed to run the build.
 
       # apt-get install build-essential git pkg-config autoconf autoconf-archive libglib2.0-dev libjsoncpp-dev uuid-dev liblz4-dev libcap-ng-dev libxml2-utils python3-minimal python3-dbus python3-docutils python3-jinja2 libxml2-utils libtinyxml2-dev
 
+- Dependencies to build with DCO support:
+
+      # apt-get install libnl-3-dev libnl-genl-3-dev protobuf-compiler libprotobuf-dev
+
 
 #### Fedora:
 
@@ -405,25 +433,34 @@ First install the package dependencies needed to run the build.
 
 - Generic build requirements:
 
-      # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2 tinyxml2-devel python3-dbus python3-gobject python3-pyOpenSSL python3-jinja2 python3-docutils python3-dbus
+      # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2 tinyxml2-devel python3-dbus python3-gobject python3-pyOpenSSL python3-jinja2 python3-docutils python3-dbus bzip2
+
+- Dependencies to build with DCO support:
+
+      # yum install libnl3-devel protobuf-compiler protobuf protobuf-devel
 
 
 #### Red Hat Enterprise Linux / CentOS / Scientific Linux
   First install the ``epel-release`` repository if that is not yet installed.
 
-  **NOTE**
-     For Red Hat Enterprise Linux 8 and CentOS 8, use the package lists used in Fedora.
+##### NOTES: RHEL 8 / CentOS 8 - differences from RHEL 7 / CentOS 7
+  For Red Hat Enterprise Linux 8 and CentOS 8, use the package lists used in
+  Fedora.  In addition the CodeReady (RHEL) / PowerTools (CentOS) repository
+  needs to be enabled when building with Data Channel Offload (DCO) support.
 
-  Then you can run:
+  For CentOS 8 run this command:
+
+     # yum-config-manager --set-enabled PowerTools  # CentOS
+
+##### Required packages
 
 - (Optional) Installing ``tinyxml2`` and ``tinyxml2-devel``
   If you want to use ``--enable-addons-aws``, you will need the tinyxml2
   development packages.  If you cannot find these packages in your normal
   repositories, they are also available in the ``openvpn3`` Fedora Copr
-  repository
+  repository.  These packages are also found in the CodeReady (RHEL) and
+  PowerTools (CentOS) repositories.
 
-      # yum install yum-plugin-copr
-      # yum copr enable dsommers/openvpn3
       # yum install tinyxml2 tinyxml2-devel
 
 - Building with OpenSSL (recommended)
@@ -434,9 +471,11 @@ First install the package dependencies needed to run the build.
 
       # yum install mbedtls-devel
 
-- Generic build requirements:
+- Generic build requirements (only RHEL 7):
 
       # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel lz4-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2 python-docutils python36 python36-dbus python36-gobject python36-pyOpenSSL
+
+  For RHEL 8/CentOS 8 see the Fedora package lists, including dependencies for DCO support.
 
 
 ### Preparations building from git
@@ -490,6 +529,52 @@ user.
 
 If you want to enable the AWS-VPC integration, add ``--enable-addons-aws``
 to the ``./configure`` command.
+
+
+#### TECH PREVIEW: Kernel based Data Channel Offload (DCO) support
+
+**BEWARE - UNDER HEAVY DEVELOPMENT**
+
+     This feature is under heavy development.  It is NOT production
+     ready and the API between the kernel module and OpenVPN 3 Linux may
+     change in incompatible ways for the time being until the API is
+     considered stable.
+
+The Data Channel Offload support moves the processing of the OpenVPN data
+channel operations from the client process to the kernel, via the ovpn-dco
+kernel module.  This means the encryption and decryption of the tunnelled
+network traffic is kept entirely in kernel space instead of being send
+back and forth between the kernel and the OpenVPN client process.  This
+has the potential to improve the overall VPN throughput.  This module must
+be installed before OpenVPN 3 Linux can make use of this feature.  This is
+shipped in the OpenVPN 3 Linux package repositories or can be built from
+the [source code](https://gitlab.com/openvpn/ovpn-dco/).
+
+The ovpn-dco kernel module currently only support ***Linux kernel 5.4*** and
+newer.  Currently supported distributions with DCO support:
+
+ * Fedora release 32, 33 and Rawhide
+ * Ubuntu 20.04
+
+The ovpn-dco kernel module is currently not functional on RHEL/CentOS due
+to the kernel version is older than 5.4.  OpenVPN 3 Linux will build with
+the ``--enable-dco`` feature but requires a functional ``ovpn-dco``
+kernel module to be fully functional.
+
+
+
+To build OpenVPN 3 Linux with this support, add ``--enable-dco`` to the
+``./configure`` command.
+
+##### NOTES: SELinux on Fedora
+
+   There is a known issue with SELinux.  For the time being SELinux
+   must be put into permissive mode before DCO support will work.
+   This is done by running this command:
+
+       # setenforce 0
+
+   This will fixed in a later release of OpenVPN 3 Linux.
 
 
 #### Auto-completion helper for bash/zsh
