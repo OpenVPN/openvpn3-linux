@@ -102,6 +102,7 @@ NetCfgDCO::NetCfgDCO(GDBusConnection *dbuscon, const std::string& objpath,
                                  {
                                          self->queue_read_pipe(nullptr);
                                          self->genl->start_vpn(transport_fd);
+                                         self->genl->register_packet();
                                  }
                      );
 }
