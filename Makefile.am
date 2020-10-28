@@ -710,7 +710,9 @@ endif
 src/shell/bash-completion/openvpn2:
 if ENABLE_BASH_COMPLETION
 if HAVE_PYTHON
-	$(AM_V_GEN)src/shell/bash-completion/gen-openvpn2-completion.py --python-source-dir $(top_srcdir)/src/python > $@
+	test -d `dirname $@` || $(MKDIR_P) `dirname $@`
+	test $(top_srcdir) != $(top_builddir) && cp -vr $(top_srcdir)/src/python/openvpn3 $(top_builddir)/src/python/ || true
+	$(AM_V_GEN)$(top_srcdir)/src/shell/bash-completion/gen-openvpn2-completion.py --python-source-dir $(top_builddir)/src/python > $@
 endif
 endif
 
@@ -720,9 +722,9 @@ install-data-local :
 if ENABLE_BASH_COMPLETION
 	$(MKDIR_P) "${DESTDIR}/${bash_completion_dir}/"
 if HAVE_PYTHON
-	install -m 644 src/shell/bash-completion/openvpn2 "${DESTDIR}/${bash_completion_dir}/"
+	install -m 644 $(top_builddir)/src/shell/bash-completion/openvpn2 "${DESTDIR}/${bash_completion_dir}/"
 endif
-	install -m 644 src/shell/bash-completion/openvpn3 "${DESTDIR}/${bash_completion_dir}/"
+	install -m 644 $(top_srcdir)/src/shell/bash-completion/openvpn3 "${DESTDIR}/${bash_completion_dir}/"
 	pushd "${DESTDIR}/${bash_completion_dir}/" ; \
 	ln -sf openvpn3 openvpn3-admin ; \
 	popd
