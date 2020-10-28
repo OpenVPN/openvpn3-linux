@@ -58,6 +58,23 @@ _openvpn2_completion()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     case $prev in
+        '--config')
+            # Prepare a simple filter, providing partial matching
+            filter="cat" # by default everything passes
+            if [ -n "$cur" ]; then
+                filter="grep -E ^$cur"
+            fi
+
+            selopts="-W"
+            # Only list files which most likely are OpenVPN configuration files
+            selopts="$selopts $(grep -sm1 -E '(client|remote |port |lport |rport |key |cert |ca )' ${cur}*.conf ${cur}*.ovpn | cut -d: -f1 | $filter | tr '\\n' ' ')"
+
+            # Add directories too, but ignore those starting with '.{some-alpha-num-letters}'
+            selopts="$selopts $(compgen -d -- $cur | sed 's#$#/#' | grep -vE '^\\.\\w+' | tr '\\n' ' ')"
+
+            # all information gathered, generate the completion reply
+            COMPREPLY=( $( compgen "${selopts}" -- $cur ) )
+            ;;
     {% for option, values in valid_args.items() %}
         '{{ option }}')
             COMPREPLY=( $(compgen -W  "{{ values }}" -- $cur) )
@@ -95,15 +112,20 @@ if __name__ == '__main__':
     cfgparser = openvpn3.ConfigParser([sys.argv[0],], argp.description)
     completion_data = cfgparser.RetrieveShellCompletionData()
 
+    # Prepare a list containing all valid options
+    option_list = '{' + ','.join(['"%s"' % o for o in completion_data['options']]) + '}'
+
+    #
     # Generate the bash-completion script
+    #
+    # We remove --config, as that is explicitly handled in the template
+    completion_data['options'].remove('--config')
     valid_args = {}
     for opt, values in completion_data['argvalues'].items():
         if len(values) > 1:
             valid_args[opt] = '{' + ','.join(['"%s"' % v for v in values]) + '}'
         else:
             valid_args[opt] = '%s' % values[0]
-
-    option_list = '{' + ','.join(['"%s"' % o for o in completion_data['options']]) + '}'
 
     ctpl = Template(completion_template)
     script = ctpl.render(valid_args=valid_args, option_list=option_list)
