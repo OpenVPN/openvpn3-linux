@@ -32,7 +32,7 @@
 #include <sys/socket.h>
 
 NetCfgDCO::NetCfgDCO(GDBusConnection *dbuscon, const std::string& objpath,
-                     const std::string& dev_name, int transport_fd,
+                     const std::string& dev_name, int transport_fd, ovpn_proto proto,
                      pid_t backend_pid, LogWriter *logwr)
     : DBusObject(objpath + "/dco"),
       signal(dbuscon, LogGroup::NETCFG, objpath, logwr),
@@ -98,10 +98,10 @@ NetCfgDCO::NetCfgDCO(GDBusConnection *dbuscon, const std::string& objpath,
                             )
         );
 
-    openvpn_io::post(io_context, [transport_fd, self=Ptr(this)]()
+    openvpn_io::post(io_context, [transport_fd, proto, self=Ptr(this)]()
                                  {
                                          self->queue_read_pipe(nullptr);
-                                         self->genl->start_vpn(transport_fd);
+                                         self->genl->start_vpn(transport_fd, proto);
                                          self->genl->register_packet();
                                  }
                      );
@@ -218,16 +218,17 @@ void NetCfgDCO::callback_method_call(GDBusConnection *conn,
         }
         else if ("NewPeer" == method_name)
         {
-            int local_port, remote_port;
-            gchar *local_ip, *remote_ip;
-            g_variant_get(params, "(susu)", &local_ip, &local_port, &remote_ip, &remote_port);
+            GLibUtils::checkParams(__func__, params, "(susu)", 4);
 
-            openvpn_io::ip::udp::endpoint local(openvpn_io::ip::make_address(local_ip), local_port);
-            openvpn_io::ip::udp::endpoint remote(openvpn_io::ip::make_address(remote_ip), remote_port);
+            std::string local_ip = GLibUtils::ExtractValue<std::string>(params, 0);
+            int local_port = GLibUtils::ExtractValue<unsigned int>(params, 1);
+            std::string remote_ip = GLibUtils::ExtractValue<std::string>(params, 2);
+            int remote_port = GLibUtils::ExtractValue<unsigned int>(params, 3);
 
-            openvpn_io::post(io_context, [local, remote, self=Ptr(this)]()
+            openvpn_io::post(io_context, [local_ip, local_port, remote_ip, remote_port, self=Ptr(this)]()
                                          {
-                                             self->genl->new_peer(local, remote);
+                                             self->genl->new_peer(openvpn_io::ip::make_address(local_ip), local_port,
+                                                                  openvpn_io::ip::make_address(remote_ip), remote_port);
                                          }
                 );
 

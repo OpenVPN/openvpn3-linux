@@ -320,6 +320,7 @@ public:
 
 #ifdef ENABLE_OVPNDCO
     int tun_builder_dco_enable(int transport_fd,
+                               unsigned int proto,
                                const std::string& dev_name) override
     {
         if (!device)
@@ -332,7 +333,7 @@ public:
         {
             if (!dco)
             {
-                dco.reset(device->EnableDCO(transport_fd, dev_name));
+                dco.reset(device->EnableDCO(transport_fd, proto, dev_name));
             }
             return dco->GetPipeFD();
         }

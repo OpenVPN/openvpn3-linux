@@ -400,9 +400,9 @@ namespace NetCfgProxy
 
 
 #ifdef ENABLE_OVPNDCO
-    DCO* Device::EnableDCO(int transport_fd, const std::string& dev_name)
+    DCO* Device::EnableDCO(int transport_fd, unsigned int proto, const std::string& dev_name)
     {
-        GVariant *res = CallSendFD("EnableDCO", g_variant_new("(s)", dev_name.c_str()), transport_fd);
+        GVariant *res = CallSendFD("EnableDCO", g_variant_new("(su)", dev_name.c_str(), proto), transport_fd);
         gchar *path = nullptr;
         g_variant_get(res, "(o)", &path);
         std::string dcopath{path};

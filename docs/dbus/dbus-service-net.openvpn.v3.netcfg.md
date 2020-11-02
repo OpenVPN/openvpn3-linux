@@ -190,7 +190,9 @@ interface net.openvpn.v3.netcfg {
       AddNetworks(in  a(subb) networks);
       AddDNS(in  as server_list);
       AddDNSSearch(in  as domains);
-      EnableDCO(out  o dco_device_path);
+      EnableDCO(in  s dev_name,
+                in  u proto,
+                out o dco_device_path);
       Establish();
       Disable();
       Destroy();
@@ -297,6 +299,7 @@ Instantiates DCO device object, which handles DCO functionality.
 | Direction | Name            | Type              | Description                                              |
 |-----------|-----------------|-------------------|----------------------------------------------------------|
 | In        | dev_name        | string            | A name for net device to be created                      |
+| In        | proto           | unsigned integer  | Transport protocol, see `enum ovpn_proto` in ovpn_dco.h  |
 | Out       | dco_device_path | object path       | A unique D-Bus object path for DCO device                |
 
 

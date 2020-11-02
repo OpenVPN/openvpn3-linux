@@ -204,6 +204,7 @@ public:
 #ifdef ENABLE_OVPNDCO
                    << "        <method name='EnableDCO'>"
                    << "            <arg direction='in' type='s' name='dev_name'/>"
+                   << "            <arg direction='in' type='u' name='proto'/>"
                    << "            <arg type='o' direction='out' name='dco_device_path'/>"
                    << "        </method>"
 #endif
@@ -408,8 +409,9 @@ public:
 #ifdef ENABLE_OVPNDCO
             else if ("EnableDCO" == method_name)
             {
-                GLibUtils::checkParams(__func__, params, "(s)", 1);
-                std::string dev_name{g_variant_get_string(g_variant_get_child_value(params, 0), 0)};
+                GLibUtils::checkParams(__func__, params, "(su)", 2);
+                std::string dev_name = GLibUtils::ExtractValue<std::string>(params, 0);
+                ovpn_proto proto = static_cast<ovpn_proto>(GLibUtils::ExtractValue<uint32_t>(params, 1));
                 set_device_name(dev_name);
 
                 int transport_fd = GLibUtils::get_fd_from_invocation(invoc);
@@ -417,6 +419,7 @@ public:
                                                obj_path,
                                                dev_name,
                                                transport_fd,
+                                               proto,
                                                creatorPid,
                                                signal.GetLogWriter()));
 

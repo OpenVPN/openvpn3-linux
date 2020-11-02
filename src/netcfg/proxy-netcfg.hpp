@@ -181,10 +181,11 @@ namespace NetCfgProxy
          * Enables DCO functionality. This requires ovpn-dco kernel module.
          *
          * @param transport_fd fd of transport socket, provided by client
+         * @param proto transport protocol such as OVPN_PROTO_UDP4. See enum ovpn_dco for values.
          * @param dev_name name of net device to create
          * @return DCO* DCO proxy object
          */
-        DCO* EnableDCO(int transport_fd, const std::string& dev_name);
+        DCO* EnableDCO(int transport_fd, unsigned int proto, const std::string& dev_name);
 
         /**
          * Applies configuration to DCO interface.

@@ -40,6 +40,7 @@ public:
               const std::string& objpath,
               const std::string& dev_name,
               int transport_fd,
+              ovpn_proto proto,
               pid_t backend_pid,
               LogWriter *logwr);
 
