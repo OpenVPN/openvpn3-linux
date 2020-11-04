@@ -528,6 +528,7 @@ public:
                 }
                 signal.LogInfo("Restarting connection");
                 signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_RECONNECTING);
+                paused = false;
                 vpnclient->reconnect(0);
             }
             else if ("ForceShutdown" == method_name)
