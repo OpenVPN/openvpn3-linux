@@ -322,8 +322,8 @@ class ConfigParser():
                                    + ' the tunnel will also exit')
 
         self.__parser.add_argument('--keepalive', metavar='P_SECS R_SECS',
-                                   action='store',
-                                   nargs=2,
+                                   action=ConfigParser.OpenVPNvarArgs,
+                                   required_args=2,
                                    help='Ping remote every P_SECS second and '
                                    + 'restart tunnel if no response within '
                                    + 'R_SECS seconds')
@@ -544,7 +544,7 @@ class ConfigParser():
 
         self.__parser.add_argument('--static-challenge', metavar='MSG ECHO',
                                    action=ConfigParser.OpenVPNvarArgs,
-                                   min_args=2,
+                                   required_args=2,
                                    help='Enable static challenge/response '
                                    + 'protocol using challenge text MSG, with '
                                    + 'ECHO indicating echo flag (0|1)')
@@ -869,6 +869,11 @@ class ConfigParser():
                     self.__min_args = kwargs.pop('min_args')
                 except KeyError:
                     self.__min_args = 0
+                try:
+                    self.__required_args = kwargs.pop('required_args')
+                except KeyError:
+                    self.__required_args = 0
+
                 super(ConfigParser.OpenVPNvarArgs, self).__init__(option_strings, dest, '*', **kwargs)
 
             def __call__(self, parser, namespace, values, option_string=None):
@@ -886,11 +891,20 @@ class ConfigParser():
                 except AttributeError:
                     pass
 
+                required_args = 0
+                try:
+                    required_args = self.__required_args
+                except AttributeError:
+                    pass
+
                 if isinstance(values, list):
                     if len(values) < min_args:
                         err = 'The --%s requires at least %i arguments' % (self.dest, min_args)
                         raise argparse.ArgumentError(self, err)
 
+                    if required_args > 0 and len(values) != required_args:
+                        err = 'The --%s require exactly %i arguments' % (self.dest, required_args)
+                        raise argparse.ArgumentError(self, err)
                     dst.append(' '.join(values))
                 else:
                     dst.append(values)
