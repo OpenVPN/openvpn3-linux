@@ -590,6 +590,30 @@ class ConfigParser():
                                    + 'with a shared secret key (FILE).  This'
                                    + 'CANNOT be combined with --tls-auth')
 
+        tls_versions = ['1.0','1.1','1.2','1.3']
+        self.__parser.add_argument('--tls-version-min',
+                                   metavar='TLS_VERSION [\'or-highest\']',
+                                   action=ConfigParser.OpenVPNvarArgs,
+                                   choices=tls_versions + ['or-highest',],
+                                   min_args=1,
+                                   help='Set the minimum TLS version accepted '
+                                   + 'from the remote peer.  Optionally the'
+                                   + '\'or-highest\' keyword can be added.  '
+                                   + 'Default: "1.0"  '
+                                   + 'Valid versions: '
+                                   + ', '.join(tls_versions))
+
+        self.__parser.add_argument('--tls-version-max',
+                                   metavar='TLS_VERSION',
+                                   action=ConfigParser.OpenVPNvarArgs,
+                                   choices=tls_versions,
+                                   required_args=1,
+                                   help='Set the maximum TLS version accepted '
+                                   + 'from the remote peer.  '
+                                   + 'Default is the highest supported.  '
+                                   + 'Valid versions: '
+                                   + ', '.join(tls_versions))
+
         self.__parser.add_argument('--tls-timeout', metavar='SECS',
                                    action='store',
                                    help='Packet retransmit timeout on TLS '
