@@ -606,7 +606,7 @@ namespace NetCfgProxy
         auto copyKeyDirection = [](const KoRekey::KeyDirection& src, DcoKeyConfig_KeyDirection* dst) {
             dst->set_cipher_key(src.cipher_key, src.cipher_key_size);
             dst->set_hmac_key(src.hmac_key, src.hmac_key_size);
-            dst->set_nonce_tail(src.nonce_tail, 12);
+            dst->set_nonce_tail(src.nonce_tail, sizeof(src.nonce_tail));
             dst->set_cipher_key_size(src.cipher_key_size);
             dst->set_hmac_key_size(src.hmac_key_size);
         };

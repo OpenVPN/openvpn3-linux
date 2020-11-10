@@ -295,7 +295,7 @@ void NetCfgDCO::new_key(GVariant* params)
         {
             dst.cipher_key = reinterpret_cast<const unsigned char*>(src.cipher_key().data());
             dst.hmac_key = reinterpret_cast<const unsigned char*>(src.hmac_key().data());
-            std::memcpy(dst.nonce_tail, src.nonce_tail().data(), 12);
+            std::memcpy(dst.nonce_tail, src.nonce_tail().data(), sizeof(dst.nonce_tail));
             dst.cipher_key_size = src.cipher_key_size();
             dst.hmac_key_size = src.hmac_key_size();
         };
