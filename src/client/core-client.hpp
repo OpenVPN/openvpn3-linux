@@ -282,7 +282,20 @@ private:
         }
         else if ("INFO" == ev.name)
         {
-            signal->LogInfo(ev.info);
+            if (string::starts_with(ev.info, "OPEN_URL:"))
+            {
+                std::string url = ev.info.substr(9);
+                signal->AttentionReq(ClientAttentionType::CREDENTIALS,
+                                     ClientAttentionGroup::OPEN_URL, url);
+                signal->StatusChange(StatusMajor::SESSION,
+                                     StatusMinor::SESS_AUTH_URL,
+                                     url);
+                run_status = StatusMinor::CFG_REQUIRE_USER;
+            }
+            else
+            {
+                signal->LogInfo(ev.info);
+            }
         }
         else if ("COMPRESSION_ENABLED" == ev.name)
         {
