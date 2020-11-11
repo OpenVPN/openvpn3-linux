@@ -169,8 +169,14 @@ def fetch_logs_loop(sessobj, verb):
             pass
     except KeyboardInterrupt:
         print("\nDisconnecting...")
-        print(sessobj.GetFormattedStatistics())
-        sessobj.Disconnect()
+        try:
+            print(sessobj.GetFormattedStatistics())
+            sessobj.Disconnect()
+        except dbus.exceptions.DBusException as e:
+            if str(e).split(':')[0] == 'org.freedesktop.DBus.Error.UnknownMethod':
+                pass
+            else:
+                raise e
 
     print('Disconnected')
     return 0
