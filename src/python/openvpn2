@@ -37,6 +37,7 @@ import datetime
 import dbus
 import os
 import time
+import webbrowser
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
 from getpass import getpass
@@ -91,6 +92,20 @@ def import_config(bus, opts):
     return cfg
 
 
+def open_web_auth(url):
+    print('  ########################')
+    print('  ## WEB AUTHENTICATION ##')
+    print('  ########################\n')
+    print()
+    print('  Web based authentication is required to establish the connection.')
+
+    if webbrowser.open_new(url):
+        print('  A browser window should have been opened on your system.')
+    else:
+        print('  Open this URL in a browser: ')
+        print('       ' + url);
+    print()
+
 ##
 #  Simple Log signal callback function.  Called each time a Log event
 #  happens on this session.
@@ -115,8 +130,12 @@ def LogHandler(group, catg, msg):
 def StatusHandler(major, minor, msg):
     maj = StatusMajor(major)
     min = StatusMinor(minor)
-    print('%s [STATUS] (%s, %s) %s' % (datetime.datetime.now(),
-                                       maj, min, msg))
+
+    if StatusMajor.SESSION == maj and StatusMinor.SESS_AUTH_URL == min:
+        open_web_auth(msg)
+    else:
+        print('%s [STATUS] (%s, %s) %s' % (datetime.datetime.now(),
+                                           maj, min, msg))
 
     # Session got most likely disconnected outside of this program
     if StatusMajor.SESSION == maj and StatusMinor.PROC_STOPPED == min:
@@ -235,12 +254,14 @@ def start_tunnel(bus, cfgobj, background_mode, verb):
                         print(' Authentication failed')
                         done = True
                         exit_code = 3
-
                     else:  # Not handled status codes
                         print('{Status: major=%s, minor=%s, message="%s"}' %
                               (status['major'].name, status['minor'].name,
                                status['message']))
                         exit_code = 7
+                elif StatusMajor.SESSION == status['major']:
+                    if StatusMinor.SESS_AUTH_URL:
+                        connected = True;
 
                 if connected is False and done is False:
                     # Check if everything is okay.  If authentication
@@ -253,6 +274,9 @@ def start_tunnel(bus, cfgobj, background_mode, verb):
                     print('VPN session is running in the background.')
                     print('Session path: ' + sessionobj.GetPath())
                     print()
+                    if StatusMajor.SESSION == status['major'] \
+                        and StatusMinor.SESS_AUTH_URL == status['minor']:
+                        open_web_auth(status['message'])
                     print('Use the \'openvpn3 session-manage\' command line '
                           + 'tool to manage this session.')
                     print('See \'openvpn3 session-manage --help\' and '
