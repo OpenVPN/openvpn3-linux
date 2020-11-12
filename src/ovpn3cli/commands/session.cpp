@@ -29,6 +29,7 @@
 #include "dbus/core.hpp"
 #include "common/cmdargparser.hpp"
 #include "common/lookup.hpp"
+#include "common/open-uri.hpp"
 #include "common/requiresqueue.hpp"
 #include "common/utils.hpp"
 #include "configmgr/proxy-configmgr.hpp"
@@ -223,7 +224,43 @@ static void start_session(OpenVPN3SessionProxy& session,
                     }
                     throw;
                 }
-                if (s.minor == StatusMinor::CONN_CONNECTED)
+                if (s.Check(StatusMajor::SESSION, StatusMinor::SESS_AUTH_URL))
+                {
+                    std::cout << "Web based authentication required." << std::endl;
+                    OpenURIresult r = open_uri(s.message);
+                    switch (r->status)
+                    {
+                    case OpenURIstatus::INVALID:
+                        std::cout << "** ERROR **  The server requested an invalid URL: "
+                            << s.message << std::endl
+                            << "Disconnecting" << std::endl;
+                        sigint_received = true; // Simulate a CTRL-C to exit
+                        break;
+
+                    case OpenURIstatus::FAIL:
+                        std::cout << "Could not open the URL automatically." << std::endl
+                                  << "Open this URL to complete the connection: " << std::endl
+                                  << "     " << s.message << std::endl
+                                  << std::endl
+                                  << "Further manage this session using 'openvpn3 session-manage'"
+                                  << std::endl;
+                        return;
+
+                    case OpenURIstatus::SUCCESS:
+                        std::cout << "Session running, awaiting external authentication." << std::endl
+                                  << "Further manage this session using 'openvpn3 session-manage'"
+                                  << std::endl;
+                        return;
+
+                    default:
+                        std::cout << "** ERROR **  Unknown error occured." << std::endl
+                                  << r->message << std::endl
+                                  << "Disconecting" << std::endl;
+                        sigint_received = true;
+                        break;
+                    }
+                }
+                else if (s.minor == StatusMinor::CONN_CONNECTED)
                 {
                     std::cout << "Connected" << std::endl;
                     return;
@@ -253,7 +290,7 @@ static void start_session(OpenVPN3SessionProxy& session,
                         // Ignore any errors in this case
                     }
                     std::cout << std::endl;
-                    throw SessionException("CTRL-C caught - Session stopped");
+                    throw SessionException("Session stopped");
                 }
 
                 sleep(1);  // If not yet connected, wait for 1 second

@@ -519,6 +519,8 @@ src_ovpn3cli_openvpn3_SOURCES = \
 	src/common/cmdargparser-exceptions.hpp \
 	src/common/configfileparser.cpp \
 	src/common/configfileparser.hpp \
+	src/common/open-uri.cpp \
+	src/common/open-uri.hpp \
 	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp
