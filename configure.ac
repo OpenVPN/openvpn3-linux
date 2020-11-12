@@ -90,6 +90,13 @@ PKG_CHECK_MODULES(
         [AC_MSG_ERROR([glib2/gio package not found. Is the glib2 development package installed?])]
 )
 
+PKG_CHECK_MODULES(
+        [LIBGLIBGIOUNIX],
+        [gio-unix-2.0],
+        [have_glibgiounix="yes"],
+        [AC_MSG_ERROR([glib2/gio-unix package not found. Is the glib2 development package installed?])]
+)
+
 dnl
 dnl  Check for UUID library
 dnl

@@ -112,6 +112,7 @@ AM_CXXFLAGS = \
 	$(ASIO_CXXFLAGS) \
 	$(CRYPTO_CFLAGS) \
 	$(LIBGLIBGIO_CFLAGS) \
+	$(LIBGLIBGIOUNIX_CFLAGS) \
 	$(LIBJSONCPP_CFLAGS) \
 	$(LIBLZ4_CFLAGS) \
 	$(LIBUUID_CFLAGS) \
@@ -240,6 +241,7 @@ noinst_PROGRAMS += \
 	src/tests/misc/logwriter-tests \
 	src/tests/misc/lookup-tests \
 	src/tests/misc/netcfg-dns-direct-file-selftest \
+	src/tests/misc/open-uri-test \
 	src/tests/misc/syslog-facility-mapping-test \
 	src/tests/dbus/config-lock-down \
 	src/tests/dbus/config-override-selftest \
@@ -325,6 +327,11 @@ src_tests_misc_netcfg_dns_direct_file_selftest_SOURCES = \
 	src/netcfg/dns/settings-manager.cpp \
 	src/netcfg/netcfg-changeevent.cpp
 src_tests_misc_netcfg_dns_direct_file_selftest_CXXFLAGS=$(AM_CXXFLAGS) -DENABLE_DEBUG
+
+src_tests_misc_open_uri_test_SOURCES = \
+	src/tests/misc/open-uri-test.cpp \
+	src/common/open-uri.cpp \
+	src/common/open-uri.hpp
 
 src_tests_misc_syslog_facility_mapping_test_SOURCES = \
 	src/tests/misc/syslog-facility-mapping-test.cpp
