@@ -294,10 +294,8 @@ void NetCfgDCO::new_key(GVariant* params)
     auto copyKeyDirection = [](const DcoKeyConfig_KeyDirection& src, KoRekey::KeyDirection& dst)
         {
             dst.cipher_key = reinterpret_cast<const unsigned char*>(src.cipher_key().data());
-            dst.hmac_key = reinterpret_cast<const unsigned char*>(src.hmac_key().data());
             std::memcpy(dst.nonce_tail, src.nonce_tail().data(), sizeof(dst.nonce_tail));
             dst.cipher_key_size = src.cipher_key_size();
-            dst.hmac_key_size = src.hmac_key_size();
         };
 
     openvpn_io::post(io_context, [=, self=Ptr(this)]()
@@ -307,7 +305,6 @@ void NetCfgDCO::new_key(GVariant* params)
                                      kc.key_id = dco_kc.key_id();
                                      kc.remote_peer_id = dco_kc.remote_peer_id();
                                      kc.cipher_alg = dco_kc.cipher_alg();
-                                     kc.hmac_alg = dco_kc.hmac_alg();
 
                                      copyKeyDirection(dco_kc.encrypt(),
                                                       kc.encrypt);

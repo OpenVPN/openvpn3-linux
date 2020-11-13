@@ -601,14 +601,11 @@ namespace NetCfgProxy
         kc.set_key_id(kc_arg->key_id);
         kc.set_remote_peer_id(kc_arg->remote_peer_id);
         kc.set_cipher_alg(kc_arg->cipher_alg);
-        kc.set_hmac_alg(kc_arg->hmac_alg);
 
         auto copyKeyDirection = [](const KoRekey::KeyDirection& src, DcoKeyConfig_KeyDirection* dst) {
             dst->set_cipher_key(src.cipher_key, src.cipher_key_size);
-            dst->set_hmac_key(src.hmac_key, src.hmac_key_size);
             dst->set_nonce_tail(src.nonce_tail, sizeof(src.nonce_tail));
             dst->set_cipher_key_size(src.cipher_key_size);
-            dst->set_hmac_key_size(src.hmac_key_size);
         };
 
         copyKeyDirection(kc_arg->encrypt, kc.mutable_encrypt());
