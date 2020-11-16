@@ -25,6 +25,7 @@
 #include <ctime>
 
 #include <openvpn/log/logsimple.hpp>
+#include "common/cmdargparser-exceptions.hpp"
 #include "common/core-extensions.hpp"
 #include "common/lookup.hpp"
 #include "common/utils.hpp"
@@ -1729,7 +1730,22 @@ public:
 
         if (!state_dir.empty())
         {
-            cfgmgr->SetStateDirectory(state_dir);
+            try
+            {
+                cfgmgr->SetStateDirectory(state_dir);
+            }
+            catch (const DBusException& excp)
+            {
+                LogEvent ev{LogGroup::CONFIGMGR,
+                            LogCategory::CRIT,
+                            std::string("Error parsing --state-dir: ")
+                            + std::string(excp.what())};
+                if (logwr)
+                {
+                    logwr->Write(ev);
+                }
+                throw ConfigFileException(ev.message);
+            }
         }
         procsig->ProcessChange(StatusMinor::PROC_STARTED);
 

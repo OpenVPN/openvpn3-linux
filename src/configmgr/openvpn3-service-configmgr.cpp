@@ -167,7 +167,7 @@ int main(int argc, char **argv)
 
         return argparser.RunCommand(simple_basename(argv[0]), argc, argv);
     }
-    catch (CommandException& excp)
+    catch (const CommandArgBaseException& excp)
     {
         std::cout << excp.what() << std::endl;
         return 2;
