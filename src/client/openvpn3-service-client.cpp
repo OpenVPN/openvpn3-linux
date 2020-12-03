@@ -1072,7 +1072,7 @@ private:
             vpnconfig.guiVersion = get_guiversion();
             vpnconfig.info = true;
             vpnconfig.content = pm.profile_content();
-            vpnconfig.ssoMethods = "openurl,crtext";
+            vpnconfig.ssoMethods = "openurl";
             vpnconfig.dco = dco;
             set_overrides(overrides);
         }
