@@ -285,7 +285,7 @@ if test -z "${OPENVPN3_CORE_SOURCEDIR}"; then
 fi
 AC_MSG_NOTICE([Using OpenVPN 3 Core Library directory: ${OPENVPN3_CORE_SOURCEDIR}])
 AC_MSG_CHECKING([OpenVPN 3 Core Library version])
-if test -e ".git"; then
+if test -e "${srcdir}/.git"; then
    OPENVPN3_CORE_VERSION="`${OPENVPN3_CORE_SOURCEDIR}/scripts/version`"
 elif test -f ${srcdir}/openvpn3-core-version; then
    OPENVPN3_CORE_VERSION="`cat ${srcdir}/openvpn3-core-version`"
