@@ -25,20 +25,13 @@
 
 #include "connection.hpp"
 
+// Several Glib2 functions used cannot use empty strings if the argument
+// to the function is to be ignored, it must be NULL.  Since we need this
+// behaviour more places, we define it as a macro.
+#define STRING_TO_CHARPTR(x) x.empty() ? nullptr : x.c_str()
+
 namespace openvpn
 {
-    inline const char * string2C_char(std::string in)
-    {
-            return (in.empty() ? NULL : in.c_str());
-    }
-
-
-    inline std::string C_char2string(const char *in)
-    {
-            return (NULL == in ? "" : std::string(in));
-    }
-
-
     class DBusSignalSubscription
     {
     public:
@@ -138,10 +131,10 @@ namespace openvpn
         void Subscribe(std::string busname, std::string objpath, std::string signal_name)
         {
             guint signal_id = g_dbus_connection_signal_subscribe(conn,
-                                                           string2C_char(busname),
-                                                           string2C_char(interface),
-                                                           string2C_char(signal_name),
-                                                           string2C_char(objpath),
+                                                           STRING_TO_CHARPTR(busname),
+                                                           STRING_TO_CHARPTR(interface),
+                                                           STRING_TO_CHARPTR(signal_name),
+                                                           STRING_TO_CHARPTR(objpath),
                                                            NULL,
                                                            G_DBUS_SIGNAL_FLAGS_NONE,
                                                            dbusobject_callback_signal_handler,
@@ -258,7 +251,7 @@ namespace openvpn
         std::string interface;
         std::string object_path;
         std::map<std::string, guint> subscriptions;
-        bool subscribed;
+        bool subscribed = false;
     };
 
 
@@ -445,9 +438,9 @@ namespace openvpn
 
             GError *error = NULL;
             if( !g_dbus_connection_emit_signal(conn,
-                                               string2C_char(busn),
-                                               string2C_char(objpath),
-                                               string2C_char(interf),
+                                               STRING_TO_CHARPTR(busn),
+                                               STRING_TO_CHARPTR(objpath),
+                                               STRING_TO_CHARPTR(interf),
                                                signal_name.c_str(),
                                                params,
                                                &error))

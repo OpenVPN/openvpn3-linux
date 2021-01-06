@@ -39,15 +39,17 @@
 
 using namespace openvpn;
 
+
 class SigSubscription : public DBusSignalSubscription
 {
 public:
     SigSubscription(DBus& dbusobj,
-                    std::string bus_name,
-                    std::string interface,
-                    std::string object_path,
-                    std::string signal_name)
-        : DBusSignalSubscription(dbusobj, bus_name, interface, object_path, signal_name)
+                    const std::string& bus_name,
+                    const std::string& interface,
+                    const std::string& object_path,
+                    const std::string& signal_name)
+       : DBusSignalSubscription(dbusobj, bus_name, interface,
+                                object_path, signal_name)
     {
     }
 
@@ -187,28 +189,35 @@ public:
 
 int main(int argc, char **argv)
 {
-    const char *sig_name = (argc > 1 ? argv[1] : NULL);
-    const char *interf   = (argc > 2 ? argv[2] : NULL);
-    const char *obj_path = (argc > 3 ? argv[3] : NULL);
-    const char *bus_name = (argc > 4 ? argv[4] : NULL);
+    std::string sig_name = (argc > 1 ? argv[1] : "");
+    std::string interf   = (argc > 2 ? argv[2] : "");
+    std::string obj_path = (argc > 3 ? argv[3] : "");
+    std::string bus_name = (argc > 4 ? argv[4] : "");
 
-    DBus dbus(G_BUS_TYPE_SYSTEM);
-    dbus.Connect();
-    std::cout << "Connected to D-Bus" << std::endl;
+    try
+    {
+        DBus dbus(G_BUS_TYPE_SYSTEM);
+        dbus.Connect();
+        std::cout << "Connected to D-Bus" << std::endl;
 
-    SigSubscription subscription(dbus, C_char2string(bus_name), C_char2string(interf),
-                                 C_char2string(obj_path), C_char2string(sig_name));
+        SigSubscription subscription(dbus, bus_name, interf,
+                                           obj_path, sig_name);
 
-    std::cout << "Subscribed" << std::endl
-              << "Bus name:    " << (bus_name != NULL ? bus_name : "(not set)") << std::endl
-              << "Interface:   " << (interf != NULL ? interf : "(not set)") << std::endl
-              << "Object path: " << (obj_path != NULL ? obj_path : "(not set)") << std::endl
-              << "Signal name: " << (sig_name != NULL ? sig_name : "(not set)") << std::endl;
+        std::cout << "Subscribed" << std::endl
+                  << "Bus name:    " << (bus_name.empty() ? bus_name : "(not set)") << std::endl
+                  << "Interface:   " << (interf.empty() ? interf : "(not set)") << std::endl
+                  << "Object path: " << (obj_path.empty() ? obj_path : "(not set)") << std::endl
+                  << "Signal name: " << (sig_name.empty() ? sig_name : "(not set)") << std::endl;
 
-    GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
-    g_unix_signal_add(SIGINT, stop_handler, main_loop);
-    g_unix_signal_add(SIGTERM, stop_handler, main_loop);
-    g_main_loop_run(main_loop);
-
+        GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
+        g_unix_signal_add(SIGINT, stop_handler, main_loop);
+        g_unix_signal_add(SIGTERM, stop_handler, main_loop);
+        g_main_loop_run(main_loop);
+    }
+    catch (const DBusException& excp)
+    {
+        std::cerr << "EXCEPTION: " << excp.what() << std::endl;
+        return 2;
+    }
     return 0;
 }
