@@ -236,7 +236,8 @@ TEST(DNSResolverSettings, GVariantTests_SingleNameServer)
     // Insert a single name server and search domain
     std::vector<std::string> ns = {{"9.9.9.9"}};
     GVariant* d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(ns));
-    r1->AddNameServers(d);
+    std::string res = r1->AddNameServers(d);
+    ASSERT_STREQ(res.c_str(), "9.9.9.9");
     g_variant_unref(d);
 
     std::vector<std::string> chk = r1->GetNameServers();
@@ -280,7 +281,8 @@ TEST(DNSResolverSettings, GVariantTests_MultipleEntries)
     // Insert a single name server and search domain
     std::vector<std::string> ns = {{"10.0.0.1", "10.0.2.2", "10.0.3.3"}};
     GVariant* d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(ns));
-    r1->AddNameServers(d);
+    std::string res = r1->AddNameServers(d);
+    ASSERT_STREQ(res.c_str(), "10.0.0.1, 10.0.2.2, 10.0.3.3");
     g_variant_unref(d);
 
     std::vector<std::string> sd = {{"sub1.example.net", "sub2.example.com",

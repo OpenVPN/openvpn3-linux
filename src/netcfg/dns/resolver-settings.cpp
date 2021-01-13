@@ -29,6 +29,8 @@
 #include <string>
 #include <vector>
 
+#include <glib.h>
+
 #include "dbus/core.hpp"
 #include "netcfg/dns/resolver-settings.hpp"
 #include "netcfg/netcfg-exception.hpp"
@@ -163,7 +165,6 @@ namespace DNS
         }
 
         GVariant *srv = nullptr;
-        bool first = true;
         std::string ret;
         while ((srv = g_variant_iter_next_value(srvlist)))
         {
@@ -178,7 +179,7 @@ namespace DNS
             {
                 name_servers.push_back(v);
             }
-            ret += (!first ? std::string(", ") : std::string("")) + v;
+            ret += (!ret.empty() ? ", " : "" ) + v;
 
             g_variant_unref(srv);
         }
