@@ -718,6 +718,13 @@ class ConfigParser():
                              + 'Not needed with OpenVPN 3 which uses a '
                              + 'different privilege separation approach')
 
+        ignored.add_argument('--mute',
+                             metavar='SECS',
+                             action=ConfigParser.IgnoreArg,
+                             nargs=1,
+                             help='Silence repeating messages during n '
+                             + 'seconds. Not supported in OpenVPN3')
+
         ignored.add_argument('--nice',
                              metavar='LEVEL',
                              action=ConfigParser.IgnoreArg,
@@ -762,6 +769,19 @@ class ConfigParser():
                              help='If hostname resolve fails for --remote, '
                              + 'retry resolve for n seconds before failing. '
                              + 'Not supported by OpenVPN 3')
+
+        ignored.add_argument('--route-delay',
+                             action=ConfigParser.IgnoreArg,
+                             nargs='*',
+                             help='Delay n seconds (default 0) after '
+                             + 'connection establishment, before adding '
+                             + ' routes. Not supported by OpenVPN 3.')
+
+        ignored.add_argument('--route-method',
+                             action=ConfigParser.IgnoreArg,
+                             nargs=1,
+                             help='Which method m to use for adding routes on '
+                             + 'Windows. Not supported by OpenVPN 3.')
 
         ignored.add_argument('--script-security',
                              metavar='LEVEL',
