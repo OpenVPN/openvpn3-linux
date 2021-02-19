@@ -1269,13 +1269,20 @@ public:
 
     ~BackendClientDBus()
     {
-        // If we do unicast (!broadcast), detach from the log service
-        if (!signal_broadcast)
+        try
         {
-            logservice->Detach(OpenVPN3DBus_interf_backends);
-            logservice->Detach(OpenVPN3DBus_interf_sessions);
+            // If we do unicast (!broadcast), detach from the log serviceif (!signal_broadcast)
+            {
+                logservice->Detach(OpenVPN3DBus_interf_backends);
+                logservice->Detach(OpenVPN3DBus_interf_sessions);
+            }
+            procsig->ProcessChange(StatusMinor::PROC_STOPPED);
         }
-        procsig->ProcessChange(StatusMinor::PROC_STOPPED);
+        catch (const std::exception& excp)
+        {
+            std::cerr << "** ERROR **  Failed closing down D-Bus connection: "
+                      <<  std::string(excp.what());
+        }
     }
 
 
