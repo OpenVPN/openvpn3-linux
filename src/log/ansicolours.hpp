@@ -131,8 +131,8 @@ public:
         case Colour::BRIGHT_WHITE:
                 bgcode = "\033[47m";
                 break;
+
         case Colour::NONE:
-                bgcode = "";
         default:
                 bgcode = "";
                 break;
