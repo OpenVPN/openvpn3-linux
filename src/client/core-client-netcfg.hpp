@@ -319,9 +319,7 @@ public:
     }
 
 #ifdef ENABLE_OVPNDCO
-    int tun_builder_dco_enable(int transport_fd,
-                               unsigned int proto,
-                               const std::string& dev_name) override
+    int tun_builder_dco_enable(const std::string& dev_name) override
     {
         if (!device)
         {
@@ -333,7 +331,7 @@ public:
         {
             if (!dco)
             {
-                dco.reset(device->EnableDCO(transport_fd, proto, dev_name));
+                dco.reset(device->EnableDCO(dev_name));
             }
             return dco->GetPipeFD();
         }
@@ -344,17 +342,15 @@ public:
         }
     }
 
-    virtual void tun_builder_dco_new_peer(const std::string& local_ip,
-                                          unsigned int local_port,
-                                          const std::string& remote_ip,
-                                          unsigned int remote_port)
+    virtual void tun_builder_dco_new_peer(uint32_t peer_id, uint32_t transport_fd, struct sockaddr *sa,
+                                          socklen_t salen, IPv4::Addr& vpn4, IPv6::Addr& vpn6) override
     {
         if (!dco)
         {
             NetCfgProxyException(__func__, "Lost link to DCO device");
         }
 
-        dco->NewPeer(local_ip, local_port, remote_ip, remote_port);
+        dco->NewPeer(peer_id, transport_fd, sa, salen, vpn4, vpn6);
     }
 
     void tun_builder_dco_new_key(unsigned int key_slot, const KoRekey::KeyConfig* kc) override
@@ -383,24 +379,24 @@ public:
         device->EstablishDCO();
     }
 
-    void tun_builder_dco_swap_keys() override
+    void tun_builder_dco_swap_keys(uint32_t peer_id) override
     {
         if (!dco)
         {
             NetCfgProxyException(__func__, "Lost link to DCO device");
         }
 
-        dco->SwapKeys();
+        dco->SwapKeys(peer_id);
     }
 
-    void tun_builder_dco_set_peer(int keepalive_interval, int keepalive_timeout) override
+    void tun_builder_dco_set_peer(uint32_t peer_id, int keepalive_interval, int keepalive_timeout) override
     {
         if (!dco)
         {
             NetCfgProxyException(__func__, "Lost link to DCO device");
         }
 
-        dco->SetPeer(keepalive_interval, keepalive_timeout);
+        dco->SetPeer(peer_id, keepalive_interval, keepalive_timeout);
     }
 #endif  // ENABLE_OVPNDCO
 

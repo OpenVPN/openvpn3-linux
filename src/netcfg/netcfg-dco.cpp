@@ -32,8 +32,7 @@
 #include <sys/socket.h>
 
 NetCfgDCO::NetCfgDCO(GDBusConnection *dbuscon, const std::string& objpath,
-                     const std::string& dev_name, int transport_fd, ovpn_proto proto,
-                     pid_t backend_pid, LogWriter *logwr)
+                     const std::string& dev_name, pid_t backend_pid, LogWriter *logwr)
     : DBusObject(objpath + "/dco"),
       signal(dbuscon, LogGroup::NETCFG, objpath, logwr),
       fds{},
@@ -43,18 +42,22 @@ NetCfgDCO::NetCfgDCO(GDBusConnection *dbuscon, const std::string& objpath,
     introspect << "<node name='" << objpath << "'>"
                << "    <interface name='" << OpenVPN3DBus_interf_netcfg << "'>"
                << "        <method name='NewPeer'>"
-               << "          <arg type='s' direction='in' name='local_ip'/>"
-               << "          <arg type='u' direction='in' name='local_port'/>"
-               << "          <arg type='s' direction='in' name='remote_ip'/>"
-               << "          <arg type='u' direction='in' name='remote_port'/>"
+               << "          <arg type='u' direction='in' name='peer_id'/>"
+               << "          <arg type='s' direction='in' name='sa'/>"
+               << "          <arg type='u' direction='in' name='salen'/>"
+               << "          <arg type='s' direction='in' name='vpn4'/>"
+               << "          <arg type='s' direction='in' name='vpn6'/>"
                << "        </method>"
                << "        <method name='GetPipeFD'/>"
                << "        <method name='NewKey'>"
                << "          <arg type='u' direction='in' name='key_slot'/>"
                << "          <arg type='s' direction='in' name='key_config'/>"
                << "        </method>"
-               << "        <method name='SwapKeys'/>"
+               << "        <method name='SwapKeys'>"
+               << "          <arg type='u' direction='in' name='peer_id'/>"
+               << "        </method>"
                << "        <method name='SetPeer'>"
+               << "          <arg type='u' direction='in' name='peer_id'/>"
                << "          <arg type='u' direction='in' name='keepalive_interval'/>"
                << "          <arg type='u' direction='in' name='keepalive_timeout'/>"
                << "        </method>"
@@ -98,10 +101,9 @@ NetCfgDCO::NetCfgDCO(GDBusConnection *dbuscon, const std::string& objpath,
                             )
         );
 
-    openvpn_io::post(io_context, [transport_fd, proto, self=Ptr(this)]()
+    openvpn_io::post(io_context, [self=Ptr(this)]()
                                  {
                                          self->queue_read_pipe(nullptr);
-                                         self->genl->start_vpn(transport_fd, proto);
                                          self->genl->register_packet();
                                  }
                      );
@@ -149,7 +151,17 @@ void NetCfgDCO::queue_read_pipe(PacketFrom *pkt)
         {
             if (!error)
             {
-                self->genl->send_data(pkt->buf.data(), bytes_recvd);
+                uint32_t peer_id;
+
+                if (bytes_recvd < sizeof(peer_id)) {
+                    std::stringstream os;
+                    os << "Received message too small on pipe, size=" << bytes_recvd;
+                    self->signal.LogError(os.str());
+                } else {
+                    std::memcpy(&peer_id, pkt->buf.data(), sizeof(peer_id));
+                    self->genl->send_data(peer_id, pkt->buf.data() + sizeof(peer_id),
+                                          bytes_recvd - sizeof(peer_id));
+                }
                 self->queue_read_pipe(pkt.release());
             }
         }
@@ -218,17 +230,28 @@ void NetCfgDCO::callback_method_call(GDBusConnection *conn,
         }
         else if ("NewPeer" == method_name)
         {
-            GLibUtils::checkParams(__func__, params, "(susu)", 4);
+            GLibUtils::checkParams(__func__, params, "(ususs)", 5);
 
-            std::string local_ip = GLibUtils::ExtractValue<std::string>(params, 0);
-            int local_port = GLibUtils::ExtractValue<unsigned int>(params, 1);
-            std::string remote_ip = GLibUtils::ExtractValue<std::string>(params, 2);
-            int remote_port = GLibUtils::ExtractValue<unsigned int>(params, 3);
+            int transport_fd = GLibUtils::get_fd_from_invocation(invoc);
 
-            openvpn_io::post(io_context, [local_ip, local_port, remote_ip, remote_port, self=Ptr(this)]()
+            unsigned int peer_id = GLibUtils::ExtractValue<unsigned int>(params, 0);
+            std::string sa_str = GLibUtils::ExtractValue<std::string>(params, 1);
+            int salen = GLibUtils::ExtractValue<unsigned int>(params, 2);
+            std::string vpn4_str = GLibUtils::ExtractValue<std::string>(params, 3);
+            std::string vpn6_str = GLibUtils::ExtractValue<std::string>(params, 4);
+
+            struct sockaddr_storage sa;
+            int ret = base64->decode(&sa, sizeof(sa), sa_str);
+            if (ret != salen)
+            {
+                throw NetCfgException("Sockaddr size mismatching");
+            }
+            IPv4::Addr vpn4 = IPv4::Addr::from_string(vpn4_str);
+            IPv6::Addr vpn6 = IPv6::Addr::from_string(vpn6_str);
+
+            openvpn_io::post(io_context, [peer_id, transport_fd, sa, salen, vpn4, vpn6, self=Ptr(this)]()
                                          {
-                                             self->genl->new_peer(openvpn_io::ip::make_address(local_ip), local_port,
-                                                                  openvpn_io::ip::make_address(remote_ip), remote_port);
+                                             self->genl->new_peer(peer_id, transport_fd, (struct sockaddr *)&sa, salen, vpn4, vpn6);
                                          }
                 );
 
@@ -238,19 +261,24 @@ void NetCfgDCO::callback_method_call(GDBusConnection *conn,
             new_key(params);
         } else if ("SwapKeys" == method_name)
         {
-            swap_keys();
+            swap_keys(params);
         }
         else if ("SetPeer" == method_name)
         {
+            GLibUtils::checkParams(__func__, params, "(uuu)", 3);
+
+            unsigned int peer_id;
             int keepalive_interval, keepalive_timeout;
-            g_variant_get(params, "(uu)",
+            g_variant_get(params, "(uuu)", &peer_id,
                           &keepalive_interval, &keepalive_timeout);
 
-            openvpn_io::post(io_context, [keepalive_interval,
+            openvpn_io::post(io_context, [peer_id,
+                                          keepalive_interval,
                                           keepalive_timeout,
                                           self=Ptr(this)]()
                              {
-                                     self->genl->set_peer(keepalive_interval,
+                                     self->genl->set_peer(peer_id,
+                                                          keepalive_interval,
                                                           keepalive_timeout);
                              });
 
@@ -316,11 +344,15 @@ void NetCfgDCO::new_key(GVariant* params)
         );
 }
 
-void NetCfgDCO::swap_keys()
+void NetCfgDCO::swap_keys(GVariant *params)
 {
-    openvpn_io::post(io_context, [self=Ptr(this)]()
+    GLibUtils::checkParams(__func__, params, "(u)", 1);
+
+    unsigned int peer_id = GLibUtils::ExtractValue<unsigned int>(params, 0);
+
+    openvpn_io::post(io_context, [=, self=Ptr(this)]()
     {
-        self->genl->swap_keys();
+        self->genl->swap_keys(peer_id);
     });
 }
 #endif  // ENABLE_OVPNDCO

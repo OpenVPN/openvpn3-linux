@@ -400,9 +400,9 @@ namespace NetCfgProxy
 
 
 #ifdef ENABLE_OVPNDCO
-    DCO* Device::EnableDCO(int transport_fd, unsigned int proto, const std::string& dev_name)
+    DCO* Device::EnableDCO(const std::string& dev_name)
     {
-        GVariant *res = CallSendFD("EnableDCO", g_variant_new("(su)", dev_name.c_str(), proto), transport_fd);
+        GVariant *res = Call("EnableDCO", g_variant_new("(s)", dev_name.c_str()));
         gchar *path = nullptr;
         g_variant_get(res, "(o)", &path);
         std::string dcopath{path};
@@ -587,11 +587,15 @@ namespace NetCfgProxy
         return fd;
     }
 
-    void DCO::NewPeer(const std::string& local_ip, unsigned int local_port,
-                      const std::string& remote_ip, unsigned int remote_port)
+    void DCO::NewPeer(unsigned int peer_id, int transport_fd,
+                      const sockaddr *sa, unsigned int salen,
+                      const IPv4::Addr& vpn4, const IPv6::Addr& vpn6)
     {
-        Call("NewPeer", g_variant_new("(susu)", local_ip.c_str(), local_port,
-                                      remote_ip.c_str(), remote_port));
+        auto sa_str = base64->encode(sa, salen);
+
+        CallSendFD("NewPeer", g_variant_new("(ususs)", peer_id, sa_str.c_str(), salen,
+                                            vpn4.to_string().c_str(), vpn6.to_string().c_str()),
+                   transport_fd);
     }
 
     void DCO::NewKey(unsigned int key_slot, const KoRekey::KeyConfig* kc_arg)
@@ -616,16 +620,16 @@ namespace NetCfgProxy
         Call("NewKey", g_variant_new("(us)", key_slot, str.c_str()));
     }
 
-    void DCO::SwapKeys()
+    void DCO::SwapKeys(unsigned int peer_id)
     {
-        GVariant *res = Call("SwapKeys");
+        GVariant *res = Call("SwapKeys", g_variant_new("(u)", peer_id));
         g_variant_unref(res);
     }
 
-    void DCO::SetPeer(int keepalive_interval, int keepalive_timeout)
+    void DCO::SetPeer(unsigned int peer_id, int keepalive_interval, int keepalive_timeout)
     {
         GVariant *res = Call("SetPeer",
-                             g_variant_new("(uu)",
+                             g_variant_new("(uuu)", peer_id,
                                            keepalive_interval,
                                            keepalive_timeout));
         g_variant_unref(res);

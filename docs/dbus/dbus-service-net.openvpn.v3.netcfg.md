@@ -398,40 +398,42 @@ D-Bus destination: `net.openvpn.v3.netcfg` \- Object path: `/net/openvpn/v3/netc
 node /net/openvpn/v3/netcfg/${UNIQUE_ID}/dco {
 interface net.openvpn.v3.netcfg {
     methods:
-      NewPeer(in  s local_ip,
-              in  u local_port,
-              in  s remote_ip,
-              in  u remote_port);
+      NewPeer(in  u peer_id,
+              in  s sa,
+              in  u salen,
+              in  s vpn4,
+              in  s vpn6);
       GetPipeFD();
-      NewKey(in  u remote_peer_id,
-             in  u key_slot,
-             in  u key_id,
-             in  s enc_key,
-             in  s enc_nonce,
-             in  s dec_key,
-             in  s dec_nonce);
-      SwapKeys();
+      NewKey(in  u key_slot,
+             in  s key_config);
+      SwapKeys(in  u peer_id);
+      SetPeer(in  u peer_id,
+              in  u keepalive_interval,
+              in  u keepalive_timeout);
   };
 };
 ```
 
 ### Method: `net.openvpn.v3.netcfg.NewPeer`
 
-Creates a new peer inside ovpn-dco kernel module. Typically client creates socket, establishes connection
-and passes local and remote endpoint properties to this method.
+Creates a new peer in the ovpn-dco kernel module. The client is expected to
+create a socket, establish the connection and pass the remote end-point along
+with additional properties to this method.
 
 #### Arguments
 | Direction | Name         | Type         | Description                                                      |
 |-----------|--------------|--------------|------------------------------------------------------------------|
-| In        | local_ip     | string       | IP address of local endpoint                                     |
-| In        | local_port   | unsigned int | Port of local endpoint                                           |
-| In        | remote_ip    | string       | IP address of remote endpoint                                    |
-| In        | remote_port  | unsigned int | Port of remote endpoint                                          |
+| In        | peer_id      | unsigned int | The ID to assign to the new peer                                 |
+| In        | sa           | string       | Base64 encoded blob containing a sockaddr_in/in6 object representing the remote endpoint|
+| In        | salen        | unsigned int | Length of 'sa' after being base64-decoded                        |
+| In        | vpn4         | string       | IPv4 address of the peer on the tunnel                           |
+| In        | vpn6         | string       | IPv6 address of the peer on the tunnel                           |
 
 
 ### Method: `net.openvpn.v3.netcfg.GetPipeFD`
 
-Returns file descriptor used for bidirection generic netlink-based communication with ovpn-dco kernel module
+Returns file descriptor used for bidirection generic netlink-based communication
+with ovpn-dco kernel module
 
 #### Arguments
 | Direction | Name         | Type              | Description                                                        |
@@ -441,28 +443,39 @@ Returns file descriptor used for bidirection generic netlink-based communication
 
 ### Method: `net.openvpn.v3.netcfg.NewKey`
 
-Pass a new symmetric encryption key, NONCE and HMAC values used for the data channel. This is used when encrypting and decrypting the tunneled network traffic. See src/netcfg/dco-keyconfig.proto for DcoKeyConfig protobuf object specification.
+Pass a new symmetric encryption key, along with the cipher to use and its NONCE
+(if needed). This is used when encrypting and decrypting the tunneled network
+traffic. See src/netcfg/dco-keyconfig.proto for DcoKeyConfig protobuf object
+specification.
 
 #### Arguments
 | Direction | Name                | Type         | Description                                                              |
 |-----------|---------------------|--------------|--------------------------------------------------------------------------|
-| In        | key_slot            | unsigned int | key slot (OVPN_KEY_SLOT_PRIMARY or OVPN_KEY_SLOT_SECONDARY)              |
-| In        | key_config          | string       | base64-encoded DcoKeyConfig object                                          |
+| In        | key_slot            | unsigned int | key slot ID (can be OVPN_KEY_SLOT_PRIMARY or OVPN_KEY_SLOT_SECONDARY)    |
+| In        | key_config          | string       | Base64 encoded DcoKeyConfig object containing the key material and cipher definition|
 
 ### Method: `net.openvpn.v3.netcfg.SwapKeys`
 
-Swaps the primary and secondary encryption keys used by the data channel for the tunneled network traffic. This call triggers
-the DCO kernel module to perform this swap in kernel memory. This is used to rotate and add new symmetric encryption keys
-during the lifetime of a VPN session. See the OpenVPN documentation related to key renegotiation options for more details.
+Swaps the primary and secondary encryption keys used by the data channel for the
+tunnelled network traffic. This call triggers instructs ovpn-dco to perform this
+swap in kernel memory. This is used to rotate and add new symmetric encryption
+keys during the lifetime of a VPN session. See the OpenVPN documentation related
+to key renegotiation options for more details.
+
+#### Arguments
+| Direction | Name         | Type         | Description                                                      |
+|-----------|--------------|--------------|------------------------------------------------------------------|
+| In        | peer_id      | unsigned int | The ID of the peer whose keys have to be swapped                 |
 
 
 ### Method: `net.openvpn.v3.netcfg.SetPeer`
 
-Set peer properties inside ovpn-dco kernel module.
+Set peer properties in the ovpn-dco kernel module.
 
 #### Arguments
 | Direction | Name                | Type         | Description                                                              |
 |-----------|---------------------|--------------|--------------------------------------------------------------------------|
+| In        | peer_id             | unsigned int | The ID of the peer whose properties have to be set/modified              |
 | In        | keepalive_interval  | unsigned int | how often to send ping packets when connection is idling                 |
 | In        | keepalive_timeout   | unsigned int | how long to wait after receiving last packet before triggering timeout   |
 

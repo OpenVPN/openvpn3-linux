@@ -180,12 +180,10 @@ namespace NetCfgProxy
         /**
          * Enables DCO functionality. This requires ovpn-dco kernel module.
          *
-         * @param transport_fd fd of transport socket, provided by client
-         * @param proto transport protocol such as OVPN_PROTO_UDP4. See enum ovpn_dco for values.
          * @param dev_name name of net device to create
          * @return DCO* DCO proxy object
          */
-        DCO* EnableDCO(int transport_fd, unsigned int proto, const std::string& dev_name);
+        DCO* EnableDCO(const std::string& dev_name);
 
         /**
          * Applies configuration to DCO interface.
@@ -288,13 +286,16 @@ namespace NetCfgProxy
         /**
          * @brief Creates a new peer in ovpn-dco kernel module.
          *
-         * @param local_ip    local ip address
-         * @param local_port  local port
-         * @param remote_ip   remote ip address
-         * @param remote_port remote port
+         * @param peer_id      ID of the peer to create
+         * @param transport_fd fd of transport socket, provided by client
+         * @param sa           sockaddr object indentifying the remote endpoint
+         * @param salen        the length of the 'sa' object
+         * @param vpn4         IPv4 of this peer in the tunnel
+         * @param vpn6         IPV6 of this peer in the tunnel
          */
-        void NewPeer(const std::string& local_ip, unsigned int local_port,
-                     const std::string& remote_ip, unsigned int remote_port);
+        void NewPeer(unsigned int peer_id, int transport_fd,
+                     const sockaddr *sa, unsigned int salen,
+                     const IPv4::Addr& vpn4, const IPv6::Addr& vpn6);
 
 
         /**
@@ -311,16 +312,19 @@ namespace NetCfgProxy
         /**
          * Swaps primary key with secondary key
          *
+         * @param peer_id ID of the peer to swap keys for
          */
-        void SwapKeys();
+        void SwapKeys(unsigned int peer_id);
 
         /**
          * @brief Sets properties of peer
          *
+         * @param peer_id            ID of the peer to modify
          * @param keepalive_interval keepalive interval
-         * @param keepalive_timeout keepalive timeout
+         * @param keepalive_timeout  keepalive timeout
          */
-        void SetPeer(int keepalive_interval, int keepalive_timeout);
+        void SetPeer(unsigned int peer_id, int keepalive_interval,
+                     int keepalive_timeout);
     };
 #endif  // ENABLE_OVPNDCO
 } // namespace NetCfgProxy

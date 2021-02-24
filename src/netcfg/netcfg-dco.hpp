@@ -39,8 +39,6 @@ public:
     NetCfgDCO(GDBusConnection *dbuscon,
               const std::string& objpath,
               const std::string& dev_name,
-              int transport_fd,
-              ovpn_proto proto,
               pid_t backend_pid,
               LogWriter *logwr);
 
@@ -87,7 +85,7 @@ public:
 private:
     void new_key(GVariant *params);
 
-    void swap_keys();
+    void swap_keys(GVariant *params);
 
     struct PacketFrom {
         typedef std::unique_ptr<PacketFrom> SPtr;
