@@ -1,5 +1,13 @@
 // This file is used to build in the internal Jenkins build system.
 // It might be also useful for external CI/CD
+import org.jenkinsci.plugins.pipeline.modeldefinition.Utils
+
+properties([
+    parameters([
+         booleanParam(name: 'CREATE_STREAM', defaultValue: false, description: 'Create coverity stream if it does not exist')
+    ])
+])
+
 
 def checkout_git() {
     checkout([
@@ -18,10 +26,103 @@ def checkout_git() {
     ])
 }
 
+def run_coverity_build()
+{
+    def streamname = env.BRANCH_NAME.replaceAll('/', '_')
+    streamname = "openvpn3-linux-jenkins-${streamname}"
+
+    echo "Coverity stream name: ${streamname}"
+
+
+    withCredentials([file(credentialsId: 'license.dat', variable: 'COVERITY_LICENSE'),
+                     file(credentialsId: 'coverity-auth.txt', variable: 'COVERITY_AUTHFILE'),
+                     string(credentialsId: 'COVERITY_HOST', variable: 'COVERITY_HOST')
+                     ]) {
+
+        def COV = "/opt/coverity-analysis/bin/"
+        echo "Cov files license ${COVERITY_LICENSE}, authfile ${COVERITY_AUTHFILE}, coverity-host: ${COVERITY_HOST}"
+
+        def covmanageim = "$COV/cov-manage-im --host ${COVERITY_HOST} --ssl --auth-key-file ${COVERITY_AUTHFILE} "
+
+        def allstreams = sh (script: covmanageim + "--mode streams --show --name 'openvpn3-linux-jenkins-*'", returnStdout: true)
+
+        echo "Streams: ${allstreams}"
+
+        if (allstreams.contains(streamname))
+        {
+            echo "Running coverity as stream exists"
+        }
+        else if (params.CREATE_STREAM.toBoolean())
+        {
+              stage("Create stream")
+              {
+                 echo  "Creating coverity stream"
+                 sh covmanageim + "--mode streams --add --set name:${streamname}"
+                 sh covmanageim + "--mode projects --update --name openvpn3-linux --insert stream:${streamname}"
+
+              }
+        }
+        else
+        {
+             echo "Skipped coverity run. Stream does not exist and parameter do not force creation"
+             Utils.markStageSkippedForConditional('coverity')
+             return
+        }
+
+
+         step([$class: 'WsCleanup'])
+         dir("${WORKSPACE}/openvpn3-linux") {
+                stage('Checkout') {
+                    checkout_git()
+                }
+
+                stage('Bootstrap/configure') {
+                    sh "./bootstrap.sh"
+                    sh "./configure --prefix=/usr --sysconfdir=/etc --enable-debug-core-events --enable-debug-options --enable-debug-exceptions --enable-addons-aws --enable-dco"
+                }
+
+                stage("setup coverity") {
+                     sh "$COV/cov-configure --gcc --config cov-conf.xml"
+                }
+                stage("cov-build")
+                {
+                     sh "$COV/cov-build --dir idir --config cov-conf.xml make " + '-j$(nproc)'
+                }
+                stage("cov-import-scm")
+                {
+                     sh "$COV/cov-import-scm --dir idir --scm git"
+                }
+                stage("cov-analyze")
+                {
+                    // Keep the order of --strip-path intact, it is applied in this order
+                    sh "$COV/cov-analyze --dir idir --all --security-file ${COVERITY_LICENSE} --strip-path ${WORKSPACE}/openvpn3-linux/vendor --strip-path ${WORKSPACE}"
+                }
+
+               stage("cov-commit")
+               {
+                      sh "$COV/cov-commit-defects --dir idir --host ${COVERITY_HOST} --ssl --stream ${streamname} --auth-key-file ${COVERITY_AUTHFILE} --security-file ${COVERITY_LICENSE}"
+               }
+         }
+     }
+}
+
+def build_coverity() {
+    timeout(time:40) {
+        stage('Prepare node allocation')
+        {
+            // Empty stage to make it show up nicer in blue ocean jenkins ui
+        }
+        node('ec2_openvpn3_linux') {
+            run_coverity_build()
+        }
+    }
+}
+
+
 
 def build_tarball()
 {
-    timeout(time:120) {
+    timeout(time:40) {
         stage('Prepare node allocation')
         {
             // Empty stage to make it show up nicer in blue ocean jenkins ui
@@ -57,7 +158,9 @@ def build_tarball()
                         sh './src/ovpn3cli/openvpn3 version'
                         archiveArtifacts 'openvpn3-linux-*.tar.xz'
                     }
+
                  }
+
             }
         }
     }
@@ -67,7 +170,16 @@ def build_tarball()
 try {
     bitbucketStatusNotify(buildState: 'INPROGRESS')
     echo "build parameters ${params}"
-    build_tarball()
+    parallel(
+        tarball:
+        {
+             build_tarball()
+        },
+        coverity:
+        {
+             build_coverity()
+        }
+    )
 
     currentBuild.result = 'SUCCESS'
     bitbucketStatusNotify(buildState: 'SUCCESSFUL')
