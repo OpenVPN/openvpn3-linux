@@ -128,7 +128,7 @@ namespace openvpn
                         tbc->tun_builder_add_route("0.0.0.0", 1, -1, false);
                         tbc->tun_builder_add_route("128.0.0.0", 1, -1, false);
                     }
-                    if (netCfgDevice.reroute_ipv4)
+                    if (netCfgDevice.reroute_ipv6)
                     {
                         tbc->tun_builder_add_route("::", 1, -1, true);
                         tbc->tun_builder_add_route("8000::", 1, -1, true);
