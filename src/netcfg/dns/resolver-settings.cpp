@@ -104,6 +104,30 @@ namespace DNS
     }
 
 
+    void ResolverSettings::SetDNSScope(const DNS::Scope new_scope) noexcept
+    {
+        scope = new_scope;
+    }
+
+
+    const DNS::Scope ResolverSettings::GetDNSScope() const noexcept
+    {
+        return scope;
+    }
+
+    const char* ResolverSettings::GetDNSScopeStr() const noexcept
+    {
+        switch (scope)
+        {
+        case DNS::Scope::GLOBAL:
+            return "global";
+        case DNS::Scope::TUNNEL:
+            return "tunnel";
+        }
+        return "";
+    }
+
+
     void ResolverSettings::AddNameServer(const std::string& server)
     {
         // Avoid adding duplicated entries
@@ -146,6 +170,29 @@ namespace DNS
     std::vector<std::string> ResolverSettings::GetSearchDomains(bool removable) const noexcept
     {
         return (!prepare_removal || removable ? search_domains : std::vector<std::string>{});
+    }
+
+
+    const std::string ResolverSettings::SetDNSScope(GVariant *params)
+    {
+        std::string params_type(g_variant_get_type_string(params));
+        if ("s" != params_type)
+        {
+            throw NetCfgException("[SetDNSScope] Invalid D-Bus data type: " + params_type);
+        }
+
+        std::string recv_scope(g_variant_get_string(params, nullptr));
+        if ("global" == recv_scope)
+        {
+            scope = DNS::Scope::GLOBAL;
+            return recv_scope;
+        }
+        else if ("tunnel" == recv_scope)
+        {
+            scope = DNS::Scope::TUNNEL;
+            return recv_scope;
+        }
+        throw NetCfgException("[SetDNSScope] Invalid DNS Scope value: " + recv_scope);
     }
 
 

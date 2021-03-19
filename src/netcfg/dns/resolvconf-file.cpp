@@ -276,6 +276,10 @@ void ResolvConfFile::Apply(const ResolverSettings::Ptr settings)
         }
     }
 
+    // Prepare to add a warning to the logs if DNS scope is not GLOBAL
+    // resolv.conf based resolver does not support any other modes
+    dns_scope_non_global = settings->GetDNSScope() != DNS::Scope::GLOBAL;
+
     ++modified_count;
 }
 
@@ -315,6 +319,11 @@ void ResolvConfFile::Commit(NetCfgSignals *signal)
     // Send all NetworkChange events in the notification queue
     if (signal)
     {
+        if (dns_scope_non_global)
+        {
+            signal->LogWarn("DNS Scope change ignored. Only global scope supported");
+        }
+
         for (const auto& ev : notification_queue)
         {
             signal->NetworkChange(ev);

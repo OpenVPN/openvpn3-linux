@@ -94,11 +94,10 @@ void SystemdResolved::Apply(const ResolverSettings::Ptr settings)
             upd.search.push_back(SearchDomain(sd, true));
         }
 
-        // FIXME: This enforces all "global" lookups to happen
-        //        in parallel to other interfaces on the host.
-        //        This should be configurable.
-        upd.search.push_back(SearchDomain(".", true));
-
+        if (settings->GetDNSScope() == DNS::Scope::GLOBAL)
+        {
+            upd.search.push_back(SearchDomain(".", true));
+        }
     }
     update_queue.push_back(upd);
 }

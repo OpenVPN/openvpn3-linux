@@ -221,6 +221,7 @@ public:
                    << "        <property type='au' name='acl' access='read'/>"
                    << "        <property type='b'  name='active' access='read'/>"
                    << "        <property type='b'  name='modified' access='read'/>"
+                   << "        <property type='s'  name='dns_scope' access='readwrite'/>"
                    << "        <property type='as'  name='dns_name_servers' access='read'/>"
                    << "        <property type='as'  name='dns_search_domains' access='read'/>"
                    << properties.GetIntrospectionXML()
@@ -625,7 +626,6 @@ public:
             }
             else if ("acl" == property_name)
             {
-
                 return GLibUtils::GVariantFromVector(GetAccessList());
             }
             else if ("active" == property_name)
@@ -635,6 +635,11 @@ public:
             else if ("modified" == property_name)
             {
                 return g_variant_new_boolean(modified);
+            }
+            else if ("dns_scope" == property_name)
+            {
+                return g_variant_new_string(dnsconfig ? dnsconfig->GetDNSScopeStr()
+                                                      : "");
             }
             else if ("dns_name_servers" == property_name)
             {
@@ -731,6 +736,30 @@ public:
                 signal.SetLogLevel(log_level);
                 return build_set_property_response(property_name,
                                                    (guint32) log_level);
+            }
+            else if("dns_scope" == property_name)
+            {
+                if (!resolver || !dnsconfig)
+                {
+                    throw NetCfgException("No resolver configured");
+                }
+                try
+                {
+                    std::string scope = dnsconfig->SetDNSScope(value);
+                    signal.Debug(device_name, "Changed DNS resolver scope to '"
+                                + scope + "'");
+                    return build_set_property_response(property_name, scope);
+                }
+                catch (const NetCfgException& excp)
+                {
+                    signal.LogError("Failed changing DNS scope: "
+                                    + std::string(excp.what()));
+                    throw DBusPropertyException(G_IO_ERROR,
+                                                G_IO_ERROR_INVALID_DATA,
+                                                obj_path, intf_name,
+                                                property_name,
+                                                "Invalid DNS scope data");
+                }
             }
             else if (properties.Exists(property_name))
             {

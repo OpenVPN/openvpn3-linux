@@ -37,6 +37,12 @@ namespace NetCfg
 {
 namespace DNS
 {
+    enum class Scope
+    {
+        GLOBAL,    ///<  Can resolve all DNS queries
+        TUNNEL,    ///<  Will only resolve DNS queries for domains on this tunnel
+    };
+
     class ResolverSettings : public virtual RC<thread_unsafe_refcount>
     {
     public:
@@ -135,6 +141,25 @@ namespace DNS
          */
         std::string GetDeviceName() const noexcept;
 
+        /**
+         *  Sets the DNS resolver scope
+         * @param scope  DNS::Scope to use
+         */
+        void SetDNSScope(const DNS::Scope scope) noexcept;
+
+        /**
+         *  Retrieve the current DNS resolver scope
+         *
+         * @return  Returns DNS::Scope of the current resolver scope
+         */
+        const DNS::Scope GetDNSScope() const noexcept;
+
+        /**
+         *  Retrieve the current DNS resolver scope as a string
+         *
+         * @return Returns a std::string representation of the current DNS::Scope
+         */
+        const char* GetDNSScopeStr() const noexcept;
 
         /**
          *  Adds a new single DNS name server
@@ -244,6 +269,17 @@ namespace DNS
 
 #ifdef __GIO_TYPES_H__  // Only add GLib/GDBus methods if this is already used
         /**
+         *  Sets the DNS resolver scope based on a value from a set_property
+         *  D-Bus call
+         *
+         *  @param params  GVariant object containing an (s) based string
+         *                 of a textual representation of the scope
+         *  @returns Returns a std::string of the received and accepted
+         *           DNS resolver scope
+         */
+        const std::string SetDNSScope(GVariant *params);
+
+        /**
          *  Adds DNS name servers based on an array of strings provided via
          *  a GVariant container of the (as) type.
          *
@@ -271,6 +307,7 @@ namespace DNS
         bool enabled = false;
         bool prepare_removal = false;
         std::string device_name;
+        Scope scope = DNS::Scope::GLOBAL;
         std::vector<std::string> name_servers;
         std::vector<std::string> search_domains;
     };
