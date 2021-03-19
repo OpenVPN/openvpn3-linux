@@ -296,7 +296,10 @@ namespace GLibUtils
         if (format != typestr || (num > 0 && num != g_variant_n_children(params)))
         {
             THROW_DBUSEXCEPTION(func, "Incorrect parameter format: "
-                                + typestr + ", expected " + format);
+                                + typestr + ", expected " + format
+                                + "(elements expected: " + std::to_string(num)
+                                + " received: "
+                                + std::to_string(g_variant_n_children(params)) + ")");
         }
     }
 
