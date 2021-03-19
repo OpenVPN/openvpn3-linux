@@ -224,6 +224,9 @@ def parse_autoload_config(autoload):
                 else:
                     print("WARNING: Invalid tunnel:dns-fallback value: %s" % v)
 
+            elif 'dns-scope' == k:
+                autoloadcfg['override']['dns-scope'] = v
+
             elif 'dns-setup-disabled' == k:
                 autoloadcfg['override']['dns-setup-disabled'] = v
 

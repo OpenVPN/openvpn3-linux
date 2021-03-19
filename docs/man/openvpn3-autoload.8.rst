@@ -353,6 +353,28 @@ server on the system.  Valid strings are:
     Configures the system to use :code:`8.8.8.8` and :code:`8.8.4.4`
     as fallback DNS servers
 
+Attribute: dns-scope
+""""""""""""""""""""
+Defines the DNS query scope.  This is currently only supported when enabling
+the `systemd-resolved`\(8) resolver support in `openvpn3-service-netcfg`\(8).
+Supported values are:
+
+:code:`global`:  (default)
+    The VPN service provided DNS server(s) will be used for all types of
+    DNS queries.
+
+:code:`tunnel`:
+    The VPN service provided DNS server(s) will only be used for queries for
+    DNS domains pushed by the VPN service.
+
+    **NOTE**
+        The DNS domains pushed by the VPN service may be queried by DNS
+        servers with `systemd-resolved`\(8) service if their respective
+        interfaces are configured to do global DNS queries.  But other
+        non-listed DNS domains will not be sent to this VPN service
+        provider's DNS server.
+
+
 Attribute: dns-setup-disabled
 """""""""""""""""""""""""""""
 Controls whether DNS configurations in the VPN configuration profile or
