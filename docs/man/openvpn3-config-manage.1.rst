@@ -92,6 +92,29 @@ OPTIONS
                         :code:`false`
 
 
+--dns-scope SCOPE
+                        Defines the DNS query scope.  This is currently only
+                        supported when enabling the `systemd-resolved`\(8)
+                        resolver support in `openvpn3-service-netcfg`\(8).
+                        Supported values are:
+
+                        :code:`global`:  (default)
+                          The VPN service provided DNS server(s) will be used
+                          for all types of DNS queries.
+
+                        :code:`tunnel`:
+                          The VPN service provided DNS server(s) will only be
+                          used for queries for DNS domains pushed by the
+                          VPN service.
+
+                          **NOTE**
+                            The DNS domains pushed by the VPN service may be
+                            queried by DNS servers with `systemd-resolved`\(8)
+                            service if their respective interfaces are
+                            configured to do global DNS queries.  But other
+                            non-listed DNS domains will not be sent to this
+                            VPN service provider's DNS server.
+
 --dns-setup-disabled BOOL
                         If set to true, DNS settings will not be configured
                         on the system.  Valid values are: :code:`true`,

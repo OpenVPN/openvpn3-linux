@@ -104,6 +104,10 @@ const ValidOverride configProfileOverrides[] = {
     {"dns-setup-disabled", OverrideType::boolean,
      "Do not change the DNS settings on the system"},
 
+    {"dns-scope", OverrideType::string,
+     "Defines which domain scope can be queried via VPN provided DNS servers",
+      [] {return std::string("global tunnel");}},
+
     {"dns-sync-lookup", OverrideType::boolean,
      "Use synchronous DNS Lookups"},
 
