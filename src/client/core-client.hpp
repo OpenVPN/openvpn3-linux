@@ -89,6 +89,7 @@ public:
 
 protected:
     bool disabled_dns_config;
+    std::string dns_scope = "global";
 
 private:
     std::string session_name;
@@ -132,6 +133,10 @@ public:
         disabled_socket_protect_fd = val;
     }
 
+    void set_dns_resolver_scope(const std::string scope)
+    {
+        dns_scope = scope;
+    }
 
     void disable_dns_config(bool val)
     {

@@ -402,6 +402,7 @@ public:
 
 protected:
     bool disabled_dns_config;
+    std::string dns_scope = "global";
 
 
 private:
@@ -414,6 +415,7 @@ private:
         {
             std::string devpath = netcfgmgr.CreateVirtualInterface(session_token);
             device.reset(netcfgmgr.getVirtualInterface(devpath));
+            device->SetProperty("dns_scope", dns_scope);
             return true;
         }
         catch (NetCfgProxyException& e)

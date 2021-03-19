@@ -740,6 +740,7 @@ private:
     std::string configpath;
     CoreVPNClient::Ptr vpnclient;
     bool disabled_socket_protect;
+    std::string dns_scope = "global";
     bool ignore_dns_cfg;
     std::unique_ptr<std::thread> client_thread;
     ClientAPI::Config vpnconfig;
@@ -882,6 +883,9 @@ private:
                     signal.LogVerb1(dmsg.str());
                 }
             }
+
+            signal.Debug("Using DNS resolver scope: " + dns_scope);
+            vpnclient->set_dns_resolver_scope(dns_scope);
 
             // Start a new client thread ...
             // ... but first clean up if we have an old thread
@@ -1074,6 +1078,7 @@ private:
             vpnconfig.content = pm.profile_content();
             vpnconfig.ssoMethods = "openurl";
             vpnconfig.dco = dco;
+
             set_overrides(overrides);
         }
         catch (std::exception& e)
@@ -1119,6 +1124,15 @@ private:
             {
                 ignore_dns_cfg = override.boolValue;
                 valid_override = true;
+            }
+            else if (override.override.key == "dns-scope")
+            {
+                if ("global" == override.strValue
+                    || "tunnel" == override.strValue)
+                {
+                    dns_scope = override.strValue;
+                    valid_override = true;
+                }
             }
             else if (override.override.key == "dns-sync-lookup")
             {
