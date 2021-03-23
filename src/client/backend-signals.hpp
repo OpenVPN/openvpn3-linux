@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017 - 2019  OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017 - 2019  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2021  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2021  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -84,7 +84,14 @@ public:
     void LogFATAL(std::string msg) override
     {
         Log(LogEvent(log_group, LogCategory::FATAL, msg));
-        kill(getpid(), SIGHUP);
+        // This is essentially a glib2 hack, to allow on going signals to
+        // be properly sent before we shut down.
+        delayed_shutdown.reset(new std::thread([]()
+                {
+                    sleep(3);
+                    kill(getpid(), SIGHUP);
+                }
+        ));
     }
 
     /**
@@ -150,6 +157,7 @@ private:
     const unsigned int default_log_level = 6; // LogCategory::DEBUG
     std::string session_token;
     StatusEvent status;
+    std::unique_ptr<std::thread> delayed_shutdown;
 };
 
 #endif  // OPENVPN3_DBUS_CLIENT_BACKENDSIGNALS_HPP
