@@ -56,6 +56,19 @@
 
 using namespace openvpn;
 
+#define THROW_CLIENTEXCEPTION(m) throw ClientException(m, __FILE__, __LINE__, __FUNCTION__)
+class ClientException : public DBusException
+{
+public:
+    ClientException(const std::string msg,
+                    const char* file = __FILE__,
+                    const int line = __LINE__,
+                    const char* method = __FUNCTION__)
+        : DBusException("Client", msg, file, line, method)
+    {
+    }
+};
+
 /**
  *  Class managing a specific VPN client tunnel.  This object has its own
  *  unique D-Bus bus name and object path and is designed to only be
@@ -358,7 +371,19 @@ public:
                 // tried to connectbut got an AUTH_FAILED, either due to wrong
                 // credentials or a dynamic challenge from the server, we
                 // need to re-establish the vpnclient object.
-                initialize_client();
+                try
+                {
+                    initialize_client();
+                }
+                catch (ClientException& excp)
+                {
+                    signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::PROC_KILLED,
+                                        excp.GetRawError());
+                    signal.LogFATAL("Failed to initialize client: "
+                                       + std::string(excp.GetRawError()));
+                    excp.SetDBusError(invoc, "net.openvpn.v3.error.client");
+                    return;
+                }
 
                 if (!userinputq.QueueAllDone())
                 {
@@ -921,8 +946,7 @@ private:
     {
         if (vpnconfig.content.empty())
         {
-            THROW_DBUSEXCEPTION("BackendServiceObject",
-                                "No configuration profile has been parsed");
+            THROW_CLIENTEXCEPTION("No configuration profile has been parsed");
         }
 
         // Create a new VPN client object, which is handling the
@@ -958,9 +982,8 @@ private:
         }
         catch (const std::exception& excp)
         {
-            THROW_DBUSEXCEPTION("BackendClientObject",
-                                "Configuration pre-parsing failed: "
-                                + std::string(excp.what()));
+            THROW_CLIENTEXCEPTION("Configuration pre-parsing failed: "
+                                  + std::string(excp.what()));
         }
 
         //
@@ -994,8 +1017,7 @@ private:
                                 statusmsg.str());
             signal.Debug(statusmsg.str());
             vpnclient = nullptr;
-            THROW_DBUSEXCEPTION("BackendServiceObject",
-                                "Configuration parsing failed: " + cfgeval.message);
+            THROW_CLIENTEXCEPTION("Configuration parsing failed: " + cfgeval.message);
         }
 
         if (!vpnconfig.disableClientCert && cfgeval.externalPki)
@@ -1003,7 +1025,7 @@ private:
             std::string errmsg = "Failed to parse configuration: "
                 "Configuration requires external PKI which is not implemented yet.";
             signal.LogError(errmsg);
-            THROW_DBUSEXCEPTION("BackendServiceObject", errmsg);
+            THROW_CLIENTEXCEPTION(errmsg);
         }
 
         // Do we need username/password?  Or does this configuration allow the
