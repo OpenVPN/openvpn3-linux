@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
-#  Copyright (C) 2017 - 2018  OpenVPN Inc. <sales@openvpn.net>
-#  Copyright (C) 2017 - 2018  David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2017 - 2021  OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2017 - 2021  David Sommerseth <davids@openvpn.net>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -333,6 +333,9 @@ def start_tunnel(bus, cfgobj, background_mode, verb):
             elif str(excep).find('Backend VPN process is not ready') > 1:
                 # Wait for the backend to settle
                 time.sleep(0.5)
+            elif str(excep).find('ERR_PROFILE_SERVER_LOCKED_UNSUPPORTED:') > 1:
+                sessionobj.Disconnect()
+                raise Exception('Server locked profiles are not supported')
             else:
                 if 'OPENVPN3_DEBUG' in os.environ:
                     print ('\nstart_tunnel() [2] traceback:\n')

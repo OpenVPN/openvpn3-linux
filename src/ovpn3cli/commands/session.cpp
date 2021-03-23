@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018 - 2020  OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018 - 2020  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2021  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2021  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -542,6 +542,11 @@ static int cmd_session_start(ParsedArgs::Ptr args)
     }
     catch (const SessionException& excp)
     {
+        std::string err{excp.what()};
+        if (err.find("ERR_PROFILE_SERVER_LOCKED_UNSUPPORTED:") != std::string::npos)
+        {
+            throw CommandException("session-start", "Server locked profiles are unsupported");
+        }
         throw CommandException("session-start", excp.what());
     }
     catch (...)
