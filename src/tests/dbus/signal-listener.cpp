@@ -138,12 +138,28 @@ public:
             guint group = 0;
             guint catg = 0;
             gchar *message = nullptr;
-            g_variant_get (parameters, "(uus)", &group, &catg, &message);
+            gchar *sesstok = nullptr;
 
+            std::string typestr{g_variant_get_type_string(parameters)};
+            if ("(uus)" == typestr)
+            {
+                g_variant_get (parameters, "(uus)", &group, &catg, &message);
+            }
+            else if ("(uuss)" == typestr)
+            {
+                g_variant_get (parameters, "(uuss)", &group, &catg,
+                               &sesstok, &message);
+            }
+            else
+            {
+                std::cout << "-- Log: { UNKOWN FORMAT: " << typestr << "}" << std::endl;
+                return;
+            }
             std::cout << "-- Log: "
                       << "sender=" << sender_name
                       << ", interface=" << interface_name
                       << ", path=" << object_path
+                      << (sesstok ? ", session_token=" + std::string(sesstok) : "")
                       << ": [" << std::to_string(group) << ", "
                       << std::to_string(catg) << "] "
                       << "-- type=" << LogGroup_str[group] << ", "
