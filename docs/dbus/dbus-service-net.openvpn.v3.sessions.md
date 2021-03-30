@@ -205,7 +205,11 @@ node /net/openvpn/v3/sessions/${UNIQUE_ID} {
       readonly a{sv} last_log;
       readonly a{sx} statistics;
       readwrite b dco;
+      readonly s device_path;
+      readonly s device_name;
       readonly o config_path;
+      readonly s config_name;
+      readonly s session_name;
       readonly u backend_pid;
       readwrite b restrict_log_access;
       readwrite b receive_log_events;
@@ -378,13 +382,15 @@ documentation](dbus-logging.md) for details on this signal.
 | session_created| uint64          | Read-only  | Unix Epoc timestamp of when the session was created |
 | acl           | array(integer)   | Read-only  | An array of UID values granted access               |
 | public_access | boolean          | Read/Write | If set to true, access control is disabled.  Only owner may change this property, modify the ACL or delete the configuration |
-| status        | dictionary       | Read-only  | Contains the last processed StatusChange signal |
+| status        | (integer, integer, string) | Read-only  | Contains the last processed StatusChange signal as a tuple of (StatusMajor, StatusMinor, StatusMessage) |
 | last_log      | dictionary       | Read-only  | Contains the last Log signal proxied from the backend process |
 | statistics    | dictionary       | Read-only  | Contains tunnel statistics |
 | dco           | boolean          | Read-Write | Kernel based Data Channel Offload flag. Must be modified before calling Connect() to override the current setting. |
 | device_path   | object path      | Read-only  | D-Bus object path to the net.openvpn.v3.netcfg device object related to this session |
 | device_name   | string           | Read-only  | Virtual network interface name used by this session |
 | config_path   | object path      | Read-only  | D-Bus object path to the configuration profile used |
+| config_name   | string           | Read-only  | Name of the configuration profile when the session was started |
+| session_name  | string           | Read-only  | Name of the VPN session, named by the the OpenVPN 3 Core library on successful connect |
 | backend_pid   | uint             | Read-only  | Process ID of the VPN backend client process |
 | restrict_log_access | boolean    | Read-Write | If set to true, only the session owner can modify receive_log_events and log_verbosity, otherwise all granted users can access the log settings |
 | receive_log_events | boolean     | Read-Write | If set to true, the session manager will proxy log events from the VPN backend process |
