@@ -537,6 +537,16 @@ static int cmd_session_start(ParsedArgs::Ptr args)
         sleep(1);  // Allow session to be established (FIXME: Signals?)
         std::cout << "Session path: " << sessionpath << std::endl;
         OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, sessionpath);
+
+#ifdef ENABLE_OVPNDCO
+        if (args->Present("dco"))
+        {
+            // If a certain DCO state was requested, set the DCO flag before
+            // starting the connection
+            session.SetDCO(args->GetBoolValue("dco", false));
+        }
+#endif
+
         start_session(session, SessionStartMode::START);
         return 0;
     }
@@ -577,6 +587,11 @@ SingleCommand::Ptr prepare_command_session_start()
                    arghelper_config_paths);
     cmd->AddOption("persist-tun", 0,
                    "Enforces persistent tun/seamless tunnel (requires --config)");
+#ifdef ENABLE_OVPNDCO
+    cmd->AddOption("dco", 0, "BOOL", true,
+                   "Start the connection using Data Channel Offload kernel acceleration",
+                   arghelper_boolean);
+#endif
 
     return cmd;
 }

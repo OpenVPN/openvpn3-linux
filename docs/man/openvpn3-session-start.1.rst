@@ -46,6 +46,22 @@ OPTIONS
                 will not tear-down the virtual VPN interface when reconnecting.
                 See ``openvpn3-config-manage`` for details.
 
+--dco BOOL
+                Enable kernel based Data Channel Offload for this session only.
+                This moves the tunnelled network traffic to be handled inside
+                the kernel.  This improves the processing of the network traffic
+                and moves the encryption, decryption and packet authentication
+                for the tunnelled network traffic to be handled inside the
+                kernel instead of begin passed via the OpenVPN client process in
+                user space.
+
+                This option is only available if openvpn3-linux has been built
+                with this support.
+
+                *WARNING:*
+                    This is currently a **tech preview** feature and is **not**
+                    ready for production environments.  It also requires the
+                    `ovpn-dco` kernel module to be installed to work.
 
 SEE ALSO
 ========
