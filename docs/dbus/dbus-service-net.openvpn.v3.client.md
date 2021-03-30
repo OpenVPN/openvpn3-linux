@@ -87,6 +87,7 @@ node /net/openvpn/v3/backends/session {
     properties:
       readwrite u log_level;
       readonly a{sx} statistics;
+      readwrite b dco;
       readonly o device_path;
       readonly s device_name;
   };
@@ -345,6 +346,7 @@ the initialization.
 |---------------|------------------|:----------:|----------------------------|
 | log_level     | uint             | read-write | Controls the log verbosity of messages intended to be proxied to the user front-end. **Note:** Not currently implemented |
 | statistics    | dictionary       | Read-only  | Contains tunnel statistics |
+| dco           | boolean          | read-write | Kernel based Data Channel Offload flag. Must be modified before calling Connect() to override the current setting. |
 | device_path   | object path      | Read-only  | D-Bus object path to the net.openvpn.v3.netcfg device object related to this session |
 | device_name   | string           | Read-only  | Virtual network interface name used by this session |
 

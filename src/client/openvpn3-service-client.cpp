@@ -152,6 +152,7 @@ public:
                           << "        </signal>"
                           << "        <property type='a{sx}' name='statistics' access='read'/>"
                           << "        <property type='(uus)' name='status' access='read'/>"
+                          << "        <property type='b' name='dco' access='readwrite'/>"
                           << "        <property type='o' name='device_path' access='read'/>"
                           << "        <property type='s' name='device_name' access='read'/>"
                           <<  "    </interface>"
@@ -643,6 +644,10 @@ public:
             {
                 return g_variant_new_uint32(signal.GetLogLevel());
             }
+            else if ("dco" == property_name)
+            {
+                return g_variant_new_boolean(vpnconfig.dco);
+            }
 
             // ... other properties is restricted to the session manager
             validate_sender(sender);
@@ -735,6 +740,13 @@ public:
                 return build_set_property_response(property_name,
                                                    (guint32) log_verb);
             }
+            else if ("dco" == property_name)
+            {
+                vpnconfig.dco = g_variant_get_boolean(value);
+                signal.LogVerb1(std::string("Session Manager change: DCO ") +
+                                (vpnconfig.dco ? "enabled" : "disabled"));
+                return build_set_property_response(property_name, vpnconfig.dco);
+            }
         }
         catch (DBusCredentialsException& excp)
         {
@@ -811,6 +823,7 @@ private:
 
         try
         {
+            signal.Debug(std::string("[Connect] DCO flag: ") + (vpnconfig.dco ? "enabled" : "disabled"));
             signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_CONNECTING, "");
             ClientAPI::Status status = vpnclient->connect();
             if (status.error)
