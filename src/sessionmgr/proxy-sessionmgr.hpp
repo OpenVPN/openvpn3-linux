@@ -655,6 +655,31 @@ public:
     }
 
 
+    /**
+     *  Retrieve if the session is configured to use a Data Channel Offload (DCO)
+     *  interface
+     *
+     * @return  Returns true if DCO is enabled
+     */
+    bool GetDCO() const
+    {
+        return GetBoolProperty("dco");
+    }
+
+    /**
+     *  Enable or disable the Data Channel Offload (DCO) interface.  This can
+     *  only be called _before_ starting a connection.  Otherwise it will throw
+     *  an exception.
+     *
+     * @param dco  Boolean, true to enable DCO
+     *
+     */
+    void SetDCO(bool dco) const
+    {
+        SetProperty("dco", dco);
+    }
+
+
 private:
     /**
      * Simple wrapper for simple D-Bus method calls not requiring much

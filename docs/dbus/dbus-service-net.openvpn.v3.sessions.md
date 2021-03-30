@@ -204,6 +204,7 @@ node /net/openvpn/v3/sessions/${UNIQUE_ID} {
       readonly s status;
       readonly a{sv} last_log;
       readonly a{sx} statistics;
+      readwrite b dco;
       readonly o config_path;
       readonly u backend_pid;
       readwrite b restrict_log_access;
@@ -380,6 +381,7 @@ documentation](dbus-logging.md) for details on this signal.
 | status        | dictionary       | Read-only  | Contains the last processed StatusChange signal |
 | last_log      | dictionary       | Read-only  | Contains the last Log signal proxied from the backend process |
 | statistics    | dictionary       | Read-only  | Contains tunnel statistics |
+| dco           | boolean          | Read-Write | Kernel based Data Channel Offload flag. Must be modified before calling Connect() to override the current setting. |
 | device_path   | object path      | Read-only  | D-Bus object path to the net.openvpn.v3.netcfg device object related to this session |
 | device_name   | string           | Read-only  | Virtual network interface name used by this session |
 | config_path   | object path      | Read-only  | D-Bus object path to the configuration profile used |

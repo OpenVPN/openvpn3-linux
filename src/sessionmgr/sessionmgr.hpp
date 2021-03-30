@@ -409,6 +409,12 @@ private:
 };
 
 
+enum class DCOstatus : unsigned short {
+    UNCHANGED,
+    MODIFIED,
+    LOCKED
+};
+
 /**
  *  A SessionObject contains information about a specific VPN client tunnel.
  *  Each time a new tunnel is created and initiated via D-Bus, the contents
@@ -504,6 +510,7 @@ public:
                           << "        <property type='(uus)' name='status' access='read'/>"
                           << "        <property type='a{sv}' name='last_log' access='read'/>"
                           << "        <property type='a{sx}' name='statistics' access='read'/>"
+                          << "        <property type='b' name='dco' access='readwrite'/>"
                           << "        <property type='s' name='device_path' access='read'/>"
                           << "        <property type='s' name='device_name' access='read'/>"
                           << "        <property type='o' name='config_path' access='read'/>"
@@ -796,6 +803,13 @@ public:
             if ("Connect" == method_name)
             {
                 CheckACL(sender);
+
+                if (DCOstatus::MODIFIED == dco_status)
+                {
+                    be_proxy->SetProperty("dco", dco);
+                    dco_status = DCOstatus::LOCKED;
+                }
+
                 be_proxy->Call("Connect");
                 LogVerb2("Starting connection");
             }
@@ -1077,6 +1091,18 @@ public:
                 return NULL;
             }
         }
+        else if ("dco" == property_name)
+        {
+            try
+            {
+                return be_proxy->GetProperty("dco");
+            }
+            catch (DBusException&)
+            {
+                // This is a pure fall-through, will be handled below
+                // returing the current DCO flag of the session manager instead
+            }
+        }
 
         try
         {
@@ -1213,6 +1239,12 @@ public:
         {
             ret = g_variant_new_string (config_name.c_str());
         }
+        else if ("dco" == property_name)
+        {
+            // If the DCO flag of the backend process could not be retrieved,
+            // return our current setting
+            ret = g_variant_new_boolean(dco);
+        }
         else if ("session_name" == property_name)
         {
             try
@@ -1318,7 +1350,23 @@ public:
 
         try
         {
-            if (("restrict_log_access" == property_name) && be_conn)
+            if (("dco" == property_name) && be_conn)
+            {
+                if (DCOstatus::LOCKED != dco_status)
+                {
+                    dco = g_variant_get_boolean(value);
+                    dco_status = DCOstatus::MODIFIED;
+                    return build_set_property_response(property_name, dco);
+                }
+                else
+                {
+                    throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
+                                                obj_path, intf_name,
+                                                property_name,
+                                                "DCO setting cannot be changed now");
+                }
+            }
+            else if (("restrict_log_access" == property_name) && be_conn)
             {
                 restrict_log_access = g_variant_get_boolean(value);
                 return build_set_property_response(property_name,
@@ -1424,6 +1472,8 @@ private:
     std::time_t session_created;
     std::string config_path;
     std::string config_name;
+    bool dco = false;
+    DCOstatus dco_status = DCOstatus::UNCHANGED;
     SessionStatusChange *sig_statuschg;
     SessionLogEvent *sig_logevent;
     std::string backend_token;
