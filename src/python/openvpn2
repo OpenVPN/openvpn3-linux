@@ -188,7 +188,7 @@ def fetch_logs_loop(sessobj, verb):
 #  This is the main entry point for establishing new tunnels and it
 #  handles both background and forground run modes
 #
-def start_tunnel(bus, cfgobj, background_mode, verb):
+def start_tunnel(bus, cfgobj, opts):
     # Main session manager object
     sessmgr = SessionManager(bus)
 
@@ -201,10 +201,16 @@ def start_tunnel(bus, cfgobj, background_mode, verb):
     done = False
     status = None
     exit_code = 0
+    dco_configured = False
     while done is False:
         try:
             # Check if the backend needs something more from us ...
             sessionobj.Ready()   # This throws an exception if not ready
+
+            # Is DCO enabled?
+            if not dco_configured and opts.GetDataChannelOffload():
+                sessionobj.SetDCO(opts.GetDataChannelOffload())
+                dco_configured = True
 
             # If not running in the background, print the log events
             # to the terminal.  When the fetch_logs_loop() function returns,
@@ -213,8 +219,8 @@ def start_tunnel(bus, cfgobj, background_mode, verb):
             # This approach will start a GLib main loop which takes care of
             # the main programs execution
             #
-            if background_mode is False:
-                return fetch_logs_loop(sessionobj, verb)
+            if not opts.GetDaemon():
+                return fetch_logs_loop(sessionobj, opts.GetLogVerbosity())
 
             # ... and if this session is to be run in the
             # background when connected ...
@@ -382,8 +388,7 @@ def openvpn2_main(args):
         cfgobj = import_config(bus, opts)
 
         # Start the tunnel, which his managed by the session manager
-        ret = start_tunnel(bus, cfgobj,
-                           opts.GetDaemon(), opts.GetLogVerbosity())
+        ret = start_tunnel(bus, cfgobj, opts)
 
     except KeyboardInterrupt:
         print("")
