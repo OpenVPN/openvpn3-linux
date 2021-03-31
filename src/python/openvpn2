@@ -152,7 +152,6 @@ def StatusHandler(major, minor, msg):
 #  the session is closed outside of this program
 #
 def fetch_logs_loop(sessobj, verb):
-    print(verb)
     sessobj.LogCallback(LogHandler)
     sessobj.StatusChangeCallback(StatusHandler)
     sessobj.SetProperty('log_verbosity', dbus.UInt32(verb))
