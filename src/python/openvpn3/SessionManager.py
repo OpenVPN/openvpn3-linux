@@ -368,6 +368,26 @@ class Session(object):
         return ret
 
 
+    ##
+    #  Retrieve the Data Channel Offset (DCO) setting for a running VPN session
+    #
+    #  @return Returns True if the session DCO kernel acceleration has
+    #          been enabled
+    #
+    @__delete_check
+    def GetDCO(self):
+        return self.__prop_intf.Get('net.openvpn.v3.sessions', 'dco')
+
+
+    ##
+    #  Change the Data Channel Offset (DCO) setting for a running VPN session.
+    #  This can only be modified *BEFORE* the Connect() method has been called.
+    #
+    @__delete_check
+    def SetDCO(self, dco):
+        self.__prop_intf.Set('net.openvpn.v3.sessions', 'dco', dco)
+
+
 
 ##
 #  The SessionManager object provides access to the main object in
