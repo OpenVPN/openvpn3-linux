@@ -710,9 +710,13 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
 
         // Retrieve the tun interface name for this session
         std::string devname;
+        bool dco = false;
         try
         {
             devname = sprx.GetDeviceName();
+#ifdef ENABLE_OVPNDCO
+            dco = sprx.GetDCO();
+#endif
         }
         catch (DBusException&)
         {
@@ -767,6 +771,7 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
                   << std::endl;
         std::cout << "       Owner: " << owner
                   << std::setw(47 - owner.size()) << "Device: " << devname
+                  << (dco ? " (DCO)" : "")
                   << std::endl;
         std::cout << config_line.str();
         std::cout << sessionname_line.str();
