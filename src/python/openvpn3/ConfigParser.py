@@ -28,6 +28,7 @@ import os
 import shlex
 from getpass import getpass
 
+
 # Detect if pyOpenSSL is available or not.
 # This module is used to parse PKCS#12 files only
 # and if not present when needed, it will complain
@@ -92,8 +93,8 @@ class ConfigParser():
     def GenerateConfig(self):
         cfg = []
         for opt_key, opt_val in self.__opts.items():
-            if 'daemon' == opt_key:
-                # Don't put 'daemon' into the generated config,
+            if opt_key in ('daemon', 'dco'):
+                # Don't put 'daemon' or 'dco' into the generated config,
                 # that is not a useful option for the OpenVPN 3 backend and we
                 # handle this in the front-end instead.
                 continue;
@@ -139,6 +140,13 @@ class ConfigParser():
     def GetPersistTun(self):
         try:
             return self.__opts['persist_tun']
+        except AttributeError:
+            return False
+
+
+    def GetDataChannelOffload(self):
+        try:
+            return self.__opts['dco']
         except AttributeError:
             return False
 
@@ -660,6 +668,23 @@ class ConfigParser():
                                    help='Accept connections only with a host '
                                    + 'with a specific X509 subject or CN match '
                                    + 'string.')
+
+
+        techprev_descr = 'Options in this group may change, disappear or change '\
+        + 'behaviour.  These options are not production ready.'
+        techpreview = self.__parser.add_argument_group('Tech-Preview options',
+                                                       techprev_descr)
+        techpreview.add_argument('--enable-dco',
+                                 action='store_true',
+                                 dest='dco',
+                                 help='Enable Data Channel Offload kernel '
+                                 + 'acceleration.')
+        techpreview.add_argument('--disable-dco',
+                                 action='store_false',
+                                 dest='dco',
+                                 help='Disable Data Channel Offload kernel '
+                                 + 'acceleration.')
+
 
         descr = 'The following options are ignored and not processed.  These ' \
         + 'options are not implemented in the OpenVPN 3 Core library ' \
