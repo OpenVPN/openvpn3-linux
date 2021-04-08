@@ -97,6 +97,7 @@ src/tests/dbus/request-queue-client2
 src/tests/dbus/request-queue-service
 src/tests/dbus/signal-listener
 src/tests/dbus/statusevent-selftest
+src/tests/dbus/netcfg-systemd-resolved-basic
 src/tests/misc/config-export-json-test
 src/tests/misc/gettimestamp
 src/tests/misc/json-config-import-test
@@ -105,6 +106,7 @@ src/tests/misc/logwriter-tests
 src/tests/misc/lookup-tests
 src/tests/misc/netcfg-dns-direct-file-selftest
 src/tests/misc/syslog-facility-mapping-test
+src/tests/misc/open-uri-test
 src/tests/netcfg/clinetcfg
 src/tests/ovpn3-core/profilemerge-optionlist
 src/tests/unit/libgtest.a
@@ -119,9 +121,12 @@ src/policy/net.openvpn.v3.netcfg.conf
 src/policy/net.openvpn.v3.rules
 src/policy/net.openvpn.v3.sessions.conf
 src/policy/openvpn3-linux.pkla
+src/policy/syntax-check.sh.log
+src/policy/syntax-check.sh.trs
 src/python/openvpn3/constants.py
 src/python/openvpn3/gen-python-constants
 src/python/openvpn3/__pycache__/
 src/python/openvpn3/*.pyc
 src/service-autostart/net.openvpn*.service
 test-driver
+test-suite.log
