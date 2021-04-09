@@ -34,6 +34,7 @@ namespace openvpn {
                 || (optname == "extra-certs")
                 || (optname == "cert")
                 || (optname == "auth-user-pass")
+                || (optname == "http-proxy-user-pass")
                 || (optname == "dh")
                 || (optname == "pkcs12")
                 || (optname == "tls-auth")
