@@ -281,6 +281,25 @@ private:
                 run_status = StatusMinor::CFG_REQUIRE_USER;
             }
         }
+        else if ("PROXY_NEED_CREDS" == ev.name)
+        {
+            signal->Debug("PROXY_NEED_CREDS: |" + ev.info + "|");
+
+            userinputq->RequireAdd(ClientAttentionType::CREDENTIALS,
+                                   ClientAttentionGroup::HTTP_PROXY_CREDS,
+                                   "http_proxy_user", "HTTP proxy username",
+                                   false);
+            userinputq->RequireAdd(ClientAttentionType::CREDENTIALS,
+                                   ClientAttentionGroup::HTTP_PROXY_CREDS,
+                                   "http_proxy_pass", "HTTP proxy password",
+                                   true);
+            signal->AttentionReq(ClientAttentionType::CREDENTIALS,
+                                 ClientAttentionGroup::HTTP_PROXY_CREDS, "");
+            signal->StatusChange(StatusMajor::CONNECTION,
+                                 StatusMinor::CFG_REQUIRE_USER,
+                                 "HTTP proxy credentials");
+            run_status = StatusMinor::CFG_REQUIRE_USER;
+        }
         else if ("WARN" == ev.name)
         {
             signal->LogWarn(ev.info);
@@ -404,15 +423,6 @@ private:
                                  "Proxy connection error");
             run_status = StatusMinor::CONN_FAILED;
             failed_signal_sent = true;
-        }
-        else if ("PROXY_NEED_CREDS" == ev.name)
-        {
-            signal->StatusChange(StatusMajor::CONNECTION,
-                                 StatusMinor::CONN_FAILED,
-                                 "Proxy connection error");
-            run_status = StatusMinor::CONN_FAILED;
-            failed_signal_sent = true;
-            signal->LogCritical("Proxy " + ev.info);
         }
         else if ("CLIENT_HALT" == ev.name)
         {

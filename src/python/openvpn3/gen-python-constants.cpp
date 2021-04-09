@@ -170,6 +170,7 @@ int main(int argc, char **argv)
     vector<ConstantMapping<ClientAttentionGroup>> client_att_group;
     MAP(ClientAttentionGroup, client_att_group, "UNSET", UNSET);
     MAP(ClientAttentionGroup, client_att_group, "USER_PASSWORD", USER_PASSWORD);
+    MAP(ClientAttentionGroup, client_att_group, "HTTP_PROXY_CREDS", HTTP_PROXY_CREDS);
     MAP(ClientAttentionGroup, client_att_group, "PK_PASSPHRASE", PK_PASSPHRASE);
     MAP(ClientAttentionGroup, client_att_group, "CHALLENGE_STATIC", CHALLENGE_STATIC);
     MAP(ClientAttentionGroup, client_att_group, "CHALLENGE_DYNAMIC", CHALLENGE_DYNAMIC);

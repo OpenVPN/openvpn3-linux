@@ -900,6 +900,20 @@ private:
                 provide_creds = true;
             }
 
+            if (userinputq.QueueCount(ClientAttentionType::CREDENTIALS,
+                                      ClientAttentionGroup::HTTP_PROXY_CREDS) > 0)
+            {
+                creds.http_proxy_user =
+                    userinputq.GetResponse(ClientAttentionType::CREDENTIALS,
+                                           ClientAttentionGroup::HTTP_PROXY_CREDS,
+                                           "http_proxy_user");
+                creds.http_proxy_pass =
+                    userinputq.GetResponse(ClientAttentionType::CREDENTIALS,
+                                           ClientAttentionGroup::HTTP_PROXY_CREDS,
+                                           "http_proxy_pass");
+                provide_creds = true;
+            }
+
             if (provide_creds)
             {
                 ClientAPI::Status cred_res = vpnclient->provide_creds(creds);
@@ -910,8 +924,8 @@ private:
                 }
 
                 std::stringstream msg;
-                msg << "Username/password provided successfully"
-                    << " for '" << creds.username << "'";
+                msg << "Username/password provided successfully" << " for '"
+                    << (creds.username.empty() ? creds.http_proxy_user : creds.username) << "'";
                 signal.LogVerb1(msg.str());
                 if (!creds.response.empty())
                 {

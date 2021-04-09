@@ -213,10 +213,13 @@ Valid `ClientAttentionGroup` values are:
 |-------------------|:---:|--------------------------------------------------------------------|
 | UNSET             | 0   | This is an invalid value, used for initialization only             |
 | USER_PASSWORD     | 1   | Classic username/password authentication                           |
-| CHALLENGE_STATIC  | 2   | Static challenge/response authentication, typically acquired before a connection starts |
-| CHALLENGE_DYNAMIC | 3   | Dynamic challenge/response authentication, requested by the VPN server |
-| PKCS11_SIGN       | 4   | PKCS#11 signature operation                                        |
-| PKCS11_DECRYPT    | 4   | PKCS#11 decrypt operation                                          |
+| HTTP_PROXY_CREDS  | 2   | Credentials for authenticating to the HTTP proxy                   |
+| PK_PASSPHRASE     | 3   | Passphrase for the user's private key                              |
+| CHALLENGE_STATIC  | 4   | Static challenge/response authentication, typically acquired before a connection starts |
+| CHALLENGE_DYNAMIC | 5   | Dynamic challenge/response authentication, requested by the VPN server |
+| PKCS11_SIGN       | 6   | PKCS#11 signature operation                                        |
+| PKCS11_DECRYPT    | 7   | PKCS#11 decrypt operation                                          |
+| OPEN_URL          | 8   | URL for web authentication                                         |
 
 All of these references are declared in `src/dbus/constants.hpp`.
 

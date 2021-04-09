@@ -188,10 +188,11 @@ const std::array<const std::string, ClientAttentionTypeCount> ClientAttentionTyp
     "Requesting access permission"
 }};
 
-const uint8_t ClientAttentionGroupCount = 8;
+const uint8_t ClientAttentionGroupCount = 9;
 enum class ClientAttentionGroup : std::uint8_t {
     UNSET,
     USER_PASSWORD,
+    HTTP_PROXY_CREDS,
     PK_PASSPHRASE,
     CHALLENGE_STATIC,
     CHALLENGE_DYNAMIC,
@@ -203,6 +204,7 @@ enum class ClientAttentionGroup : std::uint8_t {
 const std::array<const std::string, ClientAttentionGroupCount> ClientAttentionGroup_str = {{
     "(unset)",
     "Username/password authentication",
+    "HTTP proxy credentials",
     "Private key passphrase",
     "Static challenge",
     "Dynamic challenge",
