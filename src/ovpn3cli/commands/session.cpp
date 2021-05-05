@@ -324,7 +324,7 @@ static void start_session(OpenVPN3SessionProxy& session,
                         {
                             set_console_echo(false);
                         }
-                        std::cin >> r.value;
+                        std::getline(std::cin, r.value);
                         if (r.hidden_input)
                         {
                             std::cout << std::endl;
