@@ -41,6 +41,11 @@ int main(int argc, char **argv)
         conf << line << std::endl;
     }
 
+    ProfileMergeFromString pm(conf.str(), "",
+                              ProfileMerge::FOLLOW_FULL,
+                              ProfileParseLimits::MAX_LINE_SIZE,
+                              ProfileParseLimits::MAX_PROFILE_SIZE);
+
     OptionList::Limits limits("profile is too large",
                       ProfileParseLimits::MAX_PROFILE_SIZE,
                       ProfileParseLimits::OPT_OVERHEAD,
@@ -48,7 +53,7 @@ int main(int argc, char **argv)
                       ProfileParseLimits::MAX_LINE_SIZE,
                       ProfileParseLimits::MAX_DIRECTIVE_SIZE);
     OptionListJSON options;
-    options.parse_from_config(conf.str(), &limits);
+    options.parse_from_config(pm.profile_content(), &limits);
     std::cout << options.json_export() << std::endl;
     return 0;
 }

@@ -56,6 +56,8 @@ int main(int argc, char **argv)
     }
 
     ProfileMergeJSON pm(jsondata);
-    std::cout << pm.profile_content() << std::endl;
+    OptionListJSON opts;
+    opts.parse_from_config(pm.profile_content(), nullptr);
+    std::cout << opts.string_export() << std::endl;
     return 0;
 }

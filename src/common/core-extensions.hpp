@@ -46,12 +46,15 @@ namespace openvpn {
         bool inlined_file = optparser_inline_file(optname);
         std::stringstream ret;
 
-        if (inlined_file)
+        if (inlined_file && !optvalue.empty())
         {
-
             ret << "<" << optname << ">" << std::endl
-                << optvalue
-                << "</" << optname << ">"
+                << optvalue;
+            if ('\n' != optvalue.back())
+            {
+                ret << std::endl;
+            }
+            ret << "</" << optname << ">"
                 << std::endl;
         }
         else
@@ -96,7 +99,8 @@ namespace openvpn {
             for(const auto& element : *this)
             {
                 std::string optname = element.ref(0);
-                if (optparser_inline_file(optname))
+
+                if (optparser_inline_file(optname) && element.size() > 1)
                 {
                     cfgstr << optparser_mkline(optname, element.ref(1)) << std::endl;
                 }
