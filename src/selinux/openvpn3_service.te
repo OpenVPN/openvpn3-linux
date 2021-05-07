@@ -1,0 +1,140 @@
+policy_module(openvpn3_service, 1.0.0)
+
+########################################
+#
+# Declarations
+#
+
+require {
+        type proc_net_t;
+        class file read;
+        class unix_dgram_socket { create_socket_perms sendto };
+        class udp_socket rw_socket_perms;
+        class tcp_socket rw_socket_perms;
+        class tun_socket create;
+        class netlink_route_socket rw_netlink_socket_perms;
+        class netlink_generic_socket rw_netlink_socket_perms;
+        class capability { dac_override dac_read_search net_admin setpcap };
+        class process setcap;
+}
+
+type openvpn3_client_t;
+type openvpn3_client_exec_t;
+init_daemon_domain(openvpn3_client_t, openvpn3_client_exec_t)
+dbus_system_domain(openvpn3_client_t, openvpn3_client_exec_t)
+
+type openvpn3_netcfg_t;
+type openvpn3_netcfg_exec_t;
+init_daemon_domain(openvpn3_netcfg_t, openvpn3_netcfg_exec_t)
+dbus_system_domain(openvpn3_netcfg_t, openvpn3_netcfg_exec_t)
+
+type openvpn3_netcfg_var_lib_t;
+files_type(openvpn3_netcfg_var_lib_t)
+
+########################################
+#
+# openvpn3_netcfg local policy
+#
+allow openvpn3_netcfg_t self:capability { setgid setuid setpcap net_admin dac_override dac_read_search };
+allow openvpn3_netcfg_t self:process setcap;
+
+# Allow openvpn3-service-netcfg to load tun/ovpn-dco kernel modules,
+# create and manage tun based devices
+kernel_request_load_module(openvpn3_netcfg_t)
+corenet_rw_tun_tap_dev(openvpn3_netcfg_t)
+
+# Allow generic D-Bus access and D-Bus communcation from
+# openvpn3-service-netcfg to openvpn3-service-client.  In addition
+# D-Bus daemon needs privileges to do some read/write ops on sockets
+# passed via D-Bus from openvpn3-service-client to openvpn3-service-netcfg.
+dbus_system_bus_client(openvpn3_netcfg_t)
+openvpn3_allow_dbus_chat(openvpn3_netcfg_t, openvpn3_client_t)
+allow system_dbusd_t openvpn3_netcfg_t:unix_dgram_socket { read write };
+
+# Allow openvpn3-service-netcfg to create sockets which can be passed back to
+# openvpn3-service-client.  Unix sockets and fifo files are used for establishing
+# a communication channel between ovpn-dco interface and openvpn3-service-client
+allow openvpn3_netcfg_t self:tun_socket create;
+allow openvpn3_netcfg_t self:unix_dgram_socket { create_socket_perms sendto };
+allow openvpn3_netcfg_t self:unix_stream_socket create_stream_socket_perms;
+rw_fifo_files_pattern(openvpn3_netcfg_t, self, self)
+
+# Allow openvpn3-service-netcfg to operate on sockets created by
+# openvpn3-service-client. This is needed for ovpn-dco interfaces, as the
+# TCP/UDP socket create by openvpn3-service-client is passed to the kernel
+# module via openvpn3-service-netcfg.
+allow openvpn3_netcfg_t openvpn3_client_t:udp_socket rw_socket_perms;
+allow openvpn3_netcfg_t openvpn3_client_t:tcp_socket rw_socket_perms;
+
+# Allow openvpn3-service-netcfg to use netlink for network/routing config
+allow openvpn3_netcfg_t self:netlink_route_socket rw_netlink_socket_perms;
+allow openvpn3_netcfg_t self:netlink_generic_socket rw_netlink_socket_perms;
+
+# Allows openvpn3-service-netcfg to manage /etc/resolv.conf
+sysnet_manage_config(openvpn3_netcfg_t)
+
+# openvpn3-service-netcfg keeps state/config files in /var/lib/openvpn3
+manage_dirs_pattern(openvpn3_netcfg_t, openvpn3_netcfg_var_lib_t, openvpn3_netcfg_var_lib_t)
+manage_files_pattern(openvpn3_netcfg_t, openvpn3_netcfg_var_lib_t, openvpn3_netcfg_var_lib_t)
+manage_lnk_files_pattern(openvpn3_netcfg_t, openvpn3_netcfg_var_lib_t, openvpn3_netcfg_var_lib_t)
+files_var_lib_filetrans(openvpn3_netcfg_t, openvpn3_netcfg_var_lib_t, { dir file lnk_file })
+
+# Generic access needed by most services
+files_read_etc_files(openvpn3_netcfg_t)
+auth_use_nsswitch(openvpn3_netcfg_t)
+miscfiles_read_localization(openvpn3_netcfg_t)
+
+# Silence noise from not needed privileges
+# openvpn3-service-netcfg calls access("/proc/net/unix", R_OK), but does not
+# seem to use it for anything.
+dontaudit openvpn3_netcfg_t proc_net_t:file read;
+
+
+########################################
+#
+# openvpn3_client local policy
+#
+
+allow openvpn3_client_t self:capability { setgid setuid };
+
+# openvpn3-service-backendstart uses execve() to start openvpn3-service-client
+can_exec(openvpn3_client_t, openvpn3_client_exec_t)
+
+# Allow openvpn3-service-client to use sockets created by
+# openvpn3-service-netcfg - used for ovpn-dco kernel module communication
+allow openvpn3_client_t openvpn3_netcfg_t:unix_dgram_socket { read write };
+rw_fifo_files_pattern(openvpn3_client_t, self, self)
+
+# Allow openvpn3-service-client to use tun/tap devices,
+# created by openvpn3-service-netcfg
+corenet_rw_tun_tap_dev(openvpn3_client_t)
+allow openvpn3_client_t kernel_t:unix_dgram_socket sendto;
+allow openvpn3_client_t self:unix_dgram_socket { write };
+
+# Allow openvpn3-service-client to connect to remote TCP ports,
+# ie. an OpenVPN server
+corenet_tcp_connect_all_ports(openvpn3_client_t)
+
+allow openvpn3_client_t self:unix_stream_socket create_stream_socket_perms;
+allow openvpn3_client_t self:unix_dgram_socket create;
+
+# Allow openvpn3-service-client to use the D-Bus system bus
+# and communicate with openvpn3-service-netcfg over the bus.
+dbus_system_bus_client(openvpn3_client_t)
+openvpn3_allow_dbus_chat(openvpn3_client_t, openvpn3_netcfg_t)
+
+# Allow openvpn3-service-client to send a fd to openvpn3-service-netcfg
+# to "socket protect" it
+domain_use_interactive_fds(openvpn3_client_t) # Double check this; "seinfo -xaprivfd" lists bunch of types.
+
+# Allow D-Bus daemon to read/write packets on TCP/UDP sockets created
+# by openvpn3-service-client - also needed to interact with FD passing
+# from client to netcfg
+allow system_dbusd_t openvpn3_client_t:udp_socket { read write };
+allow system_dbusd_t openvpn3_client_t:tcp_socket { read write };
+
+# Generic access needed by most services
+files_read_etc_files(openvpn3_client_t)
+auth_use_nsswitch(openvpn3_client_t)
+miscfiles_read_localization(openvpn3_client_t)
+sysnet_dns_name_resolve(openvpn3_client_t)

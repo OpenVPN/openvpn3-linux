@@ -1,0 +1,217 @@
+
+## <summary>policy for openvpn3_client and openvpn3_netcfg</summary>
+
+########################################
+## <summary>
+##	Execute openvpn3_netcfg_exec_t in the openvpn3_netcfg domain.
+## </summary>
+## <param name="domain">
+## <summary>
+##	Domain allowed to transition.
+## </summary>
+## </param>
+#
+interface(`openvpn3_netcfg_domtrans',`
+	gen_require(`
+		type openvpn3_netcfg_t, openvpn3_netcfg_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	domtrans_pattern($1, openvpn3_netcfg_exec_t, openvpn3_netcfg_t)
+')
+
+######################################
+## <summary>
+##	Execute openvpn3_netcfg in the caller domain.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`openvpn3_netcfg_exec',`
+	gen_require(`
+		type userdom_base_user_templateopenvpn3_netcfg_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	can_exec($1, openvpn3_netcfg_exec_t)
+')
+
+########################################
+## <summary>
+##	Search openvpn3_netcfg lib directories.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`openvpn3_netcfg_search_lib',`
+	gen_require(`
+		type openvpn3_netcfg_var_lib_t;
+	')
+
+	allow $1 openvpn3_netcfg_var_lib_t:dir search_dir_perms;
+	files_search_var_lib($1)
+')
+
+########################################
+## <summary>
+##	Read openvpn3_netcfg lib files.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`openvpn3_netcfg_read_lib_files',`
+	gen_require(`
+		type openvpn3_netcfg_var_lib_t;
+	')
+
+	files_search_var_lib($1)
+	read_files_pattern($1, openvpn3_netcfg_var_lib_t, openvpn3_netcfg_var_lib_t)
+')
+
+########################################
+## <summary>
+##	Manage openvpn3_netcfg lib files.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`openvpn3_netcfg_manage_lib_files',`
+	gen_require(`
+		type openvpn3_netcfg_var_lib_t;
+	')
+
+	files_search_var_lib($1)
+	manage_files_pattern($1, openvpn3_netcfg_var_lib_t, openvpn3_netcfg_var_lib_t)
+')
+
+########################################
+## <summary>
+##	Manage openvpn3_netcfg lib directories.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`openvpn3_netcfg_manage_lib_dirs',`
+	gen_require(`
+		type openvpn3_netcfg_var_lib_t;
+	')
+
+	files_search_var_lib($1)
+	manage_dirs_pattern($1, openvpn3_netcfg_var_lib_t, openvpn3_netcfg_var_lib_t)
+')
+
+
+########################################
+## <summary>
+##	All of the rules required to administrate
+##	an openvpn3_netcfg environment
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+## <param name="role">
+##	<summary>
+##	Role allowed access.
+##	</summary>
+## </param>
+## <rolecap/>
+#
+interface(`openvpn3_netcfg_admin',`
+	gen_require(`
+		type openvpn3_netcfg_t;
+		type openvpn3_netcfg_var_lib_t;
+	')
+
+	allow $1 openvpn3_netcfg_t:process { signal_perms };
+	ps_process_pattern($1, openvpn3_netcfg_t)
+
+        tunable_policy(`deny_ptrace',`',`
+            allow $1 openvpn3_netcfg_t:process ptrace;
+        ')
+
+	files_search_var_lib($1)
+	admin_pattern($1, openvpn3_netcfg_var_lib_t)
+	optional_policy(`
+		systemd_passwd_agent_exec($1)
+		systemd_read_fifo_file_passwd_run($1)
+	')
+')
+
+########################################
+## <summary>
+##	Execute openvpn3_client_exec_t in the openvpn3_client domain.
+## </summary>
+## <param name="domain">
+## <summary>
+##	Domain allowed to transition.
+## </summary>
+## </param>
+#
+interface(`openvpn3_client_domtrans',`
+	gen_require(`
+		type openvpn3_client_t, openvpn3_client_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	domtrans_pattern($1, openvpn3_client_exec_t, openvpn3_client_t)
+')
+
+######################################
+## <summary>
+##	Execute openvpn3_client in the caller domain.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`openvpn3_client_exec',`
+	gen_require(`
+		type openvpn3_client_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	can_exec($1, openvpn3_client_exec_t)
+')
+
+
+######################################
+## <summary>
+##	Allow OpenVPN 3 services to communicate with each other
+## </summary>
+## <param name="source_domain">
+##	<summary>
+##	Domain to be allowed access.
+##	</summary>
+## </param>
+## <param name="target_domain">
+##	<summary>
+##	Domain to which access is granted
+##	</summary>
+## </param>
+#
+interface(`openvpn3_allow_dbus_chat',`
+        gen_require(`
+                class dbus send_msg;
+        ')
+
+        allow $1 $2:dbus send_msg;
+')

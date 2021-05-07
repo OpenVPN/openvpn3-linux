@@ -1,0 +1,4 @@
+/var/lib/openvpn3/netcfg.json					--	gen_context(system_u:object_r:openvpn3_netcfg_var_lib_t,s0)
+/usr/libexec/openvpn3-linux/openvpn3-service-netcfg		--	gen_context(system_u:object_r:openvpn3_netcfg_exec_t,s0)
+/usr/libexec/openvpn3-linux/openvpn3-service-backendstart	--	gen_context(system_u:object_r:openvpn3_client_exec_t,s0)
+/usr/libexec/openvpn3-linux/openvpn3-service-client		--	gen_context(system_u:object_r:openvpn3_client_exec_t,s0)
