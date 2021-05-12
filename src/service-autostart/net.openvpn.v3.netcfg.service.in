@@ -20,4 +20,4 @@
 [D-BUS Service]
 Name=net.openvpn.v3.netcfg
 User=root
-Exec=@LIBEXEC_PATH@/openvpn3-service-netcfg --resolv-conf /etc/resolv.conf --state-dir "@OPENVPN_STATEDIR@"
+Exec=@LIBEXEC_PATH@/openvpn3-service-netcfg @DNS_RESOLVER_CONFIG@ --state-dir "@OPENVPN_STATEDIR@"

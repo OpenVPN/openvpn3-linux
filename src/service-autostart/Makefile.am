@@ -21,6 +21,7 @@
 	$(AM_V_GEN)sed -e 's|\@LIBEXEC_PATH\@|$(pkglibexecdir)|' \
 		       -e 's|\@OPENVPN_USERNAME\@|$(OPENVPN_USERNAME)|' \
 		       -e 's|\@OPENVPN_STATEDIR\@|$(openvpn3_statedir)|' \
+		       -e 's|\@DNS_RESOLVER_CONFIG\@|$(dns_resolver_config)|' \
 		$< > $@.tmp && mv $@.tmp $@
 
 MAINTAINERCLEANFILES = \

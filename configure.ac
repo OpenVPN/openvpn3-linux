@@ -337,6 +337,17 @@ fi
 AC_SUBST([systemd_unitdir])
 
 dnl
+dnl  Default DNS resolver
+dnl
+AC_ARG_VAR([DEFAULT_DNS_RESOLVER], [Default DNS resolver configuration (default: --resolv-conf /etc/resolv.conf)])
+if test -n "${DEFAULT_DNS_RESOLVER}"; then
+   dns_resolver_config="${DEFAULT_DNS_RESOLVER}"
+else
+   dns_resolver_config="--resolv-conf /etc/resolv.conf"
+fi
+AC_SUBST([dns_resolver_config])
+
+dnl
 dnl  Enables support for the ovpn-dco kernel module data channel offload (DCO)
 dnl
 dnl  When this option is enabled, OpenVPN 3 will try to use the ovpn-dco kernel
