@@ -28,6 +28,12 @@ SELINUX_POLICIES = openvpn3.pp openvpn3_service.pp
 #  Generic SELinux policy build
 #
 
+EXTRA_DIST = \
+	$(patsubst %.pp,%.te,$(SELINUX_POLICIES)) \
+	$(patsubst %.pp,%.if,$(SELINUX_POLICIES)) \
+	$(patsubst %.pp,%.fc,$(SELINUX_POLICIES))
+
+
 if ENABLE_SELINUX_BUILD
 
 BUILD_POLICIES = $(patsubst %.pp,%.pp.bz2,$(SELINUX_POLICIES))
@@ -37,11 +43,6 @@ all : $(BUILD_POLICIES)
 MAINTAINERCLEANFILES = Makefile Makefile.in $(BUILD_POLICIES) $(SELINUX_POLICIES)
 
 CLEANFILES = $(BUILD_POLICIES) $(SELINUX_POLICIES)
-
-EXTRA_DIST = \
-	$(patsubst %.pp,%.te,$(SELINUX_POLICIES)) \
-	$(patsubst %.pp,%.if,$(SELINUX_POLICIES)) \
-	$(patsubst %.pp,%.fc,$(SELINUX_POLICIES))
 
 # The three files being copied first happens only when doing out-of-tree builds,
 # as the SELinux build method does not account for such scenarios
