@@ -343,8 +343,26 @@ AC_ARG_VAR([DEFAULT_DNS_RESOLVER], [Default DNS resolver configuration (default:
 if test -n "${DEFAULT_DNS_RESOLVER}"; then
    dns_resolver_config="${DEFAULT_DNS_RESOLVER}"
 else
-   dns_resolver_config="--resolv-conf /etc/resolv.conf"
+   if test -r /etc/os-release; then
+      AC_MSG_NOTICE([Found /etc/os-release ... parsing it])
+      SAVED_VERSION="${VERSION}"
+      . /etc/os-release
+      AC_MSG_NOTICE([Operating system: ${NAME} ${VERSION}])
+      if test "${ID}" == "ubuntu"; then
+         major_ver="`echo ${VERSION_ID} | cut -d. -f1`"
+         if test ${major_ver} -ge 20; then
+             dns_resolver_config="--systemd-resolved"
+         fi
+      elif test "${ID}" == "fedora"; then
+         dns_resolver_config="--systemd-resolved"
+      fi
+      VERSION="${SAVED_VERSION}"
+   fi
+   if test -z "${dns_resolver_config}"; then
+      dns_resolver_config="--resolv-conf /etc/resolv.conf"
+   fi
 fi
+AC_MSG_NOTICE([Default DNS resolver configuration: ${dns_resolver_config}])
 AC_SUBST([dns_resolver_config])
 
 dnl
