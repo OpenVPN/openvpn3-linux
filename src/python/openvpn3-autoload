@@ -96,7 +96,7 @@ def find_autoload_configs(srcdir):
                 except TypeError as e:
                     print('Could not parse "%s": %s' % (cfgnam, str(e)))
                 except ValueError as e:
-                    print('Invalid JSON data in "%s": %s' % (cfgnam, str(e)))
+                    print('Invalid JSON data in "%s": %s' % (alfilen, str(e)))
                 except Exception as e:
                     print('Error: ' + str(e))
 
