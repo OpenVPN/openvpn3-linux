@@ -206,7 +206,7 @@ void File::SetValue(const std::string& key, const std::string& value)
 
     if (OptionValueType::Present == it->type)
     {
-        it->present = ("1" == value || "yes" == value);
+        it->present = ("1" == value || "yes" == value || "true" == value);
         it->value = "";
     }
     else
