@@ -140,6 +140,11 @@ public:
         return user_error.c_str();
     }
 
+    const std::string& GetError() const noexcept
+    {
+        return errormsg;
+    }
+
     const char* GetMethod() const noexcept
     {
         return method.c_str();
