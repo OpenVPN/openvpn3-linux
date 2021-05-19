@@ -59,7 +59,16 @@ namespace NetCfgProxy
                     OpenVPN3DBus_interf_netcfg,
                     OpenVPN3DBus_rootp_netcfg)
     {
-        CheckServiceAvail();
+        try
+        {
+            CheckServiceAvail();
+            (void) GetServiceVersion();
+        }
+        catch (const DBusException&)
+        {
+            throw NetCfgProxyException(
+                    "Init", "Could not connect to net.openvpn.v3.netcfg service");
+        }
     }
 
 
