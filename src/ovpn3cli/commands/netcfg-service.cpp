@@ -58,6 +58,12 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
             return 3;
         }
     }
+    catch(const NetCfgProxyException& excp)
+    {
+        std::cerr << "Could not reach OpenVPN 3 Network Configuration Service: "
+                  << excp.GetError() << std::endl;
+        return 3;
+    }
 
     try
     {
