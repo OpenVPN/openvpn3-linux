@@ -197,12 +197,15 @@ UNIT_TESTS = \
 	src/tests/unit/statusevent.cpp \
 	src/tests/unit/syslog-facility-mapping.cpp \
 	src/tests/unit/dns-settings-manager-test.cpp \
-	src/tests/unit/dns-resolver-settings.cpp
+	src/tests/unit/dns-resolver-settings.cpp \
+	src/tests/unit/machine-id.cpp
 
 UNIT_TESTS_DEPS = \
 	src/common/configfileparser.cpp \
 	src/common/configfileparser.hpp \
 	src/common/lookup.cpp \
+	src/common/machineid.cpp \
+	src/common/machineid.hpp \
 	src/common/timestamp.cpp \
 	src/netcfg/netcfg-changeevent.cpp \
 	src/netcfg/netcfg-changetype.cpp \
@@ -222,7 +225,7 @@ src_tests_unit_libgtest_a_SOURCES = \
 	vendor/googletest/googletest/src/gtest_main.cc
 
 noinst_PROGRAMS += src/tests/unit/unit-tests
-src_tests_unit_unit_tests_LDADD = src/tests/unit/libgtest.a $(LIBGLIBGIO_LIBS) $(LIBJSONCPP_LIBS)
+src_tests_unit_unit_tests_LDADD = src/tests/unit/libgtest.a $(LIBGLIBGIO_LIBS) $(LIBJSONCPP_LIBS) $(OPENSSL_LIBS) $(LIBUUID_LIBS)
 src_tests_unit_unit_tests_SOURCES = \
 	$(UNIT_TESTS_DEPS) $(UNIT_TESTS)
 else
@@ -240,6 +243,7 @@ noinst_PROGRAMS += \
 	src/tests/misc/log-prefix-selftest \
 	src/tests/misc/logwriter-tests \
 	src/tests/misc/lookup-tests \
+	src/tests/misc/machineid-test \
 	src/tests/misc/netcfg-dns-direct-file-selftest \
 	src/tests/misc/open-uri-test \
 	src/tests/misc/syslog-facility-mapping-test \
@@ -318,6 +322,11 @@ src_tests_misc_lookup_tests_SOURCES = \
 	src/tests/misc/lookup-tests.cpp \
 	src/common/lookup.cpp \
 	src/common/utils.cpp
+
+src_tests_misc_machineid_test_SOURCES = \
+	src/tests/misc/machineid-test.cpp \
+	src/common/machineid.cpp \
+	src/common/machineid.hpp
 
 src_tests_misc_netcfg_dns_direct_file_selftest_SOURCES = \
 	src/tests/misc/netcfg-dns-direct-file-selftest.cpp \
