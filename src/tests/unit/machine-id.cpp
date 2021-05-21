@@ -42,7 +42,9 @@ TEST(MachineID, not_implemented)
 }
 #else
 
+#include <openssl/ssl.h>
 #include <openssl/evp.h>
+#include <openvpn/openssl/compat.hpp>
 
 class ReferenceID
 {

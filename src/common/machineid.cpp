@@ -32,7 +32,9 @@
 #include <uuid/uuid.h>
 
 #ifdef USE_OPENSSL
+#include <openssl/ssl.h>
 #include <openssl/evp.h>
+#include <openvpn/openssl/compat.hpp>
 #endif
 
 #include "machineid.hpp"
