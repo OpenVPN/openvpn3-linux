@@ -638,6 +638,8 @@ else
         openvpn3_statedir="${localstatedir}/lib/openvpn3"
 fi
 AC_SUBST([openvpn3_statedir])
+AC_DEFINE_UNQUOTED([OPENVPN3_STATEDIR],["${openvpn3_statedir}"], [Path to OpenVPN 3 state directory])
+
 
 dnl
 dnl  Path where to install the various back-end OpenVPN 3 D-Bus services
