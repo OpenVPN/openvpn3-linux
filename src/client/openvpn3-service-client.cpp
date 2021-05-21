@@ -40,6 +40,7 @@
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
 #include "dbus/path.hpp"
+#include "common/machineid.hpp"
 #include "common/requiresqueue.hpp"
 #include "common/utils.hpp"
 #include "common/cmdargparser.hpp"
@@ -1029,6 +1030,19 @@ private:
             // If this happens, the configuration profile does not
             // contain a client certificate - so we disable it
             vpnconfig.disableClientCert = true;
+        }
+
+        //  Set a unique host/machine ID
+        try
+        {
+            MachineID machineid;
+            machineid.success();
+            vpnconfig.hwAddrOverride = machineid.get();
+        }
+        catch (const MachineIDException& excp)
+        {
+            signal.LogCritical("Could not set a unique host ID: "
+                               + excp.GetError());
         }
 
         // We need to provide a copy of the vpnconfig object, as vpnclient
