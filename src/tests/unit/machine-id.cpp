@@ -82,7 +82,7 @@ private:
 
     std::string hash_sha256(const std::string& input) {
         // Initialise an OpenSSL message digest context for SHA256
-        const EVP_MD *md = EVP_get_digestbynid(NID_sha256);
+        const EVP_MD *md = EVP_sha256();
         assert(nullptr != md);
         EVP_MD_CTX *ctx = EVP_MD_CTX_new();
         assert(nullptr != ctx);
@@ -94,7 +94,7 @@ private:
         // Calculate the SHA256 hash of the date
         unsigned char hash[EVP_MAX_MD_SIZE];
         unsigned int len = 0;
-        EVP_DigestFinal(ctx, hash, &len);
+        EVP_DigestFinal_ex(ctx, hash, &len);
         EVP_MD_CTX_free(ctx);
 
         // Format the calculated hash as a readable hex string

@@ -97,10 +97,10 @@ MachineID::MachineID(const std::string& local_machineid, bool enforce_local)
         // implementation.
 
         // Initialise an OpenSSL message digest context for SHA256
-        const EVP_MD *md = EVP_get_digestbynid(NID_sha256);
+        const EVP_MD *md = EVP_sha256();
         if (nullptr == md)
         {
-            throw MachineIDException("[OpenSSL] Failed looking up NID for SHA256");
+            throw MachineIDException("[OpenSSL] Failed preparing SHA256 MD context");
         }
         EVP_MD_CTX *ctx = EVP_MD_CTX_new();
         if (nullptr == ctx)
@@ -119,7 +119,7 @@ MachineID::MachineID(const std::string& local_machineid, bool enforce_local)
         // Calculate the SHA256 hash of the date
         unsigned char hash[EVP_MAX_MD_SIZE];
         unsigned int len = 0;
-        EVP_DigestFinal(ctx, hash, &len);
+        EVP_DigestFinal_ex(ctx, hash, &len);
         EVP_MD_CTX_free(ctx);
 
         // Format the calculated hash as a readable hex string
