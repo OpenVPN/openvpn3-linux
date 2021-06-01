@@ -24,6 +24,7 @@
 #
 
 __all__ = ['StatusMajor', 'StatusMinor',
+           'SessionManagerEvent', 'SessionManagerEventType',
            'ClientAttentionType', 'ClientAttentionGroup',
            'NetCfgChangeType',
            'ConfigParser',
@@ -34,4 +35,4 @@ from .constants import *
 from .ConfigParser import ConfigParser
 from .ConfigManager import ConfigurationManager, Configuration
 from .NetCfgManager import NetCfgManager, NetCfgDevice, NetworkChangeSignal
-from .SessionManager import SessionManager, Session
+from .SessionManager import SessionManager, SessionManagerEvent, Session

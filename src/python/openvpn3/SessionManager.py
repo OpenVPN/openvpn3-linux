@@ -27,7 +27,7 @@
 import dbus
 import time
 from functools import wraps
-from openvpn3.constants import StatusMajor, StatusMinor
+from openvpn3.constants import StatusMajor, StatusMinor, SessionManagerEventType
 from openvpn3.constants import ClientAttentionType, ClientAttentionGroup
 
 ##
@@ -390,6 +390,42 @@ class Session(object):
 
 
 ##
+#  This class will be instantiated on each SessionManagerEvent D-Bus
+#  signal and sent to the callback function.  It will contain
+#  all information about the event
+#
+class SessionManagerEvent(object):
+    def __init__(self, path, type, owner):
+        self.__path = path
+        self.__type = SessionManagerEventType(type)
+        self.__owner = owner
+
+    def GetPath(self):
+        return self.__path
+
+    def GetType(self):
+        return self.__type
+
+    def GetOwner(self):
+        return self.__owner
+
+    def __repr__(self):
+        return '<SessionManagerEvent type="%s", path="%s", owner_uid=%i>' % (
+            self.__type.name, str(self.__path), self.__owner)
+
+    def __str__(self):
+        return '[SESSION] %s: %s (owner: %i)' % (
+            self.__type.name, str(self.__path), self.__owner)
+
+    def __eq__(self, other):
+        if isinstance(other, SessionManagerEventType):
+            return other == self.__type
+        elif isinstance(other, str) or isinstance(other, dbus.ObjectPath):
+            return str(other) == str(self.__path)
+        return False
+
+
+##
 #  The SessionManager object provides access to the main object in
 #  the session manager D-Bus service.  This is primarily used to create
 #  new VPN tunnel sessions, but can also be used to retrieve specific objects
@@ -494,6 +530,18 @@ class SessionManager(object):
 
 
     ##
+    #  Subscribes to the SessionManagerEvent signals from the session manager
+    #  and register a callback function which is being called on each event
+    #
+    #  The callback function needs to accept 1 arguments:
+    #    a SessionManagerEvent object
+    #
+    def SessionManagerCallback(self, cbfnc):
+        self.__sessmgr_callback_func = cbfnc
+        self.__manager_intf.connect_to_signal('SessionManagerEvent', self.__sessmgr_event_cb_wrapper)
+
+
+    ##
     #  Private method, which sends a Ping() call to the main D-Bus
     #  interface for the service.  This is used to wake-up the service
     #  if it isn't running yet.
@@ -515,3 +563,11 @@ class SessionManager(object):
                 delay *= 1.33
             attempts -= 1
         raise RuntimeError("Could not establish contact with the Session Manager")
+
+
+    ##
+    #  Internal wrapper method to call the SessionManagerEvent signal handler
+    #  with a SessionManagerEvent Python object
+    #
+    def __sessmgr_event_cb_wrapper(self, path, evtype, owner):
+        self.__sessmgr_callback_func(SessionManagerEvent(path, evtype, owner))
