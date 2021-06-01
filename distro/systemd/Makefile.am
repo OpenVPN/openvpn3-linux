@@ -19,6 +19,7 @@
 
 %.service : %.service.in Makefile
 	$(AM_V_GEN)sed -e 's|\@SBINDIR\@|$(sbindir)|' \
+		       -e 's|\@LIBEXECDIR\@|$(pkglibexecdir)|' \
 		       -e 's|\@OPENVPN3_CONFIGDIR\@|$(openvpn3_configdir)|' \
 		$< > $@.tmp && mv $@.tmp $@
 
@@ -26,10 +27,16 @@ MAINTAINERCLEANFILES = \
 	Makefile.in
 
 EXTRA_DIST = \
-	openvpn3-autoload.service.in
+	openvpn3-autoload.service.in \
+	openvpn3-session@.service.in \
+	openvpn3-systemd
 
 systemd_unit_DATA = \
-	openvpn3-autoload.service
+	openvpn3-autoload.service \
+	openvpn3-session@.service
+
+pkglibexec_SCRIPTS = \
+	openvpn3-systemd
 
 CLEANFILES = $(systemd_unit_DATA) *~
 

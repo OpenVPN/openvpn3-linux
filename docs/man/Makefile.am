@@ -77,6 +77,7 @@ MAN_SECTION_8 = \
 	openvpn3-service-logger.8 \
 	openvpn3-service-netcfg.8 \
 	openvpn3-service-sessionmgr.8 \
+	openvpn3-systemd.8 \
 	$(ADDONS_SECTION_8)
 
 EXTRA_DIST = \

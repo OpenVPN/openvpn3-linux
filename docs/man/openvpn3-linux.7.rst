@@ -65,6 +65,9 @@ your own OpenVPN 3 front-ends with little extra efforts.  Both ``openvpn2``
 and ``openvpn3-autoload`` are Python 3 scripts which makes use of this
 OpenVPN 3 Python module.
 
+OpenVPN 3 Linux also provides an ``openvpn3-systemd``\(8) helper, which
+allows starting and managing VPN sessions via ``systemd``\(1)
+
 
 OPENVPN 3 D-BUS SERVICES
 ========================
@@ -191,3 +194,4 @@ SEE ALSO
 ``openvpn3-service-logger``\(8)
 ``openvpn3-service-netcfg``\(8)
 ``openvpn3-service-sessionmgr``\(8)
+``openvpn3-systemd``\(8)
