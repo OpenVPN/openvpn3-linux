@@ -33,6 +33,7 @@
 #include "config.h"
 #include "dbus/constants.hpp"
 #include "netcfg/netcfg-changetype.hpp"
+#include "sessionmgr/sessionmgr-events.hpp"
 
 using namespace std;
 
@@ -159,6 +160,11 @@ int main(int argc, char **argv)
     MAP(StatusMinor, min, "PROC_STOPPED", PROC_STOPPED);
     MAP(StatusMinor, min, "PROC_KILLED", PROC_KILLED);
     Generator("StatusMinor", min);
+
+    vector<ConstantMapping<SessionManager::EventType>> smgrev;
+    MAP(SessionManager::EventType, smgrev, "SESS_CREATED", SESS_CREATED);
+    MAP(SessionManager::EventType, smgrev, "SESS_DESTROYED", SESS_DESTROYED);
+    Generator("SessionManagerEventType", smgrev);
 
     vector<ConstantMapping<ClientAttentionType>> client_att_type;
     MAP(ClientAttentionType, client_att_type, "UNSET", UNSET);

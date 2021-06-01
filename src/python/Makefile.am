@@ -18,7 +18,10 @@
 #
 
 AM_CXXFLAGS = \
-	-I$(top_srcdir)/src
+	-I$(top_srcdir)/src \
+	-I$(top_srcdir)/openvpn3-core \
+	$(OPENVPN3_CORE_CXXFLAGS) \
+	$(LIBGLIBGIO_CFLAGS)
 
 CLEANFILES = \
 	*~ \
