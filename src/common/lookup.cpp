@@ -48,6 +48,24 @@ static inline bool isanum_string(const std::string& data)
 }
 
 
+
+static inline char* alloc_sysconf_buffer(int name, size_t* retlen)
+{
+    long buflen = sysconf(name);
+    if (buflen == -1)
+    {
+        // Some Linux distributions/libc libraries may fail to lookup the
+        // the proper sysconf() value.  Fallback to a reasonable size most
+        // likely large enough.  This is a known issue with Alpine Linux.
+        buflen = 16384;
+    }
+    *retlen = buflen;
+    char *retbuf = (char *)malloc((size_t) buflen);
+    memset(retbuf, 0, buflen);
+    return retbuf;
+}
+
+
 /**
  *  Looks up the uid of a user account to extract its username
  *
@@ -59,11 +77,8 @@ std::string lookup_username(uid_t uid)
 {
     struct passwd pwrec;
     struct passwd *result = nullptr;
-    size_t buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
-    char *buf = nullptr;
-
-    buf = (char *) malloc(buflen);
-    memset(buf, 0, buflen);
+    size_t buflen = 0;
+    char *buf = alloc_sysconf_buffer(_SC_GETPW_R_SIZE_MAX, &buflen);
 
     std::string ret;
     int r = getpwuid_r(uid, &pwrec, buf, buflen, &result);
@@ -91,11 +106,9 @@ uid_t lookup_uid(std::string username)
 {
     struct passwd pwrec;
     struct passwd *result = nullptr;
-    size_t buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
-    char *buf = nullptr;
+    size_t buflen = 0;
+    char *buf = alloc_sysconf_buffer(_SC_GETPW_R_SIZE_MAX, &buflen);
 
-    buf = (char *) malloc(buflen);
-    memset(buf, 0, buflen);
     uid_t ret;
     int r = getpwnam_r(username.c_str(), &pwrec, buf, buflen, &result);
     if ( (0 == r) && (NULL != result))
@@ -149,11 +162,9 @@ gid_t lookup_gid(const std::string& groupname)
 {
     struct group grprec;
     struct group *result = nullptr;
-    size_t buflen = sysconf(_SC_GETGR_R_SIZE_MAX);
-    char *buf = nullptr;
+    size_t buflen = 0;
+    char *buf = alloc_sysconf_buffer(_SC_GETPW_R_SIZE_MAX, &buflen);
 
-    buf = (char *) malloc(buflen);
-    memset(buf, 0, buflen);
     gid_t ret;
     int r = getgrnam_r(groupname.c_str(), &grprec, buf, buflen, &result);
     if ( (0 == r) && (NULL != result))
