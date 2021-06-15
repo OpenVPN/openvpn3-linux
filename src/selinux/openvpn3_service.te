@@ -72,6 +72,9 @@ allow openvpn3_netcfg_t self:netlink_generic_socket rw_netlink_socket_perms;
 
 # Allows openvpn3-service-netcfg to manage /etc/resolv.conf
 sysnet_manage_config(openvpn3_netcfg_t)
+# Needed to allow to rename /etc/resolv.conf to a backup file and create a
+# new /etc/resolv.conf - including restoring backup afterwards
+filetrans_pattern(openvpn3_netcfg_t, etc_t, net_conf_t, file)
 
 # openvpn3-service-netcfg keeps state/config files in /var/lib/openvpn3
 manage_dirs_pattern(openvpn3_netcfg_t, openvpn3_netcfg_var_lib_t, openvpn3_netcfg_var_lib_t)
