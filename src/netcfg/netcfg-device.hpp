@@ -436,11 +436,19 @@ public:
                 // The virtual device has not yet been created on the host (for
                 // non-DCO case), but all settings which has been queued up
                 // will be activated when this method is called.
-                if (resolver && dnsconfig
-                    && DNS::ApplySettingsMode::MODE_PRE == resolver->GetApplyMode())
+                try
                 {
-                    dnsconfig->Enable();
-                    resolver->ApplySettings(&signal);
+                    if (resolver && dnsconfig
+                        && DNS::ApplySettingsMode::MODE_PRE == resolver->GetApplyMode())
+                    {
+                        dnsconfig->Enable();
+                        resolver->ApplySettings(&signal);
+                    }
+                }
+                catch (const NetCfgException& excp)
+                {
+                    signal.LogCritical("DNS Resolver settings: "
+                                       + std::string(excp.what()));
                 }
 
                 if (!tunimpl)
@@ -449,21 +457,30 @@ public:
                 }
                 int fd = tunimpl->establish(*this);
 
-                if (resolver && dnsconfig)
+                try
                 {
-                    if (DNS::ApplySettingsMode::MODE_POST == resolver->GetApplyMode())
+                    if (resolver && dnsconfig)
                     {
-                        dnsconfig->SetDeviceName(device_name);
-                        dnsconfig->Enable();
-                        resolver->ApplySettings(&signal);
-                    }
+                        if (DNS::ApplySettingsMode::MODE_POST == resolver->GetApplyMode())
+                        {
+                            dnsconfig->SetDeviceName(device_name);
+                            dnsconfig->Enable();
+                            resolver->ApplySettings(&signal);
+                        }
 
-                    std::stringstream details;
-                    details << dnsconfig;
-                    signal.Debug(device_name,
-                                 "Activating DNS/resolver settings: "
-                                 + details.str());
-                    modified = false;
+                        std::stringstream details;
+                        details << dnsconfig;
+                        signal.Debug(device_name,
+                                     "Activating DNS/resolver settings: "
+                                     + details.str());
+                        modified = false;
+                    }
+                }
+                catch (const NetCfgException& excp)
+                {
+                    signal.LogCritical("DNS Resolver settings: "
+                                       + std::string(excp.what()));
+
                 }
 
 #ifdef ENABLE_OVPNDCO
