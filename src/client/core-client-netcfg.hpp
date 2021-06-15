@@ -272,7 +272,14 @@ public:
         }
         else
         {
-            device->Disable();
+            try
+            {
+                device->Disable();
+            }
+            catch(const DBusException& excp)
+            {
+                signal->LogCritical(excp.GetRawError());
+            }
         }
     }
 
