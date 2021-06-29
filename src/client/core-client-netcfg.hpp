@@ -66,7 +66,26 @@ public:
     ~NetCfgTunBuilder()
     {
         // Explicitly call cleanup
-        netcfgmgr.Cleanup();
+        try
+        {
+            if (device)
+            {
+                device->Destroy();
+            }
+        }
+        catch (const NetCfgProxyException& excp)
+        {
+            signal->LogCritical("Removing device failed: " + excp.GetError());
+        }
+
+        try
+        {
+            netcfgmgr.Cleanup();
+        }
+        catch (const NetCfgProxyException& excp)
+        {
+            signal->LogCritical("Cleaning up NetCfgMgr error: " + excp.GetError());
+        }
 #ifdef OPENVPN3_CORE_CLI_TEST
         delete signal;
 #endif
@@ -243,7 +262,39 @@ public:
         // Set all routes in one go to avoid calling the function multiple
         // times
         device->AddNetworks(networks);
-        return device->Establish();
+
+        int ret = -1;
+        try
+        {
+            ret = device->Establish();
+        }
+        catch (const DBusProxyAccessDeniedException& excp)
+        {
+            signal->StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_FAILED);
+            try
+            {
+                tun_builder_teardown(true);
+            }
+            catch (...)
+            {
+            }
+            signal->LogFATAL("Access denied calling NetCfgDevice::Establish(): " +
+                                std::string(excp.what()));
+        }
+        catch (const DBusException& excp)
+        {
+            signal->StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_FAILED);
+            try
+            {
+                tun_builder_teardown(true);
+            }
+            catch (...)
+            {
+            }
+            signal->LogFATAL("Error calling NetCfgDevice::Establish(): " +
+                                std::string(excp.what()));
+        }
+        return ret;
     }
 
 
@@ -267,7 +318,15 @@ public:
 
         if (disconnect)
         {
-            device->Destroy();
+            try
+            {
+                device->Destroy();
+            }
+            catch(const DBusException& excp)
+            {
+                signal->LogCritical("tun_builder_teardown: "
+                                    + std::string(excp.GetRawError()));
+            }
             device.reset(nullptr);
         }
         else
@@ -422,7 +481,15 @@ private:
         {
             std::string devpath = netcfgmgr.CreateVirtualInterface(session_token);
             device.reset(netcfgmgr.getVirtualInterface(devpath));
-            device->SetProperty("dns_scope", dns_scope);
+            try
+            {
+                device->SetProperty("dns_scope", dns_scope);
+            }
+            catch(const DBusException& excp)
+            {
+                signal->LogCritical("Failed changing DNS Scope: "
+                                    + std::string(excp.GetRawError()));
+            }
             return true;
         }
         catch (NetCfgProxyException& e)
