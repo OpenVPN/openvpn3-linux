@@ -61,6 +61,7 @@ namespace DNS
         struct updateQueueEntry
         {
             bool enable;
+            bool disabled = false;
             resolved::Link::Ptr link;
             resolved::ResolverRecord::List resolver;
             resolved::SearchDomain::List search;

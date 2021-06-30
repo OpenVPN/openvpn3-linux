@@ -105,8 +105,12 @@ void SystemdResolved::Apply(const ResolverSettings::Ptr settings)
 
 void SystemdResolved::Commit(NetCfgSignals *signal)
 {
-    for (const auto& upd : update_queue)
+    for (auto& upd : update_queue)
     {
+        if (upd.disabled)
+        {
+            continue;
+        }
         try
         {
             if (upd.enable)
@@ -126,6 +130,7 @@ void SystemdResolved::Commit(NetCfgSignals *signal)
         catch (const DBusException& excp)
         {
             signal->LogCritical("systemd-resolved: " + std::string(excp.what()));
+            upd.disabled = true;
         }
     }
     update_queue.clear();
