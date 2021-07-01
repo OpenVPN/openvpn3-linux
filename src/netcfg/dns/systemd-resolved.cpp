@@ -127,9 +127,19 @@ void SystemdResolved::Commit(NetCfgSignals *signal)
                 upd.link->Revert();
             }
         }
+        catch (const DBusProxyAccessDeniedException& excp)
+        {
+            signal->LogCritical("systemd-resolved: " + std::string(excp.what()));
+            upd.disabled = true;
+        }
         catch (const DBusException& excp)
         {
             signal->LogCritical("systemd-resolved: " + std::string(excp.what()));
+            upd.disabled = true;
+        }
+        catch (const std::exception& excp)
+        {
+            signal->LogError("systemd-resolved: " + std::string(excp.what()));
             upd.disabled = true;
         }
     }
