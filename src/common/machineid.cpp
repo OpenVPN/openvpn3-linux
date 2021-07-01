@@ -71,6 +71,14 @@ MachineID::MachineID(const std::string& local_machineid, bool enforce_local)
         if (!machineid_file.eof() && !machineid_file.fail())
         {
             success = true;
+            if (fname == local_machineid)
+            {
+                source = MachineID::SourceType::LOCAL;
+            }
+            else
+            {
+                source = MachineID::SourceType::SYSTEM;
+            }
             break;
         }
     }
@@ -84,6 +92,16 @@ MachineID::MachineID(const std::string& local_machineid, bool enforce_local)
     {
         // No machine ID was found; generate one on-the-fly and save it
         rawid = generate_machine_id(local_machineid);
+        if (errormsg.empty())
+        {
+            source = MachineID::SourceType::LOCAL;
+        }
+        else
+        {
+            // If an error message appeared in generate_machine_id, the
+            // source is completely random
+            source = MachineID::SourceType::RANDOM;
+        }
     }
 
     try
@@ -131,6 +149,7 @@ MachineID::MachineID(const std::string& local_machineid, bool enforce_local)
         machine_id = std::string(output.str());
 #else
         errormsg = "Retrieving a MachineID is only supported with OpenSSL";
+        source = MachineID::SourceType::None;
 #endif
     }
     catch (const std::exception& excp)
@@ -148,6 +167,13 @@ void MachineID::success() const
         throw MachineIDException(errormsg);
     }
 }
+
+
+MachineID::SourceType MachineID::GetSource() const noexcept
+{
+    return source;
+}
+
 
 std::string MachineID::get() const noexcept
 {

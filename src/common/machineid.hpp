@@ -58,6 +58,14 @@ private:
 class MachineID
 {
 public:
+    enum class SourceType {
+        NONE,    ///< No source used - no reliable machine-id available if any at all
+        SYSTEM,  ///< machine-id derived from /etc/machine-id
+        LOCAL,   ///< Static machine-id created, using OPENVPN3_MACHINEID
+        RANDOM   ///< Storing generated machine-id failed, unreliable random value used
+    };
+
+
     MachineID(const std::string& local_machineid = OPENVPN3_MACHINEID,
               bool enforce_local=false);
     virtual ~MachineID() = default;
@@ -71,6 +79,13 @@ public:
      */
     void success() const;
 
+    /**
+     *  Retrieve the source type for the generation of the machine-id
+     *
+     * @return  Returns MachineID::SourceType used
+     */
+    SourceType GetSource() const noexcept;
+
     std::string get() const noexcept;
 
     friend std::ostream& operator<<(std::ostream& os,
@@ -80,6 +95,7 @@ public:
     }
 
 private:
+    SourceType source{SourceType::NONE};
     std::string machine_id{};
     std::string errormsg{};
 

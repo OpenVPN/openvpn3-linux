@@ -134,9 +134,28 @@ private:
 
 };
 
+
+TEST_F(MachineIDTest, get_system)
+{
+    std::ifstream sys_machineid_file("/etc/machine-id");
+    std::string sysid;
+    sys_machineid_file >> sysid;
+    if (!sys_machineid_file.fail())
+    {
+        MachineID machid;
+        EXPECT_TRUE(machid.GetSource() == MachineID::SourceType::SYSTEM);
+    }
+    else
+    {
+        GTEST_SKIP() << "Missing /etc/system-id file";
+    }
+    sys_machineid_file.close();
+}
+
 TEST_F(MachineIDTest, get)
 {
     MachineID machid("unit-test_machine-id", true);
+    EXPECT_TRUE(machid.GetSource() == MachineID::SourceType::LOCAL);
     ASSERT_NO_THROW(machid.success());
     ASSERT_EQ(machid.get(), refid->get());
 }
@@ -144,6 +163,7 @@ TEST_F(MachineIDTest, get)
 TEST_F(MachineIDTest, stringstream)
 {
     MachineID machid("unit-test_machine-id", true);
+    EXPECT_TRUE(machid.GetSource() == MachineID::SourceType::LOCAL);
     ASSERT_NO_THROW(machid.success());
 
     std::stringstream id;
@@ -154,6 +174,7 @@ TEST_F(MachineIDTest, stringstream)
 TEST_F(MachineIDTest, fail_machine_id_save)
 {
     MachineID machid("/some/non/existing/path/ovpn3-unittest-machine-id", true);
+    EXPECT_TRUE(machid.GetSource() == MachineID::SourceType::RANDOM);
     ASSERT_THROW(machid.success(), MachineIDException);
 }
 
