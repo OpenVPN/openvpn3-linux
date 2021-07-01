@@ -58,6 +58,9 @@ SingleCommand::Ptr prepare_command_sessions_list();
 SingleCommand::Ptr prepare_command_netcfg_service();
 
 
+// Commands provided in variables.cpp
+SingleCommand::Ptr prepare_command_variables();
+
 
 // Gather the complete list of commands.  The order
 // here is reflected in the help screen when the main
@@ -98,6 +101,7 @@ std::vector<PrepareCommand> command_list_openvpn3 = {
 //
 std::vector<PrepareCommand> command_list_openvpn3admin = {
     prepare_command_version,
+    prepare_command_variables,
 
     prepare_command_log_service,
     prepare_command_netcfg_service,

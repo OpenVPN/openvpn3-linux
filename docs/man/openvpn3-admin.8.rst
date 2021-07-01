@@ -34,6 +34,13 @@ version ``[--services]``
                 provided, it will show the version information for all available
                 OpenVPN 3 D-Bus backend services.
 
+variables ``[--machine-id]``
+                Show various OpenVPN 3 Linux related variables.
+
+                ``--machine-id`` shows the hosts machine-id and the source
+                used to derive the value.  This value is sent to OpenVPN
+                servers in the IV_HWADDR variable.
+
 log-service
                 Manage the OpenVPN 3 Log service
 

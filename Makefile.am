@@ -542,12 +542,15 @@ src_ovpn3cli_openvpn3_admin_SOURCES = \
 	src/ovpn3cli/arghelpers.cpp \
 	src/ovpn3cli/ovpn3cli.hpp \
 	src/ovpn3cli/commands/commands.hpp \
+	src/ovpn3cli/commands/variables.cpp \
 	src/ovpn3cli/commands/version.cpp \
 	src/ovpn3cli/commands/log-service.cpp \
 	src/ovpn3cli/commands/netcfg-service.cpp \
 	src/common/cmdargparser.cpp \
 	src/common/configfileparser.cpp \
 	src/common/configfileparser.hpp \
+	src/common/machineid.cpp \
+	src/common/machineid.hpp \
 	src/common/utils.cpp \
 	src/netcfg/proxy-netcfg.cpp
 nodist_src_ovpn3cli_openvpn3_admin_SOURCES=$(DCO_KEYCONFIG_PB_SOURCES)
