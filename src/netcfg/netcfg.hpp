@@ -111,6 +111,10 @@ public:
                           << "</node>";
         ParseIntrospectionXML(introspection_xml);
         signal.Debug("Network Configuration service object ready");
+        if (!resolver)
+        {
+            signal.LogWarn("No DNS resolver has been configured");
+        }
     }
 
 

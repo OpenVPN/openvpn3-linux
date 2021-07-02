@@ -231,7 +231,18 @@ int netcfg_main(ParsedArgs::Ptr args)
 
         if (args->Present("systemd-resolved"))
         {
-            resolver_be = new DNS::SystemdResolved(dbus.GetConnection());
+            try
+            {
+                resolver_be = new DNS::SystemdResolved(dbus.GetConnection());
+            }
+            catch (const DNS::resolved::Exception& excp)
+            {
+                std::cerr << "*** ERROR *** "<< excp.what() << std::endl;
+            }
+            catch (const NetCfgException& excp)
+            {
+                std::cerr << "*** ERROR *** "<< excp.what() << std::endl;
+            }
         }
 
         DNS::SettingsManager::Ptr resolvmgr = nullptr;
@@ -358,6 +369,9 @@ int main(int argc, char **argv)
         std::cout << excp.what() << std::endl;
         return 2;
     }
-
-
+    catch (const std::exception& excp)
+    {
+        std::cout << "*** ERROR ***   " << excp.what() << std::endl;
+        return 3;
+    }
 }
