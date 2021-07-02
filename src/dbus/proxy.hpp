@@ -488,6 +488,32 @@ namespace openvpn
         }
 
 
+        int StartServiceByName(const std::string& name)
+        {
+            GDBusProxy *proxy = SetupProxy("org.freedesktop.DBus",
+                                           "org.freedesktop.DBus",
+                                               "/");
+            GVariant *r = dbus_proxy_call(proxy,
+                                          "StartServiceByName",
+                                          g_variant_new("(su)",
+                                                        name.c_str(),
+                                                        0 // Not in use by D-Bus
+                                                        ),
+                                           false,
+                                           G_DBUS_CALL_FLAGS_NONE);
+            if (r)
+            {
+                GLibUtils::checkParams(__func__, r, "(u)", 1);
+                guint res = GLibUtils::ExtractValue<unsigned int>(r, 0);
+                g_variant_unref(r);
+                return res;
+            }
+            THROW_DBUSEXCEPTION("StartServiceByName",
+                                std::string("Failed requesting starting of ")
+                                + "service '" + name + "' ");
+        }
+
+
         GVariant * Call(std::string method, GVariant *params, bool noresponse = false) const
         {
             return dbus_proxy_call(proxy, method, params, noresponse,
