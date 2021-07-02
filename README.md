@@ -323,6 +323,13 @@ The following dependencies are needed:
 
   https://en.wikipedia.org/wiki/Util-linux
 
+* polkit 0.105 or newer
+
+  http://www.freedesktop.org/wiki/Software/polkit
+
+  Only needed when using the systemd-resolved integration.  On Ubuntu this
+  package is called policykit-1.
+
 * (optional) libnl3 3.2.29 or newer
 
   http://www.infradead.org/~tgr/libnl/
@@ -414,7 +421,7 @@ First install the package dependencies needed to run the build.
 
 - Generic build requirements:
 
-      # apt-get install build-essential git pkg-config autoconf autoconf-archive libglib2.0-dev libjsoncpp-dev uuid-dev liblz4-dev libcap-ng-dev libxml2-utils python3-minimal python3-dbus python3-docutils python3-jinja2 libxml2-utils libtinyxml2-dev
+      # apt-get install build-essential git pkg-config autoconf autoconf-archive libglib2.0-dev libjsoncpp-dev uuid-dev liblz4-dev libcap-ng-dev libxml2-utils python3-minimal python3-dbus python3-docutils python3-jinja2 libxml2-utils libtinyxml2-dev policykit-1
 
 - Dependencies to build with DCO support:
 
@@ -433,7 +440,7 @@ First install the package dependencies needed to run the build.
 
 - Generic build requirements:
 
-      # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2 tinyxml2-devel python3-dbus python3-gobject python3-pyOpenSSL python3-jinja2 python3-docutils python3-dbus bzip2
+      # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2 tinyxml2-devel python3-dbus python3-gobject python3-pyOpenSSL python3-jinja2 python3-docutils python3-dbus bzip2 polkit
 
 - Dependencies to build with DCO support:
 
@@ -473,7 +480,7 @@ First install the package dependencies needed to run the build.
 
 - Generic build requirements (only RHEL 7):
 
-      # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel lz4-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2 python-docutils python36 python36-dbus python36-gobject python36-pyOpenSSL
+      # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel lz4-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2 python-docutils python36 python36-dbus python36-gobject python36-pyOpenSSL polkit
 
   For RHEL 8/CentOS 8 see the Fedora package lists, including dependencies for DCO support.
 
