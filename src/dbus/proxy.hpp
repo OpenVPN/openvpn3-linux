@@ -467,6 +467,27 @@ namespace openvpn
         }
 
 
+        std::string GetNameOwner(const std::string& name)
+        {
+            GDBusProxy *proxy = SetupProxy("org.freedesktop.DBus",
+                                           "org.freedesktop.DBus",
+                                               "/");
+            GVariant *r = dbus_proxy_call(proxy,
+                                          "GetNameOwner",
+                                          g_variant_new("(s)", name.c_str()),
+                                          false,
+                                          G_DBUS_CALL_FLAGS_NONE);
+            if (r)
+            {
+                GLibUtils::checkParams(__func__, r, "(s)", 1);
+                std::string res(GLibUtils::ExtractValue<std::string>(r, 0));
+                g_variant_unref(r);
+                return res;
+            }
+            THROW_DBUSEXCEPTION("GetNameOwner", "No owner found");
+        }
+
+
         GVariant * Call(std::string method, GVariant *params, bool noresponse = false) const
         {
             return dbus_proxy_call(proxy, method, params, noresponse,
