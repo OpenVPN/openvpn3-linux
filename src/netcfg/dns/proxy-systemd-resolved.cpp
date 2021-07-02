@@ -287,6 +287,21 @@ namespace resolved {
                     "org.freedesktop.resolve1.Manager",
                     "/org/freedesktop/resolve1")
     {
+        // Check for presence of org.freedesktop.PolicyKit1
+        // This service is needed to be allowed to send update requests
+        // to systemd-resolved as the 'openvpn' user which net.openvpn.v3.netcfg
+        // run as
+        try
+        {
+            (void) StartServiceByName("org.freedesktop.PolicyKit1");
+            (void) GetNameOwner("org.freedesktop.PolicyKit1");
+        }
+        catch (const DBusException& excp)
+        {
+            throw Exception(std::string("Could not access ")
+                                  + "org.freedesktop.PolicyKit1 (polkitd) service. "
+                                  + "Cannot configure systemd-resolved integration");
+        }
     }
 
 
