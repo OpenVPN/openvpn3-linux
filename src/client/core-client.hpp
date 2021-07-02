@@ -330,8 +330,8 @@ private:
             signal->LogVerb2("Retrieving configuration from server");
         }
         else if ("TUN_SETUP_FAILED" == ev.name
-                 && "TUN_IFACE_CREATE" == ev.name
-                 && "TUN_IFACE_DISABLED" == ev.name)
+                 || "TUN_IFACE_CREATE" == ev.name
+                 || "TUN_IFACE_DISABLED" == ev.name)
         {
             failed_signal_sent = true;
             signal->StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_FAILED);
