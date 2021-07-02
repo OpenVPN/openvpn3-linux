@@ -110,7 +110,7 @@ static void apply_capabilities(ParsedArgs::Ptr args,
         // With the capapbility set, no root account access is needed
         drop_root_ng();
     }
-    capng_apply(CAPNG_SELECT_BOTH);
+    capng_apply(CAPNG_SELECT_CAPS);
 }
 
 
