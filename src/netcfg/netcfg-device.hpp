@@ -455,7 +455,18 @@ public:
                 {
                     tunimpl.reset(getCoreBuilderInstance());
                 }
-                int fd = tunimpl->establish(*this);
+
+                int fd = -1 ;
+                try
+                {
+                    fd = tunimpl->establish(*this);
+                }
+                catch (const NetCfgException& excp)
+                {
+                    signal.LogCritical("Failed to setup a TUN interface: "
+                                       + std::string(excp.what()));
+
+                }
 
                 try
                 {
@@ -782,6 +793,13 @@ public:
             {
                 return properties.SetValue(property_name, value);
             }
+        }
+        catch (const NetCfgException& excp)
+        {
+            signal.LogError(excp.what());
+            throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
+                                        obj_path, intf_name, property_name,
+                                        excp.what());
         }
         catch (DBusPropertyException&)
         {
