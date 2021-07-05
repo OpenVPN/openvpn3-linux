@@ -13,7 +13,7 @@ require {
         class tcp_socket rw_socket_perms;
         class tun_socket create;
         class netlink_route_socket rw_netlink_socket_perms;
-        class netlink_generic_socket rw_netlink_socket_perms;
+        class netlink_generic_socket create_socket_perms;
         class capability { dac_override dac_read_search net_admin setpcap };
         class process setcap;
 }
@@ -68,7 +68,7 @@ allow openvpn3_netcfg_t openvpn3_client_t:tcp_socket rw_socket_perms;
 
 # Allow openvpn3-service-netcfg to use netlink for network/routing config
 allow openvpn3_netcfg_t self:netlink_route_socket rw_netlink_socket_perms;
-allow openvpn3_netcfg_t self:netlink_generic_socket rw_netlink_socket_perms;
+allow openvpn3_netcfg_t self:netlink_generic_socket create_socket_perms;
 
 # Allows openvpn3-service-netcfg to manage /etc/resolv.conf
 sysnet_manage_config(openvpn3_netcfg_t)
