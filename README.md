@@ -240,7 +240,7 @@ with no data to maintain, they will shut-down automatically.
 
       # openvpn3-admin netcfg-service --config-set systemd-resolved 1
 
-  Next time the ``openvpn3-service-netcfg`` service restarts, systemd-resovled
+  Next time the ``openvpn3-service-netcfg`` service restarts, systemd-resolved
   support will be used instead.  Note, this requires at least **systemd v243**
   or newer (or a distribution which has back-ported a newer version).  This works
   now with CentOS 8, Fedora 31 and newer, Red Hat Enterprise Linux 8 or
@@ -560,28 +560,18 @@ the [source code](https://gitlab.com/openvpn/ovpn-dco/).
 The ovpn-dco kernel module currently only support ***Linux kernel 5.4*** and
 newer.  Currently supported distributions with DCO support:
 
- * Fedora release 32, 33 and Rawhide
- * Ubuntu 20.04
+ * CentOS 8
+ * Fedora release 33, 34 and Rawhide
+ * Red Hat Enterprise Linux 8
+ * Ubuntu 20.04 and newer
 
 The ovpn-dco kernel module is currently not functional on RHEL/CentOS due
-to the kernel version is older than 5.4.  OpenVPN 3 Linux will build with
+to the kernel version is older than 4.18.  OpenVPN 3 Linux will build with
 the ``--enable-dco`` feature but requires a functional ``ovpn-dco``
 kernel module to be fully functional.
 
-
-
 To build OpenVPN 3 Linux with this support, add ``--enable-dco`` to the
 ``./configure`` command.
-
-##### NOTES: SELinux on Fedora
-
-   There is a known issue with SELinux.  For the time being SELinux
-   must be put into permissive mode before DCO support will work.
-   This is done by running this command:
-
-       # setenforce 0
-
-   This will fixed in a later release of OpenVPN 3 Linux.
 
 
 #### Auto-completion helper for bash/zsh
@@ -600,17 +590,17 @@ a single VPN session).  This is done via D-Bus.  But on systems with
 SELinux, the D-Bus daemon is not allowed to pass file descriptors related
 to `/dev/net/tun`.
 
-The openvpn3-linux project ships an SELinux policy module, which will be
-installed in `/etc/openvpn3/selinux` **if** the `./configure` script can
+The openvpn3-linux project ships atwo SELinux policy modules, which will be
+installed in `/usr/share/selinux/packages` **if** the `./configure` script can
 locate the SELinux policy development files.  On RHEL/Fedora the development
 files are located under `/usr/share/selinux/devel` and provided by the
 `selinux-policy-devel` package.
 
 If the `selinux-policy-devel` package has been detected by `./configure`,
 running `make install` will install the `openvpn3.pp` policy package,
-typically in `/etc/openvpn3/selinux`.
+typically in `/usr/share/selinux/packages`.
 
-This policy package adds a SELinux boolean, `dbus_access_tuntap_device`,
+The `openvpn3.pp` policy package adds a SELinux boolean, `dbus_access_tuntap_device`,
 which grants processes, such as `dbus-daemon` running under the
 `system_dbusd_t` security context access to files labelled as
 `tun_tap_device_t`; which matches the label of `/dev/net/tun`.
@@ -627,6 +617,15 @@ has not been done.  The source code of the policy package can be found in
 
 For users installing the pre-built RPM binaries, this is handled by the RPM
 scriptlet during package install.
+
+The second policy module, `openvpn3_service.pp`, will confine both the
+`openvpn3-service-netcfg` and `openvpn3-service-client` processes into their
+own SELinux process contexts (`openvpn3_netcfg_t` and `openvpn3_client_t`).
+See the [`src/selinux/openvpn3_service.te`](src/selinux/openvpn3_service.te)
+source for more details.
+
+For the RPM builds, both SELinux policies are provided in the
+`openvpn3-selinux` package.
 
 
 Logging
