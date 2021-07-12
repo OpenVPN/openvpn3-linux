@@ -96,16 +96,6 @@ private:
 };
 #endif
 
-
-class CoreFatalError : public std::exception
-{
-public:
-    CoreFatalError()
-    {
-    }
-};
-
-
 /**
  *  Core VPN Client implementation of ClientAPI::OpenVPNClient
  */
@@ -253,9 +243,7 @@ private:
 
 #ifdef DEBUG_CORE_EVENTS
         std::stringstream entry;
-        entry << " EVENT [" << evntcount << "]"
-              << "[fatal="<< (ev.fatal ? "true" : "false") << "]"
-              << "[name=" << ev.name << "]: " << ev.info;
+        entry << " EVENT [" << evntcount << "][name=" << ev.name << "]: " << ev.info;
         signal->Debug(entry.str());
 #endif
 
@@ -348,15 +336,7 @@ private:
             failed_signal_sent = true;
             signal->StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_FAILED);
             run_status = StatusMinor::CONN_FAILED;
-            if (ev.fatal)
-            {
-                signal->LogFATAL("TUN configuration failed: ["
-                                 + ev.name + "] " + ev.info);
-            }
-            else
-            {
-                signal->LogCritical("Failed configuring TUN device (" + ev.name + ")");
-            }
+            signal->LogCritical("Failed configuring TUN device (" + ev.name + ")");
         }
         else if ("CONNECTING" == ev.name)
         {
@@ -461,18 +441,12 @@ private:
                                      StatusMinor::CONN_DISCONNECTED);
                 run_status = StatusMinor::CONN_DISCONNECTED;
                 signal->LogInfo("Disconnected");
-                failed_signal_sent = ev.fatal;
             }
         }
         else if (ev.fatal)
         {
             std::string msgtag = "[" + ev.name + "] ";
             signal->LogFATAL(msgtag + ev.info);
-        }
-
-        if (ev.fatal)
-        {
-            throw CoreFatalError();
         }
     }
 
