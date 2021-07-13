@@ -38,7 +38,8 @@ namespace openvpn {
                 || (optname == "dh")
                 || (optname == "pkcs12")
                 || (optname == "tls-auth")
-                || (optname == "tls-crypt")) ? true : false;
+                || (optname == "tls-crypt")
+                || (optname == "tls-crypt-v2")) ? true : false;
     }
 
     std::string optparser_mkline(std::string optname, std::string optvalue)
