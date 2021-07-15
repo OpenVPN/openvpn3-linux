@@ -309,12 +309,18 @@ private:
             if (string::starts_with(ev.info, "OPEN_URL:"))
             {
                 std::string url = ev.info.substr(9);
-                signal->AttentionReq(ClientAttentionType::CREDENTIALS,
-                                     ClientAttentionGroup::OPEN_URL, url);
-                signal->StatusChange(StatusMajor::SESSION,
-                                     StatusMinor::SESS_AUTH_URL,
-                                     url);
-                run_status = StatusMinor::CFG_REQUIRE_USER;
+                open_url(url, "");
+            }
+            else if (string::starts_with(ev.info, "WEB_AUTH:"))
+            {
+                std::string extra = ev.info.substr(9);
+                size_t flags_end = extra.find(':');
+                if (flags_end != std::string::npos)
+                {
+                    std::string flags = extra.substr(0, flags_end);
+                    std::string url = extra.substr(flags_end + 1);
+                    open_url(url, flags);
+                }
             }
             else
             {
@@ -448,6 +454,18 @@ private:
             std::string msgtag = "[" + ev.name + "] ";
             signal->LogFATAL(msgtag + ev.info);
         }
+    }
+
+    void open_url(std::string& url, const std::string& flags)
+    {
+        // We currently ignore the flags since we do not have an
+        // internal webview or proxy implementation
+        signal->AttentionReq(ClientAttentionType::CREDENTIALS,
+                             ClientAttentionGroup::OPEN_URL, url);
+        signal->StatusChange(StatusMajor::SESSION,
+                             StatusMinor::SESS_AUTH_URL,
+                             url);
+        run_status = StatusMinor::CFG_REQUIRE_USER;
     }
 
 
