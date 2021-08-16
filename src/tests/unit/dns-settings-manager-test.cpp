@@ -23,6 +23,7 @@
  * @brief  [enter description of what this file contains]
  */
 
+#include <algorithm>
 #include <iostream>
 #include <vector>
 #include <gtest/gtest.h>

@@ -23,6 +23,7 @@
  * @brief  Unit test for Configuration::File and related classes
  */
 
+#include <algorithm>
 #include <memory>
 #include <fstream>
 #include <sstream>
