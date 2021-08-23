@@ -137,6 +137,9 @@ def fetch_profile(uri, username, password, autologin):
         sslctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
         sslctx.options &= ~ssl.OP_NO_SSLv3
         sslctx.options &= ~ssl.OP_NO_SSLv2
+        sslctx.load_default_certs()
+        sslctx.verify_mode = ssl.CERT_REQUIRED
+        sslctx.check_hostname = True
         handler = urllib.request.HTTPSHandler(context=sslctx)
         if 'OPENVPN3_DEBUG' in os.environ:
             handler.set_http_debuglevel(1)
