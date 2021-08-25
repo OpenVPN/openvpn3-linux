@@ -43,6 +43,11 @@ OPTIONS
                 Can be used instead of ``--path`` where the tun interface name
                 managed by OpenVPN 3 is given instead.
 
+--timeout SECS
+                Defines how long it will attempt to reestablish the connection
+                when restarting or resuming a session.  Default is to never
+                time out.
+
 -P, --pause
                 Suspends/pauses the running VPN session.  This is not a
                 complete shutdown and can be used to temporarily disconnect with

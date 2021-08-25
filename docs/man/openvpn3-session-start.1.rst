@@ -46,6 +46,10 @@ OPTIONS
                 will not tear-down the virtual VPN interface when reconnecting.
                 See ``openvpn3-config-manage`` for details.
 
+--timeout SECS
+                Defines how long it will attempt to establish a connection
+                before aborting.  Default is to never time out.
+
 --dco BOOL
                 Enable kernel based Data Channel Offload for this session only.
                 This moves the tunnelled network traffic to be handled inside

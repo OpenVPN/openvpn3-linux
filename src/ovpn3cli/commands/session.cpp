@@ -160,11 +160,14 @@ enum class SessionStartMode : std::uint8_t {
  *                      operate on
  * @param initial_mode  SessionStartMode defining how this tunnel is
  *                      to be (re)started
+ * @param timeout       Connection timeout. If exceeding this, the connection
+ *                      attempt is aborted.
  *
  * @throws SessionException if any issues related to the session itself.
  */
 static void start_session(OpenVPN3SessionProxy& session,
-                          SessionStartMode initial_mode)
+                          SessionStartMode initial_mode,
+                          int timeout)
 {
     // Prepare the SIGINT signal handling
     struct sigaction sact;
@@ -203,13 +206,12 @@ static void start_session(OpenVPN3SessionProxy& session,
                 throw SessionException("Unknown SessionStartMode");
             }
 
-            // Allow approx 30 seconds to establish connection; one loop
-            // will take about 1.3 seconds.
-            unsigned int attempts = 23;
+            // Attempt to connect until the given timeout has been reached.
+            // If timeout has been disabled (-1), loop forever.
+            time_t op_start = time(0);
             StatusEvent s;
-            while (attempts > 0)
+            while ((-1 == timeout) || ((op_start + timeout) >= time(0)))
             {
-                attempts--;
                 usleep(300000);  // sleep 0.3 seconds - avg setup time
                 try
                 {
@@ -268,7 +270,6 @@ static void start_session(OpenVPN3SessionProxy& session,
                 else if (s.minor == StatusMinor::CONN_DISCONNECTED
                         || s.minor == StatusMinor::CONN_AUTH_FAILED)
                 {
-                    attempts = 0;
                     break;
                 }
                 else if (s.minor == StatusMinor::CFG_REQUIRE_USER)
@@ -280,7 +281,6 @@ static void start_session(OpenVPN3SessionProxy& session,
                 // If it has, disconnect the connection attempt and abort.
                 if (sigint_received)
                 {
-                    attempts = 0;
                     try
                     {
                         session.Disconnect();
@@ -295,10 +295,10 @@ static void start_session(OpenVPN3SessionProxy& session,
 
                 sleep(1);  // If not yet connected, wait for 1 second
             }
-            if (attempts < 1)
+            if ((op_start + timeout) <= time(0))
             {
                 std::stringstream err;
-                err << "Failed to connect: " << s << std::endl;
+                err << "Failed to connect (timeout): " << s << std::endl;
                 session.Disconnect();
                 throw SessionException(err.str());
             }
@@ -483,6 +483,12 @@ static int cmd_session_start(ParsedArgs::Ptr args)
                                "--persist-tun can only be used with --config");
     }
 
+    int timeout = -1;
+    if (args->Present("timeout"))
+    {
+        timeout = std::atoi(args->GetValue("timeout", 0).c_str());
+    }
+
     try
     {
         OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
@@ -547,7 +553,7 @@ static int cmd_session_start(ParsedArgs::Ptr args)
         }
 #endif
 
-        start_session(session, SessionStartMode::START);
+        start_session(session, SessionStartMode::START, timeout);
         return 0;
     }
     catch (const SessionException& excp)
@@ -587,6 +593,8 @@ SingleCommand::Ptr prepare_command_session_start()
                    arghelper_config_paths);
     cmd->AddOption("persist-tun", 0,
                    "Enforces persistent tun/seamless tunnel (requires --config)");
+    cmd->AddOption("timeout", 0, "SECS", true,
+                   "Connection attempt timeout (default: infinite)");
 #ifdef ENABLE_OVPNDCO
     cmd->AddOption("dco", 0, "BOOL", true,
                    "Start the connection using Data Channel Offload kernel acceleration",
@@ -894,6 +902,12 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
 
     try
     {
+        int timeout = -1;
+        if (args->Present("timeout"))
+        {
+            timeout = std::atoi(args->GetValue("timeout", 0).c_str());
+        }
+
         OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
                                      OpenVPN3DBus_rootp_sessions);
 
@@ -1012,13 +1026,13 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
         case mode_resume:
             std::cout << "Resuming session: " << sesspath
                       << std::endl;
-            start_session(session, SessionStartMode::RESUME);
+            start_session(session, SessionStartMode::RESUME, timeout);
             return 0;
 
         case mode_restart:
             std::cout << "Restarting session: " << sesspath
             << std::endl;
-            start_session(session, SessionStartMode::RESTART);
+            start_session(session, SessionStartMode::RESTART, timeout);
             return 0;
 
         case mode_disconnect:
@@ -1079,6 +1093,9 @@ SingleCommand::Ptr prepare_command_session_manage()
                    "Alternative to --path, where tun interface name is used "
                    "instead",
                    arghelper_managed_interfaces);
+    cmd->AddOption("timeout", 0, "SECS", true,
+                   "Connection attempt timeout for resume and restart "
+                   "(default: infinite)");
     cmd->AddOption("pause", 'P', "Pauses the VPN session");
     cmd->AddOption("resume", 'R', "Resumes a paused VPN session");
     cmd->AddOption("restart", "Disconnect and reconnect a running VPN session");
