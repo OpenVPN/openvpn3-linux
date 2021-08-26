@@ -228,7 +228,7 @@ class OpenVPN3systemd(object):
                 elif str(excep).find('ERR_PROFILE_SERVER_LOCKED_UNSUPPORTED:') > 1:
                     self.__session.Disconnect()
                     raise Exception('Server locked profiles are not supported')
-                elif str(excep).find(' Backend VPN process have died') > 1:
+                elif str(excep).find(' Backend VPN process has died') > 1:
                     raise Exception('VPN backend process stopped unexpectedly. '
                                       + 'Session has closed. :: ' + str(excep))
             except KeyboardInterrupt:

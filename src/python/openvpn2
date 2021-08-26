@@ -327,7 +327,7 @@ def start_tunnel(bus, cfgobj, opts):
 
                     input_slot.ProvideInput(response)
 
-            elif str(excep).find(' Backend VPN process have died') > 1:
+            elif str(excep).find(' Backend VPN process has died') > 1:
                 if 3 == exit_code:  # Authentication failed, this is expected
                     break
                 if 'OPENVPN3_DEBUG' in os.environ:

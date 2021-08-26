@@ -999,7 +999,7 @@ public:
                 {
                     // Ignore any errors for now.
                 }
-                errmsg = "Backend VPN process have died.  Session is no longer valid.";
+                errmsg = "Backend VPN process has died.  Session is no longer valid.";
                 if (!selfdestruct_complete)
                 {
                     StatusChange(StatusMajor::SESSION, StatusMinor::PROC_KILLED, "Backend process died");
