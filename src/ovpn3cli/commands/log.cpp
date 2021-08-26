@@ -186,8 +186,7 @@ public:
                                  OpenVPN3DBus_rootp_sessions),
         mainloop(main_loop)
     {
-        manager.reset(new OpenVPN3SessionProxy(G_BUS_TYPE_SYSTEM,
-                                               OpenVPN3DBus_rootp_sessions));
+        manager.reset(new OpenVPN3SessionMgrProxy(G_BUS_TYPE_SYSTEM));
         Subscribe("SessionManagerEvent");
     }
 
@@ -278,7 +277,7 @@ private:
     std::string session_path{""};
     std::string config_name{""};
     std::string tun_interf{""};
-    std::unique_ptr<OpenVPN3SessionProxy> manager = nullptr;
+    std::unique_ptr<OpenVPN3SessionMgrProxy> manager = nullptr;
     std::unique_ptr<OpenVPN3SessionProxy> session_proxy = nullptr;
     SessionLogger::Ptr session_log = nullptr;
     unsigned int log_level = 0;

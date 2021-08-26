@@ -165,7 +165,7 @@ enum class SessionStartMode : std::uint8_t {
  *
  * @throws SessionException if any issues related to the session itself.
  */
-static void start_session(OpenVPN3SessionProxy& session,
+static void start_session(OpenVPN3SessionProxy::Ptr session,
                           SessionStartMode initial_mode,
                           int timeout)
 {
@@ -184,20 +184,20 @@ static void start_session(OpenVPN3SessionProxy& session,
         loops--;
         try
         {
-            session.Ready();  // If not, an exception will be thrown
+            session->Ready();  // If not, an exception will be thrown
             switch (mode)
             {
             case SessionStartMode::START:
-                session.Connect();
+                session->Connect();
                 break;
 
             case SessionStartMode::RESUME:
-                session.Resume();
+                session->Resume();
                 mode = SessionStartMode::START;
                 break;
 
             case SessionStartMode::RESTART:
-                session.Restart();
+                session->Restart();
                 mode = SessionStartMode::START;
                 break;
 
@@ -215,7 +215,7 @@ static void start_session(OpenVPN3SessionProxy& session,
                 usleep(300000);  // sleep 0.3 seconds - avg setup time
                 try
                 {
-                    s = session.GetLastStatus();
+                    s = session->GetLastStatus();
                 }
                 catch (DBusException& excp)
                 {
@@ -283,7 +283,7 @@ static void start_session(OpenVPN3SessionProxy& session,
                 {
                     try
                     {
-                        session.Disconnect();
+                        session->Disconnect();
                     }
                     catch (...)
                     {
@@ -299,7 +299,7 @@ static void start_session(OpenVPN3SessionProxy& session,
             {
                 std::stringstream err;
                 err << "Failed to connect (timeout): " << s << std::endl;
-                session.Disconnect();
+                session->Disconnect();
                 throw SessionException(err.str());
             }
         }
@@ -307,7 +307,7 @@ static void start_session(OpenVPN3SessionProxy& session,
         {
             // If the ReadyException is thrown, it means the backend
             // needs more from the front-end side
-            for (auto& type_group : session.QueueCheckTypeGroup())
+            for (auto& type_group : session->QueueCheckTypeGroup())
             {
                 ClientAttentionType type;
                 ClientAttentionGroup group;
@@ -316,7 +316,7 @@ static void start_session(OpenVPN3SessionProxy& session,
                 if (ClientAttentionType::CREDENTIALS == type)
                 {
                     std::vector<struct RequiresSlot> reqslots;
-                    session.QueueFetchAll(reqslots, type, group);
+                    session->QueueFetchAll(reqslots, type, group);
                     for (auto& r : reqslots)
                     {
                         std::cout << r.user_description << ": ";
@@ -331,7 +331,7 @@ static void start_session(OpenVPN3SessionProxy& session,
                             set_console_echo(true);
 
                         }
-                        session.ProvideResponse(r);
+                        session->ProvideResponse(r);
                     }
                 }
             }
@@ -366,8 +366,8 @@ static int cmd_session_stats(ParsedArgs::Ptr args)
 
     try
     {
-        OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
-                                     OpenVPN3DBus_rootp_sessions);
+        OpenVPN3SessionMgrProxy sessmgr(G_BUS_TYPE_SYSTEM);
+
         std::string sesspath = "";
         if (args->Present("config"))
         {
@@ -491,9 +491,7 @@ static int cmd_session_start(ParsedArgs::Ptr args)
 
     try
     {
-        OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
-                                     OpenVPN3DBus_rootp_sessions);
-        sessmgr.Ping();
+        OpenVPN3SessionMgrProxy sessmgr(G_BUS_TYPE_SYSTEM);
 
         std::string cfgpath;
         if (args->Present("config"))
@@ -538,18 +536,16 @@ static int cmd_session_start(ParsedArgs::Ptr args)
         }
 
         // Create a new tunnel session
-        std::string sessionpath = sessmgr.NewTunnel(cfgpath);
+        OpenVPN3SessionProxy::Ptr session = sessmgr.NewTunnel(cfgpath);
 
-        sleep(1);  // Allow session to be established (FIXME: Signals?)
-        std::cout << "Session path: " << sessionpath << std::endl;
-        OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, sessionpath);
+        std::cout << "Session path: " << session->GetPath() << std::endl;
 
 #ifdef ENABLE_OVPNDCO
         if (args->Present("dco"))
         {
             // If a certain DCO state was requested, set the DCO flag before
             // starting the connection
-            session.SetDCO(args->GetBoolValue("dco", false));
+            session->SetDCO(args->GetBoolValue("dco", false));
         }
 #endif
 
@@ -623,19 +619,12 @@ SingleCommand::Ptr prepare_command_session_start()
  */
 static int cmd_sessions_list(ParsedArgs::Ptr args)
 {
-    OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
-                                 OpenVPN3DBus_rootp_sessions);
+    OpenVPN3SessionMgrProxy sessmgr(G_BUS_TYPE_SYSTEM);
     sessmgr.Ping();
 
     bool first = true;
-    for (auto& sessp : sessmgr.FetchAvailableSessions())
+    for (auto& sprx : sessmgr.FetchAvailableSessions())
     {
-        if (sessp.empty())
-        {
-            continue;
-        }
-        OpenVPN3SessionProxy sprx(G_BUS_TYPE_SYSTEM, sessp);
-
         // Retrieve the name of the configuration profile used
         std::stringstream config_line;
         bool config_deleted = false;
@@ -644,7 +633,7 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
             // Retrieve the current configuration profile name from the
             // configuration manager
             std::string cfgname_current = "";
-            std::string config_path = sprx.GetStringProperty("config_path");
+            std::string config_path = sprx->GetStringProperty("config_path");
             try
             {
                 OpenVPN3ConfigurationProxy cprx(G_BUS_TYPE_SYSTEM, config_path);
@@ -665,7 +654,7 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
 
             // Retrieve the configuration profile name used when starting
             // the VPN sessions
-            std::string cfgname = sprx.GetStringProperty("config_name");
+            std::string cfgname = sprx->GetStringProperty("config_name");
             if (!cfgname.empty())
             {
                 config_line << " Config name: " << cfgname;
@@ -693,7 +682,7 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
         std::string created;
         try
         {
-            std::time_t sess_created = sprx.GetUInt64Property("session_created");
+            std::time_t sess_created = sprx->GetUInt64Property("session_created");
             std::string c = std::asctime(std::localtime(&sess_created));
             created = c.substr(0, c.size() - 1);
         }
@@ -707,8 +696,8 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
         pid_t be_pid;
         try
         {
-            owner = lookup_username(sprx.GetUIntProperty("owner"));
-            be_pid = sprx.GetUIntProperty("backend_pid");
+            owner = lookup_username(sprx->GetUIntProperty("owner"));
+            be_pid = sprx->GetUIntProperty("backend_pid");
         }
         catch (DBusException&)
         {
@@ -721,9 +710,9 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
         bool dco = false;
         try
         {
-            devname = sprx.GetDeviceName();
+            devname = sprx->GetDeviceName();
 #ifdef ENABLE_OVPNDCO
-            dco = sprx.GetDCO();
+            dco = sprx->GetDCO();
 #endif
         }
         catch (DBusException&)
@@ -738,7 +727,7 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
         std::stringstream sessionname_line;
         try
         {
-            std::string sessname = sprx.GetStringProperty("session_name");
+            std::string sessname = sprx->GetStringProperty("session_name");
             if (!sessname.empty())
             {
                 sessionname_line << "Session name: " << sessname << std::endl;
@@ -753,7 +742,7 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
         StatusEvent status;
         try
         {
-            status = sprx.GetLastStatus();
+            status = sprx->GetLastStatus();
         }
         catch (DBusException&)
         {
@@ -771,7 +760,7 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
         first = false;
 
         // Output session information
-        std::cout << "        Path: " << sessp << std::endl;
+        std::cout << "        Path: " << sprx->GetProxyPath() << std::endl;
         std::cout << "     Created: " << created
                   << std::setw(47 - created.size()) << std::setfill(' ')
                   << " PID: "
@@ -908,8 +897,7 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
             timeout = std::atoi(args->GetValue("timeout", 0).c_str());
         }
 
-        OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
-                                     OpenVPN3DBus_rootp_sessions);
+        OpenVPN3SessionMgrProxy sessmgr(G_BUS_TYPE_SYSTEM);
 
         if (mode_cleanup == mode)
         {
@@ -917,23 +905,22 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
             // status available.  A valid status means it is not empty nor
             // unset.  If the status can't be retrieved, it is also
             // invalid.
-            std::vector<std::string> sesspaths = sessmgr.FetchAvailableSessions();
+            std::vector<OpenVPN3SessionProxy::Ptr> sessions = sessmgr.FetchAvailableSessions();
             std::cout << "Cleaning up stale sessions - Found "
-                      << std::to_string(sesspaths.size()) << " open sessions "
+                      << std::to_string(sessions.size()) << " open sessions "
                       << "to check" << std::endl;
 
             unsigned int c = 0;
-            for (const auto &sp : sesspaths)
+            for (const auto& s : sessions)
             {
-                OpenVPN3SessionProxy s(G_BUS_TYPE_SYSTEM, sp);
                 try
                 {
-                    std::string cfgname = s.GetStringProperty("config_name");
+                    std::string cfgname = s->GetStringProperty("config_name");
 
-                    std::cout << "Checking:  " << cfgname << " - " << sp
+                    std::cout << "Checking:  " << cfgname << " - " << s->GetPath()
                               << " ... ";
 
-                    StatusEvent st = s.GetLastStatus();
+                    StatusEvent st = s->GetLastStatus();
                     if (st.Check(StatusMajor::UNSET, StatusMinor::UNSET)
                         && st.message.empty())
                     {
@@ -942,7 +929,7 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
                         // openvpn3-service-client process is running and
                         // responsive, but has not even managed to load a
                         // configuration profile
-                        s.Disconnect();
+                        s->Disconnect();
                         std::cout << "Removed" << std::endl;
                         ++c;
                     }
@@ -964,7 +951,7 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
                     // Session Manager only.
                     try
                     {
-                        s.Disconnect();
+                        s->Disconnect();
                     }
                     catch (...)
                     {
@@ -1006,8 +993,10 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
             sesspath = args->GetValue("path", 0);
         }
 
-        OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, sesspath);
-        if (!session.CheckObjectExists())
+        OpenVPN3SessionProxy::Ptr session;
+        session.reset(new OpenVPN3SessionProxy(G_BUS_TYPE_SYSTEM, sesspath));
+
+        if (!session->CheckObjectExists())
         {
             throw CommandException("session-manage",
                                    "Session not found");
@@ -1018,7 +1007,7 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
         switch (mode)
         {
         case mode_pause:
-            session.Pause("Front-end request");
+            session->Pause("Front-end request");
             std::cout << "Initiated session pause: " << sesspath
                       << std::endl;
             return 0;
@@ -1038,14 +1027,14 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
         case mode_disconnect:
             try
             {
-                stats = session.GetConnectionStats();
+                stats = session->GetConnectionStats();
             }
             catch (...)
             {
                 std::cout << "Connection statistics is not available"
                           << std::endl;
             }
-            session.Disconnect();
+            session->Disconnect();
             std::cout << "Initiated session shutdown." << std::endl;
             std::cout << statistics_plain(stats);
             break;
@@ -1150,8 +1139,7 @@ static int cmd_session_acl(ParsedArgs::Ptr args)
 
     try
     {
-        OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM,
-                                     OpenVPN3DBus_rootp_sessions);
+        OpenVPN3SessionMgrProxy sessmgr(G_BUS_TYPE_SYSTEM);
 
         std::string sesspath = "";
         if (args->Present("config"))

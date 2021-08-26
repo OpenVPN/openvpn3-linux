@@ -108,10 +108,10 @@ std::string arghelper_config_names()
  */
 std::string arghelper_session_paths()
 {
-    OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_sessions);
+    OpenVPN3SessionMgrProxy sessmgr(G_BUS_TYPE_SYSTEM);
 
     std::stringstream res;
-    for (auto& session : sessmgr.FetchAvailableSessions())
+    for (auto& session : sessmgr.FetchAvailableSessionPaths())
     {
         if (session.empty())
         {
@@ -125,7 +125,7 @@ std::string arghelper_session_paths()
 
 std::string arghelper_managed_interfaces()
 {
-    OpenVPN3SessionProxy sessmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_sessions);
+    OpenVPN3SessionMgrProxy sessmgr(G_BUS_TYPE_SYSTEM);
 
     std::stringstream res;
     for (const auto& dev : sessmgr.FetchManagedInterfaces())
@@ -150,10 +150,10 @@ std::string arghelper_config_names_sessions()
 {
     DBus conn(G_BUS_TYPE_SYSTEM);
     conn.Connect();
-    OpenVPN3SessionProxy sessmgr(conn, OpenVPN3DBus_rootp_sessions);
+    OpenVPN3SessionMgrProxy sessmgr(conn);
 
     std::vector<std::string> cfgnames;
-    for (const auto& sesp : sessmgr.FetchAvailableSessions())
+    for (const auto& sesp : sessmgr.FetchAvailableSessionPaths())
     {
         OpenVPN3SessionProxy sess(conn, sesp);
         std::string cfgname = sess.GetStringProperty("config_name");

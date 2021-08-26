@@ -114,7 +114,7 @@ TEST(SessionManagerEvent, init_with_gvariant_invalid)
     GVariant *data = g_variant_builder_end(b);
     g_variant_builder_clear(b);
     g_variant_builder_unref(b);
-    ASSERT_THROW(Event ev(data), Exception);
+    ASSERT_THROW(Event ev(data), SessionManager::Exception);
     g_variant_unref(data);
 
     b = g_variant_builder_new(G_VARIANT_TYPE("(oqu)"));
@@ -124,7 +124,7 @@ TEST(SessionManagerEvent, init_with_gvariant_invalid)
     data = g_variant_builder_end(b);
     g_variant_builder_clear(b);
     g_variant_builder_unref(b);
-    ASSERT_THROW(Event ev(data), Exception);
+    ASSERT_THROW(Event ev(data), SessionManager::Exception);
     g_variant_unref(data);
 
 }

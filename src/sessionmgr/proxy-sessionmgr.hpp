@@ -30,6 +30,7 @@
 #define OPENVPN3_DBUS_PROXY_SESSION_HPP
 
 #include <iostream>
+#include <memory>
 
 #include "dbus/core.hpp"
 #include "dbus/requiresqueue-proxy.hpp"
@@ -85,6 +86,8 @@ public:
 class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
 {
 public:
+    typedef std::shared_ptr<OpenVPN3SessionProxy> Ptr;
+
     /**
      * Initilizes the D-Bus client proxy.  This constructor will establish
      * the D-Bus connection by itself.
@@ -136,188 +139,9 @@ public:
         }
     }
 
-
-    /**
-     *  Only valid if the session object path points at the main session
-     *  manager object.  This starts a new VPN backend client process, running
-     *  with the needed privileges.
-     *
-     * @param cfgpath  VPN profile configuration D-Bus path to use for the
-     *                 backend client
-     * @return Returns a D-Bus object path string to the session object
-     *         created
-     */
-    std::string NewTunnel(std::string cfgpath)
+    const std::string GetPath() const
     {
-        if (!g_variant_is_object_path(cfgpath.c_str()))
-        {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                "Invalid D-Bus path to configuration profile");
-
-        }
-
-        CheckServiceAvail();
-        if (!CheckObjectExists(10, 300))
-        {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                "Failed to connect to session manager");
-        }
-
-        GVariant *res = Call("NewTunnel",
-                             g_variant_new("(o)", cfgpath.c_str()));
-        if (NULL == res)
-        {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                "Failed to start a new tunnel");
-        }
-
-        gchar *buf = nullptr;
-        g_variant_get(res, "(o)", &buf);
-        std::string ret(buf);
-        g_variant_unref(res);
-        g_free(buf);
-
-        return ret;
-    }
-
-
-    /**
-     * Retrieves an array of strings with session paths which are available
-     * to the calling user
-     *
-     * @return A std::vector<std::string> of session paths
-     */
-    std::vector<std::string> FetchAvailableSessions()
-    {
-        GVariant *res = Call("FetchAvailableSessions");
-        if (NULL == res)
-        {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                "Failed to retrieve available sessions");
-        }
-        GVariantIter *sesspaths = NULL;
-        g_variant_get(res, "(ao)", &sesspaths);
-
-        GVariant *path = NULL;
-        std::vector<std::string> ret;
-        while ((path = g_variant_iter_next_value(sesspaths)))
-        {
-            gsize len;
-            ret.push_back(std::string(g_variant_get_string(path, &len)));
-            g_variant_unref(path);
-        }
-        g_variant_unref(res);
-        g_variant_iter_free(sesspaths);
-        return ret;
-    }
-
-
-    std::vector<std::string> FetchManagedInterfaces()
-    {
-        GVariant *res = Call("FetchManagedInterfaces");
-        if (nullptr == res)
-        {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                "Failed to retrieve managed interfaces");
-        }
-
-        GVariantIter *device_list = nullptr;
-        g_variant_get(res, "(as)", &device_list);
-
-        GVariant *device = nullptr;
-        std::vector<std::string> ret;
-        while ((device = g_variant_iter_next_value(device_list)))
-        {
-            ret.push_back(std::string(g_variant_get_string(device, nullptr)));
-            g_variant_unref(device);
-        }
-        g_variant_unref(res);
-        g_variant_iter_free(device_list);
-        return ret;
-    }
-
-    /**
-     *  Lookup all sessions which where started with the given configuration
-     *  profile name.
-     *
-     * @param cfgname  std::string containing the configuration name to
-     *                 look up
-     *
-     * @return Returns a std::vector<std::string> with all session object
-     *         paths which were started with the given configuration name.
-     *         If no match is found, the std::vector will be empty.
-     */
-    std::vector<std::string> LookupConfigName(std::string cfgname)
-    {
-        GVariant *res = Call("LookupConfigName",
-                             g_variant_new("(s)", cfgname.c_str()));
-        if (nullptr == res)
-        {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                "Failed to lookup configuration names");
-        }
-        GVariantIter *session_paths = nullptr;
-        g_variant_get(res, "(ao)", &session_paths);
-
-        GVariant *path = nullptr;
-        std::vector<std::string> ret;
-        while ((path = g_variant_iter_next_value(session_paths)))
-        {
-            ret.push_back(GLibUtils::GetVariantValue<std::string>(path));
-            g_variant_unref(path);
-        }
-        g_variant_unref(res);
-        g_variant_iter_free(session_paths);
-        return ret;
-    }
-
-
-    /**
-     *  Lookup the session path for a specific interface name.
-     *
-     * @param interface  std::string containing the interface name
-     *
-     * @return  Returns a std::string containing the D-Bus path to the session
-     *          this interface is related to.  If not found, and exception
-     *          is thrown.
-     */
-    std::string LookupInterface(std::string interface)
-    {
-        try
-        {
-            GVariant *res = Call("LookupInterface",
-                                 g_variant_new("(s)", interface.c_str()));
-            if (nullptr == res)
-            {
-                throw TunInterfaceException("LookupInterface",
-                                            "Failed to lookup interface");
-            }
-
-            std::string ret(GLibUtils::ExtractValue<std::string>(res, 0));
-            g_variant_unref(res);
-
-            if (ret.empty())
-            {
-                throw TunInterfaceException("LookupInterface",
-                                            "No managed interface found");
-            }
-            return ret;
-        }
-        catch (const TunInterfaceException&)
-        {
-            throw;
-        }
-        catch (const DBusException& rawerr)
-        {
-            std::string err(rawerr.what());
-            size_t p = err.find("GDBus.Error:net.openvpn.v3.error.iface:");
-            if (p != std::string::npos)
-            {
-                throw TunInterfaceException("LookupInterface",
-                                            err.substr(err.rfind(":")+2));
-            }
-            throw;
-        }
+        return GetProxyPath();
     }
 
     /**
@@ -707,3 +531,240 @@ private:
 };
 
 #endif // OPENVPN3_DBUS_PROXY_CONFIG_HPP
+
+class OpenVPN3SessionMgrProxy : public DBusProxy
+{
+public:
+    /**
+     * Initilizes the D-Bus client proxy.  This constructor will establish
+     * the D-Bus connection by itself.
+     *
+     * @param bus_type   Defines if the connection is on the system or session
+     *                   bus.
+     * @param objpath    D-Bus object path to the SessionObjectes
+     */
+    OpenVPN3SessionMgrProxy(GBusType bus_type)
+        : DBusProxy(bus_type,
+                    OpenVPN3DBus_name_sessions,
+                    OpenVPN3DBus_interf_sessions,
+                    OpenVPN3DBus_rootp_sessions)
+    {
+        (void) GetServiceVersion();
+    }
+
+
+    OpenVPN3SessionMgrProxy(DBus & dbusobj)
+        : DBusProxy(dbusobj,
+                    OpenVPN3DBus_name_sessions,
+                    OpenVPN3DBus_interf_sessions,
+                    OpenVPN3DBus_rootp_sessions)
+    {
+        (void) GetServiceVersion();
+    }
+
+
+    /**
+     *  Only valid if the session object path points at the main session
+     *  manager object.  This starts a new VPN backend client process, running
+     *  with the needed privileges.
+     *
+     * @param cfgpath  VPN profile configuration D-Bus path to use for the
+     *                 backend client
+     * @return Returns an OpenVPN3SessionProxy::Ptr to the new session
+     *         D-Bus object
+     */
+    OpenVPN3SessionProxy::Ptr NewTunnel(std::string cfgpath)
+    {
+        if (!g_variant_is_object_path(cfgpath.c_str()))
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionMgrProxy",
+                                "Invalid D-Bus path to configuration profile");
+        }
+
+        CheckServiceAvail();
+        if (!CheckObjectExists(10, 300))
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionMgrProxy",
+                                "Failed to connect to session manager");
+        }
+
+        GVariant *res = Call("NewTunnel",
+                             g_variant_new("(o)", cfgpath.c_str()));
+        if (NULL == res)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
+                                "Failed to start a new tunnel");
+        }
+
+        gchar *buf = nullptr;
+        g_variant_get(res, "(o)", &buf);
+        std::string path(buf);
+        g_variant_unref(res);
+        g_free(buf);
+
+        OpenVPN3SessionProxy::Ptr session;
+        session.reset(new OpenVPN3SessionProxy(G_BUS_TYPE_SYSTEM, path));
+        sleep(1);  // Allow session to be established (FIXME: Signals?)
+        return session;
+    }
+
+
+    /**
+     * Retrieves an array of strings with session paths which are available
+     * to the calling user
+     *
+     * @return A std::vector<std::string> of session paths
+     */
+    std::vector<std::string> FetchAvailableSessionPaths()
+    {
+        GVariant *res = Call("FetchAvailableSessions");
+        if (NULL == res)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
+                                "Failed to retrieve available sessions");
+        }
+        GVariantIter *sesspaths = NULL;
+        g_variant_get(res, "(ao)", &sesspaths);
+
+        GVariant *path = NULL;
+        std::vector<std::string> ret;
+        while ((path = g_variant_iter_next_value(sesspaths)))
+        {
+            gsize len;
+            ret.push_back(std::string(g_variant_get_string(path, &len)));
+            g_variant_unref(path);
+        }
+        g_variant_unref(res);
+        g_variant_iter_free(sesspaths);
+        return ret;
+    }
+
+
+    /**
+     *  Retrieve an array of OpenVPN3SessionProxy objects for all available
+     *  sessions
+     *
+     * @return  std::vector<OpenVPN3SessionProxy::Ptr> of session objects
+     */
+    std::vector<OpenVPN3SessionProxy::Ptr> FetchAvailableSessions()
+    {
+        std::vector<OpenVPN3SessionProxy::Ptr> ret;
+        for (const auto& path : FetchAvailableSessionPaths())
+        {
+            OpenVPN3SessionProxy::Ptr s;
+            s.reset(new OpenVPN3SessionProxy(G_BUS_TYPE_SYSTEM, path));
+            ret.push_back(s);
+        }
+        return ret;
+    }
+
+
+    std::vector<std::string> FetchManagedInterfaces()
+    {
+        GVariant *res = Call("FetchManagedInterfaces");
+        if (nullptr == res)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
+                                "Failed to retrieve managed interfaces");
+        }
+
+        GVariantIter *device_list = nullptr;
+        g_variant_get(res, "(as)", &device_list);
+
+        GVariant *device = nullptr;
+        std::vector<std::string> ret;
+        while ((device = g_variant_iter_next_value(device_list)))
+        {
+            ret.push_back(std::string(g_variant_get_string(device, nullptr)));
+            g_variant_unref(device);
+        }
+        g_variant_unref(res);
+        g_variant_iter_free(device_list);
+        return ret;
+    }
+
+
+    /**
+     *  Lookup all sessions which where started with the given configuration
+     *  profile name.
+     *
+     * @param cfgname  std::string containing the configuration name to
+     *                 look up
+     *
+     * @return Returns a std::vector<std::string> with all session object
+     *         paths which were started with the given configuration name.
+     *         If no match is found, the std::vector will be empty.
+     */
+    std::vector<std::string> LookupConfigName(std::string cfgname)
+    {
+        GVariant *res = Call("LookupConfigName",
+                             g_variant_new("(s)", cfgname.c_str()));
+        if (nullptr == res)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
+                                "Failed to lookup configuration names");
+        }
+        GVariantIter *session_paths = nullptr;
+        g_variant_get(res, "(ao)", &session_paths);
+
+        GVariant *path = nullptr;
+        std::vector<std::string> ret;
+        while ((path = g_variant_iter_next_value(session_paths)))
+        {
+            ret.push_back(GLibUtils::GetVariantValue<std::string>(path));
+            g_variant_unref(path);
+        }
+        g_variant_unref(res);
+        g_variant_iter_free(session_paths);
+        return ret;
+    }
+
+
+    /**
+     *  Lookup the session path for a specific interface name.
+     *
+     * @param interface  std::string containing the interface name
+     *
+     * @return  Returns a std::string containing the D-Bus path to the session
+     *          this interface is related to.  If not found, and exception
+     *          is thrown.
+     */
+    std::string LookupInterface(std::string interface)
+    {
+        try
+        {
+            GVariant *res = Call("LookupInterface",
+                                 g_variant_new("(s)", interface.c_str()));
+            if (nullptr == res)
+            {
+                throw TunInterfaceException("LookupInterface",
+                                            "Failed to lookup interface");
+            }
+
+            std::string ret(GLibUtils::ExtractValue<std::string>(res, 0));
+            g_variant_unref(res);
+
+            if (ret.empty())
+            {
+                throw TunInterfaceException("LookupInterface",
+                                            "No managed interface found");
+            }
+            return ret;
+        }
+        catch (const TunInterfaceException&)
+        {
+            throw;
+        }
+        catch (const DBusException& rawerr)
+        {
+            std::string err(rawerr.what());
+            size_t p = err.find("GDBus.Error:net.openvpn.v3.error.iface:");
+            if (p != std::string::npos)
+            {
+                throw TunInterfaceException("LookupInterface",
+                                            err.substr(err.rfind(":")+2));
+            }
+            throw;
+        }
+    }
+};

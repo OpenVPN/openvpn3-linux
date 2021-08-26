@@ -45,8 +45,7 @@ public:
         }
         else if ("sessionmgr" == manager)
         {
-            sessmgr.reset(new OpenVPN3SessionProxy(G_BUS_TYPE_SYSTEM,
-                                                   OpenVPN3DBus_rootp_sessions));
+            sessmgr.reset(new OpenVPN3SessionMgrProxy(G_BUS_TYPE_SYSTEM));
         }
         else
         {
@@ -74,7 +73,7 @@ public:
 private:
     std::string manager = "";
     std::unique_ptr<OpenVPN3ConfigurationProxy> cfgmgr = nullptr;
-    std::unique_ptr<OpenVPN3SessionProxy> sessmgr = nullptr;
+    std::unique_ptr<OpenVPN3SessionMgrProxy> sessmgr = nullptr;
 };
 
 int main(int argc, char **argv)

@@ -31,9 +31,9 @@
 
 int main(int argc, char **argv)
 {
-    OpenVPN3SessionProxy sessproxy(G_BUS_TYPE_SYSTEM,
-                                   OpenVPN3DBus_rootp_sessions);
-    for (auto& path : sessproxy.FetchAvailableSessions())
+    OpenVPN3SessionMgrProxy sessproxy(G_BUS_TYPE_SYSTEM);
+
+    for (auto& path : sessproxy.FetchAvailableSessionPaths())
     {
         std::cout << path << std::endl;
     }
