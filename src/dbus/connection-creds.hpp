@@ -402,6 +402,29 @@ private:
 
 
         /**
+         *  This is an extended CheckACL() method which grants the root user
+         *  access regardless of the ACL.
+         *
+         *  In case of authorization failure, a DBusCredentialsException
+         *  is thrown.
+         *
+         * @param sender      String containing the callers D-Bus bus name
+         * @param allow_mngr  Set to false by default.  If set to true, the
+         *                    openvpn user (OpenVPN Manager) will be granted
+         *                    access regardless of the UID.
+         */
+        void CheckACL_allowRoot(const std::string sender, bool allow_mngr = false) const
+        {
+            if ( 0 == GetUID(sender) )
+            {
+                // Allow root access
+                return;
+            }
+            check_acl(sender, false, allow_mngr);
+        }
+
+
+        /**
          *  Restricted access control, where only the owner of the object
          *  will be granted access.  This check will _NOT_ respect the
          *  public access attribute; as this check is often used when
