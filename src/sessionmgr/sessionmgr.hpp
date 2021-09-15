@@ -1106,7 +1106,7 @@ public:
 
         try
         {
-            CheckACL(sender);
+            CheckACL_allowRoot(sender);
         }
         catch (DBusCredentialsException& excp)
         {
