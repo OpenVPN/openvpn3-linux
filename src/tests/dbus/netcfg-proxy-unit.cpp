@@ -40,6 +40,7 @@ int main(int argc, char **argv)
 
     NetCfgProxy::Manager netcfgmgr(conn.GetConnection());
     int failures = 0;
+    size_t not_our_devs = 0;
 
     // Create a few devices
     try
@@ -58,20 +59,8 @@ int main(int argc, char **argv)
 
         std::cout << "Fetching device paths ... " << std::endl;
         std::vector<std::string> devpaths = netcfgmgr.FetchInterfaceList();
-
-        if (devpaths.size() != genpaths.size())
-        {
-            std::cout << "    Mismatch between number of elements - "
-                      << devpaths.size() << " != " << genpaths.size()
-                      << std::endl;
-            ++failures;
-        }
-        else
-        {
-            std::cout << "    Size mathces expectaions: " << devpaths.size()
-                      << std::endl;
-        }
-
+        std::vector<std::string> our_devs{};
+        size_t match_count = 0;
         for (const auto& p : devpaths)
         {
             std::cout << "    Device path: " << p << " ... ";
@@ -86,14 +75,38 @@ int main(int argc, char **argv)
             }
             if (!found)
             {
-                ++failures;
+                ++not_our_devs;
             }
-            std::cout << (found ? "Match!" : "*NOT FOUND*") << std::endl;
+            else
+            {
+                ++match_count;
+                our_devs.push_back(p);
+            }
+            std::cout << (found ? "Match!" : "*Unknown (not created by us)*") << std::endl;
         }
         std::cout << std::endl;
 
-        std::cout << "Removing devices... " << std::endl;
-        for (const auto& p : devpaths)
+
+        if (genpaths.size() != match_count)
+        {
+            std::cout << "    Mismatch between number of elements - "
+                      << devpaths.size() << " != " << genpaths.size()
+                      << std::endl;
+            ++failures;
+        }
+        else
+        {
+            std::cout << "    Size matches expectations: " << match_count
+                      << std::endl
+                      << "    Devices not created by us: " << not_our_devs
+                      << std::endl
+                      << "    Total devices: " << devpaths.size()
+                      << std::endl << std::endl;
+        }
+
+
+        std::cout << "Removing devices we created... " << std::endl;
+        for (const auto& p : our_devs)
         {
             std::cout << "    Removing: " << p << std::endl;
             NetCfgProxy::Device dev(conn.GetConnection(), p);
@@ -105,15 +118,16 @@ int main(int argc, char **argv)
         std::cout << "Re-fetching device paths ... " << std::endl;
         devpaths = netcfgmgr.FetchInterfaceList();
 
-        if (devpaths.size() != 0)
+        if (devpaths.size() != not_our_devs)
         {
-            std::cout << "    FAIL: Devices still available - "
+            std::cout << "    FAIL: Devices we created are still available - "
                       << devpaths.size() << std::endl;
             ++failures;
         }
         else
         {
-            std::cout << "    SUCCESS: Empty device list: " << devpaths.size()
+            std::cout << "    SUCCESS: All our devices removed: "
+                       << devpaths.size() - not_our_devs
                       << std::endl;
         }
         std::cout << std::endl;
