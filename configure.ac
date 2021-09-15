@@ -1,7 +1,7 @@
 dnl  OpenVPN 3 Linux client -- Next generation OpenVPN client
 dnl
-dnl  Copyright (C) 2017 - 2019  OpenVPN Inc. <sales@openvpn.net>
-dnl  Copyright (C) 2017 - 2019  David Sommerseth <davids@openvpn.net>
+dnl  Copyright (C) 2017 - 2021  OpenVPN Inc. <sales@openvpn.net>
+dnl  Copyright (C) 2017 - 2021  David Sommerseth <davids@openvpn.net>
 dnl
 dnl  This program is free software: you can redistribute it and/or modify
 dnl  it under the terms of the GNU General Public License as published by
@@ -116,6 +116,61 @@ PKG_CHECK_MODULES(
         [have_libcapng="yes"],
         [AC_MSG_ERROR([libcap-ng package not found. Is the development package installed?])]
 )
+
+
+PKG_CHECK_MODULES(
+        [LIBTINYXML2],
+        [tinyxml2],
+        [
+            AC_LANG([C++])
+            LIBS="${LIBS} ${TINYXML2_LIBS}"
+            have_tinyxml="yes"
+            AC_MSG_CHECKING([presence of XMLDocument::ErrorName])
+            AC_COMPILE_IFELSE(
+                [AC_LANG_PROGRAM(
+                    [[
+#include <tinyxml2.h>
+                    ]],
+                    [[
+tinyxml2::XMLDocument doc;
+doc.ErrorName();
+                    ]]
+                )],
+                [
+                    AC_MSG_RESULT([yes])
+                    AC_DEFINE([OVPN_TINYXML2_HAS_ERROR_NAME], [1], [TinyXML2 has XMLDocument::ErrorName method])
+                ],
+                [
+                    AC_MSG_RESULT([no])
+                ]
+            )
+
+            AC_MSG_CHECKING([presence of XMLDocument::ErrorStr])
+            AC_COMPILE_IFELSE(
+                [AC_LANG_PROGRAM(
+                    [[
+#include <tinyxml2.h>
+                    ]],
+                    [[
+tinyxml2::XMLDocument doc;
+doc.ErrorStr();
+                    ]]
+                )],
+                [
+                    AC_MSG_RESULT([yes])
+                    AC_DEFINE([OVPN_TINYXML2_HAS_ERROR_STR], [1], [TinyXML2 has XMLDocument::ErrorStr method])
+                ],
+                [
+                    AC_MSG_RESULT([no])
+                ]
+            )
+          ],
+          [AC_MSG_ERROR([tinyxml2 package not found.])]
+)
+if test "$have_tinyxml" = "yes"; then
+        AC_DEFINE([HAVE_TINYXML], [1], [tinyxml library is available])
+fi
+AM_CONDITIONAL([HAVE_TINYXML], [test "${have_tinyxml}" = "yes"])
 
 
 dnl
@@ -573,57 +628,6 @@ AC_ARG_ENABLE(
      [enable_addons_aws="yes"]
 )
 AM_CONDITIONAL([BUILD_ADDONS_AWS], [test "${enable_addons_aws}" = "yes"])
-
-if test "${enable_addons_aws}" = "yes"; then
-    PKG_CHECK_MODULES(
-        [LIBTINYXML2],
-        [tinyxml2],
-        [
-            AC_LANG([C++])
-            LIBS="${LIBS} ${TINYXML2_LIBS}"
-            AC_MSG_CHECKING([presence of XMLDocument::ErrorName])
-            AC_COMPILE_IFELSE(
-                [AC_LANG_PROGRAM(
-                    [[
-#include <tinyxml2.h>
-                    ]],
-                    [[
-tinyxml2::XMLDocument doc;
-doc.ErrorName();
-                    ]]
-                )],
-                [
-                    AC_MSG_RESULT([yes])
-                    AC_DEFINE([OVPN_TINYXML2_HAS_ERROR_NAME], [1], [TinyXML2 has XMLDocument::ErrorName method])
-                ],
-                [
-                    AC_MSG_RESULT([no])
-                ]
-            )
-
-            AC_MSG_CHECKING([presence of XMLDocument::ErrorStr])
-            AC_COMPILE_IFELSE(
-                [AC_LANG_PROGRAM(
-                    [[
-#include <tinyxml2.h>
-                    ]],
-                    [[
-tinyxml2::XMLDocument doc;
-doc.ErrorStr();
-                    ]]
-                )],
-                [
-                    AC_MSG_RESULT([yes])
-                    AC_DEFINE([OVPN_TINYXML2_HAS_ERROR_STR], [1], [TinyXML2 has XMLDocument::ErrorStr method])
-                ],
-                [
-                    AC_MSG_RESULT([no])
-                ]
-            )
-        ],
-        [AC_MSG_ERROR([tinyxml2 package not found.])]
-    )
-fi
 
 
 dnl

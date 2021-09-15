@@ -1,8 +1,8 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017 - 2019  OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017 - 2019  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018 - 2019  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2017 - 2021  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2021  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2021  Arne Schwabe <arne@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -21,7 +21,17 @@
 #ifndef OPENVPN3_DBUS_PROXY_HPP
 #define OPENVPN3_DBUS_PROXY_HPP
 
+#include <memory>
 #include <gio-unix-2.0/gio/gunixfdlist.h>
+
+#ifdef HAVE_TINYXML
+#include <openvpn/common/exception.hpp>
+#include <openvpn/common/xmlhelper.hpp>
+
+// using XmlDocPtr = std::shared_ptr<openvpn::Xml::Document>;
+typedef std::shared_ptr<openvpn::Xml::Document> XmlDocPtr;
+#endif
+
 
 #include "dbus/connection.hpp"
 #include "glibutils.hpp"
@@ -237,6 +247,30 @@ namespace openvpn
             call_flags = flags;
         }
 
+
+#ifdef HAVE_TINYXML
+        XmlDocPtr Introspect()
+        {
+            GDBusProxy* introsprx = SetupProxy(bus_name,
+                                              "org.freedesktop.DBus.Introspectable",
+                                              object_path);
+
+            GVariant* res = dbus_proxy_call(introsprx, "Introspect", nullptr,
+                                            false, G_DBUS_CALL_FLAGS_NONE);
+            if (nullptr == res)
+            {
+                THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
+                                    "Failed to call introspect method");
+            }
+
+            XmlDocPtr doc;
+            doc.reset(new Xml::Document(GLibUtils::ExtractValue<std::string>(res, 0),
+                                        "introspect"));
+            g_variant_unref(res);
+
+            return doc;
+        }
+#endif
 
         /**
          *  Some service expose a 'version' property in the main manager
