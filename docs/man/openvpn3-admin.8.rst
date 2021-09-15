@@ -53,6 +53,11 @@ netcfg-service
                 * D-Bus service: *net.openvpn.v3.netcfg*
                 * Provided by: **openvpn3-service-netcfg**\(8)
 
+sessionmgr-service
+                Manage the OpenVPN 3 Session Manager service
+
+                * D-Bus service: *net.openvpn.v3.sessions*
+                * Provided by: **openvpn3-service-sessionmgr**\(8)
 
 SEE ALSO
 ========
@@ -60,6 +65,8 @@ SEE ALSO
 ``openvpn3``\(1)
 ``openvpn3-admin-log-service``\(8)
 ``openvpn3-admin-netcfg-service``\(8)
+``openvpn3-admin-sessionmgr-service``\(8)
 ``openvpn3-service-logger``\(8)
 ``openvpn3-service-netcfg``\(8)
+``openvpn3-service-sessionmgr``\(8)
 

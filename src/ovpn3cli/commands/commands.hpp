@@ -57,6 +57,8 @@ SingleCommand::Ptr prepare_command_sessions_list();
 // Commands provided in netcfg-service.cpp
 SingleCommand::Ptr prepare_command_netcfg_service();
 
+// Commands provided in sessionmgr-service.cpp
+SingleCommand::Ptr prepare_command_sessionmgr_service();
 
 // Commands provided in variables.cpp
 SingleCommand::Ptr prepare_command_variables();
@@ -105,5 +107,8 @@ std::vector<PrepareCommand> command_list_openvpn3admin = {
 
     prepare_command_log_service,
     prepare_command_netcfg_service,
+#ifdef HAVE_TINYXML
+    prepare_command_sessionmgr_service
+#endif
 };
 #endif // OVPN3CLI_OPENVPN3ADMIN

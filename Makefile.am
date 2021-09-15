@@ -546,15 +546,23 @@ src_ovpn3cli_openvpn3_admin_SOURCES = \
 	src/ovpn3cli/commands/version.cpp \
 	src/ovpn3cli/commands/log-service.cpp \
 	src/ovpn3cli/commands/netcfg-service.cpp \
+	src/ovpn3cli/commands/sessionmgr-service.cpp \
 	src/common/cmdargparser.cpp \
 	src/common/configfileparser.cpp \
 	src/common/configfileparser.hpp \
 	src/common/machineid.cpp \
 	src/common/machineid.hpp \
+	src/common/lookup.cpp \
+	src/common/lookup.hpp \
 	src/common/utils.cpp \
 	src/netcfg/proxy-netcfg.cpp
 nodist_src_ovpn3cli_openvpn3_admin_SOURCES=$(DCO_KEYCONFIG_PB_SOURCES)
 src_ovpn3cli_openvpn3_admin_CXXFLAGS=$(AM_CXXFLAGS) -DOVPN3CLI_OPENVPN3ADMIN
+if HAVE_TINYXML
+src_ovpn3cli_openvpn3_admin_CXXFLAGS+=$(LIBTINYXML2_CFLAGS)
+src_ovpn3cli_openvpn3_admin_LDADD=$(LDADD) $(LIBTINYXML2_LIBS)
+endif
+
 
 #
 #  openvpn3-service-client: The VPN client process
