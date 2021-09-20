@@ -1072,37 +1072,6 @@ public:
                         "Session not active");
             return NULL;
         }
-        if ("owner" == property_name)
-        {
-            return GetOwner();
-        }
-        else if ("device_path" == property_name)
-        {
-            try
-            {
-                return be_proxy->GetProperty("device_path");
-            }
-            catch (DBusException&)
-            {
-                g_set_error(error,
-                            G_IO_ERROR,
-                            G_IO_ERROR_PENDING,
-                            "Device path not available");
-                return NULL;
-            }
-        }
-        else if ("dco" == property_name)
-        {
-            try
-            {
-                return be_proxy->GetProperty("dco");
-            }
-            catch (DBusException&)
-            {
-                // This is a pure fall-through, will be handled below
-                // returing the current DCO flag of the session manager instead
-            }
-        }
 
         try
         {
@@ -1132,16 +1101,27 @@ public:
         }
 
 
-        /*
-          std::cout << "[SessionObject] get_property(): "
-                  << "sender=" << sender
-                  << ", object_path=" << obj_path
-                  << ", interface=" << intf_name
-                  << ", property=" << property_name
-                  << std::endl;
-        */
         GVariant *ret = NULL;
-        if ("restrict_log_access" == property_name)
+        if ("owner" == property_name)
+        {
+            ret = GetOwner();
+        }
+        else if ("device_path" == property_name)
+        {
+            try
+            {
+                ret = be_proxy->GetProperty("device_path");
+            }
+            catch (DBusException&)
+            {
+                g_set_error(error,
+                            G_IO_ERROR,
+                            G_IO_ERROR_PENDING,
+                            "Device path not available");
+                return NULL;
+            }
+        }
+        else if ("restrict_log_access" == property_name)
         {
             ret = g_variant_new_boolean (restrict_log_access);
         }
@@ -1241,9 +1221,16 @@ public:
         }
         else if ("dco" == property_name)
         {
-            // If the DCO flag of the backend process could not be retrieved,
-            // return our current setting
-            ret = g_variant_new_boolean(dco);
+            try
+            {
+                ret = be_proxy->GetProperty("dco");
+            }
+            catch (DBusException&)
+            {
+                // If the DCO flag of the backend process could not be
+                // retrieved, return our current setting
+                ret = g_variant_new_boolean(dco);
+            }
         }
         else if ("session_name" == property_name)
         {
