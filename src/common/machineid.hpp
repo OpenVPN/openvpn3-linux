@@ -28,8 +28,6 @@
 #include <iostream>
 #include <exception>
 
-#include "../../config.h"
-
 #define OPENVPN3_MACHINEID std::string(std::string(OPENVPN3_STATEDIR) + "/machine-id")
 
 class MachineIDException : std::exception

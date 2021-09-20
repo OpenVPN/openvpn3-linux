@@ -23,6 +23,7 @@
  * @brief  Unit test for MachineID
  */
 
+#include "config.h"
 
 #include <iostream>
 #include <fstream>

@@ -23,6 +23,7 @@
  * @brief  Simple self-test of the NetCfg::DNS::ResolvConfFile() class
  */
 
+#include "config.h"
 
 #include <iostream>
 #include <cstdio>

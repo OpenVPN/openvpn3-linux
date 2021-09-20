@@ -23,6 +23,8 @@
  * @brief  Generate a static unique machine ID
  */
 
+#include "config.h"
+
 #include <fstream>
 #include <iostream>
 #include <sstream>

@@ -25,6 +25,7 @@
 
 #include <iostream>
 
+#include "config.h"
 #include "common/machineid.hpp"
 
 int main()
