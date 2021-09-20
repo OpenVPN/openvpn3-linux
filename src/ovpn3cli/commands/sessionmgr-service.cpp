@@ -63,6 +63,24 @@ static std::vector<std::string> get_running_sessions()
 
 static void list_running_sessions(bool verbose)
 {
+    if (::geteuid() != 0)
+    {
+        // This is a pretty lame way to restrict this for root only.
+        // But there will be exceptions thrown on sessions non-root users
+        // will not have access too later on, getting a ugly looking listing.
+        //
+        // This way we avoid complicating the logic below further adding
+        // support for something which isn't supposed to be supported.
+        //
+        // Non-root users can try to introspect the sessionmgr service
+        // directly and will not get too much details from there anyhow
+        // - except of sessions they're granted access to.  Which is
+        // essentially what 'openvpn3 sessions-list' does.
+        //
+        throw CommandException("sessionmgr-service",
+                               "This must be run as root");
+    }
+
     try
     {
         bool first = true;
@@ -71,31 +89,13 @@ static void list_running_sessions(bool verbose)
             OpenVPN3SessionProxy sess(G_BUS_TYPE_SYSTEM, session_path);
 
             // Retrieve the session start timestamp
-            std::string created;
-            try
-            {
-                std::time_t sess_created = sess.GetUInt64Property("session_created");
-                std::string c = std::asctime(std::localtime(&sess_created));
-                created = c.substr(0, c.size() - 1);
-            }
-            catch (DBusException&)
-            {
-                created = "(Not available)";
-            }
+            std::time_t sess_created = sess.GetUInt64Property("session_created");
+            std::string c = std::asctime(std::localtime(&sess_created));
+            std::string created = c.substr(0, c.size() - 1);
 
             // Retrieve session owner information and VPN backend process PID
-            std::string owner;
-            pid_t be_pid;
-            try
-            {
-                owner = lookup_username(sess.GetUIntProperty("owner"));
-                be_pid = sess.GetUIntProperty("backend_pid");
-            }
-            catch (DBusException&)
-            {
-                owner = "(not available)";
-                be_pid = -1;
-            }
+            std::string owner = lookup_username(sess.GetUIntProperty("owner"));
+            pid_t be_pid = sess.GetUIntProperty("backend_pid");
 
             // Retrieve the tun interface name for this session
             std::string devname;
