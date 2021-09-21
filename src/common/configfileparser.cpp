@@ -46,7 +46,7 @@ OptionMapEntry::OptionMapEntry(std::string option, std::string field_label,
                                std::string description, OptionValueType type)
     : option(option), field_label(field_label), description(description),
       exclusive_group(""),
-      type(type), present(false), value("")
+      type(type), present(false), present_value(false), value("")
 {
 }
 
@@ -56,7 +56,7 @@ OptionMapEntry::OptionMapEntry(std::string option, std::string field_label,
                                std::string description, OptionValueType type)
     : option(option), field_label(field_label), description(description),
       exclusive_group(exclusive_group),
-      type(type), present(false), value("")
+      type(type), present(false), present_value(false), value("")
 {
 }
 
@@ -89,7 +89,14 @@ void File::Parse(Json::Value& config)
             continue;
         }
         it->present = true;
-        it->value = config[elm].asString();
+        if (OptionValueType::Present == it->type)
+        {
+            it->present_value = config[elm].asBool();
+        }
+        else
+        {
+            it->value = config[elm].asString();
+        }
     }
 }
 
@@ -186,6 +193,11 @@ std::string File::GetValue(const std::string& key)
     {
         throw OptionNotPresent(key);
     }
+
+    if (OptionValueType::Present == it->type)
+    {
+        return (it->present_value ? "true" : "false");
+    }
     return it->value;
 }
 
@@ -206,7 +218,8 @@ void File::SetValue(const std::string& key, const std::string& value)
 
     if (OptionValueType::Present == it->type)
     {
-        it->present = ("1" == value || "yes" == value || "true" == value);
+        it->present = true;
+        it->present_value = ("1" == value || "yes" == value || "true" == value);
         it->value = "";
     }
     else
@@ -214,7 +227,6 @@ void File::SetValue(const std::string& key, const std::string& value)
         it->value = value;
         it->present = !value.empty();
     }
-    return;
 }
 
 
@@ -307,7 +319,14 @@ Json::Value File::Generate()
     {
         if (e.present)
         {
-            ret[e.field_label] = e.value;
+            if (OptionValueType::Present == e.type)
+            {
+                ret[e.field_label] = e.present_value;
+            }
+            else
+            {
+                ret[e.field_label] = e.value;
+            }
             std::string comment = std::string("//  Option --") + e.option + " :: " + e.description;
             ret[e.field_label].setComment(comment, Json::CommentPlacement::commentBefore);
         }

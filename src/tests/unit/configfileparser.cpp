@@ -129,6 +129,9 @@ protected:
                            "Test Option - String", OptionValueType::String},
             OptionMapEntry{"present-option", "present_opt",
                            "Test Option - Present", OptionValueType::Present},
+            OptionMapEntry{"not-present-option", "not_present",
+                           "Option which should not be present/set",
+                           OptionValueType::Present},
 
             OptionMapEntry{"group-1-opt1", "grp1opt1", "group1",
                            "Test Group 1 Option 1", OptionValueType::Int},
@@ -202,31 +205,33 @@ TEST_F(ConfigurationFile, setval_string)
 
 TEST_F(ConfigurationFile, setval_present)
 {
-    std::vector<std::string> testvals = {"0", "1", "2", "no", "yes",
-                                         "false", "abc", "-1"};
+    // All of these will be considered "present" - but value differs
+    std::map<std::string, bool> testvals = {
+            {"0",     false},
+            {"1",     true},
+            {"2",     false},
+            {"no",    false},
+            {"yes",   true},
+            {"false", false},
+            {"true",  true},
+            {"abc",   false},
+            {"-1",    false}
+        };
     for (const auto& val : testvals)
     {
-        testfile->SetValue("present-option", val);
-        Json::Value data = testfile->Generate();
+        testfile->SetValue("present-option", val.first);
+        Json::Value parsed = testfile->Generate();
 
-        bool expected_present = ("1" == val || "yes" == val);
-        std::string fields_exp{(expected_present ? "present_opt:" : "")};
-        EXPECT_EQ(get_json_member_names(data), fields_exp)
-            << "Unexpected JSON members found for value '" << val << "'";
+        EXPECT_TRUE(parsed["present_opt"].asBool() == val.second)
+            << "Unexpected value for" << val.first << " returned: "
+            << parsed["present_opt"].asString() << std::endl << parsed;
+   }
 
-        if (expected_present)
-        {
-            EXPECT_TRUE(testfile->IsPresent("present-option"))
-                << "integer-option was unexpectedly NOT present with value '"
-                << val << "'";
-        }
-        else
-        {
-            EXPECT_FALSE(testfile->IsPresent("present-option"))
-                << "integer-option was unexpectedly present with value '"
-                << val << "'";
-        }
-    }
+    // Check for an not-present option
+    Json::Value parsed = testfile->Generate();
+    EXPECT_TRUE(parsed["not_present"].asString() == "")
+        << "Unexpected value for 'not-present-option returned: "
+        << parsed["not_present"].asString() << std::endl << parsed;
 }
 
 
@@ -310,7 +315,7 @@ TEST_F(ConfigurationFile, write_all)
 TEST_F(ConfigurationFile, getoptions)
 {
     Json::Value testdata;
-    testdata["present_opt"] = std::string{""};
+    testdata["present_opt"] = true;
     testdata["str_opt"] = std::string{"Moar testing"};
     testfile->Parse(testdata);
 
@@ -339,11 +344,11 @@ TEST_F(ConfigurationFile, getval)
     EXPECT_THROW(testfile->GetValue("present-option"), OptionNotPresent)
         << "OptionNotPresent exception was expected";
 
-    testdata["present_opt"] = std::string{""};
+    testdata["present_opt"] = false;
     testfile->Parse(testdata);
     EXPECT_TRUE(testfile->IsPresent("present-option"))
         << "present_opt is set -> IsPresent() should have returned true";
-    EXPECT_EQ(testfile->GetValue("present-option"), std::string{""})
+    EXPECT_EQ(testfile->GetValue("present-option"), "false")
         << "An empty string is expected when 'present-option' is set";
 }
 
@@ -353,7 +358,7 @@ TEST_F(ConfigurationFile, load_file_normal)
 
     rawdata["int_opt"] = std::string("9876");
     rawdata["str_opt"] = std::string("Another test string");
-    rawdata["present_opt"] = std::string("");
+    rawdata["present_opt"] = true;
 
     std::ofstream rawfile("/tmp/unit-test-config-parser-file-2.json");
     rawfile << rawdata << std::endl;
@@ -438,7 +443,7 @@ TEST_F(ConfigurationFile, check_exclusive_fail_2)
 {
     Json::Value data2;
     data2["grp2optB"] = "Test string 2";
-    data2["grp2optC"] = "";
+    data2["grp2optC"] = false;
     testfile->Parse(data2);
     EXPECT_THROW(testfile->CheckExclusiveOptions(), ExclusiveOptionError);
 }

@@ -76,7 +76,14 @@ struct OptionMapEntry
                 break;
 
             case OptionValueType::Present:
-                out << "Yes";
+                if ( e.present )
+                {
+                    out << (e.present_value ? "Yes" : "No");
+                }
+                else
+                {
+                    out << "(not set)";
+                }
                 break;
             }
             out << std::endl;
@@ -90,7 +97,8 @@ struct OptionMapEntry
     std::string description;       ///< User friendly description
     std::string exclusive_group;   ///< Belongs to a group with only one can be used
     OptionValueType type;          ///< Data type of this value
-    bool present;                  ///< Has this option been set?
+    bool present;                  ///< Has this option been configured?
+    bool present_value;            ///< Should the option be considered set or unset?
     std::string value;             ///< Value of the setting
 };
 typedef std::vector<OptionMapEntry> OptionMap;
