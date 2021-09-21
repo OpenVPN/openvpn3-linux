@@ -383,6 +383,7 @@ TEST_F(ConfigurationFile, load_file_additional)
 
     rawdata["int_opt"] = std::string("29437");
     rawdata["str_opt"] = std::string("Yet more testing");
+    rawdata["present_opt"] = std::string("1");
     rawdata["unexpected"] = std::string("some value");
 
     std::ofstream rawfile("/tmp/unit-test-config-parser-file-3.json");
@@ -394,8 +395,10 @@ TEST_F(ConfigurationFile, load_file_additional)
         << "Missing int_opt entry";
     EXPECT_TRUE(testfile->IsPresent("string-option"))
         << "Missing str_opt entry";
-    EXPECT_FALSE(testfile->IsPresent("present-option"))
-        << "Unset present-option was present";
+    EXPECT_TRUE(testfile->IsPresent("present-option"))
+        << "Missing present-option entry";
+    EXPECT_FALSE(testfile->IsPresent("not-present-option"))
+        << "The not-present-option is present";
     EXPECT_THROW(testfile->IsPresent("unexpected"), OptionNotFound)
         << "Unexpected field found";
 
@@ -410,14 +413,14 @@ TEST_F(ConfigurationFile, load_file_additional)
                           members.end(),
                           "str_opt") != members.end())
         << "Could not find 'str_opt' in generated JSON data";
-    EXPECT_FALSE(std::find(members.begin(),
+    EXPECT_TRUE(std::find(members.begin(),
                           members.end(),
                           "present_opt") != members.end())
         << "Could not find 'present_opt' in generated JSON data";
     EXPECT_FALSE(std::find(members.begin(),
-                          members.end(),
-                          "unexpected") != members.end())
-        << "Could not find 'unexpected' in generated JSON data";
+                           members.end(),
+                           "unexpected") != members.end())
+        << "Found 'unexpected' in generated JSON data";
 
     unlink("/tmp/unit-test-config-parser-file-3.json");
 }

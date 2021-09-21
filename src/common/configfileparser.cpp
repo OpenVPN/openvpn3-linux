@@ -91,7 +91,16 @@ void File::Parse(Json::Value& config)
         it->present = true;
         if (OptionValueType::Present == it->type)
         {
-            it->present_value = config[elm].asBool();
+            if( config[elm].isString())
+            {
+                // backwards compat parsing.
+                // May be removed some time after the v25 release
+                it->present_value = true;
+            }
+            else
+            {
+                it->present_value = config[elm].asBool();
+            }
         }
         else
         {
