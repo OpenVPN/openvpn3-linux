@@ -230,6 +230,24 @@ void File::SetValue(const std::string& key, const std::string& value)
 }
 
 
+void File::UnsetOption(const std::string& key)
+{
+    auto it = std::find_if(map.begin(), map.end(),
+                           [key](OptionMapEntry e)
+                           {
+                                return key == e.option;
+                           });
+    if (it == map.end())
+    {
+        throw OptionNotFound(key);
+    }
+
+    it->present = false;
+    it->present_value = false;
+    it->value = "";
+}
+
+
 void File::CheckExclusiveOptions()
 {
 

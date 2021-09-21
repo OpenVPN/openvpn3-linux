@@ -49,6 +49,7 @@ enum class OptionValueType : uint8_t {
 
 
 /**
+ *
  *   A single mapping between a command line option and the field it
  *   is stored in in the JSON based configuration file
  */
@@ -184,6 +185,13 @@ public:
      */
     void SetValue(const std::string& key, const std::string& value);
 
+
+    /**
+     *  Unsets a configuration option in the configuration file
+     *
+     * @param key   std::string of the command line option name to unset
+     */
+    void UnsetOption(const std::string& key);
 
     /**
      *  Run a check in all options to see if options belonging to the same

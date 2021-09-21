@@ -27,6 +27,7 @@
 #include <memory>
 #include <fstream>
 #include <sstream>
+#include <string>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -493,7 +494,7 @@ TEST_F(ConfigurationFile, single_entry_present)
         << "Unexpected JSON members found";
 
     // Now, remove that entry and save the file again
-    testfile->SetValue("present-option", "0");
+    testfile->UnsetOption("present-option");
     testfile->Save("/tmp/unit-test-config-parser-single-entry.json");
 
     // Validate that this config has now been deleted
