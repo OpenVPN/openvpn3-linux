@@ -68,6 +68,13 @@ public:
                               GDBusMethodInvocation *invoc) override;
 
     /**
+     * Checks for availability of data channel offload kernel module
+     *
+     * @return bool indicating whether the ovpn-dco kernel module is available
+     */
+    static bool available();
+
+    /**
      * Called by GeNL in worker thread when there is incoming data or event from kernel
      *
      * @param buf

@@ -95,6 +95,9 @@ public:
                           << "          <arg type='o' direction='in' name='device_path' />"
                           << "          <arg type='b' direction='out' name='succeded'/>"
                           << "        </method>"
+                          << "        <method name='DcoAvailable'>"
+                          << "          <arg type='b' direction='out' name='available'/>"
+                          << "        </method>"
                           << "        <method name='Cleanup'>"
                           << "        </method>"
                           << NetCfgSubscriptions::GenIntrospection("NotificationSubscribe",
@@ -201,6 +204,14 @@ public:
             else if ("ProtectSocket" == method_name)
             {
                 retval = protect_socket(GetPID(sender), conn, invoc, params);
+            }
+            else if ("DcoAvailable" == method_name)
+            {
+                bool available = false;
+#ifdef ENABLE_OVPNDCO
+                available = NetCfgDCO::available();
+#endif
+                retval = g_variant_new("(b)", available);
             }
             else if ("Cleanup" == method_name)
             {

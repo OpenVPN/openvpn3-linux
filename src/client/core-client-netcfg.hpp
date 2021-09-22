@@ -385,6 +385,11 @@ public:
     }
 
 #ifdef ENABLE_OVPNDCO
+    bool tun_builder_dco_available() override
+    {
+        return netcfgmgr.DcoAvailable();
+    }
+
     int tun_builder_dco_enable(const std::string& dev_name) override
     {
         if (!device)

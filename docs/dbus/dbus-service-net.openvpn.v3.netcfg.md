@@ -24,6 +24,7 @@ node /net/openvpn/v3/netcfg {
                     in  b ipv6,
                     in  o device_path,
                     out b succeded);
+      DcoAvailable(out b available);
       Cleanup();
       NotificationSubscribe(in  u filter);
       NotificationUnsubscribe(in  s optional_subscriber);
@@ -84,6 +85,23 @@ This method also
 
 
 [1] Unix file descriptors that are passed are not in the D-Bus method signature
+
+
+### Method: `net.openvpn.v3.netcfg.DcoAvailable`
+
+This method is called by the VPN client backend to check if the DCO kernel
+module is available. It it called by through the tun_builder interface, to
+query the status during instantiation of the transport used to establish
+the tunnel.
+
+#### Arguments
+
+This method also
+
+| Direction | Name         | Type        | Description                                                           |
+|-----------|--------------|-------------|-----------------------------------------------------------------------|
+| Out       | available    | boolean     | Is set to true if the DCO kernel module is available and loadable     |
+
 
 ### Method: `net.openvpn.v3.netcfg.Cleanup`
 

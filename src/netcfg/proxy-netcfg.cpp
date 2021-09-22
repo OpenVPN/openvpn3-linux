@@ -161,6 +161,15 @@ namespace NetCfgProxy
         return ret;
     }
 
+    bool Manager::DcoAvailable()
+    {
+        GVariant* res = Call("DcoAvailable");
+        GLibUtils::checkParams(__func__, res, "(b)", 1);
+        bool ret = GLibUtils::GetVariantValue<bool>(g_variant_get_child_value(res, 0));
+        g_variant_unref(res);
+        return ret;
+    }
+
     void Manager::Cleanup()
     {
         if (!CheckObjectExists())

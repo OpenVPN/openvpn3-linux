@@ -181,6 +181,11 @@ NetCfgDCO::~NetCfgDCO()
 #endif
 }
 
+bool NetCfgDCO::available()
+{
+    return GeNLImpl::available();
+}
+
 void NetCfgDCO::tun_read_handler(BufferAllocated &buf)
 {
     pipe->write_some(buf.const_buffer());
