@@ -199,7 +199,14 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
                 }
 
                 // Update the configuration and save the file.
-                config.SetValue(optname, new_value);
+                if ("config-unset" == cfgmode)
+                {
+                    config.UnsetOption(optname);
+                }
+                else
+                {
+                    config.SetValue(optname, new_value);
+                }
                 try
                 {
                     config.CheckExclusiveOptions();
