@@ -305,6 +305,7 @@ protected:
 
 private:
     bool parse_bool_value(const std::string& k, const std::string& value) const;
+    void remove_arg(const std::string& opt);
 };
 
 

@@ -300,6 +300,23 @@ bool ParsedArgs::parse_bool_value(const std::string& k, const std::string& value
 }
 
 
+void ParsedArgs::remove_arg(const std::string& opt)
+{
+    // Remove the parsed argument values
+    auto e = key_value.find(opt);
+    if (e != key_value.end())
+    {
+        e->second = std::vector<std::string>{};
+    }
+
+    // Remove the item from the list of present arguments/options
+    auto p = std::find(present.begin(), present.end(), opt);
+    if (p != present.end())
+    {
+        present.erase(p);
+    }
+}
+
 
 //
 //  RegisterParsedArgs implementation
