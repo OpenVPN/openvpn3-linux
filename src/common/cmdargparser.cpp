@@ -48,43 +48,24 @@ using namespace openvpn;
 //  ParsedArgs implementation
 //
 
-void ParsedArgs::ImportConfigFile(Configuration::File::Ptr config,
-                                  bool overwrite)
+void ParsedArgs::ImportConfigFile(Configuration::File::Ptr config)
 {
     for (const auto& opt : config->GetOptions())
     {
         // Check if this is an exclusive option
         std::vector<std::string> related = config->GetRelatedExclusiveOptions(opt);
-        for (const auto& go : related)
+        // Remove all the related exclusive options in the parsed args.
+        // The imported configuration file overrides the command line
+        // arguments
+        for (const auto& rel : related)
         {
-            auto xo = key_value.find(go);
-            if (key_value.end() == xo)
-            {
-                continue;
-            }
-            if (overwrite)
-            {
-                key_value.erase(xo);
-                present.erase(std::remove(present.begin(),
-                                          present.end(),
-                                          go),
-                              present.end());
-            }
-            else
-            {
-                throw ExclusiveOptionError(opt, related);
-            }
+            remove_arg(rel);
         }
 
+        // Add/overwrite the argument/option from the configuration file
+        remove_arg(opt);
         key_value[opt].push_back(config->GetValue(opt));
-
-        // Update the list of processed options
-        if (std::find(present.begin(),
-                      present.end(),
-                      opt) == present.end())
-        {
-            present.push_back(opt);
-        }
+        present.push_back(opt);
     }
 }
 

@@ -86,17 +86,12 @@ public:
      *
      * @param config     Configuration::File::Ptr to the configuration
      *                   file parser
-     * @param overwrite  If conflicting exclusive options on the command line
-     *                   are found in the config file, the default is to
-     *                   throw an exception.  If set to true, the conflicting
-     *                   option from the command line is removed.
      *
      * @throws ExclusiveOptionError if overrwite is false and an exclusive
      *         option from the command line conflicts with the configuration
      *         file.
      */
-    void ImportConfigFile(Configuration::File::Ptr config,
-                          bool overwrite = false);
+    void ImportConfigFile(Configuration::File::Ptr config);
 
     /**
      *  Get the program name (argv[0])
