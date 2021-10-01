@@ -273,7 +273,14 @@ public:
      */
     std::vector<std::string> GetAllValues(const std::string k) const
     {
-        return key_value.at(k);
+        try
+        {
+            return key_value.at(k);
+        }
+        catch (const std::out_of_range&)
+        {
+            return {};
+        }
     }
 
 
