@@ -743,7 +743,8 @@ if ENABLE_BASH_COMPLETION
 if HAVE_PYTHON
 	test -d `dirname $@` || $(MKDIR_P) `dirname $@`
 	test $(top_srcdir) != $(top_builddir) && cp -vr $(top_srcdir)/src/python/openvpn3 $(top_builddir)/src/python/ || true
-	$(AM_V_GEN)$(top_srcdir)/src/shell/bash-completion/gen-openvpn2-completion.py --python-source-dir $(top_builddir)/src/python > $@
+	$(AM_V_GEN)$(top_srcdir)/src/shell/bash-completion/gen-openvpn2-completion.py --python-source-dir $(top_builddir)/src/python > $@.tmp
+	mv $@.tmp $@
 endif
 endif
 
