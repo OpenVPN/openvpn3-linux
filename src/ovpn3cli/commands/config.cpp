@@ -974,7 +974,7 @@ static int cmd_config_remove(ParsedArgs::Ptr args)
         std::string response;
         if (!args->Present("force"))
         {
-            std::cout << "This operation CANNOT be undone and removes this"
+            std::cout << "This operation CANNOT be undone and removes this "
                       << "configuration profile completely."
                       << std::endl;
             std::cout << "Are you sure you want to do this? "
