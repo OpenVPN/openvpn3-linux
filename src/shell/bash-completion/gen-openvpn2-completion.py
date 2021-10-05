@@ -75,7 +75,7 @@ _openvpn2_completion()
             # all information gathered, generate the completion reply
             COMPREPLY=( $( compgen "${selopts}" -- $cur ) )
             ;;
-    {% for option, values in valid_args.items() %}
+    {% for option, values in valid_args | dictsort %}
         '{{ option }}')
             COMPREPLY=( $(compgen -W  "{{ values }}" -- $cur) )
             return 0
