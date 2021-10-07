@@ -89,9 +89,7 @@ void SystemdResolved::Apply(const ResolverSettings::Ptr settings)
 
         for (const auto& sd : settings->GetSearchDomains())
         {
-            // FIXME: Currently we default to routing domains only
-            //        Need to figure out how to
-            upd.search.push_back(SearchDomain(sd, true));
+            upd.search.push_back(SearchDomain(sd, false));
         }
 
         if (settings->GetDNSScope() == DNS::Scope::GLOBAL)
