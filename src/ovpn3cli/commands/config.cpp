@@ -468,7 +468,7 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
                 try
                 {
                     conf.UnsetOverride(override);
-                    std::cout << "Unset overide '" + override.key + "'" << std::endl;
+                    std::cout << "Unset override '" + override.key + "'" << std::endl;
                     valid_option = true;
                 }
                 catch (DBusException& err)
