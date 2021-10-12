@@ -145,7 +145,7 @@ def fetch_profile(uri, username, password, autologin):
         if 'OPENVPN3_DEBUG' in os.environ:
             handler.set_http_debuglevel(1)
     else:
-        raise RuntimeException('Only the https protocol is supported')
+        raise RuntimeError('Only the https protocol is supported')
 
     # Prepare urllib, providing credentials
     opener = urllib.request.build_opener(handler,
