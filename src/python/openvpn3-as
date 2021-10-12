@@ -34,6 +34,7 @@ import ssl
 import openvpn3
 import dbus
 import xml.etree.ElementTree as xmlET
+import socket
 
 
 ##
@@ -162,9 +163,27 @@ def fetch_profile(uri, username, password, autologin):
             contents = response.read()
         return contents.decode('utf-8')
     except urllib.error.URLError as e:
-        errxml = xmlET.fromstring(e.read().decode('utf-8'))
+        try:
+            errxml = xmlET.fromstring(e.read().decode('utf-8'))
+        except AttributeError:
+            err = "(unknown)"
+            if urllib.error.URLError == type(e):
+                if ssl.SSLError == type(e.reason):
+                    if 'CERTIFICATE_VERIFY_FAILED' == e.reason.reason:
+                        err = "Server HTTPS certificate validation failed"
+                    else:
+                        err = e.reason.reason
+                elif socket.gaierror == type(e.reason):
+                    err = e.reason.strerror
+                else:
+                    err = '[%s] %s' %(type(e.reason), str(e.reason))
+            else:
+                err = str(e)
+            raise RuntimeError(err)
+
         if 'Error' != errxml.tag:
             raise e
+
         typetag = errxml.find('Type')
         msgtag = errxml.find('Message')
         if msgtag is None or typetag is None:
@@ -219,9 +238,7 @@ def main():
             if crv1auth.Process():
                 password = crv1auth.GetResponse()
         except Exception as e:
-            print('ERROR: Failed to download configuration profile')
-            print('ERROR: %s' % e)
-            sys.exit(2)
+            raise RuntimeError('Failed to download configuration profile: %s' % str(e))
 
     if profile is None or len(profile) < 1:
         print('ERROR: No configuration profile retrieved')
@@ -243,5 +260,7 @@ def main():
 if __name__ == '__main__':
     try:
         main()
+    except RuntimeError as e:
+        print(e)
     except KeyboardInterrupt:
         print()
