@@ -295,10 +295,13 @@ static void start_session(OpenVPN3SessionProxy::Ptr session,
 
                 sleep(1);  // If not yet connected, wait for 1 second
             }
-            if ((op_start + timeout) <= time(0))
+            time_t now = time(0);
+            if ((op_start + timeout) <= now)
             {
                 std::stringstream err;
-                err << "Failed to connect (timeout): " << s << std::endl;
+                err << "Failed to connect"
+                    << (timeout > 0 && (op_start + timeout) <= now ? " (timeout)" : "")
+                    << ": " << s << std::endl;
                 session->Disconnect();
                 throw SessionException(err.str());
             }
