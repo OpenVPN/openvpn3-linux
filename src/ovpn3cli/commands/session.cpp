@@ -274,7 +274,7 @@ static void start_session(OpenVPN3SessionProxy::Ptr session,
                 }
                 else if (s.minor == StatusMinor::CFG_REQUIRE_USER)
                 {
-                    break;
+                    throw ReadyException(s.message);
                 }
 
                 // Check if an SIGINT / CTRL-C event has occurred.
@@ -303,7 +303,7 @@ static void start_session(OpenVPN3SessionProxy::Ptr session,
                 throw SessionException(err.str());
             }
         }
-        catch (ReadyException& err)
+        catch (const ReadyException&)
         {
             // If the ReadyException is thrown, it means the backend
             // needs more from the front-end side
