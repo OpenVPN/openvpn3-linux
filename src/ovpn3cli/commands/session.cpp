@@ -267,10 +267,21 @@ static void start_session(OpenVPN3SessionProxy::Ptr session,
                     std::cout << "Connected" << std::endl;
                     return;
                 }
-                else if (s.minor == StatusMinor::CONN_DISCONNECTED
-                        || s.minor == StatusMinor::CONN_AUTH_FAILED)
+                else if (s.minor == StatusMinor::CONN_DISCONNECTED)
                 {
                     break;
+                }
+                else if (s.minor == StatusMinor::CONN_AUTH_FAILED)
+                {
+                    try
+                    {
+                        session->Disconnect();
+                    }
+                    catch (...)
+                    {
+                        // Ignore errors
+                    }
+                    throw SessionException("User authentication failed");
                 }
                 else if (s.minor == StatusMinor::CFG_REQUIRE_USER)
                 {
