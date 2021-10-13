@@ -29,6 +29,7 @@
 #        have been made available in the OpenVPN 3 Core library.
 
 import sys
+from hawkey import RuntimeException
 if sys.version_info[0] < 3:
     print("Python 3.x is required")
     sys.exit(1)
@@ -58,7 +59,7 @@ if 'OPENVPN3_DEBUG' in os.environ:
 
 # Global variables
 mainloop = GLib.MainLoop()
-
+gl_sessionobj = None
 
 def import_config(bus, opts):
     cfgmgr = ConfigurationManager(bus)
@@ -144,6 +145,14 @@ def StatusHandler(major, minor, msg):
         mainloop.quit()
     if StatusMajor.CONNECTION == maj and StatusMinor.CONN_DISCONNECTED == min:
         mainloop.quit()
+    if StatusMajor.CONNECTION == maj and StatusMinor.CFG_REQUIRE_USER == min:
+        try:
+            global gl_sessionobj
+            request_credentials(gl_sessionobj)
+            gl_sessionobj.Connect()
+        except RuntimeError:
+            mainloop.quit()
+
 
 
 ##
@@ -152,6 +161,8 @@ def StatusHandler(major, minor, msg):
 #  the session is closed outside of this program
 #
 def fetch_logs_loop(sessobj, verb):
+    global gl_sessionobj
+    gl_sessionobj = sessobj
     sessobj.LogCallback(LogHandler)
     sessobj.StatusChangeCallback(StatusHandler)
     sessobj.SetProperty('log_verbosity', dbus.UInt32(verb))
@@ -179,6 +190,31 @@ def fetch_logs_loop(sessobj, verb):
 
     print('Disconnected')
     return 0
+
+
+def request_credentials(sessionobj):
+    # User credentials comes in tuples of (type, group).
+    # Type should always be 1 - that is the type for
+    # user credentials.
+    for input_slot in sessionobj.FetchUserInputSlots():
+
+        # Skip non-user credentials requests
+        if input_slot.GetTypeGroup()[0] != ClientAttentionType.CREDENTIALS:
+            continue
+
+        try:
+            if False == input_slot.GetInputMask():
+                response = input(input_slot.GetLabel() + ': ')
+            else:
+                response = getpass(input_slot.GetLabel() + ': ')
+        except KeyboardInterrupt:
+            # Shutdown the backend client
+            print("\nAborting")
+            sessionobj.Disconnect()
+            raise RuntimeError("Aborting")
+
+        input_slot.ProvideInput(response)
+
 
 
 ##
@@ -305,27 +341,10 @@ def start_tunnel(bus, cfgobj, opts):
             if str(excep).find(' Missing user credentials') > 0:
                 print('Credentials needed')
 
-                # User credentials comes in tuples of (type, group).
-                # Type should always be 1 - that is the type for
-                # user credentials.
-                for input_slot in sessionobj.FetchUserInputSlots():
-
-                    # Skip non-user credentials requests
-                    if input_slot.GetTypeGroup()[0] != ClientAttentionType.CREDENTIALS:
-                        continue
-
-                    try:
-                        if False == input_slot.GetInputMask():
-                            response = input(input_slot.GetLabel() + ': ')
-                        else:
-                            response = getpass(input_slot.GetLabel() + ': ')
-                    except KeyboardInterrupt:
-                        # Shutdown the backend client
-                        print("\nAborting")
-                        sessionobj.Disconnect()
-                        return 8
-
-                    input_slot.ProvideInput(response)
+                try:
+                    request_credentials(sessionobj)
+                except RuntimeError:
+                    return 8;
 
             elif str(excep).find(' Backend VPN process has died') > 1:
                 if 3 == exit_code:  # Authentication failed, this is expected
