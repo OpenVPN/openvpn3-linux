@@ -216,6 +216,7 @@ private:
     std::mutex event_mutex;
     bool failed_signal_sent;
     StatusMinor run_status;
+    bool initial_connection = true;
 
     bool socket_protect(int socket, std::string remote, bool ipv6) override
     {
@@ -367,12 +368,18 @@ private:
             signal->LogInfo("Connected: " + ev.info);
             signal->StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_CONNECTED);
             run_status = StatusMinor::CONN_CONNECTED;
+            initial_connection = false;
         }
         else if ("RECONNECTING" == ev.name)
         {
-            signal->LogInfo("Reconnecting");
-            signal->StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_RECONNECTING);
-            run_status = StatusMinor::CONN_RECONNECTING;
+            // Don't send/log the "reconnecting" state on the
+            // first initial connection
+            if (!initial_connection)
+            {
+                signal->LogInfo("Reconnecting");
+                signal->StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_RECONNECTING);
+                run_status = StatusMinor::CONN_RECONNECTING;
+            }
         }
         else if ("RESOLVE" == ev.name)
         {
