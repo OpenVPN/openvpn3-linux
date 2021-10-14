@@ -178,13 +178,23 @@ namespace openvpn
             }
         }
 
-        virtual void Log(const LogEvent& logev)
+        virtual void Log(const LogEvent& logev, bool duplicate_check = false)
         {
             // Don't log unless the log level filtering allows it
             // The filtering is done against the LogCategory of the message
             if (!LogFilterAllow(logev))
             {
                 return;
+            }
+
+            if (duplicate_check)
+            {
+                if (last_logevent && (logev == *last_logevent))
+                {
+                    // This contains the same log message as the previous one
+                    return;
+                }
+                last_logevent.reset(new LogEvent(logev));
             }
 
             if( logwr )
@@ -194,29 +204,29 @@ namespace openvpn
             Send("Log", logev.GetGVariantTuple());
         }
 
-        virtual void Debug(std::string msg)
+        virtual void Debug(std::string msg, bool duplicate_check = false)
         {
-            Log(LogEvent(log_group, LogCategory::DEBUG, msg));
+            Log(LogEvent(log_group, LogCategory::DEBUG, msg), duplicate_check);
         }
 
-        virtual void LogVerb2(std::string msg)
+        virtual void LogVerb2(std::string msg, bool duplicate_check = false)
         {
-            Log(LogEvent(log_group, LogCategory::VERB2, msg));
+            Log(LogEvent(log_group, LogCategory::VERB2, msg), duplicate_check);
         }
 
-        virtual void LogVerb1(std::string msg)
+        virtual void LogVerb1(std::string msg, bool duplicate_check = false)
         {
-            Log(LogEvent(log_group, LogCategory::VERB1, msg));
+            Log(LogEvent(log_group, LogCategory::VERB1, msg), duplicate_check);
         }
 
-        virtual void LogInfo(std::string msg)
+        virtual void LogInfo(std::string msg, bool duplicate_check = false)
         {
-            Log(LogEvent(log_group, LogCategory::INFO, msg));
+            Log(LogEvent(log_group, LogCategory::INFO, msg), duplicate_check);
         }
 
-        virtual void LogWarn(std::string msg)
+        virtual void LogWarn(std::string msg, bool duplicate_check = false)
         {
-            Log(LogEvent(log_group, LogCategory::WARN, msg));
+            Log(LogEvent(log_group, LogCategory::WARN, msg), duplicate_check);
         }
 
         virtual void LogError(std::string msg)
@@ -247,6 +257,9 @@ namespace openvpn
     protected:
         LogWriter *logwr = nullptr;
         LogGroup log_group;
+
+    private:
+        std::unique_ptr<LogEvent> last_logevent;
     };
 
 

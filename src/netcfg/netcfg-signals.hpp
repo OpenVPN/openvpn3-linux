@@ -56,7 +56,7 @@ public:
     }
 
 
-    void Debug(std::string msg) override
+    void Debug(std::string msg)
     {
         Log(LogEvent(log_group, LogCategory::DEBUG, msg));
     }

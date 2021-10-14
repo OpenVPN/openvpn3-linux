@@ -58,7 +58,7 @@ public:
      *
      * @param logev  LogEvent object containing the log message to log.
      */
-    void Log(const LogEvent& logev) override
+    void Log(const LogEvent& logev, bool duplicate_check = false) override
     {
         // Don't log unless the log level filtering allows it
         // The filtering is done against the LogCategory of the message
@@ -75,6 +75,7 @@ public:
         LogEvent l(logev, session_token);
         Send("Log", l.GetGVariantTuple());
     }
+
 
     /**
      * Sends a FATAL log messages and kills itself
