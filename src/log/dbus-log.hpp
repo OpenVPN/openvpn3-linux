@@ -191,10 +191,7 @@ namespace openvpn
             {
                 logwr->Write(logev);
             }
-            Send("Log", g_variant_new("(uus)",
-                                      (guint) logev.group,
-                                      (guint) logev.category,
-                                      logev.message.c_str()));
+            Send("Log", logev.GetGVariantTuple());
         }
 
         virtual void Debug(std::string msg)
