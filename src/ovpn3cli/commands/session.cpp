@@ -162,12 +162,15 @@ enum class SessionStartMode : std::uint8_t {
  *                      to be (re)started
  * @param timeout       Connection timeout. If exceeding this, the connection
  *                      attempt is aborted.
+ * @param background    Connection should be started in the background after
+ *                      basic credentials has been provided.  Only considered
+ *                      for initial_mode == SessionStartMode::START.
  *
  * @throws SessionException if any issues related to the session itself.
  */
 static void start_session(OpenVPN3SessionProxy::Ptr session,
                           SessionStartMode initial_mode,
-                          int timeout)
+                          int timeout, bool background = false)
 {
     // Prepare the SIGINT signal handling
     struct sigaction sact;
@@ -189,6 +192,12 @@ static void start_session(OpenVPN3SessionProxy::Ptr session,
             {
             case SessionStartMode::START:
                 session->Connect();
+                if (background)
+                {
+                    std::cout << "Session started in the background" << std::endl;
+
+                    return;
+                }
                 break;
 
             case SessionStartMode::RESUME:
@@ -563,7 +572,8 @@ static int cmd_session_start(ParsedArgs::Ptr args)
         }
 #endif
 
-        start_session(session, SessionStartMode::START, timeout);
+        start_session(session, SessionStartMode::START,
+                      timeout, args->Present("background"));
         return 0;
     }
     catch (const SessionException& excp)
@@ -605,6 +615,8 @@ SingleCommand::Ptr prepare_command_session_start()
                    "Enforces persistent tun/seamless tunnel (requires --config)");
     cmd->AddOption("timeout", 0, "SECS", true,
                    "Connection attempt timeout (default: infinite)");
+    cmd->AddOption("background", 0,
+                   "Starts the connection in the background after basic credentials are provided");
 #ifdef ENABLE_OVPNDCO
     cmd->AddOption("dco", 0, "BOOL", true,
                    "Start the connection using Data Channel Offload kernel acceleration",

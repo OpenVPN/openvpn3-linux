@@ -50,6 +50,12 @@ OPTIONS
                 Defines how long it will attempt to establish a connection
                 before aborting.  Default is to never time out.
 
+--background
+                Starts the connection in the background after basic user
+                credentials has been provided.  Using this option will require
+                to use ``openvpn3 session-manage``\(1) for further interaction
+                with the session.
+
 --dco BOOL
                 Enable kernel based Data Channel Offload for this session only.
                 This moves the tunnelled network traffic to be handled inside
