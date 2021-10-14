@@ -60,20 +60,8 @@ public:
      */
     void Log(const LogEvent& logev, bool duplicate_check = false) override
     {
-        // Don't log unless the log level filtering allows it
-        // The filtering is done against the LogCategory of the message
-        if (!LogFilterAllow(logev))
-        {
-            return;
-        }
-
-        if( logwr )
-        {
-            logwr->Write(logev);
-        }
-
         LogEvent l(logev, session_token);
-        Send("Log", l.GetGVariantTuple());
+        LogSender::Log(l, duplicate_check);
     }
 
 
