@@ -36,6 +36,13 @@
  */
 struct LogEvent
 {
+    enum class Format : uint8_t
+    {
+        AUTO,
+        NORMAL,
+        SESSION_TOKEN
+    };
+
     /**
      *  Initializes an empty LogEvent struct.
      */
@@ -56,6 +63,7 @@ struct LogEvent
         : group(grp), category(ctg), message(msg)
     {
         remove_trailing_nl();
+        format = Format::NORMAL;
     }
 
     /**
@@ -71,6 +79,7 @@ struct LogEvent
           session_token(session_token), message(msg)
     {
         remove_trailing_nl();
+        format = Format::SESSION_TOKEN;
     }
 
 
@@ -79,6 +88,7 @@ struct LogEvent
           session_token(session_token), message(logev.message)
     {
         remove_trailing_nl();
+        format = Format::SESSION_TOKEN;
     }
 
 
@@ -104,10 +114,12 @@ struct LogEvent
             else if ("(uus)" == g_type)
             {
                 parse_tuple(logev, false);
+                format = Format::NORMAL;
             }
             else if ("(uuss)" == g_type)
             {
                 parse_tuple(logev, true);
+                format = Format::SESSION_TOKEN;
             }
             else
             {
@@ -144,17 +156,18 @@ struct LogEvent
      * @return  Returns a pointer to a GVariant object with the formatted
      *          data
      */
-    GVariant *GetGVariantTuple() const
+    GVariant* GetGVariantTuple() const
     {
-        if (session_token.empty())
-        {
-            return g_variant_new("(uus)", (guint32) group, (guint32) category,
-                                 message.c_str());
-        }
-        else
+        if (Format::SESSION_TOKEN == format
+            || (Format::AUTO == format && !session_token.empty()))
         {
             return g_variant_new("(uuss)", (guint32) group, (guint32) category,
                                  session_token.c_str(), message.c_str());
+        }
+        else
+        {
+            return g_variant_new("(uus)", (guint32) group, (guint32) category,
+                                 message.c_str());
         }
     }
 
@@ -173,7 +186,7 @@ struct LogEvent
                               g_variant_new_uint32((guint) group));
         g_variant_builder_add(b, "{sv}", "log_category",
                               g_variant_new_uint32((guint) category));
-        if (!session_token.empty())
+        if (!session_token.empty() || Format::SESSION_TOKEN == format)
         {
             g_variant_builder_add(b, "{sv}", "log_session_token",
                                   g_variant_new_string(session_token.c_str()));
@@ -195,6 +208,7 @@ struct LogEvent
         category = LogCategory::UNDEFINED;
         session_token.clear();
         message.clear();
+        format = Format::AUTO;
     }
 
 
@@ -255,6 +269,7 @@ struct LogEvent
     LogCategory category;
     std::string session_token;
     std::string message;
+    Format format = Format::AUTO;
 
 
 private:
@@ -306,7 +321,12 @@ private:
         if (d)
         {
             session_token = std::string(g_variant_get_string(d, &len));
+            format = Format::SESSION_TOKEN;
             g_variant_unref(d);
+        }
+        else
+        {
+            format = Format::NORMAL;
         }
         d = nullptr;
 

@@ -66,6 +66,7 @@ TEST(LogEvent, init_empty)
     LogEvent empty;
     std::string res = test_empty(empty, true);
     ASSERT_TRUE(res.empty()) << res;
+    ASSERT_EQ(empty.format, LogEvent::Format::AUTO);
 }
 
 
@@ -74,6 +75,7 @@ TEST(LogEvent, init_with_value_1)
     LogEvent ev(LogGroup::LOGGER, LogCategory::DEBUG, "Test LogEvent");
     std::string res = test_empty(ev, false);
     ASSERT_TRUE(res.empty()) << res;
+    ASSERT_EQ(ev.format, LogEvent::Format::NORMAL);
 }
 
 
@@ -83,6 +85,7 @@ TEST(LogEvent, reset)
     ev.reset();
     std::string res = test_empty(ev, true);
     ASSERT_TRUE(res.empty()) << res;
+    ASSERT_EQ(ev.format, LogEvent::Format::AUTO);
 }
 
 
@@ -92,6 +95,7 @@ TEST(LogEvent, init_with_session_token)
                 "session_token_value", "Log message");
     std::string res = test_empty(ev, false);
     ASSERT_TRUE(res.empty()) << res;
+    ASSERT_EQ(ev.format, LogEvent::Format::SESSION_TOKEN);
 }
 
 
@@ -102,6 +106,7 @@ TEST(LogEvent, reset_with_session_token)
     ev.reset();
     std::string res = test_empty(ev, true);
     ASSERT_TRUE(res.empty()) << res;
+    ASSERT_EQ(ev.format, LogEvent::Format::AUTO);
 }
 
 
@@ -137,6 +142,7 @@ TEST(LogEvent, parse_gvariant_dict)
     ASSERT_EQ(parsed.group, LogGroup::LOGGER);
     ASSERT_EQ(parsed.category, LogCategory::DEBUG);
     ASSERT_EQ(parsed.message, "Test log message");
+    ASSERT_EQ(parsed.format, LogEvent::Format::NORMAL);
 }
 
 
@@ -152,6 +158,7 @@ TEST(LogEvent, parse_gvariant_tuple)
     ASSERT_EQ(parsed.group, LogGroup::BACKENDPROC);
     ASSERT_EQ(parsed.category, LogCategory::INFO);
     ASSERT_EQ(parsed.message, "Parse testing again");
+    ASSERT_EQ(parsed.format, LogEvent::Format::NORMAL);
 }
 
 
@@ -212,6 +219,7 @@ TEST(LogEvent, parse_gvariant_dict_session_token)
     ASSERT_EQ(parsed.category, LogCategory::DEBUG);
     ASSERT_EQ(parsed.session_token, "session_token_value");
     ASSERT_EQ(parsed.message, "Test log message");
+    ASSERT_EQ(parsed.format, LogEvent::Format::SESSION_TOKEN);
 }
 
 
@@ -229,6 +237,7 @@ TEST(LogEvent, parse_gvariant_tuple_session_token)
         ASSERT_EQ(parsed.category, LogCategory::INFO);
         ASSERT_EQ(parsed.session_token, "session_token_val");
         ASSERT_EQ(parsed.message, "Parse testing again");
+        ASSERT_EQ(parsed.format, LogEvent::Format::SESSION_TOKEN);
 }
 
 
@@ -273,6 +282,7 @@ TEST(LogEvent, GetVariantDict_session_token)
     ASSERT_EQ(cmp.category, dicttest.category);
     ASSERT_EQ(cmp.session_token, dicttest.session_token);
     ASSERT_EQ(cmp.message, dicttest.message);
+    ASSERT_EQ(cmp.format, dicttest.format);
 }
 
 
