@@ -333,7 +333,7 @@ private:
         }
         else if ("GET_CONFIG" == ev.name)
         {
-            signal->LogVerb2("Retrieving configuration from server");
+            signal->LogVerb2("Retrieving configuration from server", true);
         }
         else if ("TUN_SETUP_FAILED" == ev.name
                  || "TUN_IFACE_CREATE" == ev.name
@@ -356,7 +356,7 @@ private:
         }
         else if ("WAIT" == ev.name)
         {
-            signal->LogVerb1("Waiting for server response");
+            signal->LogVerb1("Waiting for server response", true);
         }
         else if ("WAIT_PROXY" == ev.name)
         {
@@ -376,7 +376,7 @@ private:
         }
         else if ("RESOLVE" == ev.name)
         {
-            signal->LogVerb2("Resolving");
+            signal->LogVerb2("Resolving", true);
         }
         else if ("AUTH_FAILED" == ev.name)
         {
