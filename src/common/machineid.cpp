@@ -151,7 +151,7 @@ MachineID::MachineID(const std::string& local_machineid, bool enforce_local)
         machine_id = std::string(output.str());
 #else
         errormsg = "Retrieving a MachineID is only supported with OpenSSL";
-        source = MachineID::SourceType::None;
+        source = MachineID::SourceType::NONE;
 #endif
     }
     catch (const std::exception& excp)
