@@ -395,6 +395,22 @@ existing configurations.
                       applicable with OpenVPN 3, which uses a different
                       execution model.
 
+--data-ciphers CIPHERLIST
+                      OpenVPN 2.5 introduced this option has a replacement
+                      to ``--ncp-ciphers``.  This is primarily intended to
+                      be used when migrating away from the prior default
+                      BF-CBC cipher.  With Negotiable Cipher Parameters
+                      (NCP), this should not be needed in the future.
+                      OpenVPN 3 also has a different way of handling this
+                      situation and is believed to not have the same
+                      connectivity issues as OpenVPN 2.4 and newer 2.x
+                      releases could have against older OpenVPN 2.x
+                      servers.
+
+--data-ciphers-fallback ALG
+                      This is tightly coupled to ``--data-ciphers`` and is
+                      also not used nor supported by OpenVPN 3.
+
 --dev-node NODE       OpenVPN 2.x will use /dev/net/tun, /dev/tun, /dev/tap,
                       etc by default when creating the tun/tap interface.  This
                       is handled differently in OpenVPN 3 Linux and is not
@@ -418,6 +434,11 @@ existing configurations.
 --group GROUP         Run OpenVPN with GROUP group credentials.  Not needed
                       with OpenVPN 3 which uses a different privilege
                       separation approach
+
+--ncp-ciphers CIPHERLIST
+                      OpenVPN 2.4 option renamed to ``--data-ciphers`` in
+                      OpenVPN 2.5.  Ignored in OpenVPN 3.
+
 --nice LEVEL          Change process priority.  Not supported in OpenVPN 3
 
 --nobind              Do not bind to local address and port.  This is default

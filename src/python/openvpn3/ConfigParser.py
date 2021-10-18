@@ -707,6 +707,22 @@ class ConfigParser():
                              + 'using /dev/net/tun. This is setting is not '
                              + 'configurable in OpenVPN 3 Linux front-ends.')
 
+        ignored.add_argument('--data-ciphers',
+                             metavar='CIPHERLIST',
+                             action=ConfigParser.IgnoreArg,
+                             nargs=1,
+                             help='OpenVPN 2.x option used for handling NCP '
+                             + 'related challenges when migrating out of BF-CBC. '
+                             + 'Not considered needed in OpenVPN 3')
+
+        ignored.add_argument('--data-ciphers-fallback',
+                             metavar='ALG',
+                             action=ConfigParser.IgnoreArg,
+                             nargs=1,
+                             help='OpenVPN 2.x option used for handling NCP '
+                             + 'related challenges when migrating out of BF-CBC. '
+                             + 'Not considered needed in OpenVPN 3.')
+
         ignored.add_argument('--down',
                              metavar='SCRIPT',
                              action=ConfigParser.IgnoreArg,
@@ -749,6 +765,12 @@ class ConfigParser():
                              nargs=1,
                              help='Silence repeating messages during n '
                              + 'seconds. Not supported in OpenVPN3')
+
+        ignored.add_argument('--ncp-ciphers',
+                             metavar='CIPHERLIST',
+                             nargs=1,
+                             help='OpenVPN 2.4 option, renamed to '
+                             + '--data-ciphers in OpenVPN 2.5')
 
         ignored.add_argument('--nice',
                              metavar='LEVEL',
