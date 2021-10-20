@@ -766,6 +766,13 @@ class ConfigParser():
                              help='Silence repeating messages during n '
                              + 'seconds. Not supported in OpenVPN3')
 
+        ignored.add_argument('--mute-replay-warnings',
+                             metavar='SECS',
+                             action=ConfigParser.IgnoreArg,
+                             nargs=0,
+                             help='Silence the output of replay warnings. '
+                             + 'Not supported in OpenVPN3')
+
         ignored.add_argument('--ncp-ciphers',
                              metavar='CIPHERLIST',
                              nargs=1,

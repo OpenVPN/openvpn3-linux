@@ -435,6 +435,12 @@ existing configurations.
                       with OpenVPN 3 which uses a different privilege
                       separation approach
 
+--mute-replay-warnings
+                      OpenVPN 2.5 and older can hide warnings related to
+                      replayed packets.  Packet replays are not reported
+                      in the same way in OpenVPN 3 Core library, so this
+                      option makes no behavioural change.
+
 --ncp-ciphers CIPHERLIST
                       OpenVPN 2.4 option renamed to ``--data-ciphers`` in
                       OpenVPN 2.5.  Ignored in OpenVPN 3.
