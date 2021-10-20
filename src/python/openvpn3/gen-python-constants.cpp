@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017      OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2021  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2021  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -94,26 +94,9 @@ int main(int argc, char **argv)
          << "# constants are modified." << std::endl
          << "#" << std::endl << std::endl;
 
-    // The IntFlag extension in enum arrived in Python 3.6,
-    // older Python releases need to pick this from the
-    // aenum module available via pip3
-    double pyver = ::atof(PYTHON_VERSION);
-    if (pyver > 3.5)
-    {
-        std::cout << "from enum import Enum, IntFlag" << std::endl << std::endl;
-    }
-    else
-    {
-        std::cout << "# Python version during build time was older than 3.6; "
-                  << "using enum workaround" << std::endl;
-        std::cout << "try:" << std::endl
-                  << "    from aenum import Enum, IntFlag" << std::endl
-                  << "except ImportError:" << std::endl
-                  << "    import sys" << std::endl
-                  << "    print('** ERROR **  The openvpn3 module requires the "
-                  << "aenum module on this platform.  Install via pip3.')" << std::endl
-                  << "    sys.exit(8)" << std::endl << std::endl;
-    }
+    // This requires Python 3.6 or newer
+    // Older Python releases are no longer supported
+    std::cout << "from enum import Enum, IntFlag" << std::endl << std::endl;
 
     std::cout << "VERSION = '" << PACKAGE_GUIVERSION << "'"
               << std::endl << std::endl;
