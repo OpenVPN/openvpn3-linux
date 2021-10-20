@@ -29,7 +29,6 @@
 #        have been made available in the OpenVPN 3 Core library.
 
 import sys
-from hawkey import RuntimeException
 if sys.version_info[0] < 3:
     print("Python 3.x is required")
     sys.exit(1)
