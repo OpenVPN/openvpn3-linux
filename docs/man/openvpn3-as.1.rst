@@ -46,6 +46,12 @@ OPTIONS
 --username USERNAME
                       Username to use for OpenVPN Access Server login
 
+--insecure-certs
+                      Accept invalid and potentially insecure TLS server
+                      certificates.  This is typically needed if the Access
+                      Server uses a self-signed certificate or issued by a
+                      Certificate Authority not known by the system.  Use this
+                      feature carefully.
 
 SEE ALSO
 ========

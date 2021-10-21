@@ -123,7 +123,7 @@ class CRV1Authentication(Exception):
 #  @return Returns a string containing the configuration profile for the user
 #          on success.  Otherwise an exception with the error is thrown.
 #
-def fetch_profile(uri, username, password, autologin):
+def fetch_profile(uri, username, password, autologin, insecure_certs):
     resturi = uri.geturl() + '/rest/' + (autologin and 'GetAutologin' or 'GetUserlogin') + "?tls-cryptv2=1&action=import"
 
     # Prepare credentials
@@ -139,8 +139,9 @@ def fetch_profile(uri, username, password, autologin):
         sslctx.options &= ~ssl.OP_NO_SSLv3
         sslctx.options &= ~ssl.OP_NO_SSLv2
         sslctx.load_default_certs()
-        sslctx.verify_mode = ssl.CERT_REQUIRED
-        sslctx.check_hostname = True
+        if not insecure_certs:
+            sslctx.verify_mode = ssl.CERT_REQUIRED
+            sslctx.check_hostname = True
         handler = urllib.request.HTTPSHandler(context=sslctx)
         if 'OPENVPN3_DEBUG' in os.environ:
             handler.set_http_debuglevel(1)
@@ -208,6 +209,8 @@ def main():
                            help='Override the automatically generated profile name (default: AS:$servername)')
     cmdparser.add_argument('--username', metavar='USERNAME',
                            help='Username to use for OpenVPN Access Server login')
+    cmdparser.add_argument('--insecure-certs', action='store_true',
+                           help='Ignore invalid https server certificates used by the server')
 
     cmdparser.add_argument('server', metavar='<https://...>', type=str, nargs=1,
                            help='URL to OpenVPN Access Server')
@@ -232,7 +235,7 @@ def main():
     done = False
     while not done:
         try:
-            profile = fetch_profile(uri, username, password, opts.autologin)
+            profile = fetch_profile(uri, username, password, opts.autologin, opts.insecure_certs)
             done = True
         except CRV1Authentication as crv1auth:
             if crv1auth.Process():
