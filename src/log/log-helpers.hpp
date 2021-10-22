@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017-2018 OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017-2018 David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017-2021  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017-2021  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -17,11 +17,11 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#ifndef OPENVPN3_HELPERS_LOG_HPP
-#define OPENVPN3_HELPERS_LOG_HPP
+#pragma once
 
 #include <cstdint>
 #include <sstream>
+#include <string>
 #include <array>
 
 class LogException : public std::exception
@@ -128,18 +128,26 @@ const std::array<const std::string, 9> LogCategory_str = {{
 
 inline const std::string LogPrefix(LogGroup group, LogCategory catg)
 {
+        std::stringstream grp_str;
         if ((uint8_t) group >= LogGroupCount) {
-            THROW_LOGEXCEPTION("Invalid Log Group value");
+            grp_str << "[group:" << std::to_string((uint8_t)group) << "]";
+        }
+        else
+        {
+            grp_str << LogGroup_str[(uint8_t) group];
         }
 
+        std::stringstream catg_str;
         if ((uint8_t) catg > 8) {
-            THROW_LOGEXCEPTION("Invalid category in log flags");
+            catg_str << "[category:" << std::to_string((uint8_t)catg) << "]";
+        }
+        else
+        {
+            catg_str << LogCategory_str[(uint8_t)catg];
         }
 
         std::stringstream ret;
-        ret << LogGroup_str[(uint8_t) group] << " "
-            << LogCategory_str[(uint8_t)catg] << ": ";
+        ret << grp_str.str() << " "
+            << catg_str.str() << ": ";
         return ret.str();
 }
-
-#endif // OPENVPN3_LOG_HELPERS_HPP
