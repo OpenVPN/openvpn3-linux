@@ -1126,7 +1126,7 @@ class ConfigParser():
                 self.__tag = kwargs.pop('embed_tag')
             else:
                 self.__tag = 'tls-auth'
-            super(ConfigParser.EmbedFile, self).__init__(option_strings, dest, '+', **kwargs)
+            super(ConfigParser.EmbedTLSauth, self).__init__(option_strings, dest, '+', **kwargs)
 
         def __call__(self, parser, namespace, values, option_string=None):
             """Loads the tls-auth file, generates an embedded option of it
@@ -1217,7 +1217,9 @@ class ConfigParser():
                 self.__warn = False
             super(ConfigParser.IgnoreArg, self).__init__(option_strings, dest, nargs, **kwargs)
 
-        def __call__(self, parser, namespace, values, options_string):
+        def __call__(self, parser, namespace, values, options_string=None):
+            if options_string is None:
+                raise KeyError('option_string is required')
             if self.__warn is True:
                 print("** WARNING ** Ignoring option: %s %s" % (
                     self.option_strings[0], " ".join(values)))
