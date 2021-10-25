@@ -108,7 +108,8 @@ class ConfigParser():
             elif opt_val is not None:
                 processed = False
                 if key in ('ca', 'cert', 'extra-certs', 'http-proxy-user-pass',
-                           'key', 'tls-auth', 'tls-crypt', 'auth-user-pass'):
+                           'key', 'tls-auth', 'tls-crypt', 'tls-crypt-v2',
+                           'auth-user-pass'):
                     # Embedded files should not be prefixed by the key value
                     #
                     # First, check if it is an embedded file here
@@ -597,6 +598,12 @@ class ConfigParser():
                                    help='Encrypts the TLS control channel '
                                    + 'with a shared secret key (FILE).  This'
                                    + 'CANNOT be combined with --tls-auth')
+
+        self.__parser.add_argument('--tls-crypt-v2', metavar='FILE',
+                                   action=ConfigParser.EmbedFile,
+                                   dest='tls-crypt-v2', embed_tag='tls-crypt-v2',
+                                   help='Encrypts the TLS control channel '
+                                   + 'with a client specific secret key (FILE).')
 
         tls_versions = ['1.0','1.1','1.2','1.3']
         self.__parser.add_argument('--tls-version-min',
