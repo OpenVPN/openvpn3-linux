@@ -240,6 +240,7 @@ public:
 
         last_logev = logev;
         last_logev.session_token.clear();
+        last_logev.format = LogEvent::Format::NORMAL;
         return last_logev;
     }
 
