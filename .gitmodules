@@ -1,12 +1,12 @@
 [submodule "openvpn3-core"]
 	path = openvpn3-core
-	url = git://github.com/OpenVPN/openvpn3
+	url = https://github.com/OpenVPN/openvpn3
 [submodule "asio"]
 	path = vendor/asio
-	url = git://github.com/chriskohlhoff/asio
+	url = https://github.com/chriskohlhoff/asio
 [submodule "googletest"]
 	path = vendor/googletest
-	url = git://github.com/google/googletest.git
+	url = https://github.com/google/googletest.git
 	ignore = untracked
 [submodule "ovpn-dco"]
 	path = ovpn-dco
