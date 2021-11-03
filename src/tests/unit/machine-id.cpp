@@ -143,7 +143,7 @@ TEST_F(MachineIDTest, get_system)
     sys_machineid_file >> sysid;
     if (!sys_machineid_file.fail())
     {
-        MachineID machid;
+        MachineID machid("/etc/machine-id", true);
         EXPECT_TRUE(machid.GetSource() == MachineID::SourceType::SYSTEM);
     }
     else
@@ -151,6 +151,16 @@ TEST_F(MachineIDTest, get_system)
         GTEST_SKIP() << "Missing /etc/system-id file";
     }
     sys_machineid_file.close();
+}
+
+TEST_F(MachineIDTest, get_systemd_api)
+{
+#if HAVE_SYSTEMD
+    MachineID machid;
+    EXPECT_TRUE(machid.GetSource() == MachineID::SourceType::SYSTEMD_API);
+#else
+    GTEST_SKIP() << "Needed systemd functions not available";
+#endif
 }
 
 TEST_F(MachineIDTest, get)

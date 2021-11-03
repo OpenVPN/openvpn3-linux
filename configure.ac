@@ -117,6 +117,35 @@ PKG_CHECK_MODULES(
         [AC_MSG_ERROR([libcap-ng package not found. Is the development package installed?])]
 )
 
+dnl
+dnl  Check for systemd libraries; used for an alternative MachineID implementation
+dnl
+PKG_CHECK_MODULES(
+        [LIBSYSTEMD],
+        [libsystemd > 218],
+        [have_libsystemd="yes"],
+        []
+)
+if test "$have_libsystemd" = "yes"; then
+        saved_CFLAGS="${CFLAGS}"
+        saved_LIBS="${LIBS}"
+        CFLAGS="${CFLAGS} ${LIBSYSTEMD_CFLAGS}"
+        LIBS="${LIBS} ${LIBSYSTEMD_LIBS}"
+        AC_CHECK_FUNCS([sd_id128_get_machine],
+                       [AC_CHECK_FUNCS([sd_id128_to_string],
+                                       [have_systemd_libs="yes"],
+                                       [])
+                       ],
+                       []
+                      )
+fi
+AC_SUBST([HAVE_SYSTEMD])
+if test "$have_systemd_libs" = "yes"; then
+        AC_DEFINE([HAVE_SYSTEMD], [1],
+                  [Needed systemd library functions are available]
+        )
+fi;
+
 
 PKG_CHECK_MODULES(
         [LIBTINYXML2],

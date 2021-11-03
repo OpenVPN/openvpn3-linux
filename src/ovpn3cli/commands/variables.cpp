@@ -51,6 +51,9 @@ int cmd_variables(ParsedArgs::Ptr args)
             case MachineID::SourceType::SYSTEM:
                 std::cout << "System";
                 break;
+            case MachineID::SourceType::SYSTEMD_API:
+                std::cout << "systemd API";
+                break;
             case MachineID::SourceType::LOCAL:
                 std::cout << "Installation local";
                 break;

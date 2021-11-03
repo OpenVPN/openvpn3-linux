@@ -1,7 +1,7 @@
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
-#  Copyright (C) 2017 - 2019  OpenVPN Inc. <sales@openvpn.net>
-#  Copyright (C) 2017 - 2019  David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2017 - 2021  OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2017 - 2021  David Sommerseth <davids@openvpn.net>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -117,6 +117,7 @@ AM_CXXFLAGS = \
 	$(LIBLZ4_CFLAGS) \
 	$(LIBUUID_CFLAGS) \
 	$(LIBCAPNG_CFLAGS) \
+	$(LIBSYSTEMD_CFLAGS) \
 	-DLIBEXECDIR=\"$(libexecdir)\" \
 	$(DCO_CXXFLAGS)
 
@@ -128,7 +129,8 @@ LDADD = \
 	$(LIBGLIBGIO_LIBS) \
 	$(LIBJSONCPP_LIBS) \
 	$(LIBLZ4_LIBS) \
-	$(LIBUUID_LIBS)
+	$(LIBUUID_LIBS) \
+	$(LIBSYSTEMD_LIBS)
 
 if ENABLE_OVPNDCO
 LDADD += $(LIBNL_GENL_LIBS) $(PROTOBUF_LIBS)

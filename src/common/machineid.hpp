@@ -57,10 +57,11 @@ class MachineID
 {
 public:
     enum class SourceType {
-        NONE,    ///< No source used - no reliable machine-id available if any at all
-        SYSTEM,  ///< machine-id derived from /etc/machine-id
-        LOCAL,   ///< Static machine-id created, using OPENVPN3_MACHINEID
-        RANDOM   ///< Storing generated machine-id failed, unreliable random value used
+        NONE,        ///< No source used - no reliable machine-id available if any at all
+        SYSTEM,      ///< machine-id derived from /etc/machine-id
+        SYSTEMD_API, ///< machine-id derived from systemd API
+        LOCAL,       ///< Static machine-id created, using OPENVPN3_MACHINEID
+        RANDOM       ///< Storing generated machine-id failed, unreliable random value used
     };
 
 

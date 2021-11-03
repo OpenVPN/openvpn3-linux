@@ -33,6 +33,10 @@
 #include <vector>
 #include <uuid/uuid.h>
 
+#ifdef HAVE_SYSTEMD
+#include <systemd/sd-id128.h>
+#endif
+
 #ifdef USE_OPENSSL
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
@@ -58,51 +62,66 @@ const char* MachineIDException::what()
 
 MachineID::MachineID(const std::string& local_machineid, bool enforce_local)
 {
-    std::vector<std::string> files;
-    if (!enforce_local)
-    {
-        files.push_back("/etc/machine-id");
-    }
-    files.push_back(local_machineid);
 
-    std::ifstream machineid_file;
-    bool success = false;
-    for (const auto& fname : files)
+    std::string rawid;
+
+#if HAVE_SYSTEMD
+    sd_id128_t sdmid;
+    if (!enforce_local && (0 == sd_id128_get_machine(&sdmid)))
     {
-        machineid_file.open(fname);
-        if (!machineid_file.eof() && !machineid_file.fail())
+        char sdmidstr[SD_ID128_STRING_MAX];
+        rawid = std::string(sd_id128_to_string(sdmid, sdmidstr));
+        source = MachineID::SourceType::SYSTEMD_API;
+    }
+    else
+#endif
+    {
+        std::vector<std::string> files;
+        if (!enforce_local)
         {
-            success = true;
-            if (fname == local_machineid)
+            files.push_back("/etc/machine-id");
+        }
+        files.push_back(local_machineid);
+
+        std::ifstream machineid_file;
+        bool success = false;
+        for (const auto& fname : files)
+        {
+            machineid_file.open(fname);
+            if (!machineid_file.eof() && !machineid_file.fail())
+            {
+                success = true;
+                if ((fname == local_machineid)
+                    && ("/etc/machine-id" != local_machineid))
+                {
+                    source = MachineID::SourceType::LOCAL;
+                }
+                else
+                {
+                    source = MachineID::SourceType::SYSTEM;
+                }
+                break;
+            }
+        }
+
+        if (success)
+        {
+            std::getline(machineid_file, rawid);
+        }
+        else
+        {
+            // No machine ID was found; generate one on-the-fly and save it
+            rawid = generate_machine_id(local_machineid);
+            if (errormsg.empty())
             {
                 source = MachineID::SourceType::LOCAL;
             }
             else
             {
-                source = MachineID::SourceType::SYSTEM;
+                // If an error message appeared in generate_machine_id, the
+                // source is completely random
+                source = MachineID::SourceType::RANDOM;
             }
-            break;
-        }
-    }
-
-    std::string rawid;
-    if (success)
-    {
-        std::getline(machineid_file, rawid);
-    }
-    else
-    {
-        // No machine ID was found; generate one on-the-fly and save it
-        rawid = generate_machine_id(local_machineid);
-        if (errormsg.empty())
-        {
-            source = MachineID::SourceType::LOCAL;
-        }
-        else
-        {
-            // If an error message appeared in generate_machine_id, the
-            // source is completely random
-            source = MachineID::SourceType::RANDOM;
         }
     }
 
