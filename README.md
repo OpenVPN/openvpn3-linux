@@ -457,7 +457,8 @@ First install the package dependencies needed to run the build.
 
   For CentOS 8 run this command:
 
-     # yum-config-manager --set-enabled PowerTools  # CentOS
+     # yum -y install yum-utils
+     # yum-config-manager --set-enabled powertools
 
 ##### Required packages
 
