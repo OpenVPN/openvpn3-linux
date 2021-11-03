@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2021  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2021  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -17,9 +17,7 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#ifndef OPENVPN3_CORE_EXTENSIONS
-#define OPENVPN3_CORE_EXTENSIONS
-
+#pragma once
 #include <iostream>
 #include <json/json.h>
 #include <openvpn/client/cliconstants.hpp>
@@ -40,6 +38,16 @@ namespace openvpn {
                 || (optname == "tls-auth")
                 || (optname == "tls-crypt")
                 || (optname == "tls-crypt-v2")) ? true : false;
+    }
+
+    inline bool option_req_array(const std::string& optname)
+    {
+        return (("peer-fingerprint" == optname)
+                || ("pull-filter" == optname)
+                || ("remote" == optname)
+                || ("route" == optname)
+                || ("route-ipv6" == optname)
+               ) ? true : false;
     }
 
     std::string optparser_mkline(std::string optname, std::string optvalue)
@@ -87,7 +95,18 @@ namespace openvpn {
 
                 // Put these parts into the Json::Value storage
                 // and trim trailing spaces in value
-                outdata[optname] = value.str().substr(0,value.str().find_last_not_of(" ")+1);
+                std::string v = value.str().substr(0,value.str().find_last_not_of(" ")+1);
+
+                // Certain options can be used multiple times, so we treat it
+                // as an array in the JSON export
+                if (!option_req_array(optname))
+                {
+                    outdata[optname] = v;
+                }
+                else
+                {
+                    outdata[optname].append(v);
+                }
             }
 
             return outdata;
@@ -126,7 +145,22 @@ namespace openvpn {
             for(auto it = data.begin(); it != data.end(); ++it)
             {
                 std::string name = it.name();
-                config_str << optparser_mkline(name, data[name].asString());
+                // We need different parsing if the JsonValue is an array or not
+                // and we don't rely on option_req_array() here for backwards
+                // compatibility with existing persistent configs not using
+                // arrays for these options.  Instead we trust the JSON input.
+                if (!data[name].isArray())
+                {
+                    config_str << optparser_mkline(name, data[name].asString());
+                }
+                else
+                {
+                    for (size_t idx = 0; idx < data[name].size(); idx++)
+                    {
+                        config_str << optparser_mkline(name,
+                                                       data[name].get(idx, "").asString());
+                    }
+                }
             }
             expand_profile(config_str.str(), "", openvpn::ProfileMerge::FOLLOW_NONE,
                            openvpn::ProfileParseLimits::MAX_LINE_SIZE,
@@ -135,6 +169,3 @@ namespace openvpn {
         }
     };
 }
-
-#endif // OPENVPN3_CORE_EXTENSIONS
-
