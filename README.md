@@ -440,7 +440,7 @@ First install the package dependencies needed to run the build.
 
 - Generic build requirements:
 
-      # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2 tinyxml2-devel python3-dbus python3-gobject python3-pyOpenSSL python3-jinja2 python3-docutils python3-dbus bzip2 polkit
+      # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2 tinyxml2-devel python3-dbus python3-gobject python3-pyOpenSSL python3-jinja2 python3-docutils bzip2 polkit
 
 - Dependencies to build with DCO support:
 
