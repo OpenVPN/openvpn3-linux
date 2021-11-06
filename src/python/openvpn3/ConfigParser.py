@@ -1090,7 +1090,7 @@ class ConfigParser():
         def __call__(self, parser, namespace, values, option_string=None):
             """Loads the given file and generates an embedded option of it"""
 
-            if len(values) != 1 and not self.__ignore_missing_filename:
+            if len(values) < 1 and not self.__ignore_missing_filename:
                 err = '%s needs a filename' % (self.option_strings[0])
                 raise argparse.ArgumentError(self, err)
 
@@ -1098,7 +1098,7 @@ class ConfigParser():
                 # When a filename is present, embed
                 # the file into the proper tags
                 try:
-                    fp = open(values[0], 'r')
+                    fp = open(self.normalize_filename(values), 'r')
                     ret = '<%s>\n' % self.__tag
                     ret += '\n'.join([l.strip() for l in fp.readlines()])
                     ret += '\n</%s>' % self.__tag
@@ -1112,6 +1112,12 @@ class ConfigParser():
                 # this is allowed (ignore_missing_filename=True),
                 # just add this as an option without arguments.
                 setattr(namespace, self.dest, '')
+
+
+        def normalize_filename(self, values):
+            fn = " ".join(values)
+            fn = fn.replace('"', '').replace("'", '').replace('\\', '')
+            return fn
 
     # ENDCLASS: EmbedFile
 
@@ -1134,11 +1140,12 @@ class ConfigParser():
             """
 
             # If values is a list, we have filename and key-direction
-            filename = values
-            if isinstance(values, list):
-                if len(values) > 1:
-                    setattr(namespace, 'key-direction', values[1])
-                filename = values[0]
+            filename = ""
+            if values[-1:][0] in ('0', '1'):
+                filename = self.normalize_filename(values[:-1])
+                setattr(namespace, 'key-direction', values[-1:])
+            else:
+                filename = self.normalize_filename(values)
 
             fp = open(filename, 'r')
             ret = '<%s>\n' % self.__tag
