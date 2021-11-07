@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018 - 2020  OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018 - 2020  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2021  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2021  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -582,6 +582,25 @@ public:
 
 
     /**
+     *   Add an alias command to this main command.  This is useful
+     *   when wanting to deprecate a command while keeping the old one
+     *   still functional.
+     *
+     * @param alias    std::string of the alias name
+     * @param remark   std::string with a message being shown when used
+     */
+    void SetAliasCommand(const std::string& alias,
+                         const std::string& remark = {});
+
+    /**
+     *   Retrieve the alias set for this command
+     *
+     * @return Returns a std::string with the alias
+     */
+    const std::string GetAliasCommand() const;
+
+
+    /**
      * Adds a new option to the current command.  This takes both a
      * long and short option without any additional value arguments.
      *
@@ -732,7 +751,8 @@ public:
      */
     bool CheckCommandName(const std::string cmdn)
     {
-        return cmdn == command;
+        return (cmdn == command)
+               || (!alias_cmd.empty() && cmdn == alias_cmd);
     }
 
 
@@ -804,6 +824,8 @@ private:
     const std::string command;
     const std::string description;
     const commandPtr command_func;
+    std::string alias_cmd;
+    std::string alias_remark;
     std::vector<SingleCommandOption::Ptr> options;
     std::string shortopts;
     bool opt_version_added;

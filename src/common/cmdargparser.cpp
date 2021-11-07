@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018 - 2020  OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018 - 2020  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2021  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2021  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -194,7 +194,7 @@ void Commands::ShellCompletion::list_options(const std::string cmd)
 {
     for (auto const& c : commands->GetAllCommandObjects())
     {
-        if (c->GetCommand() == cmd )
+        if ((c->GetCommand() == cmd) || (c->GetAliasCommand() == cmd))
         {
             std::cout << c->GetOptionsList() << std::endl;
             return;
@@ -207,7 +207,7 @@ void Commands::ShellCompletion::call_arg_helper(const std::string cmd, const std
 {
     for (auto const& c : commands->GetAllCommandObjects())
     {
-        if (c->GetCommand() == cmd )
+        if ((c->GetCommand() == cmd) || (c->GetAliasCommand() == cmd))
         {
             unsigned int skip = 0;
             if ('-' == option[0])
@@ -614,6 +614,20 @@ SingleCommandOption::Ptr SingleCommand::AddOption(const std::string longopt,
 }
 
 
+void SingleCommand::SetAliasCommand(const std::string& alias,
+                                    const std::string& remark)
+{
+    alias_cmd = alias;
+    alias_remark = remark;
+}
+
+
+const std::string SingleCommand::GetAliasCommand() const
+{
+    return alias_cmd;
+}
+
+
 void SingleCommand::AddVersionOption(const char shortopt)
 {
     (void) AddOption("version", shortopt, "Show version information");
@@ -680,6 +694,11 @@ RegisterParsedArgs::Ptr SingleCommand::parse_commandline(const std::string & arg
                                                          int argc, char **argv)
 {
     struct option *long_opts = init_getopt();
+
+    if (argv[1] && (argv[1] == alias_cmd) && !alias_remark.empty())
+    {
+        std::cout << alias_remark << std::endl;
+    }
 
     RegisterParsedArgs::Ptr cmd_args;
     cmd_args.reset(new RegisterParsedArgs(arg0));
