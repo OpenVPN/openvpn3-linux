@@ -885,6 +885,14 @@ private:
                                                             "password");
                     creds.cachePassword = true;
                 }
+
+                if (userinputq.QueueCount(ClientAttentionType::CREDENTIALS,
+                                          ClientAttentionGroup::CHALLENGE_STATIC) > 0)
+                {
+                    creds.response = userinputq.GetResponse(ClientAttentionType::CREDENTIALS,
+                                                            ClientAttentionGroup::CHALLENGE_STATIC,
+                                                            "static_challenge");
+                }
                 creds.replacePasswordWithSessionID = true; // If server sends auth-token
                 provide_creds = true;
             }
@@ -1082,6 +1090,16 @@ private:
             userinputq.RequireAdd(ClientAttentionType::CREDENTIALS,
                                   ClientAttentionGroup::USER_PASSWORD,
                                   "password", "Auth Password", true);
+
+            if (!cfgeval.staticChallenge.empty())
+            {
+                userinputq.RequireAdd(ClientAttentionType::CREDENTIALS,
+                                      ClientAttentionGroup::CHALLENGE_STATIC,
+                                      "static_challenge",
+                                      cfgeval.staticChallenge,
+                                      !cfgeval.staticChallengeEcho);
+            }
+
             signal.AttentionReq(ClientAttentionType::CREDENTIALS,
                                 ClientAttentionGroup::USER_PASSWORD,
                                 "Username/password credentials needed");
