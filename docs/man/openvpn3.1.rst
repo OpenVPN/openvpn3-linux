@@ -43,7 +43,7 @@ Configuration management
 ``config-acl``
     Manage access control lists for configurations
 
-``config-show``
+``config-dump``
     Show/dump a configuration profile
 
 ``config-remove``
@@ -81,7 +81,7 @@ SEE ALSO
 ``openvpn2``\(1)
 ``openvpn3-config-import``\(1)
 ``openvpn3-config-acl``\(1)
-``openvpn3-config-show``\(1)
+``openvpn3-config-dump``\(1)
 ``openvpn3-config-remove``\(1)
 ``openvpn3-configs-list``\(1)
 ``openvpn3-session-start``\(1)

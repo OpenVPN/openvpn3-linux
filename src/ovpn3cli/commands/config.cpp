@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018 - 2020  OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018 - 2020  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2021  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2021  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -861,7 +861,7 @@ SingleCommand::Ptr prepare_command_config_acl()
 
 
 /**
- *  openvpn3 config-show command
+ *  openvpn3 config-dump command
  *
  *  This command is used to show the contents of a configuration profile.
  *  It allows both the textual representation, which is compatible with
@@ -871,11 +871,11 @@ SingleCommand::Ptr prepare_command_config_acl()
  * @return Returns the exit code which will be returned to the calling shell
  *
  */
-static int cmd_config_show(ParsedArgs::Ptr args)
+static int cmd_config_dump(ParsedArgs::Ptr args)
 {
     if (!args->Present("path") && !args->Present("config"))
     {
-        throw CommandException("config-show",
+        throw CommandException("config-dump",
                                "No configuration profile provided "
                                "(--config, --path)");
     }
@@ -883,13 +883,13 @@ static int cmd_config_show(ParsedArgs::Ptr args)
     try
     {
         std::string path = (args->Present("config")
-                             ? retrieve_config_path("config-show",
+                             ? retrieve_config_path("config-dump",
                                                     args->GetValue("config", 0))
                              : args->GetValue("path", 0));
         OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path);
         if (!conf.CheckObjectExists())
         {
-            throw CommandException("config-show",
+            throw CommandException("config-dump",
                                    "Configuration does not exist");
         }
 
@@ -906,25 +906,27 @@ static int cmd_config_show(ParsedArgs::Ptr args)
     }
     catch (DBusException& err)
     {
-        throw CommandException("config-show", err.GetRawError());
+        throw CommandException("config-dump", err.GetRawError());
     }
 }
 
 
 /**
- *  Creates the SingleCommand object for the 'config-show' command
+ *  Creates the SingleCommand object for the 'config-dump' command
  *
  * @return  Returns a SingleCommand::Ptr object declaring the command
  */
-SingleCommand::Ptr prepare_command_config_show()
+SingleCommand::Ptr prepare_command_config_dump()
 {
     //
     //  config-show command
     //
     SingleCommand::Ptr cmd;
-    cmd.reset(new SingleCommand("config-show",
+    cmd.reset(new SingleCommand("config-dump",
                                 "Show/dump a configuration profile",
-                                cmd_config_show));
+                                cmd_config_dump));
+    cmd->SetAliasCommand("config-show",
+                         "**\n** This is command deprecated, use config-dump instead\n**");
     auto path_opt = cmd->AddOption("path", 'o', "OBJ-PATH", true,
                                    "Path to the configuration in the "
                                    "configuration manager",

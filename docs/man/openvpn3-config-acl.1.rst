@@ -69,7 +69,7 @@ OPTIONS
                         Locks down the configuration profile so it can only
                         be used to start new VPN sessions by users granted
                         access.  Only the configuration profile owner can now
-                        show the profile contents via ``openvpn3 config-show``.
+                        show the profile contents via ``openvpn3 config-dump``.
                         Valid argument values: :code:`true`, :code:`false`
 
 -S, --seal              This seals the configuration profile for everyone,
@@ -84,5 +84,5 @@ SEE ALSO
 ``openvpn3``\(1)
 ``openvpn3-config-import``\(1)
 ``openvpn3-config-manage``\(1)
-``openvpn3-config-show``\(1)
+``openvpn3-config-dump``\(1)
 ``openvpn3-configs-list``\(1)

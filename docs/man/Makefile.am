@@ -1,7 +1,7 @@
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
-#  Copyright (C) 2018 - 2020  OpenVPN Inc. <sales@openvpn.net>
-#  Copyright (C) 2018 - 2020  David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2018 - 2021  OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2018 - 2021  David Sommerseth <davids@openvpn.net>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -53,7 +53,7 @@ MAN_SECTION_1 = \
 	openvpn3-config-manage.1 \
 	openvpn3-config-import.1 \
 	openvpn3-config-remove.1 \
-	openvpn3-config-show.1 \
+	openvpn3-config-dump.1 \
 	openvpn3-configs-list.1 \
 	openvpn3-log.1 \
 	openvpn3-session-acl.1 \
@@ -100,3 +100,6 @@ MAINTAINERCLEANFILES = \
 	Makefile.in
 
 CLEANFILES = $(MAN_SECTION_1) $(MAN_SECTION_7) $(MAN_SECTION_8) *~
+
+install-data-local :
+	ln -sf openvpn3-config-dump.8 openvpn3-config-show.8

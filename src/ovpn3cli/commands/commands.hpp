@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2019         OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2019         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2019 - 2021  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2019 - 2021  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -37,7 +37,7 @@ SingleCommand::Ptr prepare_command_version();
 SingleCommand::Ptr prepare_command_config_import();
 SingleCommand::Ptr prepare_command_config_manage();
 SingleCommand::Ptr prepare_command_config_acl();
-SingleCommand::Ptr prepare_command_config_show();
+SingleCommand::Ptr prepare_command_config_dump();
 SingleCommand::Ptr prepare_command_config_remove();
 SingleCommand::Ptr prepare_command_configs_list();
 
@@ -83,7 +83,7 @@ std::vector<PrepareCommand> command_list_openvpn3 = {
     prepare_command_config_import,
     prepare_command_config_manage,
     prepare_command_config_acl,
-    prepare_command_config_show,
+    prepare_command_config_dump,
     prepare_command_config_remove,
     prepare_command_configs_list,
 
