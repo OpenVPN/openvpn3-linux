@@ -42,4 +42,5 @@ CLEANFILES = $(systemd_unit_DATA) *~
 
 install-data-local:
 	$(MKDIR_P) "$(DESTDIR)$(openvpn3_configdir)"
-	$(MKDIR_P) -m750 "$(DESTDIR)$(openvpn3_configdir)/autoload"
+	$(MKDIR_P) "$(DESTDIR)$(openvpn3_configdir)/autoload"
+	chmod 750 "$(DESTDIR)$(openvpn3_configdir)/autoload"

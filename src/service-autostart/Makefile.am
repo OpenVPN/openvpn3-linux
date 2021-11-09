@@ -45,5 +45,6 @@ CLEANFILES = $(dbus_system_service_DATA) *~
 
 # If chown fails, we will ignore that - most likely not run as root
 install-data-local:
-	$(MKDIR_P) -m750 $(DESTDIR)$(openvpn3_statedir) $(DESTDIR)$(openvpn3_statedir)/configs
+	$(MKDIR_P) $(DESTDIR)$(openvpn3_statedir) $(DESTDIR)$(openvpn3_statedir)/configs
+	chmod 750 $(DESTDIR)$(openvpn3_statedir) $(DESTDIR)$(openvpn3_statedir)/configs
 	chown -R $(OPENVPN_USERNAME):$(OPENVPN_GROUP) $(DESTDIR)$(openvpn3_statedir) || echo
