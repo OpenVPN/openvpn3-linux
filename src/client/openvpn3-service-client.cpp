@@ -1193,7 +1193,7 @@ private:
             }
             else if (override.override.key == "ipv6")
             {
-                vpnconfig.ipv6 = override.strValue;
+                vpnconfig.allowUnusedAddrFamilies = override.strValue;
                 valid_override = true;
             }
             else if (override.override.key == "dns-fallback-google")

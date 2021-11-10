@@ -298,7 +298,7 @@ public:
     }
 
 
-    bool tun_builder_set_block_ipv6(bool block_ipv6) override
+    bool tun_builder_set_allow_family(int af, bool block_ipv6) override
     {
         // TODO
         return false;
