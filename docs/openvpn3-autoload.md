@@ -157,7 +157,6 @@ the proxy username/password unencrypted.
     "crypto": {
             "default-key-direction": KEY_DIR,
             "private-key-passphrase": "PASSWORD",
-            "force-aes-cbc": BOOLEAN,
             "tls-params": {
                     "cert-profile": "PROFILE",
                     "min-version": "TLS_VERSION"
@@ -176,9 +175,6 @@ what the remote side is configured to use.
 #### crypto: private-key-passphrase
 A string containing the password to decrypt the private key, if it is
 encrypted.
-
-#### crypto: force-aes-cbc
-Boolean flag enforcing the client to use an AES-CBC cipher.
 
 ### crypt: tls-params
 This sub-section defines the TLS protocol specific parameters

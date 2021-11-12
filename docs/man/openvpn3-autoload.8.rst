@@ -149,19 +149,10 @@ parameters related to the crypto layers of a VPN session.
 ::
 
     "crypto": {
-        "force-aes-cbc": BOOLEAN,
         "tls-params": {
             ...
         }
     }
-
-
-Attribute: crypto:force-aes-cbc
-"""""""""""""""""""""""""""""""
-The :code:`force-aes-cbc` elements enforces the use of the AES-CBC cipher
-algorithm.  This is disabled by default, which allows the configuration
-profile to control the cipher, or can allow the server to change the
-cipher via the Negotiable Crypto Parameters protocol (NCP).
 
 
 Sub-Section: crypto:tls-params

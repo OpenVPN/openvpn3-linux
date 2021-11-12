@@ -144,11 +144,6 @@ OPTIONS
                         :code:`yes`:
                           Both client and server can use compression
 
---force-cipher-aes-cbc BOOL
-                        Override ``--cipher`` and disable cipher negotiation
-                        and force AES-CBC cipher to be used.  Valid values
-                        are: :code:`true`, :code:`false`
-
 --tls-version-min ARG
                         Sets the minimum TLS version for the control channel.
                         For this to be functional, the SSL/TLS library in use

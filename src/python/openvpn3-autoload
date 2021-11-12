@@ -185,9 +185,6 @@ def parse_autoload_config(autoload):
             if not v:
                 continue
 
-            elif 'force-aes-cbc' == k:
-                autoloadcfg['override']['force-cipher-aes-cbc'] = v
-
             elif 'tls-params' == k:
                 for (tpk, tpv) in v.items():
                     if not tpv:

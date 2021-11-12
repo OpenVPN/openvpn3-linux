@@ -1225,11 +1225,6 @@ private:
                 vpnconfig.retryOnAuthFailed = override.boolValue;
                 valid_override = true;
             }
-            else if (override.override.key == "force-cipher-aes-cbc")
-            {
-                vpnconfig.forceAesCbcCiphersuites = override.boolValue;
-                valid_override = true;
-            }
             else if (override.override.key == "allow-compression")
             {
                 vpnconfig.compressionMode = override.strValue;
