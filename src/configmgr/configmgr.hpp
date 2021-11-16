@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017 - 2020  OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017 - 2020  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2021  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2021  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -263,6 +263,7 @@ public:
         import_tstamp = profile["import_timestamp"].asUInt64();
         last_use_tstamp = profile["last_used_timestamp"].asUInt64();
         locked_down = profile["locked_down"].asBool();
+        transfer_owner_sess = profile["transfer_owner_session"].asBool();
         readonly = profile["readonly"].asBool();
         single_use = profile["single_use"].asBool();
         used_count = profile["used_count"].asUInt();
@@ -341,6 +342,7 @@ public:
         ret["import_timestamp"] = (uint32_t) import_tstamp;
         ret["last_used_timestamp"] = (uint32_t) last_use_tstamp;
         ret["locked_down"] = locked_down;
+        ret["transfer_owner_session"] = transfer_owner_sess;
         ret["readonly"] = readonly;
         ret["single_use"] = single_use;
         ret["used_count"] = used_count;
@@ -1025,6 +1027,7 @@ public:
         properties.AddBinding(new PropertyType<bool>(this, "readonly", "read", false, readonly));
         properties.AddBinding(new PropertyType<bool>(this, "single_use", "read", false, single_use));
         properties.AddBinding(new PropertyType<unsigned int>(this, "used_count", "read", false, used_count));
+        properties.AddBinding(new PropertyType<bool>(this, "transfer_owner_session", "readwrite", true, transfer_owner_sess));
         properties.AddBinding(new PropertyType<bool>(this, "valid", "read", false, valid));
         properties.AddBinding(new PropertyType<decltype(override_list)>(this, "overrides", "read", true, override_list));
         properties.AddBinding(new PropertyType<bool>(this, "dco", "readwrite", true, dco));
@@ -1094,6 +1097,7 @@ private:
     bool readonly;
     bool single_use;
     bool locked_down;
+    bool transfer_owner_sess = false;
     bool dco; // data channel offload
     PropertyCollection properties;
     std::string persistent_file;

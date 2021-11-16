@@ -134,6 +134,7 @@ node /net/openvpn/v3/configuration/${UNIQUE_ID} {
       readonly a{sv} overrides;
       readonly b readonly;
       readonly b single_use;
+      readwrite b transfer_owner_session;
       readonly u used_count;
       readwrite b dco;
       readonly b valid;
@@ -248,6 +249,7 @@ success. If an error occurs, a D-Bus error is returned.
 | overrides     | dictionary       | Read-only  | Contains all the override settings enabled.  This is stored as a key/value based dictionary, where value can be any arbitrary data type |
 | readonly      | boolean          | Read-only  | If set to true, the configuration have been sealed and can no longer be modified |
 | single_use    | boolean          | Read-only  | If set to true, this configuration profile will be automatically removed after the first `Fetch` call. This is intended to be used by command line clients providing a similar user experience as the OpenVPN 2.x versions provides. |
+| transfer_owner_session | boolean | Read/Write | If set to true, another user granted access to this profile will transfer the VPN session ownership back to the profile owner at start up | 
 | used_count    | unsigned integer | Read-only  | Number of times Fetch has been called [1]           |
 | dco           | boolean          | Read/Write | If set to true, the VPN tunnel will make use of the kernel accellerated Data Channel Offload feature (requires kernel support) |
 | valid         | boolean          | Read-only  | Contains an indication if the configuration profile is considered functional for a VPN session |

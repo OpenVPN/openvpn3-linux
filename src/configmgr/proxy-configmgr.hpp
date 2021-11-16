@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017 - 2018  OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017 - 2018  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2021  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2021  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -345,6 +345,34 @@ public:
     {
         return GetUIntProperty("owner");
     }
+
+
+    /**
+     *  Should the ownership of the configuration profile be
+     *  transfered to newly created sessions?
+     *
+     *  This means it will be the owner of the configuration profile
+     *  who will own the VPN session, not the user starting the session
+     *
+     * @return  Returns true if ownership should be transferred
+     */
+    bool GetTransferOwnerSession()
+    {
+        return GetBoolProperty("transfer_owner_session");
+    }
+
+
+    /**
+     *  Sets the session ownership transfer flag for a configuration
+     *  profile
+     *
+     * @param value Boolean value to enable/disable the setting
+     */
+    void SetTransferOwnerSession(const bool value)
+    {
+        return SetProperty("transfer_owner_session", value);
+    }
+
 
     /**
      *  Retrieve the list of overrides for this object. The overrides
