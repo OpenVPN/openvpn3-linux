@@ -65,6 +65,15 @@ OPTIONS
                         ``--grant``.  Valid argument values: :code:`true`,
                         :code:`false`
 
+-T BOOL, --transfer-owner-session BOOL
+                        If another user is granted access to the configuration
+                        profile, that user will be the owner of the VPN session
+                        when started.  Setting this flag to true will transfer
+                        the ownership back to the profile owner while granting
+                        the user starting the session rights to also manage the
+                        session.  See ``openvpn3-session-acl``\(1) for details
+                        on the session ACLs.
+
 --lock-down BOOL
                         Locks down the configuration profile so it can only
                         be used to start new VPN sessions by users granted
@@ -86,3 +95,4 @@ SEE ALSO
 ``openvpn3-config-manage``\(1)
 ``openvpn3-config-dump``\(1)
 ``openvpn3-configs-list``\(1)
+``openvpn3-session-acl``\(1)

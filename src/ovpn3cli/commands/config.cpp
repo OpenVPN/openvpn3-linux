@@ -618,12 +618,12 @@ static int cmd_config_acl(ParsedArgs::Ptr args)
                                "(--config, --path)");
     }
 
-    if (!args->Present("show")
-        && !args->Present("grant")
-        && !args->Present("revoke")
-        && !args->Present("public-access")
-        && !args->Present("lock-down")
-        && !args->Present("seal"))
+    try
+    {
+        args->Present({"show", "grant", "revoke", "public-access", "lock-down",
+                        "seal", "transfer-owner-session"});
+    }
+    catch (const OptionNotFound&)
     {
         throw CommandException("config-acl", "No operation option provided");
     }
@@ -707,6 +707,15 @@ static int cmd_config_acl(ParsedArgs::Ptr args)
             }
         }
 
+        if (args->Present("transfer-owner-session"))
+        {
+            bool v = args->GetBoolValue("transfer-owner-session", 0);
+            conf.SetTransferOwnerSession(v);
+            std::cout << "Configuration ownership transfer to session "
+                      << (v ? "enabled" : "disabled")
+                      << std::endl;
+        }
+
         if (args->Present("lock-down"))
         {
             bool ld = args->GetBoolValue("lock-down", 0);
@@ -785,6 +794,10 @@ static int cmd_config_acl(ParsedArgs::Ptr args)
                       << (conf.GetLockedDown() ? "yes" : "no")
                       << std::endl;
 
+            std::cout << "    Ownership transfer: "
+                      << (conf.GetTransferOwnerSession() ? "yes" : "no")
+                      << std::endl;
+
             std::cout << "         Public access: "
                       << (conf.GetPublicAccess() ? "yes" : "no")
                       << std::endl;
@@ -844,6 +857,9 @@ SingleCommand::Ptr prepare_command_config_acl()
                    "Revoke this user access from this configuration profile");
     cmd->AddOption("public-access", "<true|false>", true,
                    "Set/unset the public access flag",
+                   arghelper_boolean);
+    cmd->AddOption("transfer-owner-session", 'T', "<true|false>", true,
+                   "Transfer the configuration ownership to the VPN session at startup",
                    arghelper_boolean);
     cmd->AddOption("lock-down", "<true|false>", true,
                    "Set/unset the lock-down flag.  Will disable config retrieval for users",
