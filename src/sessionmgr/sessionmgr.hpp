@@ -50,6 +50,7 @@
 #include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"
 #include "client/statusevent.hpp"
+#include "configmgr/proxy-configmgr.hpp"
 #include "sessionmgr-exceptions.hpp"
 #include "sessionmgr-events.hpp"
 
@@ -1532,6 +1533,19 @@ private:
                                                     GetUniqueBusID(be_busname),
                                                     OpenVPN3DBus_interf_backends,
                                                     DBusObject::GetObjectPath());
+
+            // Retrieve the ACL and ownership transfer information from configmgr
+            auto cfgprx = OpenVPN3ConfigurationProxy(G_BUS_TYPE_SYSTEM,
+                                                         config_path);
+            if (cfgprx.GetTransferOwnerSession())
+            {
+                uid_t curr_owner = GetOwnerUID();
+                TransferOwnership(cfgprx.GetOwner());
+                // This is needed for the session starter to be allowed to
+                // complete the connecting phase
+                GrantAccess(curr_owner);
+                restrict_log_access = false;
+            }
 
             GVariant *res_g = be_proxy->Call("RegistrationConfirmation",
                                              g_variant_new("(so)",
