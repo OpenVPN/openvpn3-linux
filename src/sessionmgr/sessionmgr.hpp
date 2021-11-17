@@ -811,7 +811,19 @@ public:
                     be_proxy->SetProperty("dco", dco);
                     dco_status = DCOstatus::LOCKED;
                 }
-
+                try
+                {
+                    auto verb = (unsigned int)be_proxy->GetUIntProperty("log_level");
+                    SetLogLevel(verb);
+                    if (sig_logevent)
+                    {
+                        sig_logevent->SetLogLevel(verb);
+                    }
+                }
+                catch (const DBusException&)
+                {
+                    LogCritical("Could not retrieve the client backend log level");
+                }
                 be_proxy->Call("Connect");
                 LogVerb2("Starting connection");
             }
