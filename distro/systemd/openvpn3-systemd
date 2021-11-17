@@ -30,6 +30,7 @@ import dbus
 import errno
 import openvpn3
 import os
+import subprocess
 import sys
 import systemd.daemon
 import time
@@ -37,6 +38,7 @@ import time
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
 from openvpn3 import StatusMajor, StatusMinor, SessionManagerEventType
+from openvpn3 import ClientAttentionType
 
 if sys.version_info[0] < 3:
     print("Python 3.x is required")
@@ -126,6 +128,9 @@ class OpenVPN3systemd(object):
         if StatusMajor.CONNECTION == maj and StatusMinor.CONN_DISCONNECTED == min:
             self.sd_notify(1, "STATUS=%s:%s, %s\nSTOPPING=1" % (maj, min, msg))
             self.__mainloop.quit()
+        if StatusMajor.CONNECTION == maj and StatusMinor.CFG_REQUIRE_USER == min:
+            self.__request_credentials()
+            self.__session.Connect()
 
 
     ##
@@ -228,9 +233,7 @@ class OpenVPN3systemd(object):
                 if str(excep).find('Backend VPN process is not ready') > 1:
                     time.sleep(0.5)
                 elif str(excep).find(' Missing user credentials') > 0:
-                    # FIXME: Add support for systemd-ask-password
-                    self.__session.Disconnect()
-                    raise Exception('User credentials are needed.  This is currently not supported')
+                    self.__request_credentials()
                 elif str(excep).find('ERR_PROFILE_SERVER_LOCKED_UNSUPPORTED:') > 1:
                     self.__session.Disconnect()
                     raise Exception('Server locked profiles are not supported')
@@ -273,6 +276,26 @@ class OpenVPN3systemd(object):
             raise RuntimeError("Session not started")
 
         self.__session.Disconnect()
+
+
+    def __request_credentials(self):
+        args_base = [ '/usr/bin/systemd-ask-password','--icon','network-vpn']
+
+        for input_slot in self.__session.FetchUserInputSlots():
+            if input_slot.GetTypeGroup()[0] != ClientAttentionType.CREDENTIALS:
+                # skip non-user credential requests
+                continue
+
+            args = [] + args_base
+            if False == input_slot.GetInputMask():
+                args += ['--echo']
+            args += ['%s:' % (input_slot.GetLabel())]
+            try:
+                r = subprocess.check_output(args)
+                input_slot.ProvideInput(r.decode('utf-8').strip())
+            except subprocess.CalledProcessError as e:
+                self.__session.Disconnect()
+                raise RuntimeError("Could not retrieve user credentials: %s" % str(e))
 
 
 if "__main__" == __name__:
