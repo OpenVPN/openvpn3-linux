@@ -113,13 +113,13 @@ class OpenVPN3systemd(object):
         # Session got most likely disconnected outside of this program
         if StatusMajor.SESSION == maj and StatusMinor.PROC_STOPPED == min:
             self.sd_notify(1, "STATUS=%s:%s, %s\nSTOPPING=1" % (maj, min, msg))
-            mainloop.quit()
+            self.__mainloop.quit()
         if StatusMajor.CONNECTION == maj and StatusMinor.CONN_AUTH_FAILED == min:
             self.sd_notify(1, "STATUS=%s:%s, %s\nSTOPPING=1" % (maj, min, msg))
-            mainloop.quit()
+            self.__mainloop.quit()
         if StatusMajor.CONNECTION == maj and StatusMinor.CONN_DISCONNECTED == min:
             self.sd_notify(1, "STATUS=%s:%s, %s\nSTOPPING=1" % (maj, min, msg))
-            mainloop.quit()
+            self.__mainloop.quit()
 
 
     ##
