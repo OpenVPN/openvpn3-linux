@@ -35,10 +35,21 @@ using namespace openvpn;
 
 int main(int argc, char **argv)
 {
-    std::stringstream conf;
 
-    for (std::string line; std::getline(std::cin, line);) {
-        conf << line << std::endl;
+    std::stringstream conf;
+    if (argc < 2)
+    {
+        std::cerr << "Reading configuration from stdin" << std::endl;
+
+        for (std::string line; std::getline(std::cin, line);) {
+            conf << line << std::endl;
+        }
+    }
+    else
+    {
+        std::cerr << "Reading configuration from " << argv[1] << std::endl;
+        std::ifstream file(argv[1], std::ifstream::binary);
+        conf << file.rdbuf();
     }
 
     ProfileMergeFromString pm(conf.str(), "",
