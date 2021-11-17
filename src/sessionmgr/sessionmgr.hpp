@@ -1417,7 +1417,19 @@ public:
                                                 excp.what());
                 }
 
-                // FIXME: Proxy log level to the OpenVPN3 Core client
+                try
+                {
+                    if (be_proxy)
+                    {
+                        be_proxy->SetProperty("log_level", log_verb);
+                    }
+                }
+                catch (const DBusException& e)
+                {
+                    LogCritical("Could not set the VPN backend log level");
+                    Debug("Backend log-level error: "
+                          + std::string(e.GetRawError()));
+                }
                 return build_set_property_response(property_name,
                                                    (guint32) log_verb);
             }
