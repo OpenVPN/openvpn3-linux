@@ -1,8 +1,8 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017 - 2020  OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017 - 2020  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018 - 2020  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2017 - 2021  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2021  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2021  Arne Schwabe <arne@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -1038,6 +1038,29 @@ private:
             // If this happens, the configuration profile does not
             // contain a client certificate - so we disable it
             vpnconfig.disableClientCert = true;
+        }
+
+        // Set the log-level based on the --verb argument from the profile
+        try
+        {
+            const char *verb = parsed_opts.get_c_str("verb", 0, 3);
+            if (verb)
+            {
+                unsigned int v = std::atoi(verb);
+                if (v > 6)
+                {
+                    v = 6;
+                }
+                signal.SetLogLevel(v);
+            }
+        }
+        catch (const LogException&)
+        {
+            signal.LogCritical("Invalid --verb level in configuration profile");
+        }
+        catch (...)
+        {
+            // If verb is not found, we use the default log level
         }
 
         //  Set a unique host/machine ID
