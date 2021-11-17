@@ -27,6 +27,7 @@
 import argparse
 import datetime
 import dbus
+import errno
 import openvpn3
 import os
 import sys
@@ -65,6 +66,7 @@ class OpenVPN3systemd(object):
         # Initial states for session information
         self.__session = None
         self.__sesspath = None
+        self.__error_set = False
 
 
     ##
@@ -72,11 +74,14 @@ class OpenVPN3systemd(object):
     #  systemd service
     #
     def sd_notify(self, ready, msg = None):
-        notifstr = ""
+        if self.__error_set:
+            return
+
+        notifstr = ''
+        if ready > 0:
+            notifstr += 'READY=%i\n' % (ready)
         if msg is not None and len(msg) > 0:
-            notifstr = "READY=%i\n%s\n" % (ready, msg)
-        else:
-            notifstr = "READY=%i\n" % ready
+            notifstr += "%s\n" % (msg)
 
         systemd.daemon.notify(notifstr)
 
@@ -115,7 +120,8 @@ class OpenVPN3systemd(object):
             self.sd_notify(1, "STATUS=%s:%s, %s\nSTOPPING=1" % (maj, min, msg))
             self.__mainloop.quit()
         if StatusMajor.CONNECTION == maj and StatusMinor.CONN_AUTH_FAILED == min:
-            self.sd_notify(1, "STATUS=%s:%s, %s\nSTOPPING=1" % (maj, min, msg))
+            self.sd_notify(0, "STATUS=%s:%s, %s\nERRRNO=%i" % (maj, min, msg, errno.EACCES))
+            self.__error_set = True
             self.__mainloop.quit()
         if StatusMajor.CONNECTION == maj and StatusMinor.CONN_DISCONNECTED == min:
             self.sd_notify(1, "STATUS=%s:%s, %s\nSTOPPING=1" % (maj, min, msg))
