@@ -98,6 +98,10 @@ const ValidOverride configProfileOverrides[] = {
     {"persist-tun", OverrideType::boolean,
      "The tun interface should persist during reconnect"},
 
+    {"log-level", OverrideType::string,
+     "Override the configuration profile --verb setting",
+     [] { return std::string("1 2 3 4 5 6");}},
+
     {"dns-fallback-google", OverrideType::boolean,
      "Uses Google DNS servers (8.8.8.8/8.8.4.4) if no DNS server are provided"},
 

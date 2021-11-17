@@ -1219,6 +1219,11 @@ private:
                 vpnconfig.allowUnusedAddrFamilies = override.strValue;
                 valid_override = true;
             }
+            else if (override.override.key == "log-level")
+            {
+                signal.SetLogLevel(std::atoi(override.strValue.c_str()));
+                valid_override = true;
+            }
             else if (override.override.key == "dns-fallback-google")
             {
                 vpnconfig.googleDnsFallback = override.boolValue;
