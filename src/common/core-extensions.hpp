@@ -1,4 +1,4 @@
-//  OpenVPN 3 Linux client -- Next generation OpenVPN client
+//  OpenVPN 3 Linux client -- Next generation OpenVPN clientq
 //
 //  Copyright (C) 2017 - 2021  OpenVPN Inc. <sales@openvpn.net>
 //  Copyright (C) 2017 - 2021  David Sommerseth <davids@openvpn.net>
@@ -96,6 +96,18 @@ namespace openvpn {
                 // Put these parts into the Json::Value storage
                 // and trim trailing spaces in value
                 std::string v = value.str().substr(0,value.str().find_last_not_of(" ")+1);
+
+                // Hack to fix incorrect rendering of --static-challenge
+                // Option::render() does not include the required quotes for the
+                // static challenge message.  And Option::escape() puts the echo
+                // flag inside the static challenge message quote.
+                if ("static-challenge" == optname)
+                {
+                    std::ostringstream sc;
+                    sc << "\"" << v.substr(0, v.length()-2) << "\""
+                        << " " << v.substr(v.length()-1, 1);
+                    v = std::string(sc.str());
+                }
 
                 // Certain options can be used multiple times, so we treat it
                 // as an array in the JSON export
