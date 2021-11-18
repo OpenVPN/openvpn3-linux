@@ -34,19 +34,20 @@
 
 #include "common/machineid.hpp"
 
-namespace unittest {
-
 #ifndef USE_OPENSSL
+namespace unittest {
 TEST(MachineID, not_implemented)
 {
     GTEST_SKIP() << "MachineID tests are only available with OpenSSL builds";
 }
+} // namespace unittest
 #else
 
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
 #include <openvpn/openssl/compat.hpp>
 
+namespace unittest {
 class ReferenceID
 {
 public:
