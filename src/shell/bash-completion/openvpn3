@@ -45,7 +45,8 @@ _openvpn3_generic_completion()
         selection=""
         if [ "${cur:0:2}" == "--" -o "${cur:0:1}" == "-" ]; then
             # If the argument starts with '-' or '--' provide list of options
-            selopts="-W $($cmd shell-completion --list-options $first)"
+            comp_op="-W"
+            selopts="$($cmd shell-completion --list-options $first)"
         else
             # Some options can get some extra help from bash
             case "${prev}" in
@@ -56,31 +57,40 @@ _openvpn3_generic_completion()
                     filter="grep -E ^$cur"
                 fi
 
-                selopts="-W"
+                comp_op="-W"
                 if [ "config-import" = "${first}" -o "session-start" = "${first}" ]; then
                     # Only list files which most likely are OpenVPN configuration files
-                    selopts="$selopts $(grep -sm1 -E '(client|remote |port |lport |rport |key |cert |ca )' ${cur}*.conf ${cur}*.ovpn | cut -d: -f1 | $filter | tr '\n' ' ')"
+                    selopts="$(grep -sm1 -E '(client|remote |port |lport |rport |key |cert |ca )' ${cur}*.conf ${cur}*.ovpn | cut -d: -f1 | $filter | tr '\n' ' ')"
 
                     # Add directories too, but ignore those starting with '.{some-alpha-num-letters}'
-                    selopts="$selopts $(compgen -d -- $cur | sed 's#$#/#' | grep -vE '^\.\w+' | tr '\n' ' ')"
+                    selopts="$(compgen -d -- $cur | sed 's#$#/#' | grep -vE '^\.\w+' | tr '\n' ' ')"
                 fi
 
                 # In addition, extend with all pre-loaded configurations
-                selopts="$selopts $($cmd shell-completion --list-options $first --arg-help $prev)"
+                selopts="$($cmd shell-completion --list-options $first --arg-help $prev)"
                 ;;
 
             "--grant"|"--revoke") # Takes username (or UID, which we don't tackle here)
-                selopts="-u"
+                comp_op="-u"
+                selopts=""
                 ;;
 
             *)
                 # Otherwise try to fill out with possible argument values for the
                 # provided option
-                selopts="-W $($cmd shell-completion --list-options $first --arg-help $prev)"
+                comp_op="-W"
+                arghelp="$prev"
+                if [ "$cur" == "=" ]; then
+                        arghelp="$prev$cur"
+                fi
+                selopts="$($cmd shell-completion --list-options $first --arg-help $arghelp)"
                 ;;
             esac
         fi
-        COMPREPLY=( $( compgen "${selopts}" -- $cur ) )
+        if [ "$cur" == "=" ]; then
+                cur=""
+        fi
+        COMPREPLY=( $( compgen ${comp_op} "${selopts}" -- $cur ) )
     fi
 }
 

@@ -412,6 +412,11 @@ std::string SingleCommandOption::get_option_list_prefixed()
             r << " ";
         }
         r << "--" << longopt;
+
+        if (optional_argument == getopt_option.has_arg)
+        {
+            r << " --" << longopt << "=";
+        }
     }
     if (!alias.empty())
     {
@@ -420,14 +425,32 @@ std::string SingleCommandOption::get_option_list_prefixed()
             r << " ";
         }
         r << "--" << alias;
+        if (optional_argument == getopt_alias.has_arg)
+        {
+            r << " --" << alias << "=";
+        }
     }
     return r.str();
 }
 
 
-std::string SingleCommandOption::call_argument_helper_callback()
+std::string SingleCommandOption::call_argument_helper_callback(const std::string& opt_name)
 {
-        return (nullptr != arg_helper_func ? arg_helper_func() : "");
+    if (nullptr == arg_helper_func)
+    {
+        return "";
+    }
+
+    // If this option has optional arguments, only suggest values if the option
+    // has a trailing '='
+    if ((optional_argument == getopt_option.has_arg
+         || optional_argument == getopt_alias.has_arg)
+        && (opt_name.rfind("=") == std::string::npos))
+    {
+        return "";
+    }
+
+    return arg_helper_func();
 }
 
 
@@ -542,7 +565,7 @@ std::string SingleCommandOption::gen_help_line_generator(const char opt_short,
         {
             // This option is optional, indicate it by embracing the
             // value description into [].
-            r << " [" << metavar << "]";
+            r << "[=" << metavar << "]";
         }
     }
 
@@ -659,14 +682,19 @@ std::string SingleCommand::CallArgumentHelper(const std::string option_name)
 {
     for (auto const& opt : options)
     {
+        // Strip any trailing '=' for the long option check.
+        // Options with optional arguments always has a '=' to provide a value
+        auto pos = option_name.rfind("=");
+        std::string o = (pos != std::string::npos ? option_name.substr(0, pos) : option_name);
+
         if (1 == option_name.size()
             && opt->check_short_option(option_name[0]))
         {
-            return opt->call_argument_helper_callback();
+            return opt->call_argument_helper_callback(option_name);
         }
-        else if (opt->check_long_option(option_name.c_str()))
+        else if (opt->check_long_option(o.c_str()))
         {
-            return opt->call_argument_helper_callback();
+            return opt->call_argument_helper_callback(option_name);
         }
     }
     return "";

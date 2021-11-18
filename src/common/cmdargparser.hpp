@@ -448,7 +448,7 @@ public:
      * @return Must return a string of possible values where each value is
      *         separated by space
      */
-    std::string call_argument_helper_callback();
+    std::string call_argument_helper_callback(const std::string& opt_name);
 
 
     /**
