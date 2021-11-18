@@ -201,9 +201,17 @@ public:
      * @param k  std::string containing the option name to look-up
      * @return Returns the number of elements found for that option name.
      */
-    unsigned int GetValueLen(const std::string k) const
+    unsigned int GetValueLen(const std::string k) const noexcept
     {
-        return key_value.at(k).size();
+        try
+        {
+            return key_value.at(k).size();
+        }
+        catch (const std::out_of_range&)
+        {
+            // Ignore out-of-bound errors
+            return 0;
+        }
     }
 
 
