@@ -864,6 +864,7 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
     const unsigned int mode_restart    = 1 << 2;
     const unsigned int mode_disconnect = 1 << 3;
     const unsigned int mode_cleanup    = 1 << 4;
+    const unsigned int mode_log_level  = 1 << 5;
 
     unsigned int mode = 0;
     unsigned int mode_count = 0;
@@ -893,16 +894,24 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
         mode_count++;
     }
 
+    if (args->Present("log-level"))
+    {
+        mode |= mode_log_level;
+        mode_count++;
+    }
+
     if (0 == mode_count)
     {
         throw CommandException("session-manage",
                                "One of --pause, --resume, --restart, "
-                               "--disconnect or --cleanup must be present");
+                               "--disconnect, --cleanup or --log-level "
+                               "must be present");
     }
     if (1 < mode_count)
     {
         throw CommandException("session-manage",
-                               "--pause, --resume, --restart or --disconnect "
+                               "--pause, --resume, --restart, --disconnect "
+                               "--cleanup or --log-level "
                                "cannot be used together");
     }
 
@@ -1064,6 +1073,22 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
             std::cout << "Initiated session shutdown." << std::endl;
             std::cout << statistics_plain(stats);
             break;
+
+        case mode_log_level:
+            unsigned int cur = session->GetLogVerbosity();
+            std::cout << "Current log level: " << std::to_string(cur) << std::endl;
+
+            if (args->GetValueLen("log-level") > 0 )
+            {
+                unsigned int verb = std::atoi(args->GetLastValue("log-level").c_str());
+                if (verb != cur)
+                {
+                    session->SetLogVerbosity(verb);
+                    std::cout << "New log level: " << std::to_string(verb)
+                              << std::endl;
+                }
+            }
+            break;
         }
         return 0;
     }
@@ -1108,6 +1133,9 @@ SingleCommand::Ptr prepare_command_session_manage()
                    "Alternative to --path, where tun interface name is used "
                    "instead",
                    arghelper_managed_interfaces);
+    cmd->AddOption("log-level", 0, "LEVEL", false,
+                   "View/Set the log-level for a running VPN session",
+                   arghelper_log_levels);
     cmd->AddOption("timeout", 0, "SECS", true,
                    "Connection attempt timeout for resume and restart "
                    "(default: infinite)");

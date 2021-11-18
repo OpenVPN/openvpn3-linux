@@ -43,6 +43,12 @@ OPTIONS
                 Can be used instead of ``--path`` where the tun interface name
                 managed by OpenVPN 3 is given instead.
 
+--log-level[=LEVEL]
+                View/change the log-level for this session.  This will have an
+                instant impact on the log level next time there are new log
+                events from the VPN session.  If no new log level is given, only
+                the current log level will be shown.
+
 --timeout SECS
                 Defines how long it will attempt to reestablish the connection
                 when restarting or resuming a session.  Default is to never
