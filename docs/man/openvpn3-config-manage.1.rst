@@ -86,6 +86,13 @@ OPTIONS
                         the tun adapter will be torn down before reconnects.
                         Valid values are: :code:`true`, :code:`false`
 
+--log-level LEVEL
+                        Overrides the default log level.  The default log level
+                        is ``3`` if the configuration file does not contain a
+                        ``--verb`` option.  This override will take place over
+                        any other log verbosity settings.  Valid values are
+                        between ``1`` and ``6``.
+
 --dns-fallback-google BOOL
                         If set to true, the DNS resolver settings will include
                         Google DNS servers.  Valid values are: :code:`true`,
