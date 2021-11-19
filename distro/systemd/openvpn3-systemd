@@ -193,7 +193,7 @@ class OpenVPN3systemd(object):
     #
     #  Before this method is called, the RetrieveConfig() method must be called
     #
-    def Start(self, log_level=6):
+    def Start(self, log_level):
         if self.__session is not None:
             raise RuntimeError("Session already started")
         if self.__config is None:
@@ -207,7 +207,10 @@ class OpenVPN3systemd(object):
         # Set up signal callback handlers and the proper log level
         self.__session.LogCallback(self._LogHandler)
         self.__session.StatusChangeCallback(self._StatusHandler)
-        self.__session.SetProperty('log_verbosity', dbus.UInt32(log_level))
+
+        if log_level > 0:
+            print(">> Changing log level to %i" % log_level)
+            self.__session.SetProperty('log_verbosity', dbus.UInt32(log_level))
 
         print("Session initiated: %s" % self.__session.GetPath())
         done = False
@@ -299,10 +302,9 @@ class OpenVPN3systemd(object):
 
 
 if "__main__" == __name__:
-    log_level = 5
+    start_log_level = -1
     if 'OPENVPN3_DEBUG' in os.environ:
-        log_level = 6
-
+        start_log_level = 6
     argp = argparse.ArgumentParser('openvpn3-systemd',
                                    description='OpenVPN 3 systemd session management')
     argp.add_argument('config', metavar='CONFIG_PROFILE', type=str,
@@ -313,7 +315,7 @@ if "__main__" == __name__:
                       help='Restarts a running VPN session with this configuration profile')
     argp.add_argument('--stop', action='store_const', const='stop', dest='mode',
                       help='Stops a running VPN session with this configuration profile')
-    argp.add_argument('--log-level', type=int, action='store', default=log_level,
+    argp.add_argument('--log-level', type=int, action='store', default=start_log_level,
                       help='Set the log verbosity level')
     args = argp.parse_args()
 
