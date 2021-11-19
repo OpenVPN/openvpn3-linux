@@ -1043,7 +1043,7 @@ private:
         // Set the log-level based on the --verb argument from the profile
         try
         {
-            const char *verb = parsed_opts.get_c_str("verb", 0, 3);
+            const char *verb = parsed_opts.get_c_str("verb", 1, 16);
             if (verb)
             {
                 unsigned int v = std::atoi(verb);
