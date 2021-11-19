@@ -1543,7 +1543,7 @@ public:
 
 
 private:
-    unsigned int default_log_level = 6; // LogCategory::DEBUG messages
+    unsigned int default_log_level = 3; // LogCategory::INFO messages
     pid_t start_pid;
     std::string session_token;
     std::string object_path;
