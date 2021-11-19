@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2021  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2021  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -33,6 +33,14 @@
  */
 struct StatusEvent
 {
+    enum class PrintMode : uint8_t
+    {
+        NONE = 0,
+        MAJOR = 1,
+        MINOR = 2,
+        ALL = 3
+    };
+
     StatusEvent(const StatusMajor maj, const StatusMinor min,
                 const std::string& msg)
     {
@@ -93,6 +101,7 @@ struct StatusEvent
         major = StatusMajor::UNSET;
         minor = StatusMinor::UNSET;
         message.clear();
+        print_mode = (uint8_t) PrintMode::ALL;
 #ifdef DEBUG_CORE_EVENTS
         show_numeric_status = true;
 #else
@@ -111,6 +120,16 @@ struct StatusEvent
         return (StatusMajor::UNSET == major)
                && (StatusMinor::UNSET == minor)
                && message.empty();
+    }
+
+
+    /**
+     *  Configures what should be printed
+     * @param m
+     */
+    void PrintMode(const StatusEvent::PrintMode m)
+    {
+        print_mode = (unsigned short) m;
     }
 
 
@@ -186,16 +205,31 @@ struct StatusEvent
         }
         else
         {
-            std::stringstream num_status;
-            if (s.show_numeric_status)
+            std::stringstream status_num;
+            std::stringstream status_str;
+
+            status_num << "[";
+            if (s.print_mode & (uint8_t) StatusEvent::PrintMode::MAJOR)
             {
-                num_status << "[" << std::to_string((unsigned) s.major) << ","
-                           << std::to_string((unsigned) s.minor) << "] ";
+                status_num << std::to_string((unsigned) s.major);
+                status_str << StatusMajor_str[(unsigned) s.major];
             }
-            return os << num_status.str()
-                      << StatusMajor_str[(unsigned) s.major] << ", "
-                      << StatusMinor_str[(unsigned) s.minor]
-                      << (!s.message.empty() ? ": " : "")
+            if (s.print_mode == (uint8_t) StatusEvent::PrintMode::ALL)
+            {
+                status_num << ",";
+                status_str << ", ";
+            }
+            if (s.print_mode & (uint8_t) StatusEvent::PrintMode::MINOR)
+            {
+                status_num << std::to_string((unsigned) s.minor);
+                status_str << StatusMinor_str[(unsigned) s.minor];
+            }
+            status_num << "] ";
+
+            return os << (s.show_numeric_status ? status_num.str() : "")
+                      << status_str.str()
+                      << (s.print_mode != (uint8_t) StatusEvent::PrintMode::NONE
+                          && !s.message.empty() ? ": " : "")
                       << (!s.message.empty() ? s.message : "");
         }
     }
@@ -217,6 +251,7 @@ struct StatusEvent
     StatusMajor major;
     StatusMinor minor;
     std::string message;
+    uint8_t print_mode;
     bool show_numeric_status;
 
 private:
