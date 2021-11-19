@@ -1173,7 +1173,8 @@ static int cmd_session_auth(ParsedArgs::Ptr args)
     for (const auto& sess : smprx.FetchAvailableSessions())
     {
         StatusEvent s = sess->GetLastStatus();
-        if (s.Check(StatusMajor::CONNECTION, StatusMinor::CFG_REQUIRE_USER))
+        if (s.Check(StatusMajor::CONNECTION, StatusMinor::CFG_REQUIRE_USER)
+            || s.Check(StatusMajor::SESSION, StatusMinor::SESS_AUTH_URL))
         {
             session_list.push_back(sess);
         }
@@ -1217,7 +1218,14 @@ static int cmd_session_auth(ParsedArgs::Ptr args)
                   << std::to_string(sess->GetUIntProperty("backend_pid")) << std::endl;
         std::cout << "     Created: " << created << std::endl;
         std::cout << " Config name: " << sess->GetStringProperty("config_name") << std::endl;
-        std::cout << " Auth status: " << status << std::endl;
+        std::cout << " Auth status: ";
+        if (status.Check(StatusMajor::SESSION, StatusMinor::SESS_AUTH_URL))
+        {
+            status.PrintMode(StatusEvent::PrintMode::NONE);
+            std::cout << "On-going web authentication" << std::endl
+                      << "    Auth URL: ";
+        }
+        std::cout << status << std::endl;
     }
     std::cout << "-----------------------------------------------------------------------------" << std::endl;
     return 0;
