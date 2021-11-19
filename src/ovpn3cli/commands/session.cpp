@@ -1165,6 +1165,25 @@ SingleCommand::Ptr prepare_command_session_manage()
 //////////////////////////////////////////////////////////////////////////
 
 
+static std::string arghelper_auth_req()
+{
+    OpenVPN3SessionMgrProxy smprx(G_BUS_TYPE_SYSTEM);
+    OpenVPN3SessionProxy::Ptr session{nullptr};
+    std::ostringstream res;
+
+    for (const auto& sess : smprx.FetchAvailableSessions())
+    {
+        StatusEvent s = sess->GetLastStatus();
+        if (s.Check(StatusMajor::CONNECTION, StatusMinor::CFG_REQUIRE_USER)
+            || s.Check(StatusMajor::SESSION, StatusMinor::SESS_AUTH_URL))
+        {
+            res << std::to_string(sess->GetUIntProperty("backend_pid")) << " ";
+        }
+    }
+
+    return res.str();
+}
+
 
 static int cmd_session_auth_complete(const unsigned int authid)
 {
@@ -1290,7 +1309,8 @@ SingleCommand::Ptr prepare_command_session_auth()
                                 "Interact with on-going session authentication requests",
                                 cmd_session_auth));
     cmd->AddOption("auth-req", 0, "ID", true,
-                   "Continue the authentication process for the given auth request ID");
+                   "Continue the authentication process for the given auth request ID",
+                   arghelper_auth_req);
     return cmd;
 }
 
