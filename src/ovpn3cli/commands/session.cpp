@@ -138,6 +138,39 @@ static void sigint_handler(int sig)
 }
 
 
+bool start_url_auth(const std::string& url)
+{
+    OpenURIresult r = open_uri(url);
+    switch (r->status)
+    {
+    case OpenURIstatus::INVALID:
+        std::cout << "** ERROR **  The server requested an invalid URL: "
+                  << url << std::endl;
+        return false;
+
+    case OpenURIstatus::FAIL:
+        std::cout << "Could not open the URL automatically." << std::endl
+                  << "Open this URL to complete the connection: " << std::endl
+                  << "     " << url << std::endl
+                  << std::endl
+                  << "Further manage this session using 'openvpn3 session-manage'"
+                  << std::endl;
+        return true;
+
+    case OpenURIstatus::SUCCESS:
+        std::cout << "Session running, awaiting external authentication." << std::endl
+                  << "Further manage this session using 'openvpn3 session-manage'"
+                  << std::endl;
+        return true;
+
+    default:
+        std::cout << "** ERROR **  Unknown error occurred." << std::endl
+                  << r->message << std::endl;
+        return false;
+    }
+}
+
+
 /**
  *  Defines which start modes used by @start_session()
  */
@@ -147,6 +180,8 @@ enum class SessionStartMode : std::uint8_t {
     RESUME,  /**< Call the Resume() method */
     RESTART  /**< Call the Restart() method */
 };
+
+
 
 
 /**
@@ -238,37 +273,14 @@ static void start_session(OpenVPN3SessionProxy::Ptr session,
                 if (s.Check(StatusMajor::SESSION, StatusMinor::SESS_AUTH_URL))
                 {
                     std::cout << "Web based authentication required." << std::endl;
-                    OpenURIresult r = open_uri(s.message);
-                    switch (r->status)
+                    if (start_url_auth(s.message))
                     {
-                    case OpenURIstatus::INVALID:
-                        std::cout << "** ERROR **  The server requested an invalid URL: "
-                            << s.message << std::endl
-                            << "Disconnecting" << std::endl;
-                        sigint_received = true; // Simulate a CTRL-C to exit
-                        break;
-
-                    case OpenURIstatus::FAIL:
-                        std::cout << "Could not open the URL automatically." << std::endl
-                                  << "Open this URL to complete the connection: " << std::endl
-                                  << "     " << s.message << std::endl
-                                  << std::endl
-                                  << "Further manage this session using 'openvpn3 session-manage'"
-                                  << std::endl;
                         return;
-
-                    case OpenURIstatus::SUCCESS:
-                        std::cout << "Session running, awaiting external authentication." << std::endl
-                                  << "Further manage this session using 'openvpn3 session-manage'"
-                                  << std::endl;
-                        return;
-
-                    default:
-                        std::cout << "** ERROR **  Unknown error occured." << std::endl
-                                  << r->message << std::endl
-                                  << "Disconecting" << std::endl;
-                        sigint_received = true;
-                        break;
+                    }
+                    else
+                    {
+                        sigint_received = true;  // Simulate a CTRL-C to exit
+                        std::cout << "Disconnecting" << std::endl;
                     }
                 }
                 else if (s.minor == StatusMinor::CONN_CONNECTED)
@@ -1154,6 +1166,36 @@ SingleCommand::Ptr prepare_command_session_manage()
 
 
 
+static int cmd_session_auth_complete(const unsigned int authid)
+{
+    OpenVPN3SessionMgrProxy smprx(G_BUS_TYPE_SYSTEM);
+    OpenVPN3SessionProxy::Ptr session{nullptr};
+    for (const auto& s : smprx.FetchAvailableSessions())
+    {
+        unsigned int bepid = s->GetUIntProperty("backend_pid");
+        if (authid == bepid)
+        {
+            session = s;
+            break;
+        }
+    }
+    if (nullptr == session)
+    {
+        throw CommandException("session-auth", "No session found");
+    }
+
+    std::cout << "Continuing authentication for session "
+              << session->GetStringProperty("config_name")
+              << std::endl
+              << "Session path: "
+              << session->GetPath()
+              << std::endl << std::endl;
+    start_session(session, SessionStartMode::START, -1, false);
+
+    return 0;
+}
+
+
 /**
  *  openvpn3 session-auth command
  *
@@ -1163,6 +1205,12 @@ SingleCommand::Ptr prepare_command_session_manage()
  */
 static int cmd_session_auth(ParsedArgs::Ptr args)
 {
+
+    if (args->Present("auth-req"))
+    {
+        return cmd_session_auth_complete(std::atoi(args->GetLastValue("auth-req").c_str()));
+    }
+
     //
     // List all running sessions requiring user authentication interaction
     //
@@ -1241,6 +1289,8 @@ SingleCommand::Ptr prepare_command_session_auth()
     cmd.reset(new SingleCommand("session-auth",
                                 "Interact with on-going session authentication requests",
                                 cmd_session_auth));
+    cmd->AddOption("auth-req", 0, "ID", true,
+                   "Continue the authentication process for the given auth request ID");
     return cmd;
 }
 
