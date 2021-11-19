@@ -1155,6 +1155,93 @@ SingleCommand::Ptr prepare_command_session_manage()
 
 
 /**
+ *  openvpn3 session-auth command
+ *
+ *  This command is used to list on-going VPN sessions requiring user
+ *  interaction for further authentication
+ *
+ */
+static int cmd_session_auth(ParsedArgs::Ptr args)
+{
+    //
+    // List all running sessions requiring user authentication interaction
+    //
+    OpenVPN3SessionMgrProxy smprx(G_BUS_TYPE_SYSTEM);
+
+    // Retrieve a list of all sessions requiring user interaction
+    std::vector<OpenVPN3SessionProxy::Ptr> session_list = {};
+    for (const auto& sess : smprx.FetchAvailableSessions())
+    {
+        StatusEvent s = sess->GetLastStatus();
+        if (s.Check(StatusMajor::CONNECTION, StatusMinor::CFG_REQUIRE_USER))
+        {
+            session_list.push_back(sess);
+        }
+    }
+
+    if (session_list.size() < 1)
+    {
+        std::cout << "No sessions requires authentication interaction" << std::endl;
+        return 0;
+    }
+
+    // List all sessions found
+    std::cout << "-----------------------------------------------------------------------------" << std::endl;
+    bool first = true;
+    for (const auto& sess : session_list)
+    {
+        if (!first)
+        {
+            std::cout << std::endl;
+        }
+        first = false;
+
+        // Retrieve the session start timestamp
+        std::string created;
+        try
+        {
+            std::time_t sess_created = sess->GetUInt64Property("session_created");
+            std::string c = std::asctime(std::localtime(&sess_created));
+            created = c.substr(0, c.size() - 1);
+        }
+        catch (DBusException&)
+        {
+            created = "(Not available)";
+        }
+
+        auto status = sess->GetLastStatus();
+        status.PrintMode(StatusEvent::PrintMode::MINOR);
+
+        std::cout << "        Path: " << sess->GetPath() << std::endl;
+        std::cout << "Auth Request: "
+                  << std::to_string(sess->GetUIntProperty("backend_pid")) << std::endl;
+        std::cout << "     Created: " << created << std::endl;
+        std::cout << " Config name: " << sess->GetStringProperty("config_name") << std::endl;
+        std::cout << " Auth status: " << status << std::endl;
+    }
+    std::cout << "-----------------------------------------------------------------------------" << std::endl;
+    return 0;
+}
+
+
+SingleCommand::Ptr prepare_command_session_auth()
+{
+    //
+    //  session-auth command
+    //
+    SingleCommand::Ptr cmd;
+    cmd.reset(new SingleCommand("session-auth",
+                                "Interact with on-going session authentication requests",
+                                cmd_session_auth));
+    return cmd;
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+
+
+
+/**
  *  openvpn3 session-acl command
  *
  *  Command to modify the access control to a specific VPN session.

@@ -50,6 +50,7 @@ SingleCommand::Ptr prepare_command_log_service();
 // Commands provided in session.cpp
 SingleCommand::Ptr prepare_command_session_start();
 SingleCommand::Ptr prepare_command_session_manage();
+SingleCommand::Ptr prepare_command_session_auth();
 SingleCommand::Ptr prepare_command_session_acl();
 SingleCommand::Ptr prepare_command_session_stats();
 SingleCommand::Ptr prepare_command_sessions_list();
@@ -89,6 +90,7 @@ std::vector<PrepareCommand> command_list_openvpn3 = {
 
     prepare_command_session_start,
     prepare_command_session_manage,
+    prepare_command_session_auth,
     prepare_command_session_acl,
     prepare_command_session_stats,
     prepare_command_sessions_list,

@@ -57,6 +57,7 @@ MAN_SECTION_1 = \
 	openvpn3-configs-list.1 \
 	openvpn3-log.1 \
 	openvpn3-session-acl.1 \
+	openvpn3-session-auth.1 \
 	openvpn3-session-manage.1 \
 	openvpn3-session-start.1 \
 	openvpn3-session-stats.1 \

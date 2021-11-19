@@ -60,6 +60,9 @@ Session management
 ``session-manage``
     Manage VPN sessions
 
+``session-auth``
+    See and interact with on-going session authentication
+
 ``session-acl``
     Manage access control lists for sessions
 
@@ -86,6 +89,7 @@ SEE ALSO
 ``openvpn3-configs-list``\(1)
 ``openvpn3-session-start``\(1)
 ``openvpn3-session-manage``\(1)
+``openvpn3-session-auth``\(1)
 ``openvpn3-session-acl``\(1)
 ``openvpn3-session-stats``\(1)
 ``openvpn3-sessions-list``\(1)
