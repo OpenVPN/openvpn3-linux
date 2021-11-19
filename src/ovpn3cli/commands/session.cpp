@@ -815,7 +815,6 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
         if (status.Check(StatusMajor::SESSION, StatusMinor::SESS_AUTH_URL))
         {
             std::cout << "Web authentication required to connect" << std::endl;
-            std::cout << "    Auth URL: " << status.message << std::endl;
         }
         else
         {
