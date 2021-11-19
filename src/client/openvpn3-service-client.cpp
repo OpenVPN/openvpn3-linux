@@ -1100,6 +1100,9 @@ private:
             THROW_CLIENTEXCEPTION(errmsg);
         }
 
+        signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CFG_OK,
+                            "config_path=" + configpath);
+
         // Do we need username/password?  Or does this configuration allow the
         // client to log in automatically?
         if (!cfgeval.autologin
@@ -1126,6 +1129,10 @@ private:
             signal.AttentionReq(ClientAttentionType::CREDENTIALS,
                                 ClientAttentionGroup::USER_PASSWORD,
                                 "Username/password credentials needed");
+
+            signal.StatusChange(StatusMajor::CONNECTION,
+                                StatusMinor::CFG_REQUIRE_USER,
+                                "Username/password credentials needed");
         }
 
         if (cfgeval.privateKeyPasswordRequired && vpnconfig.privateKeyPassword.length() == 0)
@@ -1136,10 +1143,8 @@ private:
             signal.AttentionReq(ClientAttentionType::CREDENTIALS,
                                 ClientAttentionGroup::PK_PASSPHRASE,
                                 "Private key passphrase needed");
+            // FIXME: Consider if this should result in a StatusChange as well
         }
-
-        signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CFG_OK,
-                            "config_path=" + configpath);
     }
 
 
