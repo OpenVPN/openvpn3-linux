@@ -36,6 +36,10 @@ typedef std::shared_ptr<openvpn::Xml::Document> XmlDocPtr;
 #include "dbus/connection.hpp"
 #include "glibutils.hpp"
 
+/// Default timeout for D-Bus calls.  Setting this to -1 uses the default
+/// value in glib2, which is typically 20 seconds.  We reduce it to 5 seconds
+#define DBUS_PROXY_CALL_TIMEOUT 5000
+
 namespace openvpn
 {
     class DBusProxyAccessDeniedException: std::exception
@@ -597,7 +601,7 @@ namespace openvpn
                                                                       interface.c_str(),
                                                                       property.c_str()),
                                                         G_DBUS_CALL_FLAGS_NONE,
-                                                        -1,          // timeout, -1 == default
+                                                        DBUS_PROXY_CALL_TIMEOUT,
                                                         NULL,        // GCancellable
                                                         &error);
             if (!response && !error)
@@ -687,7 +691,7 @@ namespace openvpn
                                                                  property.c_str(),
                                                                  value),
                                                    G_DBUS_CALL_FLAGS_NONE,
-                                                   -1,          // timeout, -1 == default
+                                                   DBUS_PROXY_CALL_TIMEOUT,
                                                    NULL,        // GCancellable
                                                    &error);
             if (!ret && !error)
@@ -845,7 +849,7 @@ namespace openvpn
                                                  method.c_str(),
                                                  params,      // parameters to method
                                                  flags,
-                                                 -1,          // timeout, -1 == default
+                                                 DBUS_PROXY_CALL_TIMEOUT,
                                                  nullptr,        // GCancellable
                                                  &error);
                 }
@@ -870,7 +874,7 @@ namespace openvpn
                                                                        method.c_str(),
                                                                        params,      // parameters to method
                                                                        flags,
-                                                                       -1,          // timeout, -1 == default
+                                                                       DBUS_PROXY_CALL_TIMEOUT,
                                                                        fdlist,     // fd_list (to send)
                                                                        out_fdlist_ptr,
                                                                        nullptr,        // GCancellable
@@ -912,7 +916,7 @@ namespace openvpn
             {
                 g_dbus_proxy_call(prx, method.c_str(), params,
                                   flags,
-                                  -1,       // timeout, -1 == default
+                                  DBUS_PROXY_CALL_TIMEOUT,
                                   nullptr,     // GCancellable
                                   nullptr,     // Response callback, not needed here
                                   nullptr);    // user_data, not needed due to no callback
