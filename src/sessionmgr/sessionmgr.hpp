@@ -1401,12 +1401,15 @@ public:
                 }
                 return build_set_property_response(property_name, recv_log_events);
             }
-            else if (("log_verbosity" == property_name) && be_conn && sig_logevent)
+            else if (("log_verbosity" == property_name) && be_conn)
             {
                 unsigned int log_verb = g_variant_get_uint32(value);
                 try
                 {
-                    sig_logevent->SetLogLevel(log_verb);
+                    if (sig_logevent)
+                    {
+                        sig_logevent->SetLogLevel(log_verb);
+                    }
                     SetLogLevel(log_verb);
                 }
                 catch (const LogException& excp)
