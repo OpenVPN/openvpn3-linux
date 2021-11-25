@@ -478,17 +478,46 @@ private:
                 return;
             }
 
-            uid_t sender_uid = GetUID(sender);
-
-            if (sender_uid == owner)
-            {
-                return;
-            }
-
-            uid_t ovpn_uid;
+            uid_t sender_uid = 65535;
             try
             {
+                sender_uid = GetUID(sender);
+
+                if (sender_uid == owner)
+                {
+                    return;
+                }
+
+                uid_t ovpn_uid;
                 ovpn_uid = lookup_uid(OPENVPN_USERNAME);
+
+                if (allow_mngr && sender_uid == ovpn_uid)
+                {
+                    return;
+                }
+
+                if (owner_only)
+                {
+                    throw DBusCredentialsException(sender_uid,
+                                                   "net.openvpn.v3.error.acl.denied",
+                                                   "Owner access denied"
+                                                   );
+                }
+
+                for (auto& acl_uid : acl_list)
+                {
+                    if (acl_uid == sender_uid)
+                    {
+                        return;
+                    }
+                }
+                throw DBusCredentialsException(sender_uid,
+                                               "net.openvpn.v3.error.acl.denied",
+                                               "Access denied");
+            }
+            catch (const DBusCredentialsException&)
+            {
+                throw;
             }
             catch (const LookupException& excp)
             {
@@ -496,29 +525,12 @@ private:
                                                "net.openvpn.v3.error.acl.lookup",
                                                excp.str());
             }
-            if (allow_mngr && sender_uid == ovpn_uid)
-            {
-                return;
-            }
-
-            if (owner_only)
+            catch (const DBusException& excp)
             {
                 throw DBusCredentialsException(sender_uid,
-                                               "net.openvpn.v3.error.acl.denied",
-                                               "Owner access denied"
-                                               );
+                        "net.openvpn.v3.error.acl.lookup",
+                        "Could not identify caller");
             }
-
-            for (auto& acl_uid : acl_list)
-            {
-                if (acl_uid == sender_uid)
-                {
-                    return;
-                }
-            }
-            throw DBusCredentialsException(sender_uid,
-                                           "net.openvpn.v3.error.acl.denied",
-                                           "Access denied");
         }
     };
 };
