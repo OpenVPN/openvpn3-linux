@@ -1344,6 +1344,10 @@ public:
         catch (DBusCredentialsException& excp)
         {
             LogWarn(excp.what());
+            Debug("SetProperty - Object path: " + obj_path
+                  + ", interface=" + intf_name
+                  + ", property_name=" + property_name
+                  + ", sender=" + sender);
             throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
                                         obj_path, intf_name, property_name,
                                         excp.what());
