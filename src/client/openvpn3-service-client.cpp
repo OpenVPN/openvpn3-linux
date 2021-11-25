@@ -771,6 +771,7 @@ private:
     GDBusConnection *dbusconn;
     GMainLoop *mainloop;
     BackendSignals signal;
+    bool profile_log_level_override = false; ///< Cfg profile has a log-level override
     bool signal_broadcast;
     std::string session_token;
     bool registered;
@@ -1041,26 +1042,33 @@ private:
         }
 
         // Set the log-level based on the --verb argument from the profile
-        try
+        // unless the configuration profile has a log-level override.
+        // This check is handled here because the overrides are parsed before
+        // this initialize_client() method is called.  We do not want the
+        // configuration file to override the profile overrides.
+        if (!profile_log_level_override)
         {
-            const char *verb = parsed_opts.get_c_str("verb", 1, 16);
-            if (verb)
+            try
             {
-                unsigned int v = std::atoi(verb);
-                if (v > 6)
+                const char *verb = parsed_opts.get_c_str("verb", 1, 16);
+                if (verb)
                 {
-                    v = 6;
+                    unsigned int v = std::atoi(verb);
+                    if (v > 6)
+                    {
+                        v = 6;
+                    }
+                    signal.SetLogLevel(v);
                 }
-                signal.SetLogLevel(v);
             }
-        }
-        catch (const LogException&)
-        {
-            signal.LogCritical("Invalid --verb level in configuration profile");
-        }
-        catch (...)
-        {
-            // If verb is not found, we use the default log level
+            catch (const LogException&)
+            {
+                signal.LogCritical("Invalid --verb level in configuration profile");
+            }
+            catch (...)
+            {
+                // If verb is not found, we use the default log level
+            }
         }
 
         //  Set a unique host/machine ID
@@ -1227,6 +1235,7 @@ private:
             else if (override.override.key == "log-level")
             {
                 signal.SetLogLevel(std::atoi(override.strValue.c_str()));
+                profile_log_level_override = true;
                 valid_override = true;
             }
             else if (override.override.key == "dns-fallback-google")
