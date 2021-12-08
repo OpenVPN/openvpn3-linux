@@ -151,6 +151,14 @@ OPTIONS
                         :code:`yes`:
                           Both client and server can use compression
 
+--enable-legacy-algorithms BOOL
+                        By default, OpenVPN 3 Linux only expects to work with
+                        servers capable of doing AEAD ciphers on the data
+                        channel, such as AES-GCM or ChaCha20-Poly1305 (if
+                        supported by the TLS library).  To connect to legacy
+                        servers not capable of AEAD ciphers on the data channel,
+                        it might help to enable legacy cipher algorithms.
+
 --tls-version-min ARG
                         Sets the minimum TLS version for the control channel.
                         For this to be functional, the SSL/TLS library in use

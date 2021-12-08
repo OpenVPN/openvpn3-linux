@@ -122,6 +122,10 @@ const ValidOverride configProfileOverrides[] = {
      "Set compression mode",
      [] {return std::string("no asym yes");}},
 
+    {"enable-legacy-algorithms", OverrideType::boolean,
+     "Enable legacy non-AEAD cipher algorithms for the data channel",
+     [] {return std::string("true false");}},
+
     {"tls-version-min", OverrideType::string,
      "Sets the minimal TLS version for the control channel",
      [] {return std::string("tls_1_0 tls_1_1 tls_1_2 tls_1_3");}},
