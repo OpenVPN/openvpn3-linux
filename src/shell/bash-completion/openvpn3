@@ -56,18 +56,17 @@ _openvpn3_generic_completion()
                 if [ -n "$cur" ]; then
                     filter="grep -E ^$cur"
                 fi
-
                 comp_op="-W"
                 if [ "config-import" = "${first}" -o "session-start" = "${first}" ]; then
                     # Only list files which most likely are OpenVPN configuration files
                     selopts="$(grep -sm1 -E '(client|remote |port |lport |rport |key |cert |ca )' ${cur}*.conf ${cur}*.ovpn | cut -d: -f1 | $filter | tr '\n' ' ')"
 
                     # Add directories too, but ignore those starting with '.{some-alpha-num-letters}'
-                    selopts="$(compgen -d -- $cur | sed 's#$#/#' | grep -vE '^\.\w+' | tr '\n' ' ')"
+                    selopts="$(compgen -d -- $cur | sed 's#$#/#' | grep -vE '^\.\w+' | tr '\n' ' ') $selopts"
                 fi
 
                 # In addition, extend with all pre-loaded configurations
-                selopts="$($cmd shell-completion --list-options $first --arg-help $prev)"
+                selopts="$($cmd shell-completion --list-options $first --arg-help $prev) $selopts"
                 ;;
 
             "--grant"|"--revoke") # Takes username (or UID, which we don't tackle here)
