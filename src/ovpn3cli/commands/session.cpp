@@ -153,13 +153,14 @@ bool start_url_auth(const std::string& url)
                   << "Open this URL to complete the connection: " << std::endl
                   << "     " << url << std::endl
                   << std::endl
-                  << "Further manage this session using 'openvpn3 session-manage'"
+                  << "Further manage this session using 'openvpn3 session-auth'"
                   << std::endl;
         return true;
 
     case OpenURIstatus::SUCCESS:
         std::cout << "Session running, awaiting external authentication." << std::endl
-                  << "Further manage this session using 'openvpn3 session-manage'"
+                  << "Further manage this session using "
+                  << "'openvpn3 session-manage' and 'openvpn3 session-auth'"
                   << std::endl;
         return true;
 
