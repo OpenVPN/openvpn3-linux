@@ -348,39 +348,4 @@ namespace openvpn {
             push_back(OptionList::parse_option_from_line(l.str(), &limits));
         }
     };
-
-    class ProfileMergeJSON : public openvpn::ProfileMerge
-    {
-    public:
-        ProfileMergeJSON(const Json::Value& data)
-        {
-            // Parse the JSON input into a plain/text config file which
-            // is then parsed/imported into the OpenVPN option storage.
-            std::stringstream config_str;
-            for(auto it = data.begin(); it != data.end(); ++it)
-            {
-                std::string name = it.name();
-                // We need different parsing if the JsonValue is an array or not
-                // and we don't rely on option_req_array() here for backwards
-                // compatibility with existing persistent configs not using
-                // arrays for these options.  Instead we trust the JSON input.
-                if (!data[name].isArray())
-                {
-                    config_str << optparser_mkline(name, data[name].asString());
-                }
-                else
-                {
-                    for (size_t idx = 0; idx < data[name].size(); idx++)
-                    {
-                        config_str << optparser_mkline(name,
-                                                       data[name].get(idx, "").asString());
-                    }
-                }
-            }
-            expand_profile(config_str.str(), "", openvpn::ProfileMerge::FOLLOW_NONE,
-                           openvpn::ProfileParseLimits::MAX_LINE_SIZE,
-                           openvpn::ProfileParseLimits::MAX_PROFILE_SIZE,
-                           profile_content().size());
-        }
-    };
 }

@@ -294,14 +294,7 @@ public:
         }
 
         // Parse the options from the imported configuration
-        OptionList::Limits limits("profile is too large",
-                                  ProfileParseLimits::MAX_PROFILE_SIZE,
-                                  ProfileParseLimits::OPT_OVERHEAD,
-                                  ProfileParseLimits::TERM_OVERHEAD,
-                                  ProfileParseLimits::MAX_LINE_SIZE,
-                                  ProfileParseLimits::MAX_DIRECTIVE_SIZE);
-        ProfileMergeJSON pm(profile["profile"]);
-        options.parse_from_config(pm.profile_content(), &limits);
+        options.json_import(profile["profile"]);
 
         initialize_configuration(true);
     }

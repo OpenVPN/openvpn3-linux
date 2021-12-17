@@ -55,9 +55,8 @@ int main(int argc, char **argv)
         file >> jsondata;
     }
 
-    ProfileMergeJSON pm(jsondata);
     OptionListJSON opts;
-    opts.parse_from_config(pm.profile_content(), nullptr);
+    opts.json_import(jsondata);
     std::cout << opts.string_export() << std::endl;
     return 0;
 }
