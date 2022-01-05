@@ -45,6 +45,7 @@ represented as a string blob containing everything.
 | Direction | Name        | Type        | Description                                                           |
 |-----------|-------------|-------------|-----------------------------------------------------------------------|
 | In        | name        | string      | User friendly name of the profile. To be used in user front-ends      |
+| In        | config_str  | string      | content of config file                                                |
 | In        | single_use  | boolean     | If set to true, it will be removed from memory on first use           |
 | In        | persistent  | boolean     | If set to true, the configuration will be saved to disk               |
 | Out       | config_path | object path | A unique D-Bus object path for the imported VPN configuration profile |
