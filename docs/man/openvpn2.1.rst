@@ -172,6 +172,9 @@ OPTIONS
                       :code:`ipv6`
                           Enable or disable IPv6 inside the tunnel.
                           Valid values: :code:`yes`, :code:`no` or :code:`default`
+                      :code:`enable-legacy-algorithms`
+                          Enables non-AEAD ciphers supported by the TLS library.
+                          See ``openvpn3-config-manage``\(1) for details.
 
                       :code:`dns-setup-disabled`
                           Disable configuring pushed DNS settings.

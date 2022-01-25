@@ -417,7 +417,7 @@ class ConfigParser():
                        'ipv6', 'dns-setup-disabled', 'dns-sync-lookup',
                        'auth-fail-retry', 'proxy-host', 'proxy-port',
                        'proxy-username', 'proxy-password',
-                       'proxy-auth-cleartext']
+                       'proxy-auth-cleartext', 'enable-legacy-algorithms']
         self.__parser.add_argument('--profile-override',
                                    metavar='OVERRIDE-KEY OVERRIDE-VALUE',
                                    action=ConfigParser.OpenVPNoverrideArgs,
