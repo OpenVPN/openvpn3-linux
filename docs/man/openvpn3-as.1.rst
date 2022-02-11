@@ -51,6 +51,12 @@ OPTIONS
                       Override the automatically generated profile name
                       (default: :code:`AS:$servername`)
 
+--owner USERNAME
+                      Transfer the ownership of the downloaded configuration
+                      profile to ``USERNAME``.  This requires ``openvpn3-as``
+                      to be run as ``root``.  This is useful when used together
+                      with ``--systemd-start``.
+
 --username USERNAME
                       Username to use for OpenVPN Access Server login
 

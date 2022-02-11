@@ -32,6 +32,7 @@ import urllib.parse
 import urllib.request
 import ssl
 import openvpn3
+import pwd
 import dbus
 import xml.etree.ElementTree as xmlET
 import socket
@@ -237,6 +238,8 @@ def main():
                            help='Do not import the configuration profile as a persistent profile (default: persistent)')
     cmdparser.add_argument('--name', metavar='CONFIG-NAME',
                            help='Override the automatically generated profile name (default: AS:$servername)')
+    cmdparser.add_argument('--owner', metavar='USERNAME',
+                           help='Import this configuration with USERNAME as the profile owner (requires root)')
     cmdparser.add_argument('--username', metavar='USERNAME',
                            help='Username to use for OpenVPN Access Server login')
     cmdparser.add_argument('--insecure-certs', action='store_true',
@@ -253,6 +256,17 @@ def main():
     if opts.systemd_start and os.geteuid() != 0:
         print('ERROR: This must be run as root when using --systemd-start')
         sys.exit(1)
+
+    owner_uid = None
+    if opts.owner:
+        if os.geteuid() != 0:
+            print('ERROR: This must be run as root when using --owner')
+            sys.exit(1)
+        try:
+            pwe = pwd.getpwnam(opts.owner)
+            owner_uid = pwe.pw_uid
+        except KeyError:
+            raise RuntimeError('ERROR: User "%s" was not found' % opts.owner)
 
     # Connect to the D-Bus system bus and establish a link
     # to the OpenVPN 3 Configuration Manager
@@ -289,6 +303,17 @@ def main():
     print('Profile imported successfully')
     print('Configuration name: %s' % profile_name)
     print('Configuration path: %s' % cfgobj.GetPath())
+
+    if opts.systemd_start and owner_uid is not None:
+        print('Granting root user access to profile ... ', end='', flush=True)
+        cfgobj.AccessGrant(0)
+        cfgobj.SetOwnershipTransfer(True)
+        print('Done')
+
+    if owner_uid is not None:
+        print('Setting the profile ownership to "%s" (uid %u) ... ' % (opts.owner, owner_uid), end='', flush=True)
+        cfgmgr.TransferOwnership(cfgobj.GetPath(), owner_uid)
+        print('Done')
 
     if opts.systemd_start:
         unit_name = 'openvpn3-session@%s.service' % cfgobj.GetConfigName()
