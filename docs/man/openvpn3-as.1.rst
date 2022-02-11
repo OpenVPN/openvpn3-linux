@@ -35,6 +35,14 @@ OPTIONS
                       to the Access Server, but this feature may not be
                       available for all user profiles.
 
+--systemd-start
+                      Start the downloaded profile automatically after
+                      downloading it, using the systemd
+                      ``openvpn3-sessions@.service`` unit file; see the
+                      ``openvpn3-systemd``\(1) man page for details.  Enabling
+                      this will also start this unit file at boot.  This
+                      requires ``openvpn3-as`` to be run as ``root``.
+
 --impersistent
                       Do not import the configuration profile as a persistent
                       profile (default: ``persistent``)

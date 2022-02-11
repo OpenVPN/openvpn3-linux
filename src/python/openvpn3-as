@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
-#  Copyright (C) 2019 - 2021  OpenVPN Inc. <sales@openvpn.net>
-#  Copyright (C) 2019 - 2021  David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2019 - 2022  OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2019 - 2022  David Sommerseth <davids@openvpn.net>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -109,6 +109,34 @@ class CRV1Authentication(Exception):
 
 
 ##
+#  Helper class to integrate with a few systemd operations
+#
+class SystemdServiceUnit(object):
+    """Simple implementation for managing systemd services"""
+
+    def __init__(self, dbuscon, unit_name):
+        self._dbuscon = dbuscon
+        self._unit_name = unit_name
+
+        # Retrieve access to the main systemd manager object
+        self._srvmngr_obj = self._dbuscon.get_object('org.freedesktop.systemd1',
+                                                     '/org/freedesktop/systemd1')
+        # Establish a link to the manager interface in the manager object
+        self._srvmgr = dbus.Interface(self._srvmngr_obj,
+                                      dbus_interface='org.freedesktop.systemd1.Manager')
+
+    def Enable(self):
+        """Enable a systemd service unit to be started at boot"""
+
+        self._srvmgr.EnableUnitFiles([self._unit_name,], False, True)
+
+    def Start(self):
+        """Start a systemd service unit"""
+
+        self._srvmgr.StartUnit(self._unit_name, 'replace')
+
+
+##
 #  Fetches a configuration profile from an OpenVPN Access Server
 #  for a specific user.
 #
@@ -202,6 +230,8 @@ def main():
                                         usage='%(prog)s [options] <https://...>')
     cmdparser.add_argument('--autologin', action='store_true',
                            help='Download the auto-login profile (default: user-login profile)')
+    cmdparser.add_argument('--systemd-start', action='store_true',
+                           help='Enable and start this configuration during boot automatically')
 
     cmdparser.add_argument('--impersistent', action='store_true',
                            help='Do not import the configuration profile as a persistent profile (default: persistent)')
@@ -218,6 +248,10 @@ def main():
     opts = cmdparser.parse_args()
     if len(opts.server) != 1:
         print('ERROR: Missing OpenVPN Access Server URL')
+        sys.exit(1)
+
+    if opts.systemd_start and os.geteuid() != 0:
+        print('ERROR: This must be run as root when using --systemd-start')
         sys.exit(1)
 
     # Connect to the D-Bus system bus and establish a link
@@ -256,6 +290,17 @@ def main():
     print('Configuration name: %s' % profile_name)
     print('Configuration path: %s' % cfgobj.GetPath())
 
+    if opts.systemd_start:
+        unit_name = 'openvpn3-session@%s.service' % cfgobj.GetConfigName()
+        service = SystemdServiceUnit(sysbus, unit_name)
+
+        print('Enabling %s during boot ... ' % unit_name, end='', flush=True)
+        service.Enable()
+        print('Done')
+
+        print('Starting %s ... ' % unit_name, end='', flush=True)
+        service.Start()
+        print('Done')
 
 #
 #  MAIN
