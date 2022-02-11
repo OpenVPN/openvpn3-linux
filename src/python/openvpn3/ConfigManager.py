@@ -191,6 +191,16 @@ class Configuration(object):
 
 
     ##
+    #  Sets the ownership transfer flag which transfers the owner ship
+    #  of the session to the same as the owner of the configuration profile
+    #  if the session was started as root
+    #
+    @__delete_check
+    def SetOwnershipTransfer(self, val):
+        self.SetProperty('transfer_owner_session', val)
+
+
+    ##
     #  Fetch the configuration profile contents as a text/plain string
     #
     @__delete_check
