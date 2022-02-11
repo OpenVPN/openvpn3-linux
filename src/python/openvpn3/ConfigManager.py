@@ -1,7 +1,7 @@
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
-#  Copyright (C) 2018 - 2019  OpenVPN Inc. <sales@openvpn.net>
-#  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2018 - 2022  OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2018 - 2022  David Sommerseth <davids@openvpn.net>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -83,6 +83,16 @@ class Configuration(object):
     @__delete_check
     def GetPath(self):
         return dbus.ObjectPath(self.__cfg_path)
+
+
+    ##
+    #  Retrieve the configuration name of this object
+    #
+    #  @return String containing the configuration name of the profile
+    #
+    @__delete_check
+    def GetConfigName(self):
+        return str(self.__prop_intf.Get('net.openvpn.v3.configuration','name'))
 
 
     ##
