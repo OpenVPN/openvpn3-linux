@@ -1,7 +1,8 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2019 - 2020  OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2019 - 2020  Lev Stipakov <lev@openvpn.net>
+//  Copyright (C) 2019 - 2022  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2019 - 2022  Lev Stipakov <lev@openvpn.net>
+//  Copyright (C) 2020 - 2022  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -424,19 +425,9 @@ int aws_main(ParsedArgs::Ptr args)
     LogServiceProxy::Ptr logsrvprx = nullptr;
     if (!signal_broadcast)
     {
-        try
-        {
-            LogServiceProxy::Ptr log_service(new LogServiceProxy(dbus.GetConnection()));
-            log_service->Attach(OpenVPN3DBus_interf_aws);
-            log_service->Attach(OpenVPN3DBus_interf_aws + ".core");
-        }
-        catch (const DBusProxyAccessDeniedException& exc)
-        {
-            std::stringstream err;
-            err << "** ERROR **  Could not attach to OpenVPN 3 log service"
-                << " (" << std::string(exc.what()) << ")";
-            throw CommandException("AWS", err.str());
-        }
+        logsrvprx = LogServiceProxy::AttachInterface(dbus.GetConnection(),
+                                                     OpenVPN3DBus_interf_aws);
+        logsrvprx->Attach(OpenVPN3DBus_interf_aws + ".core");
     }
 
     std::string config_file{OPENVPN3_AWS_CONFIG};
@@ -467,7 +458,8 @@ int aws_main(ParsedArgs::Ptr args)
         g_main_loop_unref(main_loop);
         if (logsrvprx)
         {
-            logsrvprx->Detach(OpenVPN3DBus_interf_backends);
+            logsrvprx->Detach(OpenVPN3DBus_interf_aws + ".core");
+            logsrvprx->Detach(OpenVPN3DBus_interf_aws);
         }
     }
     catch (const DBusException& exc)
@@ -497,6 +489,12 @@ int main(int argc, char **argv)
     try
     {
         return cmd.RunCommand(simple_basename(argv[0]), argc, argv);
+    }
+    catch (const LogServiceProxyException& excp)
+    {
+        std::cout << "** ERROR ** " << excp.what() << std::endl;
+        std::cout << "            " << excp.debug_details() << std::endl;
+        return 2;
     }
     catch (CommandException& excp)
     {
