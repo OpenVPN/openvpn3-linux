@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018 - 2020  OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018 - 2020  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2022  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2022  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -198,8 +198,8 @@ int netcfg_main(ParsedArgs::Ptr args)
         // If we do unicast (!broadcast), attach to the log service
         if (!netcfgopts.signal_broadcast)
         {
-            logservice.reset(new LogServiceProxy(dbus.GetConnection()));
-            logservice->Attach(OpenVPN3DBus_interf_netcfg);
+            logservice = LogServiceProxy::AttachInterface(dbus.GetConnection(),
+                                                          OpenVPN3DBus_interf_netcfg);
             logservice->Attach(OpenVPN3DBus_interf_netcfg + ".core");
         }
 
@@ -314,6 +314,12 @@ int netcfg_main(ParsedArgs::Ptr args)
                 exit_code = 4;
             }
         }
+    }
+    catch (const LogServiceProxyException& excp)
+    {
+        std::cout << "** ERROR ** " << excp.what() << std::endl;
+        std::cout << "            " << excp.debug_details() << std::endl;
+        exit_code = 3;
     }
     catch (std::exception& excp)
     {
