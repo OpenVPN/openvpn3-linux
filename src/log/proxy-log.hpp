@@ -32,6 +32,45 @@
 #include "dbus/proxy.hpp"
 #include "dbus/glibutils.hpp"
 
+/**
+ *  Basic exception class for LogServiceProxy related errors
+ */
+class LogServiceProxyException : public std::exception
+{
+public:
+    LogServiceProxyException(const std::string& msg) noexcept
+        : message(msg)
+    {
+    }
+
+    LogServiceProxyException(const std::string& msg,
+                             const std::string& dbg) noexcept
+        : message(msg), debug(dbg)
+    {
+    }
+
+    virtual ~LogServiceProxyException() = default;
+
+
+    virtual const char* what() const noexcept
+    {
+        return message.c_str();
+    }
+
+
+    virtual std::string debug_details() const noexcept
+    {
+        return debug;
+    }
+
+
+private:
+    std::string message = {};
+    std::string debug = {};
+};
+
+
+
 struct LogSubscriberEntry
 {
     LogSubscriberEntry(std::string tag,
