@@ -394,6 +394,10 @@ have not yet been implemented in the OpenVPN 3 Core library and others
 are not relevant any more.  But none of these options will break any
 existing configurations.
 
+--auth-nocache        Do not cache --askpass or --auth-user-pass in virtual
+                      memory.  Not applicable with OpenVPN 3 due to different
+                      credentials storage model.
+
 --chroot DIR          Chroot to this directory after initialization.  Not
                       applicable with OpenVPN 3, which uses a different
                       execution model.

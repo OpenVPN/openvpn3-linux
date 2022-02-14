@@ -1,7 +1,7 @@
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
-#  Copyright (C) 2017 - 2020  OpenVPN Inc. <sales@openvpn.net>
-#  Copyright (C) 2017 - 2020  David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2017 - 2022  OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2017 - 2022  David Sommerseth <davids@openvpn.net>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -697,6 +697,14 @@ class ConfigParser():
         + 'options are not implemented in the OpenVPN 3 Core library ' \
         + 'and will not break existing configurations.'
         ignored = self.__parser.add_argument_group('Ignored options', descr)
+
+        ignored.add_argument('--auth-nocache',
+                             action=ConfigParser.IgnoreArg,
+                             nargs=0,
+                             help='Do not cache --askpass or --auth-user-pass '
+                             + 'in virtual memory.  Not applicable with '
+                             + 'OpenVPN 3 due to different credentials storage '
+                             + 'model.')
 
         ignored.add_argument('--chroot',
                              metavar='DIR',
