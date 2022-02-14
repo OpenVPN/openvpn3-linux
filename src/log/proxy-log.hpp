@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2022  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2022  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -26,8 +26,7 @@
 #pragma once
 
 #include <algorithm>
-
-#include <openvpn/common/rc.hpp>
+#include <memory>
 
 #include "dbus/core.hpp"
 #include "dbus/proxy.hpp"
@@ -56,12 +55,10 @@ typedef std::vector<LogSubscriberEntry> LogSubscribers;
  *  Client proxy implementation interacting with a
  *  the net.openvpn.v3.log service
  */
-class LogServiceProxy : public DBusProxy,
-                        public RC<thread_unsafe_refcount>
-
+class LogServiceProxy : public DBusProxy
 {
 public:
-    typedef RCPtr<LogServiceProxy> Ptr;
+    typedef std::shared_ptr<LogServiceProxy> Ptr;
 
     /**
      *  Initialize the LogServiceProxy.
