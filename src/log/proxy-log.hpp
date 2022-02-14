@@ -123,6 +123,39 @@ public:
 
 
     /**
+     *  Helper function to connect to the Log service and attach this caller to
+     *  the service.
+     *
+     * @param conn        GDBusConnection* to the D-Bus system bus
+     * @param interface   D-Bus interface the log service will log from this process
+     *
+     * @return            Returns a LogServiceProxy object pointer, used to detach
+     *                    from the log service when this logging is no longer
+     *                    needed.
+     */
+    static LogServiceProxy::Ptr AttachInterface(GDBusConnection *conn,
+                                                const std::string interface)
+    {
+        LogServiceProxy::Ptr lgs = nullptr;
+        try
+        {
+            lgs.reset(new LogServiceProxy(conn));
+            lgs->Attach(interface);
+        }
+        catch(const DBusException& excp)
+        {
+            if(lgs)
+            {
+                lgs.reset();
+            }
+            throw LogServiceProxyException(
+                    "Could not connect to " + OpenVPN3DBus_name_log + " service",
+                    excp.what());
+        }
+        return lgs;
+    }
+
+    /**
      *  Attach this D-Bus connection to the log service.  By doing this
      *  all Log signals sent from this client will be caught by the log
      *  service.
