@@ -29,6 +29,7 @@
 #        have been made available in the OpenVPN 3 Core library.
 
 import sys
+
 if sys.version_info[0] < 3:
     print("Python 3.x is required")
     sys.exit(1)
@@ -233,6 +234,7 @@ def start_tunnel(bus, cfgobj, opts):
     #  Starting the tunnel ...
     #
     done = False
+    connected = False
     status = None
     exit_code = 0
     dco_configured = False
@@ -371,7 +373,13 @@ def start_tunnel(bus, cfgobj, opts):
                 # statistics
                 print(sessionobj.GetFormattedStatistics())
             print("\nClosing session")
-            sessionobj.Disconnect()
+            connected = False
+            try:
+                sessionobj.Disconnect()
+            except KeyboardInterrupt:
+                done = True
+            except RuntimeError:
+                done = True
 
     return exit_code
 
