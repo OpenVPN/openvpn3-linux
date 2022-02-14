@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2022  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2022  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -89,8 +89,8 @@ static int session_manager(ParsedArgs::Ptr args)
     LogServiceProxy::Ptr logsrvprx = nullptr;
     if (!signal_broadcast)
     {
-        logsrvprx.reset(new LogServiceProxy(dbus.GetConnection()));
-        logsrvprx->Attach(OpenVPN3DBus_interf_sessions);
+        logsrvprx = LogServiceProxy::AttachInterface(dbus.GetConnection(),
+                                                     OpenVPN3DBus_interf_sessions);
     }
 
     unsigned int log_level = 3;
@@ -162,6 +162,12 @@ int main(int argc, char **argv)
         drop_root();
 
         return argparser.RunCommand(simple_basename(argv[0]), argc, argv);
+    }
+    catch (const LogServiceProxyException& excp)
+    {
+        std::cout << "** ERROR ** " << excp.what() << std::endl;
+        std::cout << "            " << excp.debug_details() << std::endl;
+        return 2;
     }
     catch (CommandException& excp)
     {
