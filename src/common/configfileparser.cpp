@@ -369,6 +369,10 @@ void File::Save(const std::string cfgfname)
     {
         cfgfile << Generate() << std::endl;
     }
+    if (cfgfile.fail())
+    {
+        throw ConfigFileException(cfgfname, "Error saving the configuration file");
+    }
     cfgfile.close();
 }
 
