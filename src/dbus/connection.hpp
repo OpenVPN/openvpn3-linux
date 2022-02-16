@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2022  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2022  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -23,10 +23,11 @@
  * @brief  Main D-Bus connection handling
  *
  */
-#ifndef OPENVPN3_DBUS_CONNECTION_HPP
-#define OPENVPN3_DBUS_CONNECTION_HPP
+#pragma once
 
 #include <iostream>
+
+#include <gio/gio.h>
 
 #include "exceptions.hpp"
 #include "idlecheck.hpp"
@@ -359,7 +360,7 @@ namespace openvpn
         }
 
     private:
-        GBusType bus_type;
+        GBusType bus_type = GBusType::G_BUS_TYPE_NONE;
         bool connected;
         bool connection_only;
         bool setup_complete;
@@ -367,7 +368,7 @@ namespace openvpn
         std::string root_path;
         std::string default_interface;
         GDBusConnection *dbuscon;
-        guint busid;
+        guint busid = 0;
 
         /**
          *  C wrapper function for the GDBus g_bus_own_name_on_connection()
@@ -403,4 +404,3 @@ namespace openvpn
         }
     };
 };
-#endif // OPENVPN3_DBUS_CONNECTION_HPP
