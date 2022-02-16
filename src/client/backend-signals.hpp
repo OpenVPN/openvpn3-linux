@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017 - 2021  OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017 - 2021  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2022  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2022  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -24,13 +24,14 @@
  *         sending signals
  */
 
-#ifndef OPENVPN3_DBUS_CLIENT_BACKENDSIGNALS_HPP
-#define OPENVPN3_DBUS_CLIENT_BACKENDSIGNALS_HPP
+#pragma once
 
 #include <sstream>
 #include <openvpn/common/rc.hpp>
 
+#include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"
+
 
 class BackendSignals : public LogSender,
                        public RC<thread_unsafe_refcount>
@@ -148,5 +149,3 @@ private:
     StatusEvent status;
     std::unique_ptr<std::thread> delayed_shutdown;
 };
-
-#endif  // OPENVPN3_DBUS_CLIENT_BACKENDSIGNALS_HPP
