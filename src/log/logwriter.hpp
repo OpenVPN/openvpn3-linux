@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2022  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2022  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -90,9 +90,9 @@ public:
      *
      * @param data         std::string of data to be written
      * @param colour_init  std::string to be printed before log data, to
-     *                     set the proper colours.  Emtpy by default.
+     *                     set the proper colours.  Empty by default.
      * @param colour_reset std::string to be printed after the log data
-     *                     to reset colour selection.  Emtpy by default.
+     *                     to reset colour selection.  Empty by default.
      *
      */
     virtual void Write(const std::string& data,
@@ -140,7 +140,7 @@ public:
     /**
      *  Writes a LogEvent() object in a formatted way.
      *
-     * @param logev  Poplulated LogEvent() object to log
+     * @param logev  Populated LogEvent() object to log
      *
      */
     virtual void Write(const LogEvent& logev)
@@ -185,7 +185,7 @@ protected:
     bool log_meta =true;
     std::string metadata;
     std::string prepend;
-    bool prepend_meta;
+    bool prepend_meta = false;
 };
 
 
@@ -224,9 +224,9 @@ public:
      *
      * @param data         std::string of data to be written
      * @param colour_init  std::string to be printed before log data, to
-     *                     set the proper colours.  Emtpy by default.
+     *                     set the proper colours.  Empty by default.
      * @param colour_reset std::string to be printed after the log data
-     *                     to reset colour selection.  Emtpy by default.
+     *                     to reset colour selection.  Empty by default.
      */
     virtual void Write(const std::string& data,
                        const std::string& colour_init = "",
@@ -278,7 +278,7 @@ public:
 
 
     /*
-     * Explicity tells the compiler that we want to not to override an
+     * Explicitly tells the compiler that we want to not to override an
      * existing Write and our Write with different arguments should not
      * generate a warning
      */
@@ -379,8 +379,8 @@ public:
 
 
     /**
-     *  Converts a string specifiying a syslog log facility
-     *  to the appropriate int syslog integer value.  See syslog(3)
+     *  Converts a string specifying a syslog log facility
+     *  to the appropriate into syslog integer value.  See syslog(3)
      *  for valid values.
      *
      * @param facility  std::string containing the log facility name
@@ -483,7 +483,7 @@ private:
      *
      * @param catg  LogCategory to convert to syslog log level.
      *
-     * @return  Returns an int of the correpsonding syslog log level value.
+     * @return  Returns an int of the corresponding syslog log level value.
      */
     static inline int logcatg2syslog(LogCategory catg)
     {
