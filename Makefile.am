@@ -703,6 +703,7 @@ src_log_openvpn3_service_logger_SOURCES = \
 	src/log/logevent.hpp \
 	src/log/logger.hpp \
 	src/log/logwriter.hpp \
+	src/log/service.cpp \
 	src/log/service.hpp \
 	src/common/cmdargparser.cpp \
 	src/common/configfileparser.cpp \

@@ -1,0 +1,601 @@
+//  OpenVPN 3 Linux client -- Next generation OpenVPN client
+//
+//  Copyright (C) 2018 - 2022  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2022  David Sommerseth <davids@openvpn.net>
+//
+//  This program is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU Affero General Public License as
+//  published by the Free Software Foundation, version 3 of the
+//  License.
+//
+//  This program is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU Affero General Public License for more details.
+//
+//  You should have received a copy of the GNU Affero General Public License
+//  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
+
+/**
+ * @file   service.cpp
+ *
+ * @brief  D-Bus service for log management
+ */
+
+#include <map>
+#include <string>
+#include <functional>
+#include <json/json.h>
+
+#include <openvpn/common/rc.hpp>
+
+#include "common/utils.hpp"
+#include "dbus/core.hpp"
+#include "dbus/connection-creds.hpp"
+#include "dbus/path.hpp"
+#include "logger.hpp"
+#include "service.hpp"
+
+using namespace openvpn;
+
+
+//
+//  LogTag class implementation
+//
+
+LogTag::LogTag(std::string sender, std::string interface)
+{
+    tag = std::string("[") + sender + "/" + interface + "]";
+
+    // Create a hash of the tag, used as an index
+    std::hash<std::string> hashfunc;
+    hash = hashfunc(tag);
+}
+
+
+std::string LogTag::str() const
+{
+    return std::string("{tag:") + std::string(std::to_string(hash))
+           + std::string("}");
+}
+
+
+
+//
+//  LogServiceManager class implementation
+//
+LogServiceManager::LogServiceManager(GDBusConnection *dbcon,
+                                     const std::string objpath,
+                                     LogWriter *logwr,
+                                     const unsigned int log_level)
+        : DBusObject(objpath), DBusConnectionCreds(dbcon),
+          dbuscon(dbcon), logwr(logwr), log_level(log_level), statedir("")
+{
+    // Restrict extended access in this log service from these
+    // well-known bus names primarily.
+    //
+    // When the backend VPN client process attaches to the log service
+    // it will be granted management access to its own log subscription,
+    // but this is checked later.
+    //
+    allow_list.push_back(OpenVPN3DBus_name_backends);
+    allow_list.push_back(OpenVPN3DBus_name_sessions);
+    allow_list.push_back(OpenVPN3DBus_name_configuration);
+
+    std::stringstream introspection_xml;
+    introspection_xml << "<node name='" << objpath << "'>"
+    << "    <interface name='" << OpenVPN3DBus_interf_log << "'>"
+    << "        <method name='Attach'>"
+    << "            <arg type='s' name='interface' direction='in'/>"
+    << "        </method>"
+    << "        <method name='Detach'>"
+    << "            <arg type='s' name='interface' direction='in'/>"
+    << "        </method>"
+    << "        <method name='GetSubscriberList'>"
+    << "            <arg type='a(ssss)' name='subscribers' direction='out'/>"
+    << "        </method>"
+    << "        <property type='s' name='version' access='read'/>"
+    << "        <property name='log_level' type='u' access='readwrite'/>"
+    << "        <property name='log_dbus_details' type='b' access='readwrite'/>"
+    << "        <property name='timestamp' type='b' access='readwrite'/>"
+    << "        <property name='num_attached' type='u' access='read'/>"
+    << "    </interface>"
+    << "</node>";
+    ParseIntrospectionXML(introspection_xml);
+}
+
+
+void LogServiceManager::SetStateDirectory(std::string sd)
+{
+    if (sd.empty())
+    {
+        // Ignore this
+        return;
+    }
+    statedir = sd;
+    load_state();
+}
+
+
+void LogServiceManager::callback_method_call(GDBusConnection *conn,
+                                             const std::string sender,
+                                             const std::string obj_path,
+                                             const std::string intf_name,
+                                             const std::string meth_name,
+                                             GVariant *params,
+                                             GDBusMethodInvocation *invoc)
+{
+    std::stringstream meta;
+    meta << "sender=" << sender
+         << ", object_path=" << obj_path
+         << ", interface=" << intf_name
+         << ", method=" << meth_name;
+
+    try
+    {
+        IdleCheck_UpdateTimestamp();
+
+        // Extract the interface to operate on.  All D-Bus method
+        // calls expects this information.
+        std::string interface;
+        if ("GetSubscriberList" != meth_name)
+        {
+            GLibUtils::checkParams(__func__, params, "(s)", 1);
+            interface = GLibUtils::ExtractValue<std::string>(params, 0);
+        }
+
+        if ("Attach" == meth_name)
+        {
+            LogTag tag(sender, interface);
+
+            // Subscribe to signals from a new D-Bus service/client
+
+            // Check this has not been already registered
+            if (loggers.find(tag.hash) != loggers.end())
+            {
+                std::stringstream l;
+                l << "Duplicate: " << tag << "  " << tag.tag;
+
+                logwr->AddMeta(meta.str());
+                logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN,
+                                      l.str()));
+
+                GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.log",
+                                                              "Already registered");
+                g_dbus_method_invocation_return_gerror(invoc, err);
+                g_error_free(err);
+                return;
+            }
+
+            loggers[tag.hash].reset(new Logger(dbuscon, logwr, tag.str(),
+                                          sender, interface, log_level));
+
+            std::stringstream l;
+            l << "Attached: " << tag << "  " << tag.tag;
+
+            logwr->AddMeta(meta.str());
+            logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2,
+                                  l.str()));
+            IdleCheck_RefInc();
+
+            g_dbus_method_invocation_return_value(invoc, NULL);
+        }
+        else if ("Detach" == meth_name)
+        {
+            LogTag tag(sender, interface);
+
+            // Ensure the requested logger is truly configured
+            if (loggers.find(tag.hash) == loggers.end())
+            {
+                std::stringstream l;
+                l << "Not found: " << tag << " " << tag.tag;
+
+                logwr->AddMeta(meta.str());
+                logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN,
+                                      l.str()));
+
+                GError *err = g_dbus_error_new_for_dbus_error(
+                                "net.openvpn.v3.error.log",
+                                "Log registration not found");
+                g_dbus_method_invocation_return_gerror(invoc, err);
+                g_error_free(err);
+                return;
+            }
+
+            // Check this has not been already registered
+            validate_sender(sender, loggers[tag.hash]->GetBusName());
+
+            // Unsubscribe from signals from a D-Bus service/client
+            loggers.erase(tag.hash);
+            std::stringstream l;
+            l << "Detached: " << tag << "  " << tag.tag;
+
+            logwr->AddMeta(meta.str());
+            logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2,
+                                  l.str()));
+            IdleCheck_RefDec();
+            g_dbus_method_invocation_return_value(invoc, NULL);
+        }
+        else if ("GetSubscriberList" == meth_name)
+        {
+            GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("a(ssss)"));
+
+            if (nullptr == bld)
+            {
+                GError *err = g_dbus_error_new_for_dbus_error(
+                                "net.openvpn.v3.error.log",
+                                "Could not generate subscribers list");
+                g_dbus_method_invocation_return_gerror(invoc, err);
+                g_error_free(err);
+                return;
+            }
+
+            for (const auto& l : loggers)
+            {
+                Logger::Ptr sub = l.second;
+                g_variant_builder_add(bld, "(ssss)",
+                                      std::to_string(l.first).c_str(),
+                                      sub->GetBusName().c_str(),
+                                      sub->GetInterface().c_str(),
+                                      sub->GetObjectPath().c_str());
+
+            }
+            g_dbus_method_invocation_return_value(invoc,
+                                                  GLibUtils::wrapInTuple(bld));
+            return;
+        }
+        else
+        {
+            std::string qdom = "net.openvpn.v3.error.invalid";
+            GError *dbuserr = g_dbus_error_new_for_dbus_error(qdom.c_str(),
+                                                              "Unknown method");
+            g_dbus_method_invocation_return_gerror(invoc, dbuserr);
+            g_error_free(dbuserr);
+            return;
+        }
+    }
+    catch (DBusCredentialsException& excp)
+    {
+        logwr->AddMeta(meta.str());
+        logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::CRIT,
+                              excp.what()));
+        excp.SetDBusError(invoc);
+        return;
+    }
+}
+
+
+GVariant* LogServiceManager::callback_get_property(GDBusConnection *conn,
+                                                   const std::string sender,
+                                                   const std::string obj_path,
+                                                   const std::string intf_name,
+                                                   const std::string property_name,
+                                                   GError **error)
+{
+    try
+    {
+        IdleCheck_UpdateTimestamp();
+
+        if ("version" == property_name)
+        {
+            return g_variant_new_string(package_version());
+        }
+        else if ("log_level" == property_name)
+        {
+            return g_variant_new_uint32(log_level);
+        }
+        else if ("log_dbus_details" == property_name)
+        {
+            return g_variant_new_boolean(logwr->LogMetaEnabled());
+        }
+
+        else if ("timestamp" == property_name)
+        {
+            return g_variant_new_boolean(logwr->TimestampEnabled());
+        }
+        else if ("num_attached" == property_name)
+        {
+            return g_variant_new_uint32(loggers.size());
+        }
+    }
+    catch (...)
+    {
+        g_set_error(error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                    "Unknown error");
+    }
+    g_set_error(error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, "Unknown property");
+    return NULL;
+}
+
+
+
+GVariantBuilder* LogServiceManager::callback_set_property(GDBusConnection *conn,
+                                                          const std::string sender,
+                                                          const std::string obj_path,
+                                                          const std::string intf_name,
+                                                          const std::string property_name,
+                                                          GVariant *value,
+                                                          GError **error)
+{
+    std::stringstream meta;
+    meta << "sender=" << sender
+         << ", object_path=" << obj_path
+         << ", interface=" << intf_name
+         << ", property_name=" << property_name;
+
+    try
+    {
+        IdleCheck_UpdateTimestamp();
+        GVariantBuilder *ret = nullptr;
+
+        if ("log_level" == property_name)
+        {
+            unsigned int new_log_level = g_variant_get_uint32(value);
+            if (new_log_level > 6)
+            {
+                throw DBusPropertyException(G_IO_ERROR,
+                                            G_IO_ERROR_INVALID_DATA,
+                                            obj_path, intf_name,
+                                            property_name,
+                                            "Invalid log level");
+            }
+            log_level = new_log_level;
+            for (const auto& l : loggers)
+            {
+                l.second->SetLogLevel(log_level);
+            }
+            std::stringstream l;
+            l << "Log level changed to " << std::to_string(log_level);
+            logwr->AddMeta(meta.str());
+            logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1,
+                                  l.str()));
+            ret = build_set_property_response(property_name,
+                                               (guint32) log_level);
+        }
+        else if ("log_dbus_details" == property_name)
+        {
+            // First check if this will cause a change
+            bool newval= g_variant_get_boolean(value);
+            if (logwr->LogMetaEnabled() == newval)
+            {
+                // Nothing changes ... make some noise about it
+                throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
+                                            obj_path, intf_name,
+                                            property_name,
+                                            "New value the same as current value");
+            }
+
+            // Changing the setting
+            logwr->EnableLogMeta(newval);
+
+            // Log the change
+            std::stringstream l;
+            l << "D-Bus details logging has changed to "
+              << (newval? "enabled" : "disabled");
+            logwr->AddMeta(meta.str());
+            logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1,
+                                  l.str()));
+
+            ret = build_set_property_response(property_name, newval);
+        }
+        else if ("timestamp" == property_name)
+        {
+            // First check if this will cause a change
+            bool newtstamp = g_variant_get_boolean(value);
+            if (logwr->TimestampEnabled() == newtstamp)
+            {
+                // Nothing changes ... make some noise about it
+                throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
+                                            obj_path, intf_name,
+                                            property_name,
+                                            "New value the same as current value");
+            }
+
+            // Try setting the new timestamp flag value
+
+            logwr->EnableTimestamp(newtstamp);
+
+            // Re-read the value from the LogWriter.  Some LogWriters
+            bool timestamp = logwr->TimestampEnabled();
+            // might not allow modifying the timestamp flag
+
+            std::stringstream l;
+            l << "Timestamp flag "
+              << (newtstamp == timestamp ? "has" : "could not be")
+              << " changed to: "
+              << (newtstamp ? "enabled" : "disabled");
+
+            logwr->AddMeta(meta.str());
+            logwr->Write(LogEvent(
+                            LogGroup::LOGGER,
+                            (newtstamp == timestamp
+                             ? LogCategory::VERB1 : LogCategory::ERROR),
+                            l.str()));
+            if (newtstamp != timestamp)
+            {
+                throw DBusPropertyException(G_IO_ERROR,
+                                            G_IO_ERROR_READ_ONLY,
+                                            obj_path, intf_name,
+                                            property_name,
+                                            "Log timestamp is read-only");
+            }
+            ret = build_set_property_response(property_name,
+                                               timestamp);
+        }
+
+        if (!statedir.empty())
+        {
+            save_state();
+        }
+        return ret;
+    }
+    catch (DBusPropertyException&)
+    {
+        throw;
+    }
+    catch (DBusException& excp)
+    {
+        throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
+                                    obj_path, intf_name, property_name,
+                                    excp.what());
+    }
+    throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
+                                obj_path, intf_name, property_name,
+                                "Invalid property");
+}
+
+
+void LogServiceManager::validate_sender(std::string sender, std::string allow)
+{
+    // Extend the basic allow list with the callers bus name as well.
+    // This is to ensure the createor of the Logger object can
+    // unsubscribe.
+    auto chk = allow_list;
+    chk.push_back(allow);
+
+    for (const auto& i : chk)
+    {
+        // Check if the senders unique bus id matches any of the ones
+        // we allow
+        std::string uniqid;
+        try
+        {
+            uniqid = GetUniqueBusID(i);
+        }
+        catch (DBusException& excp)
+        {
+            // Ignore exceptions, most likely it cannot find the
+            // well-known bus name it looks for.  So we use the
+            // lookup ID from the allow_list instead
+            uniqid = i;
+        }
+
+        if (uniqid == sender)
+        {
+            return;
+        }
+    }
+
+    // No luck ... so we throw a credentials exception
+    try
+    {
+        uid_t sender_uid = GetUID(sender);
+        throw DBusCredentialsException(sender_uid,
+                                       "net.openvpn.v3.error.acl.denied",
+                                       "Access denied");
+    }
+    catch (DBusException&)
+    {
+        throw DBusCredentialsException(sender,
+                                       "net.openvpn.v3.error.acl.denied",
+                                       "Access denied");
+    }
+}
+
+
+void LogServiceManager::load_state()
+{
+    std::ifstream statefile(statedir + "/log-service.json");
+
+    if (statefile.eof() || statefile.fail())
+    {
+        // We ignore situations if the file
+        // does not exist or is not readable
+        return;
+    }
+    std::string line;
+    std::stringstream buf;
+    while (std::getline(statefile, line))
+    {
+        buf << line << std::endl;
+    }
+
+    // Parse buffer into JSON
+    Json::Value state;
+    buf >> state;
+
+    auto val= state["log_level"];
+    if (val.isUInt())
+    {
+        log_level = val.asUInt();
+    }
+
+    val = state["log_dbus_details"];
+    if (val.isBool())
+    {
+        logwr->EnableLogMeta(val.asBool());
+    }
+
+    val = state["timestamp"];
+    if (val.isBool())
+    {
+        logwr->EnableTimestamp(val.asBool());
+    }
+}
+
+
+void LogServiceManager::save_state()
+{
+    Json::Value state;
+    state["log_level"] = log_level;
+    state["log_dbus_details"] = logwr->LogMetaEnabled();
+    state["timestamp"] = logwr->TimestampEnabled();
+
+    std::ofstream statefile(statedir + "/log-service.json");
+    statefile << state << std::endl;
+    statefile.close();
+}
+
+
+
+//
+//  LogService class implementation
+//
+
+LogService::LogService(GDBusConnection *dbuscon,
+                       LogWriter *logwr,
+                       unsigned int log_level)
+        : DBus(dbuscon, OpenVPN3DBus_name_log, OpenVPN3DBus_rootp_log,
+                OpenVPN3DBus_interf_log),
+          logwr(logwr), log_level(log_level), statedir("")
+{
+}
+
+
+void LogService::SetStateDirectory(std::string sd)
+{
+    statedir = sd;
+}
+
+
+void LogService::callback_bus_acquired()
+{
+    // Once the D-Bus name is registered and acknowledge,
+    // register the Log Service Manager object which does the
+    // real work.
+    logmgr.reset(new LogServiceManager(GetConnection(),
+                                       OpenVPN3DBus_rootp_log,
+                                       logwr, log_level));
+    logmgr->SetStateDirectory(statedir);
+    logmgr->RegisterObject(GetConnection());
+
+    if (nullptr != idle_checker)
+    {
+        logmgr->IdleCheck_Register(idle_checker);
+    }
+}
+
+
+void LogService::callback_name_acquired(GDBusConnection *conn,
+                                        std::string busname)
+{
+}
+
+
+void LogService::callback_name_lost(GDBusConnection *conn, std::string busname)
+{
+    THROW_DBUSEXCEPTION("LogServiceManager",
+                        "openvpn3-service-logger could not register '"
+                        + busname + "'");
+};
