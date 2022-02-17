@@ -121,10 +121,10 @@ void LogSender::StatusChange(const StatusEvent& statusev)
 
 void LogSender::ProxyLog(const LogEvent& logev)
 {
-    // Don't proxy this log message unless the log level filtering
+    // Don't proxy an empty log message and if the log level filtering
     // allows it.  The filtering is done against the LogCategory of
     // the message, so we need to extract the LogCategory first
-    if (LogFilterAllow(logev))
+    if (!logev.empty() && LogFilterAllow(logev))
     {
         Send("Log", logev.GetGVariantTuple());
     }
@@ -133,9 +133,9 @@ void LogSender::ProxyLog(const LogEvent& logev)
 
 void LogSender::Log(const LogEvent& logev, bool duplicate_check)
 {
-    // Don't log unless the log level filtering allows it
+    // Don't log an empty messages or if log level filtering allows it
     // The filtering is done against the LogCategory of the message
-    if (!LogFilterAllow(logev))
+    if (logev.empty() || !LogFilterAllow(logev))
     {
         return;
     }
