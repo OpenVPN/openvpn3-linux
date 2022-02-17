@@ -402,6 +402,7 @@ src_tests_dbus_log_listener_SOURCES = \
 
 src_tests_dbus_log_listener2_SOURCES = \
 	src/tests/dbus/log-listener2.cpp \
+	src/log/dbus-log.cpp \
 	src/common/utils.cpp
 
 src_tests_dbus_logevent_selftest_SOURCES = \
@@ -412,7 +413,8 @@ src_tests_dbus_logservice1_SOURCES = \
 	src/common/cmdargparser.cpp \
 	src/common/configfileparser.cpp \
 	src/common/timestamp.cpp \
-	src/common/utils.cpp
+	src/common/utils.cpp \
+	src/log/dbus-log.cpp
 
 src_tests_dbus_manager_lookupconfigname_SOURCES = \
 	src/tests/dbus/manager-lookupconfigname.cpp
@@ -480,6 +482,7 @@ src_tests_netcfg_clinetcfg_SOURCES = \
 	src/common/timestamp.cpp \
 	src/common/utils.hpp \
 	src/configmgr/proxy-configmgr.hpp \
+	src/log/dbus-log.cpp \
 	src/log/dbus-log.hpp \
 	src/log/proxy-log.hpp \
 	src/netcfg/proxy-netcfg.cpp \
@@ -535,7 +538,8 @@ src_ovpn3cli_openvpn3_SOURCES = \
 	src/common/open-uri.hpp \
 	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
-	src/common/utils.cpp
+	src/common/utils.cpp \
+	src/log/dbus-log.cpp
 
 #
 # openvpn3-admin:  Service management admin utility
@@ -588,6 +592,7 @@ src_client_openvpn3_service_client_SOURCES = \
 	src/common/utils.cpp \
 	src/configmgr/overrides.cpp \
 	src/configmgr/proxy-configmgr.hpp \
+	src/log/dbus-log.cpp \
 	src/log/dbus-log.hpp \
 	src/log/proxy-log.hpp \
 	src/netcfg/proxy-netcfg.hpp \
@@ -603,6 +608,7 @@ src_client_openvpn3_service_backendstart_SOURCES = \
 	src/common/cmdargparser.cpp \
 	src/common/configfileparser.cpp \
 	src/common/utils.cpp \
+	src/log/dbus-log.cpp \
 	src/log/dbus-log.hpp
 
 
@@ -621,6 +627,7 @@ src_configmgr_openvpn3_service_configmgr_SOURCES = \
 	src/common/lookup.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp \
+	src/log/dbus-log.cpp \
 	src/log/dbus-log.hpp
 
 
@@ -641,7 +648,7 @@ src_sessionmgr_openvpn3_service_sessionmgr_SOURCES = \
 	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp \
-	src/log/dbus-log.hpp \
+	src/log/dbus-log.cpp \
 	src/netcfg/proxy-netcfg.cpp
 nodist_src_sessionmgr_openvpn3_service_sessionmgr_SOURCES=$(DCO_KEYCONFIG_PB_SOURCES)
 
@@ -686,6 +693,7 @@ src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp \
 	src/log/core-dbus-logbase.hpp \
+	src/log/dbus-log.cpp \
 	src/log/dbus-log.hpp
 nodist_src_netcfg_openvpn3_service_netcfg_SOURCES=$(DCO_KEYCONFIG_PB_SOURCES)
 src_netcfg_openvpn3_service_netcfg_LDADD = $(LIBCAPNG_LIBS) $(LIBGLIBGIO_LIBS) $(LIBJSONCPP_LIBS) $(LIBUUID_LIBS) $(LIBNL_GENL_LIBS) $(PROTOBUF_LIBS)
@@ -698,6 +706,7 @@ src_log_openvpn3_service_logger_SOURCES = \
 	src/log/openvpn3-service-logger.cpp \
 	src/log/ansicolours.hpp \
 	src/log/colourengine.hpp \
+	src/log/dbus-log.cpp \
 	src/log/dbus-log.hpp \
 	src/log/log-helpers.hpp \
 	src/log/logevent.hpp \
@@ -722,7 +731,8 @@ addons_aws_openvpn3_service_aws_SOURCES = \
     src/netcfg/netcfg-changeevent.cpp \
     src/netcfg/proxy-netcfg.cpp \
     src/netcfg/netcfg-changetype.cpp \
-    src/common/utils.cpp
+    src/common/utils.cpp \
+    src/log/dbus-log.cpp
 addons_aws_openvpn3_service_aws_CXXFLAGS = \
     $(AM_CXXFLAGS) \
     -UENABLE_OVPNDCO \
