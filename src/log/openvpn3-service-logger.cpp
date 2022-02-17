@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017-2018 OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017-2018 David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017-2022  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017-2022  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -225,10 +225,10 @@ static int logger(ParsedArgs::Ptr args)
             if (args->Present("session-manager")
                 || args->Present("session-manager-client-proxy"))
             {
-                session_subscr = new Logger(dbusconn, logwr.get(),
-                                            "[S]", "",
-                                            OpenVPN3DBus_interf_sessions,
-                                            log_level);
+                session_subscr.reset(new Logger(dbusconn, logwr.get(),
+                                                "[S]", "",
+                                                OpenVPN3DBus_interf_sessions,
+                                                log_level));
                 ++subscribers;
                 if (!args->Present("session-manager-client-proxy"))
                 {
@@ -243,10 +243,10 @@ static int logger(ParsedArgs::Ptr args)
 
             if (args->Present("config-manager"))
             {
-                config_subscr = new Logger(dbusconn, logwr.get(),
-                                           "[C]", "",
-                                           OpenVPN3DBus_interf_configuration,
-                                           log_level);
+                config_subscr.reset(new Logger(dbusconn, logwr.get(),
+                                               "[C]", "",
+                                               OpenVPN3DBus_interf_configuration,
+                                               log_level));
                 ++subscribers;
             }
 

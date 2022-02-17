@@ -25,15 +25,16 @@
  * @brief  Main log handler class, handles all the Log signals being sent
  */
 
+#include <memory>
+
 #include "dbus-log.hpp"
 #include "logwriter.hpp"
 
 
-class Logger : public LogConsumer,
-               public RC<thread_unsafe_refcount>
+class Logger : public LogConsumer
 {
 public:
-    typedef RCPtr<Logger> Ptr;
+    typedef std::shared_ptr<Logger> Ptr;
 
     Logger(GDBusConnection *dbuscon, LogWriter *logwr,
            const std::string& tag, const std::string& busname,

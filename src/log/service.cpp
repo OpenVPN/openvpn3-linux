@@ -28,8 +28,6 @@
 #include <functional>
 #include <json/json.h>
 
-#include <openvpn/common/rc.hpp>
-
 #include "common/utils.hpp"
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"

@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
 
@@ -34,7 +36,7 @@
  *  the log tags and hashes used to separate log events from various
  *  attached log senders.
  */
-struct LogTag : public RC<thread_unsafe_refcount>
+struct LogTag
 {
     /**
      *  LogTag contstructor
@@ -85,11 +87,10 @@ struct LogTag : public RC<thread_unsafe_refcount>
  *  over D-Bus
  */
 class LogServiceManager : public DBusObject,
-                          public DBusConnectionCreds,
-                          public RC<thread_unsafe_refcount>
+                          public DBusConnectionCreds
 {
 public:
-    typedef RCPtr<LogServiceManager> Ptr;
+    typedef std::unique_ptr<LogServiceManager> Ptr;
 
     /**
      *  Initializes the LogServiceManager object.
@@ -187,11 +188,10 @@ private:
  *  Main Log Service handler.  This class establishes the D-Bus log service
  *  for the OpenVPN 3 Linux client.
  */
-class LogService : public DBus,
-                   public RC<thread_unsafe_refcount>
+class LogService : public DBus
 {
 public:
-    typedef RCPtr<LogService> Ptr;
+    typedef std::unique_ptr<LogService> Ptr;
 
     /**
      *  Initialize the Log Service.
