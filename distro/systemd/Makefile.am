@@ -26,17 +26,16 @@
 MAINTAINERCLEANFILES = \
 	Makefile.in
 
-EXTRA_DIST = \
-	openvpn3-autoload.service.in \
-	openvpn3-session@.service.in \
-	openvpn3-systemd
-
 systemd_unit_DATA = \
 	openvpn3-autoload.service \
 	openvpn3-session@.service
 
 pkglibexec_SCRIPTS = \
 	openvpn3-systemd
+
+EXTRA_DIST = \
+	$(foreach var, $(systemd_unit_DATA), $(var).in) \
+	$(pkglibexec_SCRIPTS)
 
 CLEANFILES = $(systemd_unit_DATA) *~
 
