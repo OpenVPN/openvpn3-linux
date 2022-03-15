@@ -36,6 +36,9 @@ import time
 from pathlib import Path
 import openvpn3
 from openvpn3 import StatusMajor, StatusMinor
+import gi
+gi.require_version('Secret', '1')
+from gi.repository import Secret
 
 # Add the traceback module if we're in debugging mode.
 # This will allow dumping of tracebacks when exceptions happens
@@ -239,6 +242,15 @@ def start_tunnel(sessmgr, cfgobj, autoload):
 
     ready = False
     conn_started = False
+
+
+    #libsecret schema
+    OpenVPN3_LINUX = Secret.Schema.new('OpenVPN.Store',
+    Secret.SchemaFlags.NONE,
+    {
+        'Key': Secret.SchemaAttributeType.STRING,
+    }
+    )
     while not ready:
         try:
             # See of the backend process is ready to start a connection
@@ -276,7 +288,15 @@ def start_tunnel(sessmgr, cfgobj, autoload):
                         sess.Disconnect()
                         raise Exception('The .autoload config for "%s" is lacking details for "%s".  Auto-start '
                                         'ignored.' % (cfgn, varn))
-                    ui.ProvideInput(userauth[varn])
+                    if autoload['libsecret'] == True:
+                        #Only looks to see if it exists, Won't throw error if it doesn't to ensure backwards compatibilityi
+                        if varn=='password':
+                            string_password = Secret.password_lookup_sync(OpenVPN3_LINUX, {'Key': userauth[varn]}, None)
+                            ui.ProvideInput(string_password)
+                        else:
+                            ui.ProvideInput(userauth[varn])
+                    else:
+                        ui.ProvideInput(userauth[varn])
 
             # If the VPN backend doesn't reply soon enough, try again in a bit
             elif (err.find('org.freedesktop.DBus.Error.NoReply') > -1
