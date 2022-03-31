@@ -119,6 +119,7 @@ public:
                           << "    <interface name='" << OpenVPN3DBus_interf_backends << "'>"
                           << "        <method name='RegistrationConfirmation'>"
                           << "            <arg type='s' name='token' direction='in'/>"
+                          << "            <arg type='o' name='session_path' direction='in'/>"
                           << "            <arg type='o' name='config_path' direction='in'/>"
                           << "            <arg type='s' name='config_name' direction='out'/>"
                           << "        </method>"
@@ -300,19 +301,19 @@ public:
                     signal.LogWarn("All signals are broadcasted to all users");
                 }
 
-                gchar *token = nullptr;
-                gchar *cfgpath = nullptr;
-                g_variant_get (params, "(so)", &token, &cfgpath);
+                GLibUtils::checkParams(__func__, params, "(soo)", 3);
+                std::string verify_token = GLibUtils::ExtractValue<std::string>(params, 0);
+                registered = (session_token == verify_token);
 
-                registered = (session_token == std::string(token));
-                configpath = std::string(cfgpath);
+                std::string sessionpath = GLibUtils::ExtractValue<std::string>(params, 1);
+                signal.SetSessionPath(sessionpath);
+
+                configpath = GLibUtils::ExtractValue<std::string>(params, 2);
 
                 signal.Debug("Registration confirmation: "
-                             + std::string(token) + " == "
+                             + verify_token + " == "
                              + std::string(session_token) + " => "
                              + (registered ? "true" : "false"));
-                g_free(cfgpath);
-                g_free(token);
 
                 if (registered)
                 {

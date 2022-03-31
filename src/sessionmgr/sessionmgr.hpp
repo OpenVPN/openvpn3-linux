@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017 - 2020  OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017 - 2020  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2022  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2022  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -186,16 +186,16 @@ public:
      * @param session_token      Backend VPN client session token, used to
      *                           validate if the LogEvent is targeting the
      *                           same session this object is configured for.
-     * @param sigproxy_obj_path  Destination D-Bus path for the signal
+     * @param session_path       D-Bus path to the session to retrieve log
+     *                           events from and proxy forward as.
      */
     SessionLogEvent(GDBusConnection *conn,
                     std::string interface,
                     std::string bus_name,
                     std::string session_token,
-                    std::string sigproxy_obj_path)
-        : LogConsumerProxy(conn, interface,
-                           OpenVPN3DBus_rootp_backends_session,
-                           OpenVPN3DBus_interf_sessions, sigproxy_obj_path),
+                    std::string session_path)
+        : LogConsumerProxy(conn, interface, session_path,
+                           OpenVPN3DBus_interf_sessions, session_path),
            bus_name(bus_name),
            session_token(session_token),
            last_logev()
@@ -294,19 +294,18 @@ public:
      *                           signals will not be proxied further.
      * @param interface          D-Bus interface to use for the signal
      *                           subscription
-     * @param sigproxy_obj_path  D-Bus object path which will be used when
-     *                           the session manager sends the proxied
-     *                           StatusChange signal
+     * @param session_path       D-Bus path to the session to retrieve
+     *                           StatusChange events from and proxy forward as
      */
     SessionStatusChange(GDBusConnection *conn,
                         std::string bus_name,
                         std::string interface,
-                        std::string sigproxy_obj_path)
+                        std::string session_path)
         : DBusSignalSubscription(conn, bus_name, interface,
                                  OpenVPN3DBus_rootp_backends_session,
                                  "StatusChange"),
           DBusSignalProducer(conn, "", OpenVPN3DBus_interf_sessions,
-                             sigproxy_obj_path),
+                             session_path),
           backend_busname(bus_name),
           last_status()
     {
@@ -1579,8 +1578,9 @@ private:
             }
 
             GVariant *res_g = be_proxy->Call("RegistrationConfirmation",
-                                             g_variant_new("(so)",
+                                             g_variant_new("(soo)",
                                                            backend_token.c_str(),
+                                                           DBusObject::GetObjectPath().c_str(),
                                                            config_path.c_str()));
             if (nullptr == res_g)
             {
