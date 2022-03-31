@@ -47,6 +47,10 @@ public:
         SetLogLevel(default_log_level);
     }
 
+    void SetSessionPath(const std::string& session_path)
+    {
+        set_object_path(session_path);
+    }
 
     const std::string GetLogIntrospection() override
     {
