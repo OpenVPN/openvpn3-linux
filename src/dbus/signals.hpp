@@ -384,6 +384,11 @@ public:
 
 
 protected:
+    void set_object_path(const std::string& new_path)
+    {
+        object_path = new_path;
+    }
+
     const std::string get_object_path() const
     {
         return object_path;
