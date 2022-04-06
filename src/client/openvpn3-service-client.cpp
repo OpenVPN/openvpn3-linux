@@ -140,6 +140,7 @@ public:
                                                                  "UserInputQueueCheck",
                                                                  "UserInputProvide")
                           << "        <property name='log_level' type='u' access='readwrite'/>"
+                          << "        <property name='session_path' type='s' access='read'/>"
                           << "        <property name='session_name' type='s' access='read'/>"
                           << signal.GetStatusChangeIntrospection()
                           << signal.GetLogIntrospection()
@@ -638,7 +639,11 @@ public:
     {
         try {
             // Some properties can be read without any restrictions ...
-            if ("device_path" == property_name)
+            if ("session_path" == property_name)
+            {
+                return g_variant_new_string(registered ? signal.GetSessionPath().c_str() : "");
+            }
+            else if ("device_path" == property_name)
             {
                 return g_variant_new_string((vpnclient ? vpnclient->netcfg_get_device_path().c_str() : ""));
             }
