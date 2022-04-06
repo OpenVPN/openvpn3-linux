@@ -47,6 +47,11 @@ public:
         SetLogLevel(default_log_level);
     }
 
+    const std::string GetSessionPath() const
+    {
+        return get_object_path();
+    }
+
     void SetSessionPath(const std::string& session_path)
     {
         set_object_path(session_path);
