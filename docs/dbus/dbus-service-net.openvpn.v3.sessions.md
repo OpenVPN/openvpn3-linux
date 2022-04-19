@@ -316,7 +316,7 @@ cannot have its access revoked.
 
 See the `net.openvpn.v3.backends.UserInputQueueGetTypeGroup` in
 [`net.openvpn.v3.backends`
-client](dbus-service.net.openvpn.v3.client.md) documentation for
+client](dbus-service-net.openvpn.v3.client.md) documentation for
 details.  The session manager just proxies this method call to the
 backend process.
 
@@ -325,7 +325,7 @@ backend process.
 
 See the `net.openvpn.v3.backends.UserInputQueueCheck` in
 [`net.openvpn.v3.backends`
-client](dbus-service.net.openvpn.v3.client.md) documentation for
+client](dbus-service-net.openvpn.v3.client.md) documentation for
 details.  The session manager just proxies this method call to the
 backend process.
 
@@ -334,7 +334,7 @@ backend process.
 
 See the `net.openvpn.v3.backends.UserInputQueueFetch` in
 [`net.openvpn.v3.backends`
-client](dbus-service.net.openvpn.v3.client.md) documentation for
+client](dbus-service-net.openvpn.v3.client.md) documentation for
 details.  The session manager just proxies this method call to the
 backend process.
 
@@ -343,7 +343,7 @@ backend process.
 
 See the `net.openvpn.v3.backends.UserInputProvide` in
 [`net.openvpn.v3.backends`
-client](dbus-service.net.openvpn.v3.client.md) documentation for
+client](dbus-service-net.openvpn.v3.client.md) documentation for
 details.  The session manager just proxies this method call to the
 backend process.
 
@@ -352,7 +352,7 @@ backend process.
 
 See the `net.openvpn.v3.backends.AttentionRequired` entry in
 [`net.openvpn.v3.backends`
-client](dbus-service.net.openvpn.v3.client.md) documentation for
+client](dbus-service-net.openvpn.v3.client.md) documentation for
 details.  The session manager just proxies these signals from the
 backend process to front-ends subscribing to this signal.
 
@@ -361,7 +361,7 @@ backend process to front-ends subscribing to this signal.
 
 See the `net.openvpn.v3.backends.StatusSignal` entry in
 [`net.openvpn.v3.backends`
-client](dbus-service.net.openvpn.v3.client.md) documentation for
+client](dbus-service-net.openvpn.v3.client.md) documentation for
 details.  The session manager just proxies these signals from the
 backend process to front-ends subscribing to this signal.
 
@@ -422,7 +422,7 @@ This is essentially a saved Log signal and contains the following references in 
 #### Dictionary: statistics
 
 See the properties section in [`net.openvpn.v3.backends`
-client](dbus-service.net.openvpn.v3.client.md) documentation for
+client](dbus-service-net.openvpn.v3.client.md) documentation for
 details.  The session manager just proxies the contents of the
 `statistics` property from the backend process.
 
