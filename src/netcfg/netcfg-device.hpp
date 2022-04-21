@@ -29,8 +29,8 @@
 #pragma once
 
 #include <functional>
-#include <gio-unix-2.0/gio/gunixfdlist.h>
-#include <gio-unix-2.0/gio/gunixconnection.h>
+#include <gio/gunixfdlist.h>
+#include <gio/gunixconnection.h>
 
 #include <openvpn/common/rc.hpp>
 
