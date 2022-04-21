@@ -22,7 +22,7 @@
 #define OPENVPN3_DBUS_PROXY_HPP
 
 #include <memory>
-#include <gio-unix-2.0/gio/gunixfdlist.h>
+#include <gio/gunixfdlist.h>
 
 #ifdef HAVE_TINYXML
 #include <openvpn/common/exception.hpp>
