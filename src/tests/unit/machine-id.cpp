@@ -190,6 +190,5 @@ TEST_F(MachineIDTest, fail_machine_id_save)
     ASSERT_THROW(machid.success(), MachineIDException);
 }
 
-#endif // USE_OPENSSL
-
 }  // namespace unittest
+#endif // USE_OPENSSL
