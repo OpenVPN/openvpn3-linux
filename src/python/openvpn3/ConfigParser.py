@@ -197,6 +197,13 @@ class ConfigParser():
                                    +' message digest algorithm alg'
                                    +' (default=SHA1)')
 
+        self.__parser.add_argument('--auth-retry', metavar='MODE',
+                                   action='store',
+                                   nargs=1,
+                                   completion_suggestions=['none','nointeract','interact'],
+                                   help='How to handle auth failures - none:disconnect, '
+                                   + 'nointeract=reuse credentials, interact=ask for new credentials')
+
         self.__parser.add_argument('--auth-user-pass', metavar='[USER-PASS-FILE]',
                                    action=ConfigParser.EmbedFile,
                                    embed_tag = 'auth-user-pass',

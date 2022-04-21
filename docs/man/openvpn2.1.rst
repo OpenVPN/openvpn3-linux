@@ -34,6 +34,22 @@ OPTIONS
 --auth ALG            Authenticate packets with HMAC using message digest
                       algorithm alg (default=SHA1)
 
+--auth-retry MODE
+                      Defines how authentication failures should be handled.
+                      Valid modes are:
+
+                      :code:`none`
+                            Disconnect on authentication failures (default)
+
+                      :code:`nointeract`
+                            Reuse already collected credentials
+
+                      :code:`interact`
+                            Ask for new credentials from the user
+
+                      Currently, the OpenVPN 3 Linux client implementation
+                      ignores this option.
+
 --auth-user-pass      Authenticate with server using username/password
 
 --ca FILE             Certificate authority file in .pem format containing
