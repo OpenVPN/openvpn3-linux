@@ -1,7 +1,7 @@
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
-#  Copyright (C) 2017 - 2021  OpenVPN Inc. <sales@openvpn.net>
-#  Copyright (C) 2017 - 2021  David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2017 - 2022  OpenVPN Inc. <sales@openvpn.net>
+#  Copyright (C) 2017 - 2022  David Sommerseth <davids@openvpn.net>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -727,7 +727,7 @@ addons_aws_openvpn3_service_aws_CXXFLAGS = \
     $(LIBTINYXML2_CFLAGS) \
     $(LIBJSONCPP_CFLAGS)
 addons_aws_openvpn3_service_aws_LDADD = \
-    $(OPENSSL_LIBS) \
+    $(CRYPTO_LIBS) \
     $(LIBGLIBGIO_LIBS) \
     $(LIBJSONCPP_LIBS) \
     $(LIBTINYXML2_LIBS)

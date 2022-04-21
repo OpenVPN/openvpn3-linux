@@ -1,7 +1,7 @@
 dnl  OpenVPN 3 Linux client -- Next generation OpenVPN client
 dnl
-dnl  Copyright (C) 2017 - 2021  OpenVPN Inc. <sales@openvpn.net>
-dnl  Copyright (C) 2017 - 2021  David Sommerseth <davids@openvpn.net>
+dnl  Copyright (C) 2017 - 2022  OpenVPN Inc. <sales@openvpn.net>
+dnl  Copyright (C) 2017 - 2022  David Sommerseth <davids@openvpn.net>
 dnl
 dnl  This program is free software: you can redistribute it and/or modify
 dnl  it under the terms of the GNU General Public License as published by
@@ -656,6 +656,9 @@ AC_ARG_ENABLE(
                      [Enable building AWS add-on])],
      [enable_addons_aws="yes"]
 )
+if test "${enable_addons_aws}" = "yes" && test "${with_crypto_library}" != "openssl"; then
+     AC_MSG_ERROR([The AWS integration requires OpenSSL])
+fi
 AM_CONDITIONAL([BUILD_ADDONS_AWS], [test "${enable_addons_aws}" = "yes"])
 
 
