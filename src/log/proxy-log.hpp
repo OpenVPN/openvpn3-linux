@@ -176,6 +176,17 @@ public:
     }
 
 
+    void AssignSession(const std::string& sesspath, const std::string& interf)
+    {
+        GVariant* empty = Call("AssignSession",
+                               g_variant_new("(os)",
+                                             sesspath.c_str(),
+                                             interf.c_str()),
+                               false);
+        g_variant_unref(empty);
+    }
+
+
     /**
      *  Detach this running connection from the log service.  This will
      *  make the log service unsubscribe from the provided interface.

@@ -30,7 +30,9 @@
 
 #include "common/utils.hpp"
 #include "dbus/core.hpp"
+#include "dbus/exceptions.hpp"
 #include "dbus/connection-creds.hpp"
+#include "dbus/glibutils.hpp"
 #include "dbus/path.hpp"
 #include "logger.hpp"
 #include "service.hpp"
@@ -87,6 +89,10 @@ LogServiceManager::LogServiceManager(GDBusConnection *dbcon,
     << "        <method name='Attach'>"
     << "            <arg type='s' name='interface' direction='in'/>"
     << "        </method>"
+    << "        <method name='AssignSession'>"
+    << "            <arg type='o' name='session_path' direction='in'/>"
+    << "            <arg type='s' name='interface' direction='in'/>"
+    << "        </method>"
     << "        <method name='Detach'>"
     << "            <arg type='s' name='interface' direction='in'/>"
     << "        </method>"
@@ -137,7 +143,8 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
         // Extract the interface to operate on.  All D-Bus method
         // calls expects this information.
         std::string interface;
-        if ("GetSubscriberList" != meth_name)
+        if ("GetSubscriberList" != meth_name
+            && "AssignSession" != meth_name)
         {
             GLibUtils::checkParams(__func__, params, "(s)", 1);
             interface = GLibUtils::ExtractValue<std::string>(params, 0);
@@ -178,6 +185,41 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
             IdleCheck_RefInc();
 
             g_dbus_method_invocation_return_value(invoc, NULL);
+        }
+        else if ("AssignSession" == meth_name)
+        {
+            // Check if the sender is a VPN client. If it is, save an
+            // index entry to the LogTag hash of the logger using the
+            // session path as the lookup key.
+            //
+            GLibUtils::checkParams(__func__, params, "(os)", 2);
+            std::string sesspath = GLibUtils::ExtractValue<std::string>(params, 0);
+            interface = GLibUtils::ExtractValue<std::string>(params, 1);
+
+            std::string be_busname = check_busname_vpn_client(sender);
+            if (!be_busname.empty())
+            {
+                LogTag tag(sender, interface);
+                logger_session[sesspath] = tag.hash;
+                logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::DEBUG,
+                                      "Assigned session " + sesspath
+                                      + " to " + tag.str()));
+                g_dbus_method_invocation_return_value(invoc, NULL);
+                return;
+            }
+            else
+            {
+                logwr->AddMeta(meta.str());
+                logwr->Write("AssignSession caller (" + sender + ")"
+                             + " is not a VPN client process");
+                GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.log",
+                                                              "Caller is not a VPN client");
+                g_dbus_method_invocation_return_gerror(invoc, err);
+                g_error_free(err);
+                return;
+
+            }
+
         }
         else if ("Detach" == meth_name)
         {
@@ -543,6 +585,37 @@ void LogServiceManager::save_state()
     std::ofstream statefile(statedir + "/log-service.json");
     statefile << state << std::endl;
     statefile.close();
+}
+
+
+std::string LogServiceManager::check_busname_vpn_client(const std::string& chk_busn) const
+{
+    // All VPN backend client processes has a well-known D-Bus name which
+    // starts with:
+    //     OpenVPN3DBus_name_backends_be + pid_of_process
+    //
+    // The busname given here can be both a well-known D-Bus name or a
+    // unique D-Bus name (":1.xxxx").
+    //
+    // To identify if this is a client, first look up the PID of the given
+    // busname, then build a well-known busname string using that PID value
+    // and query for the unique busname using the generated well-known busname
+    // string.  If this matches the given busname to this method, it is a
+    // backend client process.
+
+    try
+    {
+        pid_t pid = DBusConnectionCreds::GetPID(chk_busn);
+        std::string well_known_name = OpenVPN3DBus_name_backends_be
+                                    + std::to_string(pid);
+        std::string verify_name = DBusConnectionCreds::GetUniqueBusID(well_known_name);
+        return (verify_name == chk_busn ? well_known_name : "");
+    }
+    catch (const DBusException&)
+    {
+        // Well-known bus name not found
+        return "";
+    }
 }
 
 

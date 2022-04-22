@@ -38,6 +38,8 @@ node /net/openvpn/v3/log {
   interface net.openvpn.v3.log {
     methods:
       Attach(in  s interface);
+      AssignSession(in  o session_path,
+                    in  s interface);
       Detach(in  s interface);
       GetSubscriberList(out a(ssss) subscribers);
     signals:
@@ -62,6 +64,21 @@ target these signals only to the `net.openvpn.v3.log` D-Bus service.
 | Direction | Name        | Type        | Description                                                           |
 |-----------|-------------|-------------|-----------------------------------------------------------------------|
 | In        | interface   | string      | String containing the service interface to subscribe to.  If a service sends `Log` signals with different signals, each of these interfaces must be Attached |
+
+
+### Method: `net.openvpn.v3.log.AssignSession`
+
+A `net.openvpn.v3.backend.be$PID` service can through this method add a
+link between the Session D-Bus path to a specific VPN client service.  This
+is required to have happened before the `net.openvpn.v3.log` service can do
+a lookup from a session path to log events coming from a specific client backend.
+
+##### Arguments
+
+| Direction | Name         | Type        | Description                                                           |
+|-----------|--------------|-------------|-----------------------------------------------------------------------|
+| In        | session_path | string      | D-Bus Session Path to the session this client is responsible for      |
+| In        | interface    | string      | String containing the client interface log events are related to.     |
 
 
 ### Method: `net.openvpn.v3.log.Detach`

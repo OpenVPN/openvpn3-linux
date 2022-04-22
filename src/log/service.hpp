@@ -80,6 +80,7 @@ struct LogTag
 };
 
 
+using LoggerSessionsList = std::map<std::string, size_t>;
 
 /**
  *  The LogServiceManager maintains the D-Bus object to be used
@@ -151,7 +152,7 @@ private:
     unsigned int log_level;
     std::string statedir;
     std::vector<std::string> allow_list;
-
+    LoggerSessionsList logger_session = {};
 
     /**
      *  Validate that the sender is on a list of allowed senders.  If the
@@ -180,6 +181,9 @@ private:
      *  Saves the state of the current log service settings to a JSON file
      */
     void save_state();
+
+    std::string check_busname_vpn_client(const std::string& chk_busn) const;
+
 };
 
 
