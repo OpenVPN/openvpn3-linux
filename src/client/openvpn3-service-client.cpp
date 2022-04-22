@@ -318,6 +318,9 @@ public:
 
                 if (registered)
                 {
+                    LogServiceProxy lgs(GetConnection());
+                    lgs.AssignSession(sessionpath, OpenVPN3DBus_interf_backends);
+
                     // Fetch the configuration from the config-manager.
                     // Since the configuration may be set up for single-use
                     // only, we must keep this config as long as we're running
