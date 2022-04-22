@@ -249,6 +249,16 @@ public:
     }
 
 
+    const std::string GetUniqueBusName() const
+    {
+        if (!connected)
+        {
+            THROW_DBUSEXCEPTION("DBus", "D-Bus connection not established");
+        }
+        return std::string(g_dbus_connection_get_unique_name(dbuscon));
+    }
+
+
     /**
      *   Retrieve the configured root object path for this connection.
      *   This can only be called on connections which is configured with a
