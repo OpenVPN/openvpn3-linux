@@ -203,7 +203,7 @@ public:
      */
     GDBusConnection * GetConnection() const
     {
-        if (!connected)
+        if (!connected || !G_IS_DBUS_CONNECTION(dbuscon))
         {
             THROW_DBUSEXCEPTION("DBus", "D-Bus setup incomplete.  Missing Connect() call?");
         }
@@ -223,7 +223,7 @@ public:
      */
     guint GetBusID() const
     {
-        if (!connected)
+        if (!connected || !G_IS_DBUS_CONNECTION(dbuscon))
         {
             THROW_DBUSEXCEPTION("DBus", "D-Bus setup incomplete.  Missing Setup() call?");
         }
@@ -251,7 +251,7 @@ public:
 
     const std::string GetUniqueBusName() const
     {
-        if (!connected)
+        if (!connected || !G_IS_DBUS_CONNECTION(dbuscon))
         {
             THROW_DBUSEXCEPTION("DBus", "D-Bus connection not established");
         }
