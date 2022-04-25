@@ -125,6 +125,8 @@ public:
     void StatusChange(const StatusEvent& statusev);
 
     void ProxyLog(const LogEvent& logev, const std::string& path = "");
+    void ProxyStatusChange(const StatusEvent& status, const std::string& path);
+
     virtual void Log(const LogEvent& logev, bool duplicate_check = false);
     virtual void Debug(std::string msg, bool duplicate_check = false);
     virtual void LogVerb2(std::string msg, bool duplicate_check = false);

@@ -153,6 +153,15 @@ void LogSender::ProxyLog(const LogEvent& logev, const std::string& path)
 }
 
 
+void LogSender::ProxyStatusChange(const StatusEvent& status, const std::string& path)
+{
+    if (!status.empty() && AllowPath(path))
+    {
+        StatusChange(status);
+    }
+}
+
+
 void LogSender::Log(const LogEvent& logev, bool duplicate_check)
 {
     // Don't log an empty messages or if log level filtering allows it
