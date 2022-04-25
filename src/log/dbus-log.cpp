@@ -52,6 +52,13 @@ unsigned int LogFilter::GetLogLevel() noexcept
 }
 
 
+void LogFilter::AddPathFilter(const std::string& path)
+{
+    filter_paths.push_back(path);
+    std::sort(filter_paths.begin(), filter_paths.end());
+}
+
+
 bool LogFilter::LogFilterAllow(const LogEvent& logev) noexcept
 {
     switch(logev.category)
@@ -73,6 +80,16 @@ bool LogFilter::LogFilterAllow(const LogEvent& logev) noexcept
     }
 }
 
+
+bool LogFilter::AllowPath(const std::string& path) noexcept
+{
+    if (filter_paths.size() < 1)
+    {
+        return true;
+    }
+    auto r = std::lower_bound(filter_paths.begin(), filter_paths.end(), path);
+    return r != filter_paths.end();
+}
 
 
 //
@@ -119,13 +136,18 @@ void LogSender::StatusChange(const StatusEvent& statusev)
 }
 
 
-void LogSender::ProxyLog(const LogEvent& logev)
+void LogSender::ProxyLog(const LogEvent& logev, const std::string& path)
 {
     // Don't proxy an empty log message and if the log level filtering
     // allows it.  The filtering is done against the LogCategory of
     // the message, so we need to extract the LogCategory first
     if (!logev.empty() && LogFilterAllow(logev))
     {
+        // If a path check is added, only proxy log event if path is allowed
+        if (path.length() > 0 && !AllowPath(path))
+        {
+            return;
+        }
         Send("Log", logev.GetGVariantTuple());
     }
 }
@@ -327,5 +349,4 @@ void LogConsumerProxy::process_log_event(const std::string sender,
     {
         throw;
     }
-
 }

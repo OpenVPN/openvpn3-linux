@@ -22,6 +22,7 @@
 #include <fstream>
 #include <ctime>
 #include <exception>
+#include <string>
 
 #include "dbus/core.hpp"
 #include "client/statusevent.hpp"
@@ -69,6 +70,16 @@ public:
      */
     unsigned int GetLogLevel() noexcept;
 
+
+    /**
+     *  Adds an allowed path to the path filtering.  This is used when
+     *  proxying log and status events, to filter what is being forwarded.
+     *
+     * @param path  std::string containing the D-Bus object path to add
+     */
+    void AddPathFilter(const std::string& path);
+
+
 protected:
     /**
      * Checks if the LogCategory matches a log level where
@@ -82,8 +93,20 @@ protected:
      */
     bool LogFilterAllow(const LogEvent& logev) noexcept;
 
+
+    /**
+     *  Checks if the path is on the path list configured via @AddPathFilter.
+     *
+     * @param path  std::string of path to check
+     * @return Returns true if the path is allowed. If no paths has been added,
+     *         it will always return true.
+     */
+    bool AllowPath(const std::string& path) noexcept;
+
+
 private:
     unsigned int log_level;
+    std::vector<std::string> filter_paths;
 };
 
 
@@ -96,13 +119,12 @@ public:
               LogWriter *lgwr = nullptr);
     virtual ~LogSender() = default;
 
-
     virtual const std::string GetLogIntrospection();
     const std::string GetStatusChangeIntrospection();
 
     void StatusChange(const StatusEvent& statusev);
 
-    void ProxyLog(const LogEvent& logev);
+    void ProxyLog(const LogEvent& logev, const std::string& path = "");
     virtual void Log(const LogEvent& logev, bool duplicate_check = false);
     virtual void Debug(std::string msg, bool duplicate_check = false);
     virtual void LogVerb2(std::string msg, bool duplicate_check = false);
