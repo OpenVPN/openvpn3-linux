@@ -45,6 +45,7 @@ public:
           log_tag(tag)
     {
         SetLogLevel(log_level);
+        Subscribe("StatusChange");
     }
 
 
@@ -129,6 +130,25 @@ public:
             {
                 lfwd.second->ProxyLog(logev, object_path);
             }
+        }
+    }
+
+
+    void ProcessSignal(const std::string sender_name,
+                       const std::string obj_path,
+                       const std::string interface_name,
+                       const std::string signal_name,
+                       GVariant *parameters) override
+    {
+        if ("StatusChange" != signal_name)
+        {
+            // Fail-safe: Only care about StatusChange signals
+            return;
+        }
+        for (const auto& lfwd : log_forwards)
+        {
+            StatusEvent status(parameters);
+            lfwd.second->ProxyStatusChange(status, obj_path);
         }
     }
 
