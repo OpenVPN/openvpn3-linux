@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017-2018 OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017-2018 David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017-2022 OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017-2022 David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -58,6 +58,40 @@ public:
     }
 
 
+    /**
+     *  Adds a log forwarding possibility through an additional LogSender
+     *  based object.  More LogSender objects can be registered, but the
+     *  provided logid needs to be unique.
+     *
+     * @param prx     A raw pointer to the LogSender object
+     * @param logid   std::string with a unique ID to this log forwarder
+     */
+    void AddLogForward(LogSender* prx, const std::string& logid)
+    {
+        if (logid.empty())
+        {
+            THROW_DBUSEXCEPTION("Logger", "No LogID set in LogSender object");
+        }
+        log_forwards[logid] = prx;
+        logwr->Write(LogGroup::LOGGER, LogCategory::DEBUG,
+                     "[Logger] Log forward added for " + logid);
+    }
+
+
+    /**
+     *  Remove a a single LogSender forwarding.
+     *
+     * @param logid  std::string of the ID to the log forwarder to remove
+     */
+    void RemoveLogForward(const std::string logid)
+    {
+        log_forwards[logid] = nullptr;
+        log_forwards.erase(logid);
+        logwr->Write(LogGroup::LOGGER, LogCategory::DEBUG,
+                     "[Logger] Log forward removed for " + logid);
+    }
+
+
     void ConsumeLogEvent(const std::string sender,
                          const std::string interface,
                          const std::string object_path,
@@ -87,6 +121,15 @@ public:
 
         // And write the real log line
         logwr->Write(logev);
+
+        // If there are any log forwarders attached, do the forwarding
+        for (const auto& lfwd : log_forwards)
+        {
+            if (lfwd.second)
+            {
+                lfwd.second->ProxyLog(logev, object_path);
+            }
+        }
     }
 
 
@@ -94,4 +137,5 @@ private:
     LogWriter *logwr;
     const std::string log_tag;
     std::vector<LogGroup> exclude_loggroup;
+    std::map<std::string, LogSender*> log_forwards = {};
 };
