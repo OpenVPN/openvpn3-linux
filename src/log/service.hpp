@@ -248,6 +248,7 @@ private:
     unsigned int log_level;
     std::string statedir;
     std::vector<std::string> allow_list;
+    LoggerProxyList logproxies;
     LoggerSessionsList logger_session = {};
 
     /**
@@ -279,6 +280,9 @@ private:
     void save_state();
 
     std::string check_busname_vpn_client(const std::string& chk_busn) const;
+
+    std::string add_log_proxy(GVariant *params, const std::string& sender);
+    void remove_log_proxy(const std::string target);
 
 };
 

@@ -42,6 +42,9 @@ node /net/openvpn/v3/log {
                     in  s interface);
       Detach(in  s interface);
       GetSubscriberList(out a(ssss) subscribers);
+      ProxyLogEvents(in  s target_address,
+                     in  o session_path,
+                     out o proxy_path);
     signals:
     properties:
       readwrite u log_level = 4;
@@ -120,6 +123,22 @@ containing four strings.
 |    3    |  String containing the D-Bus object path the subscription is tied to      |
 
 
+### Method: `net.openvpn.v3.log.ProxyLogEvents`
+
+This method is by design only available by the `openvpn` user, which the
+[`net.openvpn.v3.sessions`](dbus-service-net.openvpn.v3.sessions.md) service is running
+under.  The Session Manager can call this method to setup a new log recipient for a
+given VPN session.  In addition to Log events being forwarded, StatusChange signals are
+also part of this feature.
+
+#### Arguments
+| Direction | Name           | Type        | Description                                                           |
+|-----------|----------------|-------------|-----------------------------------------------------------------------|
+| In        | target_address | string      | D-Bus unique bus name for the recipient of Log and StatusChange events|
+| In        | session_path   | object path | D-Bus object path to the VPN session object                           |
+| Out       | proxy_path     | object path | D-Bus object path to the Log Proxy object in the logger service       |
+
+
 ### `Properties`
 
 | Name          | Type             | Read/Write | Description                                         |
@@ -152,3 +171,37 @@ The only valid log level values are between 0 and 6.
 |  5        | VERB2        |
 |  6        | DEBUG        |
 
+
+
+D-Bus destination: `net.openvpn.v3.log` - Object path: `/net/openvpn/v3/log/proxy/${UNIQUE_ID}`
+-----------------------------------------------------------------------------------------------
+
+This object is created by calling the `net.openvpn.v3.log.ProxyLogEvents`
+method.  This object contains information about each D-Bus client which will
+retrieve `Log` and `StatusChange` signals sent by the VPN client session.
+
+```
+  interface net.openvpn.v3.log {
+    methods:
+      Remove();
+    signals:
+    properties:
+      readwrite u log_level;
+      readonly s session_path;
+      readonly s target;
+  };
+```
+
+
+### Method: `net.openvpn.v3.log.Remove`
+
+By calling this method, the Log and StatusChange forwarding will be stopped.
+This will also remove this D-Bus object.
+
+
+### `Properties`
+| Name          | Type             | Read/Write | Description                                           |
+|---------------|------------------|:----------:|-------------------------------------------------------|
+| log_level     | unsigned int     | Read/Write | Verbosity level for log events to this recipient      |
+| session_path  | object path      | Read-only  | D-Bus object path to the VPN session                  |
+| target        | string           | Read-only  | D-Bus unique bus name to the recipient (D-Bus client) |

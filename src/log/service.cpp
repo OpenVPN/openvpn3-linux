@@ -233,6 +233,11 @@ LogServiceManager::LogServiceManager(GDBusConnection *dbcon,
     << "        <method name='GetSubscriberList'>"
     << "            <arg type='a(ssss)' name='subscribers' direction='out'/>"
     << "        </method>"
+    << "        <method name='ProxyLogEvents'>"
+    << "            <arg type='s' name='target_address' direction='in'/>"
+    << "            <arg type='o' name='session_path' direction='in'/>"
+    << "            <arg type='o' name='proxy_path' direction='out'/>"
+    << "        </method>"
     << "        <property type='s' name='version' access='read'/>"
     << "        <property name='log_level' type='u' access='readwrite'/>"
     << "        <property name='log_dbus_details' type='b' access='readwrite'/>"
@@ -278,6 +283,7 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
         // calls expects this information.
         std::string interface;
         if ("GetSubscriberList" != meth_name
+            && "ProxyLogEvents" != meth_name
             && "AssignSession" != meth_name)
         {
             GLibUtils::checkParams(__func__, params, "(s)", 1);
@@ -417,6 +423,21 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
             }
             g_dbus_method_invocation_return_value(invoc,
                                                   GLibUtils::wrapInTuple(bld));
+            return;
+        }
+        else if ("ProxyLogEvents" == meth_name)
+        {
+            try
+            {
+                std::string p = add_log_proxy(params, sender);
+                g_dbus_method_invocation_return_value(invoc,
+                                                      g_variant_new("(o)",
+                                                              p.c_str()));
+            }
+            catch (DBusException& err)
+            {
+                err.SetDBusError(invoc, "net.openvpn.v3.log.proxy.error");
+            }
             return;
         }
         else
@@ -752,6 +773,111 @@ std::string LogServiceManager::check_busname_vpn_client(const std::string& chk_b
     }
 }
 
+
+std::string LogServiceManager::add_log_proxy(GVariant *params, const std::string& sender)
+{
+    GLibUtils::checkParams(__func__, params, "(so)", 2);
+    const std::string target = GLibUtils::ExtractValue<std::string>(params, 0);
+    std::string session_path = GLibUtils::ExtractValue<std::string>(params, 1);
+
+    // Check if the session path is known
+    size_t log_tag{};
+    try
+    {
+        log_tag = logger_session.at(session_path);
+    }
+    catch (const std::out_of_range&)
+    {
+        std::string err = "No VPN session exists with '" + session_path +"'";
+        logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN,
+                     "ProxyLogEvents(" + target + "): " + err));
+        THROW_DBUSEXCEPTION("LogServiceManager", err);
+    }
+
+
+    std::string path = generate_path_uuid(OpenVPN3DBus_rootp_log + "/proxy", 'l');
+
+
+    auto rm_callback = [self=(LogServiceManager*) this, target]()
+                    {
+                        self->remove_log_proxy(target);
+                    };
+    LoggerProxy* logprx = new LoggerProxy(GetConnection(),
+                                         sender, rm_callback,
+                                         path, target,
+                                         session_path, OpenVPN3DBus_interf_backends,
+                                         log_level);
+
+    IdleCheck_RefInc();
+    logproxies[target] = logprx;
+
+    // Enable log forwarding in main Logger object for client session
+    loggers[log_tag]->AddLogForward(logprx, target);
+
+    logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1,
+                          "Added new log proxy by " + sender
+                          + " - session: " + session_path
+                          + ", target: " + target + ", tag: " + std::to_string(log_tag)));
+
+    return logproxies[target]->GetObjectPath();
+}
+
+void LogServiceManager::remove_log_proxy(const std::string target)
+{
+    // The log forwarding must be removed in the main Logger object.
+    // The Logger objects are indexed by its log tag,
+    // which can be retrieved by the index lookup in logger_session, but
+    // this index is using session path as the key.  The session path is
+    // available in the LoggerProxy::GetSessionPath(), which is indexed
+    // by the log listener's target address.
+    //
+    // In reverse, that means:
+    //
+    //   1.  Get the session_path from LoggerProxy using the _target_ address
+    //       which is this methods only input argument.
+    //   2.  Retrieve the log_tag from the session path
+    //       (using the logger_session index)
+    //   3.  Execute the proper Logger::RemoveLogForward(), based on the
+    //       log_tag
+    //
+    std::string session_path{"(not found)"};
+    size_t log_tag{0};
+    try
+    {
+        session_path = logproxies.at(target)->GetSessionPath();
+        log_tag = logger_session.at(session_path);
+        loggers.at(log_tag)->RemoveLogForward(target);
+#if OPENVPN_DEBUG
+        logwr->Write(LogGroup::LOGGER, LogCategory::DEBUG,
+                     std::string("remove_log_proxy: ")
+                     + "target=" + target + ", "
+                     + "session_path=" + session_path + ", "
+                     + "log_tag=" + std::to_string(log_tag));
+#endif
+
+    }
+    catch (const std::out_of_range&)
+    {
+        // If the log_tag was not found, the VPN client backend process
+        // has already detached itself from the lgo service.
+        if (log_tag > 0)
+        {
+            logwr->Write(LogGroup::LOGGER, LogCategory::WARN,
+                         std::string("Could not find session/logger for RemoveLogForward() call: ")
+                         + "target=" + target + ", "
+                         + "session_path=" + session_path + ", "
+                         + "log_tag=" + std::to_string(log_tag));
+        }
+    }
+
+    // With the log forwarding removed in the Logger object, we can
+    // erase the LoggerProxy object.
+    delete logproxies[target];
+    logproxies.erase(target);
+    logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1,
+                          "Removed log proxy: " + target));
+    IdleCheck_RefDec();
+}
 
 
 //

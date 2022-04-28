@@ -90,6 +90,61 @@ struct LogSubscriberEntry
 
 typedef std::vector<LogSubscriberEntry> LogSubscribers;
 
+
+class LogProxy : protected DBusProxy
+{
+public:
+    using Ptr = std::shared_ptr<LogProxy>;
+
+    LogProxy(GDBusConnection* conn, const std::string& path)
+        : DBusProxy(conn,
+                    OpenVPN3DBus_name_log,
+                    OpenVPN3DBus_interf_log,
+                    path)
+    {
+    }
+
+    ~LogProxy() = default;
+
+
+    const std::string GetPath() const
+    {
+        return GetProxyPath();
+    }
+
+
+    const unsigned int GetLogLevel() const
+    {
+        return GetUIntProperty("log_level");
+    }
+
+
+    void SetLogLevel(const unsigned int loglev)
+    {
+        SetProperty("log_level", loglev);
+    }
+
+
+    const std::string GetSessionPath() const
+    {
+        return GetStringProperty("session_path");
+    }
+
+
+    const std::string GetLogTarget() const
+    {
+        return GetStringProperty("target");
+    }
+
+
+    void Remove()
+    {
+        (void) Call("Remove", true);
+    }
+};
+
+
+
 /**
  *  Client proxy implementation interacting with a
  *  the net.openvpn.v3.log service
@@ -184,6 +239,26 @@ public:
                                              interf.c_str()),
                                false);
         g_variant_unref(empty);
+    }
+
+
+    LogProxy::Ptr ProxyLogEvents(const std::string& target,
+                               const std::string& session_path) const
+    {
+        GVariant* res = Call("ProxyLogEvents",
+                             g_variant_new("(so)",
+                                           target.c_str(),
+                                           session_path.c_str()));
+        if (nullptr == res)
+        {
+            throw LogServiceProxyException("ProxyLogEvents call failed");
+        }
+
+        std::string p = GLibUtils::ExtractValue<std::string>(res, 0);
+        LogProxy::Ptr ret;
+        ret.reset(new LogProxy(GetConnection(), p));
+        g_variant_unref(res);
+        return ret;
     }
 
 
