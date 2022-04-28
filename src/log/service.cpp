@@ -386,6 +386,20 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
             // Check this has not been already registered
             validate_sender(sender, loggers[tag.hash]->GetBusName());
 
+            // Do a reverse lookup in logger_session to retrieve
+            // the key to delete from the logger_sesion index
+            auto it = std::find_if(logger_session.begin(),
+                                  logger_session.end(),
+                                  [tag](const auto& e)
+                                  {
+                                      return e.second == tag.hash;
+                                  });
+            if (logger_session.end() != it)
+            {
+                logger_session.erase(it->first);
+            }
+
+
             // Unsubscribe from signals from a D-Bus service/client
             loggers.erase(tag.hash);
             std::stringstream l;
@@ -872,7 +886,6 @@ void LogServiceManager::remove_log_proxy(const std::string target)
 
     // With the log forwarding removed in the Logger object, we can
     // erase the LoggerProxy object.
-    delete logproxies[target];
     logproxies.erase(target);
     logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1,
                           "Removed log proxy: " + target));

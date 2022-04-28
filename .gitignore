@@ -85,6 +85,7 @@ src/tests/dbus/getconnectionstats
 src/tests/dbus/log-listener
 src/tests/dbus/log-listener2
 src/tests/dbus/logevent-selftest
+src/tests/dbus/logfwd-listener
 src/tests/dbus/logservice1
 src/tests/dbus/manager-lookupconfigname
 src/tests/dbus/netcfg-changeevent-selftest
