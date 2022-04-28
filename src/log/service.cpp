@@ -35,6 +35,7 @@
 #include "dbus/glibutils.hpp"
 #include "dbus/path.hpp"
 #include "logger.hpp"
+#include "dbus-log.hpp"
 #include "service.hpp"
 
 using namespace openvpn;
@@ -60,6 +61,139 @@ std::string LogTag::str() const
            + std::string("}");
 }
 
+
+
+//
+//  LoggerProxy class implementation
+//
+LoggerProxy::LoggerProxy(GDBusConnection *dbc,
+                         const std::string& creat,
+                         std::function<void()> remove_cb,
+                         const std::string& obj_path,
+                         const std::string& target,
+                         const std::string& src_path,
+                         const std::string& src_interf,
+                         const unsigned int loglvl)
+    : DBusObject(obj_path),
+      DBusConnectionCreds(dbc),
+      LogSender(dbc, LogGroup::UNDEFINED, src_interf, src_path, nullptr),
+      props(this),
+      dbuscon(dbc), creator(creat), remove_callback(remove_cb),
+      log_target(target), log_level(loglvl), session_path(src_path)
+{
+    props.AddBinding(new PropertyType<unsigned int>(
+            this, "log_level", "readwrite", true, log_level));
+    props.AddBinding(new PropertyType<std::string>(
+            this, "target", "read", true, log_target));
+    props.AddBinding(new PropertyType<std::string>(
+            this, "session_path", "read", true, session_path));
+
+    std::stringstream introspection_xml;
+    introspection_xml << "<node name='" << obj_path << "'>"
+            << "    <interface name='" << OpenVPN3DBus_interf_log << "'>"
+            << "        <method name='Remove'/>"
+            << GetLogIntrospection()
+            << props.GetIntrospectionXML()
+            << "    </interface>"
+            << "</node>";
+
+    ParseIntrospectionXML(introspection_xml);
+
+    SetLogLevel(6);
+    AddTargetBusName(target);
+    AddPathFilter(src_path);
+    RegisterObject(dbc);
+}
+
+
+LoggerProxy::~LoggerProxy()
+{
+    remove_callback();
+}
+
+
+const std::string LoggerProxy::GetObjectPath() const
+{
+    return DBusObject::GetObjectPath();
+}
+
+
+const std::string LoggerProxy::GetSessionPath() const
+{
+    return session_path;
+}
+
+
+void LoggerProxy::callback_method_call(GDBusConnection *conn,
+                                       const std::string sender,
+                                       const std::string obj_path,
+                                       const std::string intf_name,
+                                       const std::string meth_name,
+                                       GVariant *params,
+                                       GDBusMethodInvocation *invoc)
+{
+    try
+    {
+        if (sender != creator)
+        {
+            throw DBusCredentialsException(sender, "net.openvpn.v3.logger.acl",
+                                           "Access Denied,  invalid caller.");
+        }
+
+        if ("Remove" == meth_name)
+        {
+            RemoveObject(conn);
+            delete this;
+            g_dbus_method_invocation_return_value(invoc, NULL);
+            return;
+        }
+    }
+    catch (DBusCredentialsException& excp)
+    {
+        excp.SetDBusError(invoc);
+    }
+}
+
+GVariant* LoggerProxy::callback_get_property(GDBusConnection *conn,
+                                             const std::string sender,
+                                             const std::string obj_path,
+                                             const std::string intf_name,
+                                             const std::string property_name,
+                                             GError **error)
+{
+    /*
+    if (sender != creator)
+    {
+        throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
+                                    intf_name, obj_path, property_name,
+                                    "Access Denied,  invalid caller.");
+    }
+     */
+    if (props.Exists(property_name))
+    {
+        return props.GetValue(property_name);
+    }
+
+    return nullptr;
+}
+
+
+GVariantBuilder* LoggerProxy::callback_set_property(GDBusConnection *conn,
+                                                    const std::string sender,
+                                                    const std::string obj_path,
+                                                    const std::string intf_name,
+                                                    const std::string property_name,
+                                                    GVariant *value,
+                                                    GError **error)
+{
+    if (sender != creator)
+    {
+        throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
+                                    intf_name, obj_path, property_name,
+                                    "Access Denied,  invalid caller.");
+    }
+    return nullptr;
+}
 
 
 //

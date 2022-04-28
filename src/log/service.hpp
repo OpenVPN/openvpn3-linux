@@ -26,10 +26,13 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
 
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
+#include "dbus/object-property.hpp"
+#include "log/dbus-log.hpp"
 
 /**
  *  This provides a more generic interface to generate and process
@@ -80,7 +83,100 @@ struct LogTag
 };
 
 
+/**
+ *  A LoggerProxy is at its core an extended LogSender class which is
+ *  configured at runtime to be called via a Logger object.
+ *
+ *  A Logger object is created when any service is attaching itself to the
+ *  net.openvpn.v3.log service, telling the log service to collect its log
+ *  events.
+ *
+ *  The LoggerProxy is used by other applications ("clients") who wants to
+ *  see a copy of the log events.  When a D-Bus application calls the
+ *  ProxyLogEvents method, a LoggerProxy object is initiated for this client
+ *  and will then be tied to the appropriate Logger object for the requested
+ *  backend VPN service (net.openvpn.v3.backends.be$PID).
+ *
+ *  A LoggerProxy object can only be configured to forward Log and StatusChange
+ *  events from backend VPN client services.
+ */
+class LoggerProxy : public DBusObject,
+                    public DBusConnectionCreds,
+                    public LogSender
+{
+public:
+    /**
+     * LoggerProxy constructor, created by a LogServiceManager object when
+     * processing the ProxyLogEvents D-Bus method.
+     *
+     * @param dbc        GDBusConnection pointer to the current D-Bus connection
+     * @param creat      std::string of the D-Bus unique bus name requesting this
+     * @param remove_cb  std::function callback run when this object is deleted
+     * @param obj_path   std::string with the D-Bus object path of this proxy
+     * @param target     std::string of the target where Log/StatusEvent signals will be sent // FIXME: Isn't this the same as creator?
+     * @param src_path   std::string of the session path belonging to the VPN session
+     * @param src_interf std::string of the interface of the Log/StatusChange signals
+     * @param loglvl     unsigned int of the initial log level for to forward
+     */
+    LoggerProxy(GDBusConnection *dbc,
+                const std::string& creat,
+                std::function<void()> remove_cb,
+                const std::string& obj_path,
+                const std::string& target,
+                const std::string& src_path,
+                const std::string& src_interf,
+                const unsigned int loglvl);
+    ~LoggerProxy();
+
+    /**
+     * Retrieve the D-Bus object path of this proxy object
+     */
+    const std::string GetObjectPath() const;
+
+    /**
+     * Retrieve the D-Bus object path of the VPN session this proxy is tied to
+     */
+    const std::string GetSessionPath() const;
+
+
+    void callback_method_call(GDBusConnection *conn,
+                              const std::string sender,
+                              const std::string obj_path,
+                              const std::string intf_name,
+                              const std::string meth_name,
+                              GVariant *params,
+                              GDBusMethodInvocation *invoc) override;
+
+    GVariant* callback_get_property(GDBusConnection *conn,
+                                    const std::string sender,
+                                    const std::string obj_path,
+                                    const std::string intf_name,
+                                    const std::string property_name,
+                                    GError **error) override;
+
+    GVariantBuilder* callback_set_property(GDBusConnection *conn,
+                                           const std::string sender,
+                                           const std::string obj_path,
+                                           const std::string intf_name,
+                                           const std::string property_name,
+                                           GVariant *value,
+                                           GError **error) override;
+
+
+private:
+    PropertyCollection props;
+    GDBusConnection* dbuscon = nullptr;
+    std::string creator = {};
+    std::function<void()> remove_callback;
+    std::string log_target;
+    unsigned int log_level = 6;
+    std::string session_path = {};
+};
+
+using LoggerProxyList = std::map<std::string, LoggerProxy*>;
 using LoggerSessionsList = std::map<std::string, size_t>;
+
+
 
 /**
  *  The LogServiceManager maintains the D-Bus object to be used
