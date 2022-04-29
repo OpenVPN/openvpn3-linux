@@ -620,6 +620,7 @@ public:
             std::stringstream errmsg;
             errmsg << "Failed retrieving property value for "
                    << "'" << property << "': " << error->message;
+            g_error_free(error);
             THROW_DBUSEXCEPTION("DBusProxy", errmsg.str());
         }
 
@@ -710,6 +711,7 @@ public:
             std::stringstream errmsg;
             errmsg << "Failed setting new property value on "
                    << "'" << property << "': " << error->message;
+            g_error_free(error);
             THROW_DBUSEXCEPTION("DBusProxy", errmsg.str());
         }            g_variant_unref(ret);
     }
@@ -789,6 +791,7 @@ protected:
                 g_dbus_error_strip_remote_error(error);
                 errmsg << ": " << error->message;
             }
+            g_error_free(error);
             THROW_DBUSEXCEPTION("DBusProxy", errmsg.str());
         }
         if ("org.freedesktop.DBus.Properties" == intf)
@@ -906,6 +909,7 @@ private:
                 std::stringstream errmsg;
                 errmsg << "Failed calling D-Bus method " << method << ": "
                        << error->message;
+                g_error_free(error);
                 THROW_DBUSEXCEPTION("DBusProxy", errmsg.str());
             }
             return ret;
