@@ -212,7 +212,6 @@ node /net/openvpn/v3/sessions/${UNIQUE_ID} {
       readonly s session_name;
       readonly u backend_pid;
       readwrite b restrict_log_access;
-      readwrite b receive_log_events;
       readwrite u log_verbosity;
   };
 };
@@ -393,7 +392,6 @@ documentation](dbus-logging.md) for details on this signal.
 | session_name  | string           | Read-only  | Name of the VPN session, named by the the OpenVPN 3 Core library on successful connect |
 | backend_pid   | uint             | Read-only  | Process ID of the VPN backend client process |
 | restrict_log_access | boolean    | Read-Write | If set to true, only the session owner can modify receive_log_events and log_verbosity, otherwise all granted users can access the log settings |
-| receive_log_events | boolean     | Read-Write | If set to true, the session manager will proxy log events from the VPN backend process |
 | log_verbosity | uint             | Read-Write | Defines the minimum log level Log signals should have to be sent |
 
 

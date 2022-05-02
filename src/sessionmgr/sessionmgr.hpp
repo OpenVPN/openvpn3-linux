@@ -164,116 +164,6 @@ private:
 };
 
 
-/**
- *  Handler for session log events.  This will be enabled when a session
- *  is configured to proxy log messages from the VPN client backend to a
- *  front-end.
- */
-class SessionLogEvent : public LogConsumerProxy
-{
-public:
-    /**
-     *   Constructor for setting up proxying of log events from a backend to
-     *   a front-end.  The interface name of proxied log entries will be
-     *   the session managers interface.
-     *
-     * @param conn               D-Bus connection to use
-     * @param interface          Backend D-Bus interface needed for the
-     *                           subscription
-     * @param bus_name           Unique bus name of the backend VPN client
-     *                           process to expect messages from.  This is
-     *                           used for filtering.
-     * @param session_token      Backend VPN client session token, used to
-     *                           validate if the LogEvent is targeting the
-     *                           same session this object is configured for.
-     * @param session_path       D-Bus path to the session to retrieve log
-     *                           events from and proxy forward as.
-     */
-    SessionLogEvent(GDBusConnection *conn,
-                    std::string interface,
-                    std::string bus_name,
-                    std::string session_token,
-                    std::string session_path)
-        : LogConsumerProxy(conn, interface, session_path,
-                           OpenVPN3DBus_interf_sessions, session_path),
-           bus_name(bus_name),
-           session_token(session_token),
-           last_logev()
-    {
-    }
-
-
-    /**
-     *  A callback method used by LogConsumerProxy(), where we can
-     *  intercept log events as they occur.  We use this only to capture
-     *  the log event and save a copy of it.
-     *
-     * @param sender       D-Bus bus name of the sender of the log event
-     * @param interface    D-Bus interface of the sender of the log event
-     * @param object_path  D-Bus object path of the sender of the log event
-     * @param group        LogGroup reference of the log event
-     * @param catg         LogCategory reference of the log event
-     * @param msg          The log message itself
-     *
-     * @returns Returns the LogEvent to be used further.
-     */
-    LogEvent InterceptLogEvent(const std::string sender,
-                               const std::string interface,
-                               const std::string object_path,
-                               const LogEvent& logev) override
-    {
-        if (sender != bus_name)
-        {
-            // If the log event is sent from an unexpected sender,
-            // ignore it
-            throw LogConsumerProxyException(LogProxyExceptionType::IGNORE);
-        }
-        if (logev.session_token.empty())
-        {
-            throw LogConsumerProxyException(LogProxyExceptionType::INVALID,
-                                            "Missing session token");
-        }
-        if (logev.session_token != session_token)
-        {
-            // If this log event is not related to our session, ignore it
-            throw LogConsumerProxyException(LogProxyExceptionType::IGNORE);
-        }
-
-        last_logev = logev;
-        last_logev.session_token.clear();
-        last_logev.format = LogEvent::Format::NORMAL;
-        return last_logev;
-    }
-
-
-    /**
-     *  Returns a D-Bus key/value dictionary of the last log message processed
-     *
-     * @return  Returns a new GVariant Glib2 object containing the log event.
-     *          This object needs to be freed when no longer needed.
-     */
-    GVariant * GetLastLogEntry()
-    {
-        if( last_logev.empty())
-        {
-            return nullptr;  // Nothing have been logged, nothing to report
-        }
-        return last_logev.GetGVariantDict();
-    }
-
-    void SetLogLevel(unsigned int loglev)
-    {
-        LogConsumer::SetLogLevel(loglev);
-        LogSender::SetLogLevel(loglev);
-    }
-
-private:
-    std::string bus_name;
-    std::string session_token;
-    LogEvent last_logev;
-};
-
-
 
 /**
  *  Handler for session StatusChange signals.  This essentially proxies
@@ -457,12 +347,10 @@ public:
           remove_callback(remove_callback),
           be_proxy(nullptr),
           restrict_log_access(true),
-          recv_log_events(false),
           session_created(std::time(nullptr)),
           config_path(cfg_path),
           config_name(""),
           sig_statuschg(nullptr),
-          sig_logevent(nullptr),
           backend_token(""),
           backend_pid(0),
           be_conn(nullptr),
@@ -519,7 +407,6 @@ public:
                           << "        <property type='s' name='session_name' access='read'/>"
                           << "        <property type='u' name='backend_pid' access='read'/>"
                           << "        <property type='b' name='restrict_log_access' access='readwrite'/>"
-                          << "        <property type='b' name='receive_log_events' access='readwrite'/>"
                           << "        <property type='u' name='log_verbosity' access='readwrite'/>"
                           << "    </interface>"
                           << "</node>";
@@ -580,11 +467,6 @@ public:
         if (sig_statuschg)
         {
             delete sig_statuschg;
-        }
-
-        if (sig_logevent)
-        {
-            delete sig_logevent;
         }
 
         if (be_proxy)
@@ -814,10 +696,6 @@ public:
                 {
                     auto verb = (unsigned int)be_proxy->GetUIntProperty("log_level");
                     SetLogLevel(verb);
-                    if (sig_logevent)
-                    {
-                        sig_logevent->SetLogLevel(verb);
-                    }
                 }
                 catch (const DBusException&)
                 {
@@ -1138,23 +1016,10 @@ public:
         {
             ret = g_variant_new_boolean (restrict_log_access);
         }
-        else if ("receive_log_events" == property_name)
-        {
-            ret = g_variant_new_boolean (recv_log_events);
-        }
         else if ("last_log" == property_name)
         {
-            if (nullptr != sig_logevent) {
-                ret = sig_logevent->GetLastLogEntry();
-                if (NULL == ret)
-                {
-                    g_set_error(error, G_DBUS_ERROR, G_DBUS_ERROR_NO_REPLY,
-                                "No data have been logged yet");
-                }
-            } else {
-                g_set_error(error, G_DBUS_ERROR, G_DBUS_ERROR_NO_REPLY,
-                            "Logging not enabled");
-            }
+            // FIXME: This should be pulled from the openvpn-service-client
+            ret = g_variant_new_string("");
         }
         else if ("session_created" == property_name)
         {
@@ -1330,8 +1195,7 @@ public:
         try
         {
             if (!restrict_log_access
-                && ("receive_log_events" == property_name
-                    || "log_verbosity" == property_name))
+                && "log_verbosity" == property_name)
             {
                 CheckACL(sender);
             }
@@ -1376,43 +1240,11 @@ public:
                 return build_set_property_response(property_name,
                                                    restrict_log_access);
             }
-            else if (("receive_log_events" == property_name) && be_conn)
-            {
-                recv_log_events = g_variant_get_boolean(value);
-                if (recv_log_events && nullptr == sig_logevent)
-                {
-                    // Subscribe to log signals
-                    //
-                    // The SessionLogEvent() need the unique bus name
-                    // to be able to filter out the proper signals based on
-                    // the D-Bus sender.  This is since all the backend VPN
-                    // client processes uses the same object path.  In
-                    // addition, it will also match against the
-                    // session/backend token.
-                    sig_logevent = new SessionLogEvent(
-                                    be_conn,
-                                    OpenVPN3DBus_interf_backends,
-                                    GetUniqueBusID(be_busname),
-                                    backend_token,
-                                    DBusObject::GetObjectPath());
-                    sig_logevent->SetLogLevel(default_session_log_level);
-                }
-                else if (!recv_log_events && nullptr != sig_logevent)
-                {
-                    delete sig_logevent;
-                    sig_logevent = nullptr;
-                }
-                return build_set_property_response(property_name, recv_log_events);
-            }
             else if (("log_verbosity" == property_name) && be_conn)
             {
                 unsigned int log_verb = g_variant_get_uint32(value);
                 try
                 {
-                    if (sig_logevent)
-                    {
-                        sig_logevent->SetLogLevel(log_verb);
-                    }
                     SetLogLevel(log_verb);
                 }
                 catch (const LogException& excp)
@@ -1473,12 +1305,6 @@ public:
             delete sig_statuschg;
             sig_statuschg = nullptr;
         }
-
-        if (nullptr != sig_logevent)
-        {
-            delete sig_logevent;
-            sig_logevent = nullptr;
-        }
     };
 
 
@@ -1487,14 +1313,12 @@ private:
     std::function<void()> remove_callback;
     DBusProxy *be_proxy;
     bool restrict_log_access;
-    bool recv_log_events;
     std::time_t session_created;
     std::string config_path;
     std::string config_name;
     bool dco = false;
     DCOstatus dco_status = DCOstatus::UNCHANGED;
     SessionStatusChange *sig_statuschg;
-    SessionLogEvent *sig_logevent;
     std::string backend_token;
     pid_t backend_pid;
     GDBusConnection *be_conn;
