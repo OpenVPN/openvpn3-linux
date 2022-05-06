@@ -21,6 +21,23 @@
            send_interface="org.freedesktop.DBus.Peer"
            send_type="method_call"
            send_member="Ping"/>
+
+
+    <!--
+          Needed to allow log forwarding which are
+          requested via net.openvpn.v3.sessions but
+          delivered by net.openvpn.v3.log to another
+          log listener, typically without a well-known
+          busname
+    -->
+    <allow receive_sender="net.openvpn.v3.log"
+           receive_interface="net.openvpn.v3.backends"
+           receive_type="signal"
+           receive_member="Log"/>
+    <allow receive_sender="net.openvpn.v3.log"
+           receive_interface="net.openvpn.v3.backends"
+           receive_type="signal"
+           receive_member="StatusChange"/>
   </policy>
 
   <policy user="@OPENVPN_USERNAME@">

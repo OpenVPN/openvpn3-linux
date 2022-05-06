@@ -169,6 +169,7 @@ node /net/openvpn/v3/sessions/${UNIQUE_ID} {
       Ready();
       AccessGrant(in  u uid);
       AccessRevoke(in  u uid);
+      LogForward(in  b enable);
       UserInputQueueGetTypeGroup(out a(uu) type_group_list);
       UserInputQueueFetch(in  u type,
                           in  u group,
@@ -212,6 +213,7 @@ node /net/openvpn/v3/sessions/${UNIQUE_ID} {
       readonly s session_name;
       readonly u backend_pid;
       readwrite b restrict_log_access;
+      readonly ao log_forwards;
       readwrite u log_verbosity;
   };
 };
@@ -310,6 +312,18 @@ cannot have its access revoked.
 | In        | uid  | unsigned int | The UID to the user account which gets the access revoked |
 
 
+### Method: `net.openvpn.v3.sessions.LogForward`
+
+This enables log forwarding from the session to the currently connected
+D-Bus client.  The forwarding itself is sent by the
+[`net.openvpn.v3.log`](dbus-service-net.openvpn.v3.log.md) service.
+
+#### Arguments
+
+| Direction | Name   | Type    | Description                              |
+|-----------|--------|---------|------------------------------------------|
+| In        | enable | boolean |  Enables or disables the log forwarding  |
+
 
 ### Method: `net.openvpn.v3.sessions.UserInputQueueGetTypeGroup`
 
@@ -392,6 +406,7 @@ documentation](dbus-logging.md) for details on this signal.
 | session_name  | string           | Read-only  | Name of the VPN session, named by the the OpenVPN 3 Core library on successful connect |
 | backend_pid   | uint             | Read-only  | Process ID of the VPN backend client process |
 | restrict_log_access | boolean    | Read-Write | If set to true, only the session owner can modify receive_log_events and log_verbosity, otherwise all granted users can access the log settings |
+| log_forwards  | array(object paths)| Read-only | Log Proxy/forward object paths used by [`net.openvpn.v3.log`](dbus-service-net.openvpn.v3.log.md) to configure the forwarding |
 | log_verbosity | uint             | Read-Write | Defines the minimum log level Log signals should have to be sent |
 
 
