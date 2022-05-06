@@ -27,6 +27,7 @@
 #include "common/cmdargparser.hpp"
 #include "common/timestamp.hpp"
 #include "log/dbus-log.hpp"
+#include "log/dbus-logfwd.hpp"
 #include "log/logevent.hpp"
 #include "log/proxy-log.hpp"
 #include "configmgr/proxy-configmgr.hpp"
@@ -38,67 +39,42 @@ using namespace openvpn;
 
 
 /**
+ *  Generic log printer for log events.
+ *  It will prepend all lines with a timestamp.  If the event contains of
+ *  multiple lines, the following lines will be indented.
+ *
+ * @param logev  The LogEvent object to print
+ */
+
+void print_log_event(const LogEvent& logev)
+{
+    std::stringstream msg;
+    msg << logev;
+    std::vector<std::string> lines;
+    std::string line;
+    while(getline(msg, line, '\n'))
+    {
+        lines.push_back(line);
+    }
+
+    bool first = true;
+    std::cout << GetTimestamp() << lines[0] << std::endl;
+    for (const auto& l : lines)
+    {
+        if (first)
+        {
+            first = false;
+            continue;
+        }
+        std::cout << "     " << l << std::endl;
+    }
+}
+
+
+/**
  *  Simple class to handle Log signal events
  */
-class LoggerBase : public LogConsumer
-{
-public:
-    /**
-     *  When instantiating a new Logger object, it will subscribe to
-     *  Log signals appearing on a specific interface and D-Bus object path.
-     *  If these are empty, it will listen to any Log signals
-     *
-     * @param dbscon       D-Bus connection to use for subscribing
-     * @param interf       std::string containing the interface to subscribe to
-     * @param object_path  std::string with the D-Bus object path to subscribe to
-     */
-    LoggerBase(GDBusConnection * dbscon, std::string interf,
-           std::string object_path)
-        : LogConsumer(dbscon, interf, object_path)
-    {
-    }
-
-
-    /**
-     *  This method is called on each Log signal event.
-     *
-     * @param sender       std::string with the sender of the Log event sender
-     * @param interface    std::string with the interface the Log signal origins from
-     * @param object_path  std::string with the D-Bus object path of the Log event
-     * @param group        LogGroup indicator of the Log event
-     * @param catg         LogCategory indicator of the Log event
-     * @param msg          std::string carrying the Log message
-     */
-    void ConsumeLogEvent(const std::string sender,
-                         const std::string interface,
-                         const std::string object_path,
-                         const LogEvent& logev)
-    {
-        std::stringstream msg;
-        msg << logev;
-        std::vector<std::string> lines;
-        std::string line;
-        while(getline(msg, line, '\n'))
-        {
-            lines.push_back(line);
-        }
-
-        bool first = true;
-        std::cout << GetTimestamp() << lines[0] << std::endl;
-        for (const auto& l : lines)
-        {
-            if (first)
-            {
-                first = false;
-                continue;
-            }
-            std::cout << "     " << l << std::endl;
-        }
-    }
-};
-
-
-class Logger : public LoggerBase,
+class Logger : public LogConsumer,
                public RC<thread_unsafe_refcount>
 {
 public:
@@ -114,52 +90,50 @@ public:
      * @param object_path  std::string with the D-Bus object path to subscribe to
      */
     Logger(GDBusConnection * dbscon, std::string interf,
-           std::string object_path)
-        : LoggerBase(dbscon, interf, object_path)
+           std::string objpath)
+        : LogConsumer(dbscon, interf, objpath)
     {
     }
 
+    void ConsumeLogEvent(const std::string sender,
+                         const std::string interface,
+                         const std::string object_path,
+                         const LogEvent& logev)
+    {
+        print_log_event(logev);
+    }
 };
 
 
-class SessionLogger : public LoggerBase,
-                      public RC<thread_unsafe_refcount>
+/**
+ *  Log and status event handling from VPN sessions
+ */
+class SessionLogger : public LogForwardBase<SessionLogger>
 {
 public:
-    typedef RCPtr<SessionLogger> Ptr;
+    using Ptr = std::shared_ptr<SessionLogger>;
 
-    SessionLogger(GDBusConnection * dbscon, std::string interf,
-                  std::string object_path, GMainLoop *main_loop)
-        : LoggerBase(dbscon, interf, object_path),
-          main_loop(main_loop)
+    SessionLogger(DBus& dbscon, std::string interf,
+                  std::string objpath)
+        : LogForwardBase(dbscon, interf, objpath)
     {
-        Subscribe("StatusChange");
     }
 
-    void ProcessSignal(const std::string sender_name,
-                       const std::string object_path,
-                       const std::string interface_name,
-                       const std::string signal_name,
-                       GVariant *parameters) override
+    void ConsumeLogEvent(const std::string sender,
+                         const std::string interface,
+                         const std::string object_path,
+                         const LogEvent& logev) override
     {
-        if ("StatusChange" == signal_name)
-        {
-            StatusEvent stev(parameters);
-
-            std::cout << GetTimestamp() << ">> " << stev << std::endl;
-
-            // If the session was removed, stop the logger
-            if (stev.Check(StatusMajor::SESSION,
-                           StatusMinor::SESS_REMOVED))
-            {
-                g_main_loop_quit((GMainLoop *) main_loop);
-            }
-        }
+        print_log_event(logev);
     }
 
-
-private:
-    GMainLoop *main_loop;
+    void StatusChangeEvent(const std::string sender_name,
+                           const std::string interface_name,
+                           const std::string obj_path,
+                           const StatusEvent &stev) override
+    {
+        std::cout << GetTimestamp() << "[STATUS] " << stev << std::endl;
+    }
 };
 
 
@@ -178,15 +152,14 @@ private:
 class LogAttach : public DBusSignalSubscription
 {
 public:
-    LogAttach(GMainLoop *main_loop,
-              GDBusConnection *dbuscon)
+    LogAttach(GMainLoop* main_loop, DBus& dbuscon)
         : DBusSignalSubscription(dbuscon,
                                  OpenVPN3DBus_name_sessions,
                                  OpenVPN3DBus_interf_sessions,
                                  OpenVPN3DBus_rootp_sessions),
-        mainloop(main_loop)
+        mainloop(main_loop), dbus(dbuscon)
     {
-        manager.reset(new OpenVPN3SessionMgrProxy(G_BUS_TYPE_SYSTEM));
+        manager.reset(new OpenVPN3SessionMgrProxy(dbuscon));
         Subscribe("SessionManagerEvent");
     }
 
@@ -194,7 +167,7 @@ public:
     void AttachByPath(const std::string path)
     {
         session_path = path;
-        create_session_proxy(session_path);
+        setup_session_logger(session_path);
     }
 
 
@@ -202,7 +175,7 @@ public:
     {
         config_name = config;
         lookup_config_name(config_name);
-        create_session_proxy(session_path);
+        setup_session_logger(session_path);
     }
 
 
@@ -210,7 +183,7 @@ public:
     {
         tun_interf = interf;
         lookup_interface(tun_interf);
-        create_session_proxy(session_path);
+        setup_session_logger(session_path);
     }
 
 
@@ -249,7 +222,7 @@ public:
                     lookup_interface(tun_interf);
                 }
 
-                create_session_proxy(session_path);
+                setup_session_logger(session_path);
                 break;
 
             case SessionManager::EventType::SESS_DESTROYED:
@@ -259,7 +232,6 @@ public:
                     return;
                 }
 
-                cleanup();
                 std::cout << "Session closed" << std::endl;
                 g_main_loop_quit((GMainLoop *) mainloop);
                 break;
@@ -274,14 +246,14 @@ public:
 
 private:
     GMainLoop *mainloop = nullptr;
+    DBus& dbus;
     std::string session_path{""};
     std::string config_name{""};
     std::string tun_interf{""};
     std::unique_ptr<OpenVPN3SessionMgrProxy> manager = nullptr;
     std::unique_ptr<OpenVPN3SessionProxy> session_proxy = nullptr;
-    SessionLogger::Ptr session_log = nullptr;
+    SessionLogger::Ptr session_log = {};
     unsigned int log_level = 0;
-    bool log_flag_reset = false;
     bool wait_notification = false;
 
 
@@ -345,15 +317,15 @@ private:
 
 
     /**
-     *  Establish a connection to the session object for a specific
-     *  VPN session, enable session logging and sets the log level.
+     *  Create a new SessionLogger object for processing log and status event
+     *  changes for a running session.
      *
      *  The input path is used to ensure a SESS_CREATED SessionManager::Event
      *  is tied to the VPN session we expect.
      *
      * @param path  std::string of the VPN session to attach to.
      */
-    void create_session_proxy(std::string path)
+    void setup_session_logger(std::string path)
     {
         if (path.empty()
             || (0 != session_path.compare(path)))
@@ -366,9 +338,8 @@ private:
             std::cout << " Done" << std::endl;
         }
 
-        // Check if the session manager will forward log events for this
-        // session.  If not, we must enable it - and if we do this, we
-        // track that we modified this setting.
+        // Sanity check before setting up the session logger; does the
+        // session exist?
         session_proxy.reset(new OpenVPN3SessionProxy(G_BUS_TYPE_SYSTEM, path));
         if (!session_proxy->CheckObjectExists())
         {
@@ -378,12 +349,7 @@ private:
 
         std::cout << "Attaching to session " << path << std::endl;
 
-        if (!session_proxy->GetReceiveLogEvents())
-        {
-            session_proxy->SetReceiveLogEvents(true);
-            log_flag_reset = true;
-        }
-
+        // Change the log-level if requested.
         if (log_level > 0)
         {
             try
@@ -399,26 +365,13 @@ private:
                           << e.what() << std::endl;
             }
         }
-        // Setup a Logger object for the provided session path
-        session_log.reset(new SessionLogger(GetConnection(),
-                                            OpenVPN3DBus_interf_sessions,
-                                            session_path, mainloop));
-    }
 
-
-    void cleanup()
-    {
-        // If we enabled the receive_log_events property in a session object,
-        // disable it again when we exit.
-        if (session_proxy && log_flag_reset)
-        {
-            if (session_proxy->CheckObjectExists())
-            {
-                session_proxy->SetReceiveLogEvents(false);
-            }
-        }
+        // Setup the SessionLogger object for the provided session path
+        session_log = SessionLogger::create(dbus, OpenVPN3DBus_interf_backends,
+                                            session_path);
     }
 };
+
 
 
 /**
@@ -457,7 +410,7 @@ static int cmd_log(ParsedArgs::Ptr args)
         || args->Present("interface"))
     {
         std::string session_path = "";
-        logattach.reset(new LogAttach (main_loop, dbuscon.GetConnection()));
+        logattach.reset(new LogAttach (main_loop, dbuscon));
 
         if (args->Present("log-level"))
         {
