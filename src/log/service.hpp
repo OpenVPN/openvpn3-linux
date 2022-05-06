@@ -171,6 +171,8 @@ private:
     std::string log_target;
     unsigned int log_level = 6;
     std::string session_path = {};
+
+    void check_access(const std::string& sender) const;
 };
 
 using LoggerProxyList = std::map<std::string, LoggerProxy*>;

@@ -134,11 +134,7 @@ void LoggerProxy::callback_method_call(GDBusConnection *conn,
 {
     try
     {
-        if (sender != creator)
-        {
-            throw DBusCredentialsException(sender, "net.openvpn.v3.logger.acl",
-                                           "Access Denied,  invalid caller.");
-        }
+        check_access(sender);
 
         if ("Remove" == meth_name)
         {
@@ -161,17 +157,18 @@ GVariant* LoggerProxy::callback_get_property(GDBusConnection *conn,
                                              const std::string property_name,
                                              GError **error)
 {
-    /*
-    if (sender != creator)
+    try
     {
-        throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                    intf_name, obj_path, property_name,
-                                    "Access Denied,  invalid caller.");
+        check_access(sender);
+
+        if (props.Exists(property_name))
+        {
+            return props.GetValue(property_name);
+        }
     }
-     */
-    if (props.Exists(property_name))
+    catch (DBusCredentialsException& excp)
     {
-        return props.GetValue(property_name);
+        excp.SetDBusError(error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED);
     }
 
     return nullptr;
@@ -186,13 +183,27 @@ GVariantBuilder* LoggerProxy::callback_set_property(GDBusConnection *conn,
                                                     GVariant *value,
                                                     GError **error)
 {
-    if (sender != creator)
+    try
     {
-        throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                    intf_name, obj_path, property_name,
-                                    "Access Denied,  invalid caller.");
+        check_access(sender);
+    }
+    catch (DBusCredentialsException& excp)
+    {
+        excp.SetDBusError(error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED);
     }
     return nullptr;
+}
+
+
+void LoggerProxy::check_access(const std::string& sender) const
+{
+    // Only allow the creator of this proxy (typically the session manager)
+    // and the root user access
+    if ((sender != creator) && 0 == GetUID(sender))
+    {
+        throw DBusCredentialsException(sender, "net.openvpn.v3.log.acl",
+                                    "Access Denied,  invalid caller.");
+    }
 }
 
 
