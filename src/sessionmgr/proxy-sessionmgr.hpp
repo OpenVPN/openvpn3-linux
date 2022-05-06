@@ -26,8 +26,7 @@
  */
 
 
-#ifndef OPENVPN3_DBUS_PROXY_SESSION_HPP
-#define OPENVPN3_DBUS_PROXY_SESSION_HPP
+#pragma once
 
 #include <iostream>
 #include <memory>
@@ -547,7 +546,7 @@ private:
 
 };
 
-#endif // OPENVPN3_DBUS_PROXY_CONFIG_HPP
+
 
 class OpenVPN3SessionMgrProxy : public DBusProxy
 {
