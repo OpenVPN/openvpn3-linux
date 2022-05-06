@@ -124,11 +124,16 @@ public:
         logwr->Write(logev);
 
         // If there are any log forwarders attached, do the forwarding
-        for (const auto& lfwd : log_forwards)
+        if (log_forwards.size() > 0)
         {
-            if (lfwd.second)
+            LogEvent proxy_event(logev);
+            proxy_event.RemoveToken();
+            for (const auto& lfwd : log_forwards)
             {
-                lfwd.second->ProxyLog(logev, object_path);
+                if (lfwd.second)
+                {
+                    lfwd.second->ProxyLog(proxy_event, object_path);
+                }
             }
         }
     }
