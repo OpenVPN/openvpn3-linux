@@ -36,6 +36,7 @@
 #include <cstring>
 #include <functional>
 #include <ctime>
+#include <memory>
 
 #include <openvpn/common/likely.hpp>
 #include <openvpn/log/logsimple.hpp>
@@ -46,9 +47,11 @@
 #include "common/utils.hpp"
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
+#include "dbus/glibutils.hpp"
 #include "dbus/path.hpp"
 #include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"
+#include "log/proxy-log.hpp"
 #include "client/statusevent.hpp"
 #include "configmgr/proxy-configmgr.hpp"
 #include "sessionmgr-exceptions.hpp"
@@ -306,6 +309,52 @@ enum class DCOstatus : unsigned short {
     LOCKED
 };
 
+
+class SessionLogProxy : public LogServiceProxy
+{
+public:
+    using Ptr = std::shared_ptr<SessionLogProxy>;
+
+    SessionLogProxy(GDBusConnection* dbc,
+                    const std::string& target_,
+                    const std::string& session_path)
+        : LogServiceProxy(dbc), target(target_)
+    {
+        logproxy = ProxyLogEvents(target, session_path);
+    }
+
+
+    ~SessionLogProxy()
+    {
+        if (logproxy)
+        {
+            logproxy->Remove();
+            logproxy.reset();
+        }
+    }
+
+    const std::string GetLogProxyPath() const
+    {
+        return (logproxy ? logproxy->GetPath() : "");
+    }
+
+
+    void SetLogLevel(unsigned int loglvl) const
+    {
+        if (logproxy)
+        {
+            logproxy->SetLogLevel(loglvl);
+        }
+    }
+
+private:
+    std::string target = {};
+    LogProxy::Ptr logproxy = nullptr;
+};
+
+using SessionLogProxyList = std::map<std::string, SessionLogProxy::Ptr>;
+
+
 /**
  *  A SessionObject contains information about a specific VPN client tunnel.
  *  Each time a new tunnel is created and initiated via D-Bus, the contents
@@ -381,6 +430,9 @@ public:
                           << "        <method name='AccessRevoke'>"
                           << "            <arg direction='in' type='u' name='uid'/>"
                           << "        </method>"
+                          << "        <method name='LogForward'>"
+                          << "            <arg direction='in' type='b' name='enable'/>"
+                          << "        </method>"
                           << RequiresQueue::IntrospectionMethods("UserInputQueueGetTypeGroup",
                                                                  "UserInputQueueFetch",
                                                                  "UserInputQueueCheck",
@@ -407,6 +459,7 @@ public:
                           << "        <property type='s' name='session_name' access='read'/>"
                           << "        <property type='u' name='backend_pid' access='read'/>"
                           << "        <property type='b' name='restrict_log_access' access='readwrite'/>"
+                          << "        <property type='ao' name='log_forwards' access='read'/>"
                           << "        <property type='u' name='log_verbosity' access='readwrite'/>"
                           << "    </interface>"
                           << "</node>";
@@ -824,6 +877,43 @@ public:
                 LogInfo("Access revoked for UID " + std::to_string(uid));
                 return;
             }
+            else if ("LogForward" == method_name)
+            {
+                if (restrict_log_access)
+                {
+                    CheckOwnerAccess(sender);
+                }
+                else
+                {
+                    CheckACL(sender);
+                }
+
+                GLibUtils::checkParams(__func__, params, "(b)", 1);
+                bool enable = GLibUtils::ExtractValue<bool>(params, 0);
+                if (enable)
+                {
+                    log_proxies[sender].reset(
+                            new SessionLogProxy(DBusSignalSubscription::GetConnection(),
+                                                sender,
+                                                DBusObject::GetObjectPath()));
+                    LogInfo("Added log forwarding to " + sender);
+                }
+                else
+                {
+                    try
+                    {
+                        log_proxies.at(sender).reset();
+                        log_proxies.erase(sender);
+                    }
+                    catch(const std::exception& e)
+                    {
+                        LogCritical("logproxies.erase(" + sender + ") failed:" + std::string(e.what()));
+                    }
+                    LogInfo("Removed log forwarding from " + sender);
+                }
+                g_dbus_method_invocation_return_value(invoc, NULL);
+                return;
+            }
             else
             {
                 std::string errmsg = "No method named" + method_name + " is available";
@@ -1127,6 +1217,15 @@ public:
         {
             ret = g_variant_new_uint32 (backend_pid);
         }
+        else if ("log_forwards" == property_name)
+        {
+            std::vector<std::string> paths = {};
+            for (const auto& it : log_proxies)
+            {
+                paths.push_back(it.second->GetLogProxyPath());
+            }
+            ret = GLibUtils::GVariantFromVector(paths);
+        }
         else if ("log_verbosity" == property_name)
         {
             ret = g_variant_new_uint32 (GetLogLevel());
@@ -1313,6 +1412,7 @@ private:
     std::function<void()> remove_callback;
     DBusProxy *be_proxy;
     bool restrict_log_access;
+    SessionLogProxyList log_proxies= {};
     std::time_t session_created;
     std::string config_path;
     std::string config_name;

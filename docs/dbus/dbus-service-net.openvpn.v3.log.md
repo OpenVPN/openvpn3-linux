@@ -20,15 +20,32 @@ only the log service receives the Log signals.  This log service will also
 be automatically started when needed by the D-Bus daemon, if it is not
 already running.
 
-In either mode, `openvpn3-service-logger` targets `Log` signals only.
+In either mode, `openvpn3-service-logger` targets `Log` signals. For
+[`net.openvpn.v3.backend.be$PID`](docs/dbus/dbus-service-net.openvpn.v3.client.md)
+services, also StatusChange events are processed.
 
 The log service can either send Log events to a predefined log file (via
 `--log-file`), to syslog (via `--syslog`) or to the console (default).
+
+
+## Log forwarding
+
+When a process wants to receive Log and StatusChange events for a running VPN
+session, it can request those signals to be forwarded to itself by calling
+[`net.openvpn.v3.sessions.LogForward()`](dbus-service-net.openvpn.v3.sessions.md)
+with the `true` value.  This makes the session manager configure a log proxy
+proxy object in the `net.openvpn.v3.log` service which will proxy Log and
+StatusChange signals to the requester.  This forwarding is disabled by calling
+the same `LogForward()` method with the `false` value.
+
+
+## Runtime Configuration
 
 When running with `--service`, there are a few tweakable knobs which can
 be managed using the `openvpn3-admin log-service` command.  This command can
 only be used by the `root` and `openvpn` user accounts.
 
+# OpenVPN 3 Logger D-Bus objects
 
 D-Bus destination: `net.openvpn.v3.log` - Object path: `/net/openvpn/v3/log`
 ----------------------------------------------------------------------------

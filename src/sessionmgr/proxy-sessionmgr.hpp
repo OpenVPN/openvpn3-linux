@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017 - 2019  OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017 - 2019  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2022  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2022  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -421,6 +421,23 @@ public:
         {
             THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
                                 "AccessRevoke() call failed");
+        }
+        g_variant_unref(res);
+    }
+
+
+    /**
+     *  Enable/Disable the LogEvent forwarding from the client backend
+     *
+     * @param enable  bool value to enable or disable the forwarding
+     */
+    void LogForward(bool enable)
+    {
+        GVariant *res = Call("LogForward", g_variant_new("(b)", enable), false);
+        if (nullptr == res)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
+                                "LogForward() call failed");
         }
         g_variant_unref(res);
     }
