@@ -130,6 +130,13 @@ struct LogEvent
     }
 
 
+    void RemoveToken()
+    {
+        format = Format::NORMAL;
+        session_token.clear();
+    }
+
+
     static const std::string GetIntrospection(const std::string& name,
                                               bool with_session_token = false)
     {
