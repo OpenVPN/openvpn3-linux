@@ -33,9 +33,7 @@
 #include "dbus/core.hpp"
 #include "client/statusevent.hpp"
 #include "common/utils.hpp"
-#include "log/proxy-log.hpp"
 #include "log/dbus-logfwd.hpp"
-#include "sessionmgr/proxy-sessionmgr.hpp"
 
 using namespace openvpn;
 
@@ -44,11 +42,10 @@ class LogFwdSubscription : public LogForwardBase<LogFwdSubscription>
 {
 public:
     LogFwdSubscription(GMainLoop* mainloop,
-                       GDBusConnection* dbc,
-                       const std::string& target,
+                       DBus& dbc,
                        const std::string& path,
                        const std::string& interf = "")
-        : LogForwardBase(dbc, target, interf, path),
+        : LogForwardBase(dbc, interf, path),
           main_loop(mainloop)
     {
     }
@@ -64,25 +61,20 @@ protected:
                 << ", path=" << obj_path << "} : " << logev << std::endl;
     }
 
-    void ProcessSignal(const std::string sender_name,
-                                   const std::string obj_path,
-                                   const std::string interface_name,
-                                   const std::string signal_name,
-                                   GVariant *parameters) final
+    void StatusChangeEvent(const std::string sender_name,
+                           const std::string interface_name,
+                           const std::string obj_path,
+                           const StatusEvent& status) final
     {
-        if ("StatusChange" == signal_name)
-        {
-            StatusEvent status(parameters);
-            std::cout << " StatusChange{sender=" << sender_name
-                    << ", interface=" << interface_name
-                    << ", path=" << obj_path << "} : " << status << std::endl;
+        std::cout << " StatusChange{sender=" << sender_name
+                << ", interface=" << interface_name
+                << ", path=" << obj_path << "} : " << status << std::endl;
 
-            if (status.Check(StatusMajor::CONNECTION, StatusMinor::CONN_DISCONNECTED))
+        if (status.Check(StatusMajor::CONNECTION, StatusMinor::CONN_DISCONNECTED))
+        {
+            if (main_loop)
             {
-                if (main_loop)
-                {
-                    g_main_loop_quit(main_loop);
-                }
+                g_main_loop_quit(main_loop);
             }
         }
     }
@@ -139,17 +131,19 @@ int main(int argc, char **argv)
     g_unix_signal_add(SIGTERM, stop_handler, main_loop);
 
     std::cout << "Attaching to session path: " << session_path << std::endl;
-    auto logsub = LogFwdSubscription::create(main_loop,
-                                             dbus.GetConnection(),
-                                             dbus.GetUniqueBusName(),
-                                             session_path);
-
-    std::cout << "Log proxy path: " << logsub->GetLogProxyPath() << std::endl;
-    std::cout << "  Session path: " << logsub->GetSessionPath() << std::endl;
-    std::cout << "        Target: " << logsub->GetLogTarget() << std::endl;
-    std::cout << "     Log level: " << std::to_string(logsub->GetLogLevel()) << std::endl;
-
-    g_main_loop_run(main_loop);
+    try
+    {
+        auto logsub = LogFwdSubscription::create(main_loop, dbus, session_path);
+        std::cout << "Log level: " << std::to_string(logsub->GetLogLevel()) << std::endl;
+        std::cout << "D-Bus bus name: " << dbus.GetUniqueBusName() << std::endl;
+        g_main_loop_run(main_loop);
+    }
+    catch (const DBusProxyAccessDeniedException& e)
+    {
+        std::cerr << "** ERROR ** " << e.what() << std::endl;
+        std::cerr << "            " << e.getDebug() << std::endl;
+        return 1;
+    }
 
     return 0;
 }

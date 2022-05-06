@@ -31,7 +31,7 @@
 #include <string>
 
 #include "dbus-log.hpp"
-#include "proxy-log.hpp"
+#include "sessionmgr/proxy-sessionmgr.hpp"
 
 template <typename C>
 using LogFwdProcessor = std::shared_ptr<C>;
@@ -52,7 +52,6 @@ using LogFwdProcessor = std::shared_ptr<C>;
  */
 template<typename C>
 class LogForwardBase : public LogConsumer,
-                       public LogServiceProxy,
                        public std::enable_shared_from_this<LogForwardBase<C>>
 {
 public:
@@ -74,65 +73,113 @@ public:
 
 
     /**
-     *  Retrieves the D-Bus path to the log proxy object in the
-     *  net.openpvn.v3.log service.
-     */
-    const std::string GetLogProxyPath() const
-    {
-        return logproxy->GetPath();
-    }
-
-    /**
-     *  Retrieves the D-Bus path to the VPN session D-Bus object this log
-     *  forwarding/proxy object is tied to.
-     */
-    const std::string GetSessionPath() const
-    {
-        return logproxy->GetSessionPath();
-    }
-
-
-    /**
      *  Retrieve the log level of the log events being forwarded.
      */
     const unsigned int GetLogLevel() const
     {
-        return logproxy->GetLogLevel();
+        return session_proxy->GetUIntProperty("log_verbosity");
     }
 
 
     /**
-     *  Retrieve the D-Bus unique bus name of the client owning this
-     *  log forward/proxy object
+     *  The LogForwardBase also listens for StatusChange events.  These are
+     *  already parsed to set some internal statuses before it can be handled
+     *  by an implementation.  Once that has happened, this method is called
+     *  as a callback function with the parsed status.
+     *
+     *  The default implementation in LogForwardBase is to let them pass
+     *  without any processing.
+     *
+     * @param sender_name
+     * @param obj_path
+     * @param interface_name
+     * @param status           StatusEvent object of the event received
      */
-    const std::string GetLogTarget() const
+    virtual void StatusChangeEvent(const std::string sender_name,
+                                   const std::string interface_name,
+                                   const std::string obj_path,
+                                   const StatusEvent& status)
     {
-        return logproxy->GetLogTarget();
+    }
+
+
+    /**
+     *  All signals which is sent to the D-Bus client, with StatusChange and
+     *  Log events as the exceptions  will be passed on to this method.  The
+     *  default is to let them pass without any processing.
+     *
+     *  This method replaces the ProcessSignal() method otherwise used in
+     *  LogConsumer.  This is not used here, as the LogForwardBase captuers
+     *  this processing before this method is called.
+     *
+     * @param sender_name
+     * @param obj_path
+     * @param interface_name
+     * @param signal_name
+     * @param parameters
+     */
+    virtual void SignalHandler(const std::string sender_name,
+                               const std::string obj_path,
+                               const std::string interface_name,
+                               const std::string signal_name,
+                               GVariant *parameters)
+    {
     }
 
 
 protected:
-    LogForwardBase(GDBusConnection *dbusc,
-                   const std::string& target,
+    LogForwardBase(DBus& dbusc,
                    const std::string& interf,
                    const std::string& session_path)
-       : LogConsumer(dbusc, interf, session_path, ""),
-         LogServiceProxy(dbusc)
+       : LogConsumer(dbusc.GetConnection(), interf, session_path, "")
     {
-        logproxy = LogServiceProxy::ProxyLogEvents(target,
-                                                   session_path);
         Subscribe(session_path, "StatusChange");
+        session_proxy.reset(new OpenVPN3SessionProxy(dbusc, session_path));
+        session_proxy->LogForward(true);
     }
 
     ~LogForwardBase()
     {
-        if (logproxy)
+        if (session_proxy && !session_closed)
         {
-            logproxy->Remove();
+            try
+            {
+                session_proxy->LogForward(false);
+            }
+            catch (const DBusException&)
+            {
+                // Ignore errors related to disabling the log forwarding
+                // here.  The session might already be closed
+            }
         }
     }
 
 
 private:
-    LogProxy::Ptr logproxy;
+    OpenVPN3SessionProxy::Ptr session_proxy = {};
+    bool session_closed = false;
+
+
+    void ProcessSignal(const std::string sender_name,
+                       const std::string obj_path,
+                       const std::string interface_name,
+                       const std::string signal_name,
+                       GVariant *parameters) override final
+    {
+        if ("StatusChange" == signal_name)
+        {
+            StatusEvent status(parameters);
+            if (status.Check(StatusMajor::CONNECTION, StatusMinor::CONN_DISCONNECTED))
+            {
+                session_closed = true;
+            }
+            StatusChangeEvent(sender_name, obj_path, interface_name, status);
+        }
+        else
+        {
+            SignalHandler(sender_name, obj_path, interface_name, signal_name,
+                          parameters);
+        }
+
+    }
 };
