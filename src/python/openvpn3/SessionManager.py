@@ -122,7 +122,22 @@ class Session(object):
                                           dbus_interface="org.freedesktop.DBus.Properties")
 
         self.__session_path = objpath
+        self.__log_callback = None
+        self.__status_callback = None
         self.__deleted = False
+
+
+    def __del__(self):
+        try:
+            if self.__log_callback is not None:
+                self.LogCallback(None)
+            if self.__status_callback is not None:
+                self.StatusChangeCallback(None)
+        except ImportError:
+            # This happens if Python is already shutting down
+            # no chance to properly clean up at this point.
+            pass
+
 
     ##
     #  Internal decorator, checkes whether the object has been deleted or not.
@@ -278,9 +293,24 @@ class Session(object):
     #  The callback function needs to accept 3 arguments:
     #     (integer) LogGroup, (integer) LogCategory, (string) message
     #
+    #
     def LogCallback(self, cbfnc):
-        self.__session_intf.connect_to_signal('Log', cbfnc)
-        self.SetProperty('receive_log_events', True)
+        if cbfnc is not None:
+            self.__log_callback = cbfnc
+            self.__dbuscon.add_signal_receiver(cbfnc,
+                                               signal_name='Log',
+                                               dbus_interface='net.openvpn.v3.backends',
+                                               bus_name='net.openvpn.v3.log',
+                                               path=self.__session_path)
+            self.__session_intf.LogForward(True)
+        else:
+            try:
+                self.__session_intf.LogForward(False)
+            except dbus.exceptions.DBusException:
+                # If this fails, the session is typically already removed
+                pass
+            self.__dbuscon.remove_signal_receiver(self.__log_callback, 'Log')
+            self.__log_callback = None
 
 
     ##
@@ -291,7 +321,18 @@ class Session(object):
     #     (integer) StatusMajor, (integer) StatusMinor, (string) message
     #
     def StatusChangeCallback(self, cbfnc):
-        self.__session_intf.connect_to_signal('StatusChange', cbfnc)
+        if cbfnc is not None:
+            self.__status_callback = cbfnc
+            self.__dbuscon.add_signal_receiver(cbfnc,
+                                               signal_name='StatusChange',
+                                               dbus_interface='net.openvpn.v3.backends',
+                                               bus_name='net.openvpn.v3.log',
+                                               path=self.__session_path)
+        else:
+            self.__dbuscon.remove_signal_receiver(self.__status_callback,
+                                                  'StatusChange')
+            self.__status_callback = None
+
 
 
     ##
