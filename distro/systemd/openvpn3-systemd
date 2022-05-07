@@ -225,6 +225,10 @@ class OpenVPN3systemd(object):
                 try:
                     print("Disconnecting")
                     self.sd_notify(1, "STATUS=Stopping\nSTOPPING=1")
+                    try:
+                        self.__session.LogCallback(None)
+                    except dbus.exceptions.DBusException:
+                        pass
                     self.__session.Disconnect()
                 except dbus.exceptions.DBusException as e:
                     if str(e).split(':')[0] == 'org.freedesktop.DBus.Error.UnknownMethod':
@@ -247,6 +251,10 @@ class OpenVPN3systemd(object):
                 print("Disconnecting (sigint)")
                 self.sd_notify(1, "STATUS=Stopping (SIGINT)\nSTOPPING=1")
                 done = True
+                try:
+                    self.__session.LogCallback(None)
+                except dbus.exceptions.DBusException:
+                    pass
                 try:
                     self.__session.Disconnect()
                 except dbus.exceptions.DBusException as excep:
