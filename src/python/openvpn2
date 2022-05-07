@@ -180,6 +180,12 @@ def fetch_logs_loop(sessobj, verb):
     except KeyboardInterrupt:
         print("\nDisconnecting...")
         try:
+            sessobj.LogCallback(None)
+        except Exception:
+            # If anything happens in this call, ignore it.
+            # Hopefully it already gets cleaned up elsewhere
+            pass
+        try:
             print(sessobj.GetFormattedStatistics())
             sessobj.Disconnect()
         except dbus.exceptions.DBusException as e:
