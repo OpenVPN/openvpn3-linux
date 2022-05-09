@@ -514,11 +514,11 @@ dnl  This path is where the OpenVPN 3 D-Bus policy will be installed.
 dnl  This policy controls which users can do which operations on
 dnl  the various OpenVPN 3 D-Bus enabled services.
 dnl
-AC_ARG_VAR([DBUS_SYSTEM_POLICY_DIR], [D-Bus policy configuration (default: ${sysconfdir}/dbus-1/system.d)])
+AC_ARG_VAR([DBUS_SYSTEM_POLICY_DIR], [D-Bus policy configuration (default: ${datadir}/dbus-1/system.d)])
 if test -n "${DBUS_SYSTEM_POLICY_DIR}"; then
    dbus_system_policydir="${DBUS_SYSTEM_POLICY_DIR}"
 else
-   dbus_system_policydir="${sysconfdir}/dbus-1/system.d"
+   dbus_system_policydir="${datadir}/dbus-1/system.d"
 fi
 AC_SUBST([dbus_system_policydir])
 
