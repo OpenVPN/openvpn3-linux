@@ -60,6 +60,7 @@ public:
                                     "(netcfg-cli-test)",
                                     nullptr);
         signal->SetLogLevel(6);
+        signal->EnableBroadcast(true);
     }
 #endif
 
