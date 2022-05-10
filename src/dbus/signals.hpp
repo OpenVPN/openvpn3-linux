@@ -377,6 +377,12 @@ public:
     }
 
 
+    void SendTarget(const std::string& target, const std::string& signame,
+                    GVariant *params) const
+    {
+        Send(target, interface, object_path, signame, params);
+    }
+
     void Send(const std::string signal_name) const
     {
         Send("", interface, object_path, signal_name, NULL);
