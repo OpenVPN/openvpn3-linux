@@ -162,7 +162,8 @@ void LogSender::ProxyStatusChange(const StatusEvent& status, const std::string& 
 }
 
 
-void LogSender::Log(const LogEvent& logev, bool duplicate_check)
+void LogSender::Log(const LogEvent& logev, bool duplicate_check,
+                    const std::string& target)
 {
     // Don't log an empty messages or if log level filtering allows it
     // The filtering is done against the LogCategory of the message
@@ -185,7 +186,8 @@ void LogSender::Log(const LogEvent& logev, bool duplicate_check)
     {
         logwr->Write(logev);
     }
-    Send("Log", logev.GetGVariantTuple());
+
+    SendTarget(target, "Log", logev.GetGVariantTuple());
 }
 
 
