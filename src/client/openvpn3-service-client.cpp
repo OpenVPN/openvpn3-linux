@@ -208,6 +208,7 @@ public:
     void SetSignalBroadcast(bool brdc)
     {
         signal_broadcast = brdc;
+        signal.EnableBroadcast(signal_broadcast);
     }
 
 
@@ -292,12 +293,7 @@ public:
                                         "Backend service is already registered");
                 }
 
-                if (!signal_broadcast)
-                {
-                    signal.AddTargetBusName(sender); // Target signals to the session mgr
-                    signal.AddTargetBusName(GetUniqueBusID(OpenVPN3DBus_name_log)); // Target log events to log service
-                }
-                else
+                if (signal_broadcast)
                 {
                     signal.LogWarn("All signals are broadcasted to all users");
                 }
@@ -1527,6 +1523,7 @@ public:
         // Setup a signal object of the backend
         signal.reset(new BackendSignals(GetConnection(), LogGroup::BACKENDPROC,
                                         session_token, logwr));
+        signal->EnableBroadcast(signal_broadcast);
         signal->SetLogLevel(default_log_level);
         signal->LogVerb2("Backend client process started as pid " + std::to_string(start_pid)
                          + " daemonized as pid " + std::to_string(getpid()));

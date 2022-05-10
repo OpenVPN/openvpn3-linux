@@ -34,6 +34,7 @@
 
 
 class BackendSignals : public LogSender,
+                       public DBusConnectionCreds,
                        public RC<thread_unsafe_refcount>
 {
 public:
@@ -42,9 +43,17 @@ public:
                    std::string session_token, LogWriter *logwr)
         : LogSender(conn, lgroup, OpenVPN3DBus_interf_backends,
                     OpenVPN3DBus_rootp_backends_session, logwr),
+          DBusConnectionCreds(conn),
           session_token(session_token)
     {
         SetLogLevel(default_log_level);
+        configure_signal_targets();
+    }
+
+    void EnableBroadcast(bool brdcst) noexcept
+    {
+        broadcast = brdcst;
+        configure_signal_targets();
     }
 
     const std::string GetSessionPath() const
@@ -68,10 +77,10 @@ public:
      *
      * @param logev  LogEvent object containing the log message to log.
      */
-    void Log(const LogEvent& logev, bool duplicate_check = false) override
+    void Log(const LogEvent& logev, bool duplicate_check = false, const std::string& target = "") final
     {
         LogEvent l(logev, session_token);
-        LogSender::Log(l, duplicate_check);
+        LogSender::Log(l, duplicate_check, logger_busname);
     }
 
 
@@ -106,7 +115,8 @@ public:
         status.major = major;
         status.minor = minor;
         status.message = msg;
-        Send("StatusChange", status.GetGVariantTuple());
+        SendTarget(sessionmgr_busname, "StatusChange", status.GetGVariantTuple());
+        SendTarget(logger_busname, "StatusChange", status.GetGVariantTuple());
     }
 
     /**
@@ -133,7 +143,7 @@ public:
                       std::string msg)
     {
         GVariant *params = g_variant_new("(uus)", (guint) att_type, (guint) att_group, msg.c_str());
-        Send("AttentionRequired", params);
+        SendTarget(sessionmgr_busname, "AttentionRequired", params);
     }
 
     /**
@@ -154,7 +164,26 @@ public:
 
 private:
     const unsigned int default_log_level = 6; // LogCategory::DEBUG
+    bool broadcast = false;
     std::string session_token;
+    std::string sessionmgr_busname = {};
+    std::string logger_busname = {};
     StatusEvent status;
     std::unique_ptr<std::thread> delayed_shutdown;
+
+
+    void configure_signal_targets()
+    {
+        if (!broadcast)
+        {
+            sessionmgr_busname = GetUniqueBusID(OpenVPN3DBus_name_sessions);
+            logger_busname = GetUniqueBusID(OpenVPN3DBus_name_log);
+        }
+        else
+        {
+            sessionmgr_busname = {};
+            logger_busname = {};
+        }
+
+    }
 };
