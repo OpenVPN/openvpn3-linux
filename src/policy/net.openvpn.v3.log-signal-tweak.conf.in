@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE busconfig PUBLIC
+ "-//freedesktop//DTD D-BUS Bus Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
+<busconfig>
+  <policy at_console="false">
+    <!--
+          This is an additional OpenVPN 3 Linux D-Bus policy
+          needed on most distributions for the time being.
+
+          For some reason on these distribution versions
+          the 'at_console' policy is needed as the default
+          context does not properly handle receive_*
+          rules.
+
+          This is needed to allow log forwarding which are
+          requested via net.openvpn.v3.sessions but
+          delivered by net.openvpn.v3.log to another
+          log listener, typically without a well-known
+          busname.
+
+          This tweak is kept in a separate policy file
+          as the logging implementation need to be further
+          improved to avoid this policy requirement.
+    -->
+    <allow receive_sender="net.openvpn.v3.log"
+           receive_interface="net.openvpn.v3.backends"
+           receive_type="signal"
+           receive_member="Log"/>
+    <allow receive_sender="net.openvpn.v3.log"
+           receive_interface="net.openvpn.v3.backends"
+           receive_type="signal"
+           receive_member="StatusChange"/>
+  </policy>
+</busconfig>

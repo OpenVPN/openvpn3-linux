@@ -37,6 +37,7 @@ DBUS_POLICY_FILES = \
 	net.openvpn.v3.client.conf \
 	net.openvpn.v3.configuration.conf \
 	net.openvpn.v3.log.conf \
+	net.openvpn.v3.log-signal-tweak.conf \
 	net.openvpn.v3.netcfg.conf \
 	net.openvpn.v3.sessions.conf
 
