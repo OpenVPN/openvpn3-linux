@@ -21,8 +21,9 @@
            send_interface="org.freedesktop.DBus.Peer"
            send_type="method_call"
            send_member="Ping"/>
+  </policy>
 
-
+  <policy context="mandatory">
     <!--
           Needed to allow log forwarding which are
           requested via net.openvpn.v3.sessions but
