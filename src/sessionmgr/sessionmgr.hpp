@@ -1108,8 +1108,14 @@ public:
         }
         else if ("last_log" == property_name)
         {
-            // FIXME: This should be pulled from the openvpn-service-client
-            ret = g_variant_new_string("");
+            try
+            {
+                ret = be_proxy->GetProperty("last_log_line");
+            }
+            catch (DBusException&)
+            {
+                ret = GLibUtils::CreateEmptyBuilderFromType("a{sv}");
+            }
         }
         else if ("session_created" == property_name)
         {
