@@ -25,11 +25,13 @@
  */
 
 #pragma once
+
+
 #include <vector>
 #include <string>
 #include <type_traits>
 
-#include "dbus/exceptions.hpp"
+#include "exceptions.hpp"
 
 
 namespace GLibUtils
@@ -275,6 +277,28 @@ namespace GLibUtils
         GVariantBuilder *bld = GVariantBuilderFromVector(input);
         return wrapInTuple(bld);
     }
+
+
+    /**
+     *  Creates an empty variant object based on more complex types.
+     *  The implementation of this method is very basic and simple, without
+     *  any type checking, except of what @g_variant_builder_new() provides.
+     *
+     *  This function is useful in @callback_get_property() methods when
+     *  an empty dictionary or array needs to be returned.
+     *
+     * @param type  String containing the D-Bus data type to return
+     * @return Returns a new GVariant based object with the given data type but
+     *         without any values.
+     */
+    inline GVariant* CreateEmptyBuilderFromType(const char* type)
+    {
+        GVariantBuilder* b = g_variant_builder_new(G_VARIANT_TYPE(type));
+        GVariant* ret = g_variant_builder_end(b);
+        g_variant_builder_unref(b);
+        return ret;
+    }
+
 
     /**
      *  Validate the data type provided in a GVariant object against
