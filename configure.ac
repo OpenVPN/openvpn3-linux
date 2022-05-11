@@ -421,20 +421,43 @@ fi
 AC_SUBST([systemd_unitdir])
 
 dnl
-dnl  Default DNS resolver
+dnl  Default DNS resolver and Debian/Ubuntu workaround D-Bus policy
+dnl  The D-Bus policy workaround detection only works if /etc/os-release is available
 dnl
+if test -r /etc/os-release; then
+    AC_MSG_NOTICE([Found /etc/os-release ... parsing it])
+    SAVED_VERSION="${VERSION}"
+    . /etc/os-release
+    AC_MSG_NOTICE([Operating system: ${NAME} ${VERSION}])
+else
+    AC_MSG_NOTICE([No /etc/os-release found ... distro based auto-detection disabled])
+fi
+distro_major_ver="`echo ${VERSION_ID} | cut -d. -f1`"
+
+dnl D-Bus workaround policy detection
+AC_MSG_CHECKING([D-Bus at_console policy workaround needed])
+dbus_policy_workaround="no"
+if test "${ID}" == "ubuntu"; then
+    if test ${distro_major_ver} -ge 20; then
+       dbus_policy_workaround="yes"
+    fi
+elif test "${ID}" == "debian"; then
+    if test ${VERSION_ID} -eq 10 || test ${VERSION_ID} -eq 11; then
+       dbus_policy_workaround="yes"
+    fi
+fi
+AC_MSG_RESULT([${dbus_policy_workaround}])
+AM_CONDITIONAL([NEED_DBUS_WORKAROUND], [test "${dbus_policy_workaround}" = "yes"])
+
+
+dnl  default DNS resolver detection
 AC_ARG_VAR([DEFAULT_DNS_RESOLVER], [Default DNS resolver configuration (default: --resolv-conf /etc/resolv.conf)])
 if test -n "${DEFAULT_DNS_RESOLVER}"; then
    dns_resolver_config="${DEFAULT_DNS_RESOLVER}"
 else
    if test -r /etc/os-release; then
-      AC_MSG_NOTICE([Found /etc/os-release ... parsing it])
-      SAVED_VERSION="${VERSION}"
-      . /etc/os-release
-      AC_MSG_NOTICE([Operating system: ${NAME} ${VERSION}])
       if test "${ID}" == "ubuntu"; then
-         major_ver="`echo ${VERSION_ID} | cut -d. -f1`"
-         if test ${major_ver} -ge 20; then
+         if test ${distro_major_ver} -ge 20; then
              dns_resolver_config="--systemd-resolved"
          fi
       elif test "${ID}" == "fedora"; then

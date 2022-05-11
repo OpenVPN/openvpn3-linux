@@ -48,9 +48,13 @@ POLKIT_PKLA_FILES = \
 
 EXTRA_DIST = $(foreach var,$(DBUS_POLICY_FILES),$(var).in) \
 	$(foreach var,$(POLKIT_POLICY_FILES), $(var).in) \
-	$(foreach var,$(POLKIT_PKLA_FILES), $(var).in)
+	$(foreach var,$(POLKIT_PKLA_FILES), $(var).in) \
+	net.openvpn.v3.log-debian-tweaks.conf
 
 dbus_system_policy_DATA = $(DBUS_POLICY_FILES)
+if NEED_DBUS_WORKAROUND
+dbus_system_policy_DATA += net.openvpn.v3.log-debian-tweaks.conf
+endif
 
 polkit_rules_DATA = $(POLKIT_POLICY_FILES)
 
