@@ -142,6 +142,7 @@ public:
                           << "        <property name='log_level' type='u' access='readwrite'/>"
                           << "        <property name='session_path' type='s' access='read'/>"
                           << "        <property name='session_name' type='s' access='read'/>"
+                          << "        <property name='last_log_line' type='a{sv}' access='read'/>"
                           << signal.GetStatusChangeIntrospection()
                           << signal.GetLogIntrospection()
                           << "        <signal name='AttentionRequired'>"
@@ -692,6 +693,16 @@ public:
             else if ("session_name" == property_name)
             {
                 return g_variant_new_string((vpnclient ? vpnclient->tun_builder_get_session_name().c_str() : ""));
+            }
+            else if ("last_log_line" == property_name)
+            {
+                LogEvent l = signal.GetLastLogEvent();
+                if (!l.empty())
+                {
+                    l.RemoveToken();
+                    return l.GetGVariantDict();
+                }
+                return GLibUtils::CreateEmptyBuilderFromType("a{sv}");
             }
         }
         catch (DBusCredentialsException& excp)
