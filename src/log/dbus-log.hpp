@@ -137,6 +137,7 @@ public:
     virtual void LogError(std::string msg);
     virtual void LogCritical(std::string msg);
     virtual void LogFATAL(std::string msg);
+    LogEvent GetLastLogEvent() const;
 
     LogWriter * GetLogWriter();
 
@@ -145,7 +146,7 @@ protected:
     LogGroup log_group;
 
 private:
-    std::unique_ptr<LogEvent> last_logevent;
+    LogEvent last_logevent;
 };
 
 
