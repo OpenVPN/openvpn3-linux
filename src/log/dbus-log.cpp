@@ -174,13 +174,13 @@ void LogSender::Log(const LogEvent& logev, bool duplicate_check,
 
     if (duplicate_check)
     {
-        if (last_logevent && (logev == *last_logevent))
+        if (!last_logevent.empty() && (logev == last_logevent))
         {
             // This contains the same log message as the previous one
             return;
         }
-        last_logevent.reset(new LogEvent(logev));
     }
+    last_logevent = logev;
 
     if( logwr )
     {
@@ -239,6 +239,12 @@ void LogSender::LogFATAL(std::string msg)
     // Fatal log messages will always be sent
     Log(LogEvent(log_group, LogCategory::FATAL, msg));
     // FIXME: throw something here, to start shutdown procedures
+}
+
+
+LogEvent LogSender::GetLastLogEvent() const
+{
+    return LogEvent(last_logevent);
 }
 
 
