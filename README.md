@@ -264,11 +264,11 @@ How to build openvpn3-linux locally
 The primary Linux distributions targeted and regularly tested are:
 
   - CentOS 7 and 8
-  - Debian 9 and 10
-  - Fedora 31, 32 and Rawhide
+  - Debian 10 and 11
+  - Fedora 35, 36 and Rawhide
   - Red Hat Enterprise Linux (RHEL) 7 and 8
   - Scientific Linux 7
-  - Ubuntu 18.04 and 20.04
+  - Ubuntu 18.04, 20.04 and 22.04
 
 This list is not an exclusive list, and it will most likely work
 on all other distributions with recent enough dependencies.
@@ -421,7 +421,7 @@ First install the package dependencies needed to run the build.
 
 - Generic build requirements:
 
-      # apt-get install build-essential git pkg-config autoconf autoconf-archive libglib2.0-dev libjsoncpp-dev uuid-dev liblz4-dev libcap-ng-dev libxml2-utils python3-minimal python3-dbus python3-docutils python3-jinja2 libxml2-utils libtinyxml2-dev policykit-1
+      # apt-get install build-essential git pkg-config autoconf autoconf-archive libglib2.0-dev libjsoncpp-dev uuid-dev liblz4-dev libcap-ng-dev libxml2-utils python3-minimal python3-dbus python3-docutils python3-jinja2 libxml2-utils libtinyxml2-dev policykit-1 libsystemd-dev python3-systemd
 
 - Dependencies to build with DCO support:
 
@@ -440,7 +440,7 @@ First install the package dependencies needed to run the build.
 
 - Generic build requirements:
 
-      # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2 tinyxml2-devel python3-dbus python3-gobject python3-pyOpenSSL python3-jinja2 python3-docutils bzip2 polkit
+      # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2 tinyxml2-devel python3-dbus python3-gobject python3-pyOpenSSL python3-jinja2 python3-docutils bzip2 polkit systemd-devel python3-systemd
 
 - Dependencies to build with DCO support:
 
@@ -481,7 +481,7 @@ First install the package dependencies needed to run the build.
 
 - Generic build requirements (only RHEL 7):
 
-      # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel lz4-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2 python-docutils python36 python36-dbus python36-gobject python36-pyOpenSSL polkit
+      # yum install gcc-c++ git autoconf autoconf-archive automake make pkgconfig glib2-devel jsoncpp-devel libuuid-devel lz4-devel libcap-ng-devel selinux-policy-devel lz4-devel zlib-devel libxml2 python-docutils python36 python36-dbus python36-gobject python36-pyOpenSSL polkit systemd-devel
 
   For RHEL 8/CentOS 8 see the Fedora package lists, including dependencies for DCO support.
 
