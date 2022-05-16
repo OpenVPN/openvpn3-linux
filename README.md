@@ -603,7 +603,7 @@ a single VPN session).  This is done via D-Bus.  But on systems with
 SELinux, the D-Bus daemon is not allowed to pass file descriptors related
 to `/dev/net/tun`.
 
-The openvpn3-linux project ships atwo SELinux policy modules, which will be
+The openvpn3-linux project ships two SELinux policy modules, which will be
 installed in `/usr/share/selinux/packages` **if** the `./configure` script can
 locate the SELinux policy development files.  On RHEL/Fedora the development
 files are located under `/usr/share/selinux/devel` and provided by the
@@ -720,7 +720,7 @@ Contribution
 
 * Testing
   This code is quite new, but has been used a lot in various setups.
-  Please reach out on FreeNode @ #openvpn for help and discussing issues
+  Please reach out on libera.chat @ #openvpn for help and discussing issues
   you encounter, or subscribe to and ask on the
   openvpn-users@lists.sourceforge.net mailing list.
 
