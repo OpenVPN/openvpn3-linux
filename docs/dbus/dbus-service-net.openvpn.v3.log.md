@@ -43,7 +43,11 @@ the same `LogForward()` method with the `false` value.
 
 When running with `--service`, there are a few tweakable knobs which can
 be managed using the `openvpn3-admin log-service` command.  This command can
-only be used by the `root` and `openvpn` user accounts.
+only be used by the `root` and `openvpn` user accounts.  If
+`openvpn3-service-logger` is started with the `--state-dir` option, these
+runtime settings are preserved and will be reloaded automatically from the
+given directory.
+
 
 # OpenVPN 3 Logger D-Bus objects
 
@@ -120,7 +124,7 @@ avoided to have too many idling subscriptions.
 
 Retrieve a list of all subscriptions the log service is attached to.  The
 entries listed here are services which have used the `Attach` method in this
-service.  Services calling the `Dettach` method will be unlisted.
+service.  Services calling the `Detach` method will be unlisted.
 
 #### Arguments
 | Direction | Name        | Type        | Description                                                                |
