@@ -128,13 +128,25 @@ For more information, see the [`openvpn3(1)`](docs/man/openvpn3.1.rst),
 Auto-loading/starting VPN tunnels
 ---------------------------------
 
-The `openvpn3-autoload` utility is used to pre-load configuration profiles
-and possibly also start tunnels.  This requires a little bit of preparations.
-When starting it via `systemctl start openvpn3-autoload` it will look for
-configuration profiles found inside `/etc/openvpn3/autoload` which has
-a corresponding `.autoload` configuration present in addition.  This tells
-both the Configuration Manager and Session Manager how to process the
-VPN configuration profile.
+OpenVPN 3 Linux ships with a [`openvpn3-session@.service`](docs/man/openvpn3-systemd.8.rst)
+service unit file to manage VPN sessions via systemd.  This approach
+requires configuration profiles to be imported as a persistent
+configuration first.  See the
+[`openvpn3-systemd(8)`](docs/man/openvpn3-systemd.8.rst) man page for
+details.
+
+**NOTE**:
+      The `openvpn3-session@.service` unit file approach is not
+      available on Red Hat Enterprise Linux 7 and clones, due to
+      no available `python3-systemd` package.
+
+Alternatively the older `openvpn3-autoload` utility can be used to pre-load
+configuration profiles and possibly also start tunnels.  This requires a little
+bit of preparations.  When starting it via `systemctl start openvpn3-autoload`
+it will look for configuration profiles found inside `/etc/openvpn3/autoload`
+which has a corresponding `.autoload` configuration present in addition.
+This tells both the Configuration Manager and Session Manager how to process
+the VPN configuration profile.
 
 For more details, look at the [`openvpn3-autoload(8)`](docs/man/openvpn3-autoload.8.rst) man-page.
 
