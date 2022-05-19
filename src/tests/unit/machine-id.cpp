@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2021         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2021         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2021 - 2022  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2021 - 2022  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -29,6 +29,9 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <uuid/uuid.h>
 #include <gtest/gtest.h>
 
@@ -157,10 +160,46 @@ TEST_F(MachineIDTest, get_system)
 TEST_F(MachineIDTest, get_systemd_api)
 {
 #if HAVE_SYSTEMD
+    MachineID::SourceType expect_src = MachineID::SourceType::SYSTEMD_API;
+    std::string note{};
+
+    if (0 == access("/etc/machine-id", R_OK))
+    {
+        struct stat s;
+        if (0 == stat("/etc/machine-id", &s))
+        {
+          if (1 > s.st_size)
+          {
+              expect_src = MachineID::SourceType::SYSTEM;
+              note = std::string("/etc/machine-id was empty, ")
+                   + "expecing SourceType::SYSTEM";
+          }
+        }
+        else
+        {
+              expect_src = MachineID::SourceType::SYSTEM;
+              note = std::string("/etc/machine-id was inaccessible, ")
+                   + "expecing SourceType::SYSTEM";
+        }
+    }
+    else
+    {
+        expect_src = MachineID::SourceType::SYSTEM;
+        note = std::string("/etc/machine-id was inaccessible, ")
+             + "expecing SourceType::SYSTEM";
+    }
+
     MachineID machid;
-    EXPECT_TRUE(machid.GetSource() == MachineID::SourceType::SYSTEMD_API);
+    EXPECT_TRUE(machid.GetSource() == expect_src);
+    if (!note.empty())
+    {
+        std::cout << "MachineIDTest::get_systemd_api: *NOTE* "
+                  << note << std::endl;
+    }
 #else
-    GTEST_SKIP() << "Needed systemd functions not available";
+  {
+      GTEST_SKIP() << "Needed systemd API not available or unsuable";
+  }
 #endif
 }
 
