@@ -35,6 +35,7 @@
 #include <openvpn/aws/awsroute.hpp>
 #include <openvpn/common/jsonfile.hpp>
 
+#include  "common/cmdargparser.hpp"
 #include "common/utils.hpp"
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
@@ -42,8 +43,7 @@
 #include "log/ansicolours.hpp"
 #include "log/proxy-log.hpp"
 #include "netcfg/netcfg-changeevent.hpp"
-#include "netcfg/proxy-netcfg.hpp"
-#include "netcfg/netcfg-changeevent.hpp"
+#include "netcfg/proxy-netcfg-mgr.hpp"
 
 
 using namespace openvpn;

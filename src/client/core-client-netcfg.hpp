@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2017      OpenVPN Inc. <sales@openvpn.net>
-//  Copyright (C) 2017      David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017 - 2022  OpenVPN Inc. <sales@openvpn.net>
+//  Copyright (C) 2017 - 2022  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -29,7 +29,8 @@
 
 #include <openvpn/tun/builder/base.hpp>
 
-#include "netcfg/proxy-netcfg.hpp"
+#include "netcfg/proxy-netcfg-device.hpp"
+#include "netcfg/proxy-netcfg-mgr.hpp"
 #include "backend-signals.hpp"
 
 using namespace openvpn;

@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2019         OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2019         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2019 - 2022  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2019 - 2022  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -24,13 +24,13 @@
  */
 
 #include "dbus/core.hpp"
-
+#include "dbus/connection-creds.hpp"
 #include "common/cmdargparser.hpp"
 #include "common/configfileparser.hpp"
 #include "common/lookup.hpp"
 #include "netcfg/netcfg-changeevent.hpp"
 #include "netcfg/netcfg-configfile.hpp"
-#include "netcfg/proxy-netcfg.hpp"
+#include "netcfg/proxy-netcfg-mgr.hpp"
 
 
 
@@ -42,7 +42,7 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
 
     try
     {
-        prx = new NetCfgProxy::Manager(dbuscon.GetConnection());
+        prx.reset(new NetCfgProxy::Manager(dbuscon.GetConnection()));
     }
     catch(const DBusException&)
     {

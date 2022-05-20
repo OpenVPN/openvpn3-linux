@@ -1,9 +1,9 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018         Arne Schwabe <arne@openvpn.net>
-//  Copyright (C) 2019         Lev Stipakov <lev@openvpn.net>
+//  Copyright (C) 2018 - 2022  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2022  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2022  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2019 - 2022  Lev Stipakov <lev@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -20,13 +20,14 @@
 //
 
 /**
- * @file   proxy-netcfg.hpp
+ * @file   proxy-netcfg-device.hpp
  *
- * @brief  Declaration of the D-Bus proxy for the
- *         net.openvpn.v3.netcfg service
+ * @brief  Declaration of the D-Bus proxy for the device objects
+ *         of the net.openvpn.v3.netcfg service
  */
 
 #pragma once
+#define OPENVPN3_NETCFGPRX_DEVICE
 
 #include <string>
 #include <vector>
@@ -35,51 +36,15 @@
 
 #include "dbus/core.hpp"
 #include "dbus/proxy.hpp"
-#include "netcfg-changeevent.hpp"
 #include "netcfg-device.hpp"
 
 using namespace openvpn;
 
 namespace NetCfgProxy
 {
-    class Device;
-
 #ifdef ENABLE_OVPNDCO
     class DCO;
 #endif
-
-    class Manager : public DBusProxy,
-                    public RC<thread_unsafe_refcount>
-    {
-    public:
-        typedef RCPtr<Manager> Ptr;
-
-        /**
-         *  Initialize the Network Configuration proxy for the
-         *  main management interface
-         *
-         * @param dbuscon  D-Bus connection to use for D-Bus calls
-         */
-        Manager(GDBusConnection *dbuscon);
-
-        const std::string GetConfigFile();
-
-        const std::string CreateVirtualInterface(const std::string& device_name);
-
-        Device* getVirtualInterface(const std::string & path);
-        std::vector<std::string> FetchInterfaceList();
-        bool ProtectSocket(int socket, const std::string& remote, bool ipv6, const std::string& devpath);
-        bool DcoAvailable();
-        void Cleanup();
-
-        void NotificationSubscribe(NetCfgChangeType filter_flags);
-        void NotificationUnsubscribe(const std::string& subscriber);
-        void NotificationUnsubscribe();
-        NetCfgSubscriptions::NetCfgNotifSubscriptions NotificationSubscriberList();
-    };
-
-
-
     /**
      * Class representing a IPv4 or IPv6 network
      */

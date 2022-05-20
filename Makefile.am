@@ -432,7 +432,8 @@ src_tests_dbus_netcfg_changeevent_selftest_SOURCES = \
 
 src_tests_dbus_netcfg_proxy_unit_SOURCES = \
 	src/tests/dbus/netcfg-proxy-unit.cpp \
-	src/netcfg/proxy-netcfg.cpp
+	src/netcfg/proxy-netcfg-device.cpp \
+	src/netcfg/proxy-netcfg-mgr.cpp
 nodist_src_tests_dbus_netcfg_proxy_unit_SOURCES = $(DCO_KEYCONFIG_PB_SOURCES)
 
 src_tests_dbus_netcfg_systemd_resolved_basic_SOURCES = \
@@ -492,7 +493,8 @@ src_tests_netcfg_clinetcfg_SOURCES = \
 	src/log/dbus-log.cpp \
 	src/log/dbus-log.hpp \
 	src/log/proxy-log.hpp \
-	src/netcfg/proxy-netcfg.cpp \
+	src/netcfg/proxy-netcfg-device.cpp \
+	src/netcfg/proxy-netcfg-mgr.cpp \
 	config-version.h
 nodist_src_tests_netcfg_clinetcfg_SOURCES = $(DCO_KEYCONFIG_PB_SOURCES)
 endif
@@ -569,7 +571,7 @@ src_ovpn3cli_openvpn3_admin_SOURCES = \
 	src/common/lookup.cpp \
 	src/common/lookup.hpp \
 	src/common/utils.cpp \
-	src/netcfg/proxy-netcfg.cpp
+	src/netcfg/proxy-netcfg-mgr.cpp
 nodist_src_ovpn3cli_openvpn3_admin_SOURCES=$(DCO_KEYCONFIG_PB_SOURCES)
 src_ovpn3cli_openvpn3_admin_CXXFLAGS=$(AM_CXXFLAGS) -DOVPN3CLI_OPENVPN3ADMIN
 if HAVE_TINYXML
@@ -602,8 +604,10 @@ src_client_openvpn3_service_client_SOURCES = \
 	src/log/dbus-log.cpp \
 	src/log/dbus-log.hpp \
 	src/log/proxy-log.hpp \
-	src/netcfg/proxy-netcfg.hpp \
-	src/netcfg/proxy-netcfg.cpp
+	src/netcfg/proxy-netcfg-device.hpp \
+	src/netcfg/proxy-netcfg-device.cpp \
+	src/netcfg/proxy-netcfg-mgr.hpp \
+	src/netcfg/proxy-netcfg-mgr.cpp
 nodist_src_client_openvpn3_service_client_SOURCES=$(DCO_KEYCONFIG_PB_SOURCES)
 
 #
@@ -655,8 +659,7 @@ src_sessionmgr_openvpn3_service_sessionmgr_SOURCES = \
 	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp \
-	src/log/dbus-log.cpp \
-	src/netcfg/proxy-netcfg.cpp
+	src/log/dbus-log.cpp
 nodist_src_sessionmgr_openvpn3_service_sessionmgr_SOURCES=$(DCO_KEYCONFIG_PB_SOURCES)
 
 
@@ -736,7 +739,7 @@ addons_aws_openvpn3_service_aws_SOURCES = \
     src/common/configfileparser.cpp \
     src/common/timestamp.cpp \
     src/netcfg/netcfg-changeevent.cpp \
-    src/netcfg/proxy-netcfg.cpp \
+    src/netcfg/proxy-netcfg-mgr.cpp \
     src/netcfg/netcfg-changetype.cpp \
     src/common/utils.cpp \
     src/log/dbus-log.cpp
