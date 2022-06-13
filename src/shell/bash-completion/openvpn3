@@ -37,10 +37,20 @@ _openvpn3_generic_completion()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
+    o3cmds=""
+    if [ "${cur:0:2}" != "--" -a "${cur:0:1}" != "-" ]; then
+       o3cmds="$($cmd shell-completion --list-commands)"
+    fi
+
     selopts=""
-    if [ $COMP_CWORD -eq 1 ]; then
+    echo "$o3cmds" | tr ' ' '\n' | grep -v "version" | grep -qE "^$cur$"
+    if [ $? -eq 0 ]; then
+       # All commands except 'version' takes at least one option.
+       # If the requested command is not "version", attach the '--' now
+       COMPREPLY=( "$first --")
+    elif [ $COMP_CWORD -eq 1 ]; then
         # The first argument is always an openvpn3 command
-        o3cmds="$($cmd shell-completion --list-commands)"
+        # and it never starts with - or --
         COMPREPLY=( $( compgen -W "$o3cmds" $cur ) )
     elif [ $COMP_CWORD -gt 1 ]; then
         if [ "${cur:0:2}" == "--" -o "${cur:0:1}" == "-" ]; then
@@ -82,12 +92,16 @@ _openvpn3_generic_completion()
                 if [ "$cur" == "=" ]; then
                         arghelp="$prev$cur"
                 fi
-                selopts="$($cmd shell-completion --list-options $first --arg-help $arghelp)"
+                if [ -n "$first" -a -z "${cur}" -a -z "${selopts}" ]; then
+                   selopts="--"
+                else
+                   selopts="$($cmd shell-completion --list-options $first --arg-help $arghelp)"
+                fi
                 ;;
             esac
         fi
         if [ "$cur" == "=" ]; then
-                cur=""
+            cur=""
         fi
         COMPREPLY=( $( compgen ${comp_op} "${selopts}" -- $cur ) )
     fi
@@ -97,11 +111,11 @@ _openvpn3_completion()
 {
     _openvpn3_generic_completion openvpn3
 }
-complete -F _openvpn3_completion openvpn3
+complete -F _openvpn3_completion -o nospace openvpn3
 
 
 _openvpn3admin_completion()
 {
     _openvpn3_generic_completion openvpn3-admin
 }
-complete -F _openvpn3admin_completion openvpn3-admin
+complete -F _openvpn3admin_completion -o nospace openvpn3-admin
