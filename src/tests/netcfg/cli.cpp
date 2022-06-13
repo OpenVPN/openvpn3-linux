@@ -29,4 +29,5 @@
 #include "config-version.h"
 #endif
 #include "config.h"
+#include <openvpn/log/logsimple.hpp>
 #include <test/ovpncli/cli.cpp>

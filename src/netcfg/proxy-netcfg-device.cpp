@@ -32,6 +32,7 @@
 #define OPENVPN_EXTERN extern
 #include <openvpn/common/rc.hpp>
 #include <openvpn/common/base64.hpp>
+#include <openvpn/log/logbase.hpp>
 
 #include "dbus/core.hpp"
 #include "dbus/proxy.hpp"

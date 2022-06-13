@@ -254,7 +254,7 @@ private:
             signal->Debug("DYNAMIC_CHALLENGE: |" + dc_cookie + "|");
 
             ClientAPI::DynamicChallenge dc;
-            if (ClientAPI::OpenVPNClient::parse_dynamic_challenge(dc_cookie, dc))
+            if (ClientAPI::OpenVPNClientHelper::parse_dynamic_challenge(dc_cookie, dc))
             {
                 userinputq->RequireAdd(
                                 ClientAttentionType::CREDENTIALS,

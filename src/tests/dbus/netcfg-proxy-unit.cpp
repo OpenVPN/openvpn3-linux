@@ -28,6 +28,7 @@
 #include <vector>
 
 #include <openvpn/common/base64.hpp>
+#include <openvpn/log/logsimple.hpp>
 
 #include "dbus/core.hpp"
 #include "netcfg/proxy-netcfg-mgr.hpp"

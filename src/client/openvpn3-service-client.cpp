@@ -1290,7 +1290,7 @@ private:
             }
             else if (override.override.key == "enable-legacy-algorithms")
             {
-                vpnconfig.enableNonPreferredDCOAlgorithms = override.boolValue;
+                vpnconfig.enableNonPreferredDCAlgorithms = override.boolValue;
                 valid_override = true;
             }
             else if (override.override.key == "tls-version-min")
