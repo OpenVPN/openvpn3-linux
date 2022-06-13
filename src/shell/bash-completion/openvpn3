@@ -37,12 +37,12 @@ _openvpn3_generic_completion()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
+    selopts=""
     if [ $COMP_CWORD -eq 1 ]; then
         # The first argument is always an openvpn3 command
         o3cmds="$($cmd shell-completion --list-commands)"
         COMPREPLY=( $( compgen -W "$o3cmds" $cur ) )
     elif [ $COMP_CWORD -gt 1 ]; then
-        selection=""
         if [ "${cur:0:2}" == "--" -o "${cur:0:1}" == "-" ]; then
             # If the argument starts with '-' or '--' provide list of options
             comp_op="-W"
