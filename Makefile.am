@@ -194,6 +194,7 @@ UNIT_TESTS = \
 	src/tests/unit/configfileparser.cpp \
 	src/tests/unit/timestamp.cpp \
 	src/tests/unit/logevent.cpp \
+	src/tests/unit/logmetadata.cpp \
 	src/tests/unit/lookup.cpp \
 	src/tests/unit/netcfg-changeevent.cpp \
 	src/tests/unit/sessionmgr-events.cpp \

@@ -28,12 +28,123 @@
 
 #include <syslog.h>
 
+#include <algorithm>
 #include <fstream>
 #include <exception>
+#include <vector>
 
 #include "common/timestamp.hpp"
 #include "colourengine.hpp"
 #include "logevent.hpp"
+
+
+struct LogMetaDataValue
+{
+    using Ptr = std::shared_ptr<LogMetaDataValue>;
+
+    LogMetaDataValue(const std::string& l, const std::string& v, bool s = false)
+        : label(l), value(v), skip(s)
+    {
+    }
+
+    static LogMetaDataValue::Ptr create(const std::string& l,
+                                        const std::string& v,
+                                        bool s = false)
+    {
+        LogMetaDataValue::Ptr ret;
+        ret.reset(new LogMetaDataValue(l, v, s));
+        return ret;
+    }
+
+
+    friend std::ostream& operator<<(std::ostream& os, const LogMetaDataValue mdv)
+    {
+        if (mdv.skip)
+        {
+            return os;
+        }
+        return os << mdv.label << "=" << mdv.value;
+    }
+
+    std::string label;
+    std::string value;
+    bool skip;
+};
+
+
+class LogMetaData
+{
+public:
+    using Ptr = std::shared_ptr<LogMetaData>;
+
+    LogMetaData() {};
+    ~LogMetaData() = default;
+
+
+    static LogMetaData::Ptr create()
+    {
+        LogMetaData::Ptr ret;
+        ret.reset(new LogMetaData);
+        return ret;
+    }
+
+
+    template<typename T>
+    void AddMeta(const std::string& l, const T& v, bool skip = false)
+    {
+        auto mdv = LogMetaDataValue::create(l, v, skip);
+        metadata.push_back(mdv);
+    }
+
+
+    std::string GetMetaValue(const std::string l, const bool encaps_logtag=true,
+                             const std::string postfix=" ") const
+    {
+        auto it = std::find_if(metadata.begin(), metadata.end(),
+                               [l](LogMetaDataValue::Ptr e)
+                               {
+                                   return l == e->label;
+                               });
+        if (metadata.end() == it)
+        {
+            return "";
+        }
+        return (*it)->value + postfix;
+    }
+
+    bool empty()
+    {
+        return metadata.empty();
+    }
+
+    void clear()
+    {
+        metadata.clear();
+    }
+
+
+    friend std::ostream& operator<<(std::ostream& os, const LogMetaData& mdc)
+    {
+        bool first = true;
+        for (const auto& mdv : mdc.metadata)
+        {
+            if (mdv->skip)
+            {
+                continue;
+            }
+            os << (!first ? ", " : "") << (*mdv);
+            if (first)
+            {
+                first = false;
+            }
+        }
+        return os;
+    }
+
+private:
+    std::vector<LogMetaDataValue::Ptr> metadata;
+};
+
 
 
 /**
@@ -162,6 +273,7 @@ public:
             metadata = data;
         }
     }
+
 
     /**
      *  Puts a side a string which should be prepended to the next
