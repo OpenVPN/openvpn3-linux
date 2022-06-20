@@ -266,37 +266,55 @@ public:
      *
      * @param data  std::string containing meta data related to the log data
      */
-    virtual void AddMeta(const std::string& data)
+    virtual void AddMeta(const std::string& label, const std::string& data,
+                         bool skip=false)
     {
         if (log_meta)
         {
-            metadata = data;
+            metadata.AddMeta(label, data, skip);
         }
     }
 
 
+    virtual void AddMeta(const std::string& label, const LogTag& ltg,
+                         const bool skip=false, const bool encaps=true)
+    {
+        if (log_meta)
+        {
+            metadata.AddMeta(label, ltg, skip);
+        }
+    }
+
+
+    void AddMetaCopy(const LogMetaData& mdc)
+    {
+        metadata = LogMetaData(mdc);
+    }
+
+
     /**
-     *  Puts a side a string which should be prepended to the next
-     *  @Write() operation.  This is similar to @AddMeta(), but operates
-     *  on the same log line as @AddMeta().
+     *  Puts a side-string from a meta data label which should be prepended to
+     *  the next @Write() operation.  This is depends on a prior @AddMeta()
+     *  call, where it uses the value set to a meta data label.  Only a single
+     *  meta data label can be prepended.
      *
-     *  @param data      std::string containing data to prepend in front of @Write()
+     *  @param label     std::string the meta data entry to prepend before @Write()
      *  @param prep_meta Bool indicating if this data should be prepended to
      *                   the meta log line as well.  This is reset on each
-     *                   interaction.
+     *                   @Write() operation.
      */
-    virtual void WritePrepend(const std::string& data, bool prep_meta = false)
+    virtual void PrependMeta(const std::string& label, bool prep_meta = false)
     {
-        prepend = data;
+        prepend_label = label;
         prepend_meta = prep_meta;
     }
 
 
 protected:
     bool timestamp = true;
-    bool log_meta =true;
-    std::string metadata;
-    std::string prepend;
+    bool log_meta = true;
+    LogMetaData metadata;
+    std::string prepend_label;
     bool prepend_meta = false;
 };
 
@@ -344,20 +362,27 @@ public:
                        const std::string& colour_init = "",
                        const std::string& colour_reset = "") override
     {
-        if (!metadata.empty())
+        if (log_meta && !metadata.empty())
         {
             dest << (timestamp ? GetTimestamp() : "") << " "
-                 << colour_init
-                 << (prepend_meta ? prepend : "")
-                 << metadata << colour_reset
+                 << colour_init;
+            if (prepend_meta)
+            {
+                 dest << metadata.GetMetaValue(prepend_label);
+            }
+            dest << metadata << colour_reset
                  << std::endl;
-            metadata.clear();
             prepend_meta = false;
         }
         dest << (timestamp ? GetTimestamp() : "") << " "
-             << colour_init << prepend << data << colour_reset
-             << std::endl;
-        prepend.clear();
+             << colour_init;
+        if (!prepend_label.empty())
+        {
+            dest << metadata.GetMetaValue(prepend_label);
+        }
+        dest << data << colour_reset << std::endl;
+        prepend_label.clear();
+        metadata.clear();
     }
 
 protected:
@@ -551,17 +576,21 @@ public:
         // care of that.  We also do not do anything about
         // colours, as that can mess up the log files.
 
-        if (!metadata.empty())
+        std::ostringstream p;
+        p << (prepend_meta ? metadata.GetMetaValue(prepend_label) : "");
+
+        if (log_meta && !metadata.empty())
         {
-            syslog(LOG_INFO, "%s%s",
-                   (prepend_meta ? prepend.c_str() : ""),
-                   metadata.c_str());
-            metadata.clear();
+            std::ostringstream m;
+            m << metadata;
+
+            syslog(LOG_INFO, "%s%s", p.str().c_str(), m.str().c_str());
             prepend_meta = false;
         }
 
-        syslog(LOG_INFO, "%s%s", prepend.c_str(), data.c_str());
-        prepend.clear();
+        syslog(LOG_INFO, "%s%s", p.str().c_str(), data.c_str());
+        prepend_label.clear();
+        metadata.clear();
     }
 
 
@@ -573,18 +602,23 @@ public:
         // Equally simple to the other Write() method, but here
         // we have access to LogGroup and LogCategory, so we
         // include that information.
-        if (!metadata.empty())
+        std::ostringstream p;
+        p << (prepend_meta ? metadata.GetMetaValue(prepend_label) : "");
+
+        if (log_meta && !metadata.empty())
         {
+            std::ostringstream m;
+            m << metadata;
+
             syslog(logcatg2syslog(ctg), "%s%s",
-                   (prepend_meta ? prepend.c_str() : ""),
-                   metadata.c_str());
-            metadata.clear();
+                   p.str().c_str(), m.str().c_str());
             prepend_meta = false;
         }
 
         syslog(logcatg2syslog(ctg), "%s%s%s",
-               prepend.c_str(), LogPrefix(grp, ctg).c_str(), data.c_str());
-        prepend.clear();
+               p.str().c_str(), LogPrefix(grp, ctg).c_str(), data.c_str());
+        prepend_label.clear();
+        metadata.clear();
     }
 
 

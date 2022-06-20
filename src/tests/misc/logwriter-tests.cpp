@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018         OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2022  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2022  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -49,7 +49,8 @@ void run_test_1(LogWriter& w)
     w.EnableTimestamp(false);
     w.Write("Log line 4 - without timestamp");
     w.EnableTimestamp(true);
-    w.WritePrepend(" [PREPENDED] ");
+    w.AddMeta("prepend", " [PREPENDED] ", true);
+    w.PrependMeta("prepend");
     w.Write("Log line 5 - with timestamp again");
 }
 
@@ -70,7 +71,8 @@ void run_test_2(LogWriter& w)
         {
             if ((catg % 3) == 0)
             {
-                w.WritePrepend("!! ---> Prepended data <--- ");
+                w.AddMeta("prepend", "!! ---> Prepended data <--- ", true);
+                w.PrependMeta("prepend", true);
             }
             w.Write((LogGroup) group, (LogCategory) catg,
                         std::string("LogGroup/LogCategory test line: ")
@@ -100,13 +102,14 @@ void run_test_3(LogWriter& w)
                     std::stringstream s;
                     s << "!! ---> Prepended data <--- "
                       << ((catg % 2) == 0 ? "[with meta prepend] " : "");
-                    w.WritePrepend(s.str(), (catg % 2) == 0);
+                    w.AddMeta("prepend", s.str(), true);
+                    w.PrependMeta("prepend", (catg % 2) == 0);
                 }
                 LogEvent ev((LogGroup) group, (LogCategory) catg,
                             std::string("LogEvent() test line: ")
                             + std::to_string(group) + ":"
                             + std::to_string(catg));
-                w.AddMeta("Meta data for test line:"
+                w.AddMeta("meta", "Meta data for test line:"
                           + std::to_string(group) + ":"
                           + std::to_string(catg));
                 w.Write(ev);
@@ -124,7 +127,8 @@ void run_test_4(LogWriter& w)
     for (int i = 1; i < 10; i++)
     {
         w.EnableLogMeta((i % 2) == 0);
-        w.AddMeta("Meta data for line #" + std::to_string(i));
+        w.AddMeta("metaline_" + std::to_string(i),
+                  "Meta data for line #" + std::to_string(i));
         w.Write("Log data for line #" + std::to_string(i));
     }
     w.EnableLogMeta(true);

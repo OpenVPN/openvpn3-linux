@@ -258,11 +258,11 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
                                              GVariant *params,
                                              GDBusMethodInvocation *invoc)
 {
-    std::stringstream meta;
-    meta << "sender=" << sender
-         << ", object_path=" << obj_path
-         << ", interface=" << intf_name
-         << ", method=" << meth_name;
+    LogMetaData meta;
+    meta.AddMeta("sender", sender);
+    meta.AddMeta("object_path", obj_path);
+    meta.AddMeta("interface", intf_name);
+    meta.AddMeta("method", meth_name);
 
     try
     {
@@ -291,7 +291,7 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
                 std::stringstream l;
                 l << "Duplicate: " << tag << "  " << tag.tag;
 
-                logwr->AddMeta(meta.str());
+                logwr->AddMetaCopy(meta);
                 logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN,
                                       l.str()));
 
@@ -308,7 +308,7 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
             std::stringstream l;
             l << "Attached: " << tag << "  " << tag.tag;
 
-            logwr->AddMeta(meta.str());
+            logwr->AddMetaCopy(meta);
             logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2,
                                   l.str()));
             IdleCheck_RefInc();
@@ -338,7 +338,7 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
             }
             else
             {
-                logwr->AddMeta(meta.str());
+                logwr->AddMetaCopy(meta);
                 logwr->Write("AssignSession caller (" + sender + ")"
                              + " is not a VPN client process");
                 GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.log",
@@ -360,7 +360,7 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
                 std::stringstream l;
                 l << "Not found: " << tag << " " << tag.tag;
 
-                logwr->AddMeta(meta.str());
+                logwr->AddMetaCopy(meta);
                 logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN,
                                       l.str()));
 
@@ -394,7 +394,7 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
             std::stringstream l;
             l << "Detached: " << tag << "  " << tag.tag;
 
-            logwr->AddMeta(meta.str());
+            logwr->AddMetaCopy(meta);
             logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2,
                                   l.str()));
             IdleCheck_RefDec();
@@ -455,7 +455,7 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
     }
     catch (DBusCredentialsException& excp)
     {
-        logwr->AddMeta(meta.str());
+        logwr->AddMetaCopy(meta);
         logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::CRIT,
                               excp.what()));
         excp.SetDBusError(invoc);
@@ -516,11 +516,11 @@ GVariantBuilder* LogServiceManager::callback_set_property(GDBusConnection *conn,
                                                           GVariant *value,
                                                           GError **error)
 {
-    std::stringstream meta;
-    meta << "sender=" << sender
-         << ", object_path=" << obj_path
-         << ", interface=" << intf_name
-         << ", property_name=" << property_name;
+    LogMetaData meta;
+    meta.AddMeta("sender", sender);
+    meta.AddMeta("object_path", obj_path);
+    meta.AddMeta("interface", intf_name);
+    meta.AddMeta("property_name", property_name);
 
     try
     {
@@ -545,7 +545,7 @@ GVariantBuilder* LogServiceManager::callback_set_property(GDBusConnection *conn,
             }
             std::stringstream l;
             l << "Log level changed to " << std::to_string(log_level);
-            logwr->AddMeta(meta.str());
+            logwr->AddMetaCopy(meta);
             logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1,
                                   l.str()));
             ret = build_set_property_response(property_name,
@@ -571,7 +571,7 @@ GVariantBuilder* LogServiceManager::callback_set_property(GDBusConnection *conn,
             std::stringstream l;
             l << "D-Bus details logging has changed to "
               << (newval? "enabled" : "disabled");
-            logwr->AddMeta(meta.str());
+            logwr->AddMetaCopy(meta);
             logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1,
                                   l.str()));
 
@@ -604,7 +604,7 @@ GVariantBuilder* LogServiceManager::callback_set_property(GDBusConnection *conn,
               << " changed to: "
               << (newtstamp ? "enabled" : "disabled");
 
-            logwr->AddMeta(meta.str());
+            logwr->AddMetaCopy(meta);
             logwr->Write(LogEvent(
                             LogGroup::LOGGER,
                             (newtstamp == timestamp

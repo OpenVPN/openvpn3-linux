@@ -107,18 +107,17 @@ public:
         }
 
         // Prepend log lines with the log tag
-        logwr->WritePrepend(log_tag + std::string(" "), true);
+        logwr->AddMeta("logtag", log_tag, true);
+        logwr->PrependMeta("logtag", true);
 
         // Add the meta information
-        std::stringstream meta;
-        meta << "sender=" << sender
-             << ", interface=" << interface
-             << ", path=" << object_path;
+        logwr->AddMeta("sender", sender);
+        logwr->AddMeta("interface", interface);
+        logwr->AddMeta("object_path", object_path);
         if (!logev.session_token.empty())
         {
-            meta << ", session-token=" << logev.session_token;
+            logwr->AddMeta("session-token", logev.session_token);
         }
-        logwr->AddMeta(meta.str());
 
         // And write the real log line
         logwr->Write(logev);
