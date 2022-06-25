@@ -317,7 +317,7 @@ D-Bus object path.
 ### Signal: `net.openvpn.v3.backends.AttentionRequired`
 
 This signal is issued whenever the backend needs information, most
-commonly form the front-end user interface. This can be used to get
+commonly from the front-end user interface. This can be used to get
 user credentials or do PKCS#11/SmartCard operations, etc.
 
 #### Arguments
