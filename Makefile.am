@@ -758,6 +758,15 @@ if BUILD_ADDONS_AWS
 pkglibexec_PROGRAMS += addons/aws/openvpn3-service-aws
 endif
 
+#
+#  Development headers
+#
+noinst_PROGRAMS += src/dbus/gen-c-constants
+src_dbus_gen_c_constants_SOURCES = \
+	src/dbus/gen-c-constants.cpp
+
+src/dbus/constants.h: src/dbus/gen-c-constants
+	$(AM_V_GEN)$(top_builddir)/src/dbus/gen-c-constants > $@
 
 #
 #  Misc utilities
