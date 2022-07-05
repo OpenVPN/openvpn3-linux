@@ -30,7 +30,8 @@
 //  LogTag class implementation
 //
 
-LogTag::LogTag(std::string sender, std::string interface)
+LogTag::LogTag(std::string sender, std::string interface, const bool default_encaps)
+    : encaps(default_encaps)
 {
     tag = std::string("[") + sender + "/" + interface + "]";
 
@@ -40,8 +41,21 @@ LogTag::LogTag(std::string sender, std::string interface)
 }
 
 
-std::string LogTag::str() const
+const std::string LogTag::str() const
 {
-    return std::string("{tag:") + std::string(std::to_string(hash))
-           + std::string("}");
+    return LogTag::str(encaps);
+}
+
+
+const std::string LogTag::str(const bool override) const
+{
+    if (override)
+    {
+        return std::string("{tag:") + std::string(std::to_string(hash))
+               + std::string("}");
+    }
+    else
+    {
+        return std::string(std::to_string(hash));
+    }
 }

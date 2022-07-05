@@ -42,20 +42,34 @@ struct LogTag
      * @param interface  std::string of the D-Bus interface sending events
      *
      */
-    LogTag(std::string sender, std::string interface);
+    LogTag(std::string sender, std::string interface, const bool default_encaps=true);
 
 
     /**
      *  Return a std::string containing the tag to be used with log lines
      *
      *  The structure is: {tag:xxxxxxxxxxx}
-     *  where xxxxxxxxxxx is a positive number
+     *  where xxxxxxxxxxx is a positive number if the 'encaps' is set to true.
+     *
+     *  Without the 'encaps' enabled, it will just return the positive number
+     *  as a string.
+     *
+     * @param override   Bool flag to override the default encapsulating of the
+     *                   tag hash.
      *
      * @return  Returns a std::string containing the tag this sender and
-     *           interface will use
+     *          interface will use
      */
-    std::string str() const;
+     virtual const std::string str(const bool override) const;
 
+     /**
+      *  This is the same as the @str(const bool) variant, just that it will
+      *  use the default_encaps setting given to the constructor.
+      *
+     * @return  Returns a std::string containing the tag this sender and
+     *          interface will use
+      */
+     const std::string str() const;
 
     /**
      *  Write a formatted tag string via iostreams
@@ -68,10 +82,11 @@ struct LogTag
      */
     friend std::ostream& operator<<(std::ostream& os , const LogTag& ltag)
     {
-        return os << "{tag:" << std::to_string(ltag.hash) << "}";
+        return os << ltag.str();
     }
 
 
-    std::string tag;  /**<  Contains the string used for the hash generation */
-    size_t hash;      /**<  Contains the hash value for this LogTag */
+    std::string tag{};    /**<  Contains the string used for the hash generation */
+    size_t hash{};        /**<  Contains the hash value for this LogTag */
+    bool encaps = true;   /**<  Encapsulate the hash value in "{tag:...}" */
 };
