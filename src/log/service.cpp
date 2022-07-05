@@ -42,28 +42,6 @@ using namespace openvpn;
 
 
 //
-//  LogTag class implementation
-//
-
-LogTag::LogTag(std::string sender, std::string interface)
-{
-    tag = std::string("[") + sender + "/" + interface + "]";
-
-    // Create a hash of the tag, used as an index
-    std::hash<std::string> hashfunc;
-    hash = hashfunc(tag);
-}
-
-
-std::string LogTag::str() const
-{
-    return std::string("{tag:") + std::string(std::to_string(hash))
-           + std::string("}");
-}
-
-
-
-//
 //  LoggerProxy class implementation
 //
 LoggerProxy::LoggerProxy(GDBusConnection *dbc,

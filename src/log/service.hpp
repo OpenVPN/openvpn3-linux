@@ -33,54 +33,7 @@
 #include "dbus/connection-creds.hpp"
 #include "dbus/object-property.hpp"
 #include "log/dbus-log.hpp"
-
-/**
- *  This provides a more generic interface to generate and process
- *  the log tags and hashes used to separate log events from various
- *  attached log senders.
- */
-struct LogTag
-{
-    /**
-     *  LogTag contstructor
-     *
-     * @param sender     std::string of the D-Bus unique bus name (1:xxxx)
-     * @param interface  std::string of the D-Bus interface sending events
-     *
-     */
-    LogTag(std::string sender, std::string interface);
-
-
-    /**
-     *  Return a std::string containing the tag to be used with log lines
-     *
-     *  The structure is: {tag:xxxxxxxxxxx}
-     *  where xxxxxxxxxxx is a positive number
-     *
-     * @return  Returns a std::string containing the tag this sender and
-     *           interface will use
-     */
-    std::string str() const;
-
-
-    /**
-     *  Write a formatted tag string via iostreams
-     *
-     * @param os  std::ostream where to write the data
-     * @param ev  LogEvent to write to the stream
-     *
-     * @return  Returns the provided std::ostream together with the
-     *          decoded LogEvent information
-     */
-    friend std::ostream& operator<<(std::ostream& os , const LogTag& ltag)
-    {
-        return os << "{tag:" << std::to_string(ltag.hash) << "}";
-    }
-
-
-    std::string tag;  /**<  Contains the string used for the hash generation */
-    size_t hash;      /**<  Contains the hash value for this LogTag */
-};
+#include "log/logtag.hpp"
 
 
 /**

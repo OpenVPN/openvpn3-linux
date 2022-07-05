@@ -210,6 +210,7 @@ UNIT_TESTS_DEPS = \
 	src/common/machineid.cpp \
 	src/common/machineid.hpp \
 	src/common/timestamp.cpp \
+	src/log/logtag.cpp \
 	src/netcfg/netcfg-changeevent.cpp \
 	src/netcfg/netcfg-changetype.cpp \
 	src/netcfg/dns/resolver-settings.cpp \
@@ -320,7 +321,8 @@ src_tests_misc_log_prefix_selftest_SOURCES = \
 
 src_tests_misc_logwriter_tests_SOURCES = \
 	src/tests/misc/logwriter-tests.cpp \
-	src/common/timestamp.cpp
+	src/common/timestamp.cpp \
+	src/log/logtag.cpp
 
 src_tests_misc_lookup_tests_SOURCES = \
 	src/tests/misc/lookup-tests.cpp \
@@ -548,7 +550,8 @@ src_ovpn3cli_openvpn3_SOURCES = \
 	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp \
-	src/log/dbus-log.cpp
+	src/log/dbus-log.cpp \
+	src/log/logtag.cpp
 
 #
 # openvpn3-admin:  Service management admin utility
@@ -603,6 +606,7 @@ src_client_openvpn3_service_client_SOURCES = \
 	src/configmgr/proxy-configmgr.hpp \
 	src/log/dbus-log.cpp \
 	src/log/dbus-log.hpp \
+	src/log/logtag.cpp \
 	src/log/proxy-log.hpp \
 	src/netcfg/proxy-netcfg-device.hpp \
 	src/netcfg/proxy-netcfg-device.cpp \
@@ -639,7 +643,8 @@ src_configmgr_openvpn3_service_configmgr_SOURCES = \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp \
 	src/log/dbus-log.cpp \
-	src/log/dbus-log.hpp
+	src/log/dbus-log.hpp \
+	src/log/logtag.cpp
 
 
 #
@@ -659,7 +664,8 @@ src_sessionmgr_openvpn3_service_sessionmgr_SOURCES = \
 	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp \
-	src/log/dbus-log.cpp
+	src/log/dbus-log.cpp \
+	src/log/logtag.cpp
 nodist_src_sessionmgr_openvpn3_service_sessionmgr_SOURCES=$(DCO_KEYCONFIG_PB_SOURCES)
 
 
@@ -704,7 +710,8 @@ src_netcfg_openvpn3_service_netcfg_SOURCES = \
 	src/common/utils.cpp \
 	src/log/core-dbus-logbase.hpp \
 	src/log/dbus-log.cpp \
-	src/log/dbus-log.hpp
+	src/log/dbus-log.hpp \
+	src/log/logtag.cpp
 nodist_src_netcfg_openvpn3_service_netcfg_SOURCES=$(DCO_KEYCONFIG_PB_SOURCES)
 src_netcfg_openvpn3_service_netcfg_LDADD = $(LIBCAPNG_LIBS) $(LIBGLIBGIO_LIBS) $(LIBJSONCPP_LIBS) $(LIBUUID_LIBS) $(LIBNL_GENL_LIBS) $(PROTOBUF_LIBS)
 
@@ -721,6 +728,8 @@ src_log_openvpn3_service_logger_SOURCES = \
 	src/log/log-helpers.hpp \
 	src/log/logevent.hpp \
 	src/log/logger.hpp \
+	src/log/logtag.cpp \
+	src/log/logtag.hpp \
 	src/log/logwriter.hpp \
 	src/log/service.cpp \
 	src/log/service.hpp \
@@ -742,7 +751,8 @@ addons_aws_openvpn3_service_aws_SOURCES = \
     src/netcfg/proxy-netcfg-mgr.cpp \
     src/netcfg/netcfg-changetype.cpp \
     src/common/utils.cpp \
-    src/log/dbus-log.cpp
+    src/log/dbus-log.cpp \
+    src/log/logtag.cpp
 addons_aws_openvpn3_service_aws_CXXFLAGS = \
     $(AM_CXXFLAGS) \
     -UENABLE_OVPNDCO \
