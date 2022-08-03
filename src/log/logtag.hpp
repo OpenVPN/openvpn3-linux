@@ -44,6 +44,8 @@ struct LogTag
      */
     LogTag(std::string sender, std::string interface, const bool default_encaps=true);
 
+    LogTag(const LogTag& cp);
+
 
     /**
      *  Return a std::string containing the tag to be used with log lines
