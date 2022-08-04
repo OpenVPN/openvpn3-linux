@@ -28,6 +28,7 @@
 #include <memory>
 
 #include "dbus-log.hpp"
+#include "logtag.hpp"
 #include "logwriter.hpp"
 
 
@@ -37,7 +38,7 @@ public:
     typedef std::shared_ptr<Logger> Ptr;
 
     Logger(GDBusConnection *dbuscon, LogWriter *logwr,
-           const std::string& tag, const std::string& busname,
+           const LogTag& tag, const std::string& busname,
            const std::string& interf,
            const unsigned int log_level = 3)
         : LogConsumer(dbuscon, interf, "", busname),
@@ -159,7 +160,7 @@ public:
 
 private:
     LogWriter *logwr;
-    const std::string log_tag;
+    const LogTag log_tag;
     std::vector<LogGroup> exclude_loggroup;
     std::map<std::string, LogSender*> log_forwards = {};
 };

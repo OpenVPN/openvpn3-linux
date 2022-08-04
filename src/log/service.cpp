@@ -302,8 +302,8 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
                 return;
             }
 
-            loggers[tag.hash].reset(new Logger(dbuscon, logwr, tag.str(),
-                                          sender, interface, log_level));
+            loggers[tag.hash].reset(new Logger(dbuscon, logwr, tag,
+                                               sender, interface, log_level));
 
             std::stringstream l;
             l << "Attached: " << tag << "  " << tag.tag;

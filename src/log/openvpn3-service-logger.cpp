@@ -34,6 +34,22 @@
 
 using namespace openvpn;
 
+struct LogStringTag : public LogTag
+{
+    LogStringTag(const std::string& t) : LogTag()
+    {
+        tag = std::string(t);
+        hash = 0;
+        encaps = false;
+    }
+    ~LogStringTag() = default;
+
+    const std::string str(const bool override) const override
+    {
+        return tag;
+    }
+};
+
 
 static int logger(ParsedArgs::Ptr args)
 {
@@ -216,7 +232,7 @@ static int logger(ParsedArgs::Ptr args)
             if (args->Present("vpn-backend"))
             {
                 be_subscription.reset(new Logger(dbusconn, logwr.get(),
-                                                 "[B]", "",
+                                                 LogStringTag("[B]"), "",
                                                  OpenVPN3DBus_interf_backends,
                                                  log_level));
                 ++subscribers;
@@ -226,7 +242,7 @@ static int logger(ParsedArgs::Ptr args)
                 || args->Present("session-manager-client-proxy"))
             {
                 session_subscr.reset(new Logger(dbusconn, logwr.get(),
-                                                "[S]", "",
+                                                LogStringTag("[S]"), "",
                                                 OpenVPN3DBus_interf_sessions,
                                                 log_level));
                 ++subscribers;
@@ -244,7 +260,7 @@ static int logger(ParsedArgs::Ptr args)
             if (args->Present("config-manager"))
             {
                 config_subscr.reset(new Logger(dbusconn, logwr.get(),
-                                               "[C]", "",
+                                               LogStringTag("[C]"), "",
                                                OpenVPN3DBus_interf_configuration,
                                                log_level));
                 ++subscribers;
