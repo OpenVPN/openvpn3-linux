@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <fstream>
 #include <exception>
+#include <string>
 #include <vector>
 
 #include "common/timestamp.hpp"
@@ -107,6 +108,7 @@ class LogMetaData
 {
 public:
     using Ptr = std::shared_ptr<LogMetaData>;
+    using Records = std::vector<std::string>;
 
     LogMetaData() {};
     ~LogMetaData() = default;
@@ -143,7 +145,39 @@ public:
         return (*it)->GetValue(encaps_logtag) + postfix;
     }
 
-    bool empty()
+
+    Records GetMetaDataRecords(const bool upcase_label=false,
+                               const bool logtag_encaps=true) const
+    {
+        Records ret;
+        for (const auto& mdc : metadata)
+        {
+            std::string label = mdc->label;
+            if (upcase_label)
+            {
+                std::transform(label.begin(), label.end(), label.begin(),
+                               [](unsigned char c){ return std::toupper(c); });
+            }
+            if (LogMetaDataValue::Type::LOGMETA_LOGTAG == mdc->type)
+            {
+                ret.push_back(label + "=" + mdc->GetValue(logtag_encaps));
+            }
+            else
+            {
+                ret.push_back(label + "=" + mdc->GetValue());
+            }
+        }
+        return ret;
+    }
+
+
+    size_t size() const
+    {
+        return metadata.size();
+    }
+
+
+    bool empty() const
     {
         return metadata.empty();
     }
