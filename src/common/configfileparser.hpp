@@ -117,7 +117,7 @@ class File
 public:
     typedef std::shared_ptr<File> Ptr;
 
-    File();
+    File(const std::string fname="");
     virtual ~File() = default;
 
 
@@ -135,7 +135,7 @@ public:
      * @throws ConfigFileException if there were issues opening or parsing the
      *         configuration file
      */
-    void Load(const std::string& cfgfile);
+    void Load(const std::string& cfgfile="");
 
 
     /**
@@ -227,7 +227,7 @@ public:
      * @param cfgfname  std::string of the filename to use when saving
      *                  the file.
      */
-    void Save(const std::string cfgfname);
+    void Save(const std::string cfgfname="");
 
     /**
      *  Check if the configuration contains anything.  If all options are
@@ -271,6 +271,7 @@ protected:
 
 
 private:
+    std::string config_filename{};
     bool map_configured = false;   ///< Has ConfigureMapping() been run?
     OptionMap map;           ///< Currently active configuration map
 

@@ -65,8 +65,9 @@ OptionMapEntry::OptionMapEntry(std::string option, std::string field_label,
 //   class Configuration::File
 //
 
-File::File()
+File::File(const std::string fname)
 {
+    config_filename = fname;
 }
 
 
@@ -112,10 +113,16 @@ void File::Parse(Json::Value& config)
 
 void File::Load(const std::string& cfgfile)
 {
-    std::ifstream cfgs(cfgfile);
+    std::string fname = cfgfile.empty() ? config_filename : cfgfile;
+    if (fname.empty())
+    {
+        throw ConfigFileException("No configuration filename provided");
+    }
+
+    std::ifstream cfgs(fname);
     if (cfgs.eof() || cfgs.fail())
     {
-        throw ConfigFileException(cfgfile, "Could not open file");
+        throw ConfigFileException(fname, "Could not open file");
     }
 
     // Read the configuration file
@@ -141,7 +148,7 @@ void File::Load(const std::string& cfgfile)
     }
     catch (const Json::Exception& excp)
     {
-        throw ConfigFileException(cfgfile, "Error parsing file:"
+        throw ConfigFileException(fname, "Error parsing file:"
                                   + std::string(excp.what()));
     }
 }
@@ -364,14 +371,20 @@ Json::Value File::Generate()
 
 void File::Save(const std::string cfgfname)
 {
-    std::ofstream cfgfile(cfgfname);
+    std::string fname = cfgfname.empty() ? config_filename : cfgfname;
+    if (fname.empty())
+    {
+        throw ConfigFileException("No configuration filename provided");
+    }
+
+    std::ofstream cfgfile(fname);
     if (!empty())
     {
         cfgfile << Generate() << std::endl;
     }
     if (cfgfile.fail())
     {
-        throw ConfigFileException(cfgfname, "Error saving the configuration file");
+        throw ConfigFileException(fname, "Error saving the configuration file");
     }
     cfgfile.close();
 }
