@@ -171,7 +171,9 @@ public:
      *          if the the value type is OptionValueType::Present and the
      *          value is not present.
      */
-    std::string GetValue(const std::string& key);
+    const std::string GetValue(const std::string& key);
+    const int GetIntValue(const std::string& key);
+    const bool GetBoolValue(const std::string& key);
 
     /**
      *  Sets a value to a configuration option in the configuration file
@@ -182,9 +184,14 @@ public:
      *              to be considered set, otherwise it is considered unset.
      *              If the value string is empty, the value is considered
      *              unset/reset.
+     *
+     *              There are also two wrapper functions to more easily handle
+     *              setting int and boolean values directly.  These both convert
+     *              the value to std::string and calls the string based method.
      */
     void SetValue(const std::string& key, const std::string& value);
-
+    void SetValue(const std::string& key, const int value);
+    void SetValue(const std::string& key, const bool value);
 
     /**
      *  Unsets a configuration option in the configuration file

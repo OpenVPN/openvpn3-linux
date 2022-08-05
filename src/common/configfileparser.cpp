@@ -192,7 +192,7 @@ bool File::IsPresent(const std::string& key)
 }
 
 
-std::string File::GetValue(const std::string& key)
+const std::string File::GetValue(const std::string& key)
 {
     configure_mapping();
 
@@ -215,6 +215,18 @@ std::string File::GetValue(const std::string& key)
         return (it->present_value ? "true" : "false");
     }
     return it->value;
+}
+
+
+const int File::GetIntValue(const std::string& key)
+{
+    return std::stoi(File::GetValue(key));
+}
+
+
+const bool File::GetBoolValue(const std::string& key)
+{
+    return (File::GetValue(key) == "true");
 }
 
 
@@ -243,6 +255,18 @@ void File::SetValue(const std::string& key, const std::string& value)
         it->value = value;
         it->present = !value.empty();
     }
+}
+
+
+void File::SetValue(const std::string& key, const int value)
+{
+    File::SetValue(key, std::to_string(value));
+}
+
+
+void File::SetValue(const std::string& key, const bool value)
+{
+    File::SetValue(key, std::string(value ? "true" : "false"));
 }
 
 
