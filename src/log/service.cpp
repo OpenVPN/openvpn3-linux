@@ -37,6 +37,7 @@
 #include "logger.hpp"
 #include "dbus-log.hpp"
 #include "service.hpp"
+#include "service-configfile.hpp"
 
 using namespace openvpn;
 
@@ -193,7 +194,7 @@ LogServiceManager::LogServiceManager(GDBusConnection *dbcon,
                                      LogWriter *logwr,
                                      const unsigned int log_level)
         : DBusObject(objpath), DBusConnectionCreds(dbcon),
-          dbuscon(dbcon), logwr(logwr), log_level(log_level), statedir("")
+          dbuscon(dbcon), logwr(logwr), log_level(log_level)
 {
     // Restrict extended access in this log service from these
     // well-known bus names primarily.
@@ -238,15 +239,37 @@ LogServiceManager::LogServiceManager(GDBusConnection *dbcon,
 }
 
 
-void LogServiceManager::SetStateDirectory(std::string sd)
+void LogServiceManager::SetConfigFile(LogServiceConfigFile::Ptr cfgf)
 {
-    if (sd.empty())
+    if (!cfgf)
     {
         // Ignore this
         return;
     }
-    statedir = sd;
-    load_state();
+    configuration = cfgf;
+
+    for (const auto& opt : configuration->GetOptions())
+    {
+        if ("log-level" == opt)
+        {
+            log_level = configuration->GetIntValue(opt);
+            for (const auto& l : loggers)
+            {
+                l.second->SetLogLevel(log_level);
+            }
+        }
+        if (logwr)
+        {
+            if ("service-log-dbus-details" == opt)
+            {
+                logwr->EnableLogMeta(configuration->GetBoolValue(opt));
+            }
+            else if ("timestamp" == opt)
+            {
+                logwr->EnableTimestamp(configuration->GetBoolValue(opt));
+            }
+        }
+    }
 }
 
 
@@ -622,9 +645,17 @@ GVariantBuilder* LogServiceManager::callback_set_property(GDBusConnection *conn,
                                                timestamp);
         }
 
-        if (!statedir.empty())
+        if (configuration)
         {
-            save_state();
+            configuration->SetValue("log-level", (int) log_level);
+            if (logwr)
+            {
+                configuration->SetValue("service-log-dbus-details",
+                                        logwr->LogMetaEnabled());
+                configuration->SetValue("timestamp",
+                                        logwr->TimestampEnabled());
+            }
+            configuration->Save();
         }
         return ret;
     }
@@ -689,60 +720,6 @@ void LogServiceManager::validate_sender(std::string sender, std::string allow)
                                        "net.openvpn.v3.error.acl.denied",
                                        "Access denied");
     }
-}
-
-
-void LogServiceManager::load_state()
-{
-    std::ifstream statefile(statedir + "/log-service.json");
-
-    if (statefile.eof() || statefile.fail())
-    {
-        // We ignore situations if the file
-        // does not exist or is not readable
-        return;
-    }
-    std::string line;
-    std::stringstream buf;
-    while (std::getline(statefile, line))
-    {
-        buf << line << std::endl;
-    }
-
-    // Parse buffer into JSON
-    Json::Value state;
-    buf >> state;
-
-    auto val= state["log_level"];
-    if (val.isUInt())
-    {
-        log_level = val.asUInt();
-    }
-
-    val = state["log_dbus_details"];
-    if (val.isBool())
-    {
-        logwr->EnableLogMeta(val.asBool());
-    }
-
-    val = state["timestamp"];
-    if (val.isBool())
-    {
-        logwr->EnableTimestamp(val.asBool());
-    }
-}
-
-
-void LogServiceManager::save_state()
-{
-    Json::Value state;
-    state["log_level"] = log_level;
-    state["log_dbus_details"] = logwr->LogMetaEnabled();
-    state["timestamp"] = logwr->TimestampEnabled();
-
-    std::ofstream statefile(statedir + "/log-service.json");
-    statefile << state << std::endl;
-    statefile.close();
 }
 
 
@@ -891,14 +868,14 @@ LogService::LogService(GDBusConnection *dbuscon,
                        unsigned int log_level)
         : DBus(dbuscon, OpenVPN3DBus_name_log, OpenVPN3DBus_rootp_log,
                 OpenVPN3DBus_interf_log),
-          logwr(logwr), log_level(log_level), statedir("")
+          logwr(logwr), log_level(log_level)
 {
 }
 
 
-void LogService::SetStateDirectory(std::string sd)
+void LogService::SetConfigFile(LogServiceConfigFile::Ptr cfgf)
 {
-    statedir = sd;
+    configuration = cfgf;
 }
 
 
@@ -910,7 +887,10 @@ void LogService::callback_bus_acquired()
     logmgr.reset(new LogServiceManager(GetConnection(),
                                        OpenVPN3DBus_rootp_log,
                                        logwr, log_level));
-    logmgr->SetStateDirectory(statedir);
+    if (configuration)
+    {
+        logmgr->SetConfigFile(configuration);
+    }
     logmgr->RegisterObject(GetConnection());
 
     if (nullptr != idle_checker)

@@ -34,6 +34,7 @@
 #include "dbus/object-property.hpp"
 #include "log/dbus-log.hpp"
 #include "log/logtag.hpp"
+#include "service-configfile.hpp"
 
 
 /**
@@ -169,7 +170,7 @@ public:
      *
      * @param sd  std::string containing the directory where to save the state
      */
-    void SetStateDirectory(std::string sd);
+    void SetConfigFile(LogServiceConfigFile::Ptr cfgf);
 
 
     void callback_method_call(GDBusConnection *conn,
@@ -201,7 +202,7 @@ private:
     LogWriter *logwr = nullptr;
     std::map<size_t, Logger::Ptr> loggers = {};
     unsigned int log_level;
-    std::string statedir;
+    LogServiceConfigFile::Ptr configuration = nullptr;
     std::vector<std::string> allow_list;
     LoggerProxyList logproxies;
     LoggerSessionsList logger_session = {};
@@ -215,24 +216,6 @@ private:
      *                be granted access if registered.
      */
     void validate_sender(std::string sender, std::string allow);
-
-
-    /**
-     *  Loads a previously saved state.  The state is typically just
-     *  the various properties of log level and what kind of log details
-     *  being added to the log
-     *
-     *  The state file is simple JSON file which may or may not contain
-     *  all these settings.
-     *
-     */
-    void load_state();
-
-
-    /**
-     *  Saves the state of the current log service settings to a JSON file
-     */
-    void save_state();
 
     std::string check_busname_vpn_client(const std::string& chk_busn) const;
 
@@ -269,9 +252,10 @@ public:
      *  Preserves the --state-dir setting, which will be used when
      *  creating the D-Bus service object
      *
-     * @param sd  std::string containing the state directory to use
+     * @param cfgf  Pointer to an existing LogServiceConfigFile object, used
+     *              to preserve runtime changes to the configuration
      */
-    void SetStateDirectory(std::string sd);
+    void SetConfigFile(LogServiceConfigFile::Ptr cfgf);
 
     /**
      *  This callback is called when the service was successfully registered
@@ -306,5 +290,5 @@ private:
     LogServiceManager::Ptr logmgr;
     LogWriter *logwr;
     unsigned int log_level;
-    std::string statedir;
+    LogServiceConfigFile::Ptr configuration = nullptr;
 };

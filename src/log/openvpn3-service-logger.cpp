@@ -31,6 +31,7 @@
 #include "logwriter.hpp"
 #include "ansicolours.hpp"
 #include "service.hpp"
+#include "service-configfile.hpp"
 
 using namespace openvpn;
 
@@ -188,10 +189,13 @@ static int logger(ParsedArgs::Ptr args)
             //
 
             logsrv.reset(new LogService(dbusconn, logwr.get(), log_level));
-
+            LogServiceConfigFile::Ptr cfgfile;
             if (args->Present("state-dir"))
             {
-                logsrv->SetStateDirectory(args->GetValue("state-dir", 0));
+                cfgfile.reset(new LogServiceConfigFile(args->GetValue("state-dir", 0)));
+                cfgfile->Load();
+                args->ImportConfigFile(cfgfile);
+                logsrv->SetConfigFile(cfgfile);
             }
             if (idle_wait_min > 0)
             {
