@@ -231,6 +231,7 @@ LogServiceManager::LogServiceManager(GDBusConnection *dbcon,
     << "        <property type='s' name='version' access='read'/>"
     << "        <property name='log_level' type='u' access='readwrite'/>"
     << "        <property name='log_dbus_details' type='b' access='readwrite'/>"
+    << "        <property name='log_prefix_logtag' type='b' access='readwrite'/>"
     << "        <property name='timestamp' type='b' access='readwrite'/>"
     << "        <property name='num_attached' type='u' access='read'/>"
     << "    </interface>"
@@ -510,7 +511,10 @@ GVariant* LogServiceManager::callback_get_property(GDBusConnection *conn,
         {
             return g_variant_new_boolean(logwr->LogMetaEnabled());
         }
-
+        else if ("log_prefix_logtag" == property_name)
+        {
+            return g_variant_new_boolean(logwr->MessagePrependEnabled());
+        }
         else if ("timestamp" == property_name)
         {
             return g_variant_new_boolean(logwr->TimestampEnabled());
@@ -593,6 +597,32 @@ GVariantBuilder* LogServiceManager::callback_set_property(GDBusConnection *conn,
             // Log the change
             std::stringstream l;
             l << "D-Bus details logging has changed to "
+              << (newval? "enabled" : "disabled");
+            logwr->AddMetaCopy(meta);
+            logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1,
+                                  l.str()));
+
+            ret = build_set_property_response(property_name, newval);
+        }
+        else if ("log_prefix_logtag" == property_name)
+        {
+            // First check if this will cause a change
+            bool newval = g_variant_get_boolean(value);
+            if (logwr->MessagePrependEnabled() == newval)
+            {
+                // Nothing changes ... make some noise about it
+                throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
+                                            obj_path, intf_name,
+                                            property_name,
+                                            "New value the same as current value");
+            }
+
+            // Changing the setting
+            logwr->EnableMessagePrepend(newval);
+
+            // Log the change
+            std::stringstream l;
+            l << "Log tag message prefix setting has changed to "
               << (newval? "enabled" : "disabled");
             logwr->AddMetaCopy(meta);
             logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1,

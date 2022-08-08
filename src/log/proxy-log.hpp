@@ -361,6 +361,16 @@ public:
     }
 
 
+    /**
+     *  Retrieve the flag controlling if log messages to the system logs
+     *  should be prepended with a log tag
+     * @return
+     */
+    bool GetLogTagPrepend()
+    {
+        return GetBoolProperty("log_prefix_logtag");
+    }
+
     LogSubscribers GetSubscriberList()
     {
         GVariant *l = Call("GetSubscriberList");

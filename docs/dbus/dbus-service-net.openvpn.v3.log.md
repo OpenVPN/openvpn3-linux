@@ -70,6 +70,7 @@ node /net/openvpn/v3/log {
     properties:
       readwrite u log_level = 4;
       readwrite b log_dbus_details = false;
+      readwrite b log_prefix_logtag = true;
       readwrite b timestamp = true;
       readonly u num_attached = 0;
   };
@@ -166,6 +167,7 @@ also part of this feature.
 |---------------|------------------|:----------:|-----------------------------------------------------|
 | log_level     | unsigned integer | Read/Write | How verbose should the logging be.  See the table below for the mapping between log levels and Log Category the `Log` signal carries` |
 | log_dbus_details | boolean       | Read/Write | Should each Log event being processed carry a meta data line before with details about the D-Bus sender of the `Log` signal? |
+| log_prefix_logtag | boolean      | Read/Write | Configures if logged messages should be prefixed with the log senders LogTag hash value |
 | timestamp     | boolean          | Read/Write | Should each log line be prefixed with a timestamp?  This is mostly controlling the output when file or console logging is used. For syslog, timestamps are handled by syslog and the log service will enforce this to be `true`. |
 | num_attached  | unsigned integer | Read-only  | Number of attached subscriptions.  When no `openvpn3-service-*` programs are running, this should ideally be `0`. |
 

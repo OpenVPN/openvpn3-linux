@@ -259,6 +259,17 @@ public:
     }
 
 
+    void EnableMessagePrepend(const bool mp)
+    {
+        prepend_prefix = mp;
+    }
+
+    bool MessagePrependEnabled() const noexcept
+    {
+        return prepend_prefix;
+    }
+
+
     /**
      *  Writes log data to the destination buffer
      *
@@ -379,6 +390,7 @@ protected:
     bool timestamp = true;
     bool log_meta = true;
     LogMetaData metadata;
+    bool prepend_prefix = true;
     std::string prepend_label;
     bool prepend_meta = false;
 };
