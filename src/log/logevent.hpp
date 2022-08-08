@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2018 - 2019  OpenVPN, Inc. <sales@openvpn.net>
-//  Copyright (C) 2018 - 2019  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2022  OpenVPN, Inc. <sales@openvpn.net>
+//  Copyright (C) 2018 - 2022  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -28,6 +28,7 @@
 #include <string>
 #include <gio/gio.h>
 
+#include "dbus/glibutils.hpp"
 #include "log-helpers.hpp"
 
 
@@ -364,31 +365,20 @@ private:
      */
     void parse_tuple(GVariant *logevent, bool with_session_token)
     {
-        guint grp;
-        guint ctg;
-        gchar *sesstok = nullptr;
-        gchar *msg = nullptr;
-
         if (!with_session_token)
         {
-            g_variant_get(logevent, "(uus)", &grp, &ctg, &msg);
+            GLibUtils::checkParams(__func__, logevent, "(uus)", 3);
+            group = (LogGroup) GLibUtils::ExtractValue<uint32_t>(logevent, 0);
+            category = (LogCategory) GLibUtils::ExtractValue<uint32_t>(logevent, 1);
+            message = std::string(GLibUtils::ExtractValue<std::string>(logevent, 2));
         }
         else
         {
-            g_variant_get(logevent, "(uuss)", &grp, &ctg, &sesstok, &msg);
-        }
-
-        group = (LogGroup) grp;
-        category = (LogCategory) ctg;
-        if (sesstok)
-        {
-            session_token = std::string(sesstok);
-            g_free(sesstok);
-        }
-        if (msg)
-        {
-            message = std::string(msg);
-            g_free(msg);
+            GLibUtils::checkParams(__func__, logevent, "(uuss)", 4);
+            group = (LogGroup) GLibUtils::ExtractValue<uint32_t>(logevent, 0);
+            category = (LogCategory) GLibUtils::ExtractValue<uint32_t>(logevent, 1);
+            session_token = GLibUtils::ExtractValue<std::string>(logevent, 2);
+            message = std::string(GLibUtils::ExtractValue<std::string>(logevent, 3));
         }
     }
 };
