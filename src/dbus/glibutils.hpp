@@ -26,10 +26,11 @@
 
 #pragma once
 
-
 #include <vector>
 #include <string>
 #include <type_traits>
+
+#include <gio/gunixfdlist.h>
 
 #include "exceptions.hpp"
 
