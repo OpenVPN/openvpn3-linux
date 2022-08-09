@@ -208,6 +208,34 @@ struct LogEvent
 
 
     /**
+     *  Retrieve a string describing the Log Group of this LogEvent
+     *
+     * @return std::string with the log group description
+     */
+    const std::string GetLogGroupStr() const
+    {
+        if ((uint8_t) group >= LogGroupCount) {
+            return std::string("[group:" + std::to_string((uint8_t) group) + "]");
+        }
+        return LogGroup_str[(uint8_t) group];
+    }
+
+
+    /**
+     *  Retrieve a string describing the Log Category of this LogEvent
+     *
+     * @return std::string with the log category description
+     */
+    const std::string GetLogCategoryStr() const
+    {
+        if ((uint8_t) category > 8) {
+            return std::string("[category:" + std::to_string((uint8_t) category) + "]");
+        }
+        return LogCategory_str[(uint8_t) category];
+    }
+
+
+    /**
      *  Resets the LogEvent struct to a known and empty state
      */
     void reset()

@@ -31,6 +31,7 @@
 
 #include "dbus/core.hpp"
 #include "log/logevent.hpp"
+#include "log/log-helpers.hpp"
 
 namespace unittest {
 
@@ -107,6 +108,29 @@ TEST(LogEvent, reset_with_session_token)
     std::string res = test_empty(ev, true);
     ASSERT_TRUE(res.empty()) << res;
     ASSERT_EQ(ev.format, LogEvent::Format::AUTO);
+}
+
+
+TEST(LogEvent, log_group_str)
+{
+    for (uint8_t g = 0; g <= LogGroupCount; g++)
+    {
+        LogEvent ev((LogGroup) g, LogCategory::UNDEFINED, "irrelevant message");
+        std::string expstr((g < LogGroupCount ? LogGroup_str[g]: "[group:10]"));
+        EXPECT_STREQ(ev.GetLogGroupStr().c_str(), expstr.c_str());
+    }
+}
+
+
+TEST(LogEvent, log_category_str)
+{
+    for (uint8_t c = 0; c < 10; c++)
+    {
+        LogEvent ev(LogGroup::UNDEFINED, (LogCategory) c, "irrelevant message");
+        std::string expstr((c < 9 ? LogCategory_str[c]: "[category:9]"));
+        EXPECT_STREQ(ev.GetLogCategoryStr().c_str(), expstr.c_str());
+
+    }
 }
 
 
