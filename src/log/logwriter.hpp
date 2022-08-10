@@ -36,24 +36,52 @@
 #include "common/timestamp.hpp"
 #include "colourengine.hpp"
 #include "logevent.hpp"
+#include "logtag.hpp"
 
 
 struct LogMetaDataValue
 {
+    enum class Type {
+        LOGMETA_STRING,
+        LOGMETA_LOGTAG
+    };
+
     using Ptr = std::shared_ptr<LogMetaDataValue>;
 
     LogMetaDataValue(const std::string& l, const std::string& v, bool s = false)
-        : label(l), value(v), skip(s)
+        : label(l), str_value(v), logtag((const LogTag&)LogTag()), skip(s)
     {
+        type = Type::LOGMETA_STRING;
     }
 
+    LogMetaDataValue(const std::string& l, const LogTag& v, bool s = false)
+        : label(l), str_value(""), logtag(v), skip(s)
+    {
+        type = Type::LOGMETA_LOGTAG;
+    }
+
+    template<typename T>
     static LogMetaDataValue::Ptr create(const std::string& l,
-                                        const std::string& v,
+                                        const T& v,
                                         bool s = false)
     {
         LogMetaDataValue::Ptr ret;
         ret.reset(new LogMetaDataValue(l, v, s));
         return ret;
+    }
+
+
+    const std::string GetValue(const bool logtag_encaps=true) const
+    {
+        switch(type)
+        {
+        case Type::LOGMETA_STRING:
+            return str_value;
+
+        case Type::LOGMETA_LOGTAG:
+            return logtag.str(logtag_encaps);
+        }
+        return "";
     }
 
 
@@ -63,11 +91,14 @@ struct LogMetaDataValue
         {
             return os;
         }
-        return os << mdv.label << "=" << mdv.value;
+        return os << mdv.label << "=" << mdv.GetValue(mdv.logtag.encaps);
     }
 
+
+    Type type;
     std::string label;
-    std::string value;
+    const std::string str_value;
+    const LogTag& logtag;
     bool skip;
 };
 
@@ -109,7 +140,7 @@ public:
         {
             return "";
         }
-        return (*it)->value + postfix;
+        return (*it)->GetValue(encaps_logtag) + postfix;
     }
 
     bool empty()

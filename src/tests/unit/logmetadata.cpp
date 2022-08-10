@@ -37,12 +37,12 @@ TEST(LogMetaDataValue, constructor)
 {
     LogMetaDataValue mdv1("label1", "value");
     EXPECT_STREQ(mdv1.label.c_str(), "label1");
-    EXPECT_STREQ(mdv1.value.c_str(), "value");
+    EXPECT_STREQ(mdv1.GetValue().c_str(), "value");
     EXPECT_FALSE(mdv1.skip);
 
     LogMetaDataValue mdv2("label2", "another value", true);
     EXPECT_STREQ(mdv2.label.c_str(), "label2");
-    EXPECT_STREQ(mdv2.value.c_str(), "another value");
+    EXPECT_STREQ(mdv2.GetValue().c_str(), "another value");
     EXPECT_TRUE(mdv2.skip);
 }
 
@@ -52,14 +52,14 @@ TEST(LogMetaDataValue, create)
     LogMetaDataValue::Ptr mdv1 = LogMetaDataValue::create("labelA",
                                                           "valueA");
     EXPECT_STREQ(mdv1->label.c_str(), "labelA");
-    EXPECT_STREQ(mdv1->value.c_str(), "valueA");
+    EXPECT_STREQ(mdv1->GetValue().c_str(), "valueA");
     EXPECT_FALSE(mdv1->skip);
 
     LogMetaDataValue::Ptr mdv2 = LogMetaDataValue::create("labelB",
                                                           "A different value",
                                                           true);
     EXPECT_STREQ(mdv2->label.c_str(), "labelB");
-    EXPECT_STREQ(mdv2->value.c_str(), "A different value");
+    EXPECT_STREQ(mdv2->GetValue().c_str(), "A different value");
     EXPECT_TRUE(mdv2->skip);
 }
 

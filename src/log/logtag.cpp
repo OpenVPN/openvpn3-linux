@@ -41,6 +41,12 @@ LogTag::LogTag(std::string sender, std::string interface, const bool default_enc
 }
 
 
+LogTag::LogTag()
+    : tag(), hash(0), encaps(true)
+{
+}
+
+
 LogTag::LogTag(const LogTag& cp)
 {
     tag = cp.tag;
