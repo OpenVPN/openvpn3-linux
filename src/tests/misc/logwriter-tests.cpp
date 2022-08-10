@@ -26,6 +26,7 @@
 #include <iostream>
 #include <unistd.h>
 
+#include "config.h"
 #include "log/ansicolours.hpp"
 #include "log/logwriter.hpp"
 
@@ -179,6 +180,20 @@ int main(int argc, char **argv)
     run_test_3(slw);
     run_test_4(slw);
     std::cout << "Check the syslog for results" << std::endl << std::endl;
+
+#if HAVE_SYSTEMD
+    // Test the systemd-journald implementation of LogWriter.  To validate these
+    // log entries, the journalctl needs to be evaluated.
+    std::cout << "Testing JournaldWriter" << std::endl
+              << "----------------------------------------------------------"
+              << std::endl;
+    JournaldWriter jlw;
+    run_test_1(jlw);
+    run_test_2(jlw);
+    run_test_3(jlw);
+    run_test_4(jlw);
+    std::cout << "Check the systemd-journald for results" << std::endl << std::endl;
+#endif // HAVE_SYSTEMD
 
     std::cout << "All tests done" << std::endl << std::endl;
     return 0;
