@@ -128,6 +128,14 @@ static int logger(ParsedArgs::Ptr args)
     // Prepare the appropriate log writer
     LogWriter::Ptr logwr = nullptr;
     ColourEngine::Ptr colourengine = nullptr;
+#if HAVE_SYSTEMD
+    if (args->Present("journald"))
+    {
+        logwr.reset(new JournaldWriter());
+        logwr->EnableMessagePrepend(!args->Present("no-logtag-prefix"));
+    }
+    else
+#endif // HAVE_SYSTEMD
     if (args->Present("syslog"))
      {
         int facility = LOG_DAEMON;
@@ -331,6 +339,12 @@ int main(int argc, char **argv)
                         "Subscribe to VPN client log entries");
     argparser.AddOption("log-level", 0, "LEVEL", true,
                         "Set the log verbosity level (default 3)");
+#if HAVE_SYSTEMD
+    argparser.AddOption("no-logtag-prefix", 0,
+                        "Do not prefix message lines with log tags (journald only)");
+    argparser.AddOption("journald", 0,
+                        "Send all log events to systemd-journald");
+#endif // HAVE_SYSTEMD
     argparser.AddOption("syslog", 0,
                         "Send all log events to syslog");
     argparser.AddOption("syslog-facility", 0, "FACILITY", true,

@@ -62,6 +62,9 @@ protected:
             OptionMapEntry{"timestamp", "timestamp",
                            "Add timestamp to each Log event lines",
                            OptionValueType::Present},
+            OptionMapEntry{"no-logtag-prefix", "no_logtag_prefix",
+                           "Disable LogTag prefixes in journald log events",
+                           OptionValueType::Present},
             };
     }
 };

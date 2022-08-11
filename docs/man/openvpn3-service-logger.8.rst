@@ -111,6 +111,31 @@ OPTIONS
                 This will write all log events to *FILE* instead of the
                 terminal.
 
+--journald
+                This will make all log events be sent to the systemd-journald\(8)
+                log service.  This approach will add additional meta data to the
+                journal log to each log event.  Additional journal fields added
+                are prefixed with ``O3_``.  Examples of such fields are:
+                ``O3_LOGTAG``, ``O3_SENDER``, ``O3_INTERFACE``, ``O3_OBJECT_PATH``,
+                ``O3_LOG_GROUP`` and ``O3_LOG_CATEGORY``.
+
+                To view this information, use the ``--output-fields=`` option to
+                ``journalctl``\(1).
+
+                Example:
+                ::
+
+                    # journalctl --output-fields=O3_LOGTAG,O3_OBJECT_PATH,O3_INTERFACE \
+                          O3_LOG_GROUP,MESSAGE -o verbose
+
+--no-logtag-prefix
+                This option is only effective together with ``--journald``.  The
+                default is to prefix each log line (``MESSAGE=``) with a tag value
+                unique to the sender (see ``openvpn3-admin log-service --list-subscriptions``).
+                With jorunald logging, this log tag is already preserved as a journal
+                meta filed (``O3_LOGTAG``).  By enabling this option, this log tag
+                prefixing to the log message line will not happen.
+
 --syslog
                 This will make all log events be sent to the generic system
                 logger via the ``syslog``\(3) function.

@@ -269,6 +269,10 @@ void LogServiceManager::SetConfigFile(LogServiceConfigFile::Ptr cfgf)
             {
                 logwr->EnableTimestamp(configuration->GetBoolValue(opt));
             }
+            else if ("no-logtag-prefix" == opt)
+            {
+                logwr->EnableMessagePrepend(!configuration->GetBoolValue(opt));
+            }
         }
     }
 }
@@ -684,6 +688,8 @@ GVariantBuilder* LogServiceManager::callback_set_property(GDBusConnection *conn,
                                         logwr->LogMetaEnabled());
                 configuration->SetValue("timestamp",
                                         logwr->TimestampEnabled());
+                configuration->SetValue("no-logtag-prefix",
+                                        !logwr->MessagePrependEnabled());
             }
             configuration->Save();
         }
