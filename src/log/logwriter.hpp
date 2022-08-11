@@ -20,26 +20,18 @@
 /**
  * @file   logwriter.hpp
  *
- * @brief  Base class implementing a generic logging interface (API)
- *         as well as file stream and syslog implementations.
+ * @brief  Base class declaration for a generic logging interface (API)
+ *
  */
 
 #pragma once
 
 #include <syslog.h>
-#include <sys/uio.h>
-#include <ctype.h>
 
-#include <algorithm>
-#include <fstream>
-#include <exception>
+#include <memory>
 #include <string>
 #include <vector>
 
-#define SD_JOURNAL_SUPPRESS_LOCATION
-#include <systemd/sd-journal.h>
-
-#include "common/timestamp.hpp"
 #include "colourengine.hpp"
 #include "logevent.hpp"
 #include "logtag.hpp"
@@ -54,17 +46,8 @@ struct LogMetaDataValue
 
     using Ptr = std::shared_ptr<LogMetaDataValue>;
 
-    LogMetaDataValue(const std::string& l, const std::string& v, bool s = false)
-        : label(l), str_value(v), logtag((const LogTag&)LogTag()), skip(s)
-    {
-        type = Type::LOGMETA_STRING;
-    }
-
-    LogMetaDataValue(const std::string& l, const LogTag& v, bool s = false)
-        : label(l), str_value(""), logtag(v), skip(s)
-    {
-        type = Type::LOGMETA_LOGTAG;
-    }
+    LogMetaDataValue(const std::string& l, const std::string& v, bool s = false);
+    LogMetaDataValue(const std::string& l, const LogTag& v, bool s = false);
 
     template<typename T>
     static LogMetaDataValue::Ptr create(const std::string& l,
@@ -76,20 +59,7 @@ struct LogMetaDataValue
         return ret;
     }
 
-
-    const std::string GetValue(const bool logtag_encaps=true) const
-    {
-        switch(type)
-        {
-        case Type::LOGMETA_STRING:
-            return str_value;
-
-        case Type::LOGMETA_LOGTAG:
-            return logtag.str(logtag_encaps);
-        }
-        return "";
-    }
-
+    const std::string GetValue(const bool logtag_encaps=true) const;
 
     friend std::ostream& operator<<(std::ostream& os, const LogMetaDataValue mdv)
     {
@@ -99,7 +69,6 @@ struct LogMetaDataValue
         }
         return os << mdv.label << "=" << mdv.GetValue(mdv.logtag.encaps);
     }
-
 
     Type type;
     std::string label;
@@ -136,61 +105,14 @@ public:
 
 
     std::string GetMetaValue(const std::string l, const bool encaps_logtag=true,
-                             const std::string postfix=" ") const
-    {
-        auto it = std::find_if(metadata.begin(), metadata.end(),
-                               [l](LogMetaDataValue::Ptr e)
-                               {
-                                   return l == e->label;
-                               });
-        if (metadata.end() == it)
-        {
-            return "";
-        }
-        return (*it)->GetValue(encaps_logtag) + postfix;
-    }
-
+                             const std::string postfix=" ") const;
 
     Records GetMetaDataRecords(const bool upcase_label=false,
-                               const bool logtag_encaps=true) const
-    {
-        Records ret;
-        for (const auto& mdc : metadata)
-        {
-            std::string label = mdc->label;
-            if (upcase_label)
-            {
-                std::transform(label.begin(), label.end(), label.begin(),
-                               [](unsigned char c){ return std::toupper(c); });
-            }
-            if (LogMetaDataValue::Type::LOGMETA_LOGTAG == mdc->type)
-            {
-                ret.push_back(label + "=" + mdc->GetValue(logtag_encaps));
-            }
-            else
-            {
-                ret.push_back(label + "=" + mdc->GetValue());
-            }
-        }
-        return ret;
-    }
+                               const bool logtag_encaps=true) const;
 
-
-    size_t size() const
-    {
-        return metadata.size();
-    }
-
-
-    bool empty() const
-    {
-        return metadata.empty();
-    }
-
-    void clear()
-    {
-        metadata.clear();
-    }
+    size_t size() const;
+    bool empty() const;
+    void clear();
 
 
     friend std::ostream& operator<<(std::ostream& os, const LogMetaData& mdc)
@@ -414,16 +336,8 @@ public:
      * @param dest  std::ostream to be used as the log destination
      *
      */
-    StreamLogWriter(std::ostream& dest)
-        : LogWriter(),
-          dest(dest)
-    {
-    }
-
-    virtual ~StreamLogWriter()
-    {
-        dest.flush();
-    }
+    StreamLogWriter(std::ostream& dest);
+    virtual ~StreamLogWriter();
 
 
     /**
@@ -440,32 +354,9 @@ public:
      * @param colour_reset std::string to be printed after the log data
      *                     to reset colour selection.  Empty by default.
      */
-    virtual void Write(const std::string& data,
+    void Write(const std::string& data,
                        const std::string& colour_init = "",
-                       const std::string& colour_reset = "") override
-    {
-        if (log_meta && !metadata.empty())
-        {
-            dest << (timestamp ? GetTimestamp() : "") << " "
-                 << colour_init;
-            if (prepend_meta)
-            {
-                 dest << metadata.GetMetaValue(prepend_label);
-            }
-            dest << metadata << colour_reset
-                 << std::endl;
-            prepend_meta = false;
-        }
-        dest << (timestamp ? GetTimestamp() : "") << " "
-             << colour_init;
-        if (!prepend_label.empty())
-        {
-            dest << metadata.GetMetaValue(prepend_label);
-        }
-        dest << data << colour_reset << std::endl;
-        prepend_label.clear();
-        metadata.clear();
-    }
+                       const std::string& colour_reset = "") override;
 
 protected:
     std::ostream& dest;
@@ -488,11 +379,7 @@ public:
      * @param ce    ColourEngine object which provides knows how to
      *              do the proper colouring.
      */
-    ColourStreamWriter(std::ostream& dest, ColourEngine *ce)
-        : StreamLogWriter(dest), colours(ce)
-    {
-    }
-
+    ColourStreamWriter(std::ostream& dest, ColourEngine *ce);
     virtual ~ColourStreamWriter() = default;
 
 
@@ -503,35 +390,9 @@ public:
      */
     using StreamLogWriter::Write;
 
-    virtual void Write(const LogGroup grp,
+    void Write(const LogGroup grp,
                        const LogCategory ctg,
-                       const std::string& data) override
-    {
-        switch (colours->GetColourMode())
-        {
-        case ColourEngine::ColourMode::BY_CATEGORY:
-            LogWriter::Write(grp, ctg, data,
-                             colours->ColourByCategory(ctg),
-                             colours->Reset());
-            return;
-
-        case ColourEngine::ColourMode::BY_GROUP:
-            {
-                std::string grpcol = colours->ColourByGroup(grp);
-                // Highlights parts of the log event which are higher than LogCategory::INFO
-                std::string ctgcol = (LogCategory::INFO < ctg ? colours->ColourByCategory(ctg) : grpcol);
-                LogWriter::Write(grp, ctg, grpcol + data,
-                                 ctgcol,
-                                 colours->Reset());
-            }
-            break;
-
-        default:
-            LogWriter::Write(grp, ctg, data);
-            return;
-        }
-
-    }
+                       const std::string& data) override;
 
 
 private:
@@ -570,16 +431,8 @@ public:
      *                      (Default: LOG_DAEMON)
      */
     SyslogWriter(const char * progname = NULL,
-                 const int log_facility = LOG_DAEMON)
-        : LogWriter()
-    {
-        openlog(progname, LOG_NDELAY | LOG_PID, log_facility);
-    }
-
-    virtual ~SyslogWriter()
-    {
-        closelog();
-    }
+                 const int log_facility = LOG_DAEMON);
+    virtual ~SyslogWriter();
 
     /**
      *  We presume syslog will always add timestamps to its logging,
@@ -591,10 +444,7 @@ public:
      *
      * @return Will always return true.
      */
-    virtual bool TimestampEnabled() override
-    {
-        return true;
-    }
+    bool TimestampEnabled() override;
 
 
     /**
@@ -649,60 +499,14 @@ public:
     }
 
 
-    virtual void Write(const std::string& data,
+    void Write(const std::string& data,
                        const std::string& colour_init = "",
-                       const std::string& colour_reset = "") override
-    {
-        // This is a very simple log implementation.  We do not
-        // care about timestamps, as we trust the syslog takes
-        // care of that.  We also do not do anything about
-        // colours, as that can mess up the log files.
+                       const std::string& colour_reset = "") override;
 
-        std::ostringstream p;
-        p << (prepend_meta ? metadata.GetMetaValue(prepend_label) : "");
-
-        if (log_meta && !metadata.empty())
-        {
-            std::ostringstream m;
-            m << metadata;
-
-            syslog(LOG_INFO, "%s%s", p.str().c_str(), m.str().c_str());
-            prepend_meta = false;
-        }
-
-        syslog(LOG_INFO, "%s%s", p.str().c_str(), data.c_str());
-        prepend_label.clear();
-        metadata.clear();
-    }
-
-
-    virtual void Write(const LogGroup grp, const LogCategory ctg,
+    void Write(const LogGroup grp, const LogCategory ctg,
                        const std::string& data,
                        const std::string& colour_init,
-                       const std::string& colour_reset) override
-    {
-        // Equally simple to the other Write() method, but here
-        // we have access to LogGroup and LogCategory, so we
-        // include that information.
-        std::ostringstream p;
-        p << (prepend_meta ? metadata.GetMetaValue(prepend_label) : "");
-
-        if (log_meta && !metadata.empty())
-        {
-            std::ostringstream m;
-            m << metadata;
-
-            syslog(logcatg2syslog(ctg), "%s%s",
-                   p.str().c_str(), m.str().c_str());
-            prepend_meta = false;
-        }
-
-        syslog(logcatg2syslog(ctg), "%s%s%s",
-               p.str().c_str(), LogPrefix(grp, ctg).c_str(), data.c_str());
-        prepend_label.clear();
-        metadata.clear();
-    }
-
+                       const std::string& colour_reset) override;
 
 private:
     /**
@@ -750,15 +554,8 @@ private:
 class JournaldWriter : public LogWriter
 {
 public:
-    JournaldWriter()
-        : LogWriter()
-    {
-    }
-
-    virtual ~JournaldWriter()
-    {
-    }
-
+    JournaldWriter();
+    virtual ~JournaldWriter() = default;
 
     /**
      *  We presume journald will always add timestamps to its logging,
@@ -770,83 +567,15 @@ public:
      *
      * @return Will always return true.
      */
-    bool TimestampEnabled() override
-    {
-        return true;
-    }
-
+    bool TimestampEnabled() override;
 
     void Write(const std::string& data,
                const std::string& colour_init = "",
-               const std::string& colour_reset = "") override
-    {
-        JournaldWriter::Write(LogEvent(LogGroup::UNDEFINED, LogCategory::INFO,
-                                       data));
-    }
-
-
+               const std::string& colour_reset = "") override;
     void Write(const LogGroup grp, const LogCategory ctg,
                const std::string& data,
                const std::string& colour_init,
-               const std::string& colour_reset) override
-    {
-        JournaldWriter::Write(LogEvent(grp, ctg, data));
-    }
-
-    void Write(const LogEvent& event)
-    {
-        // We need extra elements for O3_SESSION_TOKEN,
-        // O3_LOG_GROUP, O3_LOG_CATEGORY, MESSAGE and
-        // the NULL termination
-        struct iovec *l = (struct iovec *) calloc(sizeof(struct iovec)+2,
-                                                  metadata.size()+6);
-        size_t i = 0;
-        for (const auto& r : metadata.GetMetaDataRecords(true, false))
-        {
-            std::string m = std::string("O3_") + r;
-            l[i++] = {(char *) strdup(m.c_str()), m.length()};
-        }
-
-        std::string st("O3_SESSION_TOKEN=");
-        if (!event.session_token.empty())
-        {
-            st += event.session_token;
-            l[i++] = {(char *) strdup(st.c_str()), st.length()};
-        }
-
-        std::string lg("O3_LOG_GROUP=" + event.GetLogGroupStr());
-        l[i++] = {(char *) strdup(lg.c_str()), lg.length()};
-
-        std::string lc("O3_LOG_CATEGORY=" + event.GetLogCategoryStr());
-        l[i++] = {(char *) strdup(lc.c_str()), lc.length()};
-
-        std::string m("MESSAGE=");
-        if (prepend_prefix && prepend_meta)
-        {
-            m += metadata.GetMetaValue(prepend_label, true);
-        }
-
-        m += event.message;
-        l[i++] = {(char *) strdup(m.c_str()), m.length()};
-        l[i] = {NULL};
-
-        int r = sd_journal_sendv(l, i);
-        if (0 != r)
-        {
-            std::cout << "ERROR: " << strerror(errno) << std::endl;
-        }
-
-        // struct iovec is a C interface; need to clean up manually
-        for (size_t j = 0; j < i; j++)
-        {
-            free(l[j].iov_base);
-            l[j].iov_base = 0;
-            l[j].iov_len = 0;
-        }
-        free(l);
-
-        prepend_label.clear();
-        metadata.clear();
-    }
+               const std::string& colour_reset) override;
+    void Write(const LogEvent& event);
 };
 #endif // HAVE_SYSTEMD
