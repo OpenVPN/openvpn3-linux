@@ -30,6 +30,7 @@
 #include <gtest/gtest.h>
 
 #include "log/logwriter.hpp"
+#include "log/logwriters/syslog.hpp"
 
 namespace unittest {
 

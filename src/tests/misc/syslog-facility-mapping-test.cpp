@@ -27,7 +27,9 @@
 #include <iostream>
 #include <string>
 #include <vector>
+
 #include "log/logwriter.hpp"
+#include "log/logwriters/syslog.hpp"
 
 int main()
 {

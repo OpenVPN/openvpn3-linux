@@ -184,7 +184,9 @@ endif
 #
 LOGWRITERS = src/log/logwriter.cpp src/log/logwriter.hpp src/log/logwriters/implementations.hpp \
 	src/log/logwriters/streamwriter.cpp \
-	src/log/logwriters/streamwriter.hpp
+	src/log/logwriters/streamwriter.hpp \
+	src/log/logwriters/syslog.cpp \
+	src/log/logwriters/syslog.hpp
 
 #
 #   TEST PROGRAMS

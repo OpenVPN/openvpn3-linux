@@ -27,3 +27,4 @@
 #pragma once
 
 #include "streamwriter.hpp"
+#include "syslog.hpp"
