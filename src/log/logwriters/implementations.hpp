@@ -26,5 +26,6 @@
 
 #pragma once
 
+#include "journald.hpp"
 #include "streamwriter.hpp"
 #include "syslog.hpp"
