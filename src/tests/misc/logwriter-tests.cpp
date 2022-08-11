@@ -29,6 +29,7 @@
 #include "config.h"
 #include "log/ansicolours.hpp"
 #include "log/logwriter.hpp"
+#include "log/logwriters/implementations.hpp"
 
 /**
  *  Tests the Write(std::string) method of the LogWriter implementation.

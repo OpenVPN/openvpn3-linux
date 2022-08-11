@@ -25,6 +25,7 @@
 #include "log/ansicolours.hpp"
 #include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"
+#include "log/logwriters/implementations.hpp"
 #include "log/proxy-log.hpp"
 #include "common/cmdargparser.hpp"
 

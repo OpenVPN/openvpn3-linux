@@ -35,6 +35,7 @@
 #include "dbus/core.hpp"
 #include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"
+#include "log/logwriters/implementations.hpp"
 #include "log/ansicolours.hpp"
 #include "log/proxy-log.hpp"
 #include "log/core-dbus-logbase.hpp"

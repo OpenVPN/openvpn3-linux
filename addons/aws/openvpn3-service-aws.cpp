@@ -40,6 +40,7 @@
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
 #include "log/logwriter.hpp"
+#include "log/logwriters/implementations.hpp"
 #include "log/ansicolours.hpp"
 #include "log/proxy-log.hpp"
 #include "netcfg/netcfg-changeevent.hpp"
