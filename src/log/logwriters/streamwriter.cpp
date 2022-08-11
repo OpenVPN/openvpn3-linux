@@ -46,6 +46,12 @@ StreamLogWriter::~StreamLogWriter()
 }
 
 
+const std::string StreamLogWriter::GetLogWriterInfo() const
+{
+    return std::string("StreamWriter");
+}
+
+
 void StreamLogWriter::Write(const std::string& data,
                             const std::string& colour_init,
                             const std::string& colour_reset)
@@ -82,6 +88,10 @@ ColourStreamWriter::ColourStreamWriter(std::ostream& dst, ColourEngine *ce)
 {
 }
 
+const std::string ColourStreamWriter::GetLogWriterInfo() const
+{
+    return std::string("ColourStreamWriter");
+}
 
 void ColourStreamWriter::Write(const LogGroup grp,
                                const LogCategory ctg,

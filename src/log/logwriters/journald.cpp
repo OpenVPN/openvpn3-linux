@@ -41,6 +41,10 @@ JournaldWriter::JournaldWriter()
 {
 }
 
+const std::string JournaldWriter::GetLogWriterInfo() const
+{
+    return std::string("journald");
+}
 
 bool JournaldWriter::TimestampEnabled()
 {

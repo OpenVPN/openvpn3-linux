@@ -46,6 +46,13 @@ SyslogWriter::~SyslogWriter()
 }
 
 
+const std::string SyslogWriter::GetLogWriterInfo() const
+{
+    return std::string("syslog");
+}
+
+
+
 bool SyslogWriter::TimestampEnabled()
 {
     return true;

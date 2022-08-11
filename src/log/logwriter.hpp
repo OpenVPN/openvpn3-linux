@@ -51,6 +51,14 @@ public:
 
 
     /**
+     *  Retrieve information about the configured LogWriter backend in use
+     *
+     * @return  Returns a std::string with information about the backend
+     */
+    virtual const std::string GetLogWriterInfo() const = 0;
+
+
+    /**
      *  Turns on/off prefixing log lines with the timestamp of the log event
      *
      * @param tstamp Boolean flag to enable (true) or disable (false)

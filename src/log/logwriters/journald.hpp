@@ -35,6 +35,9 @@ public:
     JournaldWriter();
     virtual ~JournaldWriter() = default;
 
+    const std::string GetLogWriterInfo() const override;
+
+
     /**
      *  We presume journald will always add timestamps to its logging,
      *  so we will return true regardless of what an external user wants.

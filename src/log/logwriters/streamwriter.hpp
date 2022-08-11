@@ -46,6 +46,7 @@ public:
     StreamLogWriter(std::ostream& dst);
     virtual ~StreamLogWriter();
 
+    const std::string GetLogWriterInfo() const override;
 
     /**
      *  Generic Write() method, which can allows prepended and appended
@@ -87,6 +88,8 @@ public:
      */
     ColourStreamWriter(std::ostream& dst, ColourEngine *ce);
     virtual ~ColourStreamWriter() = default;
+
+    const std::string GetLogWriterInfo() const override;
 
 
     /*

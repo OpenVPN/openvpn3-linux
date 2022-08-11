@@ -63,6 +63,8 @@ public:
                  const int log_facility = LOG_DAEMON);
     virtual ~SyslogWriter();
 
+    const std::string GetLogWriterInfo() const override;
+
     /**
      *  We presume syslog will always add timestamps to its logging,
      *  so we will return true regardless of what an external user wants.
