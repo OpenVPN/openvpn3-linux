@@ -276,6 +276,15 @@ public:
 
 
     /**
+     *  Retrieve which logging method is used by the log service
+     */
+    const std::string GetLogMethod() const
+    {
+        return GetStringProperty("log_method");
+    }
+
+
+    /**
      *  Retrieve the number of subscriptions the log service is attached to
      *
      * @return  Returns an unsigned integer with number of subscribers.

@@ -1,7 +1,7 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  Copyright (C) 2019         OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2019         David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2019 - 2022  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2019 - 2022  David Sommerseth <davids@openvpn.net>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License as
@@ -149,6 +149,8 @@ static int cmd_log_service(ParsedArgs::Ptr args)
         }
         else
         {
+            std::cout << "                 Log method: "
+                      << logsrvprx.GetLogMethod() << std::endl;
             std::cout << " Attached log subscriptions: "
                       << logsrvprx.GetNumAttached() << std::endl;
             std::cout << "             Log timestamps: "
