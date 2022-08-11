@@ -229,6 +229,7 @@ LogServiceManager::LogServiceManager(GDBusConnection *dbcon,
     << "            <arg type='o' name='proxy_path' direction='out'/>"
     << "        </method>"
     << "        <property type='s' name='version' access='read'/>"
+    << "        <property name='log_method' type='s' access='read'/>"
     << "        <property name='log_level' type='u' access='readwrite'/>"
     << "        <property name='log_dbus_details' type='b' access='readwrite'/>"
     << "        <property name='log_prefix_logtag' type='b' access='readwrite'/>"
@@ -506,6 +507,17 @@ GVariant* LogServiceManager::callback_get_property(GDBusConnection *conn,
         if ("version" == property_name)
         {
             return g_variant_new_string(package_version());
+        }
+        else if ("log_method" == property_name)
+        {
+            if (logwr)
+            {
+                return g_variant_new_string(logwr->GetLogWriterInfo().c_str());
+            }
+            else
+            {
+                return g_variant_new_string("console");
+            }
         }
         else if ("log_level" == property_name)
         {

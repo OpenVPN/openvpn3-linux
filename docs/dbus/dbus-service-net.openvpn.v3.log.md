@@ -68,6 +68,7 @@ node /net/openvpn/v3/log {
                      out o proxy_path);
     signals:
     properties:
+      readonly s log_method;
       readwrite u log_level = 4;
       readwrite b log_dbus_details = false;
       readwrite b log_prefix_logtag = true;
@@ -165,6 +166,7 @@ also part of this feature.
 
 | Name          | Type             | Read/Write | Description                                         |
 |---------------|------------------|:----------:|-----------------------------------------------------|
+| log_method    |  string          | Read-only  | Indicates which logging method is in use            |
 | log_level     | unsigned integer | Read/Write | How verbose should the logging be.  See the table below for the mapping between log levels and Log Category the `Log` signal carries` |
 | log_dbus_details | boolean       | Read/Write | Should each Log event being processed carry a meta data line before with details about the D-Bus sender of the `Log` signal? |
 | log_prefix_logtag | boolean      | Read/Write | Configures if logged messages should be prefixed with the log senders LogTag hash value |
