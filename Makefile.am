@@ -182,7 +182,9 @@ endif
 #
 #  Log writer implementations
 #
-LOGWRITERS = src/log/logwriter.cpp src/log/logwriter.hpp src/log/logwriters/implementations.hpp \
+LOGWRITERS = src/log/logwriter.hpp src/log/logwriters/implementations.hpp \
+	src/log/logmetadata.cpp \
+	src/log/logmetadata.hpp \
 	src/log/logwriters/journald.cpp \
 	src/log/logwriters/journald.hpp \
 	src/log/logwriters/streamwriter.cpp \

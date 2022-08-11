@@ -18,10 +18,9 @@
 //
 
 /**
- * @file   logwriter.cpp
+ * @file   logmetadata.cpp
  *
- * @brief  Base class implementing a generic logging interface (API)
- *         as well as file stream and syslog implementations.
+ * @brief  Implementation of the LogMetaData and LogMetaDataValue class methods
  */
 
 #include <algorithm>
@@ -30,7 +29,8 @@
 #include <string>
 #include <vector>
 
-#include "logwriter.hpp"
+#include "logmetadata.hpp"
+#include "logtag.hpp"
 
 
 //
