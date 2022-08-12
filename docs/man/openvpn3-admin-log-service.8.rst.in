@@ -28,6 +28,60 @@ OPTIONS
 
 -h, --help      Print  usage and help details to the terminal
 
+--config-show
+                Shows the contents of the configuration file used by
+                ``openvpn3-service-logger``\(8).
+
+--config-set
+                Modifies a configuration setting in the configuration file.
+                Changing the configuration file will require the
+                ``openvpn3-service-logger``\(8) process to be restarted before
+                they become active.  This option requires two arguments:
+                *CONFIG-NAME* and *CONFIG-VALUE*.  Valid *CONFIG-NAMEs* are:
+
+                :code:`log-file`
+                        Sets the log destination for log events.  See the
+                        ``--log-file`` option in the man page to
+                        ``openvpn3-service-logger``\(8) for details.
+
+                        This cannot be set if ``journald`` or ``syslog`` has
+                        been set.
+
+                :code:`colour`
+                        Enables using  colours in logged lines when logging to
+                        file.  This can only be used when a log file
+                        configured.
+
+                :code:`idle-exit`
+                        Sets the automatic idle shut down time-out.  See the
+                        ``--idle-exit`` option in the man page for
+                        ``openvpn3-service-logger``\(8) for details.
+
+                :code:`journald`
+                        Configures ``openvpn3-service-logger``\(8) to send
+                        log events to the ``systemd-journald``\(8) service.
+                        See the ``openvpn3-service-logger``\(8) man page for
+                        more details.
+
+                        This option cannot be combined with ``syslog``,
+                        ``log-file`` or ``colour``.
+
+                :code:`syslog`
+                        Configures ``openvpn3-service-logger``\(8) to send
+                        log events to the locally running syslog service.
+
+                        This option cannot be combined with ``journald``,
+                        ``log-file`` or ``colour``.
+
+                :code:`syslog-facility`
+                        Configures which syslog facility to use when logging
+                        via syslog.  Default is `LOG_DAEMON`.  This has only
+                        effect when logging via ``syslog`` has been enabled.
+
+--config-unset
+                Similar to ``--config-set`` but removes a setting from the
+                configuration file.
+
 --log-level LEVEL
                 Sets the system wide log verbosity for the log events being
                 logged to file or any other log destination
@@ -62,6 +116,7 @@ OPTIONS
 
 --list-subscriptions
                 Lists all the services the log service has subscribed to.
+
 
 SEE ALSO
 ========
