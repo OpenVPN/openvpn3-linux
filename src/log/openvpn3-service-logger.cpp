@@ -115,17 +115,18 @@ static int logger(ParsedArgs::Ptr args)
     // Open a log destination
     std::ofstream logfs;
     std::streambuf * logstream;
+    bool do_console_info = true;
     if (args->Present("log-file"))
     {
-        logfs.open(args->GetValue("log-file", 0).c_str(), std::ios_base::app);
+        logfs.open(args->GetValue("log-file", 0), std::ios_base::app);
         logstream = logfs.rdbuf();
     }
     else
     {
         logstream = std::cout.rdbuf();
+        do_console_info = false;
     }
     std::ostream logfile(logstream);
-
 
     // Prepare the appropriate log writer
     LogWriter::Ptr logwr = nullptr;
@@ -133,6 +134,7 @@ static int logger(ParsedArgs::Ptr args)
 #if HAVE_SYSTEMD
     if (args->Present("journald"))
     {
+        do_console_info = true;
         logwr.reset(new JournaldWriter());
         logwr->EnableMessagePrepend(!args->Present("no-logtag-prefix"));
     }
@@ -140,6 +142,7 @@ static int logger(ParsedArgs::Ptr args)
 #endif // HAVE_SYSTEMD
     if (args->Present("syslog"))
      {
+        do_console_info = true;
         int facility = LOG_DAEMON;
         if (args->Present("syslog-facility"))
         {
@@ -181,8 +184,15 @@ static int logger(ParsedArgs::Ptr args)
      // Setup the log receivers
     try
     {
-        logfile << get_version(args->GetArgv0()) << std::endl;
-
+        logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::INFO,
+                              get_version(args->GetArgv0())));
+        logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::INFO,
+                              "Log method: " + logwr->GetLogWriterInfo()));
+        if (do_console_info)
+        {
+            std::cout << get_version(args->GetArgv0()) << std::endl;
+            std::cout << "Log method: " << logwr->GetLogWriterInfo() << std::endl;
+        }
         // Prepare the GLib GMainLoop
         GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
 
@@ -207,13 +217,15 @@ static int logger(ParsedArgs::Ptr args)
                 args->ImportConfigFile(cfgfile);
                 logsrv->SetConfigFile(cfgfile);
             }
+
             if (idle_wait_min > 0)
             {
                 idle_exit.reset(new IdleCheck(main_loop,
                                               std::chrono::minutes(idle_wait_min)));
                 logsrv->EnableIdleCheck(idle_exit);
-                std::cout << "Idle exit set to " << idle_wait_min
-                          << " minutes" << std::endl;
+                logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::INFO,
+                        "Idle exit set to " + std::to_string(idle_wait_min)
+                        + " minutes"));
             }
             else
             {
