@@ -26,6 +26,10 @@
 
 #pragma once
 
+#include <exception>
+#include <string>
+#include <vector>
+
 /**
  *  Basic exception class which is thrown whenever any of the command parsing
  *  and related objects have issues.
