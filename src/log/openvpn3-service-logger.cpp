@@ -91,6 +91,32 @@ static int logger(ParsedArgs::Ptr args)
                                "without --service");
     }
 
+    // Load and parse the log-service.json configuration file
+    LogServiceConfigFile::Ptr cfgfile;
+    if (args->Present("state-dir"))
+    {
+        cfgfile.reset(new LogServiceConfigFile(args->GetValue("state-dir", 0)));
+        try
+        {
+            cfgfile->Load();
+            cfgfile->CheckExclusiveOptions();
+        }
+        catch (const ConfigFileException&)
+        {
+            throw CommandException("openvpn3-service-logger",
+                                   "Failed parsing configuration file: "
+                                   + cfgfile->GetFilename());
+        }
+        catch (const ExclusiveOptionError& err)
+        {
+            std::stringstream e;
+            e << "Error parsing configuration file (" << cfgfile->GetFilename()
+              << "): " << err.what();
+            throw CommandException("openvpn3-service-logger", e.str());
+        }
+        args->ImportConfigFile(cfgfile);
+    }
+
     try
     {
         args->CheckExclusiveOptions({{"syslog", "journald", "log-file"},
@@ -208,12 +234,8 @@ static int logger(ParsedArgs::Ptr args)
             //
 
             logsrv.reset(new LogService(dbusconn, logwr.get(), log_level));
-            LogServiceConfigFile::Ptr cfgfile;
-            if (args->Present("state-dir"))
+            if (cfgfile)
             {
-                cfgfile.reset(new LogServiceConfigFile(args->GetValue("state-dir", 0)));
-                cfgfile->Load();
-                args->ImportConfigFile(cfgfile);
                 logsrv->SetConfigFile(cfgfile);
             }
 
