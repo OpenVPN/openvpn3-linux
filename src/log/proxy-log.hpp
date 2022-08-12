@@ -276,6 +276,16 @@ public:
 
 
     /**
+     *  Retrieve the configuration/state file openvpn-service-logger is
+     *  configured to use.
+     */
+    const std::string GetConfigFile() const
+    {
+        return GetStringProperty("config_file");
+    }
+
+
+    /**
      *  Retrieve which logging method is used by the log service
      */
     const std::string GetLogMethod() const
