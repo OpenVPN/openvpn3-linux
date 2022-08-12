@@ -56,10 +56,12 @@ public:
     /**
      *  Initialize the SyslogWriter
      *
+     * @param prgname       std::string containing the program identifier in the
+     *                      syslog calls
      * @param log_facility  Syslog facility to use for log messages.
      *                      (Default: LOG_DAEMON)
      */
-    SyslogWriter(const char * progname = NULL,
+    SyslogWriter(const std::string& prgname = NULL,
                  const int log_facility = LOG_DAEMON);
     virtual ~SyslogWriter();
 
@@ -140,6 +142,8 @@ public:
                        const std::string& colour_reset) override;
 
 private:
+    char *progname = nullptr;
+
     /**
      *  Simple conversion between LogCategory and a corresponding
      *  log level used by syslog(3).

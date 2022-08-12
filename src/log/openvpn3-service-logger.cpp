@@ -153,7 +153,7 @@ static int logger(ParsedArgs::Ptr args)
                                        excp.what());
             }
         }
-        logwr.reset(new SyslogWriter(args->GetArgv0().c_str(), facility));
+        logwr.reset(new SyslogWriter(args->GetArgv0(), facility));
      }
      else if (args->Present("colour"))
      {

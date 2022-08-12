@@ -25,6 +25,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <string>
 
 #include "../logwriter.hpp"
 #include "syslog.hpp"
@@ -32,10 +33,11 @@
 //
 //  SyslogWriter - implementation
 //
-SyslogWriter::SyslogWriter(const char* progname,
+SyslogWriter::SyslogWriter(const std::string& prgname,
                            const int log_facility)
     : LogWriter()
 {
+    progname = strdup(prgname.c_str());
     openlog(progname, LOG_NDELAY | LOG_PID, log_facility);
 }
 
@@ -43,6 +45,7 @@ SyslogWriter::SyslogWriter(const char* progname,
 SyslogWriter::~SyslogWriter()
 {
     closelog();
+    free(progname);
 }
 
 
