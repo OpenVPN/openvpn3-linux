@@ -82,20 +82,7 @@ static int logger(ParsedArgs::Ptr args)
         throw CommandException("openvpn3-service-logger", err.str());
     }
 
-    if (args->Present("syslog") && args->Present("log-file"))
-    {
-        std::stringstream err;
-        err << "--syslog and --log-file cannot be combined.";
-        throw CommandException("openvpn3-service-logger", err.str());
-    }
-
-    if (args->Present("syslog") && args->Present("colour"))
-    {
-        std::stringstream err;
-        err << "--syslog and --colour cannot be combined.";
-        throw CommandException("openvpn3-service-logger", err.str());
-    }
-
+    // --idle-exit and --state-dir are only available with --service
     if ((args->Present("idle-exit") || args->Present("state-dir"))
         && !args->Present("service"))
     {
@@ -103,6 +90,18 @@ static int logger(ParsedArgs::Ptr args)
                                "--idle-exit or --state-dir cannot be used "
                                "without --service");
     }
+
+    try
+    {
+        args->CheckExclusiveOptions({{"syslog", "journald", "log-file"},
+                                     {"syslog", "journald", "colour"}});
+    }
+    catch (const ExclusiveOptionError& excp)
+    {
+        throw CommandException("openvpn3-service-logger",
+                               excp.what());
+    }
+
 
     DBus dbus(G_BUS_TYPE_SYSTEM);
     dbus.Connect();
