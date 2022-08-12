@@ -380,6 +380,22 @@ public:
         return GetBoolProperty("log_prefix_logtag");
     }
 
+
+    /**
+     *  Changes the log tag prefix/prepend setting, which enables or disables
+     *  the '{tag:.....'} prefix in log messages.
+     *
+     *  Not all log writers will respond to this setting.
+     *
+     * @param logprep  Bool flag whether to enable (true) or disable (false)
+     *                 log tag prefixes.
+     */
+    void SetLogTagPrepend(const bool logprep)
+    {
+        SetProperty("log_prefix_logtag", logprep);
+    }
+
+
     LogSubscribers GetSubscriberList()
     {
         GVariant *l = Call("GetSubscriberList");

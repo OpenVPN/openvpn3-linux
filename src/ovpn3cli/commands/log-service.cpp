@@ -107,6 +107,26 @@ static int cmd_log_service(ParsedArgs::Ptr args)
             }
         }
 
+        std::string oldlogprefix("");
+        bool curlogprefix = logsrvprx.GetLogTagPrepend();
+        bool newlogprefix = curdbusdetails;
+        if (args->Present("enable-log-prefix"))
+        {
+            newlogprefix = args->GetBoolValue("enable-log-prefix", 0);
+            if ( curlogprefix != newlogprefix )
+            {
+                std::stringstream t;
+                if (newlogprefix)
+                {
+                    t << " ";
+                }
+                t << "     (Was: "
+                  << (curlogprefix ? "enabled" : "disabled") << ")";
+                oldlogprefix = t.str();
+                logsrvprx.SetLogTagPrepend(newlogprefix);
+            }
+        }
+
         if (args->Present("list-subscriptions"))
         {
             DBusConnectionCreds creds(dbus.GetConnection());
@@ -149,16 +169,26 @@ static int cmd_log_service(ParsedArgs::Ptr args)
         }
         else
         {
+            std::string log_method = logsrvprx.GetLogMethod();
             std::cout << "                 Log method: "
-                      << logsrvprx.GetLogMethod() << std::endl;
+                      << log_method << std::endl;
             std::cout << " Attached log subscriptions: "
                       << logsrvprx.GetNumAttached() << std::endl;
             std::cout << "             Log timestamps: "
                       << (newtstamp ? "enabled" : "disabled")
                       << old_tstamp << std::endl;
-            std::cout << "          Log D-Bus details: "
-                      << (newdbusdetails ? "enabled" : "disabled")
-                      << old_dbusdetails << std::endl;
+            if ("journald" == log_method)
+            {
+                std::cout << "     Log tag prefix enabled: "
+                          << (newlogprefix ? "enabled" : "disabled")
+                          << oldlogprefix << std::endl;
+            }
+            else
+            {
+                std::cout << "          Log D-Bus details: "
+                          << (newdbusdetails ? "enabled" : "disabled")
+                          << old_dbusdetails << std::endl;
+            }
             std::cout << "          Current log level: "
                       << newlev << old_loglev << std::endl;
         }
@@ -192,6 +222,9 @@ SingleCommand::Ptr prepare_command_log_service()
                    arghelper_boolean);
     cmd->AddOption("dbus-details", "true/false", true,
                    "Log D-Bus sender, object path and method details of log sender",
+                   arghelper_boolean);
+    cmd->AddOption("enable-log-prefix", "true/false", true,
+                   "(journald log mode only) Enable log tag prefix in log lines",
                    arghelper_boolean);
     cmd->AddOption("list-subscriptions",
                    "List all subscriptions which has attached to the log service");
