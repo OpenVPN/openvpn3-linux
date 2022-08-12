@@ -71,6 +71,12 @@ File::File(const std::string fname)
 }
 
 
+const std::string File::GetFilename() const
+{
+    return config_filename;
+}
+
+
 void File::Parse(Json::Value& config)
 {
     configure_mapping();

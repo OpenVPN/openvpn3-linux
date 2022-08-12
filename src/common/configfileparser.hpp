@@ -120,6 +120,10 @@ public:
     File(const std::string fname="");
     virtual ~File() = default;
 
+    /**
+     *  Retrieve the filename which is currently used
+     */
+    const std::string GetFilename() const;
 
     /**
      *  Parses configuration data from JSON::Value directly
