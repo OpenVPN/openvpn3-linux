@@ -49,7 +49,7 @@ echo "Version: $VERSION"
 # Generate version.m4
 {
     cat <<EOF
-define([PRODUCT_NAME], [OpenVPN 3/Linux])
+define([PRODUCT_NAME], [OpenVPN3/Linux])
 define([PRODUCT_VERSION], [${PRODVERSION}])
 define([PRODUCT_GUIVERSION], [${GUIVERSION}])
 define([PRODUCT_TARNAME], [openvpn3-linux])
