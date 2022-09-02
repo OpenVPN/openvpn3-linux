@@ -18,12 +18,17 @@ SYNOPSIS
 DESCRIPTION
 ===========
 This command allows a user to see all on-going authentication events and pick
-up stalled ones to complete them.
+up stalled ones to complete them.  When running this command without any
+arguments unresolved authentications are listed.
 
 OPTIONS
 =======
 
--h, --help      Print  usage and help details to the terminal
+-h, --help
+        Print  usage and help details to the terminal
+
+--auth-req ID
+        Continue the authentication process for the given auth request ID.
 
 
 SEE ALSO
