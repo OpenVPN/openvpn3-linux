@@ -99,6 +99,13 @@ static int logger(ParsedArgs::Ptr args)
         try
         {
             cfgfile->Load();
+        }
+        catch (const ConfigFileException&)
+        {
+            //  Ignore load errors; the file might be missing - which is fine.
+        }
+        try
+        {
             cfgfile->CheckExclusiveOptions();
         }
         catch (const ConfigFileException&)
