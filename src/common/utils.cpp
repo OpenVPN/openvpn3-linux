@@ -149,9 +149,10 @@ std::string get_version(std::string component)
 const std::string get_guiversion()
 {
 #ifdef CONFIGURE_GIT_REVISION
-    return openvpn::platform_string(PACKAGE_NAME, "git:" CONFIGURE_GIT_REVISION CONFIGURE_GIT_FLAGS);
+    return std::string(PACKAGE_NAME)
+            + "#git:" + std::string(CONFIGURE_GIT_REVISION CONFIGURE_GIT_FLAGS);
 #else
-    return openvpn::platform_string(PACKAGE_NAME, PACKAGE_GUIVERSION);
+    return std::string(PACKAGE_NAME + "/" + PACKAGE_GUIVERSION);
 #endif
 }
 
