@@ -583,6 +583,10 @@ public:
 
     GVariant * GetProperty(std::string property) const
     {
+        if (!property_proxy)
+        {
+            THROW_DBUSEXCEPTION("DBusProxy", "Property proxy incorrectly setup");
+        }
         if (property.empty())
         {
             THROW_DBUSEXCEPTION("DBusProxy", "Property cannot be empty");
