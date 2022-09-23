@@ -624,6 +624,8 @@ src_client_openvpn3_service_client_SOURCES = \
 	src/common/core-extensions.hpp \
 	src/common/machineid.hpp \
 	src/common/machineid.cpp \
+	src/common/platforminfo.hpp \
+	src/common/platforminfo.cpp \
 	src/common/requiresqueue.cpp \
 	src/common/timestamp.cpp \
 	src/common/utils.cpp \

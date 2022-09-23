@@ -7,6 +7,7 @@ policy_module(openvpn3_service, 1.0.0)
 
 require {
         type proc_net_t;
+        type systemd_hostnamed_t;
         class file read;
         class unix_dgram_socket { create_socket_perms sendto };
         class udp_socket rw_socket_perms;
@@ -125,6 +126,11 @@ allow openvpn3_client_t self:unix_dgram_socket create;
 # and communicate with openvpn3-service-netcfg over the bus.
 dbus_system_bus_client(openvpn3_client_t)
 openvpn3_allow_dbus_chat(openvpn3_client_t, openvpn3_netcfg_t)
+
+# Allow openvpn3-service-client and org.freedesktop.hostname1
+# to communicate - for OS details (see common/platforminfo.cpp)
+openvpn3_allow_dbus_chat(openvpn3_client_t, systemd_hostnamed_t);
+openvpn3_allow_dbus_chat(systemd_hostnamed_t, openvpn3_client_t);
 
 # Allow openvpn3-service-client to send a fd to openvpn3-service-netcfg
 # to "socket protect" it

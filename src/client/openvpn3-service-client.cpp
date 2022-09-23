@@ -34,6 +34,7 @@
  *         connection.
  */
 
+#include <exception>
 #include <sstream>
 
 #define SHUTDOWN_NOTIF_PROCESS_NAME "openvpn3-service-client"
@@ -44,6 +45,7 @@
 #include "common/requiresqueue.hpp"
 #include "common/utils.hpp"
 #include "common/cmdargparser.hpp"
+#include "common/platforminfo.hpp"
 #include "configmgr/proxy-configmgr.hpp"
 #include "log/ansicolours.hpp"
 #include "log/dbus-log.hpp"
@@ -1212,6 +1214,16 @@ private:
             vpnconfig.content = pm.profile_content();
             vpnconfig.ssoMethods = "openurl,webauth";
             vpnconfig.dco = dco;
+
+            try
+            {
+                PlatformInfo platinfo(dbusconn);
+                vpnconfig.platformVersion = platinfo.str();
+            }
+            catch(const std::exception &ex)
+            {
+                signal.LogError(ex.what());
+            }
 
             set_overrides(overrides);
         }
