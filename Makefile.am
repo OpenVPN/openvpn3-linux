@@ -210,6 +210,7 @@ UNIT_TESTS = \
 	src/tests/unit/logmetadata.cpp \
 	src/tests/unit/lookup.cpp \
 	src/tests/unit/netcfg-changeevent.cpp \
+	src/tests/unit/platforminfo.cpp \
 	src/tests/unit/sessionmgr-events.cpp \
 	src/tests/unit/statusevent.cpp \
 	src/tests/unit/syslog-facility-mapping.cpp \
@@ -223,6 +224,8 @@ UNIT_TESTS_DEPS = \
 	src/common/lookup.cpp \
 	src/common/machineid.cpp \
 	src/common/machineid.hpp \
+	src/common/platforminfo.cpp \
+	src/common/platforminfo.hpp \
 	src/common/timestamp.cpp \
 	src/log/logtag.cpp \
 	$(LOGWRITERS) \
@@ -265,6 +268,7 @@ noinst_PROGRAMS += \
 	src/tests/misc/machineid-test \
 	src/tests/misc/netcfg-dns-direct-file-selftest \
 	src/tests/misc/open-uri-test \
+	src/tests/misc/platforminfo \
 	src/tests/misc/syslog-facility-mapping-test \
 	src/tests/dbus/config-lock-down \
 	src/tests/dbus/config-override-selftest \
@@ -363,6 +367,11 @@ src_tests_misc_open_uri_test_SOURCES = \
 	src/tests/misc/open-uri-test.cpp \
 	src/common/open-uri.cpp \
 	src/common/open-uri.hpp
+
+src_tests_misc_platforminfo_SOURCES = \
+	src/tests/misc/platforminfo.cpp \
+	src/common/platforminfo.cpp \
+	src/common/platforminfo.hpp
 
 src_tests_misc_syslog_facility_mapping_test_SOURCES = \
 	src/tests/misc/syslog-facility-mapping-test.cpp
