@@ -812,9 +812,11 @@ protected:
     }
 
 
-private:
+protected:
     std::string bus_name;
     std::string interface;
+
+private:
     std::string object_path;
     GDBusCallFlags call_flags;
     bool proxy_init;
