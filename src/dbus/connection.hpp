@@ -67,7 +67,8 @@ public:
           dbuscon(dbuscon)
     {
         idle_checker = nullptr;
-        connected = g_dbus_connection_is_closed(dbuscon) == 0;
+        connected = dbuscon && G_IS_DBUS_CONNECTION(dbuscon)
+                && g_dbus_connection_is_closed(dbuscon) == 0;
     }
 
 
@@ -97,7 +98,8 @@ public:
           dbuscon(dbuscon)
     {
         idle_checker = nullptr;
-        connected = g_dbus_connection_is_closed(dbuscon) == 0;
+        connected = dbuscon && G_IS_DBUS_CONNECTION(dbuscon)
+                && g_dbus_connection_is_closed(dbuscon) == 0;
     }
 
     virtual ~DBus()
