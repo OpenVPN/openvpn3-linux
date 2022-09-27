@@ -28,12 +28,21 @@
 #include <string>
 #include "dbus/core.hpp"
 #include "common/platforminfo.hpp"
+#include "dbus/exceptions.hpp"
 
 
 TEST(PlatformInfo, DBus)
 {
     DBus dbc(G_BUS_TYPE_SYSTEM);
-    dbc.Connect();
+    try
+    {
+        dbc.Connect();
+    }
+    catch (const DBusException& e)
+    {
+        GTEST_SKIP() << std::string("Could not connect to D-Bus ## ")
+                        + std::string(e.what());
+    }
 
     PlatformInfo plinfo(dbc.GetConnection());
     std::string s{plinfo.str()};
