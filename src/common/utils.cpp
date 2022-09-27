@@ -152,7 +152,7 @@ const std::string get_guiversion()
     return std::string(PACKAGE_NAME)
             + "#git:" + std::string(CONFIGURE_GIT_REVISION CONFIGURE_GIT_FLAGS);
 #else
-    return std::string(PACKAGE_NAME + "/" + PACKAGE_GUIVERSION);
+    return std::string(PACKAGE_NAME "/" PACKAGE_GUIVERSION);
 #endif
 }
 
