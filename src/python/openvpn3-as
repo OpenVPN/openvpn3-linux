@@ -164,13 +164,17 @@ def fetch_profile(uri, username, password, autologin, insecure_certs):
     handler = None
     if 'https' == uri.scheme:
         # Setup default SSL context
-        sslctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        sslctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         sslctx.options &= ~ssl.OP_NO_SSLv3
         sslctx.options &= ~ssl.OP_NO_SSLv2
         sslctx.load_default_certs()
         if not insecure_certs:
             sslctx.verify_mode = ssl.CERT_REQUIRED
             sslctx.check_hostname = True
+        else:
+            sslctx.check_hostname = False
+            sslctx.verify_mode = ssl.CERT_NONE
+
         handler = urllib.request.HTTPSHandler(context=sslctx)
         if 'OPENVPN3_DEBUG' in os.environ:
             handler.set_http_debuglevel(1)
