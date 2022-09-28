@@ -23,6 +23,10 @@
  * @brief  Implementation of JournaldWriter
  */
 
+#include "config.h"
+
+#ifdef HAVE_SYSTEMD
+
 #include <sys/uio.h>
 #include <ctype.h>
 #include <string>
@@ -33,8 +37,6 @@
 #include "log/logwriter.hpp"
 #include "log/logwriters/journald.hpp"
 
-
-#ifdef HAVE_SYSTEMD
 
 JournaldWriter::JournaldWriter()
     : LogWriter()
