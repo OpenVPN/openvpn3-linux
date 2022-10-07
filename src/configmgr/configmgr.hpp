@@ -209,16 +209,8 @@ public:
                                signal_broadcast),
           DBusCredentials(dbuscon, creator),
           remove_callback(remove_callback),
-          name(""),
           import_tstamp(std::time(nullptr)),
-          last_use_tstamp(0),
-          used_count(0),
-          valid(false),
-          readonly(false),
-          single_use(false),
-          dco(false),
-          properties(this),
-          persistent_file("")
+          properties(this)
     {
         GLibUtils::checkParams(__func__, params, "(ssbb)", 4);
         name = GLibUtils::ExtractValue<std::string>(params, 0);
@@ -1082,20 +1074,20 @@ public:
 
 private:
     std::function<void()> remove_callback;
-    std::string name;
-    std::time_t import_tstamp;
-    std::time_t last_use_tstamp;
-    unsigned int used_count;
-    bool valid;
-    bool readonly;
-    bool single_use;
-    bool locked_down;
+    std::string name = {};
+    std::time_t import_tstamp = {};
+    std::time_t last_use_tstamp = {};
+    unsigned int used_count = 0;
+    bool valid = false;
+    bool readonly = false;
+    bool single_use = false;
+    bool locked_down = false;
     bool transfer_owner_sess = false;
-    bool dco; // data channel offload
+    bool dco = false; // data channel offload
     PropertyCollection properties;
-    std::string persistent_file;
-    OptionListJSON options;
-    std::vector<OverrideValue> override_list;
+    std::string persistent_file = {};
+    OptionListJSON options = {};
+    std::vector<OverrideValue> override_list = {};
 };
 
 
