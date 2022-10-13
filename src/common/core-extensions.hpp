@@ -18,6 +18,7 @@
 //
 
 #pragma once
+
 #include <iostream>
 #include <json/json.h>
 #include <openvpn/client/cliconstants.hpp>
@@ -50,7 +51,7 @@ namespace openvpn {
                ) ? true : false;
     }
 
-    std::string optparser_mkline(std::string optname, std::string optvalue)
+    inline std::string optparser_mkline(std::string optname, std::string optvalue)
     {
         bool inlined_file = optparser_inline_file(optname);
         std::stringstream ret;
