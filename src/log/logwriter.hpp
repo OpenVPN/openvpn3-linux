@@ -185,7 +185,7 @@ public:
     }
 
 
-    virtual void AddMeta(const std::string& label, const LogTag& ltg,
+    virtual void AddMeta(const std::string& label, const LogTag::Ptr ltg,
                          const bool skip=false, const bool encaps=true)
     {
         if (log_meta)

@@ -38,7 +38,7 @@ public:
     typedef std::shared_ptr<Logger> Ptr;
 
     Logger(GDBusConnection *dbuscon, LogWriter *logwr,
-           const LogTag& tag, const std::string& busname,
+           const LogTag::Ptr tag, const std::string& busname,
            const std::string& interf,
            const unsigned int log_level = 3)
         : LogConsumer(dbuscon, interf, "", busname),
@@ -160,7 +160,7 @@ public:
 
 private:
     LogWriter *logwr;
-    const LogTag log_tag;
+    LogTag::Ptr log_tag;
     std::vector<LogGroup> exclude_loggroup;
     std::map<std::string, LogSender*> log_forwards = {};
 };

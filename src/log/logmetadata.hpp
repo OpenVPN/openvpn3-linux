@@ -47,7 +47,7 @@ struct LogMetaDataValue
     using Ptr = std::shared_ptr<LogMetaDataValue>;
 
     LogMetaDataValue(const std::string& l, const std::string& v, bool s = false);
-    LogMetaDataValue(const std::string& l, const LogTag& v, bool s = false);
+    LogMetaDataValue(const std::string& l, const LogTag::Ptr v, bool s = false);
 
     /**
      *  This is a static helper method to create a LogMetaDataValue::Ptr object
@@ -90,13 +90,14 @@ struct LogMetaDataValue
         {
             return os;
         }
-        return os << mdv.label << "=" << mdv.GetValue(mdv.logtag.encaps);
+        bool encaps = (mdv.logtag ? mdv.logtag->encaps : true);
+        return os << mdv.label << "=" << mdv.GetValue(encaps);
     }
 
     Type type;
     std::string label;
     const std::string str_value;
-    const LogTag& logtag;
+    const LogTag::Ptr logtag;
     bool skip;
 };
 

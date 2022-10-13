@@ -39,6 +39,8 @@ using namespace openvpn;
 
 struct LogStringTag : public LogTag
 {
+    using Ptr = std::shared_ptr<LogStringTag>;
+
     LogStringTag(const std::string& t) : LogTag()
     {
         tag = std::string(t);
@@ -285,8 +287,11 @@ static int logger(ParsedArgs::Ptr args)
             unsigned int subscribers = 0;
             if (args->Present("vpn-backend"))
             {
+                LogStringTag::Ptr vpnbetag;
+                vpnbetag.reset(new LogStringTag("[B]"));
+
                 be_subscription.reset(new Logger(dbusconn, logwr.get(),
-                                                 LogStringTag("[B]"), "",
+                                                 vpnbetag, "",
                                                  OpenVPN3DBus_interf_backends,
                                                  log_level));
                 ++subscribers;
@@ -295,8 +300,11 @@ static int logger(ParsedArgs::Ptr args)
             if (args->Present("session-manager")
                 || args->Present("session-manager-client-proxy"))
             {
+                LogStringTag::Ptr smgrtag;
+                smgrtag.reset(new LogStringTag("[S]"));
+
                 session_subscr.reset(new Logger(dbusconn, logwr.get(),
-                                                LogStringTag("[S]"), "",
+                                                smgrtag, "",
                                                 OpenVPN3DBus_interf_sessions,
                                                 log_level));
                 ++subscribers;
@@ -313,8 +321,11 @@ static int logger(ParsedArgs::Ptr args)
 
             if (args->Present("config-manager"))
             {
+                LogStringTag::Ptr cmgrtag;
+                cmgrtag.reset(new LogStringTag("[C]"));
+
                 config_subscr.reset(new Logger(dbusconn, logwr.get(),
-                                               LogStringTag("[C]"), "",
+                                               cmgrtag, "",
                                                OpenVPN3DBus_interf_configuration,
                                                log_level));
                 ++subscribers;

@@ -311,15 +311,15 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
 
         if ("Attach" == meth_name)
         {
-            LogTag tag(sender, interface);
+            LogTag::Ptr tag = LogTag::create(sender, interface);
 
             // Subscribe to signals from a new D-Bus service/client
 
             // Check this has not been already registered
-            if (loggers.find(tag.hash) != loggers.end())
+            if (loggers.find(tag->hash) != loggers.end())
             {
                 std::stringstream l;
-                l << "Duplicate: " << tag << "  " << tag.tag;
+                l << "Duplicate: " << *tag << "  " << tag->tag;
 
                 logwr->AddMetaCopy(meta);
                 logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN,
@@ -332,11 +332,11 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
                 return;
             }
 
-            loggers[tag.hash].reset(new Logger(dbuscon, logwr, tag,
+            loggers[tag->hash].reset(new Logger(dbuscon, logwr, tag,
                                                sender, interface, log_level));
 
             std::stringstream l;
-            l << "Attached: " << tag << "  " << tag.tag;
+            l << "Attached: " << *tag << "  " << tag->tag;
 
             logwr->AddMetaCopy(meta);
             logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2,
@@ -358,11 +358,11 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
             std::string be_busname = check_busname_vpn_client(sender);
             if (!be_busname.empty())
             {
-                LogTag tag(sender, interface);
-                logger_session[sesspath] = tag.hash;
+                LogTag::Ptr tag = LogTag::create(sender, interface);
+                logger_session[sesspath] = tag->hash;
                 logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::DEBUG,
                                       "Assigned session " + sesspath
-                                      + " to " + tag.str()));
+                                      + " to " + tag->str()));
                 g_dbus_method_invocation_return_value(invoc, NULL);
                 return;
             }
@@ -382,13 +382,13 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
         }
         else if ("Detach" == meth_name)
         {
-            LogTag tag(sender, interface);
+            LogTag::Ptr tag = LogTag::create(sender, interface);
 
             // Ensure the requested logger is truly configured
-            if (loggers.find(tag.hash) == loggers.end())
+            if (loggers.find(tag->hash) == loggers.end())
             {
                 std::stringstream l;
-                l << "Not found: " << tag << " " << tag.tag;
+                l << "Not found: " << tag << " " << tag->tag;
 
                 logwr->AddMetaCopy(meta);
                 logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN,
@@ -403,7 +403,7 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
             }
 
             // Check this has not been already registered
-            validate_sender(sender, loggers[tag.hash]->GetBusName());
+            validate_sender(sender, loggers[tag->hash]->GetBusName());
 
             // Do a reverse lookup in logger_session to retrieve
             // the key to delete from the logger_sesion index
@@ -411,7 +411,7 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
                                   logger_session.end(),
                                   [tag](const auto& e)
                                   {
-                                      return e.second == tag.hash;
+                                      return e.second == tag->hash;
                                   });
             if (logger_session.end() != it)
             {
@@ -420,9 +420,9 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
 
 
             // Unsubscribe from signals from a D-Bus service/client
-            loggers.erase(tag.hash);
+            loggers.erase(tag->hash);
             std::stringstream l;
-            l << "Detached: " << tag << "  " << tag.tag;
+            l << "Detached: " << *tag << "  " << tag->tag;
 
             logwr->AddMetaCopy(meta);
             logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2,

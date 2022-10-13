@@ -39,18 +39,19 @@
 
 LogMetaDataValue::LogMetaDataValue(const std::string& l, const std::string& v,
                                    bool s)
-    : label(l), str_value(v), logtag((const LogTag&)LogTag()), skip(s)
+    : label(l), str_value(v), logtag(nullptr), skip(s)
 {
     type = Type::LOGMETA_STRING;
 }
 
 
-LogMetaDataValue::LogMetaDataValue(const std::string& l, const LogTag& v,
+LogMetaDataValue::LogMetaDataValue(const std::string& l, const LogTag::Ptr v,
                                    bool s)
     : label(l), str_value(""), logtag(v), skip(s)
 {
     type = Type::LOGMETA_LOGTAG;
 }
+
 
 const std::string LogMetaDataValue::GetValue(const bool logtag_encaps) const
 {
@@ -60,7 +61,7 @@ const std::string LogMetaDataValue::GetValue(const bool logtag_encaps) const
         return str_value;
 
     case Type::LOGMETA_LOGTAG:
-        return logtag.str(logtag_encaps);
+        return (logtag ? logtag->str(logtag_encaps) : "[INVALID-LOGTAG]");
     }
     return "";
 }

@@ -26,6 +26,7 @@
 #pragma once
 
 #include <iostream>
+#include <memory>
 #include <string>
 
 /**
@@ -35,6 +36,8 @@
  */
 struct LogTag
 {
+    using Ptr = std::shared_ptr<LogTag>;
+
     /**
      *  LogTag constructor
      *
@@ -48,6 +51,23 @@ struct LogTag
     LogTag(const LogTag& cp);
 
     virtual ~LogTag();
+
+    static LogTag::Ptr create()
+    {
+        LogTag::Ptr r;
+        r.reset(new LogTag());
+        return r;
+    }
+
+    static LogTag::Ptr create(const std::string &sender,
+                              const std::string &interface,
+                              const bool default_encaps=true)
+    {
+        LogTag::Ptr r;
+        r.reset(new LogTag(sender, interface, default_encaps));
+        return r;
+    }
+
 
     /**
      *  Return a std::string containing the tag to be used with log lines
