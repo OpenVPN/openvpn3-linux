@@ -30,8 +30,6 @@
 
 #include "dbus/exceptions.hpp"
 
-using namespace openvpn;
-
 namespace SessionManager
 {
 
