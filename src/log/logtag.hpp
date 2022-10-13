@@ -47,6 +47,7 @@ struct LogTag
     LogTag();
     LogTag(const LogTag& cp);
 
+    virtual ~LogTag();
 
     /**
      *  Return a std::string containing the tag to be used with log lines

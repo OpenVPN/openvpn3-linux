@@ -54,6 +54,12 @@ LogTag::LogTag(const LogTag& cp)
     encaps = cp.encaps;
 }
 
+LogTag::~LogTag()
+{
+    tag = "";
+    hash = 0;
+    encaps = true;
+}
 
 const std::string LogTag::str() const
 {
