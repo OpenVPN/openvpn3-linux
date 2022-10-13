@@ -40,9 +40,9 @@ namespace SessionManager
     {
     public:
         Exception(const std::string msg,
-                                const char* file = __FILE__,
-                                const int line = __LINE__,
-                                const char* method = __FUNCTION__)
+                                const char* file,
+                                const int line,
+                                const char* method)
             : DBusException("SessionManager", msg, file, line, method)
         {
         }
