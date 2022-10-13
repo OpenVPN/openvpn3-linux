@@ -119,7 +119,6 @@ public:
 
 private:
     PropertyCollection props;
-    GDBusConnection* dbuscon = nullptr;
     std::string creator = {};
     std::function<void()> remove_callback;
     std::string log_target;

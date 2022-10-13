@@ -57,7 +57,7 @@ LoggerProxy::LoggerProxy(GDBusConnection *dbc,
       DBusConnectionCreds(dbc),
       LogSender(dbc, LogGroup::UNDEFINED, src_interf, src_path, nullptr),
       props(this),
-      dbuscon(dbc), creator(creat), remove_callback(remove_cb),
+      creator(creat), remove_callback(remove_cb),
       log_target(target), log_level(loglvl), session_path(src_path)
 {
     props.AddBinding(new PropertyType<unsigned int>(
