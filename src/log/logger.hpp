@@ -97,7 +97,7 @@ public:
     void ConsumeLogEvent(const std::string sender,
                          const std::string interface,
                          const std::string object_path,
-                         const LogEvent& logev)
+                         const LogEvent& logev) override
     {
         for (const auto& e : exclude_loggroup)
         {

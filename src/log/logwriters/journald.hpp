@@ -57,6 +57,6 @@ public:
                const std::string& data,
                const std::string& colour_init,
                const std::string& colour_reset) override;
-    void Write(const LogEvent& event);
+    void Write(const LogEvent& event) override;
 };
 #endif // HAVE_SYSTEMD

@@ -56,7 +56,7 @@ public:
     }
 
 
-    void Debug(std::string msg)
+    void Debug(std::string msg, bool duplicate_check = false) override
     {
         Log(LogEvent(log_group, LogCategory::DEBUG, msg));
     }
