@@ -30,6 +30,7 @@
 #include <gtest/gtest.h>
 
 #include "log/logwriter.hpp"
+#include "log/logtag.hpp"
 
 namespace unittest {
 
@@ -44,6 +45,11 @@ TEST(LogMetaDataValue, constructor)
     EXPECT_STREQ(mdv2.label.c_str(), "label2");
     EXPECT_STREQ(mdv2.GetValue().c_str(), "another value");
     EXPECT_TRUE(mdv2.skip);
+
+    LogTag::Ptr tag = LogTag::create("dummysender", "dummyinterface");
+    LogMetaDataValue mdv3("tag", tag);
+    EXPECT_STREQ(mdv3.label.c_str(), "tag");
+    EXPECT_STREQ(mdv3.GetValue().c_str(), tag->str().c_str());
 }
 
 
@@ -61,6 +67,11 @@ TEST(LogMetaDataValue, create)
     EXPECT_STREQ(mdv2->label.c_str(), "labelB");
     EXPECT_STREQ(mdv2->GetValue().c_str(), "A different value");
     EXPECT_TRUE(mdv2->skip);
+
+    LogTag::Ptr tag = LogTag::create("dummysender", "dummyinterface");
+    LogMetaDataValue::Ptr mdv3 = LogMetaDataValue::create("tag", tag);
+    EXPECT_STREQ(mdv3->label.c_str(), "tag");
+    EXPECT_STREQ(mdv3->GetValue().c_str(), tag->str().c_str());
 }
 
 
@@ -77,6 +88,13 @@ TEST(LogMetaDataValue, op_stream_write)
     std::stringstream s2;
     s2 << *mdv2;
     EXPECT_STREQ(s2.str().c_str(), "");
+
+    LogTag::Ptr tag = LogTag::create("dummysender", "dummyinterface");
+    std::string chk = "tag=" + tag->str();
+    LogMetaDataValue::Ptr mdv3 = LogMetaDataValue::create("tag", tag);
+    std::stringstream s3;
+    s3 << *mdv3;
+    EXPECT_STREQ(s3.str().c_str(), chk.c_str());
 }
 
 
@@ -106,6 +124,14 @@ TEST(LogMetaData, static_add_get_meta)
     lmd.AddMeta("label2", "value 2", true);
     EXPECT_STREQ(lmd.GetMetaValue("label2").c_str(), "value 2 ");
     EXPECT_STREQ(lmd.GetMetaValue("label2", false,"___").c_str(), "value 2___");
+
+    LogTag::Ptr tag = LogTag::create("dummysender", "dummyinterface");
+    std::string chk_noencap = tag->str(false) + " ";
+    std::string chk_encap = tag->str(true) + " ";
+    lmd.AddMeta("tag", tag);
+    EXPECT_STREQ(lmd.GetMetaValue("tag").c_str(), chk_encap.c_str());
+    EXPECT_STREQ(lmd.GetMetaValue("tag", false).c_str(), chk_noencap.c_str());
+    EXPECT_STREQ(lmd.GetMetaValue("tag", true).c_str(), chk_encap.c_str());
 }
 
 
@@ -116,9 +142,13 @@ TEST(LogMetaData, static_op_stream_write)
     lmd.AddMeta("label_1", "Value: 1");
     lmd.AddMeta("label_2", "SomeOtherValue");
     lmd.AddMeta("skipped_label", "Skipped Value", true);
+
+    LogTag::Ptr tag = LogTag::create("dummysender", "dummyinterface");
+    lmd.AddMeta("logtag", tag);
+    std::string chk = "label_1=Value: 1, label_2=SomeOtherValue, logtag=" + tag->str();
     std::stringstream s;
     s << lmd;
-    EXPECT_STREQ(s.str().c_str(), "label_1=Value: 1, label_2=SomeOtherValue");
+    EXPECT_STREQ(s.str().c_str(), chk.c_str());
 }
 
 
@@ -175,6 +205,9 @@ TEST(LogMetaData, op_copy)
     orig.AddMeta("label_skip", "Value skip", true);
     orig.AddMeta("label_B", "Value B");
 
+    LogTag::Ptr tag = LogTag::create("dummysender", "dummyinterface");
+    orig.AddMeta("logtag", tag);
+
     LogMetaData copy = LogMetaData(orig);
     EXPECT_STREQ(orig.GetMetaValue("label_A").c_str(),
                  copy.GetMetaValue("label_A").c_str());
@@ -182,6 +215,8 @@ TEST(LogMetaData, op_copy)
                  copy.GetMetaValue("label_skip").c_str());
     EXPECT_STREQ(orig.GetMetaValue("label_B").c_str(),
                  copy.GetMetaValue("label_B").c_str());
+    EXPECT_STREQ(orig.GetMetaValue("logtag").c_str(),
+                 copy.GetMetaValue("logtag").c_str());
 
     orig.clear();
     EXPECT_TRUE(orig.empty());
@@ -190,10 +225,13 @@ TEST(LogMetaData, op_copy)
     EXPECT_STREQ(copy.GetMetaValue("label_A", false, "").c_str(), "Value A");
     EXPECT_STREQ(copy.GetMetaValue("label_skip", false, "").c_str(), "Value skip");
     EXPECT_STREQ(copy.GetMetaValue("label_B", false, "").c_str(), "Value B");
+    EXPECT_STREQ(copy.GetMetaValue("logtag", false, "").c_str(), tag->str(false).c_str());
+    EXPECT_STREQ(copy.GetMetaValue("logtag", true, "").c_str(), tag->str().c_str());
 
+    std::string chk = "label_A=Value A, label_B=Value B, logtag=" + tag->str();
     std::stringstream s;
     s << copy;
-    EXPECT_STREQ(s.str().c_str(), "label_A=Value A, label_B=Value B");
+    EXPECT_STREQ(s.str().c_str(), chk.c_str());
 
     EXPECT_STRNE(orig.GetMetaValue("label_A").c_str(),
                  copy.GetMetaValue("label_A").c_str());
@@ -201,5 +239,62 @@ TEST(LogMetaData, op_copy)
                  copy.GetMetaValue("label_skip").c_str());
     EXPECT_STRNE(orig.GetMetaValue("label_B").c_str(),
                  copy.GetMetaValue("label_B").c_str());
+}
+
+
+void compare_logmetadata_records(LogMetaData::Records set1, LogMetaData::Records set2)
+{
+    ASSERT_EQ(set1.size(), set2.size()) << "Mismatch in LogMetaData::Record set sizes";
+
+    int idx = 0;
+    for (const auto& r : set1)
+    {
+        EXPECT_STREQ(r.c_str(), set2[idx].c_str());
+        ++idx;
+    }
+
+}
+
+TEST(LogMetaData, GetMetaDataRecords)
+{
+    LogMetaData lmd;
+    lmd.AddMeta("label_A", "Value A");
+    lmd.AddMeta("label_skip", "Value skip", true);
+    lmd.AddMeta("label_B", "Value B");
+
+    LogTag::Ptr tag = LogTag::create("dummysender", "dummyinterface");
+    lmd.AddMeta("logtag", tag);
+
+    compare_logmetadata_records(lmd.GetMetaDataRecords(),
+                                {
+                                    "label_A=Value A",
+                                    "label_skip=Value skip",
+                                    "label_B=Value B",
+                                    "logtag=" + tag->str()
+                                });
+
+    compare_logmetadata_records(lmd.GetMetaDataRecords(true),
+                                {
+                                    "LABEL_A=Value A",
+                                    "LABEL_SKIP=Value skip",
+                                    "LABEL_B=Value B",
+                                    "LOGTAG=" + tag->str()
+                                });
+
+    compare_logmetadata_records(lmd.GetMetaDataRecords(false, false),
+                                {
+                                    "label_A=Value A",
+                                    "label_skip=Value skip",
+                                    "label_B=Value B",
+                                    "logtag=" + tag->str(false)
+                                });
+
+    compare_logmetadata_records(lmd.GetMetaDataRecords(true, false),
+                                {
+                                    "LABEL_A=Value A",
+                                    "LABEL_SKIP=Value skip",
+                                    "LABEL_B=Value B",
+                                    "LOGTAG=" + tag->str(false)
+                                });
 }
 } // unittest
