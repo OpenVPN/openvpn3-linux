@@ -270,6 +270,28 @@ namespace openvpn {
         {
             std::stringstream cfgstr;
 
+            // FIXME: Hackish workaround for OpenVPN Access Server
+            //        configured to do web authentication.  This is
+            //        only needed until OpenVPN 3 Core library gets
+            //        updated to always preserve and send --auth-token,
+            //        similar to how OpenVPN 2.x behaves.
+            //
+            //        The list of options here are more to be considered
+            //        wildcard matches
+            //
+            std::vector<std::string> ignore_as_options = {
+                "CLI_PREF_",
+                "WSHOST",
+                "WEB_CA",
+                "IS_"
+            };
+
+            // These options will be prefixed with "setenv opt"
+            std::vector<std::string> rewrite_as_options = {
+                "USERNAME",
+                "PROFILE"
+            };
+
             // Iterate all the std::vector<Option> objects
             // OptionListJSON inherits OptionList which again inherits
             // std::vector<Option>, which is why we access the std::vector
@@ -278,11 +300,40 @@ namespace openvpn {
             {
                 std::string optname = element.ref(0);
 
+                // FIXME: Access Server hack
+                bool as_skip = false;
+                for (const auto &chk : ignore_as_options)
+                {
+                    if (optname.find(chk) == 0)
+                    {
+                        as_skip = true;
+                        break;
+                    }
+                }
+                if (as_skip)
+                {
+                    continue;
+                }
+
+                bool setenv_rewrite = false;
+                for (const auto &chk : rewrite_as_options)
+                {
+                    if (optname.find(chk) == 0)
+                    {
+                        setenv_rewrite = true;
+                        break;
+                    }
+                }
+
                 // Inlined files needs special treatment, as they span
                 // multiple lines.  Just retrieve the raw data directly here.
                 if (optparser_inline_file(optname) && element.size() > 1)
                 {
                     cfgstr << optparser_mkline(optname, element.ref(1)) << std::endl;
+                }
+                else if (setenv_rewrite)
+                {
+                    cfgstr << "setenv opt " << element.escape(false) << std::endl;
                 }
                 else
                 {

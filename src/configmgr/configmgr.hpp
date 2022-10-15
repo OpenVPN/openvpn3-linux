@@ -226,6 +226,7 @@ public:
                                   ProfileParseLimits::MAX_LINE_SIZE,
                                   ProfileParseLimits::MAX_DIRECTIVE_SIZE);
         options.parse_from_config(cfgstr, &limits);
+        options.parse_meta_from_config(cfgstr, "OVPN_ACCESS_SERVER", &limits);
         initialize_configuration(persistent);
 
         if (persistent && !state_dir.empty())
