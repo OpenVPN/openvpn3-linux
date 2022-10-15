@@ -29,17 +29,20 @@
 #include <iostream>
 
 #define USE_TUN_BUILDER
+#include "openvpn/log/logsimple.hpp"
 #include <client/ovpncli.cpp>
 
 #include "common/cmdargparser.hpp"
+#include "common/core-extensions.hpp"
 
 using namespace openvpn;
 
 int cmd_pm_optlist_test(ParsedArgs::Ptr args)
 {
-    if (!args->Present("config") || !args->Present("option"))
-    {
-        throw CommandException("pm+optlist-test", "Missing --config and/or --option");
+    try {
+        args->Present({"config", "option", "dump", "dump-json"});
+    } catch (const OptionNotFound& e) {
+        throw CommandException("pm+optlist-test", "Missing options");
     }
 
     // Parse the OpenVPN configuration
@@ -62,11 +65,24 @@ int cmd_pm_optlist_test(ParsedArgs::Ptr args)
     // Try to find the option - if found, print it
     try
     {
-        OptionList opts;
+        OptionListJSON opts;
         opts.parse_from_config(pm.profile_content(), &limits);
+        opts.parse_meta_from_config(pm.profile_content(), "OVPN_ACCESS_SERVER", &limits);
         opts.update_map();
-        Option pt = opts.get(args->GetValue("option", 0));
-        std::cout << "FOUND: " << pt.printable_directive() << std::endl;
+
+        if (args->Present("option"))
+        {
+            Option pt = opts.get(args->GetValue("option", 0));
+            std::cout << "FOUND: " << pt.printable_directive() << std::endl;
+        }
+        else if (args->Present("dump"))
+        {
+            std::cout << opts.string_export() << std::endl;
+        }
+        else if (args->Present("dump-json"))
+        {
+            std::cout << opts.json_export() << std::endl;
+        }
         return 0;
     }
     catch (std::exception& e)
@@ -87,6 +103,8 @@ int main(int argc, char **argv)
                             "Configuration file to process");
         argparser.AddOption("option", 'o', "CONFIG-OPTION", true,
                             "Configuration option to extract and print");
+        argparser.AddOption("dump", "Dump parsed config to console");
+        argparser.AddOption("dump-json", "Dump parsed config to console as JSON");
 
         return argparser.RunCommand(simple_basename(argv[0]), argc, argv);
     }
