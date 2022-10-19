@@ -334,12 +334,9 @@ static int cmd_log_service(ParsedArgs::Ptr args)
                           << (newlogprefix ? "enabled" : "disabled")
                           << oldlogprefix << std::endl;
             }
-            else
-            {
-                std::cout << "          Log D-Bus details: "
-                          << (newdbusdetails ? "enabled" : "disabled")
-                          << old_dbusdetails << std::endl;
-            }
+            std::cout << "          Log D-Bus details: "
+                      << (newdbusdetails ? "enabled" : "disabled")
+                      << old_dbusdetails << std::endl;
             std::cout << "          Current log level: "
                       << newlev << old_loglev << std::endl;
         }

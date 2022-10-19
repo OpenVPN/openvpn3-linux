@@ -101,9 +101,7 @@ OPTIONS
                 enabled it will add a line on the log destination
                 before the log event itself with this meta-data.  This is mostly
                 only useful when debugging and not recommended for normal
-                production.  This setting is not used if
-                ``openvpn3-service-logger``\(8) is configured to use
-                ``journald``.  Valid arguments: :code:`true`, :code:`false`
+                production.  Valid arguments: :code:`true`, :code:`false`
 
 --enable-log-prefix BOOL
                 This setting is only available if ``openvpn3-service-logger``\(8)
