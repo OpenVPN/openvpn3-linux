@@ -260,7 +260,7 @@ static int cmd_log_service(ParsedArgs::Ptr args)
 
         std::string oldlogprefix("");
         bool curlogprefix = logsrvprx.GetLogTagPrepend();
-        bool newlogprefix = curdbusdetails;
+        bool newlogprefix = curlogprefix;
         if (args->Present("enable-log-prefix"))
         {
             newlogprefix = args->GetBoolValue("enable-log-prefix", 0);
