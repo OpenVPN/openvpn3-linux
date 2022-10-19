@@ -125,6 +125,22 @@ For more information, see the [`openvpn3(1)`](docs/man/openvpn3.1.rst),
 [`openvpn3-config-import(1)`](docs/man/openvpn3-config-import.1.rst) man-pages.
 
 
+Known issues
+------------
+
+If OpenVPN 3 Linux fails to start a VPN session, please test with this
+command:
+
+     # openvpn3-admin version --services
+
+This should produce the same version string for all services.  If some
+of them fails to start, some Linux installations might not have the
+`sssd` or `nscd` service running.  Often the `net.openvpn.v3.netcfg`
+service (provided  by `openvpn3-service-netcfg`) fails to start properly.
+If your system is configured to use `sssd`, please read the comments in
+`/etc/nsswitch.conf` carefully if you want to try to start `nscd`.
+
+
 Auto-loading/starting VPN tunnels
 ---------------------------------
 
