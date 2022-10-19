@@ -173,7 +173,10 @@ public:
      *  Adds meta log info, which is printed before the log line
      *  written by Write().  This must be added before each Write() call.
      *
-     * @param data  std::string containing meta data related to the log data
+     * @param label   std::string containing a label for this meta value
+     * @param data    std::string containing meta data related to the log data
+     * @param skip    bool flag if this value should be skipped/ignored in stream
+     *                operations (default false)
      */
     virtual void AddMeta(const std::string& label, const std::string& data,
                          bool skip=false)
