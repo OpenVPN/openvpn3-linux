@@ -108,8 +108,7 @@ public:
         }
 
         // Prepend log lines with the log tag
-        logwr->AddMeta("logtag", log_tag, true);
-        logwr->PrependMeta("logtag", true);
+        logwr->AddLogTag("logtag", log_tag);
 
         // Add the meta information
         logwr->AddMeta("sender", sender);

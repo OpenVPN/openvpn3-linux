@@ -187,14 +187,18 @@ public:
         }
     }
 
-
-    virtual void AddMeta(const std::string& label, const LogTag::Ptr ltg,
-                         const bool skip=false, const bool encaps=true)
+    /**
+     *   Adds a LogTag value to the meta data variables in the log.
+     *   Calling this method will always add the meta information,
+     *   regardless if meta logging is enabled or not.
+     *
+     *  @param label   std::string of the label to use for this LogTag value
+     *  @param tag     LogTag::Ptr to a LogTag object to use in the log
+     */
+    virtual void AddLogTag(const std::string& label, const LogTag::Ptr tag)
     {
-        if (log_meta)
-        {
-            metadata.AddMeta(label, ltg, skip);
-        }
+        metadata.AddMeta(label, tag, true);
+        PrependMeta("logtag", true);
     }
 
 
