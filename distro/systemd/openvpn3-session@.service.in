@@ -1,6 +1,7 @@
 [Unit]
 Description=OpenVPN 3 Linux - VPN session for %I
-After=network.target dbus.service
+After=dbus.service network-online.target
+Wants=dbus.service network-online.target
 Documentation=man:openvpn3-linux(7)
 Documentation=man:openvpn3-systemd(7)
 
