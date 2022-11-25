@@ -33,74 +33,72 @@
 
 using namespace openvpn;
 
-namespace NetCfg
+
+namespace NetCfg {
+namespace DNS {
+
+/**
+ *  Modes of operations when applying DNS resolver settings.  Depending
+ *  on the the backend, they can be applied before or after the tun
+ *  interface has been configured.
+ */
+enum class ApplySettingsMode
 {
-namespace DNS
+    MODE_PRE, ///<  Settings are applied before device config
+    MODE_POST ///<  Settings are applied after device config
+};
+
+
+
+/**
+ *  Definition of the basic API for resolver settings implementations.
+ *
+ *  This implementation needs to account for one such object per
+ *  running VPN session.
+ *
+ */
+class ResolverBackendInterface : public virtual RC<thread_unsafe_refcount>
 {
+  public:
+    typedef RCPtr<ResolverBackendInterface> Ptr;
+
+    ResolverBackendInterface() = default;
+    virtual ~ResolverBackendInterface() = default;
+
     /**
-     *  Modes of operations when applying DNS resolver settings.  Depending
-     *  on the the backend, they can be applied before or after the tun
-     *  interface has been configured.
+     *  Provide some information for logging about the configured
+     *  resolver backend.
+     *
+     * @return  Returns a std::string with the information.
      */
-    enum class ApplySettingsMode
-    {
-        MODE_PRE,  ///<  Settings are applied before device config
-        MODE_POST  ///<  Settings are applied after device config
-    };
-
+    virtual const std::string GetBackendInfo() const noexcept = 0;
 
     /**
-      *  Definition of the basic API for resolver settings implementations.
-      *
-      *  This implementation needs to account for one such object per
-      *  running VPN session.
-      *
-      */
-    class ResolverBackendInterface : public virtual RC<thread_unsafe_refcount>
-    {
-    public:
-        typedef RCPtr<ResolverBackendInterface> Ptr;
+     *  Retrieve when the backend can apply the DNS resolver settings.
+     *  Normally it is applied before the tun interface configuration,
+     *  but some backends may need information about the device to
+     *  complete the configuration.
+     *
+     * @returns NetCfg::DNS:ApplySettingsMode
+     */
+    virtual const ApplySettingsMode GetApplyMode() const noexcept = 0;
 
-        ResolverBackendInterface() = default;
-        virtual ~ResolverBackendInterface() = default;
+    /**
+     *  Register DNS resolver settings for a particular VPN session
+     *
+     * @param settings  ResolverSettings::Ptr containing a pointer to the
+     *                  settings to apply
+     */
+    virtual void Apply(const ResolverSettings::Ptr settings) = 0;
 
-        /**
-         *  Provide some information for logging about the configured
-         *  resolver backend.
-         *
-         * @return  Returns a std::string with the information.
-         */
-        virtual const std::string GetBackendInfo() const noexcept = 0;
-
-
-        /**
-         *  Retrieve when the backend can apply the DNS resolver settings.
-         *  Normally it is applied before the tun interface configuration,
-         *  but some backends may need information about the device to
-         *  complete the configuration.
-         *
-         * @returns NetCfg::DNS:ApplySettingsMode
-         */
-        virtual const ApplySettingsMode GetApplyMode() const noexcept = 0;
-
-
-        /**
-         *  Register DNS resolver settings for a particular VPN session
-         *
-         * @param settings  ResolverSettings::Ptr containing a pointer to the
-         *                  settings to apply
-         */
-        virtual void Apply(const ResolverSettings::Ptr settings) = 0;
-
-
-        /**
-         *  Apply all resolver settings registered via the Apply() call
-         *
-         *  @param signals   Pointer to a NetCfgSignals object which will
-         *                   send "NetworkChange" notifications for DNS
-         *                   resolver changes
-         */
-        virtual void Commit(NetCfgSignals *signals) = 0;
-    };
-}
-}
+    /**
+     *  Apply all resolver settings registered via the Apply() call
+     *
+     *  @param signals   Pointer to a NetCfgSignals object which will
+     *                   send "NetworkChange" notifications for DNS
+     *                   resolver changes
+     */
+    virtual void Commit(NetCfgSignals *signals) = 0;
+};
+} // namespace DNS
+} // namespace NetCfg

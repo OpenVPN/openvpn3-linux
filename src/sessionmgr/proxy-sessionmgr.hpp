@@ -25,7 +25,6 @@
  *         calls and provide the results as native C++ data types.
  */
 
-
 #pragma once
 
 #include <iostream>
@@ -41,7 +40,6 @@
 using namespace openvpn;
 
 
-
 /**
  * This exception is thrown when the OpenVPN3SessionProxy::Ready() call
  * indicates the VPN backend client needs more information from the
@@ -49,33 +47,34 @@ using namespace openvpn;
  */
 class ReadyException : public std::exception
 {
-public:
-    ReadyException(const std::string& err) noexcept
+  public:
+    ReadyException(const std::string &err) noexcept
         : errorstr(err)
     {
     }
 
-
     virtual ~ReadyException() = default;
 
-
-    virtual const char* what() const noexcept
+    virtual const char *what() const noexcept
     {
         return errorstr.c_str();
     }
 
-
-private:
+  private:
     std::string errorstr;
 };
 
+
+
 class TunInterfaceException : public DBusException
 {
-public:
+  public:
     TunInterfaceException(const std::string classname, const std::string msg)
         : DBusException(classname, msg, __FILE__, __LINE__, __FUNCTION__)
-    {}
+    {
+    }
 };
+
 
 
 /**
@@ -84,7 +83,7 @@ public:
  */
 class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
 {
-public:
+  public:
     typedef std::shared_ptr<OpenVPN3SessionProxy> Ptr;
 
     /**
@@ -109,7 +108,7 @@ public:
         // when accessing the main management object
         if (OpenVPN3DBus_rootp_sessions == objpath)
         {
-            (void) GetServiceVersion();
+            (void)GetServiceVersion();
         }
     }
 
@@ -120,7 +119,7 @@ public:
      * @param dbusobj    DBus connection object
      * @param objpath    D-Bus object path to the SessionObject
      */
-    OpenVPN3SessionProxy(DBus & dbusobj, const std::string objpath)
+    OpenVPN3SessionProxy(DBus &dbusobj, const std::string objpath)
         : DBusRequiresQueueProxy(dbusobj,
                                  OpenVPN3DBus_name_sessions,
                                  OpenVPN3DBus_interf_sessions,
@@ -134,14 +133,16 @@ public:
         // when accessing the main management object
         if (OpenVPN3DBus_rootp_sessions == objpath)
         {
-            (void) GetServiceVersion();
+            (void)GetServiceVersion();
         }
     }
+
 
     const std::string GetPath() const
     {
         return GetProxyPath();
     }
+
 
     /**
      *  Makes the VPN backend client process start the connecting to the
@@ -151,6 +152,7 @@ public:
     {
         simple_call("Connect", "Failed to start a new tunnel");
     }
+
 
     /**
      *  Makes the VPN backend client process disconnect and then
@@ -214,7 +216,7 @@ public:
         {
             simple_call("Ready", "Connection not ready to connect yet");
         }
-        catch (DBusException& excp)
+        catch (DBusException &excp)
         {
             // Throw D-Bus errors related to "Ready" errors as ReadyExceptions
             std::string e(excp.GetRawError());
@@ -281,7 +283,6 @@ public:
     bool GetReceiveLogEvents()
     {
         return GetBoolProperty("receive_log_events");
-
     }
 
 
@@ -335,6 +336,7 @@ public:
         return ret;
     }
 
+
     /**
      * Retrieves statistics of a running VPN tunnel.  It is gathered by
      * retrieving the 'statistics' session object property.
@@ -344,12 +346,12 @@ public:
      */
     ConnectionStats GetConnectionStats()
     {
-        GVariant * statsprops = GetProperty("statistics");
-        GVariantIter * stats_ar = nullptr;
+        GVariant *statsprops = GetProperty("statistics");
+        GVariantIter *stats_ar = nullptr;
         g_variant_get(statsprops, "a{sx}", &stats_ar);
 
         ConnectionStats ret;
-        GVariant * r = nullptr;
+        GVariant *r = nullptr;
         while ((r = g_variant_iter_next_value(stats_ar)))
         {
             gchar *key = nullptr;
@@ -506,6 +508,7 @@ public:
         return GetBoolProperty("dco");
     }
 
+
     /**
      *  Enable or disable the Data Channel Offload (DCO) interface.  This can
      *  only be called _before_ starting a connection.  Otherwise it will throw
@@ -520,7 +523,7 @@ public:
     }
 
 
-private:
+  private:
     /**
      * Simple wrapper for simple D-Bus method calls not requiring much
      * input.  Will also throw a DBusException in case of errors.
@@ -543,14 +546,13 @@ private:
         }
         g_variant_unref(res);
     }
-
 };
 
 
 
 class OpenVPN3SessionMgrProxy : public DBusProxy
 {
-public:
+  public:
     /**
      * Initilizes the D-Bus client proxy.  This constructor will establish
      * the D-Bus connection by itself.
@@ -565,17 +567,16 @@ public:
                     OpenVPN3DBus_interf_sessions,
                     OpenVPN3DBus_rootp_sessions)
     {
-        (void) GetServiceVersion();
+        (void)GetServiceVersion();
     }
 
-
-    OpenVPN3SessionMgrProxy(DBus & dbusobj)
+    OpenVPN3SessionMgrProxy(DBus &dbusobj)
         : DBusProxy(dbusobj,
                     OpenVPN3DBus_name_sessions,
                     OpenVPN3DBus_interf_sessions,
                     OpenVPN3DBus_rootp_sessions)
     {
-        (void) GetServiceVersion();
+        (void)GetServiceVersion();
     }
 
 
@@ -620,7 +621,7 @@ public:
 
         OpenVPN3SessionProxy::Ptr session;
         session.reset(new OpenVPN3SessionProxy(G_BUS_TYPE_SYSTEM, path));
-        sleep(1);  // Allow session to be established (FIXME: Signals?)
+        sleep(1); // Allow session to be established (FIXME: Signals?)
         return session;
     }
 
@@ -665,7 +666,7 @@ public:
     std::vector<OpenVPN3SessionProxy::Ptr> FetchAvailableSessions()
     {
         std::vector<OpenVPN3SessionProxy::Ptr> ret;
-        for (const auto& path : FetchAvailableSessionPaths())
+        for (const auto &path : FetchAvailableSessionPaths())
         {
             OpenVPN3SessionProxy::Ptr s;
             s.reset(new OpenVPN3SessionProxy(G_BUS_TYPE_SYSTEM, path));
@@ -767,18 +768,18 @@ public:
             }
             return ret;
         }
-        catch (const TunInterfaceException&)
+        catch (const TunInterfaceException &)
         {
             throw;
         }
-        catch (const DBusException& rawerr)
+        catch (const DBusException &rawerr)
         {
             std::string err(rawerr.what());
             size_t p = err.find("GDBus.Error:net.openvpn.v3.error.iface:");
             if (p != std::string::npos)
             {
                 throw TunInterfaceException("LookupInterface",
-                                            err.substr(err.rfind(":")+2));
+                                            err.substr(err.rfind(":") + 2));
             }
             throw;
         }

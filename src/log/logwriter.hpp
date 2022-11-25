@@ -43,7 +43,7 @@
  */
 class LogWriter
 {
-public:
+  public:
     typedef std::unique_ptr<LogWriter> Ptr;
 
     LogWriter() = default;
@@ -69,6 +69,7 @@ public:
         timestamp = tstamp;
     }
 
+
     virtual bool TimestampEnabled()
     {
         return timestamp;
@@ -83,8 +84,9 @@ public:
      */
     void EnableLogMeta(const bool meta)
     {
-        log_meta= meta;
+        log_meta = meta;
     }
+
 
     bool LogMetaEnabled()
     {
@@ -96,6 +98,7 @@ public:
     {
         prepend_prefix = mp;
     }
+
 
     bool MessagePrependEnabled() const noexcept
     {
@@ -115,9 +118,14 @@ public:
      *                     to reset colour selection.  Empty by default.
      *
      */
-    virtual void Write(const std::string& data,
-                       const std::string& colour_init = "",
-                       const std::string& colour_reset = "") = 0;
+    // clang-format off
+    // bug in clang-format causes "= 0" to be wrapped
+
+    virtual void Write(const std::string &data,
+                       const std::string &colour_init = "",
+                       const std::string &colour_reset = "") = 0;
+    // clang-format on
+
 
     /**
      *  Writes log data to the destination buffer, but will prefix
@@ -132,10 +140,11 @@ public:
      *                     to reset colour selection.  Emtpy by default.
      *
      */
-    virtual void Write(const LogGroup grp, const LogCategory ctg,
-                       const std::string& data,
-                       const std::string& colour_init,
-                       const std::string& colour_reset)
+    virtual void Write(const LogGroup grp,
+                       const LogCategory ctg,
+                       const std::string &data,
+                       const std::string &colour_init,
+                       const std::string &colour_reset)
     {
         Write(LogPrefix(grp, ctg) + data, colour_init, colour_reset);
     }
@@ -150,8 +159,9 @@ public:
      * @param ctg      LogCategory the log message is categorized as
      * @param data     std::string containing the log data
      */
-    virtual void Write(const LogGroup grp, const LogCategory ctg,
-                       const std::string& data)
+    virtual void Write(const LogGroup grp,
+                       const LogCategory ctg,
+                       const std::string &data)
     {
         Write(grp, ctg, data, "", "");
     }
@@ -163,7 +173,7 @@ public:
      * @param logev  Populated LogEvent() object to log
      *
      */
-    virtual void Write(const LogEvent& logev)
+    virtual void Write(const LogEvent &logev)
     {
         Write(logev.group, logev.category, logev.message);
     }
@@ -178,14 +188,16 @@ public:
      * @param skip    bool flag if this value should be skipped/ignored in stream
      *                operations (default false)
      */
-    virtual void AddMeta(const std::string& label, const std::string& data,
-                         bool skip=false)
+    virtual void AddMeta(const std::string &label,
+                         const std::string &data,
+                         bool skip = false)
     {
         if (log_meta)
         {
             metadata.AddMeta(label, data, skip);
         }
     }
+
 
     /**
      *   Adds a LogTag value to the meta data variables in the log.
@@ -195,14 +207,14 @@ public:
      *  @param label   std::string of the label to use for this LogTag value
      *  @param tag     LogTag::Ptr to a LogTag object to use in the log
      */
-    virtual void AddLogTag(const std::string& label, const LogTag::Ptr tag)
+    virtual void AddLogTag(const std::string &label, const LogTag::Ptr tag)
     {
         metadata.AddMeta(label, tag, true);
         PrependMeta("logtag", true);
     }
 
 
-    void AddMetaCopy(const LogMetaData& mdc)
+    void AddMetaCopy(const LogMetaData &mdc)
     {
         metadata = LogMetaData(mdc);
     }
@@ -219,14 +231,14 @@ public:
      *                   the meta log line as well.  This is reset on each
      *                   @Write() operation.
      */
-    virtual void PrependMeta(const std::string& label, bool prep_meta = false)
+    virtual void PrependMeta(const std::string &label, bool prep_meta = false)
     {
         prepend_label = label;
         prepend_meta = prep_meta;
     }
 
 
-protected:
+  protected:
     bool timestamp = true;
     bool log_meta = true;
     LogMetaData metadata;

@@ -30,14 +30,16 @@
 #include <unistd.h>
 #include <exception>
 
+
 class LookupException : public std::exception
 {
-public:
-    LookupException(const std::string& msg) : message(msg)
+  public:
+    LookupException(const std::string &msg)
+        : message(msg)
     {
     }
 
-    const char* what() const noexcept
+    const char *what() const noexcept
     {
         return message.c_str();
     }
@@ -47,7 +49,7 @@ public:
         return message;
     }
 
-#ifdef __GIO_TYPES_H__  // Only add GLib/GDBus methods if this is already use
+#ifdef __GIO_TYPES_H__ // Only add GLib/GDBus methods if this is already use
     void SetDBusError(GDBusMethodInvocation *invocation) const noexcept
     {
         GError *dbuserr = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.lookup",
@@ -57,12 +59,13 @@ public:
     }
 #endif
 
-private:
+  private:
     std::string message{};
 };
+
 
 
 std::string lookup_username(uid_t uid);
 uid_t lookup_uid(std::string username);
 uid_t get_userid(const std::string input);
-gid_t lookup_gid(const std::string& groupname);
+gid_t lookup_gid(const std::string &groupname);

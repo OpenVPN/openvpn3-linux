@@ -39,15 +39,17 @@
  */
 struct LogMetaDataValue
 {
-    enum class Type {
+    enum class Type
+    {
         LOGMETA_STRING,
         LOGMETA_LOGTAG
     };
 
     using Ptr = std::shared_ptr<LogMetaDataValue>;
 
-    LogMetaDataValue(const std::string& l, const std::string& v, bool s = false);
-    LogMetaDataValue(const std::string& l, const LogTag::Ptr v, bool s = false);
+    LogMetaDataValue(const std::string &l, const std::string &v, bool s = false);
+    LogMetaDataValue(const std::string &l, const LogTag::Ptr v, bool s = false);
+
 
     /**
      *  This is a static helper method to create a LogMetaDataValue::Ptr object
@@ -62,15 +64,16 @@ struct LogMetaDataValue
      * @return Returns a LogMetaData::Ptr (std::shard_ptr) to the LogMetaDataValue
      *         object created.
      */
-    template<typename T>
-    static LogMetaDataValue::Ptr create(const std::string& l,
-                                        const T& v,
+    template <typename T>
+    static LogMetaDataValue::Ptr create(const std::string &l,
+                                        const T &v,
                                         bool s = false)
     {
         LogMetaDataValue::Ptr ret;
         ret.reset(new LogMetaDataValue(l, v, s));
         return ret;
     }
+
 
     /**
      *  Retrieve the value of this meta data as a std::string, regardless of
@@ -82,9 +85,10 @@ struct LogMetaDataValue
      *
      * @return  Returns a std::string of this objects value
      */
-    const std::string GetValue(const bool logtag_encaps=true) const;
+    const std::string GetValue(const bool logtag_encaps = true) const;
 
-    friend std::ostream& operator<<(std::ostream& os, const LogMetaDataValue mdv)
+
+    friend std::ostream &operator<<(std::ostream &os, const LogMetaDataValue mdv)
     {
         if (mdv.skip)
         {
@@ -94,6 +98,7 @@ struct LogMetaDataValue
         return os << mdv.label << "=" << mdv.GetValue(encaps);
     }
 
+
     Type type;
     std::string label;
     const std::string str_value;
@@ -102,16 +107,17 @@ struct LogMetaDataValue
 };
 
 
+
 /**
  *  The LogMetaData class is a container for LogMetaDataValue objects
  */
 class LogMetaData
 {
-public:
+  public:
     using Ptr = std::shared_ptr<LogMetaData>;
     using Records = std::vector<std::string>;
 
-    LogMetaData() {};
+    LogMetaData(){};
     ~LogMetaData() = default;
 
 
@@ -137,8 +143,8 @@ public:
      * @param  s   bool flag to indicate if this value should be skipped when
      *             the LogMetaData::operator<<() is used.
      */
-    template<typename T>
-    void AddMeta(const std::string& l, const T& v, bool skip = false)
+    template <typename T>
+    void AddMeta(const std::string &l, const T &v, bool skip = false)
     {
         auto mdv = LogMetaDataValue::create(l, v, skip);
         metadata.push_back(mdv);
@@ -157,8 +163,8 @@ public:
      *
      * @return Returns a std::string of the meta data value
      */
-    std::string GetMetaValue(const std::string l, const bool encaps_logtag=true,
-                             const std::string postfix=" ") const;
+    std::string GetMetaValue(const std::string l, const bool encaps_logtag = true, const std::string postfix = " ") const;
+
 
     /**
      *  Retrieve all collected meta data values, formatted as "key=value" pairs
@@ -169,18 +175,21 @@ public:
      * @return  Returns LogMetaData::Records (std::vector<std::string>) of all
      *          collected meta data values as key/value pairs.
      */
-    Records GetMetaDataRecords(const bool upcase_label=false,
-                               const bool logtag_encaps=true) const;
+    Records GetMetaDataRecords(const bool upcase_label = false,
+                               const bool logtag_encaps = true) const;
+
 
     /**
      *  Retrieve how many meta data values has been collected
      */
     size_t size() const;
 
+
     /**
      *  Check if any meta data values has been collected yet
      */
     bool empty() const;
+
 
     /**
      *  Clear all collected meta data values
@@ -188,10 +197,10 @@ public:
     void clear();
 
 
-    friend std::ostream& operator<<(std::ostream& os, const LogMetaData& mdc)
+    friend std::ostream &operator<<(std::ostream &os, const LogMetaData &mdc)
     {
         bool first = true;
-        for (const auto& mdv : mdc.metadata)
+        for (const auto &mdv : mdc.metadata)
         {
             if (mdv->skip)
             {
@@ -206,6 +215,7 @@ public:
         return os;
     }
 
-private:
+
+  private:
     std::vector<LogMetaDataValue::Ptr> metadata;
 };

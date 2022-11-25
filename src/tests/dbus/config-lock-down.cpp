@@ -24,12 +24,10 @@
  *         in a configuration profile
  */
 
-
-
-
 #include <iostream>
 
 #include "configmgr/proxy-configmgr.hpp"
+
 
 int main(int argc, char **argv)
 {
@@ -61,7 +59,7 @@ int main(int argc, char **argv)
 
         return 0;
     }
-    catch (std::exception& err)
+    catch (std::exception &err)
     {
         std::cout << "** ERROR ** " << err.what() << std::endl;
         return 2;

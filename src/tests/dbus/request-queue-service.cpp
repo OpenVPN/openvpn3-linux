@@ -41,11 +41,14 @@
 
 using namespace openvpn;
 
+
 class ReqQueueMain : public DBusObject
 {
-public:
+  public:
     ReqQueueMain(GDBusConnection *dbuscon,
-                 const std::string busname, const std::string interface, const std::string rootpath)
+                 const std::string busname,
+                 const std::string interface,
+                 const std::string rootpath)
         : DBusObject(rootpath),
           dbuscon(dbuscon),
           creds(dbuscon),
@@ -86,10 +89,10 @@ public:
                       << ", pid=" << std::to_string(creds.GetPID(sender))
                       << std::endl;
         }
-        catch (DBusException& excp)
+        catch (DBusException &excp)
         {
             std::cout << "Failed to retrieve sender credentials: "
-                       << excp.GetRawError();
+                      << excp.GetRawError();
         }
 
         if ("t_QueueCheckTypeGroup" == method_name)
@@ -98,7 +101,7 @@ public:
             {
                 queue->QueueCheckTypeGroup(invocation);
             }
-            catch (RequiresQueueException& excp)
+            catch (RequiresQueueException &excp)
             {
                 excp.GenerateDBusError(invocation);
             }
@@ -110,7 +113,7 @@ public:
             {
                 queue->QueueFetch(invocation, params);
             }
-            catch (RequiresQueueException& excp)
+            catch (RequiresQueueException &excp)
             {
                 excp.GenerateDBusError(invocation);
             }
@@ -127,7 +130,7 @@ public:
             {
                 queue->UpdateEntry(invocation, params);
             }
-            catch (RequiresQueueException& excp)
+            catch (RequiresQueueException &excp)
             {
                 excp.GenerateDBusError(invocation);
             }
@@ -142,16 +145,11 @@ public:
         else if ("Init" == method_name)
         {
             queue = std::unique_ptr<RequiresQueue>(new RequiresQueue());
-            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::PK_PASSPHRASE,
-                              "pk_passphrase", "Test private key passphrase", true);
-            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD,
-                              "username", "Test Auth User name", false);
-            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD,
-                              "password", "Test Auth Password", true);
-            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_DYNAMIC,
-                              "dynamic_challenge", "Test Dynamic Challenge", true);
-            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_STATIC,
-                              "static_challenge", "Test Static Challenge", true);
+            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::PK_PASSPHRASE, "pk_passphrase", "Test private key passphrase", true);
+            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "username", "Test Auth User name", false);
+            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "password", "Test Auth Password", true);
+            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_DYNAMIC, "dynamic_challenge", "Test Dynamic Challenge", true);
+            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_STATIC, "static_challenge", "Test Static Challenge", true);
             g_dbus_method_invocation_return_value(invocation, NULL);
             return;
         }
@@ -162,37 +160,38 @@ public:
     }
 
 
-    GVariant * callback_get_property(GDBusConnection *conn,
-                                     const std::string sender,
-                                     const std::string obj_path,
-                                     const std::string intf_name,
-                                     const std::string property_name,
-                                     GError **error)
+    GVariant *callback_get_property(GDBusConnection *conn,
+                                    const std::string sender,
+                                    const std::string obj_path,
+                                    const std::string intf_name,
+                                    const std::string property_name,
+                                    GError **error)
     {
         THROW_DBUSEXCEPTION("ReqQueueMain", "get property not implemented");
     }
 
-    GVariantBuilder * callback_set_property(GDBusConnection *conn,
-                                            const std::string sender,
-                                            const std::string obj_path,
-                                            const std::string intf_name,
-                                            const std::string property_name,
-                                            GVariant *value,
-                                            GError **error)
+    GVariantBuilder *callback_set_property(GDBusConnection *conn,
+                                           const std::string sender,
+                                           const std::string obj_path,
+                                           const std::string intf_name,
+                                           const std::string property_name,
+                                           GVariant *value,
+                                           GError **error)
     {
         THROW_DBUSEXCEPTION("ReqQueueMain", "set property not implemented");
     }
 
-private:
+  private:
     GDBusConnection *dbuscon;
     DBusConnectionCreds creds;
     std::unique_ptr<RequiresQueue> queue;
 };
 
 
+
 class ReqQueueServiceDBus : public DBus
 {
-public:
+  public:
     ReqQueueServiceDBus()
         : DBus(G_BUS_TYPE_SESSION,
                "net.openvpn.v3.tests.requiresqueue",
@@ -223,9 +222,10 @@ public:
                             "D-Bus name not registered: " + busname);
     }
 
-private:
-    ReqQueueMain * mainobj;
+  private:
+    ReqQueueMain *mainobj;
 };
+
 
 
 void selftest()
@@ -235,39 +235,34 @@ void selftest()
 
         RequiresQueue queue;
 
-        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::PK_PASSPHRASE,
-                         "pk_passphrase", "Selftest Private key passphrase", true);
-        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD,
-                         "username", "Selftest Auth User name", false);
-        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD,
-                         "password", "Selftest Auth Password", true);
-        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_DYNAMIC,
-                         "dynamic_challenge", "Selftest Dynamic Challenge", true);
-        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_STATIC,
-                         "static_challenge", "Selftest static Challenge", true);
+        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::PK_PASSPHRASE, "pk_passphrase", "Selftest Private key passphrase", true);
+        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "username", "Selftest Auth User name", false);
+        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "password", "Selftest Auth Password", true);
+        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_DYNAMIC, "dynamic_challenge", "Selftest Dynamic Challenge", true);
+        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_STATIC, "static_challenge", "Selftest static Challenge", true);
 
 
         // Test QueueCheckTypeGroup()
         auto type_group = queue.QueueCheckTypeGroup();
-        for (auto& tygr : type_group)
+        for (auto &tygr : type_group)
         {
             ClientAttentionType t;
             ClientAttentionGroup g;
             std::tie(t, g) = tygr;
-            unsigned int ti = (unsigned int) t;
-            unsigned int gi = (unsigned int) g;
+            unsigned int ti = (unsigned int)t;
+            unsigned int gi = (unsigned int)g;
             std::cout << "-- Request - type [" << std::to_string(ti) << "] " << ClientAttentionType_str[ti]
-                      << ", group [" << std::to_string(gi) << "] "<< ClientAttentionGroup_str[gi]
+                      << ", group [" << std::to_string(gi) << "] " << ClientAttentionGroup_str[gi]
                       << std::endl;
 
             // Test QueueCheck once we have the type and group values
             auto reqids = queue.QueueCheck(t, g);
-            for (auto& id : reqids)
+            for (auto &id : reqids)
             {
                 std::cout << "   id: " << std::to_string(id) << std::endl;
 
                 // ... provide some test data
-                std::string gen_value = "selftest_value" + std::to_string((ti*100)+(gi*10)+id);
+                std::string gen_value = "selftest_value" + std::to_string((ti * 100) + (gi * 10) + id);
                 queue.UpdateEntry(t, g, id, gen_value);
 
                 // ... retrieve it and compare
@@ -303,7 +298,7 @@ void selftest()
             queue.GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, 99);
             throw std::runtime_error("Did not fail when calling GetResponse(CREDENTIALS, USER_PASSEORD, 99)");
         }
-        catch (RequiresQueueException& excp)
+        catch (RequiresQueueException &excp)
         {
             std::cout << "Passed GetResponse(CREDENTIALS, USER_PASSWORD, 99) out-of-boundary check" << std::endl;
             std::cout << "     Exception caught: " << excp.what() << std::endl;
@@ -314,18 +309,19 @@ void selftest()
             queue.GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "this_variable_name_does_not_exist");
             throw std::runtime_error("Did not fail when calling GetResponse(CREDENTIALS, USER_PASSEORD, 'this_variable_name_does_not_exist')");
         }
-        catch (RequiresQueueException& excp)
+        catch (RequiresQueueException &excp)
         {
             std::cout << "Passed GetResponse(CREDENTIALS, USER_PASSWORD, '...') unknown variable check" << std::endl;
             std::cout << "     Exception caught: " << excp.what() << std::endl;
         }
     }
-    catch (std::exception& excp)
+    catch (std::exception &excp)
     {
-        std::cout << "** EXCEPTION: "<< excp.what() << std::endl;
+        std::cout << "** EXCEPTION: " << excp.what() << std::endl;
         exit(2);
     }
 }
+
 
 
 int main()
@@ -335,7 +331,8 @@ int main()
     selftest();
 
     // D-Bus tests
-    std::cout << std::endl << "** Starting D-Bus server" << std::endl;
+    std::cout << std::endl
+              << "** Starting D-Bus server" << std::endl;
     ReqQueueServiceDBus reqqueue;
     reqqueue.Setup();
 

@@ -35,15 +35,15 @@
 
 using namespace openvpn;
 
-
 template <class T>
 class NetCfgTunBuilder : public T
 {
-public:
+  public:
     typedef RCPtr<NetCfgTunBuilder> Ptr;
 
-    NetCfgTunBuilder(GDBusConnection* dbuscon, BackendSignals *signal,
-                     const std::string& session_token)
+    NetCfgTunBuilder(GDBusConnection *dbuscon,
+                     BackendSignals *signal,
+                     const std::string &session_token)
         : disabled_dns_config(false),
           netcfgmgr(dbuscon),
           signal(signal),
@@ -52,18 +52,21 @@ public:
     {
     }
 
+
 #ifdef OPENVPN3_CORE_CLI_TEST
-    NetCfgTunBuilder(GDBusConnection* dbuscon)
+    NetCfgTunBuilder(GDBusConnection *dbuscon)
         : disabled_dns_config(false),
           netcfgmgr(dbuscon)
     {
-        signal = new BackendSignals(dbuscon, LogGroup::CLIENT,
+        signal = new BackendSignals(dbuscon,
+                                    LogGroup::CLIENT,
                                     "(netcfg-cli-test)",
                                     nullptr);
         signal->SetLogLevel(6);
         signal->EnableBroadcast(true);
     }
 #endif
+
 
     ~NetCfgTunBuilder()
     {
@@ -75,7 +78,7 @@ public:
                 device->Destroy();
             }
         }
-        catch (const NetCfgProxyException& excp)
+        catch (const NetCfgProxyException &excp)
         {
             signal->LogCritical("Removing device failed: " + excp.GetError());
         }
@@ -84,7 +87,7 @@ public:
         {
             netcfgmgr.Cleanup();
         }
-        catch (const NetCfgProxyException& excp)
+        catch (const NetCfgProxyException &excp)
         {
             signal->LogCritical("Cleaning up NetCfgMgr error: " + excp.GetError());
         }
@@ -92,6 +95,7 @@ public:
         delete signal;
 #endif
     }
+
 
     bool tun_builder_new() override
     {
@@ -103,7 +107,7 @@ public:
     }
 
 
-    bool tun_builder_set_remote_address(const std::string& address, bool ipv6) override
+    bool tun_builder_set_remote_address(const std::string &address, bool ipv6) override
     {
         if (!device)
         {
@@ -114,9 +118,9 @@ public:
     }
 
 
-    bool tun_builder_add_address(const std::string& address,
+    bool tun_builder_add_address(const std::string &address,
                                  int prefix_length,
-                                 const std::string& gateway, // optional
+                                 const std::string &gateway, // optional
                                  bool ipv6,
                                  bool net30) override
     {
@@ -130,7 +134,7 @@ public:
             device->AddIPAddress(address, (unsigned int)prefix_length, gateway, ipv6);
             return true;
         }
-        catch (NetCfgProxyException& e)
+        catch (NetCfgProxyException &e)
         {
             std::stringstream err;
             err << "Error adding IP address " << address
@@ -195,7 +199,7 @@ public:
     }
 
 
-    bool tun_builder_add_route(const std::string& address,
+    bool tun_builder_add_route(const std::string &address,
                                int prefix_length,
                                int metric,
                                bool ipv6) override
@@ -208,19 +212,20 @@ public:
     }
 
 
-    bool tun_builder_exclude_route(const std::string& address,
+    bool tun_builder_exclude_route(const std::string &address,
                                    int prefix_length,
                                    int metric,
                                    bool ipv6) override
     {
         networks.emplace_back(NetCfgProxy::Network(address,
-                                                   (unsigned int) prefix_length,
-                                                   ipv6, true));
+                                                   (unsigned int)prefix_length,
+                                                   ipv6,
+                                                   true));
         return true;
     }
 
 
-    bool tun_builder_add_dns_server(const std::string& address, bool ipv6) override
+    bool tun_builder_add_dns_server(const std::string &address, bool ipv6) override
     {
         if (disabled_dns_config)
         {
@@ -237,7 +242,7 @@ public:
     }
 
 
-    bool tun_builder_add_search_domain(const std::string& domain) override
+    bool tun_builder_add_search_domain(const std::string &domain) override
     {
         if (disabled_dns_config)
         {
@@ -270,7 +275,7 @@ public:
         {
             ret = device->Establish();
         }
-        catch (const DBusProxyAccessDeniedException& excp)
+        catch (const DBusProxyAccessDeniedException &excp)
         {
             signal->StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_FAILED);
             try
@@ -280,10 +285,10 @@ public:
             catch (...)
             {
             }
-            signal->LogFATAL("Access denied calling NetCfgDevice::Establish(): " +
-                                std::string(excp.what()));
+            signal->LogFATAL("Access denied calling NetCfgDevice::Establish(): "
+                             + std::string(excp.what()));
         }
-        catch (const DBusException& excp)
+        catch (const DBusException &excp)
         {
             signal->StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_FAILED);
             try
@@ -293,8 +298,8 @@ public:
             catch (...)
             {
             }
-            signal->LogFATAL("Error calling NetCfgDevice::Establish(): " +
-                                std::string(excp.what()));
+            signal->LogFATAL("Error calling NetCfgDevice::Establish(): "
+                             + std::string(excp.what()));
         }
         return ret;
     }
@@ -324,7 +329,7 @@ public:
             {
                 device->Destroy();
             }
-            catch(const DBusException& excp)
+            catch (const DBusException &excp)
             {
                 signal->LogCritical("tun_builder_teardown: "
                                     + std::string(excp.GetRawError()));
@@ -337,7 +342,7 @@ public:
             {
                 device->Disable();
             }
-            catch(const DBusException& excp)
+            catch (const DBusException &excp)
             {
                 signal->LogCritical(excp.GetRawError());
             }
@@ -351,6 +356,7 @@ public:
         return true;
     }
 
+
     bool socket_protect(int socket, std::string remote, bool ipv6) override
     {
         std::string devpath = "/"; // Object paths cannot be empty
@@ -361,7 +367,8 @@ public:
         return netcfgmgr.ProtectSocket(socket, remote, ipv6, devpath);
     }
 
-    bool tun_builder_set_session_name(const std::string& name) override
+
+    bool tun_builder_set_session_name(const std::string &name) override
     {
         signal->LogVerb2("Session name: '" + name + "'");
         session_name = std::string(name);
@@ -386,13 +393,15 @@ public:
         return (device ? device->GetDeviceName() : "");
     }
 
+
 #ifdef ENABLE_OVPNDCO
     bool tun_builder_dco_available() override
     {
         return netcfgmgr.DcoAvailable();
     }
 
-    int tun_builder_dco_enable(const std::string& dev_name) override
+
+    int tun_builder_dco_enable(const std::string &dev_name) override
     {
         if (!device)
         {
@@ -408,15 +417,20 @@ public:
             }
             return dco->GetPipeFD();
         }
-        catch(const std::exception& e)
+        catch (const std::exception &e)
         {
             signal->LogError(e.what());
             return -1;
         }
     }
 
-    virtual void tun_builder_dco_new_peer(uint32_t peer_id, uint32_t transport_fd, struct sockaddr *sa,
-                                          socklen_t salen, IPv4::Addr& vpn4, IPv6::Addr& vpn6) override
+
+    virtual void tun_builder_dco_new_peer(uint32_t peer_id,
+                                          uint32_t transport_fd,
+                                          struct sockaddr *sa,
+                                          socklen_t salen,
+                                          IPv4::Addr &vpn4,
+                                          IPv6::Addr &vpn6) override
     {
         if (!dco)
         {
@@ -426,7 +440,9 @@ public:
         dco->NewPeer(peer_id, transport_fd, sa, salen, vpn4, vpn6);
     }
 
-    void tun_builder_dco_new_key(unsigned int key_slot, const KoRekey::KeyConfig* kc) override
+
+    void tun_builder_dco_new_key(unsigned int key_slot,
+                                 const KoRekey::KeyConfig *kc) override
     {
         if (!dco)
         {
@@ -435,6 +451,7 @@ public:
 
         dco->NewKey(key_slot, kc);
     }
+
 
     void tun_builder_dco_establish() override
     {
@@ -452,6 +469,7 @@ public:
         device->EstablishDCO();
     }
 
+
     void tun_builder_dco_swap_keys(uint32_t peer_id) override
     {
         if (!dco)
@@ -462,7 +480,10 @@ public:
         dco->SwapKeys(peer_id);
     }
 
-    void tun_builder_dco_set_peer(uint32_t peer_id, int keepalive_interval, int keepalive_timeout) override
+
+    void tun_builder_dco_set_peer(uint32_t peer_id,
+                                  int keepalive_interval,
+                                  int keepalive_timeout) override
     {
         if (!dco)
         {
@@ -471,14 +492,15 @@ public:
 
         dco->SetPeer(peer_id, keepalive_interval, keepalive_timeout);
     }
-#endif  // ENABLE_OVPNDCO
+#endif // ENABLE_OVPNDCO
 
-protected:
+
+  protected:
     bool disabled_dns_config;
     std::string dns_scope = "global";
 
 
-private:
+  private:
     bool create_device()
     {
         if (device)
@@ -492,14 +514,14 @@ private:
             {
                 device->SetProperty("dns_scope", dns_scope);
             }
-            catch(const DBusException& excp)
+            catch (const DBusException &excp)
             {
                 signal->LogCritical("Failed changing DNS Scope: "
                                     + std::string(excp.GetRawError()));
             }
             return true;
         }
-        catch (NetCfgProxyException& e)
+        catch (NetCfgProxyException &e)
         {
             signal->LogError(std::string("Error creating virtual network device: ") + e.what());
             return false;

@@ -19,7 +19,6 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-
 #pragma once
 
 #include <openvpn/common/rc.hpp>
@@ -29,9 +28,10 @@
 
 using namespace openvpn;
 
+
 class Property : public RC<thread_safe_refcount>
 {
-public:
+  public:
     typedef RCPtr<Property> Ptr;
 
     virtual std::string GetIntrospectionXML() const = 0;
@@ -46,12 +46,12 @@ public:
 template <typename T>
 class PropertyTypeBase : public Property
 {
-public:
+  public:
     PropertyTypeBase(DBusObject *obj_arg,
-                     const std::string & name_arg,
-                     const std::string & dbus_acl_arg,
+                     const std::string &name_arg,
+                     const std::string &dbus_acl_arg,
                      bool allow_mngr_arg,
-                     T & value_arg)
+                     T &value_arg)
         : obj(obj_arg),
           name(name_arg),
           dbus_acl(dbus_acl_arg),
@@ -74,7 +74,7 @@ public:
     }
 
 
-    virtual const char* GetDBusType() const=0;
+    virtual const char *GetDBusType() const = 0;
 
 
     virtual std::string GetName() const override
@@ -83,12 +83,12 @@ public:
     }
 
 
-protected:
+  protected:
     DBusObject *obj;
     std::string name;
     std::string dbus_acl;
     bool allow_manager;
-    T& value;
+    T &value;
 };
 
 
@@ -96,24 +96,24 @@ protected:
 template <typename T>
 class PropertyType : public PropertyTypeBase<T>
 {
-public:
-    PropertyType(DBusObject *obj_arg, std::string name_arg,
-                 std::string dbus_acl_arg, bool allow_mngr_arg,
-                 T& value_arg, std::string override_dbus_type = "")
-        : PropertyTypeBase<T>(obj_arg, name_arg,
-                              dbus_acl_arg, allow_mngr_arg,
-                              value_arg),
+  public:
+    PropertyType(DBusObject *obj_arg,
+                 std::string name_arg,
+                 std::string dbus_acl_arg,
+                 bool allow_mngr_arg,
+                 T &value_arg,
+                 std::string override_dbus_type = "")
+        : PropertyTypeBase<T>(obj_arg, name_arg, dbus_acl_arg, allow_mngr_arg, value_arg),
           override_dbus_type(override_dbus_type)
     {
-
     }
 
 
-    virtual const char* GetDBusType() const override
+    virtual const char *GetDBusType() const override
     {
         return (override_dbus_type.empty()
-                ? GLibUtils::GetDBusDataType<T>()
-                : override_dbus_type.c_str());
+                    ? GLibUtils::GetDBusDataType<T>()
+                    : override_dbus_type.c_str());
     }
 
 
@@ -122,15 +122,18 @@ public:
         return GLibUtils::CreateVariantValue(GetDBusType(), PropertyTypeBase<T>::value);
     }
 
+
     virtual GVariantBuilder *SetValue(GVariant *value_arg) override
     {
         PropertyTypeBase<T>::value = GLibUtils::GetVariantValue<T>(value_arg);
         return PropertyTypeBase<T>::obj->build_set_property_response(PropertyTypeBase<T>::name, PropertyTypeBase<T>::value);
     }
 
-private:
+
+  private:
     const std::string override_dbus_type;
 };
+
 
 
 /**
@@ -139,17 +142,14 @@ private:
 template <typename T>
 class PropertyType<std::vector<T>> : public PropertyTypeBase<std::vector<T>>
 {
-public:
+  public:
     PropertyType<std::vector<T>>(DBusObject *obj_arg,
                                  std::string name_arg,
                                  std::string dbus_acl_arg,
                                  bool allow_mngr_arg,
                                  std::vector<T> &value_arg)
-        : PropertyTypeBase<std::vector<T>>(obj_arg, name_arg,
-                                           dbus_acl_arg,
-                                           allow_mngr_arg,
-                                           value_arg),
-                                           dbus_array_type("a" + std::string(GLibUtils::GetDBusDataType<T>()))
+        : PropertyTypeBase<std::vector<T>>(obj_arg, name_arg, dbus_acl_arg, allow_mngr_arg, value_arg),
+          dbus_array_type("a" + std::string(GLibUtils::GetDBusDataType<T>()))
     {
     }
 
@@ -160,7 +160,7 @@ public:
      * @return  Returns a C char based string containing the GVariant
      *          compatible data type in use.
      */
-    virtual const char* GetDBusType() const override
+    virtual const char *GetDBusType() const override
     {
         return dbus_array_type.c_str();
     }
@@ -173,7 +173,7 @@ public:
      */
     virtual GVariant *GetValue() const override
     {
-        GVariantBuilder* bld = get_builder();
+        GVariantBuilder *bld = get_builder();
         GVariant *ret = g_variant_builder_end(bld);
         g_variant_builder_unref(bld);
         return ret;
@@ -191,9 +191,9 @@ public:
      *          data.  This will be used when sending the PropertyChanged
      *          D-Bus signal.
      */
-    virtual GVariantBuilder* SetValue(GVariant *value_arg) override
+    virtual GVariantBuilder *SetValue(GVariant *value_arg) override
     {
-        GVariantIter* list;
+        GVariantIter *list;
         g_variant_get(value_arg, dbus_array_type.c_str(), &list);
 
         GVariant *iter = NULL;
@@ -210,7 +210,7 @@ public:
     }
 
 
-private:
+  private:
     std::string dbus_array_type;
 
     /**
@@ -240,16 +240,19 @@ class PropertyCollection
     {
     }
 
+
     void AddBinding(Property::Ptr prop)
     {
         properties.insert(std::pair<std::string, Property::Ptr>(prop->GetName(), prop));
     }
+
 
     bool Exists(std::string name)
     {
         auto prop = properties.find(name);
         return prop != properties.end();
     }
+
 
     std::string GetIntrospectionXML()
     {
@@ -260,6 +263,7 @@ class PropertyCollection
         return xml;
     }
 
+
     bool GetManagerAllowed(std::string property_name)
     {
         auto prop = properties.find(property_name);
@@ -268,6 +272,7 @@ class PropertyCollection
 
         return prop->second->GetManagerAllowed();
     }
+
 
     GVariant *GetValue(std::string property_name)
     {
@@ -278,8 +283,9 @@ class PropertyCollection
         return prop->second->GetValue();
     }
 
+
     GVariantBuilder *SetValue(std::string property_name,
-                                            GVariant *value)
+                              GVariant *value)
     {
         auto prop = properties.find(property_name);
         if (prop == properties.end())
@@ -287,6 +293,7 @@ class PropertyCollection
 
         return prop->second->SetValue(value);
     }
+
 
   private:
     std::map<std::string, Property::Ptr> properties;

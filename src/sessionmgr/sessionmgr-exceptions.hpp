@@ -30,20 +30,19 @@
 
 #include "dbus/exceptions.hpp"
 
-namespace SessionManager
-{
+namespace SessionManager {
+
 
 #define THROW_SESSIONMGR(m) throw SessionManager::Exception(m, __FILE__, __LINE__, __FUNCTION__)
-    class Exception : public DBusException
+class Exception : public DBusException
+{
+  public:
+    Exception(const std::string msg,
+              const char *file,
+              const int line,
+              const char *method)
+        : DBusException("SessionManager", msg, file, line, method)
     {
-    public:
-        Exception(const std::string msg,
-                                const char* file,
-                                const int line,
-                                const char* method)
-            : DBusException("SessionManager", msg, file, line, method)
-        {
-        }
-    };
+    }
+};
 } // namespace SessionManager
-

@@ -26,6 +26,7 @@
 
 #include <iostream>
 #include <exception>
+#include <memory>
 
 #include "dbus/core.hpp"
 #include "common/lookup.hpp"
@@ -34,16 +35,18 @@
 
 using namespace openvpn;
 
+
+
 class ProxyWrangler
 {
-public:
+  public:
     ProxyWrangler(std::string objpath)
     {
-        if ("/net/openvpn/v3/configuration/" == objpath.substr(0,30))
+        if ("/net/openvpn/v3/configuration/" == objpath.substr(0, 30))
         {
             cfgprx = new OpenVPN3ConfigurationProxy(G_BUS_TYPE_SYSTEM, objpath);
         }
-        else if ("/net/openvpn/v3/sessions/" == objpath.substr(0,25))
+        else if ("/net/openvpn/v3/sessions/" == objpath.substr(0, 25))
         {
             sessprx = new OpenVPN3SessionProxy(G_BUS_TYPE_SYSTEM, objpath);
         }
@@ -120,10 +123,11 @@ public:
     }
 
 
-private:
-    OpenVPN3ConfigurationProxy * cfgprx = nullptr;
-    OpenVPN3SessionProxy * sessprx = nullptr;
+  private:
+    OpenVPN3ConfigurationProxy *cfgprx = nullptr;
+    OpenVPN3SessionProxy *sessprx = nullptr;
 };
+
 
 
 int main(int argc, char **argv)
@@ -138,7 +142,8 @@ int main(int argc, char **argv)
     std::string mode(argv[1]);
     ProxyWrangler proxy(argv[2]);
 
-    if ("list" == mode) {
+    if ("list" == mode)
+    {
         std::cout << "Object owner: (" << proxy.GetOwner()
                   << ") " << lookup_username(proxy.GetOwner())
                   << std::endl;

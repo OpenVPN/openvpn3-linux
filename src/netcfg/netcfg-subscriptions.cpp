@@ -33,7 +33,7 @@
 #include "netcfg-subscriptions.hpp"
 
 
-void NetCfgSubscriptions::Subscribe(const std::string& sender, uint32_t filter_flags)
+void NetCfgSubscriptions::Subscribe(const std::string &sender, uint32_t filter_flags)
 {
     if (0 == filter_flags)
     {
@@ -43,11 +43,11 @@ void NetCfgSubscriptions::Subscribe(const std::string& sender, uint32_t filter_f
     {
         throw NetCfgException("Invalid subscription flag, must be < 65535");
     }
-    subscriptions[sender] = (uint16_t) filter_flags;
+    subscriptions[sender] = (uint16_t)filter_flags;
 }
 
 
-void NetCfgSubscriptions::Unsubscribe(const std::string& subscriber)
+void NetCfgSubscriptions::Unsubscribe(const std::string &subscriber)
 {
     if (subscriptions.find(subscriber) == subscriptions.end())
     {
@@ -58,7 +58,7 @@ void NetCfgSubscriptions::Unsubscribe(const std::string& subscriber)
 }
 
 
-GVariant* NetCfgSubscriptions::List()
+GVariant *NetCfgSubscriptions::List()
 {
     // Build up the array of subscriber and subscription flags
     GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("a(su)"));
@@ -68,11 +68,9 @@ GVariant* NetCfgSubscriptions::List()
                               "(NetCfgSubscriptions::List)");
     }
 
-    for (const auto& sub : subscriptions)
+    for (const auto &sub : subscriptions)
     {
-        g_variant_builder_add(bld, "(su)",
-                              sub.first.c_str(),
-                              sub.second);
+        g_variant_builder_add(bld, "(su)", sub.first.c_str(), sub.second);
     }
     return GLibUtils::wrapInTuple(bld);
 }

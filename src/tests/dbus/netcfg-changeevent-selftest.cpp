@@ -31,10 +31,9 @@
 #include "netcfg/netcfg-changeevent.hpp"
 
 
-bool test_empty(const NetCfgChangeEvent& ev, const bool expect)
+bool test_empty(const NetCfgChangeEvent &ev, const bool expect)
 {
     bool ret = false;
-
 
     bool r = ev.empty();
     std::cout << "      test_empty():  ev.empty() = " << r << " ... ";
@@ -53,7 +52,7 @@ bool test_empty(const NetCfgChangeEvent& ev, const bool expect)
          && ev.device.empty()
          && ev.details.empty());
     std::cout << "      test_empty():  Element check:"
-              << " (" << std::to_string((unsigned) ev.type)
+              << " (" << std::to_string((unsigned)ev.type)
               << ", '" << ev.device
               << "', details.size=" << ev.details.size() << ") = " << r << " ... ";
     if (expect != r)
@@ -83,9 +82,10 @@ int test_init()
     }
 
     std::cout << "-- Testing just initialized object - init with values (1)" << std::endl;
-    NetCfgChangeEvent populated1(NetCfgChangeType::DEVICE_ADDED, "test-dev",
+    NetCfgChangeEvent populated1(NetCfgChangeType::DEVICE_ADDED,
+                                 "test-dev",
                                  {{"some_key", "Some detail"}});
-    if (test_empty(populated1, false))  // This should fail
+    if (test_empty(populated1, false)) // This should fail
     {
         ++ret;
     }
@@ -107,9 +107,9 @@ int test_stream()
 
     std::cout << "-- Testing string stream: NetCfgChangeEvent(NetCfgChangeType::IPADDR_ADDED, "
               << "'testdev', '2001:db8:a050::1/64') ... ";
-    NetCfgChangeEvent state(NetCfgChangeType::IPADDR_ADDED, "testdev",
-                            {{"ip_address", "2001:db8:a050::1"},
-                             {"prefix", "64"}});
+    NetCfgChangeEvent state(NetCfgChangeType::IPADDR_ADDED,
+                            "testdev",
+                            {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
     std::stringstream chk;
     chk << state;
     std::string expect("Device testdev - IP Address Added: ip_address='2001:db8:a050::1', prefix='64'");
@@ -132,9 +132,9 @@ int test_gvariant()
     int ret = 0;
 
     std::cout << "-- Testing .GetGVariant() ... " << std::endl;
-    NetCfgChangeEvent g_state(NetCfgChangeType::ROUTE_ADDED, "tun22",
-                              {{"ip_address", "2001:db8:a050::1"},
-                               {"prefix", "64"}});
+    NetCfgChangeEvent g_state(NetCfgChangeType::ROUTE_ADDED,
+                              "tun22",
+                              {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
     GVariant *chk = g_state.GetGVariant();
 
     std::cout << "      g_variant_print() check: ";
@@ -173,10 +173,9 @@ int test_gvariant()
     }
     g_variant_iter_free(det_g);
 
-    if ((guint) g_state.type != type
+    if ((guint)g_state.type != type
         || 0 != (g_state.device.compare(dev_s))
-        || g_state.details != det_s
-        )
+        || g_state.details != det_s)
     {
         std::cout << "FAILED" << std::endl;
         std::cout << "     Input: " << g_state << std::endl;
@@ -186,7 +185,7 @@ int test_gvariant()
                   << "details={";
 
         bool f = true;
-        for (const auto& kv : det_s)
+        for (const auto &kv : det_s)
         {
             std::cout << (f ? "" : ", ")
                       << kv.first << "='" << kv.second << "'";
@@ -225,11 +224,11 @@ int test_gvariant()
         std::cout << "FAILED: Data was parsed: " << invalid << std::endl;
         ++ret;
     }
-    catch (const NetCfgException& excp)
+    catch (const NetCfgException &excp)
     {
         std::cout << "PASSED: " << excp.what() << std::endl;
     }
-    catch (const std::exception& excp)
+    catch (const std::exception &excp)
     {
         std::cout << "FAILED: Unknown error: " << excp.what() << std::endl;
         ++ret;
@@ -243,13 +242,13 @@ int process_filtermask(uint16_t m, uint8_t expect)
 {
     std::vector<std::string> res = NetCfgChangeEvent::FilterMaskList(m, true);
     std::cout << "[" << std::to_string(res.size()) << " elements] ";
-    for (const auto& t : res)
+    for (const auto &t : res)
     {
         std::cout << t << " ";
     }
     if (res.size() != expect)
     {
-        std::cout << " ... FAILED: Expected "<< std::to_string(expect)
+        std::cout << " ... FAILED: Expected " << std::to_string(expect)
                   << " elements" << std::endl;
         return 1;
     }
@@ -278,14 +277,15 @@ int test_filtermasklist()
         std::cout << "-- Filter mask to string conversion (no bits set): ";
         ret += process_filtermask(mask, 0);
     }
-    catch (std::exception& excp)
+    catch (std::exception &excp)
     {
         std::cout << " ... FAILED: " << excp.what() << std::endl;
         ++ret;
-
     }
     return ret;
 }
+
+
 
 int main(int argc, char **argv)
 {
@@ -319,6 +319,7 @@ int main(int argc, char **argv)
 
     std::cout << std::endl
               << ">> OVERAL TEST RESULT: " << (failed ? "FAILED" : "PASSED")
-              << std::endl << std::endl;
-    return (failed ? 2: 0);
+              << std::endl
+              << std::endl;
+    return (failed ? 2 : 0);
 }

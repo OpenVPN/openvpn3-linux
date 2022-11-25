@@ -32,10 +32,12 @@
 
 enum class RedirectMethod : std::uint8_t
 {
-    NONE = 0,    //<  Do not add any additional routes
-    HOST_ROUTE,  //<  Add direct route to VPN server
-    BINDTODEV    //<  Bind the UDP/TCP socket to the default gw interface
+    NONE = 0,   //<  Do not add any additional routes
+    HOST_ROUTE, //<  Add direct route to VPN server
+    BINDTODEV   //<  Bind the UDP/TCP socket to the default gw interface
 };
+
+
 
 /**
  * struct to hold the setting for the Netcfg service
@@ -67,7 +69,7 @@ struct NetCfgOptions
                 config->Load(config_file);
                 args->ImportConfigFile(config);
             }
-            catch (const ConfigFileException&)
+            catch (const ConfigFileException &)
             {
                 // Ignore errors related to configuration file
             }
@@ -77,7 +79,7 @@ struct NetCfgOptions
         {
             args->CheckExclusiveOptions({{"resolv-conf", "systemd-resolved"}});
         }
-        catch (const ExclusiveOptionError& excp)
+        catch (const ExclusiveOptionError &excp)
         {
             throw CommandException("openvpn3-service-netcfg",
                                    excp.what());
@@ -114,7 +116,7 @@ struct NetCfgOptions
     }
 
 
-    NetCfgOptions(const NetCfgOptions& origin) = default;
+    NetCfgOptions(const NetCfgOptions &origin) = default;
 
     /**
      *  Generate a decoded string of the current options
@@ -137,14 +139,14 @@ struct NetCfgOptions
      * @return  Returns the provided std::ostream together with the
      *          decoded NetCfgOptions information
      */
-    friend std::ostream& operator<<(std::ostream& os , const NetCfgOptions& o)
+    friend std::ostream &operator<<(std::ostream &os, const NetCfgOptions &o)
     {
         return os << decode_options(o);
     }
 
 
-private:
-    static const std::string decode_options(const NetCfgOptions& o)
+  private:
+    static const std::string decode_options(const NetCfgOptions &o)
     {
         std::stringstream s;
 

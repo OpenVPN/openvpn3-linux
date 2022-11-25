@@ -30,15 +30,18 @@
 
 #define OPENVPN3_MACHINEID std::string(std::string(OPENVPN3_STATEDIR) + "/machine-id")
 
+
 class MachineIDException : std::exception
 {
-public:
-    MachineIDException(const std::string& msg) noexcept;
+  public:
+    MachineIDException(const std::string &msg) noexcept;
     std::string GetError() const noexcept;
     const char *what();
-private:
+
+  private:
     std::string error;
 };
+
 
 
 /**
@@ -55,8 +58,9 @@ private:
  */
 class MachineID
 {
-public:
-    enum class SourceType {
+  public:
+    enum class SourceType
+    {
         NONE,        ///< No source used - no reliable machine-id available if any at all
         SYSTEM,      ///< machine-id derived from /etc/machine-id
         SYSTEMD_API, ///< machine-id derived from systemd API
@@ -64,10 +68,10 @@ public:
         RANDOM       ///< Storing generated machine-id failed, unreliable random value used
     };
 
-
-    MachineID(const std::string& local_machineid = OPENVPN3_MACHINEID,
-              bool enforce_local=false);
+    MachineID(const std::string &local_machineid = OPENVPN3_MACHINEID,
+              bool enforce_local = false);
     virtual ~MachineID() = default;
+
 
     /**
      *  Checks if a static machine-id was retrieved successfully.  If not,
@@ -78,6 +82,7 @@ public:
      */
     void success() const;
 
+
     /**
      *  Retrieve the source type for the generation of the machine-id
      *
@@ -85,18 +90,21 @@ public:
      */
     SourceType GetSource() const noexcept;
 
+
     std::string get() const noexcept;
 
-    friend std::ostream& operator<<(std::ostream& os,
-                                    const MachineID& machid)
+
+    friend std::ostream &operator<<(std::ostream &os,
+                                    const MachineID &machid)
     {
         return os << machid.machine_id;
     }
 
-private:
+
+  private:
     SourceType source{SourceType::NONE};
     std::string machine_id{};
     std::string errormsg{};
 
-    std::string generate_machine_id(const std::string& fname) noexcept;
+    std::string generate_machine_id(const std::string &fname) noexcept;
 };

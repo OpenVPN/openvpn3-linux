@@ -37,11 +37,13 @@
 
 using namespace openvpn;
 
+
 struct LogStringTag : public LogTag
 {
     using Ptr = std::shared_ptr<LogStringTag>;
 
-    LogStringTag(const std::string& t) : LogTag()
+    LogStringTag(const std::string &t)
+        : LogTag()
     {
         tag = std::string(t);
         hash = 0;
@@ -54,6 +56,7 @@ struct LogStringTag : public LogTag
         return tag;
     }
 };
+
 
 
 static int logger(ParsedArgs::Ptr args)
@@ -102,7 +105,7 @@ static int logger(ParsedArgs::Ptr args)
         {
             cfgfile->Load();
         }
-        catch (const ConfigFileException&)
+        catch (const ConfigFileException &)
         {
             //  Ignore load errors; the file might be missing - which is fine.
         }
@@ -110,13 +113,13 @@ static int logger(ParsedArgs::Ptr args)
         {
             cfgfile->CheckExclusiveOptions();
         }
-        catch (const ConfigFileException&)
+        catch (const ConfigFileException &)
         {
             throw CommandException("openvpn3-service-logger",
                                    "Failed parsing configuration file: "
-                                   + cfgfile->GetFilename());
+                                       + cfgfile->GetFilename());
         }
-        catch (const ExclusiveOptionError& err)
+        catch (const ExclusiveOptionError &err)
         {
             std::stringstream e;
             e << "Error parsing configuration file (" << cfgfile->GetFilename()
@@ -131,12 +134,11 @@ static int logger(ParsedArgs::Ptr args)
         args->CheckExclusiveOptions({{"syslog", "journald", "log-file"},
                                      {"syslog", "journald", "colour"}});
     }
-    catch (const ExclusiveOptionError& excp)
+    catch (const ExclusiveOptionError &excp)
     {
         throw CommandException("openvpn3-service-logger",
                                excp.what());
     }
-
 
     DBus dbus(G_BUS_TYPE_SYSTEM);
     dbus.Connect();
@@ -148,7 +150,7 @@ static int logger(ParsedArgs::Ptr args)
 
     // Open a log destination
     std::ofstream logfs;
-    std::streambuf * logstream;
+    std::streambuf *logstream;
     bool do_console_info = true;
     if (args->Present("log-file"))
     {
@@ -174,54 +176,53 @@ static int logger(ParsedArgs::Ptr args)
     }
     else
 #endif // HAVE_SYSTEMD
-    if (args->Present("syslog"))
-     {
-        do_console_info = true;
-        int facility = LOG_DAEMON;
-        if (args->Present("syslog-facility"))
+        if (args->Present("syslog"))
         {
-            try {
-                std::string f = args->GetValue("syslog-facility", 0);
-                facility = SyslogWriter::ConvertLogFacility(f);
-            }
-            catch (SyslogException& excp)
+            do_console_info = true;
+            int facility = LOG_DAEMON;
+            if (args->Present("syslog-facility"))
             {
-                throw CommandException("openvpn3-service-logger",
-                                       excp.what());
+                try
+                {
+                    std::string f = args->GetValue("syslog-facility", 0);
+                    facility = SyslogWriter::ConvertLogFacility(f);
+                }
+                catch (SyslogException &excp)
+                {
+                    throw CommandException("openvpn3-service-logger",
+                                           excp.what());
+                }
             }
+            logwr.reset(new SyslogWriter(args->GetArgv0(), facility));
         }
-        logwr.reset(new SyslogWriter(args->GetArgv0(), facility));
-     }
-     else if (args->Present("colour"))
-     {
-         colourengine.reset(new ANSIColours());
-         logwr.reset(new ColourStreamWriter(logfile,
-                                            colourengine.get()));
-     }
-     else
-     {
-         logwr.reset(new StreamLogWriter(logfile));
-     }
-     logwr->EnableTimestamp(args->Present("timestamp"));
-     logwr->EnableLogMeta(args->Present("service-log-dbus-details"));
+        else if (args->Present("colour"))
+        {
+            colourengine.reset(new ANSIColours());
+            logwr.reset(new ColourStreamWriter(logfile,
+                                               colourengine.get()));
+        }
+        else
+        {
+            logwr.reset(new StreamLogWriter(logfile));
+        }
+    logwr->EnableTimestamp(args->Present("timestamp"));
+    logwr->EnableLogMeta(args->Present("service-log-dbus-details"));
 
-     // Enable automatic shutdown if the logger is
-     // idling for 10 minute or more.  By idling, it means
-     // no services are attached to this log service
-     IdleCheck::Ptr idle_exit;
-     unsigned int idle_wait_min = 10;
-     if (args->Present("idle-exit"))
-     {
-         idle_wait_min = std::atoi(args->GetValue("idle-exit", 0).c_str());
-     }
+    // Enable automatic shutdown if the logger is
+    // idling for 10 minute or more.  By idling, it means
+    // no services are attached to this log service
+    IdleCheck::Ptr idle_exit;
+    unsigned int idle_wait_min = 10;
+    if (args->Present("idle-exit"))
+    {
+        idle_wait_min = std::atoi(args->GetValue("idle-exit", 0).c_str());
+    }
 
-     // Setup the log receivers
+    // Setup the log receivers
     try
     {
-        logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::INFO,
-                              get_version(args->GetArgv0())));
-        logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::INFO,
-                              "Log method: " + logwr->GetLogWriterInfo()));
+        logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::INFO, get_version(args->GetArgv0())));
+        logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::INFO, "Log method: " + logwr->GetLogWriterInfo()));
         if (do_console_info)
         {
             std::cout << get_version(args->GetArgv0()) << std::endl;
@@ -253,9 +254,7 @@ static int logger(ParsedArgs::Ptr args)
                 idle_exit.reset(new IdleCheck(main_loop,
                                               std::chrono::minutes(idle_wait_min)));
                 logsrv->EnableIdleCheck(idle_exit);
-                logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::INFO,
-                        "Idle exit set to " + std::to_string(idle_wait_min)
-                        + " minutes"));
+                logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::INFO, "Idle exit set to " + std::to_string(idle_wait_min) + " minutes"));
             }
             else
             {
@@ -290,10 +289,7 @@ static int logger(ParsedArgs::Ptr args)
                 LogStringTag::Ptr vpnbetag;
                 vpnbetag.reset(new LogStringTag("[B]"));
 
-                be_subscription.reset(new Logger(dbusconn, logwr.get(),
-                                                 vpnbetag, "",
-                                                 OpenVPN3DBus_interf_backends,
-                                                 log_level));
+                be_subscription.reset(new Logger(dbusconn, logwr.get(), vpnbetag, "", OpenVPN3DBus_interf_backends, log_level));
                 ++subscribers;
             }
 
@@ -303,10 +299,7 @@ static int logger(ParsedArgs::Ptr args)
                 LogStringTag::Ptr smgrtag;
                 smgrtag.reset(new LogStringTag("[S]"));
 
-                session_subscr.reset(new Logger(dbusconn, logwr.get(),
-                                                smgrtag, "",
-                                                OpenVPN3DBus_interf_sessions,
-                                                log_level));
+                session_subscr.reset(new Logger(dbusconn, logwr.get(), smgrtag, "", OpenVPN3DBus_interf_sessions, log_level));
                 ++subscribers;
                 if (!args->Present("session-manager-client-proxy"))
                 {
@@ -324,10 +317,7 @@ static int logger(ParsedArgs::Ptr args)
                 LogStringTag::Ptr cmgrtag;
                 cmgrtag.reset(new LogStringTag("[C]"));
 
-                config_subscr.reset(new Logger(dbusconn, logwr.get(),
-                                               cmgrtag, "",
-                                               OpenVPN3DBus_interf_configuration,
-                                               log_level));
+                config_subscr.reset(new Logger(dbusconn, logwr.get(), cmgrtag, "", OpenVPN3DBus_interf_configuration, log_level));
                 ++subscribers;
             }
 
@@ -340,7 +330,7 @@ static int logger(ParsedArgs::Ptr args)
             }
         }
 
-        if( !be_subscription && !session_subscr && !config_subscr && !logsrv)
+        if (!be_subscription && !session_subscr && !config_subscr && !logsrv)
         {
             throw CommandException("openvpn3-service-logger",
                                    "No logging enabled. Aborting.");
@@ -362,13 +352,15 @@ static int logger(ParsedArgs::Ptr args)
 
         ret = 0;
     }
-    catch (CommandException& excp)
+    catch (CommandException &excp)
     {
         throw;
     }
 
     return ret;
 }
+
+
 
 int main(int argc, char **argv)
 {
@@ -378,40 +370,66 @@ int main(int argc, char **argv)
 
     SingleCommand argparser(argv[0], "OpenVPN 3 Logger", logger);
     argparser.AddVersionOption();
-    argparser.AddOption("timestamp", 0,
+    argparser.AddOption("timestamp",
+                        0,
                         "Print timestamps on each log entry");
-    argparser.AddOption("colour", 0,
+    argparser.AddOption("colour",
+                        0,
                         "Use colours to categorize log events");
-    argparser.AddOption("config-manager", 0,
+    argparser.AddOption("config-manager",
+                        0,
                         "Subscribe to configuration manager log entries");
-    argparser.AddOption("session-manager", 0,
+    argparser.AddOption("session-manager",
+                        0,
                         "Subscribe to session manager log entries");
-    argparser.AddOption("session-manager-client-proxy", 0,
+    argparser.AddOption("session-manager-client-proxy",
+                        0,
                         "Also include backend client messages proxied by the session manager");
-    argparser.AddOption("vpn-backend", 0,
+    argparser.AddOption("vpn-backend",
+                        0,
                         "Subscribe to VPN client log entries");
-    argparser.AddOption("log-level", 0, "LEVEL", true,
+    argparser.AddOption("log-level",
+                        0,
+                        "LEVEL",
+                        true,
                         "Set the log verbosity level (default 3)");
 #if HAVE_SYSTEMD
-    argparser.AddOption("no-logtag-prefix", 0,
+    argparser.AddOption("no-logtag-prefix",
+                        0,
                         "Do not prefix message lines with log tags (journald only)");
-    argparser.AddOption("journald", 0,
+    argparser.AddOption("journald",
+                        0,
                         "Send all log events to systemd-journald");
 #endif // HAVE_SYSTEMD
-    argparser.AddOption("syslog", 0,
+    argparser.AddOption("syslog",
+                        0,
                         "Send all log events to syslog");
-    argparser.AddOption("syslog-facility", 0, "FACILITY", true,
+    argparser.AddOption("syslog-facility",
+                        0,
+                        "FACILITY",
+                        true,
                         "Use a specific syslog facility (Default: LOG_DAEMON)");
-    argparser.AddOption("log-file", 0, "FILE", true,
+    argparser.AddOption("log-file",
+                        0,
+                        "FILE",
+                        true,
                         "Log events to file");
-    argparser.AddOption("service", 0,
+    argparser.AddOption("service",
+                        0,
                         "Run as a background D-Bus service");
-    argparser.AddOption("service-log-dbus-details", 0,
+    argparser.AddOption("service-log-dbus-details",
+                        0,
                         "(Only with --service) Include D-Bus sender, path and method references in logs");
-    argparser.AddOption("idle-exit", 0, "MINUTES", true,
+    argparser.AddOption("idle-exit",
+                        0,
+                        "MINUTES",
+                        true,
                         "(Only with --service) How long to wait before exiting"
                         "if being idle. 0 disables it (Default: 10 minutes)");
-    argparser.AddOption("state-dir", 0, "DIRECTORY", true,
+    argparser.AddOption("state-dir",
+                        0,
+                        "DIRECTORY",
+                        true,
                         "(Only with --service) Directory where to save the "
                         "service log settings");
 
@@ -419,7 +437,7 @@ int main(int argc, char **argv)
     {
         return argparser.RunCommand(simple_basename(argv[0]), argc, argv);
     }
-    catch (CommandException& excp)
+    catch (CommandException &excp)
     {
         std::cout << excp.what() << std::endl;
         return 2;

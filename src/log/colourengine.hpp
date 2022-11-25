@@ -37,20 +37,24 @@
  */
 class ColourEngine
 {
-public:
+  public:
     typedef std::unique_ptr<ColourEngine> Ptr;
+
 
     /**
      *  Colouring approaches
      */
-    enum class ColourMode : uint8_t {
-        BY_GROUP,     //!< Colours chosen based on the LogGroup identifier
-        BY_CATEGORY   //!< Colours chosen based on the LogCategory identifier
+    enum class ColourMode : uint8_t
+    {
+        BY_GROUP,   //!< Colours chosen based on the LogGroup identifier
+        BY_CATEGORY //!< Colours chosen based on the LogCategory identifier
     };
+
 
     /**
      *  Supported colours
      */
+    // clang-format off
     enum class Colour : std::uint8_t {
         NONE,
         BLACK,   BRIGHT_BLACK,
@@ -62,6 +66,8 @@ public:
         CYAN,    BRIGHT_CYAN,
         WHITE,   BRIGHT_WHITE
     };
+    // clang-format on
+
 
     /**
      *  Needs to be called to specify the colours to be used in the output
@@ -72,6 +78,7 @@ public:
      * @return  Returns a string containing to be used to colour the output
      */
     virtual const std::string Set(Colour fg, Colour bg) = 0;
+
 
     /**
      *  Removes any colour settings, returning back to default output mode
@@ -106,6 +113,7 @@ public:
         return mode;
     }
 
+
     /**
      *  Provides the colours to be used for a specific LogGroup type
      *
@@ -134,7 +142,6 @@ public:
     virtual ~ColourEngine() = default;
 
 
-private:
+  private:
     ColourMode mode = ColourMode::BY_CATEGORY;
-
 };

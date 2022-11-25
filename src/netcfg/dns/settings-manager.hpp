@@ -37,80 +37,82 @@
 using namespace openvpn;
 using namespace NetCfg::DNS;
 
-namespace NetCfg
+namespace NetCfg {
+namespace DNS {
+
+/**
+ *  Manager object for all DNS settings on the system
+ *
+ *  This depends on a backend handler object (ResolverBackendInterface)
+ *  which will perform the changes on the system.
+ */
+class SettingsManager : public virtual RC<thread_unsafe_refcount>
 {
-namespace DNS
-{
+  public:
+    typedef RCPtr<SettingsManager> Ptr;
+
+    SettingsManager(ResolverBackendInterface::Ptr be);
+    ~SettingsManager();
+
     /**
-     *  Manager object for all DNS settings on the system
+     *  Retrieve information about the configured DNS Settings backend
      *
-     *  This depends on a backend handler object (ResolverBackendInterface)
-     *  which will perform the changes on the system.
+     * @return  Returns a std::string containing the details
      */
-    class SettingsManager: public virtual RC<thread_unsafe_refcount>
-        {
-        public:
-            typedef RCPtr<SettingsManager> Ptr;
+    const std::string GetBackendInfo() const;
 
-            SettingsManager(ResolverBackendInterface::Ptr be);
-            ~SettingsManager();
-
-            /**
-             *  Retrieve information about the configured DNS Settings backend
-             *
-             * @return  Returns a std::string containing the details
-             */
-            const std::string GetBackendInfo() const;
-
-            const ApplySettingsMode GetApplyMode() const;
-
-            /**
-             *  Allocate a new set of DNS settings for the DNS resolver.
-             *
-             *  This operation is transaction oriented and will not be applied
-             *  until the ApplySettings() method has been called.   The order
-             *  of execution will be the reverse order of the
-             *  NewResolverSettings() calls.  The latest call gets precedence
-             *  over the other calls.
-             *
-             * @return  Returns a ResolverSettings::Ptr to an object which
-             *          need to be configured with the DNS settings for the
-             *          VPN session it is associated with
-             */
-            ResolverSettings::Ptr NewResolverSettings();
+    const ApplySettingsMode GetApplyMode() const;
 
 
-            /**
-             *   Apply all configured DNS settings
-             */
-            void ApplySettings(NetCfgSignals *signal);
-
-            /**
-             *  Retrieve the full list of all configured DNS servers
-             *  for all VPN sessions
-             *
-             * @return  Returns a std::vector<std::string> with all DNS
-             *          servers.  They are ordered according to the reverse
-             *          order the VPN sessions were started.  The last entries
-             *          will be the system configured DNS servers.
-             */
-            std::vector<std::string> GetDNSservers() const;
-
-            /**
-             *  Retrieve the full list of all search domains
-             *
-             * @return  Returns a std::vector<std::string> with all DNS
-             *          search domains for both VPN sessions and the
-             *          configured system search domains.
-             */
-            std::vector<std::string> GetSearchDomains() const;
+    /**
+     *  Allocate a new set of DNS settings for the DNS resolver.
+     *
+     *  This operation is transaction oriented and will not be applied
+     *  until the ApplySettings() method has been called.   The order
+     *  of execution will be the reverse order of the
+     *  NewResolverSettings() calls.  The latest call gets precedence
+     *  over the other calls.
+     *
+     * @return  Returns a ResolverSettings::Ptr to an object which
+     *          need to be configured with the DNS settings for the
+     *          VPN session it is associated with
+     */
+    ResolverSettings::Ptr NewResolverSettings();
 
 
-    private:
-        ResolverBackendInterface::Ptr backend;
-        ssize_t resolver_idx = -1;
-        std::map<size_t, ResolverSettings::Ptr> resolvers{};
-    };
+    /**
+     *   Apply all configured DNS settings
+     */
+    void ApplySettings(NetCfgSignals *signal);
+
+
+    /**
+     *  Retrieve the full list of all configured DNS servers
+     *  for all VPN sessions
+     *
+     * @return  Returns a std::vector<std::string> with all DNS
+     *          servers.  They are ordered according to the reverse
+     *          order the VPN sessions were started.  The last entries
+     *          will be the system configured DNS servers.
+     */
+    std::vector<std::string> GetDNSservers() const;
+
+
+    /**
+     *  Retrieve the full list of all search domains
+     *
+     * @return  Returns a std::vector<std::string> with all DNS
+     *          search domains for both VPN sessions and the
+     *          configured system search domains.
+     */
+    std::vector<std::string> GetSearchDomains() const;
+
+
+  private:
+    ResolverBackendInterface::Ptr backend;
+    ssize_t resolver_idx = -1;
+    std::map<size_t, ResolverSettings::Ptr> resolvers{};
+};
 
 } // namespace DNS
 } // namespace NetCfg

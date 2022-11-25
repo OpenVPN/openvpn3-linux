@@ -23,7 +23,6 @@
  * @brief  Declaration of classes used by service.cpp
  */
 
-
 #pragma once
 
 #include <functional>
@@ -58,7 +57,7 @@ class LoggerProxy : public DBusObject,
                     public DBusConnectionCreds,
                     public LogSender
 {
-public:
+  public:
     /**
      * LoggerProxy constructor, created by a LogServiceManager object when
      * processing the ProxyLogEvents D-Bus method.
@@ -73,19 +72,21 @@ public:
      * @param loglvl     unsigned int of the initial log level for to forward
      */
     LoggerProxy(GDBusConnection *dbc,
-                const std::string& creat,
+                const std::string &creat,
                 std::function<void()> remove_cb,
-                const std::string& obj_path,
-                const std::string& target,
-                const std::string& src_path,
-                const std::string& src_interf,
+                const std::string &obj_path,
+                const std::string &target,
+                const std::string &src_path,
+                const std::string &src_interf,
                 const unsigned int loglvl);
     ~LoggerProxy();
+
 
     /**
      * Retrieve the D-Bus object path of this proxy object
      */
     const std::string GetObjectPath() const;
+
 
     /**
      * Retrieve the D-Bus object path of the VPN session this proxy is tied to
@@ -101,14 +102,16 @@ public:
                               GVariant *params,
                               GDBusMethodInvocation *invoc) override;
 
-    GVariant* callback_get_property(GDBusConnection *conn,
+
+    GVariant *callback_get_property(GDBusConnection *conn,
                                     const std::string sender,
                                     const std::string obj_path,
                                     const std::string intf_name,
                                     const std::string property_name,
                                     GError **error) override;
 
-    GVariantBuilder* callback_set_property(GDBusConnection *conn,
+
+    GVariantBuilder *callback_set_property(GDBusConnection *conn,
                                            const std::string sender,
                                            const std::string obj_path,
                                            const std::string intf_name,
@@ -117,7 +120,7 @@ public:
                                            GError **error) override;
 
 
-private:
+  private:
     PropertyCollection props;
     std::string creator = {};
     std::function<void()> remove_callback;
@@ -125,10 +128,10 @@ private:
     unsigned int log_level = 6;
     std::string session_path = {};
 
-    void check_access(const std::string& sender) const;
+    void check_access(const std::string &sender) const;
 };
 
-using LoggerProxyList = std::map<std::string, LoggerProxy*>;
+using LoggerProxyList = std::map<std::string, LoggerProxy *>;
 using LoggerSessionsList = std::map<std::string, size_t>;
 
 
@@ -141,7 +144,7 @@ using LoggerSessionsList = std::map<std::string, size_t>;
 class LogServiceManager : public DBusObject,
                           public DBusConnectionCreds
 {
-public:
+  public:
     typedef std::unique_ptr<LogServiceManager> Ptr;
 
     /**
@@ -180,14 +183,16 @@ public:
                               GVariant *params,
                               GDBusMethodInvocation *invoc) override;
 
-    GVariant* callback_get_property(GDBusConnection *conn,
+
+    GVariant *callback_get_property(GDBusConnection *conn,
                                     const std::string sender,
                                     const std::string obj_path,
                                     const std::string intf_name,
                                     const std::string property_name,
                                     GError **error) override;
 
-    GVariantBuilder* callback_set_property(GDBusConnection *conn,
+
+    GVariantBuilder *callback_set_property(GDBusConnection *conn,
                                            const std::string sender,
                                            const std::string obj_path,
                                            const std::string intf_name,
@@ -196,7 +201,7 @@ public:
                                            GError **error) override;
 
 
-private:
+  private:
     GDBusConnection *dbuscon = nullptr;
     LogWriter *logwr = nullptr;
     std::map<size_t, Logger::Ptr> loggers = {};
@@ -216,11 +221,10 @@ private:
      */
     void validate_sender(std::string sender, std::string allow);
 
-    std::string check_busname_vpn_client(const std::string& chk_busn) const;
+    std::string check_busname_vpn_client(const std::string &chk_busn) const;
 
-    std::string add_log_proxy(GVariant *params, const std::string& sender);
+    std::string add_log_proxy(GVariant *params, const std::string &sender);
     void remove_log_proxy(const std::string target);
-
 };
 
 
@@ -231,7 +235,7 @@ private:
  */
 class LogService : public DBus
 {
-public:
+  public:
     typedef std::unique_ptr<LogService> Ptr;
 
     /**
@@ -247,6 +251,7 @@ public:
 
     ~LogService() = default;
 
+
     /**
      *  Preserves the --state-dir setting, which will be used when
      *  creating the D-Bus service object
@@ -256,11 +261,13 @@ public:
      */
     void SetConfigFile(LogServiceConfigFile::Ptr cfgf);
 
+
     /**
      *  This callback is called when the service was successfully registered
      *  on the D-Bus.
      */
     void callback_bus_acquired();
+
 
     /**
      *  This is called each time the well-known bus name is successfully
@@ -285,7 +292,8 @@ public:
      */
     void callback_name_lost(GDBusConnection *conn, std::string busname);
 
-private:
+
+  private:
     LogServiceManager::Ptr logmgr;
     LogWriter *logwr;
     unsigned int log_level;

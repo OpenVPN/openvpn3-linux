@@ -24,7 +24,6 @@
  *         configuration file
  */
 
-
 #pragma once
 
 #include <memory>
@@ -33,26 +32,28 @@
 
 using namespace Configuration;
 
+
 class LogServiceConfigFile : public virtual Configuration::File
 {
-public:
+  public:
     typedef std::shared_ptr<Configuration::File> Ptr;
 
-    LogServiceConfigFile() :
-        Configuration::File("")
+    LogServiceConfigFile()
+        : Configuration::File("")
     {
     }
 
-    LogServiceConfigFile(const std::string& statedir) :
-        Configuration::File(statedir + "/" + "log-service.json")
+    LogServiceConfigFile(const std::string &statedir)
+        : Configuration::File(statedir + "/" + "log-service.json")
     {
     }
 
 
-protected:
+  protected:
     Configuration::OptionMap ConfigureMapping()
     {
         return {
+            // clang-format off
             OptionMapEntry{"journald", "journald",
                            "log_method_group",
                            "Use systemd-journald",
@@ -85,7 +86,7 @@ protected:
                            OptionValueType::Present},
             OptionMapEntry{"idle-exit", "idle_exit",
                            "Idle exit timer (minutes)", OptionValueType::Int},
-
-            };
+            // clang-format on
+        };
     }
 };

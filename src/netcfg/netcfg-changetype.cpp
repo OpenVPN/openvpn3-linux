@@ -25,7 +25,8 @@
 
 #include "netcfg-changetype.hpp"
 
-NetCfgChangeType operator | (const NetCfgChangeType& a, const NetCfgChangeType& b)
+
+NetCfgChangeType operator|(const NetCfgChangeType &a, const NetCfgChangeType &b)
 {
     return NetCfgChangeType(static_cast<std::uint16_t>(a) | static_cast<std::uint16_t>(b));
 }

@@ -34,6 +34,7 @@
 
 using namespace NetCfg::DNS;
 
+
 void print_details(resolved::Link::Ptr link)
 {
     std::string curr_dns_srv{""};
@@ -45,7 +46,7 @@ void print_details(resolved::Link::Ptr link)
     {
         curr_dns_srv = link->GetCurrentDNSServer();
     }
-    catch (const DBusException& excp)
+    catch (const DBusException &excp)
     {
         std::cout << "** ERROR **  " << excp.what() << std::endl;
     }
@@ -54,7 +55,7 @@ void print_details(resolved::Link::Ptr link)
     {
         default_route = (link->GetDefaultRoute() ? "true" : " false");
     }
-    catch (const std::exception& excp)
+    catch (const std::exception &excp)
     {
         std::cout << "** ERROR **  " << excp.what() << std::endl;
         default_route = "(unknown)";
@@ -64,7 +65,7 @@ void print_details(resolved::Link::Ptr link)
     {
         dns_srvs = link->GetDNSServers();
     }
-    catch (const DBusException& excp)
+    catch (const DBusException &excp)
     {
         std::cout << "** ERROR **  " << excp.what() << std::endl;
     }
@@ -73,7 +74,7 @@ void print_details(resolved::Link::Ptr link)
     {
         srch = link->GetDomains();
     }
-    catch (const DBusException& excp)
+    catch (const DBusException &excp)
     {
         std::cout << "** ERROR **  " << excp.what() << std::endl;
     }
@@ -84,18 +85,17 @@ void print_details(resolved::Link::Ptr link)
     std::cout << "Default route: " << default_route
               << std::endl;
 
-    for (const auto& srv : dns_srvs)
+    for (const auto &srv : dns_srvs)
     {
         std::cout << "DNS server: " << srv << std::endl;
     }
 
-    for (const auto& dom : srch)
+    for (const auto &dom : srch)
     {
         std::cout << "Domain: " << dom.search
                   << " routing: " << (dom.routing ? "true" : "false")
                   << std::endl;
     }
-
 }
 
 
@@ -116,8 +116,8 @@ int program(ParsedArgs::Ptr args)
 
     std::cout << "systemd-resolved path: " << link->GetPath() << std::endl;
     bool mods = args->Present("add-resolver") || args->Present("reset-resolver")
-              || args->Present("add-search") || args->Present("reset-search")
-              || args->Present("set-default-route") || args->Present("revert");
+                || args->Present("add-search") || args->Present("reset-search")
+                || args->Present("set-default-route") || args->Present("revert");
     if (mods)
     {
         std::cout << "Before changes: " << std::endl;
@@ -132,7 +132,7 @@ int program(ParsedArgs::Ptr args)
 
         if (args->Present("add-resolver"))
         {
-            for (const auto& ip : args->GetAllValues("add-resolver"))
+            for (const auto &ip : args->GetAllValues("add-resolver"))
             {
                 rslv.push_back(resolved::ResolverRecord(AF_INET, ip));
             }
@@ -149,7 +149,7 @@ int program(ParsedArgs::Ptr args)
         {
             bool routing = args->Present("search-routing");
 
-            for (const auto& s : args->GetAllValues("add-search"))
+            for (const auto &s : args->GetAllValues("add-search"))
             {
                 srchs.push_back(resolved::SearchDomain(s, routing));
             }
@@ -169,38 +169,36 @@ int program(ParsedArgs::Ptr args)
 
     if (mods)
     {
-        std::cout << std::endl << "After changes: " << std::endl;
+        std::cout << std::endl
+                  << "After changes: " << std::endl;
         print_details(link);
     }
 
     return 0;
 }
 
+
+
 int main(int argc, char **argv)
 {
     SingleCommand cmd("netcfg-systemd-resolved",
                       "Test program for the systemd-resolved D-Bus API",
                       program);
-    cmd.AddOption("add-resolver", "IP-ADDRESS", true,
-                  "Add a DNS resolver (can be used multiple times)");
+    cmd.AddOption("add-resolver", "IP-ADDRESS", true, "Add a DNS resolver (can be used multiple times)");
     cmd.AddOption("reset-resolver",
                   "Remove all DNS resolvers for this device");
-    cmd.AddOption("add-search", "SEARCH-DOMAIN", true,
-                  "Add a DNS search domain (can be used multiple times)");
+    cmd.AddOption("add-search", "SEARCH-DOMAIN", true, "Add a DNS search domain (can be used multiple times)");
     cmd.AddOption("reset-search",
                   "Remove all DNS search domains for this device");
-    cmd.AddOption("search-routing", 0,
-                  "Sets the routing flag for the SEARCH-DOMAIN being added");
-    cmd.AddOption("set-default-route", "BOOL", true,
-                  "Changes the DefaultRoute flag for the interface");
-    cmd.AddOption("revert", 0,
-                  "Revert all DNS settings on the interface to systemd-resovled defaults");
+    cmd.AddOption("search-routing", 0, "Sets the routing flag for the SEARCH-DOMAIN being added");
+    cmd.AddOption("set-default-route", "BOOL", true, "Changes the DefaultRoute flag for the interface");
+    cmd.AddOption("revert", 0, "Revert all DNS settings on the interface to systemd-resovled defaults");
 
     try
     {
         return cmd.RunCommand(simple_basename(argv[0]), argc, argv);
     }
-    catch (const CommandException& excp)
+    catch (const CommandException &excp)
     {
         std::cout << excp.what() << std::endl;
         return 2;

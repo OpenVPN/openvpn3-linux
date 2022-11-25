@@ -35,6 +35,7 @@
 #include "common/lookup.hpp"
 #include "proxy.hpp"
 
+
 /**
  *   Queries the D-Bus daemon for the credentials of a specific D-Bus
  *   bus name.  Each D-Bus client performing an operation on a D-Bus
@@ -43,7 +44,7 @@
  */
 class DBusConnectionCreds : public DBusProxy
 {
-public:
+  public:
     /**
      * Initiate the object for querying the D-Bus daemon.  This is always
      * the org.freedesktop.DBus service and the interface is also the
@@ -52,8 +53,11 @@ public:
      * @param dbuscon  An established D-Bus connection to use for queries
      */
     DBusConnectionCreds(GDBusConnection *dbuscon)
-        : DBusProxy(dbuscon, "org.freedesktop.DBus", "org.freedesktop.DBus",
-                    "/net/freedesktop/DBus", true)
+        : DBusProxy(dbuscon,
+                    "org.freedesktop.DBus",
+                    "org.freedesktop.DBus",
+                    "/net/freedesktop/DBus",
+                    true)
     {
         SetGDBusCallFlags(G_DBUS_CALL_FLAGS_NO_AUTO_START);
         proxy = SetupProxy();
@@ -72,17 +76,17 @@ public:
         try
         {
             GVariant *result = Call("GetConnectionUnixUser",
-                                  g_variant_new("(s)", busname.c_str()));
+                                    g_variant_new("(s)", busname.c_str()));
             uid_t ret;
             g_variant_get(result, "(u)", &ret);
             g_variant_unref(result);
             return ret;
         }
-        catch (DBusException& excp)
+        catch (DBusException &excp)
         {
             THROW_DBUSEXCEPTION("DBusConnectionCreds",
                                 "Failed to retrieve UID for bus name '"
-                                + busname + "': " + excp.GetRawError());
+                                    + busname + "': " + excp.GetRawError());
         }
     }
 
@@ -99,17 +103,17 @@ public:
         try
         {
             GVariant *result = Call("GetConnectionUnixProcessID",
-                                  g_variant_new("(s)", busname.c_str()));
+                                    g_variant_new("(s)", busname.c_str()));
             pid_t ret;
             g_variant_get(result, "(u)", &ret);
             g_variant_unref(result);
             return ret;
         }
-        catch (DBusException& excp)
+        catch (DBusException &excp)
         {
             THROW_DBUSEXCEPTION("DBusConnectionCreds",
                                 "Failed to retrieve process ID for bus name '"
-                                + busname + "': " + excp.GetRawError());
+                                    + busname + "': " + excp.GetRawError());
         }
     }
 
@@ -128,7 +132,7 @@ public:
         try
         {
             GVariant *result = Call("GetNameOwner",
-                                  g_variant_new("(s)", busname.c_str()));
+                                    g_variant_new("(s)", busname.c_str()));
             gchar *res = nullptr;
             g_variant_get(result, "(s)", &res);
             g_variant_unref(result);
@@ -136,14 +140,15 @@ public:
             g_free(res);
             return ret;
         }
-        catch (DBusException& excp)
+        catch (DBusException &excp)
         {
             THROW_DBUSEXCEPTION("DBusConnectionCreds",
                                 "Failed to retrieve unique bus ID for bus name '"
-                                + busname + "': " + excp.GetRawError());
+                                    + busname + "': " + excp.GetRawError());
         }
     }
 };
+
 
 
 /**
@@ -151,7 +156,7 @@ public:
  */
 class DBusCredentialsException : public std::exception
 {
-public:
+  public:
     /**
      *  Initiate the authorization failure exception
      * @param requester    uid_t containing the rejected UID
@@ -161,11 +166,12 @@ public:
      *                     message
      */
     DBusCredentialsException(uid_t requester,
-                             std::string quarkdomain, std::string error)
+                             std::string quarkdomain,
+                             std::string error)
         : quarkdomain(quarkdomain), error(error)
     {
         std::stringstream s;
-        s << error << " (Requester UID "<< requester << ")";
+        s << error << " (Requester UID " << requester << ")";
         error_uid = s.str();
     }
 
@@ -182,20 +188,23 @@ public:
      *                     message
      */
     DBusCredentialsException(std::string requester,
-                             std::string quarkdomain, std::string error)
+                             std::string quarkdomain,
+                             std::string error)
         : quarkdomain(quarkdomain), error(error)
     {
         std::stringstream s;
-        s << error << " (D-Bus Request sender "<< requester << ")";
+        s << error << " (D-Bus Request sender " << requester << ")";
         error_uid = s.str();
     }
 
     virtual ~DBusCredentialsException() noexcept = default;
 
-    virtual const char* what() const noexcept
+
+    virtual const char *what() const noexcept
     {
         return error.c_str();
     }
+
 
     /**
      *  Wrapper for more easily returning an authorization failure
@@ -229,10 +238,11 @@ public:
      */
     void SetDBusError(GError **dbuserror, GQuark domain, gint code)
     {
-        g_set_error (dbuserror, domain, code, "%s", error.c_str());
+        g_set_error(dbuserror, domain, code, "%s", error.c_str());
     }
 
-private:
+
+  private:
     std::string quarkdomain;
     std::string error;
     std::string error_uid;
@@ -248,7 +258,7 @@ private:
  */
 class DBusCredentials : public DBusConnectionCreds
 {
-public:
+  public:
     /**
      *   Initializes the ACL check object
      *
@@ -269,7 +279,7 @@ public:
      *
      * @return GVariant<uint32> object containing the UID
      */
-    GVariant * GetOwner() const
+    GVariant *GetOwner() const
     {
         return g_variant_new_uint32(owner);
     }
@@ -333,6 +343,7 @@ public:
         return acl_list;
     }
 
+
     /**
      *  Adds a user ID (UID) to the access list
      *
@@ -340,7 +351,7 @@ public:
      */
     void GrantAccess(uid_t uid)
     {
-        for (auto& acl_uid : acl_list)
+        for (auto &acl_uid : acl_list)
         {
             if (acl_uid == uid)
             {
@@ -361,7 +372,7 @@ public:
      */
     void RevokeAccess(uid_t uid)
     {
-        for (auto& acl_uid : acl_list)
+        for (auto &acl_uid : acl_list)
         {
             if (acl_uid == uid)
             {
@@ -410,7 +421,7 @@ public:
      */
     void CheckACL_allowRoot(const std::string sender, bool allow_mngr = false) const
     {
-        if ( 0 == GetUID(sender) )
+        if (0 == GetUID(sender))
         {
             // Allow root access
             return;
@@ -440,7 +451,7 @@ public:
     }
 
 
-private:
+  private:
     uid_t owner;
     bool acl_public;
     std::vector<uid_t> acl_list;
@@ -466,7 +477,8 @@ private:
      *                    of ACL?
      */
     void check_acl(const std::string sender,
-                   bool owner_only, bool allow_mngr) const
+                   bool owner_only,
+                   bool allow_mngr) const
     {
         if (acl_public && !owner_only)
         {
@@ -495,11 +507,10 @@ private:
             {
                 throw DBusCredentialsException(sender_uid,
                                                "net.openvpn.v3.error.acl.denied",
-                                               "Owner access denied"
-                                               );
+                                               "Owner access denied");
             }
 
-            for (auto& acl_uid : acl_list)
+            for (auto &acl_uid : acl_list)
             {
                 if (acl_uid == sender_uid)
                 {
@@ -510,21 +521,21 @@ private:
                                            "net.openvpn.v3.error.acl.denied",
                                            "Access denied");
         }
-        catch (const DBusCredentialsException&)
+        catch (const DBusCredentialsException &)
         {
             throw;
         }
-        catch (const LookupException& excp)
+        catch (const LookupException &excp)
         {
             throw DBusCredentialsException(sender_uid,
                                            "net.openvpn.v3.error.acl.lookup",
                                            excp.str());
         }
-        catch (const DBusException& excp)
+        catch (const DBusException &excp)
         {
             throw DBusCredentialsException(sender_uid,
-                    "net.openvpn.v3.error.acl.lookup",
-                    "Could not identify caller");
+                                           "net.openvpn.v3.error.acl.lookup",
+                                           "Could not identify caller");
         }
     }
 };

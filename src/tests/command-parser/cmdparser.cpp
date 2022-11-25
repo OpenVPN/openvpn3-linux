@@ -33,13 +33,15 @@
 
 int cmd_dump_arg_test(ParsedArgs::Ptr args)
 {
-    std::cout << "===> cmd_dump_arg_test()" << std::endl << std::endl;;
+    std::cout << "===> cmd_dump_arg_test()" << std::endl
+              << std::endl;
+    ;
 
-    for (auto const& key : args->GetOptionNames())
+    for (auto const &key : args->GetOptionNames())
     {
         std::cout << "[cmd_test1] Argument: " << key << " = [";
         int i = 0;
-        for (auto const& val : args->GetAllValues(key))
+        for (auto const &val : args->GetAllValues(key))
         {
             if (i > 0)
             {
@@ -53,7 +55,7 @@ int cmd_dump_arg_test(ParsedArgs::Ptr args)
     auto extra = args->GetAllExtraArgs();
     std::cout << "[cmd_test1] Extra argument counts: "
               << extra.size() << std::endl;
-    for (auto const& a : args->GetAllExtraArgs())
+    for (auto const &a : args->GetAllExtraArgs())
     {
         std::cout << "[cmd_test1] Extra: " << a << std::endl;
     }
@@ -63,7 +65,8 @@ int cmd_dump_arg_test(ParsedArgs::Ptr args)
 
 int cmd_multiply(ParsedArgs::Ptr args)
 {
-    std::cout << "===> cmd_multiply() test" << std::endl << std::endl;
+    std::cout << "===> cmd_multiply() test" << std::endl
+              << std::endl;
 
     if (args->Present("bool-test"))
     {
@@ -74,7 +77,7 @@ int cmd_multiply(ParsedArgs::Ptr args)
 
     unsigned long long res = 0;
     std::cout << "Multiplying ... ";
-    for (auto const& v : args->GetAllValues("multiply"))
+    for (auto const &v : args->GetAllValues("multiply"))
     {
         if (0 == res)
         {
@@ -127,44 +130,34 @@ int main(int argc, char **argv)
                   "Simple example and test tool for the command line parser");
 
     SingleCommand::Ptr test1_cmd;
-    test1_cmd.reset(new SingleCommand("test1", "Test command 1",
-                                      cmd_dump_arg_test));
-    test1_cmd->AddOption("set-value", 's',
-                         "key", true, "Set a variable");
+    test1_cmd.reset(new SingleCommand("test1", "Test command 1", cmd_dump_arg_test));
+    test1_cmd->AddOption("set-value", 's', "key", true, "Set a variable");
     test1_cmd->AddOption("test-func1", "Just testing more options");
     test1_cmd->AddOption("test-func2", 'f', "string", false, "Just another test");
-    test1_cmd->AddOption("mandatory-arg", "string", true, "Test mandatory option argument",
-                         arghelper_mandatory_arg);
+    test1_cmd->AddOption("mandatory-arg", "string", true, "Test mandatory option argument", arghelper_mandatory_arg);
     test1_cmd->AddVersionOption();
     cmds.RegisterCommand(test1_cmd);
 
     SingleCommand::Ptr test2_cmd;
-    test2_cmd.reset(new SingleCommand("test2", "Test command two",
-                                      cmd_multiply));
-    test2_cmd->AddOption("multiply", 'm', "values" , true, "Multiply two numbers",
-                         arghelper_random_numbers);
-    test2_cmd->AddOption("bool-test", 'b',
-                         "<true|false>", true, "Test of a boolean option",
-                         arghelp_boolean);
+    test2_cmd.reset(new SingleCommand("test2", "Test command two", cmd_multiply));
+    test2_cmd->AddOption("multiply", 'm', "values", true, "Multiply two numbers", arghelper_random_numbers);
+    test2_cmd->AddOption("bool-test", 'b', "<true|false>", true, "Test of a boolean option", arghelp_boolean);
     cmds.RegisterCommand(test2_cmd);
 
     SingleCommand::Ptr test3_cmd;
-    test3_cmd.reset(new SingleCommand("test3", "Test command 3",
-                                           cmd_dump_arg_test));
-    test3_cmd->AddOption("opt-string", 'o',
-                         "string-1", false, "Optional strings");
+    test3_cmd.reset(new SingleCommand("test3", "Test command 3", cmd_dump_arg_test));
+    test3_cmd->AddOption("opt-string", 'o', "string-1", false, "Optional strings");
     cmds.RegisterCommand(test3_cmd);
 
     try
     {
         return cmds.ProcessCommandLine(argc, argv);
     }
-    catch (CommandException& e)
+    catch (CommandException &e)
     {
         if (e.gotErrorMessage())
         {
             std::cerr << e.getCommand() << ": ** ERROR ** " << e.what() << std::endl;
         }
     }
-
 }

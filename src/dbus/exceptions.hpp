@@ -26,34 +26,31 @@
 
 #include "config.h"
 
+
 /**
  *   DBusException is thrown whenever a D-Bus related error happens
  */
 class DBusException : public std::exception
 {
-public:
-    DBusException(const std::string classn, const std::string& err, const char *filen, const unsigned int linenum, const char *fn) noexcept
-    : errorstr(err)
+  public:
+    DBusException(const std::string classn, const std::string &err, const char *filen, const unsigned int linenum, const char *fn) noexcept
+        : errorstr(err)
     {
         prepare_sourceref(classn, filen, linenum, fn, errorstr);
     }
 
-
-    DBusException(const std::string classn, std::string&& err, const char *filen, const unsigned int linenum, const char *fn) noexcept
-    : errorstr(std::move(err))
+    DBusException(const std::string classn, std::string &&err, const char *filen, const unsigned int linenum, const char *fn) noexcept
+        : errorstr(std::move(err))
     {
         prepare_sourceref(classn, filen, linenum, fn, errorstr);
     }
-
 
     virtual ~DBusException() noexcept = default;
 
-
-    virtual const char* what() const noexcept
+    virtual const char *what() const noexcept
     {
         return sourceref.c_str();
     }
-
 
     /**
      *  Using @what() may return a modified error message, containing
@@ -63,7 +60,7 @@ public:
      * @return  Returns a const char * containing the unmodified
      *          error message.
      */
-    virtual const char* GetRawError() const noexcept
+    virtual const char *GetRawError() const noexcept
     {
         return errorstr.c_str();
     }
@@ -102,89 +99,89 @@ public:
      */
     virtual void SetDBusError(GError **dbuserror, GQuark domain, gint code) const
     {
-        g_set_error (dbuserror, domain, code, "%s", errorstr.c_str());
+        g_set_error(dbuserror, domain, code, "%s", errorstr.c_str());
     }
 
 
-protected:
+  protected:
     std::string sourceref;
     const std::string errorstr;
 
-private:
+
+  private:
     void prepare_sourceref(const std::string classn,
-                           const char *filen, const unsigned int linenum,
-                           const char *fn, const std::string err) noexcept
+                           const char *filen,
+                           const unsigned int linenum,
+                           const char *fn,
+                           const std::string err) noexcept
     {
 #ifdef DEBUG_EXCEPTIONS
         sourceref = "{" + std::string(filen) + ":" + std::to_string(linenum)
-                  + ", " + classn + "::" + std::string(fn) + "()} " + err;
+                    + ", " + classn + "::" + std::string(fn) + "()} " + err;
 #else
         sourceref = err;
 #endif
-
     }
-
 };
 
 #define THROW_DBUSEXCEPTION(classname, fault_data) throw DBusException(classname, fault_data, __FILE__, __LINE__, __FUNCTION__)
+
+
 
 /**
  *  Specian exception classes used by set/get properties calls.
  *  exceptions will be translated into a D-Bus error which the
  *  calling D-Bus client will receive.
  */
-
 class DBusPropertyException : public std::exception
 {
-public:
+  public:
     DBusPropertyException(GQuark domain,
                           gint code,
-                          const std::string& interf,
-                          const std::string& objp,
-                          const std::string& prop,
-                          const std::string& err) noexcept
-    : errordomain(domain),
-        errorcode(code),
-        errorstr(err),
-        detailed("")
+                          const std::string &interf,
+                          const std::string &objp,
+                          const std::string &prop,
+                          const std::string &err) noexcept
+        : errordomain(domain),
+          errorcode(code),
+          errorstr(err),
+          detailed("")
     {
         detailed = std::string("[interface=") + interf
-                    + std::string(", path=") + objp
-                    + std::string(", property=") + prop
-                    + std::string("] ")
-                    + errorstr;
+                   + std::string(", path=") + objp
+                   + std::string(", property=") + prop
+                   + std::string("] ")
+                   + errorstr;
     }
-
 
     DBusPropertyException(GQuark domain,
                           gint code,
-                          const std::string&& interf,
-                          const std::string&& objp,
-                          const std::string&& prop,
-                          const std::string&& err) noexcept
-    : errordomain(domain),
-        errorcode(code),
-        errorstr(err),
-        detailed("")
+                          const std::string &&interf,
+                          const std::string &&objp,
+                          const std::string &&prop,
+                          const std::string &&err) noexcept
+        : errordomain(domain),
+          errorcode(code),
+          errorstr(err),
+          detailed("")
     {
         detailed = std::string("[interface=") + interf
-                    + std::string(", path=") + objp
-                    + std::string(", property=") + prop
-                    + std::string("] ")
-                    + errorstr;
+                   + std::string(", path=") + objp
+                   + std::string(", property=") + prop
+                   + std::string("] ")
+                   + errorstr;
     }
-
 
     virtual ~DBusPropertyException() noexcept = default;
 
 
-    virtual const char* what() const noexcept
+    virtual const char *what() const noexcept
     {
         return detailed.c_str();
     }
 
 
-    virtual const char* GetRawError() const noexcept
+    virtual const char *GetRawError() const noexcept
     {
         return errorstr.c_str();
     }
@@ -192,12 +189,11 @@ public:
 
     void SetDBusError(GError **error)
     {
-        g_set_error(error, errordomain, errorcode,
-                    "%s", errorstr.c_str());
+        g_set_error(error, errordomain, errorcode, "%s", errorstr.c_str());
     }
 
 
-private:
+  private:
     GQuark errordomain;
     guint errorcode;
     std::string errorstr;

@@ -54,18 +54,21 @@
 using namespace openvpn;
 using namespace NetCfg;
 
+
 enum NetCfgDeviceType : unsigned int
 {
-    UNSET = 0,   // Primarily to avoid 0 but still have 0 defined
-    TAP   = 2,
-    TUN   = 3
-            // Expliclity use 3 for tun and 2 for tap as 2==TUN would be very
-            // confusing
+    UNSET = 0, // Primarily to avoid 0 but still have 0 defined
+    TAP = 2,
+    TUN = 3
+    // Expliclity use 3 for tun and 2 for tap as 2==TUN would be very
+    // confusing
 };
 
 
-class IPAddr {
-public:
+
+class IPAddr
+{
+  public:
     IPAddr() = default;
     IPAddr(std::string ipaddr, bool ipv6)
         : address(std::move(ipaddr)), ipv6(ipv6)
@@ -76,23 +79,28 @@ public:
     bool ipv6;
 };
 
+
+
 /**
  * Class representing a IPv4 or IPv6 network
  */
-class Network : public IPAddr {
-public:
+class Network : public IPAddr
+{
+  public:
     Network()
         : IPAddr()
     {
     }
 
-
-    Network(std::string networkAddress, unsigned int prefix,
-            bool ipv6, bool exclude=false) :
-            IPAddr(networkAddress, ipv6),
-            prefix(prefix), exclude(exclude)
+    Network(std::string networkAddress,
+            unsigned int prefix,
+            bool ipv6,
+            bool exclude = false)
+        : IPAddr(networkAddress, ipv6),
+          prefix(prefix), exclude(exclude)
     {
     }
+
 
     std::string str() const
     {
@@ -102,23 +110,29 @@ public:
     bool exclude;
 };
 
-class VPNAddress: public Network {
-public:
+
+
+class VPNAddress : public Network
+{
+  public:
     VPNAddress()
         : Network()
     {
     }
 
-
-    VPNAddress(std::string networkAddress, unsigned int prefix,
-               std::string gateway, bool ipv6):
-               Network(networkAddress, prefix, ipv6, false),
-               gateway(std::move(gateway))
+    VPNAddress(std::string networkAddress,
+               unsigned int prefix,
+               std::string gateway,
+               bool ipv6)
+        : Network(networkAddress, prefix, ipv6, false),
+          gateway(std::move(gateway))
     {
     }
 
     std::string gateway;
 };
+
+
 
 inline void prepare_invocation_fd_results(GDBusMethodInvocation *invoc, GVariant *parameters, int fd)
 {
@@ -138,20 +152,24 @@ inline void prepare_invocation_fd_results(GDBusMethodInvocation *invoc, GVariant
     GLibUtils::unref_fdlist(fdlist);
 }
 
+
+
 class NetCfgDevice : public DBusObject,
                      public DBusCredentials
 {
     friend CoreTunbuilderImpl;
 
-public:
+  public:
     NetCfgDevice(GDBusConnection *dbuscon,
                  std::function<void()> remove_callback,
-                 const uid_t creator, const pid_t creator_pid,
-                 const std::string& objpath,
+                 const uid_t creator,
+                 const pid_t creator_pid,
+                 const std::string &objpath,
                  std::string devname,
                  DNS::SettingsManager::Ptr resolver,
                  NetCfgSubscriptions::Ptr subscriptions,
-                 const unsigned int log_level, LogWriter *logwr,
+                 const unsigned int log_level,
+                 LogWriter *logwr,
                  NetCfgOptions options)
         : DBusObject(objpath),
           DBusCredentials(dbuscon, creator),
@@ -177,7 +195,6 @@ public:
         properties.AddBinding(new PropertyType<unsigned int>(this, "txqueuelen", "readwrite", false, txqueuelen));
         properties.AddBinding(new PropertyType<bool>(this, "reroute_ipv4", "readwrite", false, reroute_ipv4));
         properties.AddBinding(new PropertyType<bool>(this, "reroute_ipv6", "readwrite", false, reroute_ipv6));
-
 
         std::stringstream introspect;
         introspect << "<node name='" << objpath << "'>"
@@ -208,12 +225,12 @@ public:
                    << "        </method>"
 #endif
                    << "        <method name='Establish'/>"
-                                /* Note: Although in non-DCO mode Establish
-                                 * returns a unix_fd, it does not belong in the
-                                 * method signature, since glib/dbus abstraction
-                                 * is paper thin and it is handled almost like
-                                 * in recv/sendmsg as auxiliary data
-                                 */
+                   /* Note: Although in non-DCO mode Establish
+                    * returns a unix_fd, it does not belong in the
+                    * method signature, since glib/dbus abstraction
+                    * is paper thin and it is handled almost like
+                    * in recv/sendmsg as auxiliary data
+                    */
                    << "        <method name='Disable'/>"
                    << "        <method name='Destroy'/>"
                    << "        <property type='u'  name='log_level' access='readwrite'/>"
@@ -246,10 +263,12 @@ public:
         IdleCheck_RefDec();
     }
 
+
     std::string get_device_name() const noexcept
     {
         return device_name;
     }
+
 
     /**
      * Return the pid of the process that created this device
@@ -261,16 +280,16 @@ public:
     }
 
 
-protected:
-    void set_device_name(const std::string& devnam) noexcept
+  protected:
+    void set_device_name(const std::string &devnam) noexcept
     {
         signal.Debug(devnam, "Device name changed from '" + device_name + "'");
         device_name = devnam;
     }
 
 
-private:
-    void addIPAddress(GVariant* params)
+  private:
+    void addIPAddress(GVariant *params)
     {
         GLibUtils::checkParams(__func__, params, "(susb)", 4);
 
@@ -283,11 +302,11 @@ private:
                        + "/" + std::to_string(prefix)
                        + " gw " + gateway + " ipv6: " + (ipv6 ? "yes" : "no"));
 
-        vpnips.emplace_back(VPNAddress(std::string(ipaddr), prefix,
-                                       std::string(gateway), ipv6));
+        vpnips.emplace_back(VPNAddress(std::string(ipaddr), prefix, std::string(gateway), ipv6));
     }
 
-    void setRemoteAddress(GVariant* params)
+
+    void setRemoteAddress(GVariant *params)
     {
 
         GLibUtils::checkParams(__func__, params, "(sb)", 2);
@@ -295,15 +314,16 @@ private:
         std::string ipaddr(g_variant_get_string(g_variant_get_child_value(params, 0), 0));
         bool ipv6 = g_variant_get_boolean(g_variant_get_child_value(params, 1));
 
-        signal.LogInfo(std::string("Setting remote IP address to '") + ipaddr +
-                                    " ipv6: " + (ipv6 ? "yes" : "no"));
+        signal.LogInfo(std::string("Setting remote IP address to ")
+                       + ipaddr + " ipv6: " + (ipv6 ? "yes" : "no"));
         remote = IPAddr(std::string(ipaddr), ipv6);
     }
 
-    void addNetworks(GVariant* params)
+
+    void addNetworks(GVariant *params)
     {
         GLibUtils::checkParams(__func__, params, "(a(subb))", 1);
-        GVariantIter* network_iter;
+        GVariantIter *network_iter;
         g_variant_get(params, "(a(subb))", &network_iter);
 
         GVariant *network = nullptr;
@@ -321,15 +341,13 @@ private:
                            + "' excl: " + (exclude ? "yes" : "no")
                            + " ipv6: " + (ipv6 ? "yes" : "no"));
 
-            networks.emplace_back(Network(std::string(net), prefix,
-                                          ipv6, exclude));
+            networks.emplace_back(Network(std::string(net), prefix, ipv6, exclude));
         }
         g_variant_iter_free(network_iter);
-
     }
 
 
-public:
+  public:
     /**
      *  Callback method which is called each time a D-Bus method call occurs
      *  on this BackendClientObject.
@@ -378,7 +396,7 @@ public:
                 // The variable signature is not completely decided and
                 // must be adopted to what is appropriate
                 addNetworks(params);
-             }
+            }
             else if ("SetRemoteAddress" == method_name)
             {
                 setRemoteAddress(params);
@@ -421,10 +439,8 @@ public:
 
                 dco_device->RegisterObject(conn);
 
-
                 auto path = dco_device->GetObjectPath();
                 retval = g_variant_new("(o)", path.c_str());
-
             }
 #endif
             else if ("Establish" == method_name)
@@ -445,7 +461,7 @@ public:
                         resolver->ApplySettings(&signal);
                     }
                 }
-                catch (const NetCfgException& excp)
+                catch (const NetCfgException &excp)
                 {
                     signal.LogCritical("DNS Resolver settings: "
                                        + std::string(excp.what()));
@@ -456,16 +472,15 @@ public:
                     tunimpl.reset(getCoreBuilderInstance());
                 }
 
-                int fd = -1 ;
+                int fd = -1;
                 try
                 {
                     fd = tunimpl->establish(*this);
                 }
-                catch (const NetCfgException& excp)
+                catch (const NetCfgException &excp)
                 {
                     signal.LogCritical("Failed to setup a TUN interface: "
                                        + std::string(excp.what()));
-
                 }
 
                 try
@@ -483,15 +498,14 @@ public:
                         details << dnsconfig;
                         signal.Debug(device_name,
                                      "Activating DNS/resolver settings: "
-                                     + details.str());
+                                         + details.str());
                         modified = false;
                     }
                 }
-                catch (const NetCfgException& excp)
+                catch (const NetCfgException &excp)
                 {
                     signal.LogCritical("DNS Resolver settings: "
                                        + std::string(excp.what()));
-
                 }
 
 #ifdef ENABLE_OVPNDCO
@@ -509,7 +523,7 @@ public:
 #else  // Without DCO support compiled in, a FD to the tun device is always returned
                 prepare_invocation_fd_results(invoc, nullptr, fd);
                 return;
-#endif  // ENABLE_OVPNDCO
+#endif // ENABLE_OVPNDCO
             }
             else if ("Disable" == method_name)
             {
@@ -520,7 +534,7 @@ public:
 
                     signal.Debug(device_name,
                                  "Disabling DNS/resolver settings: "
-                                 + details.str());
+                                     + details.str());
 
                     dnsconfig->Disable();
                     resolver->ApplySettings(&signal);
@@ -547,7 +561,7 @@ public:
 
                 std::string sender_name = lookup_username(GetUID(sender));
                 signal.LogVerb1("Device '" + device_name + "' was removed by "
-                               + sender_name);
+                                + sender_name);
 
                 teardown(conn);
                 g_dbus_method_invocation_return_value(invoc, nullptr);
@@ -561,15 +575,15 @@ public:
             g_dbus_method_invocation_return_value(invoc, retval);
             return;
         }
-        catch (DBusCredentialsException& excp)
+        catch (DBusCredentialsException &excp)
         {
             signal.LogCritical(excp.what());
             excp.SetDBusError(invoc);
         }
-        catch (const std::exception& excp)
+        catch (const std::exception &excp)
         {
             std::string errmsg = "Failed executing D-Bus call '"
-                                  + method_name + "': " + excp.what();
+                                 + method_name + "': " + excp.what();
             GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.netcfg.error.generic",
                                                           errmsg.c_str());
             g_dbus_method_invocation_return_gerror(invoc, err);
@@ -594,7 +608,7 @@ public:
 
             signal.Debug(device_name,
                          "Removing DNS/resolver settings: "
-                         + details.str());
+                             + details.str());
             dnsconfig->PrepareRemoval();
             resolver->ApplySettings(&signal);
             modified = false;
@@ -616,6 +630,7 @@ public:
         RemoveObject(conn);
     }
 
+
     /**
      *   Callback which is used each time a NetCfgServiceObject D-Bus property
      *   is being read.
@@ -632,12 +647,12 @@ public:
      *          returned and the error must be returned via a GError
      *          object.
      */
-    GVariant * callback_get_property(GDBusConnection *conn,
-                                     const std::string sender,
-                                     const std::string obj_path,
-                                     const std::string intf_name,
-                                     const std::string property_name,
-                                     GError **error)
+    GVariant *callback_get_property(GDBusConnection *conn,
+                                    const std::string sender,
+                                    const std::string obj_path,
+                                    const std::string intf_name,
+                                    const std::string property_name,
+                                    GError **error)
     {
         try
         {
@@ -696,26 +711,37 @@ public:
                 return properties.GetValue(property_name);
             }
         }
-        catch (DBusPropertyException&)
+        catch (DBusPropertyException &)
         {
             throw;
         }
-        catch (const NetCfgException & excp)
+        catch (const NetCfgException &excp)
         {
-            throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                        intf_name, obj_path, property_name,
+            throw DBusPropertyException(G_IO_ERROR,
+                                        G_IO_ERROR_FAILED,
+                                        intf_name,
+                                        obj_path,
+                                        property_name,
                                         excp.what());
         }
-        catch (const DBusException& excp)
+        catch (const DBusException &excp)
         {
-            throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                        intf_name, obj_path, property_name,
+            throw DBusPropertyException(G_IO_ERROR,
+                                        G_IO_ERROR_FAILED,
+                                        intf_name,
+                                        obj_path,
+                                        property_name,
                                         excp.what());
         }
-        throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                    obj_path, intf_name, property_name,
+        throw DBusPropertyException(G_IO_ERROR,
+                                    G_IO_ERROR_FAILED,
+                                    obj_path,
+                                    intf_name,
+                                    property_name,
                                     "Invalid property");
-        g_set_error(error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+        g_set_error(error,
+                    G_IO_ERROR,
+                    G_IO_ERROR_NOT_SUPPORTED,
                     "Unknown property");
         return nullptr;
     }
@@ -737,13 +763,13 @@ public:
      *         confirmation on success.  On failures, an exception is thrown.
      *
      */
-    GVariantBuilder * callback_set_property(GDBusConnection *conn,
-                                            const std::string sender,
-                                            const std::string obj_path,
-                                            const std::string intf_name,
-                                            const std::string property_name,
-                                            GVariant *value,
-                                            GError **error)
+    GVariantBuilder *callback_set_property(GDBusConnection *conn,
+                                           const std::string sender,
+                                           const std::string obj_path,
+                                           const std::string intf_name,
+                                           const std::string property_name,
+                                           GVariant *value,
+                                           GError **error)
     {
         try
         {
@@ -757,15 +783,16 @@ public:
                 {
                     throw DBusPropertyException(G_IO_ERROR,
                                                 G_IO_ERROR_INVALID_DATA,
-                                                obj_path, intf_name,
+                                                obj_path,
+                                                intf_name,
                                                 property_name,
                                                 "Invalid log level");
                 }
                 signal.SetLogLevel(log_level);
                 return build_set_property_response(property_name,
-                                                   (guint32) log_level);
+                                                   (guint32)log_level);
             }
-            else if("dns_scope" == property_name)
+            else if ("dns_scope" == property_name)
             {
                 if (!resolver || !dnsconfig)
                 {
@@ -774,17 +801,17 @@ public:
                 try
                 {
                     std::string scope = dnsconfig->SetDNSScope(value);
-                    signal.Debug(device_name, "Changed DNS resolver scope to '"
-                                + scope + "'");
+                    signal.Debug(device_name, "Changed DNS resolver scope to '" + scope + "'");
                     return build_set_property_response(property_name, scope);
                 }
-                catch (const NetCfgException& excp)
+                catch (const NetCfgException &excp)
                 {
                     signal.LogError("Failed changing DNS scope: "
                                     + std::string(excp.what()));
                     throw DBusPropertyException(G_IO_ERROR,
                                                 G_IO_ERROR_INVALID_DATA,
-                                                obj_path, intf_name,
+                                                obj_path,
+                                                intf_name,
                                                 property_name,
                                                 "Invalid DNS scope data");
                 }
@@ -794,30 +821,39 @@ public:
                 return properties.SetValue(property_name, value);
             }
         }
-        catch (const NetCfgException& excp)
+        catch (const NetCfgException &excp)
         {
             signal.LogError(excp.what());
-            throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                        obj_path, intf_name, property_name,
+            throw DBusPropertyException(G_IO_ERROR,
+                                        G_IO_ERROR_FAILED,
+                                        obj_path,
+                                        intf_name,
+                                        property_name,
                                         excp.what());
         }
-        catch (DBusPropertyException&)
+        catch (DBusPropertyException &)
         {
             throw;
         }
-        catch (DBusException& excp)
+        catch (DBusException &excp)
         {
-            throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                        obj_path, intf_name, property_name,
+            throw DBusPropertyException(G_IO_ERROR,
+                                        G_IO_ERROR_FAILED,
+                                        obj_path,
+                                        intf_name,
+                                        property_name,
                                         excp.what());
         }
-        throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                    obj_path, intf_name, property_name,
+        throw DBusPropertyException(G_IO_ERROR,
+                                    G_IO_ERROR_FAILED,
+                                    obj_path,
+                                    intf_name,
+                                    property_name,
                                     "Invalid property");
     }
 
 
-private:
+  private:
     std::function<void()> remove_callback;
 
     // Properties
@@ -833,7 +869,6 @@ private:
     bool reroute_ipv4 = false;
     bool reroute_ipv6 = false;
 
-
     RCPtr<CoreTunbuilder> tunimpl;
     NetCfgSignals signal;
     DNS::SettingsManager::Ptr resolver;
@@ -848,6 +883,7 @@ private:
     NetCfgDCO::Ptr dco_device = nullptr;
 #endif
 
+
     /**
      *  Validate that the sender is allowed to do change the configuration
      *  for this device.  If not, a DBusCredentialsException is thrown.
@@ -856,7 +892,7 @@ private:
      */
     void validate_sender(std::string sender)
     {
-        return;  // FIXME: Currently disabled
+        return; // FIXME: Currently disabled
 
         // Only the session manager is susposed to talk to the
         // the backend VPN client service
@@ -864,9 +900,7 @@ private:
         {
             throw DBusCredentialsException(GetUID(sender),
                                            "net.openvpn.v3.error.acl.denied",
-                                           "You are not a session manager"
-                                           );
+                                           "You are not a session manager");
         }
     }
 };
-

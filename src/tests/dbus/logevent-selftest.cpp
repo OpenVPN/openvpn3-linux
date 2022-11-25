@@ -31,7 +31,7 @@
 #include "log/logevent.hpp"
 
 
-bool test_empty(const LogEvent& ev, const bool expect)
+bool test_empty(const LogEvent &ev, const bool expect)
 {
     bool ret = false;
 
@@ -52,8 +52,8 @@ bool test_empty(const LogEvent& ev, const bool expect)
          && LogCategory::UNDEFINED == ev.category
          && ev.message.empty());
     std::cout << "      test_empty():  Element check:"
-              << " (" << std::to_string((unsigned) ev.group)
-              << ", " << std::to_string((unsigned) ev.category)
+              << " (" << std::to_string((unsigned)ev.group)
+              << ", " << std::to_string((unsigned)ev.category)
               << ", '" << ev.message << "') = " << r << " ... ";
     if (expect != r)
     {
@@ -83,7 +83,7 @@ int test1()
 
     std::cout << "-- Testing just initialized object - init with values (1)" << std::endl;
     LogEvent populated1(LogGroup::LOGGER, LogCategory::DEBUG, "Test LogEvent");
-    if (test_empty(populated1, false))  // This should fail
+    if (test_empty(populated1, false)) // This should fail
     {
         ++ret;
     }
@@ -96,8 +96,7 @@ int test1()
     }
 
     std::cout << "-- Testing initialization with session token" << std::endl;
-    LogEvent logev(LogGroup::LOGGER, LogCategory::INFO,
-                   "session_token_value", "Log message");
+    LogEvent logev(LogGroup::LOGGER, LogCategory::INFO, "session_token_value", "Log message");
     if (test_empty(logev, false))
     {
         ++ret;
@@ -122,14 +121,15 @@ int test2_without_session_token()
     {
         std::cout << "-- Testing parsing GVariantDict - incorrect data ... ";
         data = g_variant_new("(uuis)",
-                                       (guint) StatusMajor::CONFIG,
-                                       (guint) StatusMinor::CFG_OK,
-                                       1234, "Invalid data");
+                             (guint)StatusMajor::CONFIG,
+                             (guint)StatusMinor::CFG_OK,
+                             1234,
+                             "Invalid data");
         LogEvent parsed(data);
         std::cout << "FAILED - should not be parsed successfully." << std::endl;
         ++ret;
     }
-    catch (LogException& excp)
+    catch (LogException &excp)
     {
         std::string err(excp.what());
         if (err.find("LogEvent: Invalid LogEvent data type") == std::string::npos)
@@ -151,13 +151,10 @@ int test2_without_session_token()
     {
         std::cout << "-- Testing parsing GVariantDict - correct dict ... ";
         GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
-        g_variant_builder_add (b, "{sv}", "log_group",
-                               g_variant_new_uint32((guint) LogGroup::LOGGER));
-        g_variant_builder_add (b, "{sv}", "log_category",
-                               g_variant_new_uint32((guint) LogCategory::DEBUG));
-        g_variant_builder_add (b, "{sv}", "log_message",
-                               g_variant_new_string("Test log message"));
-        GVariant *data= g_variant_builder_end(b);
+        g_variant_builder_add(b, "{sv}", "log_group", g_variant_new_uint32((guint)LogGroup::LOGGER));
+        g_variant_builder_add(b, "{sv}", "log_category", g_variant_new_uint32((guint)LogCategory::DEBUG));
+        g_variant_builder_add(b, "{sv}", "log_message", g_variant_new_string("Test log message"));
+        GVariant *data = g_variant_builder_end(b);
         g_variant_builder_unref(b);
         LogEvent parsed(data);
 
@@ -175,7 +172,7 @@ int test2_without_session_token()
         }
         g_variant_unref(data);
     }
-    catch (LogException& excp)
+    catch (LogException &excp)
     {
         std::cout << "FAILED: Exception thrown: " << excp.what() << std::endl;
         ++ret;
@@ -185,8 +182,8 @@ int test2_without_session_token()
     {
         std::cout << "-- Testing parsing GVariant Tuple (uus) ... ";
         GVariant *data = g_variant_new("(uus)",
-                                       (guint) LogGroup::BACKENDPROC,
-                                       (guint) LogCategory::INFO ,
+                                       (guint)LogGroup::BACKENDPROC,
+                                       (guint)LogCategory::INFO,
                                        "Parse testing again");
         LogEvent parsed(data);
         g_variant_unref(data);
@@ -203,7 +200,7 @@ int test2_without_session_token()
             std::cout << "PASSED" << std::endl;
         }
     }
-    catch (LogException& excp)
+    catch (LogException &excp)
     {
         std::string err(excp.what());
         if (err.find("LogEvent: Invalid LogEvent data type") == std::string::npos)
@@ -219,16 +216,15 @@ int test2_without_session_token()
 
 
     std::cout << "-- Testing .GetGVariantTuple() ... ";
-    LogEvent reverse(LogGroup::BACKENDSTART, LogCategory::WARN,
-                        "Yet another test");
+    LogEvent reverse(LogGroup::BACKENDSTART, LogCategory::WARN, "Yet another test");
     GVariant *revparse = reverse.GetGVariantTuple();
     guint grp = 0;
     guint ctg = 0;
     gchar *msg = nullptr;
     g_variant_get(revparse, "(uus)", &grp, &ctg, &msg);
 
-    if ((guint) reverse.group != grp
-        || (guint) reverse.category != ctg
+    if ((guint)reverse.group != grp
+        || (guint)reverse.category != ctg
         || g_strcmp0(reverse.message.c_str(), msg) != 0)
     {
         std::cout << "FAILED" << std::endl;
@@ -249,8 +245,7 @@ int test2_without_session_token()
     try
     {
         std::cout << "-- Testing .GetGVariantDict() ... ";
-        LogEvent dicttest(LogGroup::CLIENT, LogCategory::ERROR,
-                             "Moar testing is needed");
+        LogEvent dicttest(LogGroup::CLIENT, LogCategory::ERROR, "Moar testing is needed");
         GVariant *revparse = dicttest.GetGVariantDict();
 
         // Reuse the parser in LogEvent.  As that has already passed the
@@ -259,7 +254,7 @@ int test2_without_session_token()
 
         if (dicttest.group != cmp.group
             || dicttest.category != cmp.category
-            || 0!= dicttest.message.compare(cmp.message))
+            || 0 != dicttest.message.compare(cmp.message))
         {
             std::cout << "FAILED" << std::endl;
             std::cout << "     Input: " << dicttest << std::endl;
@@ -272,7 +267,7 @@ int test2_without_session_token()
         }
         g_variant_unref(revparse);
     }
-    catch (LogException& excp)
+    catch (LogException &excp)
     {
         std::cout << "FAILED: Exception thrown: " << excp.what() << std::endl;
         ++ret;
@@ -289,15 +284,11 @@ int test2_with_session_token()
     {
         std::cout << "-- Testing parsing GVariantDict - with session token ... ";
         GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
-        g_variant_builder_add (b, "{sv}", "log_group",
-                               g_variant_new_uint32((guint) LogGroup::LOGGER));
-        g_variant_builder_add (b, "{sv}", "log_category",
-                               g_variant_new_uint32((guint) LogCategory::DEBUG));
-        g_variant_builder_add (b, "{sv}", "log_session_token",
-                               g_variant_new_string("session_token_value"));
-        g_variant_builder_add (b, "{sv}", "log_message",
-                               g_variant_new_string("Test log message"));
-        GVariant *data= g_variant_builder_end(b);
+        g_variant_builder_add(b, "{sv}", "log_group", g_variant_new_uint32((guint)LogGroup::LOGGER));
+        g_variant_builder_add(b, "{sv}", "log_category", g_variant_new_uint32((guint)LogCategory::DEBUG));
+        g_variant_builder_add(b, "{sv}", "log_session_token", g_variant_new_string("session_token_value"));
+        g_variant_builder_add(b, "{sv}", "log_message", g_variant_new_string("Test log message"));
+        GVariant *data = g_variant_builder_end(b);
         g_variant_builder_unref(b);
         LogEvent parsed(data);
 
@@ -316,7 +307,7 @@ int test2_with_session_token()
         }
         g_variant_unref(data);
     }
-    catch (LogException& excp)
+    catch (LogException &excp)
     {
         std::cout << "FAILED: Exception thrown: " << excp.what() << std::endl;
         ++ret;
@@ -326,8 +317,8 @@ int test2_with_session_token()
     {
         std::cout << "-- Testing parsing GVariant Tuple with session token (uuss) ... ";
         GVariant *data = g_variant_new("(uuss)",
-                                       (guint) LogGroup::BACKENDPROC,
-                                       (guint) LogCategory::INFO,
+                                       (guint)LogGroup::BACKENDPROC,
+                                       (guint)LogCategory::INFO,
                                        "session_token_val",
                                        "Parse testing again");
         LogEvent parsed(data);
@@ -346,7 +337,7 @@ int test2_with_session_token()
             std::cout << "PASSED" << std::endl;
         }
     }
-    catch (LogException& excp)
+    catch (LogException &excp)
     {
         std::string err(excp.what());
         if (err.find("LogEvent: Invalid LogEvent data type") == std::string::npos)
@@ -362,8 +353,7 @@ int test2_with_session_token()
 
 
     std::cout << "-- Testing .GetGVariantTuple() with session token ... ";
-    LogEvent reverse(LogGroup::BACKENDSTART, LogCategory::WARN,
-                     "YetAnotherSessionToken", "Yet another test");
+    LogEvent reverse(LogGroup::BACKENDSTART, LogCategory::WARN, "YetAnotherSessionToken", "Yet another test");
     GVariant *revparse = reverse.GetGVariantTuple();
     guint grp = 0;
     guint ctg = 0;
@@ -371,8 +361,8 @@ int test2_with_session_token()
     gchar *msg = nullptr;
     g_variant_get(revparse, "(uuss)", &grp, &ctg, &sesstok, &msg);
 
-    if ((guint) reverse.group != grp
-        || (guint) reverse.category != ctg
+    if ((guint)reverse.group != grp
+        || (guint)reverse.category != ctg
         || g_strcmp0(reverse.session_token.c_str(), sesstok) != 0
         || g_strcmp0(reverse.message.c_str(), msg) != 0)
     {
@@ -395,8 +385,7 @@ int test2_with_session_token()
     try
     {
         std::cout << "-- Testing .GetGVariantDict() with session_token ... ";
-        LogEvent dicttest(LogGroup::CLIENT, LogCategory::ERROR,
-                          "MoarSessionTokens", "Moar testing is needed");
+        LogEvent dicttest(LogGroup::CLIENT, LogCategory::ERROR, "MoarSessionTokens", "Moar testing is needed");
         GVariant *revparse = dicttest.GetGVariantDict();
 
         // Reuse the parser in LogEvent.  As that has already passed the
@@ -419,7 +408,7 @@ int test2_with_session_token()
         }
         g_variant_unref(revparse);
     }
-    catch (LogException& excp)
+    catch (LogException &excp)
     {
         std::cout << "FAILED: Exception thrown: " << excp.what() << std::endl;
         ++ret;
@@ -429,11 +418,11 @@ int test2_with_session_token()
 }
 
 
-bool test_compare(const LogEvent& lhs, const LogEvent& rhs, const bool expect)
+bool test_compare(const LogEvent &lhs, const LogEvent &rhs, const bool expect)
 {
     bool ret = false;
-    std::cout << "-- Compare check: {" << lhs << "} == {" << rhs<< "} returns "
-               << (expect ? "true": "false") << " ... ";
+    std::cout << "-- Compare check: {" << lhs << "} == {" << rhs << "} returns "
+              << (expect ? "true" : "false") << " ... ";
     if ((lhs == rhs) == expect)
     {
         std::cout << "PASSED" << std::endl;
@@ -446,7 +435,7 @@ bool test_compare(const LogEvent& lhs, const LogEvent& rhs, const bool expect)
     }
 
     std::cout << "-- Compare check: {" << lhs << "} != {" << rhs << "} returns "
-               << (expect ? "false": "true") << " ... ";
+              << (expect ? "false" : "true") << " ... ";
     if ((lhs != rhs) != expect)
     {
         std::cout << "PASSED" << std::endl;
@@ -460,6 +449,7 @@ bool test_compare(const LogEvent& lhs, const LogEvent& rhs, const bool expect)
     return ret;
 }
 
+
 int test3()
 {
     int ret = 0;
@@ -472,7 +462,7 @@ int test3()
     }
 
     LogEvent ev2(LogGroup::BACKENDSTART, LogCategory::DEBUG, "var1");
-    LogEvent cmp2(LogGroup::BACKENDPROC,  LogCategory::DEBUG, "var1");
+    LogEvent cmp2(LogGroup::BACKENDPROC, LogCategory::DEBUG, "var1");
     if (!test_compare(ev2, cmp2, false))
     {
         ++ret;
@@ -495,14 +485,14 @@ int test3()
     return ret;
 }
 
+
 int test4()
 {
     int ret = 0;
 
     std::cout << "-- Testing string stream: LogEvent(LogGroup::LOGGER, "
               << "LogCategory::DEBUG, \"Debug message\") ... ";
-    LogEvent logev(LogGroup::LOGGER, LogCategory::DEBUG,
-                       "Debug message");
+    LogEvent logev(LogGroup::LOGGER, LogCategory::DEBUG, "Debug message");
     std::stringstream chk;
     chk << logev;
     std::string expect("Logger DEBUG: Debug message");
@@ -518,6 +508,8 @@ int test4()
 
     return ret;
 }
+
+
 
 int main(int argc, char **argv)
 {
@@ -555,8 +547,10 @@ int main(int argc, char **argv)
     }
 
 
-    std::cout << std::endl << std::endl
+    std::cout << std::endl
+              << std::endl
               << ">> OVERAL TEST RESULT: " << (failed ? "FAILED" : "PASSED")
-              << std::endl << std::endl;
-    return (failed ? 2: 0);
+              << std::endl
+              << std::endl;
+    return (failed ? 2 : 0);
 }

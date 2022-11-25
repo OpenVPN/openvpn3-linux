@@ -28,6 +28,7 @@
 #include "config.h"
 #include "log/log-helpers.hpp"
 
+
 int main(int argc, char **argv)
 {
     for (int group = 0; group <= LogGroupCount; group++)
@@ -35,10 +36,11 @@ int main(int argc, char **argv)
         for (int catg = 0; catg <= 9; catg++)
         {
             std::cout << "[" << group << ", " << catg << "] ";
-            try {
-                std::cout << LogPrefix((LogGroup) group, (LogCategory(catg)));
+            try
+            {
+                std::cout << LogPrefix((LogGroup)group, (LogCategory(catg)));
             }
-            catch (LogException& e)
+            catch (LogException &e)
             {
                 std::cout << "Failed: " << e.what();
             }

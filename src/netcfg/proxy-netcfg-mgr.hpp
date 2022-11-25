@@ -40,42 +40,42 @@
 
 using namespace openvpn;
 
-namespace NetCfgProxy
+
+namespace NetCfgProxy {
+class Device;
+
+class Manager : public DBusProxy
 {
-    class Device;
+  public:
+    using Ptr = std::shared_ptr<Manager>;
 
-    class Manager : public DBusProxy
-    {
-    public:
-        using Ptr = std::shared_ptr<Manager>;
+    /**
+     *  Initialize the Network Configuration proxy for the
+     *  main management interface
+     *
+     * @param dbuscon  D-Bus connection to use for D-Bus calls
+     */
+    Manager(GDBusConnection *dbuscon);
 
-        /**
-         *  Initialize the Network Configuration proxy for the
-         *  main management interface
-         *
-         * @param dbuscon  D-Bus connection to use for D-Bus calls
-         */
-        Manager(GDBusConnection *dbuscon);
+    const std::string GetConfigFile();
 
-        const std::string GetConfigFile();
-
-        const std::string CreateVirtualInterface(const std::string& device_name);
+    const std::string CreateVirtualInterface(const std::string &device_name);
 
 #ifdef OPENVPN3_NETCFGPRX_DEVICE
-        Device* getVirtualInterface(const std::string& path)
-        {
-            return new Device(GetConnection(), path);
-        }
+    Device *getVirtualInterface(const std::string &path)
+    {
+        return new Device(GetConnection(), path);
+    }
 #endif
 
-        std::vector<std::string> FetchInterfaceList();
-        bool ProtectSocket(int socket, const std::string& remote, bool ipv6, const std::string& devpath);
-        bool DcoAvailable();
-        void Cleanup();
+    std::vector<std::string> FetchInterfaceList();
+    bool ProtectSocket(int socket, const std::string &remote, bool ipv6, const std::string &devpath);
+    bool DcoAvailable();
+    void Cleanup();
 
-        void NotificationSubscribe(NetCfgChangeType filter_flags);
-        void NotificationUnsubscribe(const std::string& subscriber);
-        void NotificationUnsubscribe();
-        NetCfgSubscriptions::NetCfgNotifSubscriptions NotificationSubscriberList();
-    };
+    void NotificationSubscribe(NetCfgChangeType filter_flags);
+    void NotificationUnsubscribe(const std::string &subscriber);
+    void NotificationUnsubscribe();
+    NetCfgSubscriptions::NetCfgNotifSubscriptions NotificationSubscriberList();
+};
 } // namespace NetCfgProxy

@@ -17,8 +17,7 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#ifndef OPENVPN3_DBUS_HPP
-#define OPENVPN3_DBUS_HPP
+#pragma once
 
 #include <gio/gio.h>
 
@@ -29,5 +28,3 @@
 #include "dbus/proxy.hpp"
 #include "dbus/signals.hpp"
 #include "dbus/processwatch.hpp"
-
-#endif // OPENVPN3_DBUS_HPP

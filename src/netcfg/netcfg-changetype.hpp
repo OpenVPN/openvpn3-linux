@@ -24,13 +24,15 @@
  *         supports
  */
 
-
 #pragma once
 
 #include <string>
 #include <map>
 
-enum class NetCfgChangeType : std::uint16_t {
+
+enum class NetCfgChangeType : std::uint16_t
+{
+    // clang-format off
     UNSET              = 0,         //      0
     DEVICE_ADDED       = 1,         //      1
     DEVICE_REMOVED     = 1 <<  1,   //      2
@@ -43,8 +45,9 @@ enum class NetCfgChangeType : std::uint16_t {
     DNS_SERVER_REMOVED = 1 <<  8,   //    256
     DNS_SEARCH_ADDED   = 1 <<  9,   //    512
     DNS_SEARCH_REMOVED = 1 << 10,   //   1024
+    // clang-format on
 };
 
 typedef std::map<std::string, std::string> NetCfgChangeDetails;
 
-NetCfgChangeType operator | (const NetCfgChangeType& a, const NetCfgChangeType& b);
+NetCfgChangeType operator|(const NetCfgChangeType &a, const NetCfgChangeType &b);

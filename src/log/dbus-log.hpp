@@ -37,7 +37,7 @@
  */
 class LogFilter
 {
-public:
+  public:
     /**
      *  Prepares the log filter
      *
@@ -45,6 +45,7 @@ public:
      */
     LogFilter(unsigned int log_level_val) noexcept;
     ~LogFilter() = default;
+
 
     /**
      *  Sets the log level.  This filters which log messages will
@@ -62,6 +63,7 @@ public:
      */
     void SetLogLevel(unsigned int loglev);
 
+
     /**
      * Retrieves the log level in use
      *
@@ -77,10 +79,10 @@ public:
      *
      * @param path  std::string containing the D-Bus object path to add
      */
-    void AddPathFilter(const std::string& path);
+    void AddPathFilter(const std::string &path);
 
 
-protected:
+  protected:
     /**
      * Checks if the LogCategory matches a log level where
      * logging should happen
@@ -91,7 +93,7 @@ protected:
      * @return  Returns true if this LogEvent should be logged, based
      *          on the log category in the LogEvent object
      */
-    bool LogFilterAllow(const LogEvent& logev) noexcept;
+    bool LogFilterAllow(const LogEvent &logev) noexcept;
 
 
     /**
@@ -101,34 +103,37 @@ protected:
      * @return Returns true if the path is allowed. If no paths has been added,
      *         it will always return true.
      */
-    bool AllowPath(const std::string& path) noexcept;
+    bool AllowPath(const std::string &path) noexcept;
 
 
-private:
+  private:
     unsigned int log_level;
     std::vector<std::string> filter_paths;
 };
 
 
+
 class LogSender : public DBusSignalProducer,
                   public LogFilter
 {
-public:
-    LogSender(GDBusConnection * dbuscon, const LogGroup lgroup,
-              std::string interf, std::string objpath,
+  public:
+    LogSender(GDBusConnection *dbuscon,
+              const LogGroup lgroup,
+              std::string interf,
+              std::string objpath,
               LogWriter *lgwr = nullptr);
     virtual ~LogSender() = default;
+
 
     virtual const std::string GetLogIntrospection();
     const std::string GetStatusChangeIntrospection();
 
-    void StatusChange(const StatusEvent& statusev);
+    void StatusChange(const StatusEvent &statusev);
 
-    void ProxyLog(const LogEvent& logev, const std::string& path = "");
-    void ProxyStatusChange(const StatusEvent& status, const std::string& path);
+    void ProxyLog(const LogEvent &logev, const std::string &path = "");
+    void ProxyStatusChange(const StatusEvent &status, const std::string &path);
 
-    virtual void Log(const LogEvent& logev, bool duplicate_check = false,
-                     const std::string& target ="");
+    virtual void Log(const LogEvent &logev, bool duplicate_check = false, const std::string &target = "");
     virtual void Debug(std::string msg, bool duplicate_check = false);
     virtual void LogVerb2(std::string msg, bool duplicate_check = false);
     virtual void LogVerb1(std::string msg, bool duplicate_check = false);
@@ -139,31 +144,38 @@ public:
     virtual void LogFATAL(std::string msg);
     LogEvent GetLastLogEvent() const;
 
-    LogWriter * GetLogWriter();
+    LogWriter *GetLogWriter();
 
-protected:
+
+  protected:
     LogWriter *logwr = nullptr;
     LogGroup log_group;
 
-private:
+
+  private:
     LogEvent last_logevent;
 };
+
 
 
 class LogConsumer : public DBusSignalSubscription,
                     public LogFilter
 {
-public:
+  public:
     LogConsumer(GDBusConnection *dbuscon,
                 std::string interf,
                 std::string objpath,
                 std::string busn = "");
     ~LogConsumer() = default;
 
+
+    // clang-format off
+    // bug in clang-format causes "= 0" to be wrapped
     virtual void ConsumeLogEvent(const std::string sender,
                                  const std::string interface_name,
                                  const std::string obj_path,
-                                 const LogEvent& logev) = 0;
+                                 const LogEvent &logev) = 0;
+    // clang-format on
 
 
     virtual void ProcessSignal(const std::string sender_name,
@@ -174,13 +186,16 @@ public:
     {
     }
 
+
     void callback_signal_handler(GDBusConnection *connection,
                                  const std::string sender_name,
                                  const std::string obj_path,
                                  const std::string interface_name,
                                  const std::string signal_name,
                                  GVariant *parameters);
-protected:
+
+
+  protected:
     /**
      *  Signals received with the signal name "Log" are processed by
      *  this method.
@@ -207,6 +222,7 @@ protected:
 };
 
 
+
 enum class LogProxyExceptionType : std::uint8_t
 {
     IGNORE,
@@ -216,16 +232,17 @@ enum class LogProxyExceptionType : std::uint8_t
 
 class LogConsumerProxyException : public std::exception
 {
-public:
+  public:
     LogConsumerProxyException(LogProxyExceptionType t) noexcept;
     LogConsumerProxyException(LogProxyExceptionType t,
-                              const std::string& message_str) noexcept;
+                              const std::string &message_str) noexcept;
     ~LogConsumerProxyException() = default;
 
-    const char* what() const noexcept;
+    const char *what() const noexcept;
     LogProxyExceptionType GetExceptionType() const noexcept;
 
-private:
+
+  private:
     LogProxyExceptionType type;
     std::string message;
 };
@@ -234,28 +251,36 @@ private:
 
 class LogConsumerProxy : public LogConsumer, public LogSender
 {
-public:
+  public:
     LogConsumerProxy(GDBusConnection *dbuscon,
-                     std::string src_interf, std::string src_objpath,
-                     std::string dst_interf, std::string dst_objpath);
+                     std::string src_interf,
+                     std::string src_objpath,
+                     std::string dst_interf,
+                     std::string dst_objpath);
     ~LogConsumerProxy() = default;
+
 
     void ConsumeLogEvent(const std::string sender,
                          const std::string interface,
                          const std::string object_path,
-                         const LogEvent& logev)
+                         const LogEvent &logev)
     {
         // This is a dummy method and is not used by LogConsumerProxy.
         // The InterceptLogEvent() method is used instead, which allows
         // the LogEvent to be modified on-the-fly _before_ being proxied.
     }
 
+
+    // clang-format off
+    // bug in clang-format causes "= 0" to be wrapped
     virtual LogEvent InterceptLogEvent(const std::string sender,
                                        const std::string interface,
                                        const std::string object_path,
-                                       const LogEvent& logev) = 0;
+                                       const LogEvent &logev) = 0;
+    // clang-format on
 
-protected:
+
+  protected:
     virtual void process_log_event(const std::string sender,
                                    const std::string interface,
                                    const std::string object_path,

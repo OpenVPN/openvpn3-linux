@@ -34,14 +34,17 @@
 #include "netcfg-changetype.hpp"
 
 
-struct NetCfgChangeEvent {
-    NetCfgChangeEvent(const NetCfgChangeType& t, const std::string& dev,
-                     const NetCfgChangeDetails& d) noexcept;
+struct NetCfgChangeEvent
+{
+    NetCfgChangeEvent(const NetCfgChangeType &t,
+                      const std::string &dev,
+                      const NetCfgChangeDetails &d) noexcept;
     NetCfgChangeEvent(GVariant *params);
     NetCfgChangeEvent() noexcept;
 
     void reset() noexcept;
     bool empty() const noexcept;
+
 
     static const std::string IntrospectionXML() noexcept
     {
@@ -52,7 +55,8 @@ struct NetCfgChangeEvent {
                "            </signal>";
     }
 
-    static const std::string TypeStr(const NetCfgChangeType& type,
+
+    static const std::string TypeStr(const NetCfgChangeType &type,
                                      bool tech_form = false) noexcept
     {
         switch (type)
@@ -82,13 +86,13 @@ struct NetCfgChangeEvent {
         case NetCfgChangeType::DNS_SEARCH_REMOVED:
             return (tech_form ? "DNS_SEARCH_REMOVED" : "DNS Search domain Removed");
         default:
-            return "[UNKNOWN: " + std::to_string((uint8_t) type) + "]";
+            return "[UNKNOWN: " + std::to_string((uint8_t)type) + "]";
         }
     }
 
 
     static const std::vector<std::string> FilterMaskList(const uint16_t mask,
-                                           bool tech_form = false)
+                                                         bool tech_form = false)
     {
         std::vector<std::string> ret;
 
@@ -105,13 +109,14 @@ struct NetCfgChangeEvent {
         return ret;
     }
 
+
     static const std::string FilterMaskStr(const uint16_t mask,
                                            bool tech_form = false,
-                                           const std::string& separator=", ")
+                                           const std::string &separator = ", ")
     {
         std::stringstream buf;
         bool first_done = false;
-        for (const auto& t : FilterMaskList(mask, tech_form))
+        for (const auto &t : FilterMaskList(mask, tech_form))
         {
             buf << (first_done ? separator : "") << t;
             first_done = true;
@@ -120,7 +125,9 @@ struct NetCfgChangeEvent {
         return ret;
     }
 
-    GVariant * GetGVariant() const;
+
+    GVariant *GetGVariant() const;
+
 
     /**
      *  Makes it possible to write NetCfgStateEvent in a readable format
@@ -133,7 +140,7 @@ struct NetCfgChangeEvent {
      * @return  Returns the provided std::ostream together with the
      *          decoded NetCfgStateEvent information
      */
-    friend std::ostream& operator<<(std::ostream& os, const NetCfgChangeEvent& s)
+    friend std::ostream &operator<<(std::ostream &os, const NetCfgChangeEvent &s)
     {
         if (s.empty())
         {
@@ -142,7 +149,7 @@ struct NetCfgChangeEvent {
 
         std::stringstream detstr;
         bool beginning = true;
-        for (const auto& kv : s.details)
+        for (const auto &kv : s.details)
         {
             detstr << (beginning ? ": " : ", ")
                    << kv.first << "='" << kv.second << "'";
@@ -153,8 +160,9 @@ struct NetCfgChangeEvent {
                   << detstr.str();
     }
 
-    bool operator==(const NetCfgChangeEvent& compare) const;
-    bool operator!=(const NetCfgChangeEvent& compare) const;
+    bool operator==(const NetCfgChangeEvent &compare) const;
+    bool operator!=(const NetCfgChangeEvent &compare) const;
+
 
     NetCfgChangeType type;
     std::string device;

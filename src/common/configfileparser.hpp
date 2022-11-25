@@ -24,7 +24,6 @@
  *         integrate easily with the SingleCommand command line parser
  */
 
-
 #pragma once
 
 #include "config.h"
@@ -41,11 +40,13 @@ namespace Configuration {
  *  Definition of value types used by the configuration file and how
  *  it will be interpreted by the command-line argument parser.
  */
-enum class OptionValueType : uint8_t {
-    Int,      ///< Integer
-    String,   ///< String
-    Present   ///< Option is present, with not value argument
+enum class OptionValueType : uint8_t
+{
+    Int,    ///< Integer
+    String, ///< String
+    Present ///< Option is present, with not value argument
 };
+
 
 
 /**
@@ -55,15 +56,19 @@ enum class OptionValueType : uint8_t {
  */
 struct OptionMapEntry
 {
-    OptionMapEntry(std::string option, std::string file_label,
-                   std::string description, OptionValueType type);
+    OptionMapEntry(std::string option,
+                   std::string file_label,
+                   std::string description,
+                   OptionValueType type);
 
-    OptionMapEntry(std::string option, std::string file_label,
+    OptionMapEntry(std::string option,
+                   std::string file_label,
                    std::string exclusive_group,
-                   std::string description, OptionValueType type);
+                   std::string description,
+                   OptionValueType type);
 
 
-    friend std::ostream& operator<<(std::ostream& os, const OptionMapEntry& e)
+    friend std::ostream &operator<<(std::ostream &os, const OptionMapEntry &e)
     {
         std::stringstream out;
         if (e.present)
@@ -77,7 +82,7 @@ struct OptionMapEntry
                 break;
 
             case OptionValueType::Present:
-                if ( e.present )
+                if (e.present)
                 {
                     out << (e.present_value ? "Yes" : "No");
                 }
@@ -93,16 +98,17 @@ struct OptionMapEntry
     }
 
 
-    std::string option;            ///< Command line option name
-    std::string field_label;       ///< Configuration file entry label
-    std::string description;       ///< User friendly description
-    std::string exclusive_group;   ///< Belongs to a group with only one can be used
-    OptionValueType type;          ///< Data type of this value
-    bool present;                  ///< Has this option been configured?
-    bool present_value;            ///< Should the option be considered set or unset?
-    std::string value;             ///< Value of the setting
+    std::string option;          ///< Command line option name
+    std::string field_label;     ///< Configuration file entry label
+    std::string description;     ///< User friendly description
+    std::string exclusive_group; ///< Belongs to a group with only one can be used
+    OptionValueType type;        ///< Data type of this value
+    bool present;                ///< Has this option been configured?
+    bool present_value;          ///< Should the option be considered set or unset?
+    std::string value;           ///< Value of the setting
 };
 typedef std::vector<OptionMapEntry> OptionMap;
+
 
 
 /**
@@ -114,23 +120,26 @@ typedef std::vector<OptionMapEntry> OptionMap;
  */
 class File
 {
-public:
+  public:
     typedef std::shared_ptr<File> Ptr;
 
-    File(const std::string fname="");
+    File(const std::string fname = "");
     virtual ~File() = default;
+
 
     /**
      *  Retrieve the filename which is currently used
      */
     const std::string GetFilename() const;
 
+
     /**
      *  Parses configuration data from JSON::Value directly
      *
      * @param config  JSON::Value containing configuration data
      */
-    virtual void Parse(Json::Value& config);
+    virtual void Parse(Json::Value &config);
+
 
     /**
      *  Loads a JSON configration file and parses it
@@ -139,7 +148,7 @@ public:
      * @throws ConfigFileException if there were issues opening or parsing the
      *         configuration file
      */
-    void Load(const std::string& cfgfile="");
+    void Load(const std::string &cfgfile = "");
 
 
     /**
@@ -155,6 +164,7 @@ public:
      */
     std::vector<std::string> GetOptions(bool all_configured = false);
 
+
     /**
      *  Check if an option key is present or not
      *
@@ -162,7 +172,8 @@ public:
      * @return  Returns true if a value to the key is present.
      * @throws  Throw OptionNotFound if the key cannot be found.
      */
-    bool IsPresent(const std::string& key);
+    bool IsPresent(const std::string &key);
+
 
     /**
      *  Retrieve the value of a specific configuration key
@@ -175,9 +186,10 @@ public:
      *          if the the value type is OptionValueType::Present and the
      *          value is not present.
      */
-    const std::string GetValue(const std::string& key);
-    const int GetIntValue(const std::string& key);
-    const bool GetBoolValue(const std::string& key);
+    const std::string GetValue(const std::string &key);
+    const int GetIntValue(const std::string &key);
+    const bool GetBoolValue(const std::string &key);
+
 
     /**
      *  Sets a value to a configuration option in the configuration file
@@ -193,16 +205,18 @@ public:
      *              setting int and boolean values directly.  These both convert
      *              the value to std::string and calls the string based method.
      */
-    void SetValue(const std::string& key, const std::string& value);
-    void SetValue(const std::string& key, const int value);
-    void SetValue(const std::string& key, const bool value);
+    void SetValue(const std::string &key, const std::string &value);
+    void SetValue(const std::string &key, const int value);
+    void SetValue(const std::string &key, const bool value);
+
 
     /**
      *  Unsets a configuration option in the configuration file
      *
      * @param key   std::string of the command line option name to unset
      */
-    void UnsetOption(const std::string& key);
+    void UnsetOption(const std::string &key);
+
 
     /**
      *  Run a check in all options to see if options belonging to the same
@@ -212,6 +226,7 @@ public:
      *          same exclusive_group is found.
      */
     void CheckExclusiveOptions();
+
 
     /**
      *  Returns a list of other options in the same exclusive option group
@@ -223,6 +238,7 @@ public:
      */
     std::vector<std::string> GetRelatedExclusiveOptions(const std::string option);
 
+
     /**
      *  Generates a Json::Value based configuration file based on the values
      *  already set.
@@ -231,6 +247,7 @@ public:
      */
     Json::Value Generate();
 
+
     /**
      *  Writes the configuration file containing the currently set values
      *  to a file.
@@ -238,7 +255,8 @@ public:
      * @param cfgfname  std::string of the filename to use when saving
      *                  the file.
      */
-    void Save(const std::string cfgfname="");
+    void Save(const std::string cfgfname = "");
+
 
     /**
      *  Check if the configuration contains anything.  If all options are
@@ -248,26 +266,28 @@ public:
      */
     bool empty() const;
 
+
     /**
      *  Stream helper - formats all the set configuration options and
      *  their values in a user friendly format.
      */
-    friend std::ostream& operator<<(std::ostream& os, const File& m)
+    friend std::ostream &operator<<(std::ostream &os, const File &m)
     {
         std::stringstream out;
-        for (auto& e : m.map)
+        for (auto &e : m.map)
         {
             out << e;
         }
         return os << out.str();
     }
 
+
 #ifdef OPENVPN_DEBUG
     void Dump() const;
 #endif
 
 
-protected:
+  protected:
     /**
      *  This method need to return the configuration between the
      *  command-line option names and their respective configuration file
@@ -281,10 +301,10 @@ protected:
     virtual OptionMap ConfigureMapping() = 0;
 
 
-private:
+  private:
     std::string config_filename{};
-    bool map_configured = false;   ///< Has ConfigureMapping() been run?
-    OptionMap map;           ///< Currently active configuration map
+    bool map_configured = false; ///< Has ConfigureMapping() been run?
+    OptionMap map;               ///< Currently active configuration map
 
     /**
      *  Internal helper method, ensuring the mapping has been set up
@@ -292,4 +312,4 @@ private:
     void configure_mapping();
 
 }; // class File
-}  // namespace Configuration
+} // namespace Configuration

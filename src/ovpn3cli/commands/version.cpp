@@ -35,7 +35,7 @@
 
 
 #ifdef OVPN3CLI_OPENVPN3ADMIN
-bool failed = false;  //<< Is true if the RetrieveServiceVersion() call failed
+bool failed = false; //<< Is true if the RetrieveServiceVersion() call failed
 
 /**
  *  Retrieve the service version information, if available.  It will not
@@ -52,12 +52,12 @@ static std::string RetrieveServiceVersion(DBusProxy prx)
     {
         return prx.GetServiceVersion();
     }
-    catch (DBusProxyAccessDeniedException& excp)
+    catch (DBusProxyAccessDeniedException &excp)
     {
         failed = true;
         return "(unavailable - no access)";
     }
-    catch (DBusException& excp)
+    catch (DBusException &excp)
     {
         failed = true;
         return "(unavailable)";
@@ -80,7 +80,8 @@ int cmd_version(ParsedArgs::Ptr args)
     if (args->Present("services"))
     {
 
-        std::cout << "OpenVPN 3 D-Bus services:" << std::endl << std::endl;
+        std::cout << "OpenVPN 3 D-Bus services:" << std::endl
+                  << std::endl;
 
         DBus dbcon(G_BUS_TYPE_SYSTEM);
         dbcon.Connect();
@@ -121,10 +122,11 @@ int cmd_version(ParsedArgs::Ptr args)
         if (failed)
         {
             std::cout << "** Some errors occured retrieving version information."
-                       << std::endl
-                       << "** Ensure you run this command as the root or "
-                       << OPENVPN_USERNAME << " user."
-                       << std::endl << std::endl;
+                      << std::endl
+                      << "** Ensure you run this command as the root or "
+                      << OPENVPN_USERNAME << " user."
+                      << std::endl
+                      << std::endl;
             return 2;
         }
 

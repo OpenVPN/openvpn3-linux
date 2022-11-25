@@ -29,22 +29,22 @@
 // behaviour more places, we define it as a macro.
 #define STRING_TO_CHARPTR(x) x.empty() ? nullptr : x.c_str()
 
+
 class DBusSignalSubscription
 {
-public:
+  public:
     // FIXME:  Reduce number of constructors
     //         Move towards passing these variables to Subscribe()
     //         as the normal way to subscribe
 
-    DBusSignalSubscription(DBus & dbusobj,
+    DBusSignalSubscription(DBus &dbusobj,
                            std::string interf)
         : conn(dbusobj.GetConnection()),
           interface(interf)
     {
     }
 
-
-    DBusSignalSubscription(DBus & dbusobj,
+    DBusSignalSubscription(DBus &dbusobj,
                            std::string busname,
                            std::string interf,
                            std::string objpath)
@@ -55,14 +55,12 @@ public:
     {
     }
 
-
     DBusSignalSubscription(GDBusConnection *dbuscon,
                            std::string interf)
         : conn(dbuscon),
           interface(interf)
     {
     }
-
 
     DBusSignalSubscription(GDBusConnection *dbuscon,
                            std::string busname,
@@ -75,8 +73,7 @@ public:
     {
     }
 
-
-    DBusSignalSubscription(DBus & dbusobj,
+    DBusSignalSubscription(DBus &dbusobj,
                            std::string busname,
                            std::string interf,
                            std::string objpath,
@@ -88,7 +85,6 @@ public:
     {
         Subscribe(signame);
     }
-
 
     DBusSignalSubscription(GDBusConnection *dbuscon,
                            std::string busname,
@@ -114,29 +110,33 @@ public:
         Cleanup();
     }
 
+
     /**
      *  Called each time the subscribed signal has a match on the D-Bus
      */
+    // clang-format off
+    // bug in clang-format causes "= 0" to be wrapped
     virtual void callback_signal_handler(GDBusConnection *connection,
                                          const std::string sender_name,
                                          const std::string object_path,
                                          const std::string interface_name,
                                          const std::string signal_name,
                                          GVariant *parameters) = 0;
+    // clang-format on
 
 
     void Subscribe(std::string busname, std::string objpath, std::string signal_name)
     {
         guint signal_id = g_dbus_connection_signal_subscribe(conn,
-                                                       STRING_TO_CHARPTR(busname),
-                                                       STRING_TO_CHARPTR(interface),
-                                                       STRING_TO_CHARPTR(signal_name),
-                                                       STRING_TO_CHARPTR(objpath),
-                                                       NULL,
-                                                       G_DBUS_SIGNAL_FLAGS_NONE,
-                                                       dbusobject_callback_signal_handler,
-                                                       this,
-                                                       NULL );  // destructor
+                                                             STRING_TO_CHARPTR(busname),
+                                                             STRING_TO_CHARPTR(interface),
+                                                             STRING_TO_CHARPTR(signal_name),
+                                                             STRING_TO_CHARPTR(objpath),
+                                                             NULL,
+                                                             G_DBUS_SIGNAL_FLAGS_NONE,
+                                                             dbusobject_callback_signal_handler,
+                                                             this,
+                                                             NULL); // destructor
         if (signal_id == 0)
         {
             std::stringstream err;
@@ -197,7 +197,7 @@ public:
 
     void Cleanup()
     {
-        if( !subscribed )
+        if (!subscribed)
         {
             return;
         }
@@ -205,7 +205,7 @@ public:
         {
             return;
         }
-        for( auto& sub : subscriptions)
+        for (auto &sub : subscriptions)
         {
             if (sub.second > 0)
             {
@@ -217,22 +217,22 @@ public:
     }
 
 
-protected:
-    GDBusConnection * GetConnection()
+  protected:
+    GDBusConnection *GetConnection()
     {
         return conn;
     }
 
 
     static void dbusobject_callback_signal_handler(GDBusConnection *conn,
-                                                    const gchar *sender,
-                                                    const gchar *obj_path,
-                                                    const gchar *intf_name,
-                                                    const gchar *sign_name,
-                                                    GVariant *params,
-                                                    gpointer this_ptr)
+                                                   const gchar *sender,
+                                                   const gchar *obj_path,
+                                                   const gchar *intf_name,
+                                                   const gchar *sign_name,
+                                                   GVariant *params,
+                                                   gpointer this_ptr)
     {
-        class DBusSignalSubscription *obj = (class DBusSignalSubscription *) this_ptr;
+        class DBusSignalSubscription *obj = (class DBusSignalSubscription *)this_ptr;
         obj->callback_signal_handler(conn,
                                      std::string(sender),
                                      std::string(obj_path),
@@ -242,7 +242,7 @@ protected:
     }
 
 
-private:
+  private:
     GDBusConnection *conn;
     std::string bus_name;
     std::string interface;
@@ -255,14 +255,14 @@ private:
 
 class DBusSignalProducer
 {
-public:
+  public:
     DBusSignalProducer(DBus dbuscon,
                        std::string busname,
                        std::string interf,
-                       std::string objpath) :
-        conn(dbuscon.GetConnection()),
-        interface(interf),
-        object_path(objpath)
+                       std::string objpath)
+        : conn(dbuscon.GetConnection()),
+          interface(interf),
+          object_path(objpath)
     {
         if (!busname.empty())
         {
@@ -275,10 +275,10 @@ public:
     DBusSignalProducer(GDBusConnection *con,
                        std::string busname,
                        std::string interf,
-                       std::string objpath) :
-        conn(con),
-        interface(interf),
-        object_path(objpath)
+                       std::string objpath)
+        : conn(con),
+          interface(interf),
+          object_path(objpath)
     {
         if (!busname.empty())
         {
@@ -294,21 +294,20 @@ public:
     }
 
 
-    void Send(const std::vector<std::string>& bus_names,
-              const std::string& interf,
-              const std::string& objpath,
-              const std::string& signal_name,
+    void Send(const std::vector<std::string> &bus_names,
+              const std::string &interf,
+              const std::string &objpath,
+              const std::string &signal_name,
               GVariant *params) const
     {
-        g_variant_ref_sink(params);  // This method must own this object
+        g_variant_ref_sink(params); // This method must own this object
 
-        for (const auto& target : bus_names)
+        for (const auto &target : bus_names)
         {
             send_signal(target, interf, objpath, signal_name, params);
         }
 
-        g_variant_unref(params);  // Now params can be released and freed
-
+        g_variant_unref(params); // Now params can be released and freed
     }
 
 
@@ -323,12 +322,12 @@ public:
 
 
     void Send(const std::string busn,
-                     const std::string interf,
-                     const std::string objpath,
-                     const std::string signal_name,
-                     GVariant *params) const
+              const std::string interf,
+              const std::string objpath,
+              const std::string signal_name,
+              GVariant *params) const
     {
-        g_variant_ref_sink(params);  // This method must own this object
+        g_variant_ref_sink(params); // This method must own this object
 
         if (!busn.empty() || 0 == target_bus_names.size())
         {
@@ -340,7 +339,7 @@ public:
             Send(target_bus_names, interf, objpath, signal_name, params);
         }
 
-        g_variant_unref(params);  // Now params can be released and freed
+        g_variant_unref(params); // Now params can be released and freed
     }
 
 
@@ -377,11 +376,11 @@ public:
     }
 
 
-    void SendTarget(const std::string& target, const std::string& signame,
-                    GVariant *params) const
+    void SendTarget(const std::string &target, const std::string &signame, GVariant *params) const
     {
         Send(target, interface, object_path, signame, params);
     }
+
 
     void Send(const std::string signal_name) const
     {
@@ -389,40 +388,46 @@ public:
     }
 
 
-protected:
-    void set_object_path(const std::string& new_path)
+  protected:
+    void set_object_path(const std::string &new_path)
     {
         object_path = new_path;
     }
+
 
     const std::string get_object_path() const
     {
         return object_path;
     }
 
+
     const std::string get_interface() const
     {
         return interface;
     }
 
+
     void validate_params()
     {
-        if (interface.empty()) {
+        if (interface.empty())
+        {
             THROW_DBUSEXCEPTION("DBusSignalProducer", "Interface cannot be empty");
         }
 
-        if (object_path.empty()) {
+        if (object_path.empty())
+        {
             THROW_DBUSEXCEPTION("DBusSignalProducer", "Object path cannot be empty");
         }
     }
 
 
-private:
+  private:
     GDBusConnection *conn;
     std::vector<std::string> target_bus_names;
     std::string interface;
     std::string object_path;
     std::string signal_name;
+
 
     void send_signal(const std::string busn,
                      const std::string interf,
@@ -445,7 +450,7 @@ private:
         }
 
         GError *error = NULL;
-        if( !g_dbus_connection_emit_signal(conn,
+        if (!g_dbus_connection_emit_signal(conn,
                                            STRING_TO_CHARPTR(busn),
                                            STRING_TO_CHARPTR(objpath),
                                            STRING_TO_CHARPTR(interf),

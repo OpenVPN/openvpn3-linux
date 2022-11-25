@@ -36,15 +36,16 @@ namespace unittest {
 
 TEST(log, syslog_facility_mapping)
 {
-    struct log_facility_mapping_t {
+    struct log_facility_mapping_t
+    {
         const std::string name;
         const int facility;
         const bool should_pass;
     };
 
     //  Various inputs to test, with their expected test result
-    static const struct log_facility_mapping_t test_facilities[] =
-        {
+    static const struct log_facility_mapping_t test_facilities[] = {
+        // clang-format off
             {"LOG_AUTH",     LOG_AUTH,     true},
             {"LOG_AUTHPRIV", LOG_AUTHPRIV, true},
             {"LOG_CRON",     LOG_CRON,     true},
@@ -67,6 +68,7 @@ TEST(log, syslog_facility_mapping)
             {"LOG_UUCP",     LOG_UUCP,     true},
             {"LOG_INVALID",  -1,           false},
             {"",             -1,           false}
+            // clang-format off
         };
 
 

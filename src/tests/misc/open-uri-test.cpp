@@ -26,6 +26,7 @@
 #include <iostream>
 #include "common/open-uri.hpp"
 
+
 int main(int argc, char **argv)
 {
     if (argc != 2)
@@ -51,6 +52,3 @@ int main(int argc, char **argv)
         return 3;
     }
 }
-
-
-

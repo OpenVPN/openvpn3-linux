@@ -29,11 +29,13 @@
 #include "dbus/core.hpp"
 #include "configmgr/proxy-configmgr.hpp"
 
+
+
 int main(int argc, char **argv)
 {
     OpenVPN3ConfigurationProxy cfgproxy(G_BUS_TYPE_SYSTEM,
                                         OpenVPN3DBus_rootp_configuration);
-    for (auto& cfg : cfgproxy.FetchAvailableConfigs())
+    for (auto &cfg : cfgproxy.FetchAvailableConfigs())
     {
         std::cout << cfg << std::endl;
     }

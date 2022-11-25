@@ -64,7 +64,9 @@ std::string import_config(const std::string filename,
     // The ProfileMerge will ensure that all needed
     // files are embedded into the configuration we
     // send to and store in the Configuration Manager
-    ProfileMerge pm(filename, "", "",
+    ProfileMerge pm(filename,
+                    "",
+                    "",
                     ProfileMerge::FOLLOW_FULL,
                     ProfileParseLimits::MAX_LINE_SIZE,
                     ProfileParseLimits::MAX_PROFILE_SIZE);
@@ -101,8 +103,10 @@ std::string import_config(const std::string filename,
     // Import the configuration fileh
     OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration);
     conf.Ping();
-    std::string  cfgpath = conf.Import(cfgname, pm.profile_content(),
-                                       single_use, persistent);
+    std::string cfgpath = conf.Import(cfgname,
+                                      pm.profile_content(),
+                                      single_use,
+                                      persistent);
 
     // If the configuration profile contained --persist-tun,
     // set the related property in the D-Bus configuration object.
@@ -114,7 +118,7 @@ std::string import_config(const std::string filename,
     if (persist_tun)
     {
         OpenVPN3ConfigurationProxy cfgprx(G_BUS_TYPE_SYSTEM, cfgpath);
-        const ValidOverride& vo = cfgprx.LookupOverride("persist-tun");
+        const ValidOverride &vo = cfgprx.LookupOverride("persist-tun");
         cfgprx.SetOverride(vo, true);
     }
 
@@ -143,7 +147,7 @@ static int cmd_config_import(ParsedArgs::Ptr args)
     try
     {
         std::string name = (args->Present("name") ? args->GetValue("name", 0)
-                                                : args->GetValue("config", 0));
+                                                  : args->GetValue("config", 0));
         std::string path = import_config(args->GetValue("config", 0),
                                          name,
                                          false,
@@ -153,7 +157,7 @@ static int cmd_config_import(ParsedArgs::Ptr args)
                   << std::endl;
         return 0;
     }
-    catch (std::exception& e)
+    catch (std::exception &e)
     {
         throw CommandException("config-import", e.what());
     }
@@ -174,11 +178,18 @@ SingleCommand::Ptr prepare_command_config_import()
     cmd.reset(new SingleCommand("config-import",
                                 "Import configuration profiles",
                                 cmd_config_import));
-    cmd->AddOption("config", 'c', "CFG-FILE", true,
+    cmd->AddOption("config",
+                   'c',
+                   "CFG-FILE",
+                   true,
                    "Configuration file to import");
-    cmd->AddOption("name", 'n', "NAME", true,
+    cmd->AddOption("name",
+                   'n',
+                   "NAME",
+                   true,
                    "Provide a different name for the configuration (default: CFG-FILE)");
-    cmd->AddOption("persistent", 'p',
+    cmd->AddOption("persistent",
+                   'p',
                    "Make the configuration profile persistent through service restarts");
 
     return cmd;
@@ -204,20 +215,21 @@ SingleCommand::Ptr prepare_command_config_import()
  */
 static int cmd_configs_list(ParsedArgs::Ptr args)
 {
-    OpenVPN3ConfigurationProxy confmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration );
+    OpenVPN3ConfigurationProxy confmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration);
     confmgr.Ping();
 
     std::cout << "Configuration path" << std::endl;
-    std::cout << "Imported" << std::setw(32-8) << std::setfill(' ') << " "
-              << "Last used" << std::setw(26-9) << " "
+    std::cout << "Imported" << std::setw(32 - 8) << std::setfill(' ') << " "
+              << "Last used" << std::setw(26 - 9) << " "
               << "Used"
               << std::endl;
-    std::cout << "Name" << std::setw(58-4) << " " << "Owner"
+    std::cout << "Name" << std::setw(58 - 4) << " "
+              << "Owner"
               << std::endl;
-    std::cout << std::setw(32+26+18+2) << std::setfill('-') << "-" << std::endl;
+    std::cout << std::setw(32 + 26 + 18 + 2) << std::setfill('-') << "-" << std::endl;
 
     bool first = true;
-    for (auto& cfg : confmgr.FetchAvailableConfigs())
+    for (auto &cfg : confmgr.FetchAvailableConfigs())
     {
         if (cfg.empty())
         {
@@ -236,26 +248,26 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
 
         std::time_t imp_tstamp = cprx.GetUInt64Property("import_timestamp");
         std::string imported(std::asctime(std::localtime(&imp_tstamp)));
-        imported.erase(imported.find_last_not_of(" \n")+1); // rtrim
+        imported.erase(imported.find_last_not_of(" \n") + 1); // rtrim
 
         std::time_t last_u_tstamp = cprx.GetUInt64Property("last_used_timestamp");
         std::string last_used;
         if (last_u_tstamp > 0)
         {
             last_used = std::asctime(std::localtime(&last_u_tstamp));
-            last_used.erase(last_used.find_last_not_of(" \n")+1);  // rtrim
+            last_used.erase(last_used.find_last_not_of(" \n") + 1); // rtrim
         }
         unsigned int used_count = cprx.GetUIntProperty("used_count");
 
         std::cout << cfg << std::endl;
         std::cout << imported << std::setw(32 - imported.size()) << std::setfill(' ') << " "
-                  << last_used <<  std::setw(26 - last_used.size()) << " "
+                  << last_used << std::setw(26 - last_used.size()) << " "
                   << std::to_string(used_count)
                   << std::endl;
         std::cout << name << std::setw(58 - name.size()) << " " << user
                   << std::endl;
     }
-    std::cout << std::setw(32+26+18+2) << std::setfill('-') << "-" << std::endl;
+    std::cout << std::setw(32 + 26 + 18 + 2) << std::setfill('-') << "-" << std::endl;
     return 0;
 }
 
@@ -289,8 +301,8 @@ SingleCommand::Ptr prepare_command_configs_list()
  *  This command shows all overrides and other details about the config
  *  apart from the config itself
  */
-static int config_manage_show(OpenVPN3ConfigurationProxy& conf,
-                                  bool showall = false)
+static int config_manage_show(OpenVPN3ConfigurationProxy &conf,
+                              bool showall = false)
 {
 
     try
@@ -308,7 +320,8 @@ static int config_manage_show(OpenVPN3ConfigurationProxy& conf,
                   << (conf.GetDCO() ? "Yes" : "No") << std::endl;
 #endif
 
-        std::cout << std::endl << "  Overrides: ";
+        std::cout << std::endl
+                  << "  Overrides: ";
         auto overrides = conf.GetOverrides();
         if (overrides.empty() && !showall)
         {
@@ -319,10 +332,10 @@ static int config_manage_show(OpenVPN3ConfigurationProxy& conf,
             std::cout << std::endl;
         }
 
-        for (auto & vo: configProfileOverrides)
+        for (auto &vo : configProfileOverrides)
         {
             std::string value = "(not set)";
-            for (auto & ov: overrides)
+            for (auto &ov : overrides)
             {
                 if (ov.override.key == vo.key)
                 {
@@ -339,7 +352,7 @@ static int config_manage_show(OpenVPN3ConfigurationProxy& conf,
         }
         return 0;
     }
-    catch (DBusException& err)
+    catch (DBusException &err)
     {
         throw CommandException("config-manage --show", err.GetRawError());
     }
@@ -359,18 +372,18 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
     if (!args->Present("path") && !args->Present("config"))
     {
         throw CommandException("config-manage", "No configuration provided "
-                               "(--path, --config)");
+                                                "(--path, --config)");
     }
     bool override_present = false;
-    for (const ValidOverride& vo : configProfileOverrides)
+    for (const ValidOverride &vo : configProfileOverrides)
     {
         if (args->Present(vo.key)
             && (args->Present("unset-override") && args->GetValue("unset-override", 0) == vo.key))
         {
             throw CommandException("config-manage",
-                                   "Cannot provide both --" + vo.key +" and "
-                                   + "--unset-" + vo.key
-                                   + " at the same time.");
+                                   "Cannot provide both --" + vo.key + " and "
+                                       + "--unset-" + vo.key
+                                       + " at the same time.");
         }
         if (args->Present(vo.key))
         {
@@ -391,17 +404,16 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
 #ifdef ENABLE_OVPNDCO
                                " or --dco"
 #endif
-                               ")"
-                               );
+                               ")");
     }
 
     try
     {
 
         std::string path = (args->Present("config")
-                             ? retrieve_config_path("config-manage",
-                                                    args->GetValue("config", 0))
-                             : args->GetValue("path", 0));
+                                ? retrieve_config_path("config-manage",
+                                                       args->GetValue("config", 0))
+                                : args->GetValue("path", 0));
         OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path);
         if (!conf.CheckObjectExists())
         {
@@ -430,7 +442,7 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
         }
 #endif
 
-        for (const ValidOverride& vo: configProfileOverrides)
+        for (const ValidOverride &vo : configProfileOverrides)
         {
             if (args->Present(vo.key))
             {
@@ -445,7 +457,7 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
                 {
                     std::string value = args->GetValue(vo.key, 0);
                     conf.SetOverride(vo, value);
-                    std::cout << "Set override '" + vo.key + "' to '" + value +"'"
+                    std::cout << "Set override '" + vo.key + "' to '" + value + "'"
                               << std::endl;
                 }
                 valid_option = true;
@@ -454,15 +466,15 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
 
         if (args->Present("unset-override"))
         {
-            for (const auto& key : args->GetAllValues("unset-override"))
+            for (const auto &key : args->GetAllValues("unset-override"))
             {
-                const ValidOverride& override = GetConfigOverride(key, true);
+                const ValidOverride &override = GetConfigOverride(key, true);
 
                 if (OverrideType::invalid == override.type)
                 {
                     throw CommandException("config-manage",
                                            "Unsetting invalid override "
-                                           + key + " is not possible");
+                                               + key + " is not possible");
                 }
 
                 try
@@ -471,7 +483,7 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
                     std::cout << "Unset override '" + override.key + "'" << std::endl;
                     valid_option = true;
                 }
-                catch (DBusException& err)
+                catch (DBusException &err)
                 {
                     std::string e(err.what());
                     if (e.find("net.openvpn.v3.error.OverrideNotSet") != std::string::npos)
@@ -506,13 +518,12 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
         {
             throw CommandException("config-manage", "No operation option recognised");
         }
-
     }
-    catch (DBusPropertyException& err)
+    catch (DBusPropertyException &err)
     {
         throw CommandException("config-manage", err.GetRawError());
     }
-    catch (DBusException& err)
+    catch (DBusException &err)
     {
         throw CommandException("config-manage", err.GetRawError());
     }
@@ -537,32 +548,46 @@ SingleCommand::Ptr prepare_command_config_manage()
     cmd.reset(new SingleCommand("config-manage",
                                 "Manage configuration properties",
                                 cmd_config_manage));
-    auto path_opt = cmd->AddOption("path", 'o', "CONFIG-PATH", true,
+    auto path_opt = cmd->AddOption("path",
+                                   'o',
+                                   "CONFIG-PATH",
+                                   true,
                                    "Path to the configuration in the "
                                    "configuration manager",
                                    arghelper_config_paths);
     path_opt->SetAlias("config-path");
-    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
+    cmd->AddOption("config",
+                   'c',
+                   "CONFIG-NAME",
+                   true,
                    "Alternative to --path, where configuration profile name "
                    "is used instead",
                    arghelper_config_names);
-    cmd->AddOption("rename", 'r', "NEW-CONFIG-NAME", true,
+    cmd->AddOption("rename",
+                   'r',
+                   "NEW-CONFIG-NAME",
+                   true,
                    "Renames the configuration");
-    cmd->AddOption("show", 's',
-                    "Show current configuration options");
+    cmd->AddOption("show",
+                   's',
+                   "Show current configuration options");
 #ifdef ENABLE_OVPNDCO
-    cmd->AddOption("dco", "<true|false>", true,
+    cmd->AddOption("dco",
+                   "<true|false>",
+                   true,
                    "Set/unset the kernel data channel offload flag",
                    arghelper_boolean);
 #endif
 
     // Generating options for all configuration profile overrides
     // as defined in overrides.hpp
-    for (const auto& override : configProfileOverrides)
+    for (const auto &override : configProfileOverrides)
     {
         if (OverrideType::boolean == override.type)
         {
-            cmd->AddOption(override.key, "<true|false>", true,
+            cmd->AddOption(override.key,
+                           "<true|false>",
+                           true,
                            "Adds the boolean override " + override.key,
                            arghelper_boolean);
         }
@@ -571,17 +596,13 @@ SingleCommand::Ptr prepare_command_config_manage()
             std::string help = "<value>";
             if (override.argument_helper)
             {
-                help = "<" + override.argument_helper()  + ">";
+                help = "<" + override.argument_helper() + ">";
                 std::replace(help.begin(), help.end(), ' ', '|');
             }
-            cmd->AddOption(override.key, help, true,
-                           override.help,
-                           override.argument_helper);
+            cmd->AddOption(override.key, help, true, override.help, override.argument_helper);
         }
     }
-    cmd->AddOption("unset-override", "<name>", true,
-                   "Removes the <name> override",
-                   arghelper_unset_overrides);
+    cmd->AddOption("unset-override", "<name>", true, "Removes the <name> override", arghelper_unset_overrides);
 
     return cmd;
 }
@@ -620,10 +641,15 @@ static int cmd_config_acl(ParsedArgs::Ptr args)
 
     try
     {
-        args->Present({"show", "grant", "revoke", "public-access", "lock-down",
-                        "seal", "transfer-owner-session"});
+        args->Present({"show",
+                       "grant",
+                       "revoke",
+                       "public-access",
+                       "lock-down",
+                       "seal",
+                       "transfer-owner-session"});
     }
-    catch (const OptionNotFound&)
+    catch (const OptionNotFound &)
     {
         throw CommandException("config-acl", "No operation option provided");
     }
@@ -631,9 +657,9 @@ static int cmd_config_acl(ParsedArgs::Ptr args)
     try
     {
         std::string path = (args->Present("config")
-                             ? retrieve_config_path("config-acl",
-                                                    args->GetValue("config", 0))
-                             : args->GetValue("path", 0));
+                                ? retrieve_config_path("config-acl",
+                                                       args->GetValue("config", 0))
+                                : args->GetValue("path", 0));
         OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path);
         if (!conf.CheckObjectExists())
         {
@@ -643,7 +669,7 @@ static int cmd_config_acl(ParsedArgs::Ptr args)
 
         if (args->Present("grant"))
         {
-            for (auto const& user : args->GetAllValues("grant"))
+            for (auto const &user : args->GetAllValues("grant"))
             {
                 try
                 {
@@ -656,7 +682,7 @@ static int cmd_config_acl(ParsedArgs::Ptr args)
                                   << " (uid " << uid << ")"
                                   << std::endl;
                     }
-                    catch (DBusException& e)
+                    catch (DBusException &e)
                     {
                         std::cerr << "Failed granting access to "
                                   << lookup_username(uid)
@@ -665,7 +691,7 @@ static int cmd_config_acl(ParsedArgs::Ptr args)
                         ret = 3;
                     }
                 }
-                catch (const LookupException&)
+                catch (const LookupException &)
                 {
                     std::cerr << "** ERROR ** --grant " << user
                               << " does not map to a valid user account"
@@ -676,7 +702,7 @@ static int cmd_config_acl(ParsedArgs::Ptr args)
 
         if (args->Present("revoke"))
         {
-            for (auto const& user : args->GetAllValues("revoke"))
+            for (auto const &user : args->GetAllValues("revoke"))
             {
                 try
                 {
@@ -689,7 +715,7 @@ static int cmd_config_acl(ParsedArgs::Ptr args)
                                   << " (uid " << uid << ")"
                                   << std::endl;
                     }
-                    catch (DBusException& e)
+                    catch (DBusException &e)
                     {
                         std::cerr << "Failed revoking access from "
                                   << lookup_username(uid)
@@ -698,7 +724,7 @@ static int cmd_config_acl(ParsedArgs::Ptr args)
                         ret = 3;
                     }
                 }
-                catch (const LookupException&)
+                catch (const LookupException &)
                 {
                     std::cerr << "** ERROR ** --revoke " << user
                               << " does not map to a valid user account"
@@ -729,7 +755,6 @@ static int cmd_config_acl(ParsedArgs::Ptr args)
             {
                 std::cout << "Configuration has been opened up"
                           << std::endl;
-
             }
         }
 
@@ -748,7 +773,6 @@ static int cmd_config_acl(ParsedArgs::Ptr args)
                 std::cout << "Configuration is now readable to only "
                           << "specific users"
                           << std::endl;
-
             }
         }
 
@@ -808,12 +832,12 @@ static int cmd_config_acl(ParsedArgs::Ptr args)
                 std::cout << "  Users granted access: " << std::to_string(acl.size())
                           << (1 != acl.size() ? " users" : " user")
                           << std::endl;
-                for (auto const& uid : acl)
+                for (auto const &uid : acl)
                 {
                     std::string user = lookup_username(uid);
                     std::cout << "                        - (" << uid << ") "
                               << " " << ('(' != user[0] ? user : "(unknown)")
-                    << std::endl;
+                              << std::endl;
                 }
             }
         }
@@ -840,31 +864,52 @@ SingleCommand::Ptr prepare_command_config_acl()
     cmd.reset(new SingleCommand("config-acl",
                                 "Manage access control lists for configurations",
                                 cmd_config_acl));
-    auto path_opt = cmd->AddOption("path", 'o', "OBJ-PATH", true,
+    auto path_opt = cmd->AddOption("path",
+                                   'o',
+                                   "OBJ-PATH",
+                                   true,
                                    "Path to the configuration in the "
                                    "configuration manager",
                                    arghelper_config_paths);
     path_opt->SetAlias("config-path");
-    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
+    cmd->AddOption("config",
+                   'c',
+                   "CONFIG-NAME",
+                   true,
                    "Alternative to --path, where configuration profile name "
                    "is used instead",
                    arghelper_config_names);
-    cmd->AddOption("show", 's',
+    cmd->AddOption("show",
+                   's',
                    "Show the current access control lists");
-    cmd->AddOption("grant", 'G', "<UID | username>", true,
+    cmd->AddOption("grant",
+                   'G',
+                   "<UID | username>",
+                   true,
                    "Grant this user access to this configuration profile");
-    cmd->AddOption("revoke", 'R', "<UID | username>", true,
+    cmd->AddOption("revoke",
+                   'R',
+                   "<UID | username>",
+                   true,
                    "Revoke this user access from this configuration profile");
-    cmd->AddOption("public-access", "<true|false>", true,
+    cmd->AddOption("public-access",
+                   "<true|false>",
+                   true,
                    "Set/unset the public access flag",
                    arghelper_boolean);
-    cmd->AddOption("transfer-owner-session", 'T', "<true|false>", true,
+    cmd->AddOption("transfer-owner-session",
+                   'T',
+                   "<true|false>",
+                   true,
                    "Transfer the configuration ownership to the VPN session at startup",
                    arghelper_boolean);
-    cmd->AddOption("lock-down", "<true|false>", true,
+    cmd->AddOption("lock-down",
+                   "<true|false>",
+                   true,
                    "Set/unset the lock-down flag.  Will disable config retrieval for users",
                    arghelper_boolean);
-    cmd->AddOption("seal", 'S',
+    cmd->AddOption("seal",
+                   'S',
                    "Make the configuration profile permanently read-only");
 
     return cmd;
@@ -899,9 +944,9 @@ static int cmd_config_dump(ParsedArgs::Ptr args)
     try
     {
         std::string path = (args->Present("config")
-                             ? retrieve_config_path("config-dump",
-                                                    args->GetValue("config", 0))
-                             : args->GetValue("path", 0));
+                                ? retrieve_config_path("config-dump",
+                                                       args->GetValue("config", 0))
+                                : args->GetValue("path", 0));
         OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path);
         if (!conf.CheckObjectExists())
         {
@@ -920,7 +965,7 @@ static int cmd_config_dump(ParsedArgs::Ptr args)
         }
         return 0;
     }
-    catch (DBusException& err)
+    catch (DBusException &err)
     {
         throw CommandException("config-dump", err.GetRawError());
     }
@@ -943,16 +988,24 @@ SingleCommand::Ptr prepare_command_config_dump()
                                 cmd_config_dump));
     cmd->SetAliasCommand("config-show",
                          "**\n** This is command deprecated, use config-dump instead\n**");
-    auto path_opt = cmd->AddOption("path", 'o', "OBJ-PATH", true,
+    auto path_opt = cmd->AddOption("path",
+                                   'o',
+                                   "OBJ-PATH",
+                                   true,
                                    "Path to the configuration in the "
                                    "configuration manager",
                                    arghelper_config_paths);
     path_opt->SetAlias("config-path");
-    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
+    cmd->AddOption("config",
+                   'c',
+                   "CONFIG-NAME",
+                   true,
                    "Alternative to --path, where configuration profile name "
                    "is used instead",
                    arghelper_config_names);
-    cmd->AddOption("json", 'j', "Dump the configuration in JSON format");
+    cmd->AddOption("json",
+                   'j',
+                   "Dump the configuration in JSON format");
 
     return cmd;
 }
@@ -985,9 +1038,9 @@ static int cmd_config_remove(ParsedArgs::Ptr args)
     try
     {
         std::string path = (args->Present("config")
-                             ? retrieve_config_path("config-remove",
-                                                    args->GetValue("config", 0))
-                             : args->GetValue("path", 0));
+                                ? retrieve_config_path("config-remove",
+                                                       args->GetValue("config", 0))
+                                : args->GetValue("path", 0));
 
         std::string response;
         if (!args->Present("force"))
@@ -1019,7 +1072,7 @@ static int cmd_config_remove(ParsedArgs::Ptr args)
         }
         return 0;
     }
-    catch (DBusException& err)
+    catch (DBusException &err)
     {
         throw CommandException("config-remove", err.GetRawError());
     }
@@ -1045,12 +1098,18 @@ SingleCommand::Ptr prepare_command_config_remove()
     cmd.reset(new SingleCommand("config-remove",
                                 "Remove an available configuration profile",
                                 cmd_config_remove));
-    auto path_opt = cmd->AddOption("path", 'o', "OBJ-PATH", true,
+    auto path_opt = cmd->AddOption("path",
+                                   'o',
+                                   "OBJ-PATH",
+                                   true,
                                    "Path to the configuration in the "
                                    "configuration manager",
                                    arghelper_config_paths);
     path_opt->SetAlias("config-path");
-    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
+    cmd->AddOption("config",
+                   'c',
+                   "CONFIG-NAME",
+                   true,
                    "Alternative to --path, where configuration profile name "
                    "is used instead",
                    arghelper_config_names);

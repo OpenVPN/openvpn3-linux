@@ -26,6 +26,7 @@
 #include <string>
 #include "logtag.hpp"
 
+
 //
 //  LogTag class implementation
 //
@@ -47,12 +48,13 @@ LogTag::LogTag()
 }
 
 
-LogTag::LogTag(const LogTag& cp)
+LogTag::LogTag(const LogTag &cp)
 {
     tag = cp.tag;
     hash = cp.hash;
     encaps = cp.encaps;
 }
+
 
 LogTag::~LogTag()
 {
@@ -60,6 +62,7 @@ LogTag::~LogTag()
     hash = 0;
     encaps = true;
 }
+
 
 const std::string LogTag::str() const
 {

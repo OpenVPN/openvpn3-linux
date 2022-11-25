@@ -28,8 +28,7 @@
 #include "common/timestamp.hpp"
 
 
-namespace unittest
-{
+namespace unittest {
 
 TEST(common, GetTimestamp)
 {
@@ -52,4 +51,4 @@ TEST(common, GetTimestamp)
     std::string cmp(buf);
     ASSERT_EQ(tstamp, cmp) << "Mismatch between C and C++ implementation";
 }
-}
+} // namespace unittest

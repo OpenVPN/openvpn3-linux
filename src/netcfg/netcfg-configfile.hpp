@@ -24,7 +24,6 @@
  *         openvpn3-service-netcfg.
  */
 
-
 #pragma once
 
 #include <memory>
@@ -32,19 +31,21 @@
 
 using namespace Configuration;
 
+
 class NetCfgConfigFile : public virtual Configuration::File
 {
-public:
+  public:
     typedef std::shared_ptr<Configuration::File> Ptr;
-    NetCfgConfigFile() : Configuration::File()
+    NetCfgConfigFile()
+        : Configuration::File()
     {
     }
 
-
-protected:
+  protected:
     Configuration::OptionMap ConfigureMapping()
     {
         return {
+            // clang-format off
             OptionMapEntry{"log-level", "log_level",
                            "Log level", OptionValueType::Int},
             OptionMapEntry{"log-file", "log_file",
@@ -59,6 +60,7 @@ protected:
                            "Server route redirection mode", OptionValueType::String},
             OptionMapEntry{"set-somark", "set_somark",
                            "Netfilter SO_MARK", OptionValueType::String}
-            };
+            // clang-format on
+        };
     }
 };

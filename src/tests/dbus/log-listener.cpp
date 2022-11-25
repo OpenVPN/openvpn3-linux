@@ -37,8 +37,8 @@ using namespace openvpn;
 
 class LogSubscription : public DBusSignalSubscription
 {
-public:
-    LogSubscription(DBus& dbusobj, std::string logtag, std::string interface)
+  public:
+    LogSubscription(DBus &dbusobj, std::string logtag, std::string interface)
         : DBusSignalSubscription(dbusobj,
                                  "",
                                  interface,
@@ -56,18 +56,18 @@ public:
                                  const std::string signal_name,
                                  GVariant *parameters)
     {
-            guint group;
-            guint logflags;
-            gchar *msg = nullptr;
-            g_variant_get (parameters, "(uus)", &group, &logflags, &msg);
+        guint group;
+        guint logflags;
+        gchar *msg = nullptr;
+        g_variant_get(parameters, "(uus)", &group, &logflags, &msg);
 
-            std::cout << log_tag << " Log entry (" << sender_name << ") interface=" << interface_name
-                      << ", path=" << object_path << " : "
-                      << "[" << group << ", " << logflags << "] "
-                      << msg << std::endl;
+        std::cout << log_tag << " Log entry (" << sender_name << ") interface=" << interface_name
+                  << ", path=" << object_path << " : "
+                  << "[" << group << ", " << logflags << "] "
+                  << msg << std::endl;
     }
 
-private:
+  private:
     std::string log_tag;
 };
 

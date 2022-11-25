@@ -23,7 +23,6 @@
  * @brief  Exceptions used by the command line argument parser
  */
 
-
 #pragma once
 
 #include <exception>
@@ -36,7 +35,7 @@
  */
 class CommandArgBaseException : public std::exception
 {
-public:
+  public:
     /**
      *  Base exception class which only needs a message to present to the
      *  user
@@ -48,7 +47,6 @@ public:
     {
     }
 
-
     virtual ~CommandArgBaseException() = default;
 
 
@@ -58,7 +56,7 @@ public:
      *
      * @return  Returns a const char * containing the message
      */
-    virtual const char * what() const noexcept
+    virtual const char *what() const noexcept
     {
         return message.c_str();
     }
@@ -76,11 +74,9 @@ public:
     }
 
 
-protected:
+  protected:
     const std::string message;
 };
-
-
 
 /**
  *  Exception class which is thrown whenever any of the command parsing
@@ -90,7 +86,7 @@ protected:
 
 class CommandException : public CommandArgBaseException
 {
-public:
+  public:
     /**
      *  Most simple exception, only indicates the command which failed.
      *  This is used if an error message is strictly not needed, often
@@ -104,7 +100,6 @@ public:
     {
     }
 
-
     /**
      *  Similar to the simpler CommandException class, but this one
      *  allows adding a simple message providing more details about the
@@ -117,8 +112,8 @@ public:
                      const std::string msg) noexcept
         : CommandArgBaseException(msg),
           command(command)
-      {
-      }
+    {
+    }
 
 
     /**
@@ -127,17 +122,15 @@ public:
      *
      * @return Returns a const char * containing the name of the command
      */
-    virtual const char * getCommand() const noexcept
+    virtual const char *getCommand() const noexcept
     {
         return command.c_str();
     }
 
 
-private:
+  private:
     const std::string command;
 };
-
-
 
 /**
  *  Exception class which is thrown whenever any of the command parsing
@@ -145,7 +138,7 @@ private:
  */
 class OptionException : public CommandArgBaseException
 {
-public:
+  public:
     /**
      *  Most simple exception, only indicates the option which failed.
      *  This is used if an error message is strictly not needed, often
@@ -158,7 +151,6 @@ public:
           option(option)
     {
     }
-
 
     /**
      *  Similar to the simpler OptionException class, but this one
@@ -174,7 +166,6 @@ public:
     {
     }
 
-
     virtual ~OptionException() = default;
 
 
@@ -184,20 +175,19 @@ public:
      *
      * @return Returns a const char * containing the name of the option
      */
-    virtual const char * getOption() const noexcept
+    virtual const char *getOption() const noexcept
     {
         return option.c_str();
     }
 
 
-private:
+  private:
     const std::string option;
 };
 
-
 class OptionNotFound : public CommandArgBaseException
 {
-public:
+  public:
     OptionNotFound() noexcept
         : CommandArgBaseException("")
     {
@@ -209,16 +199,14 @@ public:
     }
 };
 
-
 class OptionNotPresent : public CommandArgBaseException
 {
-public:
+  public:
     OptionNotPresent(const std::string key) noexcept
         : CommandArgBaseException("Option '" + key + "' value is not present")
     {
     }
 };
-
 
 /**
  *  Exception class used by @ParsedArgs::CheckExclusiveOptions()
@@ -227,8 +215,8 @@ public:
  */
 class ExclusiveOptionError : public CommandArgBaseException
 {
-public:
-    ExclusiveOptionError(const std::string& opt,
+  public:
+    ExclusiveOptionError(const std::string &opt,
                          const std::vector<std::string> group)
         : CommandArgBaseException(generate_error(opt, group))
     {
@@ -239,9 +227,10 @@ public:
     {
     }
 
-private:
-    std::string generate_error(const std::string& opt,
-                               const std::vector<std::string>& group) const
+
+  private:
+    std::string generate_error(const std::string &opt,
+                               const std::vector<std::string> &group) const
     {
         std::stringstream msg;
         if (!opt.empty())
@@ -255,7 +244,7 @@ private:
         }
 
         bool first = true;
-        for (const auto& o : group)
+        for (const auto &o : group)
         {
             if (opt == o)
             {
@@ -272,7 +261,6 @@ private:
     }
 };
 
-
 /**
  *  Exception class used by the @ConfigFile class when parsing
  *  configuration files and mapping the content to command line
@@ -280,26 +268,27 @@ private:
  */
 class ConfigFileException : public CommandArgBaseException
 {
-public:
-    ConfigFileException(const std::string& msg)
+  public:
+    ConfigFileException(const std::string &msg)
         : CommandArgBaseException(generate_error("", msg))
     {
     }
 
-    ConfigFileException(const std::string& cfgfile,
-                        const std::string& msg)
+    ConfigFileException(const std::string &cfgfile,
+                        const std::string &msg)
         : CommandArgBaseException(generate_error(cfgfile, msg))
     {
     }
 
-private:
-    std::string generate_error(const std::string& cfgfile,
-                               const std::string& msg)
+
+  private:
+    std::string generate_error(const std::string &cfgfile,
+                               const std::string &msg)
     {
         if (!cfgfile.empty())
         {
             return std::string("Configuration file error in "
-                            + std::string(cfgfile) + ": " + msg);
+                               + std::string(cfgfile) + ": " + msg);
         }
         else
         {

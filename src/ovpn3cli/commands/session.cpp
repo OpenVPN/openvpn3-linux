@@ -39,7 +39,7 @@
 
 class SessionException : public CommandArgBaseException
 {
-public:
+  public:
     SessionException(const std::string msg)
         : CommandArgBaseException(msg)
     {
@@ -65,11 +65,11 @@ static ConnectionStats fetch_stats(std::string session_path)
         }
         return session.GetConnectionStats();
     }
-    catch (DBusException& err)
+    catch (DBusException &err)
     {
         std::stringstream errmsg;
         errmsg << "Failed to fetch statistics: " << err.GetRawError();
-        throw CommandException("session-stats",  errmsg.str());
+        throw CommandException("session-stats", errmsg.str());
     }
 }
 
@@ -80,7 +80,7 @@ static ConnectionStats fetch_stats(std::string session_path)
  * @param stats  The ConnectionStats object returned by fetch_stats()
  * @return Returns std::string with the statistics pre-formatted as text/plain
  */
-std::string statistics_plain(ConnectionStats& stats)
+std::string statistics_plain(ConnectionStats &stats)
 {
     if (stats.size() < 1)
     {
@@ -88,12 +88,13 @@ std::string statistics_plain(ConnectionStats& stats)
     }
 
     std::stringstream out;
-    out << std::endl << "Connection statistics:" << std::endl;
-    for (auto& sd : stats)
+    out << std::endl
+        << "Connection statistics:" << std::endl;
+    for (auto &sd : stats)
     {
         out << "     "
             << sd.key
-            << std::setw(20-sd.key.size()) << std::setfill('.') << "."
+            << std::setw(20 - sd.key.size()) << std::setfill('.') << "."
             << std::setw(12) << std::setfill('.')
             << sd.value
             << std::endl;
@@ -110,13 +111,13 @@ std::string statistics_plain(ConnectionStats& stats)
  * @param stats  The ConnectionStats object returned by fetch_stats()
  * @return Returns std::string with the statistics pre-formatted as JSON
  *  */
-static std::string statistics_json(ConnectionStats& stats)
+static std::string statistics_json(ConnectionStats &stats)
 {
     Json::Value outdata;
 
-    for (auto& sd : stats)
+    for (auto &sd : stats)
     {
-        outdata[sd.key] = (Json::Value::Int64) sd.value;
+        outdata[sd.key] = (Json::Value::Int64)sd.value;
     }
     std::stringstream res;
     res << outdata;
@@ -138,7 +139,7 @@ static void sigint_handler(int sig)
 }
 
 
-bool start_url_auth(const std::string& url)
+bool start_url_auth(const std::string &url)
 {
     OpenURIresult r = open_uri(url);
     switch (r->status)
@@ -175,13 +176,13 @@ bool start_url_auth(const std::string& url)
 /**
  *  Defines which start modes used by @start_session()
  */
-enum class SessionStartMode : std::uint8_t {
-    NONE,    /**< Undefined */
-    START,   /**< Call the Connect() method */
-    RESUME,  /**< Call the Resume() method */
-    RESTART  /**< Call the Restart() method */
+enum class SessionStartMode : std::uint8_t
+{
+    NONE,   /**< Undefined */
+    START,  /**< Call the Connect() method */
+    RESUME, /**< Call the Resume() method */
+    RESTART /**< Call the Restart() method */
 };
-
 
 
 
@@ -206,7 +207,8 @@ enum class SessionStartMode : std::uint8_t {
  */
 static void start_session(OpenVPN3SessionProxy::Ptr session,
                           SessionStartMode initial_mode,
-                          int timeout, bool background = false)
+                          int timeout,
+                          bool background = false)
 {
     // Prepare the SIGINT signal handling
     struct sigaction sact;
@@ -223,7 +225,7 @@ static void start_session(OpenVPN3SessionProxy::Ptr session,
         loops--;
         try
         {
-            session->Ready();  // If not, an exception will be thrown
+            session->Ready(); // If not, an exception will be thrown
             switch (mode)
             {
             case SessionStartMode::START:
@@ -257,12 +259,12 @@ static void start_session(OpenVPN3SessionProxy::Ptr session,
             StatusEvent s;
             while ((-1 == timeout) || ((op_start + timeout) >= time(0)))
             {
-                usleep(300000);  // sleep 0.3 seconds - avg setup time
+                usleep(300000); // sleep 0.3 seconds - avg setup time
                 try
                 {
                     s = session->GetLastStatus();
                 }
-                catch (DBusException& excp)
+                catch (DBusException &excp)
                 {
                     std::string err(excp.what());
                     if (err.find("Failed retrieving property value for 'status'") != std::string::npos)
@@ -280,7 +282,7 @@ static void start_session(OpenVPN3SessionProxy::Ptr session,
                     }
                     else
                     {
-                        sigint_received = true;  // Simulate a CTRL-C to exit
+                        sigint_received = true; // Simulate a CTRL-C to exit
                         std::cout << "Disconnecting" << std::endl;
                     }
                 }
@@ -326,7 +328,7 @@ static void start_session(OpenVPN3SessionProxy::Ptr session,
                     throw SessionException("Session stopped");
                 }
 
-                sleep(1);  // If not yet connected, wait for 1 second
+                sleep(1); // If not yet connected, wait for 1 second
             }
             time_t now = time(0);
             if ((op_start + timeout) <= now)
@@ -339,11 +341,11 @@ static void start_session(OpenVPN3SessionProxy::Ptr session,
                 throw SessionException(err.str());
             }
         }
-        catch (const ReadyException&)
+        catch (const ReadyException &)
         {
             // If the ReadyException is thrown, it means the backend
             // needs more from the front-end side
-            for (auto& type_group : session->QueueCheckTypeGroup())
+            for (auto &type_group : session->QueueCheckTypeGroup())
             {
                 ClientAttentionType type;
                 ClientAttentionGroup group;
@@ -353,7 +355,7 @@ static void start_session(OpenVPN3SessionProxy::Ptr session,
                 {
                     std::vector<struct RequiresSlot> reqslots;
                     session->QueueFetchAll(reqslots, type, group);
-                    for (auto& r : reqslots)
+                    for (auto &r : reqslots)
                     {
                         std::cout << r.user_description << ": ";
                         if (r.hidden_input)
@@ -365,14 +367,13 @@ static void start_session(OpenVPN3SessionProxy::Ptr session,
                         {
                             std::cout << std::endl;
                             set_console_echo(true);
-
                         }
                         session->ProvideResponse(r);
                     }
                 }
             }
         }
-        catch (DBusException& err)
+        catch (DBusException &err)
         {
             std::stringstream errm;
             errm << "Failed to start new session: "
@@ -428,7 +429,7 @@ static int cmd_session_stats(ParsedArgs::Ptr args)
             {
                 sesspath = sessmgr.LookupInterface(args->GetValue("interface", 0));
             }
-            catch (DBusException& excp)
+            catch (DBusException &excp)
             {
                 throw CommandException("session-stats", excp.GetRawError());
             }
@@ -441,7 +442,7 @@ static int cmd_session_stats(ParsedArgs::Ptr args)
         ConnectionStats stats = fetch_stats(sesspath);
 
         std::cout << (args->Present("json") ? statistics_json(stats)
-                                           : statistics_plain(stats));
+                                            : statistics_plain(stats));
         return 0;
     }
     catch (...)
@@ -464,20 +465,31 @@ SingleCommand::Ptr prepare_command_session_stats()
     cmd.reset(new SingleCommand("session-stats",
                                 "Show session statistics",
                                 cmd_session_stats));
-    auto path_opt = cmd->AddOption("path", 'o', "SESSION-PATH", true,
+    auto path_opt = cmd->AddOption("path",
+                                   'o',
+                                   "SESSION-PATH",
+                                   true,
                                    "Path to the configuration in the "
                                    "configuration manager",
                                    arghelper_session_paths);
     path_opt->SetAlias("session-path");
-    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
+    cmd->AddOption("config",
+                   'c',
+                   "CONFIG-NAME",
+                   true,
                    "Alternative to --path, where configuration profile name "
                    "is used instead",
                    arghelper_config_names_sessions);
-    cmd->AddOption("interface", 'I', "INTERFACE", true,
+    cmd->AddOption("interface",
+                   'I',
+                   "INTERFACE",
+                   true,
                    "Alternative to --path, where tun interface name is used "
                    "instead",
                    arghelper_managed_interfaces);
-    cmd->AddOption("json", 'j', "Dump the configuration in JSON format");
+    cmd->AddOption("json",
+                   'j',
+                   "Dump the configuration in JSON format");
 
     return cmd;
 }
@@ -544,7 +556,7 @@ static int cmd_session_start(ParsedArgs::Ptr args)
                 std::cout << "Using pre-loaded configuration profile '"
                           << cfgname << "'" << std::endl;
             }
-            catch (const CommandException& excp)
+            catch (const CommandException &excp)
             {
                 std::string err(excp.what());
                 if (err.find("More than one configuration profile was found") != std::string::npos)
@@ -567,7 +579,7 @@ static int cmd_session_start(ParsedArgs::Ptr args)
         if (args->Present("persist-tun"))
         {
             OpenVPN3ConfigurationProxy cfgprx(G_BUS_TYPE_SYSTEM, cfgpath);
-            const ValidOverride& vo = cfgprx.LookupOverride("persist-tun");
+            const ValidOverride &vo = cfgprx.LookupOverride("persist-tun");
             cfgprx.SetOverride(vo, true);
         }
 
@@ -585,11 +597,10 @@ static int cmd_session_start(ParsedArgs::Ptr args)
         }
 #endif
 
-        start_session(session, SessionStartMode::START,
-                      timeout, args->Present("background"));
+        start_session(session, SessionStartMode::START, timeout, args->Present("background"));
         return 0;
     }
-    catch (const SessionException& excp)
+    catch (const SessionException &excp)
     {
         std::string err{excp.what()};
         if (err.find("ERR_PROFILE_SERVER_LOCKED_UNSUPPORTED:") != std::string::npos)
@@ -618,20 +629,34 @@ SingleCommand::Ptr prepare_command_session_start()
     cmd.reset(new SingleCommand("session-start",
                                 "Start a new VPN session",
                                 cmd_session_start));
-    cmd->AddOption("config", 'c', "CONFIG-FILE", true,
+    cmd->AddOption("config",
+                   'c',
+                   "CONFIG-FILE",
+                   true,
                    "Configuration file to start directly",
                    arghelper_config_names);
-    cmd->AddOption("config-path", 'p', "CONFIG-PATH", true,
+    cmd->AddOption("config-path",
+                   'p',
+                   "CONFIG-PATH",
+                   true,
                    "Configuration path to an already imported configuration",
                    arghelper_config_paths);
-    cmd->AddOption("persist-tun", 0,
+    cmd->AddOption("persist-tun",
+                   0,
                    "Enforces persistent tun/seamless tunnel (requires --config)");
-    cmd->AddOption("timeout", 0, "SECS", true,
+    cmd->AddOption("timeout",
+                   0,
+                   "SECS",
+                   true,
                    "Connection attempt timeout (default: infinite)");
-    cmd->AddOption("background", 0,
+    cmd->AddOption("background",
+                   0,
                    "Starts the connection in the background after basic credentials are provided");
 #ifdef ENABLE_OVPNDCO
-    cmd->AddOption("dco", 0, "BOOL", true,
+    cmd->AddOption("dco",
+                   0,
+                   "BOOL",
+                   true,
                    "Start the connection using Data Channel Offload kernel acceleration",
                    arghelper_boolean);
 #endif
@@ -662,7 +687,7 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
     sessmgr.Ping();
 
     bool first = true;
-    for (auto& sprx : sessmgr.FetchAvailableSessions())
+    for (auto &sprx : sessmgr.FetchAvailableSessions())
     {
         // Retrieve the name of the configuration profile used
         std::stringstream config_line;
@@ -704,7 +729,7 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
                 else if (cfgname_current != cfgname)
                 {
                     config_line << "  (Current name: "
-                              << cfgname_current << ")";
+                                << cfgname_current << ")";
                 }
                 config_line << std::endl;
             }
@@ -725,7 +750,7 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
             std::string c = std::asctime(std::localtime(&sess_created));
             created = c.substr(0, c.size() - 1);
         }
-        catch (DBusException&)
+        catch (DBusException &)
         {
             created = "(Not available)";
         }
@@ -738,7 +763,7 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
             owner = lookup_username(sprx->GetUIntProperty("owner"));
             be_pid = sprx->GetUIntProperty("backend_pid");
         }
-        catch (DBusException&)
+        catch (DBusException &)
         {
             owner = "(not available)";
             be_pid = -1;
@@ -754,7 +779,7 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
             dco = sprx->GetDCO();
 #endif
         }
-        catch (DBusException&)
+        catch (DBusException &)
         {
             // The session may not have been started yet; the error
             // in this case isn't that valuable so we just consider
@@ -772,7 +797,7 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
                 sessionname_line << "Session name: " << sessname << std::endl;
             }
         }
-        catch (DBusException&)
+        catch (DBusException &)
         {
             // Ignore any errors if this property is unavailable
             sessionname_line << "";
@@ -783,7 +808,7 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
         {
             status = sprx->GetLastStatus();
         }
-        catch (DBusException&)
+        catch (DBusException &)
         {
         }
 
@@ -871,12 +896,14 @@ SingleCommand::Ptr prepare_command_sessions_list()
  */
 static int cmd_session_manage(ParsedArgs::Ptr args)
 {
+    // clang-format off
     const unsigned int mode_pause      = 1 << 0;
     const unsigned int mode_resume     = 1 << 1;
     const unsigned int mode_restart    = 1 << 2;
     const unsigned int mode_disconnect = 1 << 3;
     const unsigned int mode_cleanup    = 1 << 4;
     const unsigned int mode_log_level  = 1 << 5;
+    // clang-format on
 
     unsigned int mode = 0;
     unsigned int mode_count = 0;
@@ -958,7 +985,7 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
                       << "to check" << std::endl;
 
             unsigned int c = 0;
-            for (const auto& s : sessions)
+            for (const auto &s : sessions)
             {
                 try
                 {
@@ -985,7 +1012,7 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
                         std::cout << "Valid, keeping it" << std::endl;
                     }
                 }
-                catch (const std::exception& e )
+                catch (const std::exception &e)
                 {
                     // Errors in this case indicates we cannot retrieve any
                     // information about the session; thus it is most likely
@@ -1067,7 +1094,7 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
 
         case mode_restart:
             std::cout << "Restarting session: " << sesspath
-            << std::endl;
+                      << std::endl;
             start_session(session, SessionStartMode::RESTART, timeout);
             return 0;
 
@@ -1090,7 +1117,7 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
             unsigned int cur = session->GetLogVerbosity();
             std::cout << "Current log level: " << std::to_string(cur) << std::endl;
 
-            if (args->GetValueLen("log-level") > 0 )
+            if (args->GetValueLen("log-level") > 0)
             {
                 unsigned int verb = std::atoi(args->GetLastValue("log-level").c_str());
                 if (verb != cur)
@@ -1104,11 +1131,11 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
         }
         return 0;
     }
-    catch (const DBusException& excp)
+    catch (const DBusException &excp)
     {
         throw CommandException("session-manage", excp.GetRawError());
     }
-    catch (const SessionException& excp)
+    catch (const SessionException &excp)
     {
         throw CommandException("session-manage", excp.what());
     }
@@ -1132,30 +1159,55 @@ SingleCommand::Ptr prepare_command_session_manage()
     cmd.reset(new SingleCommand("session-manage",
                                 "Manage VPN sessions",
                                 cmd_session_manage));
-    auto path_opt = cmd->AddOption("path", 'o', "SESSION-PATH", true,
+    auto path_opt = cmd->AddOption("path",
+                                   'o',
+                                   "SESSION-PATH",
+                                   true,
                                    "Path to the session in the session "
                                    "manager",
                                    arghelper_session_paths);
     path_opt->SetAlias("session-path");
-    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
+    cmd->AddOption("config",
+                   'c',
+                   "CONFIG-NAME",
+                   true,
                    "Alternative to --path, where configuration profile name "
                    "is used instead",
                    arghelper_config_names_sessions);
-    cmd->AddOption("interface", 'I', "INTERFACE", true,
+    cmd->AddOption("interface",
+                   'I',
+                   "INTERFACE",
+                   true,
                    "Alternative to --path, where tun interface name is used "
                    "instead",
                    arghelper_managed_interfaces);
-    cmd->AddOption("log-level", 0, "LEVEL", false,
+    cmd->AddOption("log-level",
+                   0,
+                   "LEVEL",
+                   false,
                    "View/Set the log-level for a running VPN session",
                    arghelper_log_levels);
-    cmd->AddOption("timeout", 0, "SECS", true,
+    cmd->AddOption("timeout",
+                   0,
+                   "SECS",
+                   true,
                    "Connection attempt timeout for resume and restart "
+
                    "(default: infinite)");
-    cmd->AddOption("pause", 'P', "Pauses the VPN session");
-    cmd->AddOption("resume", 'R', "Resumes a paused VPN session");
-    cmd->AddOption("restart", "Disconnect and reconnect a running VPN session");
-    cmd->AddOption("disconnect", 'D', "Disconnects a VPN session");
-    cmd->AddOption("cleanup", 0, "Clean up stale sessions");
+    cmd->AddOption("pause",
+                   'P',
+                   "Pauses the VPN session");
+    cmd->AddOption("resume",
+                   'R',
+                   "Resumes a paused VPN session");
+    cmd->AddOption("restart",
+                   "Disconnect and reconnect a running VPN session");
+    cmd->AddOption("disconnect",
+                   'D',
+                   "Disconnects a VPN session");
+    cmd->AddOption("cleanup",
+                   0,
+                   "Clean up stale sessions");
 
     return cmd;
 }
@@ -1171,7 +1223,7 @@ static std::string arghelper_auth_req()
     OpenVPN3SessionProxy::Ptr session{nullptr};
     std::ostringstream res;
 
-    for (const auto& sess : smprx.FetchAvailableSessions())
+    for (const auto &sess : smprx.FetchAvailableSessions())
     {
         StatusEvent s = sess->GetLastStatus();
         if (s.Check(StatusMajor::CONNECTION, StatusMinor::CFG_REQUIRE_USER)
@@ -1189,7 +1241,7 @@ static int cmd_session_auth_complete(const unsigned int authid)
 {
     OpenVPN3SessionMgrProxy smprx(G_BUS_TYPE_SYSTEM);
     OpenVPN3SessionProxy::Ptr session{nullptr};
-    for (const auto& s : smprx.FetchAvailableSessions())
+    for (const auto &s : smprx.FetchAvailableSessions())
     {
         unsigned int bepid = s->GetUIntProperty("backend_pid");
         if (authid == bepid)
@@ -1208,7 +1260,8 @@ static int cmd_session_auth_complete(const unsigned int authid)
               << std::endl
               << "Session path: "
               << session->GetPath()
-              << std::endl << std::endl;
+              << std::endl
+              << std::endl;
     start_session(session, SessionStartMode::START, -1, false);
 
     return 0;
@@ -1237,7 +1290,7 @@ static int cmd_session_auth(ParsedArgs::Ptr args)
 
     // Retrieve a list of all sessions requiring user interaction
     std::vector<OpenVPN3SessionProxy::Ptr> session_list = {};
-    for (const auto& sess : smprx.FetchAvailableSessions())
+    for (const auto &sess : smprx.FetchAvailableSessions())
     {
         StatusEvent s = sess->GetLastStatus();
         if (s.Check(StatusMajor::CONNECTION, StatusMinor::CFG_REQUIRE_USER)
@@ -1256,7 +1309,7 @@ static int cmd_session_auth(ParsedArgs::Ptr args)
     // List all sessions found
     std::cout << "-----------------------------------------------------------------------------" << std::endl;
     bool first = true;
-    for (const auto& sess : session_list)
+    for (const auto &sess : session_list)
     {
         if (!first)
         {
@@ -1272,7 +1325,7 @@ static int cmd_session_auth(ParsedArgs::Ptr args)
             std::string c = std::asctime(std::localtime(&sess_created));
             created = c.substr(0, c.size() - 1);
         }
-        catch (DBusException&)
+        catch (DBusException &)
         {
             created = "(Not available)";
         }
@@ -1308,7 +1361,10 @@ SingleCommand::Ptr prepare_command_session_auth()
     cmd.reset(new SingleCommand("session-auth",
                                 "Interact with on-going session authentication requests",
                                 cmd_session_auth));
-    cmd->AddOption("auth-req", 0, "ID", true,
+    cmd->AddOption("auth-req",
+                   0,
+                   "ID",
+                   true,
                    "Continue the authentication process for the given auth request ID",
                    arghelper_auth_req);
     return cmd;
@@ -1396,7 +1452,7 @@ static int cmd_session_acl(ParsedArgs::Ptr args)
 
         if (args->Present("grant"))
         {
-            for (auto const& user : args->GetAllValues("grant"))
+            for (auto const &user : args->GetAllValues("grant"))
             {
                 try
                 {
@@ -1409,7 +1465,7 @@ static int cmd_session_acl(ParsedArgs::Ptr args)
                                   << " (uid " << uid << ")"
                                   << std::endl;
                     }
-                    catch (DBusException& e)
+                    catch (DBusException &e)
                     {
                         std::cerr << "Failed granting access to "
                                   << lookup_username(uid)
@@ -1418,7 +1474,7 @@ static int cmd_session_acl(ParsedArgs::Ptr args)
                         ret = 3;
                     }
                 }
-                catch (const LookupException&)
+                catch (const LookupException &)
                 {
                     std::cerr << "** ERROR ** --grant " << user
                               << " does not map to a valid user account"
@@ -1429,7 +1485,7 @@ static int cmd_session_acl(ParsedArgs::Ptr args)
 
         if (args->Present("revoke"))
         {
-            for (auto const& user : args->GetAllValues("revoke"))
+            for (auto const &user : args->GetAllValues("revoke"))
             {
                 try
                 {
@@ -1442,7 +1498,7 @@ static int cmd_session_acl(ParsedArgs::Ptr args)
                                   << " (uid " << uid << ")"
                                   << std::endl;
                     }
-                    catch (DBusException& e)
+                    catch (DBusException &e)
                     {
                         std::cerr << "Failed revoking access from "
                                   << lookup_username(uid)
@@ -1451,7 +1507,7 @@ static int cmd_session_acl(ParsedArgs::Ptr args)
                         ret = 3;
                     }
                 }
-                catch (const LookupException&)
+                catch (const LookupException &)
                 {
                     std::cerr << "** ERROR ** --revoke " << user
                               << " does not map to a valid user account"
@@ -1462,7 +1518,7 @@ static int cmd_session_acl(ParsedArgs::Ptr args)
         if (args->Present("public-access"))
         {
             std::string ld = args->GetValue("public-access", 0);
-            if (("false" == ld) || ("true" == ld ))
+            if (("false" == ld) || ("true" == ld))
             {
                 session.SetPublicAccess("true" == ld);
                 if ("true" == ld)
@@ -1475,7 +1531,6 @@ static int cmd_session_acl(ParsedArgs::Ptr args)
                     std::cout << "Session is now only accessible to "
                               << "specific users"
                               << std::endl;
-
                 }
             }
             else
@@ -1526,18 +1581,18 @@ static int cmd_session_acl(ParsedArgs::Ptr args)
                 std::cout << "     Users granted access: " << std::to_string(acl.size())
                           << (1 != acl.size() ? " users" : " user")
                           << std::endl;
-                for (auto const& uid : acl)
+                for (auto const &uid : acl)
                 {
                     std::string user = lookup_username(uid);
                     std::cout << "                           - (" << uid << ") "
                               << " " << ('(' != user[0] ? user : "(unknown)")
-                    << std::endl;
+                              << std::endl;
                 }
             }
         }
         return ret;
     }
-    catch (const DBusException& excp)
+    catch (const DBusException &excp)
     {
         throw CommandException("session-acl", excp.GetRawError());
     }
@@ -1562,29 +1617,49 @@ SingleCommand::Ptr prepare_command_session_acl()
     cmd.reset(new SingleCommand("session-acl",
                                 "Manage access control lists for sessions",
                                 cmd_session_acl));
-    auto path_opt = cmd->AddOption("path", 'o', "SESSION-PATH", true,
+    auto path_opt = cmd->AddOption("path",
+                                   'o',
+                                   "SESSION-PATH",
+                                   true,
                                    "Path to the session in the session "
                                    "manager",
                                    arghelper_session_paths);
     path_opt->SetAlias("session-path");
-    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
+    cmd->AddOption("config",
+                   'c',
+                   "CONFIG-NAME",
+                   true,
                    "Alternative to --path, where configuration profile name "
                    "is used instead",
                    arghelper_config_names_sessions);
-    cmd->AddOption("interface", 'I', "INTERFACE", true,
+    cmd->AddOption("interface",
+                   'I',
+                   "INTERFACE",
+                   true,
                    "Alternative to --path, where tun interface name is used "
                    "instead",
                    arghelper_managed_interfaces);
-    cmd->AddOption("show", 's',
+    cmd->AddOption("show",
+                   's',
                    "Show the current access control lists");
-    cmd->AddOption("grant", 'G', "<UID | username>", true,
+    cmd->AddOption("grant",
+                   'G',
+                   "<UID | username>",
+                   true,
                    "Grant this user access to this session");
-    cmd->AddOption("revoke", 'R', "<UID | username>", true,
+    cmd->AddOption("revoke",
+                   'R',
+                   "<UID | username>",
+                   true,
                    "Revoke this user access from this session");
-    cmd->AddOption("public-access", "<true|false>", true,
+    cmd->AddOption("public-access",
+                   "<true|false>",
+                   true,
                    "Set/unset the public access flag",
                    arghelper_boolean);
-    cmd->AddOption("allow-log-access", "<true|false>", true,
+    cmd->AddOption("allow-log-access",
+                   "<true|false>",
+                   true,
                    "Can users granted access also access the session log?",
                    arghelper_boolean);
 

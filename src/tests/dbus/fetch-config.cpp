@@ -28,9 +28,12 @@
 #include <iostream>
 #include <gio/gio.h>
 
+
+
 int main(int argc, char **argv)
 {
-    if (argc != 2) {
+    if (argc != 2)
+    {
         std::cout << "Usage: " << argv[0] << " <config obj path>" << std::endl;
         return 1;
     }
@@ -46,11 +49,11 @@ int main(int argc, char **argv)
     error = NULL;
     GDBusProxy *p = g_dbus_proxy_new_sync(conn,
                                           G_DBUS_PROXY_FLAGS_NONE,
-                                          NULL,                            // GDBusInterfaceInfo
-                                          "net.openvpn.v3.configuration",  // name
-                                          argv[1],                         // object path
-                                          "net.openvpn.v3.configuration",  // interface name
-                                          NULL,                            // GCancellable
+                                          NULL,                           // GDBusInterfaceInfo
+                                          "net.openvpn.v3.configuration", // name
+                                          argv[1],                        // object path
+                                          "net.openvpn.v3.configuration", // interface name
+                                          NULL,                           // GCancellable
                                           &error);
     if (!p || error)
     {
@@ -58,7 +61,7 @@ int main(int argc, char **argv)
         return 2;
     }
 
-    GVariant *res_v = g_dbus_proxy_get_cached_property (p, "valid");
+    GVariant *res_v = g_dbus_proxy_get_cached_property(p, "valid");
     gboolean valid = g_variant_get_boolean(res_v);
     if (false == valid)
     {
@@ -67,30 +70,30 @@ int main(int argc, char **argv)
     }
     g_variant_unref(res_v);
 
-    res_v = g_dbus_proxy_get_cached_property (p, "readonly");
+    res_v = g_dbus_proxy_get_cached_property(p, "readonly");
     gboolean readonly = g_variant_get_boolean(res_v);
     g_variant_unref(res_v);
 
-    res_v = g_dbus_proxy_get_cached_property (p, "persistent");
+    res_v = g_dbus_proxy_get_cached_property(p, "persistent");
     gboolean persistent = g_variant_get_boolean(res_v);
     g_variant_unref(res_v);
 
-    res_v = g_dbus_proxy_get_cached_property (p, "single_use");
+    res_v = g_dbus_proxy_get_cached_property(p, "single_use");
     gboolean single_use = g_variant_get_boolean(res_v);
     g_variant_unref(res_v);
 
-    res_v = g_dbus_proxy_get_cached_property (p, "name");
+    res_v = g_dbus_proxy_get_cached_property(p, "name");
     gsize cfgnamelen = 0;
     const gchar *cfgname = g_variant_get_string(res_v, &cfgnamelen);
     g_variant_unref(res_v);
 
     error = NULL;
     res_v = g_dbus_proxy_call_sync(p,
-                                   "Fetch",                // method
-                                   NULL,                   // parameters to method
+                                   "Fetch", // method
+                                   NULL,    // parameters to method
                                    G_DBUS_CALL_FLAGS_NONE,
-                                   -1,                     // timeout, -1 == default
-                                   NULL,                   // GCancellable
+                                   -1,   // timeout, -1 == default
+                                   NULL, // GCancellable
                                    &error);
     if (!res_v || error)
     {

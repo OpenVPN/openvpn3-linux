@@ -48,6 +48,7 @@
 
 using namespace NetCfg;
 
+
 static void drop_root_ng()
 {
     uid_t uid;
@@ -57,25 +58,24 @@ static void drop_root_ng()
         uid = lookup_uid(OPENVPN_USERNAME);
         gid = lookup_gid(OPENVPN_GROUP);
     }
-    catch (const LookupException& excp)
+    catch (const LookupException &excp)
     {
         throw CommandException("openvpn3-service-netcfg", excp.str());
     }
 
-    capng_flags_t flags = (capng_flags_t) (CAPNG_DROP_SUPP_GRP | CAPNG_CLEAR_BOUNDING);
+    capng_flags_t flags = (capng_flags_t)(CAPNG_DROP_SUPP_GRP | CAPNG_CLEAR_BOUNDING);
     int res = capng_change_id(uid, gid, flags);
     if (0 != res)
     {
         std::cout << "Result: " << res << std::endl;
         throw CommandException("openvpn-service-netcfg",
-                               "** FATAL** Failed to drop to user/group to "
-                               OPENVPN_USERNAME "/" OPENVPN_GROUP);
+                               "** FATAL** Failed to drop to user/group to " OPENVPN_USERNAME "/" OPENVPN_GROUP);
     }
 }
 
 
 static void apply_capabilities(ParsedArgs::Ptr args,
-                               const NetCfgOptions& opts)
+                               const NetCfgOptions &opts)
 {
     //
     // Prepare dropping capabilities and user privileges
@@ -86,22 +86,18 @@ static void apply_capabilities(ParsedArgs::Ptr args,
 #endif
     {
         // Need this capability to configure network and routing.
-        capng_update(CAPNG_ADD, (capng_type_t) (CAPNG_EFFECTIVE|CAPNG_PERMITTED),
-                      CAP_NET_ADMIN);
+        capng_update(CAPNG_ADD, (capng_type_t)(CAPNG_EFFECTIVE | CAPNG_PERMITTED), CAP_NET_ADMIN);
 
         // CAP_DAC_OVERRIDE is needed to be allowed to overwrite /etc/resolv.conf
         if (args->Present("resolv-conf"))
         {
-            capng_update(CAPNG_ADD, (capng_type_t) (CAPNG_EFFECTIVE|CAPNG_PERMITTED),
-                         CAP_DAC_OVERRIDE);
+            capng_update(CAPNG_ADD, (capng_type_t)(CAPNG_EFFECTIVE | CAPNG_PERMITTED), CAP_DAC_OVERRIDE);
         }
 
-        if (RedirectMethod::BINDTODEV ==  opts.redirect_method)
+        if (RedirectMethod::BINDTODEV == opts.redirect_method)
         {
             // We need this to be able to call setsockopt with SO_BINDTODEVICE
-            capng_update(CAPNG_ADD, (capng_type_t) (CAPNG_EFFECTIVE|CAPNG_PERMITTED),
-                         CAP_NET_RAW);
-
+            capng_update(CAPNG_ADD, (capng_type_t)(CAPNG_EFFECTIVE | CAPNG_PERMITTED), CAP_NET_RAW);
         }
     }
 #ifdef OPENVPN_DEBUG
@@ -113,7 +109,6 @@ static void apply_capabilities(ParsedArgs::Ptr args,
     }
     capng_apply(CAPNG_SELECT_CAPS);
 }
-
 
 int netcfg_main(ParsedArgs::Ptr args)
 {
@@ -137,7 +132,7 @@ int netcfg_main(ParsedArgs::Ptr args)
     // directories where only root has access
     //
     std::ofstream logfs;
-    std::ostream  *logfile = nullptr;
+    std::ostream *logfile = nullptr;
     LogWriter::Ptr logwr = nullptr;
     ColourEngine::Ptr colourengine = nullptr;
 
@@ -160,8 +155,8 @@ int netcfg_main(ParsedArgs::Ptr args)
         if (args->Present("colour"))
         {
             colourengine.reset(new ANSIColours());
-             logwr.reset(new ColourStreamWriter(*logfile,
-                                                colourengine.get()));
+            logwr.reset(new ColourStreamWriter(*logfile,
+                                               colourengine.get()));
         }
         else
         {
@@ -221,7 +216,7 @@ int netcfg_main(ParsedArgs::Ptr args)
         DNS::ResolvConfFile::Ptr resolvconf = nullptr;
         if (args->Present("resolv-conf"))
         {
-            std::string rsc =  args->GetLastValue("resolv-conf");
+            std::string rsc = args->GetLastValue("resolv-conf");
 
             // We need to preserve a ResolvConfFile pointer to be able
             // to access the DNS::ResolvConfFile::Restore() method
@@ -236,13 +231,13 @@ int netcfg_main(ParsedArgs::Ptr args)
             {
                 resolver_be = new DNS::SystemdResolved(dbus.GetConnection());
             }
-            catch (const DNS::resolved::Exception& excp)
+            catch (const DNS::resolved::Exception &excp)
             {
-                std::cerr << "*** ERROR *** "<< excp.what() << std::endl;
+                std::cerr << "*** ERROR *** " << excp.what() << std::endl;
             }
-            catch (const NetCfgException& excp)
+            catch (const NetCfgException &excp)
             {
-                std::cerr << "*** ERROR *** "<< excp.what() << std::endl;
+                std::cerr << "*** ERROR *** " << excp.what() << std::endl;
             }
         }
 
@@ -252,8 +247,7 @@ int netcfg_main(ParsedArgs::Ptr args)
             resolvmgr = new DNS::SettingsManager(resolver_be);
         }
 
-        NetworkCfgService netcfgsrv(dbus.GetConnection(), resolvmgr,
-                                    logwr.get(), netcfgopts);
+        NetworkCfgService netcfgsrv(dbus.GetConnection(), resolvmgr, logwr.get(), netcfgopts);
         netcfgsrv.SetDefaultLogLevel(log_level);
 
         // Prepare GLib Main loop
@@ -306,7 +300,7 @@ int netcfg_main(ParsedArgs::Ptr args)
                 resolvconf->Restore();
             }
         }
-        catch (std::exception& e2)
+        catch (std::exception &e2)
         {
             std::cout << "** ERROR ** Failed restoring resolv.conf: "
                       << e2.what() << std::endl;
@@ -316,13 +310,13 @@ int netcfg_main(ParsedArgs::Ptr args)
             }
         }
     }
-    catch (const LogServiceProxyException& excp)
+    catch (const LogServiceProxyException &excp)
     {
         std::cout << "** ERROR ** " << excp.what() << std::endl;
         std::cout << "            " << excp.debug_details() << std::endl;
         exit_code = 3;
     }
-    catch (std::exception& excp)
+    catch (std::exception &excp)
     {
         std::cout << "FATAL ERROR: " << excp.what() << std::endl;
         exit_code = 3;
@@ -333,37 +327,58 @@ int netcfg_main(ParsedArgs::Ptr args)
     return exit_code;
 }
 
+
+
 int main(int argc, char **argv)
 {
-    SingleCommand argparser(argv[0], "OpenVPN 3 Network Configuration Manager",
-                            netcfg_main);
+    SingleCommand argparser(argv[0], "OpenVPN 3 Network Configuration Manager", netcfg_main);
     argparser.AddVersionOption();
-    argparser.AddOption("log-level", "LOG-LEVEL", true,
+    argparser.AddOption("log-level",
+                        "LOG-LEVEL",
+                        true,
                         "Sets the default log verbosity level (valid values 0-6, default 4)");
-    argparser.AddOption("log-file", "FILE" , true,
+    argparser.AddOption("log-file",
+                        "FILE",
+                        true,
                         "Write log data to FILE.  Use 'stdout:' for console logging.");
-    argparser.AddOption("colour", 0,
+    argparser.AddOption("colour",
+                        0,
                         "Make the log lines colourful");
-    argparser.AddOption("signal-broadcast", 0,
+    argparser.AddOption("signal-broadcast",
+                        0,
                         "Broadcast all D-Bus signals instead of targeted unicast");
-    argparser.AddOption("idle-exit", "MINUTES", true,
+    argparser.AddOption("idle-exit",
+                        "MINUTES",
+                        true,
                         "How long to wait before exiting if being idle. "
                         "0 disables it (Default: 5 minutes)");
-    argparser.AddOption("resolv-conf", "FILE", true,
+    argparser.AddOption("resolv-conf",
+                        "FILE",
+                        true,
                         "Use file based resolv.conf management, based using FILE");
-    argparser.AddOption("systemd-resolved", 0,
+    argparser.AddOption("systemd-resolved",
+                        0,
                         "Use systemd-resolved for configuring DNS resolver settings");
-    argparser.AddOption("redirect-method", "METHOD", true,
+    argparser.AddOption("redirect-method",
+                        "METHOD",
+                        true,
                         "Method to use if --redirect-gateway is in use for VPN server redirect. "
                         "Methods: host-route (default), bind-device, none");
-    argparser.AddOption("set-somark", "MARK", true,
+    argparser.AddOption("set-somark",
+                        "MARK",
+                        true,
                         "Set the specified so mark on all VPN sockets.");
-    argparser.AddOption("state-dir", 0, "DIRECTORY", true,
+    argparser.AddOption("state-dir",
+                        0,
+                        "DIRECTORY",
+                        true,
                         "Directory where to save the runtime configuration settings");
 #if OPENVPN_DEBUG
-    argparser.AddOption("disable-capabilities", 0,
+    argparser.AddOption("disable-capabilities",
+                        0,
                         "Do not restrcit any process capabilties (INSECURE)");
-    argparser.AddOption("run-as-root", 0,
+    argparser.AddOption("run-as-root",
+                        0,
                         "Keep running as root and do not drop privileges (INSECURE)");
 #endif
 
@@ -371,12 +386,12 @@ int main(int argc, char **argv)
     {
         return argparser.RunCommand(simple_basename(argv[0]), argc, argv);
     }
-    catch (CommandArgBaseException& excp)
+    catch (CommandArgBaseException &excp)
     {
         std::cout << excp.what() << std::endl;
         return 2;
     }
-    catch (const std::exception& excp)
+    catch (const std::exception &excp)
     {
         std::cout << "*** ERROR ***   " << excp.what() << std::endl;
         return 3;

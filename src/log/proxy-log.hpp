@@ -32,39 +32,37 @@
 #include "dbus/proxy.hpp"
 #include "dbus/glibutils.hpp"
 
+
 /**
  *  Basic exception class for LogServiceProxy related errors
  */
 class LogServiceProxyException : public std::exception
 {
-public:
-    LogServiceProxyException(const std::string& msg) noexcept
+  public:
+    LogServiceProxyException(const std::string &msg) noexcept
         : message(msg)
     {
     }
 
-    LogServiceProxyException(const std::string& msg,
-                             const std::string& dbg) noexcept
+    LogServiceProxyException(const std::string &msg,
+                             const std::string &dbg) noexcept
         : message(msg), debug(dbg)
     {
     }
 
     virtual ~LogServiceProxyException() = default;
 
-
-    virtual const char* what() const noexcept
+    virtual const char *what() const noexcept
     {
         return message.c_str();
     }
-
 
     virtual std::string debug_details() const noexcept
     {
         return debug;
     }
 
-
-private:
+  private:
     std::string message = {};
     std::string debug = {};
 };
@@ -74,9 +72,9 @@ private:
 struct LogSubscriberEntry
 {
     LogSubscriberEntry(std::string tag,
-                         std::string busname,
-                         std::string interface,
-                         std::string object_path)
+                       std::string busname,
+                       std::string interface,
+                       std::string object_path)
         : tag(tag), busname(busname), interface(interface),
           object_path(object_path)
     {
@@ -91,12 +89,13 @@ struct LogSubscriberEntry
 typedef std::vector<LogSubscriberEntry> LogSubscribers;
 
 
+
 class LogProxy : protected DBusProxy
 {
-public:
+  public:
     using Ptr = std::shared_ptr<LogProxy>;
 
-    LogProxy(GDBusConnection* conn, const std::string& path)
+    LogProxy(GDBusConnection *conn, const std::string &path)
         : DBusProxy(conn,
                     OpenVPN3DBus_name_log,
                     OpenVPN3DBus_interf_log,
@@ -139,7 +138,7 @@ public:
 
     void Remove()
     {
-        (void) Call("Remove", true);
+        (void)Call("Remove", true);
     }
 };
 
@@ -151,7 +150,7 @@ public:
  */
 class LogServiceProxy : public DBusProxy
 {
-public:
+  public:
     typedef std::shared_ptr<LogServiceProxy> Ptr;
 
     /**
@@ -159,7 +158,7 @@ public:
      *
      * @param dbuscon  D-Bus connection to use for the proxy calls
      */
-    LogServiceProxy(GDBusConnection * dbuscon)
+    LogServiceProxy(GDBusConnection *dbuscon)
         : DBusProxy(dbuscon,
                     OpenVPN3DBus_name_log,
                     OpenVPN3DBus_interf_log,
@@ -168,9 +167,9 @@ public:
         CheckServiceAvail();
         try
         {
-            (void) GetServiceVersion();
+            (void)GetServiceVersion();
         }
-        catch (DBusProxyAccessDeniedException&)
+        catch (DBusProxyAccessDeniedException &)
         {
             // Let this pass - service is available
         }
@@ -197,18 +196,19 @@ public:
             lgs.reset(new LogServiceProxy(conn));
             lgs->Attach(interface);
         }
-        catch(const DBusException& excp)
+        catch (const DBusException &excp)
         {
-            if(lgs)
+            if (lgs)
             {
                 lgs.reset();
             }
             throw LogServiceProxyException(
-                    "Could not connect to " + OpenVPN3DBus_name_log + " service",
-                    excp.what());
+                "Could not connect to " + OpenVPN3DBus_name_log + " service",
+                excp.what());
         }
         return lgs;
     }
+
 
     /**
      *  Attach this D-Bus connection to the log service.  By doing this
@@ -231,9 +231,9 @@ public:
     }
 
 
-    void AssignSession(const std::string& sesspath, const std::string& interf)
+    void AssignSession(const std::string &sesspath, const std::string &interf)
     {
-        GVariant* empty = Call("AssignSession",
+        GVariant *empty = Call("AssignSession",
                                g_variant_new("(os)",
                                              sesspath.c_str(),
                                              interf.c_str()),
@@ -242,10 +242,10 @@ public:
     }
 
 
-    LogProxy::Ptr ProxyLogEvents(const std::string& target,
-                               const std::string& session_path) const
+    LogProxy::Ptr ProxyLogEvents(const std::string &target,
+                                 const std::string &session_path) const
     {
-        GVariant* res = Call("ProxyLogEvents",
+        GVariant *res = Call("ProxyLogEvents",
                              g_variant_new("(so)",
                                            target.c_str(),
                                            session_path.c_str()));
@@ -438,9 +438,10 @@ public:
         return list;
     }
 
-private:
-    static bool logsubscribers_sort(const LogSubscriberEntry& lhs,
-                                    const LogSubscriberEntry& rhs)
+
+  private:
+    static bool logsubscribers_sort(const LogSubscriberEntry &lhs,
+                                    const LogSubscriberEntry &rhs)
     {
         return lhs.busname < rhs.busname;
     }

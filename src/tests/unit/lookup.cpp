@@ -30,8 +30,7 @@
 #include "common/utils.hpp"
 #include "common/lookup.hpp"
 
-namespace unittest
-{
+namespace unittest {
 
 TEST(lookup, root_username)
 {
@@ -46,7 +45,7 @@ TEST(lookup, nobody_username)
     {
         nobody = lookup_uid("nobody");
     }
-    catch (const LookupException&)
+    catch (const LookupException &)
     {
         GTEST_SKIP() << "User nobody does not exist on this system";
     }
@@ -82,13 +81,13 @@ TEST(lookup, nobody_groupname)
     {
         ASSERT_NE(lookup_gid("nobody"), 0);
     }
-    catch (const LookupException&)
+    catch (const LookupException &)
     {
         try
         {
             ASSERT_NE(lookup_gid("nogroup"), 0);
         }
-        catch (const LookupException&)
+        catch (const LookupException &)
         {
             GTEST_SKIP() << "Neither nobody nor nogroup groups exists on this system";
             return;

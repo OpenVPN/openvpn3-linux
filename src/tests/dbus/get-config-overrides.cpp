@@ -32,50 +32,52 @@
 
 using namespace openvpn;
 
+
+
 int main(int argc, char **argv)
 {
-        if (argc != 2) {
-            std::cout << "Usage: " << argv[0] << " <config obj path>" << std::endl;
-            return 1;
-        }
+    if (argc != 2)
+    {
+        std::cout << "Usage: " << argv[0] << " <config obj path>" << std::endl;
+        return 1;
+    }
 
-        DBus dbusobj(G_BUS_TYPE_SYSTEM);
-        dbusobj.Connect();
+    DBus dbusobj(G_BUS_TYPE_SYSTEM);
+    dbusobj.Connect();
 
-        OpenVPN3ConfigurationProxy config(dbusobj, argv[1]);
+    OpenVPN3ConfigurationProxy config(dbusobj, argv[1]);
 
-        std::vector<OverrideValue> overrides = config.GetOverrides();
-        for (const auto& ov : overrides)
+    std::vector<OverrideValue> overrides = config.GetOverrides();
+    for (const auto &ov : overrides)
+    {
+        std::string value;
+        std::string type;
+
+        switch (ov.override.type)
         {
-            std::string value;
-            std::string type;
+        case OverrideType::boolean:
+            value = (ov.boolValue ? "True" : "False");
+            type = "boolean";
+            break;
 
-            switch (ov.override.type)
-            {
-            case OverrideType::boolean:
-                    value = (ov.boolValue ? "True" : "False");
-                    type = "boolean";
-                    break;
+        case OverrideType::string:
+            value = ov.strValue;
+            type = "string";
+            break;
 
-            case OverrideType::string:
-                    value = ov.strValue;
-                    type = "string";
-                    break;
+        case OverrideType::invalid:
+            value = "(invalid)";
+            type = "(invalid)";
+            break;
 
-            case OverrideType::invalid:
-                    value = "(invalid)";
-                    type = "(invalid)";
-                    break;
-
-            default:
-                    value = "(unknown)";
-                    type = "(unknown)";
-            }
-            std::cout << ov.override.key << " "
-                      << "[type: " << type << "]: "
-                      << value
-                      << std::endl;
+        default:
+            value = "(unknown)";
+            type = "(unknown)";
         }
-        return 0;
+        std::cout << ov.override.key << " "
+                  << "[type: " << type << "]: "
+                  << value
+                  << std::endl;
+    }
+    return 0;
 }
-

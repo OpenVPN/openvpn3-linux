@@ -29,6 +29,8 @@
 #include "dbus/core.hpp"
 #include "dbus/proxy.hpp"
 
+
+
 int main(int argc, char **argv)
 {
     if (argc != 4)
@@ -50,7 +52,7 @@ int main(int argc, char **argv)
                   << std::endl;
         return 0;
     }
-    catch (std::exception& err)
+    catch (std::exception &err)
     {
         std::cout << "** ERROR ** " << err.what() << std::endl;
         return 2;

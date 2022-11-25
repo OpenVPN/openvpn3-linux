@@ -84,7 +84,8 @@ TEST(LogMetaDataValue, op_stream_write)
     EXPECT_STREQ(s1.str().c_str(), "meta_labelA=ValueValue");
 
     LogMetaDataValue::Ptr mdv2 = LogMetaDataValue::create("meta_labelB",
-                                                          "DataData", true);
+                                                          "DataData",
+                                                          true);
     std::stringstream s2;
     s2 << *mdv2;
     EXPECT_STREQ(s2.str().c_str(), "");
@@ -123,7 +124,7 @@ TEST(LogMetaData, static_add_get_meta)
 
     lmd.AddMeta("label2", "value 2", true);
     EXPECT_STREQ(lmd.GetMetaValue("label2").c_str(), "value 2 ");
-    EXPECT_STREQ(lmd.GetMetaValue("label2", false,"___").c_str(), "value 2___");
+    EXPECT_STREQ(lmd.GetMetaValue("label2", false, "___").c_str(), "value 2___");
 
     LogTag::Ptr tag = LogTag::create("dummysender", "dummyinterface");
     std::string chk_noencap = tag->str(false) + " ";
@@ -177,7 +178,7 @@ TEST(LogMetaData, ptr_add_get_meta)
 
     lmd->AddMeta("label2", "value 2", true);
     EXPECT_STREQ(lmd->GetMetaValue("label2").c_str(), "value 2 ");
-    EXPECT_STREQ(lmd->GetMetaValue("label2", false,"==").c_str(), "value 2==");
+    EXPECT_STREQ(lmd->GetMetaValue("label2", false, "==").c_str(), "value 2==");
 }
 
 
@@ -247,12 +248,11 @@ void compare_logmetadata_records(LogMetaData::Records set1, LogMetaData::Records
     ASSERT_EQ(set1.size(), set2.size()) << "Mismatch in LogMetaData::Record set sizes";
 
     int idx = 0;
-    for (const auto& r : set1)
+    for (const auto &r : set1)
     {
         EXPECT_STREQ(r.c_str(), set2[idx].c_str());
         ++idx;
     }
-
 }
 
 TEST(LogMetaData, GetMetaDataRecords)
@@ -266,35 +266,27 @@ TEST(LogMetaData, GetMetaDataRecords)
     lmd.AddMeta("logtag", tag);
 
     compare_logmetadata_records(lmd.GetMetaDataRecords(),
-                                {
-                                    "label_A=Value A",
-                                    "label_skip=Value skip",
-                                    "label_B=Value B",
-                                    "logtag=" + tag->str()
-                                });
+                                {"label_A=Value A",
+                                 "label_skip=Value skip",
+                                 "label_B=Value B",
+                                 "logtag=" + tag->str()});
 
     compare_logmetadata_records(lmd.GetMetaDataRecords(true),
-                                {
-                                    "LABEL_A=Value A",
-                                    "LABEL_SKIP=Value skip",
-                                    "LABEL_B=Value B",
-                                    "LOGTAG=" + tag->str()
-                                });
+                                {"LABEL_A=Value A",
+                                 "LABEL_SKIP=Value skip",
+                                 "LABEL_B=Value B",
+                                 "LOGTAG=" + tag->str()});
 
     compare_logmetadata_records(lmd.GetMetaDataRecords(false, false),
-                                {
-                                    "label_A=Value A",
-                                    "label_skip=Value skip",
-                                    "label_B=Value B",
-                                    "logtag=" + tag->str(false)
-                                });
+                                {"label_A=Value A",
+                                 "label_skip=Value skip",
+                                 "label_B=Value B",
+                                 "logtag=" + tag->str(false)});
 
     compare_logmetadata_records(lmd.GetMetaDataRecords(true, false),
-                                {
-                                    "LABEL_A=Value A",
-                                    "LABEL_SKIP=Value skip",
-                                    "LABEL_B=Value B",
-                                    "LOGTAG=" + tag->str(false)
-                                });
+                                {"LABEL_A=Value A",
+                                 "LABEL_SKIP=Value skip",
+                                 "LABEL_B=Value B",
+                                 "LOGTAG=" + tag->str(false)});
 }
-} // unittest
+} // namespace unittest

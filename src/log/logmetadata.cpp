@@ -37,25 +37,25 @@
 //  LogMetaDataValue  -  implementation
 //
 
-LogMetaDataValue::LogMetaDataValue(const std::string& l, const std::string& v,
+LogMetaDataValue::LogMetaDataValue(const std::string &l,
+                                   const std::string &v,
                                    bool s)
     : label(l), str_value(v), logtag(nullptr), skip(s)
 {
     type = Type::LOGMETA_STRING;
 }
 
-
-LogMetaDataValue::LogMetaDataValue(const std::string& l, const LogTag::Ptr v,
+LogMetaDataValue::LogMetaDataValue(const std::string &l,
+                                   const LogTag::Ptr v,
                                    bool s)
     : label(l), str_value(""), logtag(v), skip(s)
 {
     type = Type::LOGMETA_LOGTAG;
 }
 
-
 const std::string LogMetaDataValue::GetValue(const bool logtag_encaps) const
 {
-    switch(type)
+    switch (type)
     {
     case Type::LOGMETA_STRING:
         return str_value;
@@ -67,6 +67,7 @@ const std::string LogMetaDataValue::GetValue(const bool logtag_encaps) const
 }
 
 
+
 //
 //  LogMetaData  -  implementation
 //
@@ -75,11 +76,12 @@ std::string LogMetaData::GetMetaValue(const std::string l,
                                       const bool encaps_logtag,
                                       const std::string postfix) const
 {
-    auto it = std::find_if(metadata.begin(), metadata.end(),
+    auto it = std::find_if(metadata.begin(),
+                           metadata.end(),
                            [l](LogMetaDataValue::Ptr e)
                            {
-                               return l == e->label;
-                           });
+        return l == e->label;
+    });
     if (metadata.end() == it)
     {
         return "";
@@ -89,16 +91,21 @@ std::string LogMetaData::GetMetaValue(const std::string l,
 
 
 LogMetaData::Records LogMetaData::GetMetaDataRecords(const bool upcase_label,
-                                        const bool logtag_encaps) const
+                                                     const bool logtag_encaps) const
 {
     Records ret;
-    for (const auto& mdc : metadata)
+    for (const auto &mdc : metadata)
     {
         std::string label = mdc->label;
         if (upcase_label)
         {
-            std::transform(label.begin(), label.end(), label.begin(),
-                           [](unsigned char c){ return std::toupper(c); });
+            std::transform(label.begin(),
+                           label.end(),
+                           label.begin(),
+                           [](unsigned char c)
+                           {
+                return std::toupper(c);
+            });
         }
         if (LogMetaDataValue::Type::LOGMETA_LOGTAG == mdc->type)
         {

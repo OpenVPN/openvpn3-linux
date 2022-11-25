@@ -44,14 +44,14 @@ static std::vector<std::string> get_running_sessions()
     OpenVPN3SessionMgrProxy smgr(G_BUS_TYPE_SYSTEM);
     const XmlDocPtr introsp = smgr.Introspect();
 
-    tinyxml2::XMLNode* root = introsp->FirstChildElement();
-    const tinyxml2::XMLElement* node = Xml::find(root, "node");
+    tinyxml2::XMLNode *root = introsp->FirstChildElement();
+    const tinyxml2::XMLElement *node = Xml::find(root, "node");
     std::vector<std::string> paths{};
     while (nullptr != node)
     {
-        const char* name = node->Attribute("name");
+        const char *name = node->Attribute("name");
         std::string session_path = OpenVPN3DBus_rootp_sessions + "/"
-                                 + std::string(name);
+                                   + std::string(name);
         paths.push_back(session_path);
 
         node = Xml::next_sibling(node);
@@ -84,7 +84,7 @@ static void list_running_sessions(bool verbose)
     try
     {
         bool first = true;
-        for (const auto& session_path : get_running_sessions())
+        for (const auto &session_path : get_running_sessions())
         {
             OpenVPN3SessionProxy sess(G_BUS_TYPE_SYSTEM, session_path);
 
@@ -106,19 +106,19 @@ static void list_running_sessions(bool verbose)
                 if (!devname.empty())
                 {
                     devname += ": ";
-    #ifdef ENABLE_OVPNDCO
+#ifdef ENABLE_OVPNDCO
                     if (sess.GetDCO())
                     {
                         devname += "[DCO] ";
                     }
-    #endif
+#endif
                 }
                 else
                 {
                     devname = " - ";
                 }
             }
-            catch (DBusException&)
+            catch (DBusException &)
             {
                 // The session may not have been started yet; the error
                 // in this case isn't that valuable so we just consider
@@ -137,10 +137,10 @@ static void list_running_sessions(bool verbose)
                     std::string sessname = sess.GetStringProperty("session_name");
                     if (!sessname.empty())
                     {
-                        sessionname = sessname ;
+                        sessionname = sessname;
                     }
                 }
-                catch (DBusException&)
+                catch (DBusException &)
                 {
                     // Ignore any errors if this property is unavailable
                     sessionname = "-";
@@ -158,10 +158,9 @@ static void list_running_sessions(bool verbose)
                 {
                     status = sess.GetLastStatus();
                 }
-                catch (DBusException&)
+                catch (DBusException &)
                 {
                 }
-
             }
 
 
@@ -188,7 +187,8 @@ static void list_running_sessions(bool verbose)
                               << "Config name" << std::setw(17) << " "
                               << "Session name" << std::setw(28) << " "
                               << std::endl
-                              << std::setw(18) << " " << "Last status"
+                              << std::setw(18) << " "
+                              << "Last status"
                               << std::endl;
                 }
                 std::cout << std::setw(79) << std::setfill('-') << "-"
@@ -206,7 +206,7 @@ static void list_running_sessions(bool verbose)
             if (verbose)
             {
                 std::cout << devname << std::setw(18 - devname.length()) << " "
-                        << sess.GetPath() << std::endl;
+                          << sess.GetPath() << std::endl;
                 std::cout << std::setw(18) << " ";
             }
             else
@@ -246,12 +246,12 @@ static void list_running_sessions(bool verbose)
             std::cout << std::setw(79) << std::setfill('-') << "-" << std::endl;
         }
     }
-    catch (DBusProxyAccessDeniedException& excp)
+    catch (DBusProxyAccessDeniedException &excp)
     {
         std::string rawerr(excp.what());
         throw CommandException("sessionmgr-service", rawerr);
     }
-    catch (DBusException& excp)
+    catch (DBusException &excp)
     {
         std::string rawerr(excp.what());
         throw CommandException("sessionmgr-service",
@@ -294,15 +294,13 @@ SingleCommand::Ptr prepare_command_sessionmgr_service()
     cmd.reset(new SingleCommand("sessionmgr-service",
                                 "Interact the OpenVPN 3 Session manager service",
                                 cmd_sessionmgr_service));
-    cmd->AddOption("list-sessions", 0,
-                   "List all running sessions and its owner");
-    cmd->AddOption("list-sessions-verbose", 0,
-                   "List a more verbose list of running sessions");
+    cmd->AddOption("list-sessions", 0, "List all running sessions and its owner");
+    cmd->AddOption("list-sessions-verbose", 0, "List a more verbose list of running sessions");
 
     return cmd;
 }
 
 
-#endif  // HAVE_TINYXML
+#endif // HAVE_TINYXML
 
 //////////////////////////////////////////////////////////////////////////

@@ -44,20 +44,21 @@ using namespace openvpn;
 #include "common/cmdargparser.hpp"
 #include "common/configfileparser.hpp"
 
+
 //
 //  ParsedArgs implementation
 //
 
 void ParsedArgs::ImportConfigFile(Configuration::File::Ptr config)
 {
-    for (const auto& opt : config->GetOptions())
+    for (const auto &opt : config->GetOptions())
     {
         // Check if this is an exclusive option
         std::vector<std::string> related = config->GetRelatedExclusiveOptions(opt);
         // Remove all the related exclusive options in the parsed args.
         // The imported configuration file overrides the command line
         // arguments
-        for (const auto& rel : related)
+        for (const auto &rel : related)
         {
             remove_arg(rel);
         }
@@ -68,6 +69,7 @@ void ParsedArgs::ImportConfigFile(Configuration::File::Ptr config)
         present.push_back(opt);
     }
 }
+
 
 
 //
@@ -81,11 +83,16 @@ Commands::ShellCompletion::ShellCompletion()
 {
     AddOption("list-commands",
               "List all available commands");
-    AddOption("list-options", "COMMAND", true,
+    AddOption("list-options",
+              "COMMAND",
+              true,
               "List all available options for a specific command");
-    AddOption("arg-helper", "OPTION", true,
+    AddOption("arg-helper",
+              "OPTION",
+              true,
               "Used together with --list-options, lists value hint to an option");
 }
+
 
 /**
  *  Provide a "back-pointer" to the parent Commands objects.  This
@@ -95,16 +102,19 @@ Commands::ShellCompletion::ShellCompletion()
  *
  * @param cmds  Commands * to the parent Commands object.
  */
-void Commands::ShellCompletion::SetMainCommands(Commands * cmds)
+void Commands::ShellCompletion::SetMainCommands(Commands *cmds)
 {
     commands = cmds;
 }
 
 
-int Commands::ShellCompletion::RunCommand(const std::string arg0, unsigned int ignored_skip,
-               int argc, char **argv)
+int Commands::ShellCompletion::RunCommand(const std::string arg0,
+                                          unsigned int ignored_skip,
+                                          int argc,
+                                          char **argv)
 {
-    try {
+    try
+    {
         ParsedArgs::Ptr args = parse_commandline(arg0, 1, argc, argv);
 
         if (!args->GetCompleted())
@@ -124,7 +134,6 @@ int Commands::ShellCompletion::RunCommand(const std::string arg0, unsigned int i
             throw CommandException("shell-completion",
                                    "Can only use --list-options once");
         }
-
 
         if (args->Present("arg-helper")
             && !args->Present("list-options"))
@@ -192,7 +201,7 @@ void Commands::ShellCompletion::list_commands()
  */
 void Commands::ShellCompletion::list_options(const std::string cmd)
 {
-    for (auto const& c : commands->GetAllCommandObjects())
+    for (auto const &c : commands->GetAllCommandObjects())
     {
         if ((c->GetCommand() == cmd) || (c->GetAliasCommand() == cmd))
         {
@@ -205,7 +214,7 @@ void Commands::ShellCompletion::list_options(const std::string cmd)
 
 void Commands::ShellCompletion::call_arg_helper(const std::string cmd, const std::string option)
 {
-    for (auto const& c : commands->GetAllCommandObjects())
+    for (auto const &c : commands->GetAllCommandObjects())
     {
         if ((c->GetCommand() == cmd) || (c->GetAliasCommand() == cmd))
         {
@@ -231,12 +240,12 @@ void Commands::ShellCompletion::call_arg_helper(const std::string cmd, const std
 //  ParsedArgs implementation
 //
 
-void ParsedArgs::CheckExclusiveOptions(const ExclusiveGroups& args_exclusive) const
+void ParsedArgs::CheckExclusiveOptions(const ExclusiveGroups &args_exclusive) const
 {
     // Check if processed options is listed as an exclusive argument
-    for (const auto& arg : present)
+    for (const auto &arg : present)
     {
-        for (const auto& group : args_exclusive)
+        for (const auto &group : args_exclusive)
         {
             // Is this argument listed in this group of exclusive args?
             if (std::find(group.begin(), group.end(), arg) == group.end())
@@ -248,7 +257,7 @@ void ParsedArgs::CheckExclusiveOptions(const ExclusiveGroups& args_exclusive) co
             // This argument was found to be in an exclusiveness group.
             // Now we need to see if any of the other arguments in this
             // group has been used already.
-            for (const auto& x : group)
+            for (const auto &x : group)
             {
                 if (arg == x)
                 {
@@ -260,19 +269,20 @@ void ParsedArgs::CheckExclusiveOptions(const ExclusiveGroups& args_exclusive) co
                 // the exclusiveness list has been used already
                 if (std::find(present.begin(),
                               present.end(),
-                              x) != present.end())
+                              x)
+                    != present.end())
                 {
                     throw ExclusiveOptionError(arg, group);
                 }
             }
         }
-    }  // End of exclusiveness check
+    } // End of exclusiveness check
 }
 
 
-bool ParsedArgs::parse_bool_value(const std::string& k, const std::string& value) const
+bool ParsedArgs::parse_bool_value(const std::string &k, const std::string &value) const
 {
-    if (("false" != value) && ("true" != value )
+    if (("false" != value) && ("true" != value)
         && ("no" != value) && ("yes" != value))
     {
         throw OptionException(k, "Boolean options must be either 'false' or 'true'");
@@ -281,7 +291,7 @@ bool ParsedArgs::parse_bool_value(const std::string& k, const std::string& value
 }
 
 
-void ParsedArgs::remove_arg(const std::string& opt)
+void ParsedArgs::remove_arg(const std::string &opt)
 {
     // Remove the parsed argument values
     auto e = key_value.find(opt);
@@ -299,6 +309,7 @@ void ParsedArgs::remove_arg(const std::string& opt)
 }
 
 
+
 //
 //  RegisterParsedArgs implementation
 //
@@ -309,10 +320,11 @@ void RegisterParsedArgs::register_option(const std::string k, const char *v)
     {
         key_value[k].push_back(std::string(v));
     }
-    for (auto const& e : present)
+    for (auto const &e : present)
     {
         // Don't register duplicates
-        if (e == k) {
+        if (e == k)
+        {
             return;
         }
     }
@@ -320,7 +332,7 @@ void RegisterParsedArgs::register_option(const std::string k, const char *v)
 }
 
 
-void RegisterParsedArgs::register_extra_args(const char * e)
+void RegisterParsedArgs::register_extra_args(const char *e)
 {
     extra_args.push_back(std::string(e));
 }
@@ -355,12 +367,11 @@ SingleCommandOption::SingleCommandOption(const std::string longopt,
                                          const std::string help_text,
                                          const argHelperFunc arg_helper_func)
     : longopt(longopt), shortopt(shrtopt),
-      metavar(metavar),  arg_helper_func(arg_helper_func),
+      metavar(metavar), arg_helper_func(arg_helper_func),
       help_text(help_text),
       alias("")
 {
-    update_getopt(longopt, shortopt,
-                  (required ? required_argument : optional_argument));
+    update_getopt(longopt, shortopt, (required ? required_argument : optional_argument));
 }
 
 
@@ -379,7 +390,7 @@ SingleCommandOption::~SingleCommandOption()
 }
 
 
-void SingleCommandOption::SetAlias(const std::string& optalias)
+void SingleCommandOption::SetAlias(const std::string &optalias)
 {
     if (!alias.empty())
     {
@@ -391,7 +402,7 @@ void SingleCommandOption::SetAlias(const std::string& optalias)
     //  Initialise a separate struct option for the alias
     getopt_alias.name = strdup(alias.c_str());
     getopt_alias.flag = NULL;
-    getopt_alias.has_arg =  getopt_option.has_arg;
+    getopt_alias.has_arg = getopt_option.has_arg;
     getopt_alias.val = 0;
 }
 
@@ -403,7 +414,6 @@ std::string SingleCommandOption::get_option_list_prefixed()
     if (0 != shortopt)
     {
         r << "-" << shortopt;
-
     }
     if (!longopt.empty())
     {
@@ -434,7 +444,7 @@ std::string SingleCommandOption::get_option_list_prefixed()
 }
 
 
-std::string SingleCommandOption::call_argument_helper_callback(const std::string& opt_name)
+std::string SingleCommandOption::call_argument_helper_callback(const std::string &opt_name)
 {
     if (nullptr == arg_helper_func)
     {
@@ -520,23 +530,21 @@ std::vector<struct option *> SingleCommandOption::get_struct_option()
 std::vector<std::string> SingleCommandOption::gen_help_line(const unsigned int width)
 {
     std::vector<std::string> ret;
-    ret.push_back(gen_help_line_generator(shortopt, longopt,
-                                          help_text, width));
+    ret.push_back(gen_help_line_generator(shortopt, longopt, help_text, width));
     if (!alias.empty())
     {
         std::stringstream alias_help;
         alias_help << "Alias for --" << longopt;
-        ret.push_back(gen_help_line_generator(0, alias,
-                                              alias_help.str(), width));
+        ret.push_back(gen_help_line_generator(0, alias, alias_help.str(), width));
     }
     return ret;
 }
 
 
 std::string SingleCommandOption::gen_help_line_generator(const char opt_short,
-                                    const std::string& opt_long,
-                                    const std::string& opt_help,
-                                    const unsigned int width)
+                                                         const std::string &opt_long,
+                                                         const std::string &opt_help,
+                                                         const unsigned int width)
 {
     std::stringstream r;
 
@@ -546,9 +554,9 @@ std::string SingleCommandOption::gen_help_line_generator(const char opt_short,
     {
         r << "     ";
     }
-    else  // ... we have a short option, format the output of it
+    else // ... we have a short option, format the output of it
     {
-        r << "-" << opt_short<< " | ";
+        r << "-" << opt_short << " | ";
     }
     r << "--" << opt_long;
 
@@ -592,7 +600,8 @@ std::string SingleCommandOption::gen_help_line_generator(const char opt_short,
 }
 
 
-void SingleCommandOption::update_getopt(const std::string longopt, const char  shortopt,
+void SingleCommandOption::update_getopt(const std::string longopt,
+                                        const char shortopt,
                                         const int has_args)
 {
     // We need a strdup() as the pointer longopt.c_str() returns on
@@ -600,7 +609,7 @@ void SingleCommandOption::update_getopt(const std::string longopt, const char  s
     // struct.  In the destructor, this is free()d again.
     getopt_option.name = strdup(longopt.c_str());
     getopt_option.flag = NULL;
-    getopt_option.has_arg =  has_args;
+    getopt_option.has_arg = has_args;
     getopt_option.val = shortopt;
 
     // Ensure the alias is properly initialized
@@ -618,6 +627,7 @@ SingleCommandOption::Ptr SingleCommand::AddOption(const std::string longopt,
     options.push_back(opt);
     return opt;
 }
+
 
 SingleCommandOption::Ptr SingleCommand::AddOption(const std::string longopt,
                                                   const char shortopt,
@@ -637,8 +647,8 @@ SingleCommandOption::Ptr SingleCommand::AddOption(const std::string longopt,
 }
 
 
-void SingleCommand::SetAliasCommand(const std::string& alias,
-                                    const std::string& remark)
+void SingleCommand::SetAliasCommand(const std::string &alias,
+                                    const std::string &remark)
 {
     alias_cmd = alias;
     alias_remark = remark;
@@ -653,7 +663,7 @@ const std::string SingleCommand::GetAliasCommand() const
 
 void SingleCommand::AddVersionOption(const char shortopt)
 {
-    (void) AddOption("version", shortopt, "Show version information");
+    (void)AddOption("version", shortopt, "Show version information");
     opt_version_added = true;
 }
 
@@ -670,7 +680,7 @@ std::string SingleCommand::GetCommandHelp(unsigned int width)
 std::string SingleCommand::GetOptionsList()
 {
     std::stringstream r;
-    for (auto const& opt : options)
+    for (auto const &opt : options)
     {
         r << opt->get_option_list_prefixed() << " ";
     }
@@ -680,7 +690,7 @@ std::string SingleCommand::GetOptionsList()
 
 std::string SingleCommand::CallArgumentHelper(const std::string option_name)
 {
-    for (auto const& opt : options)
+    for (auto const &opt : options)
     {
         // Strip any trailing '=' for the long option check.
         // Options with optional arguments always has a '=' to provide a value
@@ -701,10 +711,10 @@ std::string SingleCommand::CallArgumentHelper(const std::string option_name)
 }
 
 
-int SingleCommand::RunCommand(const std::string arg0, unsigned int skip,
-                              int argc, char **argv)
+int SingleCommand::RunCommand(const std::string arg0, unsigned int skip, int argc, char **argv)
 {
-    try {
+    try
+    {
         ParsedArgs::Ptr cmd_args = parse_commandline(arg0, skip, argc, argv);
 
         // Run the callback function.
@@ -717,9 +727,10 @@ int SingleCommand::RunCommand(const std::string arg0, unsigned int skip,
 }
 
 
-RegisterParsedArgs::Ptr SingleCommand::parse_commandline(const std::string & arg0,
+RegisterParsedArgs::Ptr SingleCommand::parse_commandline(const std::string &arg0,
                                                          unsigned int skip,
-                                                         int argc, char **argv)
+                                                         int argc,
+                                                         char **argv)
 {
     struct option *long_opts = init_getopt();
 
@@ -738,7 +749,7 @@ RegisterParsedArgs::Ptr SingleCommand::parse_commandline(const std::string & arg
         {
             int optidx = 0;
             c = getopt_long(argc, argv, shortopts.c_str(), long_opts, &optidx);
-            if (-1 == c)  // Are we done?
+            if (-1 == c) // Are we done?
             {
                 break;
             }
@@ -769,18 +780,18 @@ RegisterParsedArgs::Ptr SingleCommand::parse_commandline(const std::string & arg
                     goto exit;
                 }
 
-                for (auto& o : options)
+                for (auto &o : options)
                 {
                     if (o->check_long_option(long_opts[optidx].name))
                     {
-                            cmd_args->register_option(o->get_option_name(), optarg);
+                        cmd_args->register_option(o->get_option_name(), optarg);
                     }
                 }
             }
             else
             {
                 // Match on short option ... search on short option
-                for (auto& o : options)
+                for (auto &o : options)
                 {
                     if (o->check_short_option(c))
                     {
@@ -807,7 +818,8 @@ RegisterParsedArgs::Ptr SingleCommand::parse_commandline(const std::string & arg
         throw;
     }
 exit:
-    free(long_opts); long_opts = nullptr;
+    free(long_opts);
+    long_opts = nullptr;
     return cmd_args;
 }
 
@@ -816,19 +828,19 @@ struct option *SingleCommand::init_getopt()
 {
     unsigned int idx = 0;
     shortopts = "";
-    struct option *result = (struct option *) calloc(options.size() + 2,
-                                                     sizeof(struct option));
+    struct option *result = (struct option *)calloc(options.size() + 2,
+                                                    sizeof(struct option));
     if (result == NULL)
     {
         throw CommandException(command, "Failed to allocate memory for option parsing");
     }
 
     // Parse through all registered options
-    for (auto const& opt : options)
+    for (auto const &opt : options)
     {
         // Apply the option definition into the pre-defined designated
         // slot
-        for (const auto& o : opt->get_struct_option())
+        for (const auto &o : opt->get_struct_option())
         {
             memcpy(&result[idx], o, sizeof(struct option));
             idx++;
@@ -851,9 +863,9 @@ std::string SingleCommand::gen_help(const std::string arg0)
     r << arg0 << ": " << command << " - " << description << std::endl;
     r << std::endl;
 
-    for (const auto& opt : options)
+    for (const auto &opt : options)
     {
-        for (const auto& l : opt->gen_help_line())
+        for (const auto &l : opt->gen_help_line())
         {
             r << "   " << l << std::endl;
         }
@@ -901,7 +913,7 @@ int Commands::ProcessCommandLine(int argc, char **argv)
 
     // Find the proper registered command and let that object
     // continue the command line parsing and run the callback function
-    for (auto& c : commands)
+    for (auto &c : commands)
     {
         // If we found our command ...
         if (c->CheckCommandName(cmd))
@@ -914,7 +926,7 @@ int Commands::ProcessCommandLine(int argc, char **argv)
             //
             // Also ensure we have one extra element as a NULL terminator
             //
-            char **cmdargv = (char **) calloc(sizeof(char *), argc + 1);
+            char **cmdargv = (char **)calloc(sizeof(char *), argc + 1);
             if (NULL == cmdargv)
             {
                 throw CommandException(baseprog,
@@ -967,8 +979,9 @@ std::vector<SingleCommand::Ptr> Commands::GetAllCommandObjects()
 void Commands::print_generic_help(std::string arg0)
 {
     std::cout << arg0 << ": " << progname << std::endl;
-    std::cout << std::setw(arg0.size()+2) << " " << description;
-    std::cout << std::endl << std::endl;
+    std::cout << std::setw(arg0.size() + 2) << " " << description;
+    std::cout << std::endl
+              << std::endl;
 
     std::cout << "  Available commands: " << std::endl;
 
@@ -977,7 +990,7 @@ void Commands::print_generic_help(std::string arg0)
               << " - This help screen"
               << std::endl;
 
-    for (auto &cmd :commands)
+    for (auto &cmd : commands)
     {
         std::cout << "    " << cmd->GetCommandHelp(width);
     }

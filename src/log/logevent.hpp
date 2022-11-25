@@ -52,20 +52,6 @@ struct LogEvent
         reset();
     }
 
-    /**
-     *  Initialize the LogEvent object with the provided details.
-     *
-     * @param grp  LogGroup value to use.
-     * @param ctg  LogCategory value to use.
-     * @param msg  std::string containing the log message to use.
-     */
-    LogEvent(const LogGroup grp, const LogCategory ctg,
-             const std::string& msg)
-        : group(grp), category(ctg), message(msg)
-    {
-        remove_trailing_nl();
-        format = Format::NORMAL;
-    }
 
     /**
      *  Initialize the LogEvent object with the provided details.
@@ -74,8 +60,27 @@ struct LogEvent
      * @param ctg  LogCategory value to use.
      * @param msg  std::string containing the log message to use.
      */
-    LogEvent(const LogGroup grp, const LogCategory ctg,
-             const std::string& session_token, const std::string& msg)
+    LogEvent(const LogGroup grp,
+             const LogCategory ctg,
+             const std::string &msg)
+        : group(grp), category(ctg), message(msg)
+    {
+        remove_trailing_nl();
+        format = Format::NORMAL;
+    }
+
+
+    /**
+     *  Initialize the LogEvent object with the provided details.
+     *
+     * @param grp  LogGroup value to use.
+     * @param ctg  LogCategory value to use.
+     * @param msg  std::string containing the log message to use.
+     */
+    LogEvent(const LogGroup grp,
+             const LogCategory ctg,
+             const std::string &session_token,
+             const std::string &msg)
         : group(grp), category(ctg),
           session_token(session_token), message(msg)
     {
@@ -83,8 +88,7 @@ struct LogEvent
         format = Format::SESSION_TOKEN;
     }
 
-
-    LogEvent(const LogEvent& logev, const std::string& session_token)
+    LogEvent(const LogEvent &logev, const std::string &session_token)
         : group(logev.group), category(logev.category),
           session_token(session_token), message(logev.message)
     {
@@ -138,11 +142,11 @@ struct LogEvent
     }
 
 
-    static const std::string GetIntrospection(const std::string& name,
+    static const std::string GetIntrospection(const std::string &name,
                                               bool with_session_token = false)
     {
         std::stringstream ret;
-        ret << "        <signal name='" << name <<"'>"
+        ret << "        <signal name='" << name << "'>"
             << "            <arg type='u' name='group' direction='out'/>"
             << "            <arg type='u' name='level' direction='out'/>";
 
@@ -164,17 +168,22 @@ struct LogEvent
      * @return  Returns a pointer to a GVariant object with the formatted
      *          data
      */
-    GVariant* GetGVariantTuple() const
+    GVariant *GetGVariantTuple() const
     {
         if (Format::SESSION_TOKEN == format
             || (Format::AUTO == format && !session_token.empty()))
         {
-            return g_variant_new("(uuss)", (guint32) group, (guint32) category,
-                                 session_token.c_str(), message.c_str());
+            return g_variant_new("(uuss)",
+                                 (guint32)group,
+                                 (guint32)category,
+                                 session_token.c_str(),
+                                 message.c_str());
         }
         else
         {
-            return g_variant_new("(uus)", (guint32) group, (guint32) category,
+            return g_variant_new("(uus)",
+                                 (guint32)group,
+                                 (guint32)category,
                                  message.c_str());
         }
     }
@@ -190,17 +199,13 @@ struct LogEvent
     GVariant *GetGVariantDict() const
     {
         GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
-        g_variant_builder_add(b, "{sv}", "log_group",
-                              g_variant_new_uint32((guint) group));
-        g_variant_builder_add(b, "{sv}", "log_category",
-                              g_variant_new_uint32((guint) category));
+        g_variant_builder_add(b, "{sv}", "log_group", g_variant_new_uint32((guint)group));
+        g_variant_builder_add(b, "{sv}", "log_category", g_variant_new_uint32((guint)category));
         if (!session_token.empty() || Format::SESSION_TOKEN == format)
         {
-            g_variant_builder_add(b, "{sv}", "log_session_token",
-                                  g_variant_new_string(session_token.c_str()));
+            g_variant_builder_add(b, "{sv}", "log_session_token", g_variant_new_string(session_token.c_str()));
         }
-        g_variant_builder_add(b, "{sv}", "log_message",
-                              g_variant_new_string(message.c_str()));
+        g_variant_builder_add(b, "{sv}", "log_message", g_variant_new_string(message.c_str()));
         GVariant *ret = g_variant_builder_end(b);
         g_variant_builder_unref(b);
         return ret;
@@ -214,10 +219,11 @@ struct LogEvent
      */
     const std::string GetLogGroupStr() const
     {
-        if ((uint8_t) group >= LogGroupCount) {
-            return std::string("[group:" + std::to_string((uint8_t) group) + "]");
+        if ((uint8_t)group >= LogGroupCount)
+        {
+            return std::string("[group:" + std::to_string((uint8_t)group) + "]");
         }
-        return LogGroup_str[(uint8_t) group];
+        return LogGroup_str[(uint8_t)group];
     }
 
 
@@ -228,10 +234,11 @@ struct LogEvent
      */
     const std::string GetLogCategoryStr() const
     {
-        if ((uint8_t) category > 8) {
-            return std::string("[category:" + std::to_string((uint8_t) category) + "]");
+        if ((uint8_t)category > 8)
+        {
+            return std::string("[category:" + std::to_string((uint8_t)category) + "]");
         }
-        return LogCategory_str[(uint8_t) category];
+        return LogCategory_str[(uint8_t)category];
     }
 
 
@@ -261,6 +268,7 @@ struct LogEvent
                && message.empty();
     }
 
+
     /**
      *  Makes it possible to write LogEvents in a readable format
      *  via iostreams, such as 'std::cout << event', where event is a
@@ -272,13 +280,13 @@ struct LogEvent
      * @return  Returns the provided std::ostream together with the
      *          decoded LogEvent information
      */
-    friend std::ostream& operator<<(std::ostream& os , const LogEvent& ev)
+    friend std::ostream &operator<<(std::ostream &os, const LogEvent &ev)
     {
         return os << LogPrefix(ev.group, ev.category) << ev.message;
     }
 
 
-    bool operator==(const LogEvent& compare) const
+    bool operator==(const LogEvent &compare) const
     {
         if (session_token.empty())
         {
@@ -296,10 +304,11 @@ struct LogEvent
     }
 
 
-    bool operator!=(const LogEvent& compare) const
+    bool operator!=(const LogEvent &compare) const
     {
         return !(this->operator==(compare));
     }
+
 
     LogGroup group;
     LogCategory category;
@@ -308,7 +317,7 @@ struct LogEvent
     Format format = Format::AUTO;
 
 
-private:
+  private:
     void remove_trailing_nl()
     {
         message.erase(message.find_last_not_of("\n") + 1);
@@ -337,7 +346,7 @@ private:
         v = g_variant_get_uint32(d);
         if (v > 0 && v < LogGroup_str.size())
         {
-            group = (LogGroup) v;
+            group = (LogGroup)v;
         }
         g_variant_unref(d);
         d = nullptr;
@@ -346,14 +355,13 @@ private:
         v = g_variant_get_uint32(d);
         if (v > 0 && v < LogCategory_str.size())
         {
-            category = (LogCategory) v;
+            category = (LogCategory)v;
         }
         g_variant_unref(d);
         d = nullptr;
 
         gsize len;
-        d = g_variant_lookup_value(logevent, "log_session_token",
-                                   G_VARIANT_TYPE_STRING);
+        d = g_variant_lookup_value(logevent, "log_session_token", G_VARIANT_TYPE_STRING);
         if (d)
         {
             session_token = std::string(g_variant_get_string(d, &len));
@@ -367,7 +375,8 @@ private:
         d = nullptr;
 
         d = g_variant_lookup_value(logevent,
-                                   "log_message", G_VARIANT_TYPE_STRING);
+                                   "log_message",
+                                   G_VARIANT_TYPE_STRING);
         message = std::string(g_variant_get_string(d, &len));
         g_variant_unref(d);
 
@@ -396,15 +405,15 @@ private:
         if (!with_session_token)
         {
             GLibUtils::checkParams(__func__, logevent, "(uus)", 3);
-            group = (LogGroup) GLibUtils::ExtractValue<uint32_t>(logevent, 0);
-            category = (LogCategory) GLibUtils::ExtractValue<uint32_t>(logevent, 1);
+            group = (LogGroup)GLibUtils::ExtractValue<uint32_t>(logevent, 0);
+            category = (LogCategory)GLibUtils::ExtractValue<uint32_t>(logevent, 1);
             message = std::string(GLibUtils::ExtractValue<std::string>(logevent, 2));
         }
         else
         {
             GLibUtils::checkParams(__func__, logevent, "(uuss)", 4);
-            group = (LogGroup) GLibUtils::ExtractValue<uint32_t>(logevent, 0);
-            category = (LogCategory) GLibUtils::ExtractValue<uint32_t>(logevent, 1);
+            group = (LogGroup)GLibUtils::ExtractValue<uint32_t>(logevent, 0);
+            category = (LogCategory)GLibUtils::ExtractValue<uint32_t>(logevent, 1);
             session_token = GLibUtils::ExtractValue<std::string>(logevent, 2);
             message = std::string(GLibUtils::ExtractValue<std::string>(logevent, 3));
         }

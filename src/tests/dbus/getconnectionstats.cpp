@@ -31,6 +31,8 @@
 
 using namespace openvpn;
 
+
+
 int main(int argc, char **argv)
 {
     if (argc != 2)
@@ -40,15 +42,14 @@ int main(int argc, char **argv)
     }
 
     auto session = OpenVPN3SessionProxy(G_BUS_TYPE_SYSTEM, std::string(argv[1]));
-    for (auto& sd : session.GetConnectionStats())
+    for (auto &sd : session.GetConnectionStats())
     {
         std::cout << "  "
                   << sd.key
-                  << std::setw(20-sd.key.size()) << std::setfill('.') << "."
+                  << std::setw(20 - sd.key.size()) << std::setfill('.') << "."
                   << std::setw(12) << std::setfill('.')
                   << sd.value
                   << std::endl;
     }
     return 0;
 }
-

@@ -46,7 +46,7 @@
  */
 class DBus
 {
-public:
+  public:
     DBus(GBusType bustype)
         : keep_connection(false),
           bus_type(bustype),
@@ -58,7 +58,6 @@ public:
         idle_checker = nullptr;
     }
 
-
     DBus(GDBusConnection *dbuscon)
         : keep_connection(true),
           connected(false),
@@ -68,11 +67,10 @@ public:
     {
         idle_checker = nullptr;
         connected = dbuscon && G_IS_DBUS_CONNECTION(dbuscon)
-                && g_dbus_connection_is_closed(dbuscon) == 0;
+                    && g_dbus_connection_is_closed(dbuscon) == 0;
     }
 
-
-    DBus(GBusType bustype, std::string busname, std::string root_path, std::string default_interface )
+    DBus(GBusType bustype, std::string busname, std::string root_path, std::string default_interface)
         : keep_connection(false),
           idle_checker(nullptr),
           bus_type(bustype),
@@ -86,7 +84,7 @@ public:
     {
     }
 
-    DBus(GDBusConnection *dbuscon, std::string busname, std::string root_path, std::string default_interface )
+    DBus(GDBusConnection *dbuscon, std::string busname, std::string root_path, std::string default_interface)
         : keep_connection(true),
           idle_checker(nullptr),
           connected(false),
@@ -99,7 +97,7 @@ public:
     {
         idle_checker = nullptr;
         connected = dbuscon && G_IS_DBUS_CONNECTION(dbuscon)
-                && g_dbus_connection_is_closed(dbuscon) == 0;
+                    && g_dbus_connection_is_closed(dbuscon) == 0;
     }
 
     virtual ~DBus()
@@ -142,7 +140,7 @@ public:
      * @param chk  Smart pointer to an IdleCheck object which tracks the
      *             idle state
      */
-    void EnableIdleCheck(IdleCheck::Ptr& chk) noexcept
+    void EnableIdleCheck(IdleCheck::Ptr &chk) noexcept
     {
         idle_checker = chk.get();
     }
@@ -160,12 +158,14 @@ public:
 
         if (connection_only)
         {
-            THROW_DBUSEXCEPTION("DBus", "DBus object not prepared for owning bus name. Use the proper DBus constructor");
+            THROW_DBUSEXCEPTION("DBus",
+                                "DBus object not prepared for owning bus name. Use the proper DBus constructor");
         }
 
         if (setup_complete)
         {
-            THROW_DBUSEXCEPTION("DBus", "D-Bus setup already completed.");
+            THROW_DBUSEXCEPTION("DBus",
+                                "D-Bus setup already completed.");
         }
 
         // Acquire the requested bus name
@@ -203,7 +203,7 @@ public:
      * @return  GDBUsConnection pointer to the currently extablished
      *          D-Bus.  In case of errors, an exception will be thrown.
      */
-    GDBusConnection * GetConnection() const
+    GDBusConnection *GetConnection() const
     {
         if (!connected || !G_IS_DBUS_CONNECTION(dbuscon))
         {
@@ -245,7 +245,8 @@ public:
     {
         if (connection_only)
         {
-            THROW_DBUSEXCEPTION("DBus", "DBus object not prepared for owning bus name. Use the proper DBus constructor");
+            THROW_DBUSEXCEPTION("DBus",
+                                "DBus object not prepared for owning bus name. Use the proper DBus constructor");
         }
         return busname;
     }
@@ -275,7 +276,8 @@ public:
     {
         if (connection_only)
         {
-            THROW_DBUSEXCEPTION("DBus", "DBus object not prepared for owning bus name. Use the proper DBus constructor");
+            THROW_DBUSEXCEPTION("DBus",
+                                "DBus object not prepared for owning bus name. Use the proper DBus constructor");
         }
         return root_path;
     }
@@ -297,7 +299,8 @@ public:
     {
         if (connection_only)
         {
-            THROW_DBUSEXCEPTION("DBus", "DBus object not prepared for owning bus name. Use the proper DBus constructor");
+            THROW_DBUSEXCEPTION("DBus",
+                                "DBus object not prepared for owning bus name. Use the proper DBus constructor");
         }
         return default_interface;
     }
@@ -334,9 +337,10 @@ public:
     }
 
 
-protected:
-    bool keep_connection;  /**< Do not disconnect when DBus connection object is removed */
+  protected:
+    bool keep_connection; /**< Do not disconnect when DBus connection object is removed */
     IdleCheck *idle_checker;
+
 
     void close_and_cleanup() noexcept
     {
@@ -369,7 +373,8 @@ protected:
         }
     }
 
-private:
+
+  private:
     GBusType bus_type = GBusType::G_BUS_TYPE_NONE;
     bool connected;
     bool connection_only;
@@ -379,6 +384,7 @@ private:
     std::string default_interface;
     GDBusConnection *dbuscon;
     guint busid = 0;
+
 
     /**
      *  C wrapper function for the GDBus g_bus_own_name_on_connection()
@@ -392,7 +398,7 @@ private:
      */
     static void int_callback_name_acquired(GDBusConnection *conn, const gchar *name, gpointer this_ptr)
     {
-        class DBus *obj = (class DBus *) this_ptr;
+        class DBus *obj = (class DBus *)this_ptr;
         obj->callback_name_acquired(conn, name);
     }
 
@@ -409,7 +415,7 @@ private:
      */
     static void int_callback_name_lost(GDBusConnection *conn, const gchar *name, gpointer this_ptr)
     {
-        class DBus *obj = (class DBus *) this_ptr;
+        class DBus *obj = (class DBus *)this_ptr;
         obj->callback_name_lost(conn, name);
     }
 };

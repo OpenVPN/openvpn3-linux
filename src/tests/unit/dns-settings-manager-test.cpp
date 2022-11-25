@@ -36,7 +36,7 @@ using namespace NetCfg::DNS;
 
 class TestBackend : public ResolverBackendInterface
 {
-public:
+  public:
     typedef RCPtr<TestBackend> Ptr;
 
     TestBackend() = default;
@@ -49,7 +49,7 @@ public:
 
     const ApplySettingsMode GetApplyMode() const noexcept override
     {
-        return ApplySettingsMode::MODE_PRE;  // Not relevant in this test
+        return ApplySettingsMode::MODE_PRE; // Not relevant in this test
     }
 
     const char *ServerList() const
@@ -67,7 +67,7 @@ public:
     std::string server_list;
     std::string domain_list;
 
-protected:
+  protected:
     void Apply(const ResolverSettings::Ptr settings) override
     {
         if (!settings->GetEnabled())
@@ -87,7 +87,7 @@ protected:
         std::stringstream srv;
 
         bool first = true;
-        for (const auto& s : servers)
+        for (const auto &s : servers)
         {
             srv << (!first ? ", " : "") << s;
             first = false;
@@ -97,7 +97,7 @@ protected:
 
         std::stringstream dom;
         first = true;
-        for (const auto& d : domains)
+        for (const auto &d : domains)
         {
             dom << (!first ? ", " : "") << d;
             first = false;
@@ -107,7 +107,7 @@ protected:
     }
 
 
-private:
+  private:
     std::vector<std::string> servers;
     std::vector<std::string> domains;
 };
@@ -116,14 +116,14 @@ TestBackend::Ptr test_backend = nullptr;
 
 class DNSSettingsManager_SingleSetup : public ::testing::Test
 {
-protected:
+  protected:
     void SetUp() override
     {
         test_backend = new TestBackend();
         dnsmgr = new SettingsManager(test_backend);
     }
 
-public:
+  public:
     SettingsManager::Ptr dnsmgr = nullptr;
 };
 
@@ -213,7 +213,7 @@ TEST_F(DNSSettingsManager_SingleSetup, PrepareRemoval)
 
 class DNSSettingsManager_MultipleSessions : public ::testing::Test
 {
-protected:
+  protected:
     void SetUp() override
     {
         test_backend = new TestBackend();
@@ -222,22 +222,21 @@ protected:
 
     void TearDown() override
     {
-        for (const auto& c : cfgs)
+        for (const auto &c : cfgs)
         {
             c->PrepareRemoval();
         }
         dnsmgr->ApplySettings(nullptr);
     }
 
-    void Configure(unsigned int num, unsigned int numsrv = 1,
-                   unsigned int start = 1)
+    void Configure(unsigned int num, unsigned int numsrv = 1, unsigned int start = 1)
     {
-        for (unsigned int i = start; i < start+num; i++)
+        for (unsigned int i = start; i < start + num; i++)
         {
             ResolverSettings::Ptr rs = dnsmgr->NewResolverSettings();
             for (unsigned int j = 0; j < numsrv; j++)
             {
-                rs->AddNameServer(gen_ip(i, i+j));
+                rs->AddNameServer(gen_ip(i, i + j));
             }
             rs->AddSearchDomain(gen_search(i));
             rs->Enable();
@@ -247,19 +246,20 @@ protected:
 
     void RemoveConfig(unsigned int num)
     {
-        for (const auto& c : cfgs)
+        for (const auto &c : cfgs)
         {
             if (c && c->GetIndex() == num)
             {
                 c->PrepareRemoval();
                 cfgs.erase(std::remove(cfgs.begin(),
-                                       cfgs.end(), c),
-                                       cfgs.end());
+                                       cfgs.end(),
+                                       c),
+                           cfgs.end());
             }
         }
     }
 
-private:
+  private:
     std::string gen_ip(unsigned int i, unsigned int j)
     {
         std::stringstream out;
@@ -273,10 +273,9 @@ private:
         return std::string("con") + std::to_string(i) + ".example.org";
     }
 
-public:
+  public:
     SettingsManager::Ptr dnsmgr = nullptr;
     std::vector<ResolverSettings::Ptr> cfgs;
-
 };
 
 

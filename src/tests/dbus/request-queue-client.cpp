@@ -41,16 +41,18 @@ using namespace openvpn;
 
 //#define DIRECT_API_CHECK  // Runs D-Bus call directly via DBusProxy instead of DBusRequiresQueueProxy implementation
 
-void dump_requires_slot(struct RequiresSlot& reqdata, unsigned int id)
+
+void dump_requires_slot(struct RequiresSlot &reqdata, unsigned int id)
 {
     std::cout << "          Id: (" << std::to_string(id) << ") " << reqdata.id << std::endl
               << "        Name: " << reqdata.name << std::endl
               << "       Value: " << reqdata.value << std::endl
               << " Description: " << reqdata.user_description << std::endl
-              << "Hidden input: " << (reqdata.hidden_input ? "True": "False") << std::endl
-              << "    Provided: " << (reqdata.provided ? "True": "False") << std::endl
+              << "Hidden input: " << (reqdata.hidden_input ? "True" : "False") << std::endl
+              << "    Provided: " << (reqdata.provided ? "True" : "False") << std::endl
               << "------------------------------------------------------------" << std::endl;
 }
+
 
 #ifndef DIRECT_API_CHECK
 
@@ -59,7 +61,8 @@ void dump_requires_slot(struct RequiresSlot& reqdata, unsigned int id)
 int main()
 {
     std::cout << "** Using DBusRequiresQueueProxy implementation"
-              << std::endl << std::endl;
+              << std::endl
+              << std::endl;
 
     DBusRequiresQueueProxy queue(G_BUS_TYPE_SESSION,
                                  "net.openvpn.v3.tests.requiresqueue",
@@ -83,34 +86,34 @@ int main()
         }
         bool up, cs, cd, pk;
         up = cs = cd = pk = false;
-        for (auto& type_group : res)
+        for (auto &type_group : res)
         {
             ClientAttentionType type;
             ClientAttentionGroup group;
             std::tie(type, group) = type_group;
             switch (group)
             {
-                case ClientAttentionGroup::USER_PASSWORD:
-                    up = true;
-                    break;
+            case ClientAttentionGroup::USER_PASSWORD:
+                up = true;
+                break;
 
-                case ClientAttentionGroup::CHALLENGE_STATIC:
-                    cs = true;
-                    break;
+            case ClientAttentionGroup::CHALLENGE_STATIC:
+                cs = true;
+                break;
 
-                case ClientAttentionGroup::CHALLENGE_DYNAMIC:
-                    cd = true;
-                    break;
+            case ClientAttentionGroup::CHALLENGE_DYNAMIC:
+                cd = true;
+                break;
 
-                case ClientAttentionGroup::PK_PASSPHRASE:
-                    pk = true;
-                    break;
+            case ClientAttentionGroup::PK_PASSPHRASE:
+                pk = true;
+                break;
 
-                default:
-                    std::cerr << "-- ERROR -- | unknown group " << ClientAttentionGroup_str[(int)group] << " |" << std::endl;
-                    return 1;
+            default:
+                std::cerr << "-- ERROR -- | unknown group " << ClientAttentionGroup_str[(int)group] << " |" << std::endl;
+                return 1;
             }
-            for (auto& id : queue.QueueCheck(type, group))
+            for (auto &id : queue.QueueCheck(type, group))
             {
                 try
                 {
@@ -145,7 +148,7 @@ int main()
 
 #else // DIRECT_API_CHECK
 
-void deserialize(struct RequiresSlot& result, GVariant *indata)
+void deserialize(struct RequiresSlot &result, GVariant *indata)
 {
     if (!indata)
     {
@@ -170,15 +173,9 @@ void deserialize(struct RequiresSlot& result, GVariant *indata)
         gchar *descr = NULL;
         gboolean hidden_input = false;
 
-        g_variant_get(indata, "(uuussb)",
-                      &type,
-                      &group,
-                      &id,
-                      &name,
-                      &descr,
-                      &hidden_input);
-        result.type = (ClientAttentionType) type;
-        result.group = (ClientAttentionGroup) group;
+        g_variant_get(indata, "(uuussb)", &type, &group, &id, &name, &descr, &hidden_input);
+        result.type = (ClientAttentionType)type;
+        result.group = (ClientAttentionGroup)group;
         result.id = id;
         if (name)
         {
@@ -203,7 +200,8 @@ void deserialize(struct RequiresSlot& result, GVariant *indata)
 
 int main()
 {
-    std::cout << "** Using D-Bus API directly" << std::endl << std::endl;
+    std::cout << "** Using D-Bus API directly" << std::endl
+              << std::endl;
 
     DBusProxy proxy(G_BUS_TYPE_SESSION,
                     "net.openvpn.v3.tests.requiresqueue",
@@ -214,12 +212,13 @@ int main()
     proxy.Call("Init", true);
 
     for (int group = (int)ClientAttentionGroup::USER_PASSWORD;
-         group <= (int)ClientAttentionGroup::CHALLENGE_DYNAMIC; ++group)
+         group <= (int)ClientAttentionGroup::CHALLENGE_DYNAMIC;
+         ++group)
     {
         GVariant *res = proxy.Call("t_QueueCheck",
                                    g_variant_new("(uu)",
                                                  ClientAttentionType::CREDENTIALS,
-                                                 (ClientAttentionGroup) group));
+                                                 (ClientAttentionGroup)group));
         GVariantIter *array = 0;
         g_variant_get(res, "(au)", &array);
 
@@ -238,13 +237,13 @@ int main()
                 GVariant *req = proxy.Call("t_QueueFetch",
                                            g_variant_new("(uuu)",
                                                          ClientAttentionType::CREDENTIALS,
-                                                         (ClientAttentionGroup) group,
+                                                         (ClientAttentionGroup)group,
                                                          id));
                 struct RequiresSlot reqdata;
                 deserialize(reqdata, req);
                 dump_requires_slot(reqdata, id);
 
-                reqdata.value = "generated-data_" + reqdata.name +"_" + std::to_string(reqdata.id);
+                reqdata.value = "generated-data_" + reqdata.name + "_" + std::to_string(reqdata.id);
                 proxy.Call("t_ProvideResponse",
                            g_variant_new("(uuus)",
                                          reqdata.type,

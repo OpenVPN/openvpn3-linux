@@ -39,7 +39,7 @@
  */
 int cmd_variables(ParsedArgs::Ptr args)
 {
-    if(args->Present("machine-id"))
+    if (args->Present("machine-id"))
     {
         MachineID machine_id;
         try
@@ -68,7 +68,7 @@ int cmd_variables(ParsedArgs::Ptr args)
 
             machine_id.success();
         }
-        catch (const MachineIDException& excp)
+        catch (const MachineIDException &excp)
         {
             std::cerr << "** ERROR ** " << excp.GetError() << std::endl;
             return 1;
@@ -89,8 +89,8 @@ SingleCommand::Ptr prepare_command_variables()
     SingleCommand::Ptr variables;
 #ifdef OVPN3CLI_OPENVPN3ADMIN
     variables.reset(new SingleCommand("variables",
-                                    "Show various OpenVPN 3 variables",
-                                    cmd_variables));
+                                      "Show various OpenVPN 3 variables",
+                                      cmd_variables));
     variables->AddOption("machine-id",
                          "Show the Machine-ID variable sent to the OpenVPN server");
 

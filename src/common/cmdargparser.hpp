@@ -56,11 +56,14 @@ using namespace openvpn;
  */
 class ParsedArgs
 {
-public:
+  public:
     typedef std::shared_ptr<ParsedArgs> Ptr;
     typedef std::vector<std::vector<std::string>> ExclusiveGroups;
 
-    ParsedArgs() : argv0("") {}
+    ParsedArgs()
+        : argv0("")
+    {
+    }
 
     ParsedArgs(const std::string argv0)
         : argv0(argv0)
@@ -68,6 +71,7 @@ public:
     }
 
     virtual ~ParsedArgs() = default;
+
 
     /**
      *  Check if the command line parser completed parsing all options and
@@ -81,6 +85,7 @@ public:
         return completed;
     }
 
+
     /**
      *   Import option settings from a configuration file
      *
@@ -92,6 +97,7 @@ public:
      *         file.
      */
     void ImportConfigFile(Configuration::File::Ptr config);
+
 
     /**
      *  Get the program name (argv[0])
@@ -130,7 +136,8 @@ public:
      *
      * @throws ExclusiveOptionError if an option is not exclusive
      */
-    void CheckExclusiveOptions(const ExclusiveGroups& args_exclusive) const;
+    void CheckExclusiveOptions(const ExclusiveGroups &args_exclusive) const;
+
 
     /**
      *  Checks if a specific option name has been parsed.  This is
@@ -143,7 +150,7 @@ public:
      */
     bool Present(const std::string k) const
     {
-        for (auto const& e : present)
+        for (auto const &e : present)
         {
             if (k == e)
             {
@@ -165,7 +172,7 @@ public:
      */
     const std::string Present(const std::vector<std::string> optlist) const
     {
-        for (const auto& k : optlist)
+        for (const auto &k : optlist)
         {
             if (Present(k))
             {
@@ -185,7 +192,7 @@ public:
     std::vector<std::string> GetOptionNames() const
     {
         std::vector<std::string> keys;
-        for (auto const& k: present)
+        for (auto const &k : present)
         {
             keys.push_back(k);
         }
@@ -207,7 +214,7 @@ public:
         {
             return key_value.at(k).size();
         }
-        catch (const std::out_of_range&)
+        catch (const std::out_of_range &)
         {
             // Ignore out-of-bound errors
             return 0;
@@ -227,7 +234,6 @@ public:
         return key_value.at(k).at(idx);
     }
 
-
     /**
      *  Retrieve the last value of a specific option name
      *
@@ -238,7 +244,7 @@ public:
      * @param k   std::string containing the option name to look-up
      * @return    Returns a std::string with the collected value
      */
-    std::string GetLastValue(const std::string& k) const
+    std::string GetLastValue(const std::string &k) const
     {
         return key_value.at(k).back();
     }
@@ -266,7 +272,7 @@ public:
      * @param k    std::string containing the option name to look-up
      * @return  Returns a bool with the collected value
      */
-    bool GetLastBoolValue(const std::string& k)
+    bool GetLastBoolValue(const std::string &k)
     {
         return parse_bool_value(k, key_value.at(k).back());
     }
@@ -285,7 +291,7 @@ public:
         {
             return key_value.at(k);
         }
-        catch (const std::out_of_range&)
+        catch (const std::out_of_range &)
         {
             return {};
         }
@@ -305,7 +311,8 @@ public:
         return extra_args;
     }
 
-protected:
+
+  protected:
     std::string argv0;
     std::map<std::string, std::vector<std::string>> key_value;
     std::vector<std::string> present;
@@ -313,12 +320,10 @@ protected:
     bool completed = false;
 
 
-private:
-    bool parse_bool_value(const std::string& k, const std::string& value) const;
-    void remove_arg(const std::string& opt);
+  private:
+    bool parse_bool_value(const std::string &k, const std::string &value) const;
+    void remove_arg(const std::string &opt);
 };
-
-
 
 /**
  *  Simplistic internal specification of callback function APIs
@@ -335,14 +340,16 @@ using argHelperFunc = std::string (*)();
  */
 class RegisterParsedArgs : public virtual ParsedArgs
 {
-public:
+  public:
     typedef std::shared_ptr<RegisterParsedArgs> Ptr;
 
-    RegisterParsedArgs(const std::string arg0) : ParsedArgs(arg0)
+    RegisterParsedArgs(const std::string arg0)
+        : ParsedArgs(arg0)
     {
     }
 
     virtual ~RegisterParsedArgs() = default;
+
 
     /**
      *  Registers an option with an optional value.  If value is NULL,
@@ -361,7 +368,7 @@ public:
      *
      * @param e  char * containing the value to put aside
      */
-    void register_extra_args(const char * e);
+    void register_extra_args(const char *e);
 
 
     /**
@@ -369,7 +376,7 @@ public:
      *  callback function may be run.
      */
     void set_completed();
-};  // class RegisterParsedArgs
+}; // class RegisterParsedArgs
 
 
 
@@ -382,7 +389,7 @@ public:
  */
 class SingleCommandOption : public RC<thread_unsafe_refcount>
 {
-public:
+  public:
     typedef RCPtr<SingleCommandOption> Ptr;
 
     /**
@@ -399,7 +406,6 @@ public:
     SingleCommandOption(const std::string longopt,
                         const char shrtopt,
                         const std::string help_text);
-
 
     /**
      *  Similar to the other SingleCommandOption constructor.  This one takes
@@ -424,7 +430,6 @@ public:
                         const std::string help_text,
                         const argHelperFunc arg_helper_func = nullptr);
 
-
     ~SingleCommandOption();
 
 
@@ -434,7 +439,7 @@ public:
      *
      * @param optalias  std::string with the alias to use
      */
-    void SetAlias(const std::string& optalias);
+    void SetAlias(const std::string &optalias);
 
 
     /**
@@ -456,7 +461,7 @@ public:
      * @return Must return a string of possible values where each value is
      *         separated by space
      */
-    std::string call_argument_helper_callback(const std::string& opt_name);
+    std::string call_argument_helper_callback(const std::string &opt_name);
 
 
     /**
@@ -520,13 +525,13 @@ public:
      */
     std::vector<std::string> gen_help_line(const unsigned int width = 30);
 
-
     std::string gen_help_line_generator(const char opt_short,
-                                        const std::string& opt_long,
-                                        const std::string& opt_help,
+                                        const std::string &opt_long,
+                                        const std::string &opt_help,
                                         const unsigned int width);
 
-private:
+
+  private:
     const std::string longopt;
     const char shortopt;
     const std::string metavar;
@@ -553,9 +558,8 @@ private:
      *                   argument (required_argument)
      *
      */
-    void update_getopt(const std::string longopt, const char  shortopt,
-                       const int has_args);
-};  // class SingleCommandOption
+    void update_getopt(const std::string longopt, const char shortopt, const int has_args);
+}; // class SingleCommandOption
 
 
 
@@ -567,7 +571,7 @@ private:
  */
 class SingleCommand : public RC<thread_unsafe_refcount>
 {
-public:
+  public:
     typedef RCPtr<SingleCommand> Ptr;
 
     /**
@@ -584,8 +588,7 @@ public:
         : command(command), description(description), command_func(cmdfunc),
           opt_version_added(false)
     {
-        options.push_back(new SingleCommandOption("help", 'h',
-                                                  "This help screen"));
+        options.push_back(new SingleCommandOption("help", 'h', "This help screen"));
     }
 
 
@@ -597,8 +600,9 @@ public:
      * @param alias    std::string of the alias name
      * @param remark   std::string with a message being shown when used
      */
-    void SetAliasCommand(const std::string& alias,
-                         const std::string& remark = {});
+    void SetAliasCommand(const std::string &alias,
+                         const std::string &remark = {});
+
 
     /**
      *   Retrieve the alias set for this command
@@ -663,7 +667,7 @@ public:
      *
      */
     SingleCommandOption::Ptr AddOption(const std::string longopt,
-                   const std::string help_text)
+                                       const std::string help_text)
     {
         return AddOption(longopt, 0, help_text);
     }
@@ -694,7 +698,6 @@ public:
         return AddOption(longopt, 0, metavar, required, help_text, arg_helper);
     }
 
-
     /**
      *  Adds a default --version option, which will be handled internally
      *  by this class
@@ -712,7 +715,7 @@ public:
      *               binary/command line.  By default, it is set to 20.
      * @return
      */
-    std::string GetCommandHelp(unsigned int width=20);
+    std::string GetCommandHelp(unsigned int width = 20);
 
 
     /**
@@ -782,8 +785,10 @@ public:
      *
      * @return  Returns the same exit code as the callback function returned.
      */
-    virtual int RunCommand(const std::string arg0, unsigned int skip,
-                           int argc, char **argv);
+    virtual int RunCommand(const std::string arg0,
+                           unsigned int skip,
+                           int argc,
+                           char **argv);
 
 
     /**
@@ -806,7 +811,7 @@ public:
     }
 
 
-protected:
+  protected:
     /**
      *  Parse the command line arguments the program was started with, with
      *  some minor tweaks (see ProcessCommandLine() for details)
@@ -823,12 +828,13 @@ protected:
      *         parsing did not complete properly; most likely due to
      *         -h or --help.
      */
-    RegisterParsedArgs::Ptr parse_commandline(const std::string & arg0,
+    RegisterParsedArgs::Ptr parse_commandline(const std::string &arg0,
                                               unsigned int skip,
-                                              int argc, char **argv);
+                                              int argc,
+                                              char **argv);
 
 
-private:
+  private:
     const std::string command;
     const std::string description;
     const commandPtr command_func;
@@ -850,7 +856,6 @@ private:
      */
     struct option *init_getopt();
 
-
     /**
      *  Generates the complete help screen for this specific command.  This
      *  will typically print an introduction and then get all the help
@@ -860,7 +865,7 @@ private:
      * @return
      */
     std::string gen_help(const std::string arg0);
-};  // class SingleCommand
+}; // class SingleCommand
 
 
 
@@ -875,7 +880,7 @@ private:
  */
 class Commands : public RC<thread_unsafe_refcount>
 {
-public:
+  public:
     typedef RCPtr<Commands> Ptr;
 
     /**
@@ -893,6 +898,7 @@ public:
         shellcompl.reset(new ShellCompletion());
         commands.push_back(shellcompl);
     }
+
 
     /**
      *  Register a new command with a reference to the callback
@@ -926,7 +932,7 @@ public:
     std::vector<SingleCommand::Ptr> GetAllCommandObjects();
 
 
-private:
+  private:
     /**
      *  Subclass of Commands, which builds the shell-completion command
      *  automatically based on all the registered commands.  The output this
@@ -934,7 +940,7 @@ private:
      */
     class ShellCompletion : public SingleCommand
     {
-    public:
+      public:
         typedef RCPtr<ShellCompletion> Ptr;
 
         ShellCompletion();
@@ -947,7 +953,7 @@ private:
          *
          * @param cmds  Commands * to the parent Commands object.
          */
-        void SetMainCommands(Commands * cmds);
+        void SetMainCommands(Commands *cmds);
 
         /**
          *   Since this class inherits the SingleCommand class, we implement
@@ -965,11 +971,13 @@ private:
          * @return  Will always return 0, as we do not depend on exit codes
          *          when generating shell completion strings.
          */
-        int RunCommand(const std::string arg0, unsigned int ignored_skip,
-                       int argc, char **argv);
+        int RunCommand(const std::string arg0,
+                       unsigned int ignored_skip,
+                       int argc,
+                       char **argv);
 
-    private:
-        Commands * commands;
+      private:
+        Commands *commands;
 
         /**
          *  Helper command to be used by various command completion
@@ -1003,6 +1011,7 @@ private:
         void call_arg_helper(const std::string cmd, const std::string option);
     }; // class Commands::ShellCompletion
 
+
     /**
      *   Print an initial help screen, providing an overview of all
      *   available commands in this program
@@ -1017,4 +1026,4 @@ private:
     const std::string description;
     std::vector<SingleCommand::Ptr> commands;
     ShellCompletion::Ptr shellcompl;
-};  // class Commands
+}; // class Commands

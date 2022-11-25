@@ -27,11 +27,13 @@
 
 #include "sessionmgr/proxy-sessionmgr.hpp"
 
+
+
 int main(int argc, char **argv)
 {
     if (argc != 2)
     {
-        std::cout << "Usage: " << argv[0] << "<session object path>" << std::endl;
+        std::cout << "Usage: " << argv[0] << " <session object path>" << std::endl;
         return 1;
     }
 
@@ -43,21 +45,20 @@ int main(int argc, char **argv)
 
         std::cout << "LogEvent: " << log << std::endl;
         std::cout << "     Log Group: ["
-                  << std::to_string((unsigned int) log.group)
+                  << std::to_string((unsigned int)log.group)
                   << "] " << std::endl;
         std::cout << "  Log Category: ["
-                  << std::to_string((unsigned int) log.category)
+                  << std::to_string((unsigned int)log.category)
                   << "] " << std::endl;
-        std::cout << "   Log message: " << "[len: " << log.message.size()
+        std::cout << "   Log message: "
+                  << "[len: " << log.message.size()
                   << "] " << log.message
                   << std::endl;
         return 0;
     }
-    catch (std::exception& err)
+    catch (std::exception &err)
     {
         std::cout << "** ERROR ** " << err.what() << std::endl;
         return 2;
     }
 }
-
-

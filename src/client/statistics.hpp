@@ -23,8 +23,8 @@
  * @brief  Declaration of the connection statistics container
  */
 
-#ifndef OPENVPN3_DBUS_CLIENT_STATISTICS
-#define OPENVPN3_DBUS_CLIENT_STATISTICS
+#pragma once
+
 /**
  *  Used to deliver connection statistics for the tunnel to the
  *  user front end.  The full result will be provided as an
@@ -33,12 +33,12 @@
 struct ConnectionStatDetails
 {
     ConnectionStatDetails()
-        : key(""), value (-1)
+        : key(""), value(-1)
     {
     }
 
     ConnectionStatDetails(const std::string key, const long long value)
-        : key(key), value (value)
+        : key(key), value(value)
     {
     }
 
@@ -50,5 +50,3 @@ struct ConnectionStatDetails
  *  This data type will contain a full set of connection statistics
  */
 typedef std::vector<ConnectionStatDetails> ConnectionStats;
-
-#endif // OPENVPN3_DBUS_CLIENT_STATISTICS

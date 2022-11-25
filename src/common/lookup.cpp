@@ -35,6 +35,7 @@
 
 #include "lookup.hpp"
 
+
 /**
  *  Checks if the input string is a number or a string
  *
@@ -42,14 +43,13 @@
  * @return Returns true if the input string is a plain, positive integer
  *         number, otherwise false.
  */
-static inline bool isanum_string(const std::string& data)
+static inline bool isanum_string(const std::string &data)
 {
     return std::all_of(data.begin(), data.end(), ::isdigit);
 }
 
 
-
-static inline char* alloc_sysconf_buffer(int name, size_t* retlen)
+static inline char *alloc_sysconf_buffer(int name, size_t *retlen)
 {
     long buflen = sysconf(name);
     if (buflen == -1)
@@ -60,7 +60,7 @@ static inline char* alloc_sysconf_buffer(int name, size_t* retlen)
         buflen = 16384;
     }
     *retlen = buflen;
-    char *retbuf = (char *)malloc((size_t) buflen);
+    char *retbuf = (char *)malloc((size_t)buflen);
     memset(retbuf, 0, buflen);
     return retbuf;
 }
@@ -82,7 +82,7 @@ std::string lookup_username(uid_t uid)
 
     std::string ret;
     int r = getpwuid_r(uid, &pwrec, buf, buflen, &result);
-    if ( (0 == r) && (NULL != result))
+    if ((0 == r) && (NULL != result))
     {
         ret = std::string(pwrec.pw_name);
     }
@@ -111,7 +111,7 @@ uid_t lookup_uid(std::string username)
 
     uid_t ret;
     int r = getpwnam_r(username.c_str(), &pwrec, buf, buflen, &result);
-    if ( (0 == r) && (NULL != result))
+    if ((0 == r) && (NULL != result))
     {
 
         ret = result->pw_uid;
@@ -158,7 +158,7 @@ uid_t get_userid(const std::string input)
  * @return An gid_t integer is returned on success
  * @throws LookupException if group is not found
  */
-gid_t lookup_gid(const std::string& groupname)
+gid_t lookup_gid(const std::string &groupname)
 {
     struct group grprec;
     struct group *result = nullptr;
@@ -167,7 +167,7 @@ gid_t lookup_gid(const std::string& groupname)
 
     gid_t ret;
     int r = getgrnam_r(groupname.c_str(), &grprec, buf, buflen, &result);
-    if ( (0 == r) && (NULL != result))
+    if ((0 == r) && (NULL != result))
     {
         ret = result->gr_gid;
     }

@@ -31,6 +31,7 @@
 
 using namespace openvpn;
 
+
 /**
  *   The IdleCheck class instruments a Glib2 based application
  *   with an automatic exit solution if the program it watches
@@ -51,7 +52,7 @@ using namespace openvpn;
  */
 class IdleCheck : public RC<thread_safe_refcount>
 {
-public:
+  public:
     typedef RCPtr<IdleCheck> Ptr;
 
     /**
@@ -69,12 +70,10 @@ public:
           running(false),
           refcount(0)
     {
-            g_unix_signal_add(SIGINT, _cb__idlechecker_sighandler,
-                              (void *) this);
-            g_unix_signal_add(SIGTERM, _cb__idlechecker_sighandler,
-                              (void *) this);
+        g_unix_signal_add(SIGINT, _cb__idlechecker_sighandler, (void *)this);
+        g_unix_signal_add(SIGTERM, _cb__idlechecker_sighandler, (void *)this);
 
-            UpdateTimestamp();
+        UpdateTimestamp();
     }
 
 
@@ -108,10 +107,10 @@ public:
         }
 
         enabled = true;
-        idle_checker.reset(new std::thread([self=Ptr(this)]()
-                           {
-                               self->_cb_idlechecker__loop();
-                           }));
+        idle_checker.reset(new std::thread([self = Ptr(this)]()
+                                           {
+            self->_cb_idlechecker__loop();
+        }));
     }
 
 
@@ -186,13 +185,14 @@ public:
             // Wait until the timer completes or we get
             // notification triggered by SIGINT/SIGTERM signals
             std::unique_lock<std::mutex> exit_lock(exit_cv_mutex);
-            exit_cv.wait_for(exit_lock, idle_time,
-                             [self=Ptr(this)]
-                              {
-                                    // Do not re-trigger the timer
-                                    // if we have received a signal
-                                    return self->signal_caught;
-                              });
+            exit_cv.wait_for(exit_lock,
+                             idle_time,
+                             [self = Ptr(this)]
+                             {
+                // Do not re-trigger the timer
+                // if we have received a signal
+                return self->signal_caught;
+            });
 
             if (idle_time + last_operation < std::chrono::system_clock::now()
                 || signal_caught)
@@ -246,10 +246,10 @@ public:
     // both a setter and getter method as it is used by both the
     // signal handler below and in the wait_for() lambda in the main
     // IdleCheck loop.
-    bool signal_caught;  /**< Indicates if a signal has been received */
+    bool signal_caught; /**< Indicates if a signal has been received */
 
 
-private:
+  private:
     GMainLoop *mainloop;
     std::chrono::duration<double> idle_time;
     bool enabled;

@@ -45,22 +45,27 @@
 
 #include "machineid.hpp"
 
-MachineIDException::MachineIDException(const std::string& msg) noexcept
+
+
+MachineIDException::MachineIDException(const std::string &msg) noexcept
 {
     error = std::string(msg);
 }
+
 
 std::string MachineIDException::GetError() const noexcept
 {
     return error;
 }
 
-const char* MachineIDException::what()
+
+const char *MachineIDException::what()
 {
     return error.c_str();
 }
 
-MachineID::MachineID(const std::string& local_machineid, bool enforce_local)
+
+MachineID::MachineID(const std::string &local_machineid, bool enforce_local)
 {
 
     std::string rawid;
@@ -85,7 +90,7 @@ MachineID::MachineID(const std::string& local_machineid, bool enforce_local)
 
         std::ifstream machineid_file;
         bool success = false;
-        for (const auto& fname : files)
+        for (const auto &fname : files)
         {
             machineid_file.open(fname);
             if (!machineid_file.eof() && !machineid_file.fail())
@@ -163,9 +168,10 @@ MachineID::MachineID(const std::string& local_machineid, bool enforce_local)
 
         // Format the calculated hash as a readable hex string
         std::stringstream output;
-        for(unsigned int i = 0; i < len; i++) {
-                output << std::setw(2) << std::setfill('0')
-                       << std::hex << (int) hash[i];
+        for (unsigned int i = 0; i < len; i++)
+        {
+            output << std::setw(2) << std::setfill('0')
+                   << std::hex << (int)hash[i];
         }
         machine_id = std::string(output.str());
 #else
@@ -173,10 +179,10 @@ MachineID::MachineID(const std::string& local_machineid, bool enforce_local)
         source = MachineID::SourceType::NONE;
 #endif
     }
-    catch (const std::exception& excp)
+    catch (const std::exception &excp)
     {
         throw MachineIDException(std::string("Failed to generate MachineID: ")
-                                  + std::string(excp.what()));
+                                 + std::string(excp.what()));
     }
 }
 
@@ -202,7 +208,7 @@ std::string MachineID::get() const noexcept
 }
 
 
-std::string MachineID::generate_machine_id(const std::string& fname) noexcept
+std::string MachineID::generate_machine_id(const std::string &fname) noexcept
 {
     uuid_t uuid_bin;
     uuid_generate_time_safe(uuid_bin);

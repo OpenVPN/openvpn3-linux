@@ -47,8 +47,10 @@ namespace unittest {
 
 TEST(OptionMapEntry, stringstream_string)
 {
-    OptionMapEntry t1_str{"cmdline", "command_line",
-                          "Simple Description", OptionValueType::String};
+    OptionMapEntry t1_str{"cmdline",
+                          "command_line",
+                          "Simple Description",
+                          OptionValueType::String};
     std::stringstream t1_test;
     t1_test << t1_str;
     std::string t1_expect{""};
@@ -68,8 +70,10 @@ TEST(OptionMapEntry, stringstream_integer)
     //  This test should normally not fail if stringstream_string passes,
     //  as values are stored as strings.
 
-    OptionMapEntry t1_str{"cmdline", "command_line",
-                          "Simple Description", OptionValueType::Int};
+    OptionMapEntry t1_str{"cmdline",
+                          "command_line",
+                          "Simple Description",
+                          OptionValueType::Int};
     std::stringstream t1_test;
     t1_test << t1_str;
     std::string t1_expect{""};
@@ -89,8 +93,10 @@ TEST(OptionMapEntry, stringstream_present)
     //  This test does not care about the value field at all, only the
     //  present flag - which returns a "Yes" in the rendering if true.
 
-    OptionMapEntry t1_str{"cmdline", "command_line",
-                          "Simple Description", OptionValueType::Present};
+    OptionMapEntry t1_str{"cmdline",
+                          "command_line",
+                          "Simple Description",
+                          OptionValueType::Present};
     std::stringstream t1_test;
     t1_test << t1_str;
     std::string t1_expect{""};
@@ -112,18 +118,20 @@ TEST(OptionMapEntry, stringstream_present)
 
 class TestFile : public Configuration::File
 {
-public:
+  public:
     typedef std::unique_ptr<TestFile> Ptr;
 
-    TestFile() : File()
+    TestFile()
+        : File()
     {
     }
 
 
-protected:
+  protected:
     Configuration::OptionMap ConfigureMapping()
     {
         return {
+            // clang-format off
             OptionMapEntry{"integer-option", "int_opt",
                            "Test Option - Integer", OptionValueType::Int},
             OptionMapEntry{"string-option", "str_opt",
@@ -145,6 +153,7 @@ protected:
                            "Test Group 2 Option B", OptionValueType::String},
             OptionMapEntry{"group-2-optC", "grp2optC", "group2",
                            "Test Group 2 Option C", OptionValueType::Present}
+            // clang-format on
         };
     }
 };
@@ -152,21 +161,21 @@ protected:
 
 class ConfigurationFile : public ::testing::Test
 {
-protected:
+  protected:
     void SetUp() override
     {
         testfile.reset(new TestFile());
     }
 
-public:
+  public:
     TestFile::Ptr testfile;
 };
 
 
-std::string get_json_member_names(Json::Value& data)
+std::string get_json_member_names(Json::Value &data)
 {
     std::stringstream fields;
-    for (const auto& f : data.getMemberNames())
+    for (const auto &f : data.getMemberNames())
     {
         fields << f << ":";
     }
@@ -208,31 +217,35 @@ TEST_F(ConfigurationFile, setval_present)
 {
     // All of these will be considered "present" - but value differs
     std::map<std::string, bool> testvals = {
-            {"0",     false},
-            {"1",     true},
-            {"2",     false},
-            {"no",    false},
-            {"yes",   true},
-            {"false", false},
-            {"true",  true},
-            {"abc",   false},
-            {"-1",    false}
-        };
-    for (const auto& val : testvals)
+        // clang-format off
+        {"0",     false},
+        {"1",     true},
+        {"2",     false},
+        {"no",    false},
+        {"yes",   true},
+        {"false", false},
+        {"true",  true},
+        {"abc",   false},
+        {"-1",    false}
+        // clang-format on
+    };
+    for (const auto &val : testvals)
     {
         testfile->SetValue("present-option", val.first);
         Json::Value parsed = testfile->Generate();
 
         EXPECT_TRUE(parsed["present_opt"].asBool() == val.second)
             << "Unexpected value for" << val.first << " returned: "
-            << parsed["present_opt"].asString() << std::endl << parsed;
-   }
+            << parsed["present_opt"].asString() << std::endl
+            << parsed;
+    }
 
     // Check for an not-present option
     Json::Value parsed = testfile->Generate();
     EXPECT_TRUE(parsed["not_present"].asString() == "")
         << "Unexpected value for 'not-present-option returned: "
-        << parsed["not_present"].asString() << std::endl << parsed;
+        << parsed["not_present"].asString() << std::endl
+        << parsed;
 }
 
 
@@ -298,14 +311,14 @@ TEST_F(ConfigurationFile, write_all)
 
     // Compare data found in the saved file with
     // what have in the test object
-    for (const auto& f : data.getMemberNames())
+    for (const auto &f : data.getMemberNames())
     {
         EXPECT_EQ(testdata[f], data[f]);
     }
 
     // Double check that all fields in the testobject is present
     // in the saved field
-    for (const auto& f : testdata.getMemberNames())
+    for (const auto &f : testdata.getMemberNames())
     {
         EXPECT_EQ(data[f], testdata[f]);
     }
@@ -321,7 +334,7 @@ TEST_F(ConfigurationFile, getoptions)
     testfile->Parse(testdata);
 
     std::stringstream opts;
-    for (const auto& o : testfile->GetOptions())
+    for (const auto &o : testfile->GetOptions())
     {
         opts << o << ":";
     }
@@ -407,19 +420,23 @@ TEST_F(ConfigurationFile, load_file_additional)
     auto members = parsed.getMemberNames();
     EXPECT_TRUE(std::find(members.begin(),
                           members.end(),
-                          "int_opt") != members.end())
+                          "int_opt")
+                != members.end())
         << "Could not find 'int_opt' in generated JSON data";
     EXPECT_TRUE(std::find(members.begin(),
                           members.end(),
-                          "str_opt") != members.end())
+                          "str_opt")
+                != members.end())
         << "Could not find 'str_opt' in generated JSON data";
     EXPECT_TRUE(std::find(members.begin(),
                           members.end(),
-                          "present_opt") != members.end())
+                          "present_opt")
+                != members.end())
         << "Could not find 'present_opt' in generated JSON data";
     EXPECT_FALSE(std::find(members.begin(),
                            members.end(),
-                           "unexpected") != members.end())
+                           "unexpected")
+                 != members.end())
         << "Found 'unexpected' in generated JSON data";
 
     unlink("/tmp/unit-test-config-parser-file-3.json");
@@ -461,11 +478,11 @@ TEST_F(ConfigurationFile, get_related_group)
     ASSERT_TRUE(s1 == related.end())
         << "Found group-2-optA in group2, should not be there";
 
-    auto s2= std::find(related.begin(), related.end(), "group-2-optB");
+    auto s2 = std::find(related.begin(), related.end(), "group-2-optB");
     EXPECT_FALSE(s2 == related.end())
         << "Did not locate group-2-optB in group2";
 
-    auto s3= std::find(related.begin(), related.end(), "group-2-optC");
+    auto s3 = std::find(related.begin(), related.end(), "group-2-optC");
     EXPECT_FALSE(s3 == related.end())
         << "Did not locate grgrp2optCp2optC in group2";
 }
@@ -509,4 +526,4 @@ TEST_F(ConfigurationFile, single_entry_present)
     unlink("/tmp/unit-test-config-parser-single-entry.json");
 }
 
-} // namespace unittests
+} // namespace unittest

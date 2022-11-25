@@ -126,13 +126,12 @@ TEST(SessionManagerEvent, init_with_gvariant_invalid)
     g_variant_builder_unref(b);
     ASSERT_THROW(Event ev(data), SessionManager::Exception);
     g_variant_unref(data);
-
 }
 
 TEST(SessionManagerEvent, gvariant_get)
 {
     Event ev{"/net/openvpn/v3/test/7", EventType::SESS_DESTROYED, 789};
-    GVariant* chk = ev.GetGVariant();
+    GVariant *chk = ev.GetGVariant();
     gchar *dmp = g_variant_print(chk, true);
     std::string dump_check(dmp);
     g_free(dmp);
@@ -143,4 +142,4 @@ TEST(SessionManagerEvent, gvariant_get)
 }
 
 
-} // namespace unittests
+} // namespace unittest

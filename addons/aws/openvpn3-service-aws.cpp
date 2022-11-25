@@ -35,7 +35,7 @@
 #include <openvpn/aws/awsroute.hpp>
 #include <openvpn/common/jsonfile.hpp>
 
-#include  "common/cmdargparser.hpp"
+#include "common/cmdargparser.hpp"
 #include "common/utils.hpp"
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
@@ -57,32 +57,35 @@ static const std::string OpenVPN3DBus_path_aws = "/net/openvpn/v3/aws";
 
 class AWSObject : public RC<thread_safe_refcount>,
                   public DBusObject,
-                  public DBusSignalSubscription {
-public:
-    typedef  RCPtr<AWSObject> Ptr;
+                  public DBusSignalSubscription
+{
+  public:
+    typedef RCPtr<AWSObject> Ptr;
 
-    AWSObject(GDBusConnection* conn, const std::string& objpath,
-              const std::string& config_file,
-              LogWriter* logwr, unsigned int log_level, bool signal_broadcast)
-          : DBusObject(objpath),
-            DBusSignalSubscription(conn, "", "", "", "NetworkChange"),
-            netcfgmgr(conn),
-            vpcRoutes {},
-            log_sender(conn, LogGroup::EXTSERVICE,
-                       OpenVPN3DBus_interf_aws, objpath, logwr)
+    AWSObject(GDBusConnection *conn,
+              const std::string &objpath,
+              const std::string &config_file,
+              LogWriter *logwr,
+              unsigned int log_level,
+              bool signal_broadcast)
+        : DBusObject(objpath),
+          DBusSignalSubscription(conn, "", "", "", "NetworkChange"),
+          netcfgmgr(conn),
+          vpcRoutes{},
+          log_sender(conn, LogGroup::EXTSERVICE, OpenVPN3DBus_interf_aws, objpath, logwr)
     {
         log_sender.SetLogLevel(log_level);
         if (!signal_broadcast)
         {
             DBusConnectionCreds credsprx(conn);
             log_sender.AddTargetBusName(credsprx.GetUniqueBusID(OpenVPN3DBus_name_log));
-
         }
         std::stringstream introspection_xml;
         introspection_xml << "<node name='" << objpath << "'>"
                           << "    <interface name='"
                           << OpenVPN3DBus_interf_aws << "'>"
-                          << "    </interface>" << "</node>";
+                          << "    </interface>"
+                          << "</node>";
         ParseIntrospectionXML(introspection_xml);
 
         // Retrieve AWS role credentials and retrieve needed VPC info
@@ -92,14 +95,15 @@ public:
             THROW_DBUSEXCEPTION("AWSObject", "No role defined");
         }
         log_sender.LogInfo("Fetching credentials from role '"
-                            + role_name + "'");
+                           + role_name + "'");
 
         auto route_context = prepare_route_context(role_name);
-        AWS::Route::Info route_info { *route_context };
+        AWS::Route::Info route_info{*route_context};
         route_table_id = route_info.route_table_id;
         network_interface_id = route_info.network_interface_id;
         AWS::Route::set_source_dest_check(*route_context,
-                                          network_interface_id, false);
+                                          network_interface_id,
+                                          false);
 
         log_sender.LogInfo("Running on instance " + route_context->instance_id()
                            + ", route table " + route_table_id);
@@ -131,7 +135,7 @@ public:
 
                 log_sender.LogInfo("Removed route " + vpcRoute.first);
             }
-            catch (const std::exception& ex)
+            catch (const std::exception &ex)
             {
                 log_sender.LogError("Error removing route: " + std::string(ex.what()));
             }
@@ -157,8 +161,8 @@ public:
 
         // Parse the network change event, only consider route changes
         NetCfgChangeEvent ev(parameters);
-        if ((ev.type != NetCfgChangeType::ROUTE_ADDED) &&
-            (ev.type != NetCfgChangeType::ROUTE_REMOVED))
+        if ((ev.type != NetCfgChangeType::ROUTE_ADDED)
+            && (ev.type != NetCfgChangeType::ROUTE_REMOVED))
         {
             return;
         }
@@ -166,7 +170,7 @@ public:
         try
         {
             const std::string cidr = ev.details["subnet"] + "/" + ev.details["prefix"];
-            const bool ipv6 =  ev.details["ip_version"] == "6";
+            const bool ipv6 = ev.details["ip_version"] == "6";
             auto route_context = prepare_route_context(role_name);
 
             if (ev.type == NetCfgChangeType::ROUTE_ADDED)
@@ -198,38 +202,38 @@ public:
                 log_sender.LogInfo("Removed route " + cidr);
             }
         }
-        catch (const std::exception& ex)
+        catch (const std::exception &ex)
         {
             log_sender.LogError("Error updating VPC routing: " + std::string(ex.what()));
         }
     }
 
 
-    GVariant * callback_get_property(GDBusConnection *conn,
-                                     const std::string sender,
-                                     const std::string obj_path,
-                                     const std::string intf_name,
-                                     const std::string property_name,
-                                     GError **error) override
+    GVariant *callback_get_property(GDBusConnection *conn,
+                                    const std::string sender,
+                                    const std::string obj_path,
+                                    const std::string intf_name,
+                                    const std::string property_name,
+                                    GError **error) override
     {
         GVariant *ret = nullptr;
 
         ret = nullptr;
-        g_set_error (error,
-                     G_IO_ERROR,
-                     G_IO_ERROR_FAILED,
-                     "Unknown property");
+        g_set_error(error,
+                    G_IO_ERROR,
+                    G_IO_ERROR_FAILED,
+                    "Unknown property");
         return ret;
     }
 
 
-    GVariantBuilder * callback_set_property(GDBusConnection *conn,
-                                            const std::string sender,
-                                            const std::string obj_path,
-                                            const std::string intf_name,
-                                            const std::string property_name,
-                                            GVariant *value,
-                                            GError **error) override
+    GVariantBuilder *callback_set_property(GDBusConnection *conn,
+                                           const std::string sender,
+                                           const std::string obj_path,
+                                           const std::string intf_name,
+                                           const std::string property_name,
+                                           GVariant *value,
+                                           GError **error) override
     {
         THROW_DBUSEXCEPTION("AWSDBus", "set property not implemented");
     }
@@ -246,7 +250,7 @@ public:
     }
 
 
-private:
+  private:
     NetCfgProxy::Manager netcfgmgr;
     std::string role_name;
     std::string network_interface_id;
@@ -255,35 +259,39 @@ private:
     std::set<VpcRoute> vpcRoutes;
     LogSender log_sender;
 
-    std::string read_role_name(const std::string& config_file)
+    std::string read_role_name(const std::string &config_file)
     {
         try
         {
             auto json_content = json::read_fast(config_file);
             return json::get_string(json_content, "role");
         }
-        catch (const std::exception & ex)
+        catch (const std::exception &ex)
         {
             log_sender.LogError("Error reading role name: " + std::string(ex.what()));
             return "";
         }
     }
 
-    std::unique_ptr<AWS::Route::Context> prepare_route_context(const std::string& role_name)
+    std::unique_ptr<AWS::Route::Context> prepare_route_context(const std::string &role_name)
     {
         RandomAPI::Ptr rng(new SSLLib::RandomAPI(false));
         AWS::PCQuery::Info ii;
 
-        WS::ClientSet::run_synchronous([&](WS::ClientSet::Ptr cs) {
+        WS::ClientSet::run_synchronous([&](WS::ClientSet::Ptr cs)
+                                       {
             AWS::PCQuery::Ptr awspc(new AWS::PCQuery(cs, role_name, OPENVPN3_AWS_CERTS));
-            awspc->start([&](AWS::PCQuery::Info info) {
+            awspc->start([&](AWS::PCQuery::Info info)
+                         {
                 if (info.is_error())
                 {
                     THROW_DBUSEXCEPTION("AWSObject", "Error preparing route context: " + info.error);
                 }
                 ii = std::move(info);
             });
-        }, nullptr, rng.get());
+        },
+                                       nullptr,
+                                       rng.get());
 
         return std::unique_ptr<AWS::Route::Context>(new AWS::Route::Context(ii, ii.creds, rng, nullptr, 0));
     }
@@ -292,17 +300,16 @@ private:
 
 class AWSDBus : public DBus
 {
-public:
-    explicit AWSDBus(GDBusConnection* conn, const std::string& config_file,
-                     LogWriter* logwr, unsigned int log_level, bool sig_brdc)
+  public:
+    explicit AWSDBus(GDBusConnection *conn, const std::string &config_file, LogWriter *logwr, unsigned int log_level, bool sig_brdc)
         : DBus(conn,
                OpenVPN3DBus_interf_aws,
                OpenVPN3DBus_path_aws,
                OpenVPN3DBus_interf_aws),
-           config_file{config_file},
-           logwr{logwr},
-           log_level{log_level},
-           signal_broadcast{sig_brdc}
+          config_file{config_file},
+          logwr{logwr},
+          log_level{log_level},
+          signal_broadcast{sig_brdc}
     {
     }
 
@@ -317,8 +324,12 @@ public:
             THROW_DBUSEXCEPTION("AWSDBus",
                                 "callback_bus_acquired() - "
                                 "empty root_path for AWSObject, consider upgrading glib");
-        aws.reset(new AWSObject(GetConnection(), root_path, config_file,
-                                logwr, log_level, signal_broadcast));
+        aws.reset(new AWSObject(GetConnection(),
+                                root_path,
+                                config_file,
+                                logwr,
+                                log_level,
+                                signal_broadcast));
         aws->RegisterObject(GetConnection());
     }
 
@@ -349,12 +360,12 @@ public:
     {
         THROW_DBUSEXCEPTION("AWSDBus",
                             "openvpn3-service-aws could not register '"
-                            + busname + "' on the D-Bus");
+                                + busname + "' on the D-Bus");
     }
 
-private:
+  private:
     std::string config_file;
-    LogWriter* logwr;
+    LogWriter *logwr;
     unsigned int log_level;
     bool signal_broadcast;
     AWSObject::Ptr aws;
@@ -375,7 +386,7 @@ int aws_main(ParsedArgs::Ptr args)
     // directories where only root has access
     //
     std::ofstream logfs;
-    std::ostream  *logfile = nullptr;
+    std::ostream *logfile = nullptr;
     LogWriter::Ptr logwr = nullptr;
     ColourEngine::Ptr colourengine = nullptr;
 
@@ -448,8 +459,7 @@ int aws_main(ParsedArgs::Ptr args)
     try
     {
         // Prepare the net.openvpn.v3.aws D-Bus service
-        AWSDBus aws(dbus.GetConnection(), config_file,
-                    logwr.get(), log_level, signal_broadcast);
+        AWSDBus aws(dbus.GetConnection(), config_file, logwr.get(), log_level, signal_broadcast);
         aws.Setup();
 
         // Start the main program loop
@@ -463,7 +473,7 @@ int aws_main(ParsedArgs::Ptr args)
             logsrvprx->Detach(OpenVPN3DBus_interf_aws);
         }
     }
-    catch (const DBusException& exc)
+    catch (const DBusException &exc)
     {
         throw CommandException("AWS", exc.what());
     }
@@ -474,33 +484,40 @@ int aws_main(ParsedArgs::Ptr args)
 
 int main(int argc, char **argv)
 {
-    SingleCommand cmd(argv[0], "OpenVPN 3 AWS VPC integration service",
-                             aws_main);
+    SingleCommand cmd(argv[0], "OpenVPN 3 AWS VPC integration service", aws_main);
     cmd.AddVersionOption();
-    cmd.AddOption("config", 'c', "FILE", true,
+    cmd.AddOption("config",
+                  'c',
+                  "FILE",
+                  true,
                   "AWS VPC configuration file (default: " OPENVPN3_AWS_CONFIG ")");
-    cmd.AddOption("log-file", "FILE" , true,
+    cmd.AddOption("log-file",
+                  "FILE",
+                  true,
                   "Write log data to FILE.  Use 'stdout:' for console logging.");
-    cmd.AddOption("log-level", "LOG-LEVEL", true,
+    cmd.AddOption("log-level",
+                  "LOG-LEVEL",
+                  true,
                   "Log verbosity level (valid values 0-6, default 3)");
-    cmd.AddOption("colour", 0,
-                        "Make the log lines colourful");
-    cmd.AddOption("signal-broadcast", 0,
+    cmd.AddOption("colour",
+                  0,
+                  "Make the log lines colourful");
+    cmd.AddOption("signal-broadcast",
+                  0,
                   "Broadcast all D-Bus signals from openvpn3-service-aws");
     try
     {
         return cmd.RunCommand(simple_basename(argv[0]), argc, argv);
     }
-    catch (const LogServiceProxyException& excp)
+    catch (const LogServiceProxyException &excp)
     {
         std::cout << "** ERROR ** " << excp.what() << std::endl;
         std::cout << "            " << excp.debug_details() << std::endl;
         return 2;
     }
-    catch (CommandException& excp)
+    catch (CommandException &excp)
     {
         std::cout << cmd.GetCommand() << ": " << excp.what() << std::endl;
         return 2;
     }
-
 }

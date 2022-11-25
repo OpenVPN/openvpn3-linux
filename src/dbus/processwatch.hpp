@@ -24,10 +24,11 @@
 
 #include <openvpn/common/rc.hpp>
 
+
 class ProcessSignalWatcher : public DBusSignalSubscription,
                              public RC<thread_unsafe_refcount>
 {
-public:
+  public:
     typedef RCPtr<ProcessSignalWatcher> Ptr;
 
     ProcessSignalWatcher(GDBusConnection *dbuscon)
@@ -37,13 +38,17 @@ public:
     }
 
 
-    StatusMinor WaitForProcess(std::string interface, std::string procname, uint8_t timeout = 10)
+    StatusMinor WaitForProcess(std::string interface,
+                               std::string procname,
+                               uint8_t timeout = 10)
     {
         return start_wait(interface, procname, 0, timeout);
     }
 
 
-    StatusMinor WaitForProcess(std::string interface, pid_t pid, uint8_t timeout = 10)
+    StatusMinor WaitForProcess(std::string interface,
+                               pid_t pid,
+                               uint8_t timeout = 10)
     {
         return start_wait(interface, "", pid, timeout);
     }
@@ -87,7 +92,7 @@ public:
     }
 
 
-private:
+  private:
     std::mutex waitfor_mtx;
     std::condition_variable waitfor_condvar;
     bool waitfor_inuse;
@@ -96,16 +101,19 @@ private:
     pid_t waitfor_pid;
     bool waitfor_signaled;
 
+
     StatusMinor start_wait(std::string interface, std::string process_name, pid_t pid, uint8_t timeout)
     {
         if ((process_name.empty() && pid == 0) || (!process_name.empty() && pid > 0))
         {
-            THROW_DBUSEXCEPTION("ProcessSignalWatcher", "Process name *OR* PID must be set");
+            THROW_DBUSEXCEPTION("ProcessSignalWatcher",
+                                "Process name *OR* PID must be set");
         }
 
         if (waitfor_inuse)
         {
-            THROW_DBUSEXCEPTION("ProcessSignalWatcher", "A WaitForProcess() call is already running.");
+            THROW_DBUSEXCEPTION("ProcessSignalWatcher",
+                                "A WaitForProcess() call is already running.");
         }
         waitfor_inuse = true;
 
@@ -115,25 +123,28 @@ private:
         waitfor_signaled = false;
         waitfor_pid = pid;
 
-        guint signal_id = g_dbus_connection_signal_subscribe(GetConnection(), NULL, interface.c_str(),
-                                                             "ProcessChange", "/",
+        guint signal_id = g_dbus_connection_signal_subscribe(GetConnection(),
+                                                             NULL,
+                                                             interface.c_str(),
+                                                             "ProcessChange",
+                                                             "/",
                                                              NULL,
                                                              G_DBUS_SIGNAL_FLAGS_NONE,
                                                              dbusobject_callback_signal_handler,
                                                              this,
                                                              NULL);
         std::unique_lock<std::mutex> lock(waitfor_mtx);
-        waitfor_condvar.wait_for(lock, std::chrono::seconds(timeout),
-                                 [this]{return true == waitfor_signaled;});
+        waitfor_condvar.wait_for(lock, std::chrono::seconds(timeout), [this]
+                                 {
+            return true == waitfor_signaled;
+        });
 
         g_dbus_connection_signal_unsubscribe(GetConnection(), signal_id);
 
-        StatusMinor ret = waitfor_result;  // To avoid another caller to clobbering our result
+        StatusMinor ret = waitfor_result; // To avoid another caller to clobbering our result
         waitfor_inuse = false;
         return ret;
-
     }
-
 };
 
 
@@ -141,17 +152,21 @@ private:
 class ProcessSignalProducer : public DBusSignalProducer,
                               public RC<thread_unsafe_refcount>
 {
-public:
+  public:
     typedef RCPtr<ProcessSignalProducer> Ptr;
 
-    ProcessSignalProducer(GDBusConnection *dbuscon, std::string interface, std::string procname)
+    ProcessSignalProducer(GDBusConnection *dbuscon,
+                          std::string interface,
+                          std::string procname)
         : DBusSignalProducer(dbuscon, "", interface, "/"),
           processname(procname)
     {
     }
 
 
-    ProcessSignalProducer(GDBusConnection *dbuscon, std::string interface, std::string objpath,
+    ProcessSignalProducer(GDBusConnection *dbuscon,
+                          std::string interface,
+                          std::string objpath,
                           std::string procname)
         : DBusSignalProducer(dbuscon, "", interface, objpath),
           processname(procname)
@@ -161,7 +176,10 @@ public:
 
     void ProcessChange(const StatusMinor status)
     {
-        GVariant *params = g_variant_new("(usu)", (guint) status, processname.c_str(), getpid());
+        GVariant *params = g_variant_new("(usu)",
+                                         (guint)status,
+                                         processname.c_str(),
+                                         getpid());
         Send("ProcessChange", params);
         if (StatusMinor::PROC_STOPPED == status)
         {
@@ -172,6 +190,6 @@ public:
     }
 
 
-private:
+  private:
     std::string processname;
 };

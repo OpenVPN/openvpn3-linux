@@ -25,7 +25,7 @@
 
 #pragma once
 
-const char * package_version();
+const char *package_version();
 
 void drop_root();
 std::string get_version(std::string component);
@@ -35,8 +35,5 @@ void set_console_echo(bool echo);
 
 static inline std::string simple_basename(const std::string filename)
 {
-    return filename.substr(filename.rfind('/')+1);
+    return filename.substr(filename.rfind('/') + 1);
 }
-
-
-

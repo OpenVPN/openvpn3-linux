@@ -53,7 +53,7 @@ using namespace openvpn;
  */
 class BackendStarterSignals : public LogSender
 {
-public:
+  public:
     /**
      *  Initializes the signaling component
      *
@@ -61,10 +61,8 @@ public:
      * @param object_path A string with the D-Bus object path signals sent
      *                    should be attached to
      */
-    BackendStarterSignals(GDBusConnection *conn, std::string object_path,
-                          unsigned int log_level)
-            : LogSender(conn, LogGroup::BACKENDSTART,
-                        OpenVPN3DBus_interf_backends, object_path)
+    BackendStarterSignals(GDBusConnection *conn, std::string object_path, unsigned int log_level)
+        : LogSender(conn, LogGroup::BACKENDSTART, OpenVPN3DBus_interf_backends, object_path)
     {
         SetLogLevel(log_level);
     }
@@ -90,6 +88,7 @@ public:
 };
 
 
+
 /**
  * Main service object for starting VPN client processes
  */
@@ -97,7 +96,7 @@ class BackendStarterObject : public DBusObject,
                              public BackendStarterSignals,
                              public RC<thread_safe_refcount>
 {
-public:
+  public:
     typedef RCPtr<BackendStarterObject> Ptr;
 
     /**
@@ -108,7 +107,8 @@ public:
      * @param busname  D-Bus bus name this service is registered on
      * @param objpath  D-Bus object path to this object
      */
-    BackendStarterObject(GDBusConnection *dbuscon, const std::string busname,
+    BackendStarterObject(GDBusConnection *dbuscon,
+                         const std::string busname,
                          const std::string objpath,
                          const std::vector<std::string> client_args,
                          const std::vector<std::string> client_envvars,
@@ -178,7 +178,7 @@ public:
             // Retrieve the configuration path for the tunnel
             // from the request
             gchar *token = nullptr;
-            g_variant_get (params, "(s)", &token);
+            g_variant_get(params, "(s)", &token);
             pid_t backend_pid = start_backend_process(token);
             if (-1 == backend_pid)
             {
@@ -211,12 +211,12 @@ public:
      * @return  Returns always NULL, as there are no properties in the
      *          BackendStarterObject.
      */
-    GVariant * callback_get_property(GDBusConnection *conn,
-                                     const std::string sender,
-                                     const std::string obj_path,
-                                     const std::string intf_name,
-                                     const std::string property_name,
-                                     GError **error)
+    GVariant *callback_get_property(GDBusConnection *conn,
+                                    const std::string sender,
+                                    const std::string obj_path,
+                                    const std::string intf_name,
+                                    const std::string property_name,
+                                    GError **error)
     {
         IdleCheck_UpdateTimestamp();
         GVariant *ret = nullptr;
@@ -227,10 +227,10 @@ public:
         }
         else
         {
-            g_set_error (error,
-                         G_IO_ERROR,
-                         G_IO_ERROR_FAILED,
-                         "Unknown property");
+            g_set_error(error,
+                        G_IO_ERROR,
+                        G_IO_ERROR_FAILED,
+                        "Unknown property");
         }
         return ret;
     };
@@ -254,23 +254,24 @@ public:
      * @return Will always throw an exception as there are no properties to
      *         modify.
      */
-    GVariantBuilder * callback_set_property(GDBusConnection *conn,
-                                            const std::string sender,
-                                            const std::string obj_path,
-                                            const std::string intf_name,
-                                            const std::string property_name,
-                                            GVariant *value,
-                                            GError **error)
+    GVariantBuilder *callback_set_property(GDBusConnection *conn,
+                                           const std::string sender,
+                                           const std::string obj_path,
+                                           const std::string intf_name,
+                                           const std::string property_name,
+                                           GVariant *value,
+                                           GError **error)
     {
         THROW_DBUSEXCEPTION("BackendStarterObject",
                             "set property not implemented");
     }
 
 
-private:
+  private:
     GDBusConnection *dbuscon;
     const std::vector<std::string> client_args;
     std::vector<std::string> client_envvars;
+
 
     /**
      * Forks out a child thread which starts the openvpn3-service-client
@@ -280,7 +281,7 @@ private:
      *               object this process is tied to.
      * @return Returns the process ID (pid) of the child process.
      */
-    pid_t start_backend_process(char * token)
+    pid_t start_backend_process(char *token)
     {
         pid_t backend_pid = fork();
         if (0 == backend_pid)
@@ -293,12 +294,12 @@ private:
             //  to stdout, which will be picked up by other logs on the
             //  system
             //
-            char *args[client_args.size()+2];
+            char *args[client_args.size() + 2];
             unsigned int i = 0;
 
-            for (const auto& arg : client_args)
+            for (const auto &arg : client_args)
             {
-                args[i++] = (char *) strdup(arg.c_str());
+                args[i++] = (char *)strdup(arg.c_str());
             }
             args[i++] = token;
             args[i++] = nullptr;
@@ -309,17 +310,18 @@ private:
             {
                 std::cout << args[j] << " ";
             }
-            std::cout << std::endl << std::endl;
+            std::cout << std::endl
+                      << std::endl;
 #endif
 
-            char** env = {0};
+            char **env = {0};
             if (client_envvars.size() > 0)
             {
-                env = (char **) std::calloc(client_envvars.size(), sizeof(char *));
+                env = (char **)std::calloc(client_envvars.size(), sizeof(char *));
                 unsigned int idx = 0;
-                for (const auto& ev : client_envvars)
+                for (const auto &ev : client_envvars)
                 {
-                    env[idx] = (char *) ev.c_str();
+                    env[idx] = (char *)ev.c_str();
                     ++idx;
                 }
                 env[idx] = nullptr;
@@ -336,12 +338,12 @@ private:
             std::cerr << "** Error starting " << args[0] << ": "
                       << strerror(errno) << std::endl;
         }
-        else if( backend_pid > 0)
+        else if (backend_pid > 0)
         {
             // Parent
             std::stringstream cmdline;
             cmdline << "Command line used: ";
-            for (auto const& c : client_args)
+            for (auto const &c : client_args)
             {
                 cmdline << c << " ";
             }
@@ -354,7 +356,7 @@ private:
             if (-1 == w)
             {
                 std::stringstream msg;
-                msg << "Child process ("  << token
+                msg << "Child process (" << token
                     << ") - pid " << backend_pid
                     << " failed to start as expected (exit code: "
                     << std::to_string(rc) << ")";
@@ -368,12 +370,13 @@ private:
 };
 
 
+
 /**
  * Main D-Bus service implementation of the Backend Starter service
  */
 class BackendStarterDBus : public DBus
 {
-public:
+  public:
     /**
      * Constructor creating a D-Bus service for the Backend Starter service.
      *
@@ -400,14 +403,13 @@ public:
                                                 "BackendStarter"));
     };
 
-
     ~BackendStarterDBus()
     {
         procsig->ProcessChange(StatusMinor::PROC_STOPPED);
     }
 
 
-    void AddClientEnvVariable(const std::string& envvar)
+    void AddClientEnvVariable(const std::string &envvar)
     {
         client_envvars.push_back(envvar);
     }
@@ -419,10 +421,13 @@ public:
      */
     void callback_bus_acquired()
     {
-        mainobj.reset(new BackendStarterObject(GetConnection(), GetBusName(),
-                                               GetRootPath(), client_args,
+        mainobj.reset(new BackendStarterObject(GetConnection(),
+                                               GetBusName(),
+                                               GetRootPath(),
+                                               client_args,
                                                client_envvars,
-                                               log_level, signal_broadcast));
+                                               log_level,
+                                               signal_broadcast));
         mainobj->RegisterObject(GetConnection());
 
         procsig->ProcessChange(StatusMinor::PROC_STARTED);
@@ -444,9 +449,7 @@ public:
      * @param conn     Connection where this event happened
      * @param busname  A string of the acquired bus name
      */
-    void callback_name_acquired(GDBusConnection *conn, std::string busname)
-    {
-    };
+    void callback_name_acquired(GDBusConnection *conn, std::string busname){};
 
 
     /**
@@ -461,10 +464,11 @@ public:
     {
         THROW_DBUSEXCEPTION("BackendStarterDBus",
                             "openvpn3-service-backendstart could not register '"
-                            + busname + "' on the D-Bus");
+                                + busname + "' on the D-Bus");
     };
 
-private:
+
+  private:
     BackendStarterObject::Ptr mainobj;
     unsigned int log_level = 3;
     bool signal_broadcast = true;
@@ -483,7 +487,6 @@ int backend_starter(ParsedArgs::Ptr args)
     g_unix_signal_add(SIGINT, stop_handler, main_loop);
     g_unix_signal_add(SIGTERM, stop_handler, main_loop);
 
-
     std::vector<std::string> client_args;
 #ifdef OPENVPN_DEBUG
     if (args->Present("run-via"))
@@ -492,7 +495,7 @@ int backend_starter(ParsedArgs::Ptr args)
     }
     if (args->Present("debugger-arg"))
     {
-        for (const auto& a : args->GetAllValues("debugger-arg"))
+        for (const auto &a : args->GetAllValues("debugger-arg"))
         {
             client_args.push_back(a);
         }
@@ -563,8 +566,10 @@ int backend_starter(ParsedArgs::Ptr args)
                                                      OpenVPN3DBus_interf_backends);
     }
 
-    BackendStarterDBus backstart(dbus.GetConnection(), client_args,
-                                 log_level, signal_broadcast);
+    BackendStarterDBus backstart(dbus.GetConnection(),
+                                 client_args,
+                                 log_level,
+                                 signal_broadcast);
 
     IdleCheck::Ptr idle_exit;
     if (idle_wait_sec > 0)
@@ -585,7 +590,7 @@ int backend_starter(ParsedArgs::Ptr args)
 
     if (args->Present("client-setenv"))
     {
-        for (const auto& ev : args->GetAllValues("client-setenv"))
+        for (const auto &ev : args->GetAllValues("client-setenv"))
         {
             backstart.AddClientEnvVariable(ev);
         }
@@ -593,7 +598,6 @@ int backend_starter(ParsedArgs::Ptr args)
 
 #endif
     backstart.Setup();
-
 
     if (idle_wait_sec > 0)
     {
@@ -617,55 +621,80 @@ int backend_starter(ParsedArgs::Ptr args)
 }
 
 
+
 int main(int argc, char **argv)
 {
-    SingleCommand cmd(argv[0], "OpenVPN 3 VPN Client starter",
-                             backend_starter);
+    SingleCommand cmd(argv[0], "OpenVPN 3 VPN Client starter", backend_starter);
     cmd.AddVersionOption();
-    cmd.AddOption("log-level", "LOG-LEVEL", true,
+    cmd.AddOption("log-level",
+                  "LOG-LEVEL",
+                  true,
                   "Log verbosity level (valid values 0-6, default 3)");
-    cmd.AddOption("signal-broadcast", 0,
+    cmd.AddOption("signal-broadcast",
+                  0,
                   "Broadcast all D-Bus signals from openvpn3-service-backend instead of targeted unicast");
-    cmd.AddOption("idle-exit", "SECONDS", true,
+    cmd.AddOption("idle-exit",
+                  "SECONDS",
+                  true,
                   "How long to wait before exiting if being idle. "
                   "0 disables it (Default: 10 seconds)");
 #ifdef OPENVPN_DEBUG
-    cmd.AddOption("run-via", 0, "DEBUG_PROGAM", true,
+    cmd.AddOption("run-via",
+                  0,
+                  "DEBUG_PROGAM",
+                  true,
                   "Debug option: Run openvpn3-service-client via provided executable (full path required)");
-    cmd.AddOption("debugger-arg", 0, "ARG", true,
+    cmd.AddOption("debugger-arg",
+                  0,
+                  "ARG",
+                  true,
                   "Debug option: Argument to pass to the DEBUG_PROGAM");
-    cmd.AddOption("client-no-fork", 0,
+    cmd.AddOption("client-no-fork",
+                  0,
                   "Debug option: Adds the --no-fork argument to openvpn3-service-client");
-    cmd.AddOption("client-no-setsid", 0,
+    cmd.AddOption("client-no-setsid",
+                  0,
                   "Debug option: Adds the --no-setsid argument to openvpn3-service-client");
-    cmd.AddOption("client-path", 0, "CLIENT-PATH", true,
+    cmd.AddOption("client-path",
+                  0,
+                  "CLIENT-PATH",
+                  true,
                   "Debug option: Path to openvpn3-service-client binary");
-    cmd.AddOption("client-setenv", "ENVVAR=VALUE", true,
+    cmd.AddOption("client-setenv",
+                  "ENVVAR=VALUE",
+                  true,
                   "Debug option: Sets an environment variable passed to the openvpn3-service-client. "
                   "Can be used multiple times.");
 #endif
-    cmd.AddOption("client-log-level", "LEVEL", true,
+    cmd.AddOption("client-log-level",
+                  "LEVEL",
+                  true,
                   "Adds the --log-level LEVEL argument to openvpn3-service-client");
-    cmd.AddOption("client-log-file", "FILE", true,
+    cmd.AddOption("client-log-file",
+                  "FILE",
+                  true,
                   "Adds the --log-file FILE argument to openvpn3-service-client");
-    cmd.AddOption("client-colour", 0,
+    cmd.AddOption("client-colour",
+                  0,
                   "Adds the --colour argument to openvpn3-service-client");
-    cmd.AddOption("client-disable-protect-socket", 0,
+    cmd.AddOption("client-disable-protect-socket",
+                  0,
                   "Adds the --disable-protect argument to openvpn3-service-client");
-    cmd.AddOption("client-signal-broadcast", 0,
+    cmd.AddOption("client-signal-broadcast",
+                  0,
                   "Debug option: Adds the --signal-broadcast argument to openvpn3-service-client");
 
     try
     {
         return cmd.RunCommand(simple_basename(argv[0]), argc, argv);
     }
-    catch (const LogServiceProxyException& excp)
+    catch (const LogServiceProxyException &excp)
     {
         std::cout << "** ERROR ** " << excp.what() << std::endl;
         std::cout << "            " << excp.debug_details() << std::endl;
         return 2;
     }
-    catch (CommandException& excp)
+    catch (CommandException &excp)
     {
         std::cout << excp.what() << std::endl;
         return 2;

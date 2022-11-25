@@ -25,20 +25,21 @@
 
 #include "platforminfo.hpp"
 
+
 //
 //  PlatformInfoException implementation
 //
 
-PlatformInfoException::PlatformInfoException(const std::string& err)
+PlatformInfoException::PlatformInfoException(const std::string &err)
     : errormsg(err)
 {
 }
 
-const char* PlatformInfoException::what() const noexcept
+
+const char *PlatformInfoException::what() const noexcept
 {
     return errormsg.c_str();
 }
-
 
 
 
@@ -46,7 +47,7 @@ const char* PlatformInfoException::what() const noexcept
 //  PlatformInfo implementation
 //
 
-PlatformInfo::PlatformInfo(GDBusConnection* con)
+PlatformInfo::PlatformInfo(GDBusConnection *con)
     : DBusProxy(con,
                 "org.freedesktop.hostname1",
                 "org.freedesktop.hostname1",
@@ -69,7 +70,7 @@ const std::string PlatformInfo::str() const
     {
         os_name = GetStringProperty("OperatingSystemCPEName");
     }
-    catch (const DBusException&)
+    catch (const DBusException &)
     {
         // Ignore errors; os_name will be empty
     }
@@ -80,7 +81,7 @@ const std::string PlatformInfo::str() const
         {
             os_name = GetStringProperty("OperatingSystemPrettyName");
         }
-        catch (const DBusException&)
+        catch (const DBusException &)
         {
             // Ignore errors, os_name should be empty
         }

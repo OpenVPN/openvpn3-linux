@@ -33,6 +33,7 @@
 
 using namespace openvpn;
 
+
 static int session_manager(ParsedArgs::Ptr args)
 {
     std::cout << get_version(args->GetArgv0()) << std::endl;
@@ -50,7 +51,7 @@ static int session_manager(ParsedArgs::Ptr args)
 
     // Open a log destination, if requested
     std::ofstream logfs;
-    std::ostream  *logfile = nullptr;
+    std::ostream *logfile = nullptr;
     LogWriter::Ptr logwr = nullptr;
     ColourEngine::Ptr colourengine = nullptr;
 
@@ -71,8 +72,8 @@ static int session_manager(ParsedArgs::Ptr args)
         if (args->Present("colour"))
         {
             colourengine.reset(new ANSIColours());
-             logwr.reset(new ColourStreamWriter(*logfile,
-                                                colourengine.get()));
+            logwr.reset(new ColourStreamWriter(*logfile,
+                                               colourengine.get()));
         }
         else
         {
@@ -84,8 +85,7 @@ static int session_manager(ParsedArgs::Ptr args)
     DBus dbus(G_BUS_TYPE_SYSTEM);
     dbus.Connect();
 
-    SessionManagerDBus sessmgr(dbus.GetConnection(), logwr.get(),
-                               signal_broadcast);
+    SessionManagerDBus sessmgr(dbus.GetConnection(), logwr.get(), signal_broadcast);
 
     LogServiceProxy::Ptr logsrvprx = nullptr;
     if (!signal_broadcast)
@@ -141,20 +141,14 @@ static int session_manager(ParsedArgs::Ptr args)
 
 int main(int argc, char **argv)
 {
-    SingleCommand argparser(argv[0], "OpenVPN 3 Session Manager",
-                            session_manager);
+    SingleCommand argparser(argv[0], "OpenVPN 3 Session Manager", session_manager);
     argparser.AddVersionOption();
-    argparser.AddOption("log-level", "LOG-LEVEL", true,
-                        "Log verbosity level (valid values 0-6, default 3)");
-    argparser.AddOption("log-file", "FILE" , true,
-                        "Write log data to FILE.  Use 'stdout:' for console logging.");
-    argparser.AddOption("colour", 0,
-                        "Make the log lines colourful");
-    argparser.AddOption("signal-broadcast", 0,
-                        "Broadcast all D-Bus signals instead of targeted unicast");
-    argparser.AddOption("idle-exit", "MINUTES", true,
-                        "How long to wait before exiting if being idle. "
-                        "0 disables it (Default: 3 minutes)");
+    argparser.AddOption("log-level", "LOG-LEVEL", true, "Log verbosity level (valid values 0-6, default 3)");
+    argparser.AddOption("log-file", "FILE", true, "Write log data to FILE.  Use 'stdout:' for console logging.");
+    argparser.AddOption("colour", 0, "Make the log lines colourful");
+    argparser.AddOption("signal-broadcast", 0, "Broadcast all D-Bus signals instead of targeted unicast");
+    argparser.AddOption("idle-exit", "MINUTES", true, "How long to wait before exiting if being idle. "
+                                                      "0 disables it (Default: 3 minutes)");
 
     try
     {
@@ -164,13 +158,13 @@ int main(int argc, char **argv)
 
         return argparser.RunCommand(simple_basename(argv[0]), argc, argv);
     }
-    catch (const LogServiceProxyException& excp)
+    catch (const LogServiceProxyException &excp)
     {
         std::cout << "** ERROR ** " << excp.what() << std::endl;
         std::cout << "            " << excp.debug_details() << std::endl;
         return 2;
     }
-    catch (CommandException& excp)
+    catch (CommandException &excp)
     {
         std::cout << excp.what() << std::endl;
         return 2;

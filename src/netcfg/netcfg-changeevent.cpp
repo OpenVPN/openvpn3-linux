@@ -21,10 +21,9 @@
 #include "netcfg-changeevent.hpp"
 
 
-
-NetCfgChangeEvent::NetCfgChangeEvent(const NetCfgChangeType& t,
-                                     const std::string& dev,
-                                     const NetCfgChangeDetails& d) noexcept
+NetCfgChangeEvent::NetCfgChangeEvent(const NetCfgChangeType &t,
+                                     const std::string &dev,
+                                     const NetCfgChangeDetails &d) noexcept
 {
     reset();
     type = t;
@@ -46,7 +45,7 @@ NetCfgChangeEvent::NetCfgChangeEvent(GVariant *params)
     GVariantIter *det = nullptr;
     guint tmp_type = 0;
     g_variant_get(params, "(usa{ss})", &tmp_type, &dev, &det);
-    type = (NetCfgChangeType) tmp_type;
+    type = (NetCfgChangeType)tmp_type;
 
     device = std::string(dev);
     g_free(dev);
@@ -82,19 +81,19 @@ void NetCfgChangeEvent::reset() noexcept
 
 bool NetCfgChangeEvent::empty() const noexcept
 {
-        return (NetCfgChangeType::UNSET == type
-                && device.empty() && details.empty());
+    return (NetCfgChangeType::UNSET == type
+            && device.empty() && details.empty());
 }
 
 
-GVariant * NetCfgChangeEvent::GetGVariant() const
+GVariant *NetCfgChangeEvent::GetGVariant() const
 {
     GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("(usa{ss})"));
-    g_variant_builder_add(b, "u", (guint32) type);
+    g_variant_builder_add(b, "u", (guint32)type);
     g_variant_builder_add(b, "s", device.c_str());
 
-    g_variant_builder_open(b, G_VARIANT_TYPE ("a{ss}"));
-    for (const auto& e : details)
+    g_variant_builder_open(b, G_VARIANT_TYPE("a{ss}"));
+    for (const auto &e : details)
     {
         // WARNING: For some odd reason, these four lines
         // below this code context triggers a memory leak
@@ -117,16 +116,15 @@ GVariant * NetCfgChangeEvent::GetGVariant() const
 }
 
 
-bool NetCfgChangeEvent::operator==(const NetCfgChangeEvent& compare) const
+bool NetCfgChangeEvent::operator==(const NetCfgChangeEvent &compare) const
 {
-    return ((compare.type== (const NetCfgChangeType) type)
+    return ((compare.type == (const NetCfgChangeType)type)
             && (0 == compare.device.compare(device))
             && (compare.details == details));
-
 }
 
 
-bool NetCfgChangeEvent::operator!=(const NetCfgChangeEvent& compare) const
+bool NetCfgChangeEvent::operator!=(const NetCfgChangeEvent &compare) const
 {
     return !(this->operator==(compare));
 }

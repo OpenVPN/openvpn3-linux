@@ -32,28 +32,28 @@
 
 class NetCfgException : public std::exception
 {
-public:
-    NetCfgException(const std::string& err)
-                : errormsg(err)
+  public:
+    NetCfgException(const std::string &err)
+        : errormsg(err)
     {
     }
 
     ~NetCfgException() = default;
 
-    virtual const char* what() const noexcept
+    virtual const char *what() const noexcept
     {
         return errormsg.c_str();
     }
 
-
-private:
+  private:
     std::string errormsg;
 };
 
 
+
 class NetCfgDeviceException : std::exception
 {
-public:
+  public:
     NetCfgDeviceException(const std::string objpath,
                           const std::string devname,
                           const std::string errmsg)
@@ -64,19 +64,17 @@ public:
         user_error = device_name + ": " + errmsg;
     }
 
-    const char* what() const noexcept override
+    const char *what() const noexcept override
     {
         return user_error.c_str();
     }
 
-
-    const char* GetObjectPath() const noexcept
+    const char *GetObjectPath() const noexcept
     {
         return object_path.c_str();
     }
 
-
-#ifdef __GIO_TYPES_H__  // Only add GLib/GDBus methods if this is already used
+#ifdef __GIO_TYPES_H__ // Only add GLib/GDBus methods if this is already used
     /**
      *  Wrapper to more easily return a NetCfgDeviceException
      *  back to an on going D-Bus method call.  This will transport the
@@ -90,7 +88,8 @@ public:
      *                   entries in glib-2.0/gio/gioenums.h for details.
      */
     void SetDBusError(GError **error,
-                      const GQuark domain, const guint errcode) const noexcept
+                      const GQuark domain,
+                      const guint errcode) const noexcept
     {
         g_set_error(error, domain, errcode, "%s", user_error.c_str());
     }
@@ -105,17 +104,16 @@ public:
      *  @param domain       String which classifies the error (QuarkDomain)
      */
     void SetDBusError(GDBusMethodInvocation *invocation,
-                      const std::string& domain) const noexcept
+                      const std::string &domain) const noexcept
     {
         GError *dbuserr = g_dbus_error_new_for_dbus_error(domain.c_str(),
                                                           user_error.c_str());
         g_dbus_method_invocation_return_gerror(invocation, dbuserr);
         g_error_free(dbuserr);
     }
-#endif  // __GIO_TYPES_H__
+#endif // __GIO_TYPES_H__
 
-
-private:
+  private:
     std::string object_path;
     std::string device_name;
     std::string errormsg;
@@ -123,36 +121,35 @@ private:
 };
 
 
+
 class NetCfgProxyException : public std::exception
 {
-public:
+  public:
     NetCfgProxyException(std::string method, std::string err) noexcept
         : method(std::move(method)), errormsg(std::move(err)),
           user_error(method + "(): " + err)
     {
-
     }
 
     ~NetCfgProxyException() override = default;
 
-    virtual const char* what() const noexcept override
+    virtual const char *what() const noexcept override
     {
         return user_error.c_str();
     }
 
-    const std::string& GetError() const noexcept
+    const std::string &GetError() const noexcept
     {
         return errormsg;
     }
 
-    const char* GetMethod() const noexcept
+    const char *GetMethod() const noexcept
     {
         return method.c_str();
     }
 
-private:
+  private:
     std::string method;
     std::string errormsg;
     std::string user_error;
-
 };

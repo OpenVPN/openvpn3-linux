@@ -28,6 +28,7 @@
 #include "config.h"
 #include "common/machineid.hpp"
 
+
 int main()
 {
     MachineID machine_id;
@@ -37,11 +38,9 @@ int main()
         std::cout << "Machine ID: " << machine_id << std::endl;
         machine_id.success();
     }
-    catch(const MachineIDException& excp)
+    catch (const MachineIDException &excp)
     {
         std::cerr << "** ERROR **  " << excp.GetError() << std::endl;
     }
     return 0;
 }
-
-

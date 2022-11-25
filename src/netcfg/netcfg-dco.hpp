@@ -30,34 +30,38 @@
 #include "dbus/core.hpp"
 #include "netcfg-signals.hpp"
 
+
 class NetCfgDCO : public DBusObject, public RC<thread_safe_refcount>
 {
-public:
+  public:
     typedef RCPtr<NetCfgDCO> Ptr;
     typedef GeNL<NetCfgDCO *> GeNLImpl;
 
     NetCfgDCO(GDBusConnection *dbuscon,
-              const std::string& objpath,
-              const std::string& dev_name,
+              const std::string &objpath,
+              const std::string &dev_name,
               pid_t backend_pid,
               LogWriter *logwr);
 
     ~NetCfgDCO();
 
-    GVariant* callback_get_property(GDBusConnection *conn,
+
+    GVariant *callback_get_property(GDBusConnection *conn,
                                     const std::string sender,
                                     const std::string obj_path,
                                     const std::string intf_name,
                                     const std::string property_name,
                                     GError **error) override;
 
-    GVariantBuilder* callback_set_property(GDBusConnection *conn,
+
+    GVariantBuilder *callback_set_property(GDBusConnection *conn,
                                            const std::string sender,
                                            const std::string obj_path,
                                            const std::string intf_name,
                                            const std::string property_name,
                                            GVariant *value,
                                            GError **error) override;
+
 
     void callback_method_call(GDBusConnection *conn,
                               const std::string sender,
@@ -67,6 +71,7 @@ public:
                               GVariant *params,
                               GDBusMethodInvocation *invoc) override;
 
+
     /**
      * Checks for availability of data channel offload kernel module
      *
@@ -74,12 +79,14 @@ public:
      */
     static bool available();
 
+
     /**
      * Called by GeNL in worker thread when there is incoming data or event from kernel
      *
      * @param buf
      */
-    void tun_read_handler(BufferAllocated& buf);
+    void tun_read_handler(BufferAllocated &buf);
+
 
     /**
      * Deletes ovpn-dco net dev, stops ASIO event loop and GeNL and
@@ -87,36 +94,32 @@ public:
      */
     void teardown();
 
+
     void callback_destructor() override;
 
-private:
-    void new_key(GVariant *params);
 
+  private:
+    void new_key(GVariant *params);
     void swap_keys(GVariant *params);
 
-    struct PacketFrom {
+    struct PacketFrom
+    {
         typedef std::unique_ptr<PacketFrom> SPtr;
         BufferAllocated buf;
     };
 
-    void queue_read_pipe(PacketFrom*);
+    void queue_read_pipe(PacketFrom *);
 
     std::string backend_bus_name;
-
     NetCfgSignals signal;
-
     int fds[2]; // fds[0] is passed to client, here we use fds[1]
     std::unique_ptr<openvpn_io::posix::stream_descriptor> pipe;
-
     GeNLImpl::Ptr genl;
     openvpn_io::io_context io_context;
-
     // thread where ASIO event loop runs, used by GeNL and pipe
     std::unique_ptr<std::thread> th;
-
     std::unique_ptr<AsioWork> asio_work;
-
     std::string dev_name;
 };
 
-#endif  // ENABLE_OVPNDCO
+#endif // ENABLE_OVPNDCO

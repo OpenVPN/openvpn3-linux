@@ -46,20 +46,20 @@ using namespace openvpn;
  * @param logev  The LogEvent object to print
  */
 
-void print_log_event(const LogEvent& logev)
+void print_log_event(const LogEvent &logev)
 {
     std::stringstream msg;
     msg << logev;
     std::vector<std::string> lines;
     std::string line;
-    while(getline(msg, line, '\n'))
+    while (getline(msg, line, '\n'))
     {
         lines.push_back(line);
     }
 
     bool first = true;
     std::cout << GetTimestamp() << lines[0] << std::endl;
-    for (const auto& l : lines)
+    for (const auto &l : lines)
     {
         if (first)
         {
@@ -77,7 +77,7 @@ void print_log_event(const LogEvent& logev)
 class Logger : public LogConsumer,
                public RC<thread_unsafe_refcount>
 {
-public:
+  public:
     typedef RCPtr<Logger> Ptr;
 
     /**
@@ -89,8 +89,7 @@ public:
      * @param interf       std::string containing the interface to subscribe to
      * @param object_path  std::string with the D-Bus object path to subscribe to
      */
-    Logger(GDBusConnection * dbscon, std::string interf,
-           std::string objpath)
+    Logger(GDBusConnection *dbscon, std::string interf, std::string objpath)
         : LogConsumer(dbscon, interf, objpath)
     {
     }
@@ -98,7 +97,7 @@ public:
     void ConsumeLogEvent(const std::string sender,
                          const std::string interface,
                          const std::string object_path,
-                         const LogEvent& logev)
+                         const LogEvent &logev)
     {
         print_log_event(logev);
     }
@@ -110,11 +109,10 @@ public:
  */
 class SessionLogger : public LogForwardBase<SessionLogger>
 {
-public:
+  public:
     using Ptr = std::shared_ptr<SessionLogger>;
 
-    SessionLogger(DBus& dbscon, std::string interf,
-                  std::string objpath)
+    SessionLogger(DBus &dbscon, std::string interf, std::string objpath)
         : LogForwardBase(dbscon, interf, objpath)
     {
     }
@@ -122,7 +120,7 @@ public:
     void ConsumeLogEvent(const std::string sender,
                          const std::string interface,
                          const std::string object_path,
-                         const LogEvent& logev) override
+                         const LogEvent &logev) override
     {
         print_log_event(logev);
     }
@@ -151,13 +149,13 @@ public:
  */
 class LogAttach : public DBusSignalSubscription
 {
-public:
-    LogAttach(GMainLoop* main_loop, DBus& dbuscon)
+  public:
+    LogAttach(GMainLoop *main_loop, DBus &dbuscon)
         : DBusSignalSubscription(dbuscon,
                                  OpenVPN3DBus_name_sessions,
                                  OpenVPN3DBus_interf_sessions,
                                  OpenVPN3DBus_rootp_sessions),
-        mainloop(main_loop), dbus(dbuscon)
+          mainloop(main_loop), dbus(dbuscon)
     {
         manager.reset(new OpenVPN3SessionMgrProxy(dbuscon));
         Subscribe("SessionManagerEvent");
@@ -233,7 +231,7 @@ public:
                 }
 
                 std::cout << "Session closed" << std::endl;
-                g_main_loop_quit((GMainLoop *) mainloop);
+                g_main_loop_quit((GMainLoop *)mainloop);
                 break;
 
             case SessionManager::EventType::UNSET:
@@ -244,9 +242,9 @@ public:
         }
     }
 
-private:
+  private:
     GMainLoop *mainloop = nullptr;
-    DBus& dbus;
+    DBus &dbus;
     std::string session_path{""};
     std::string config_name{""};
     std::string tun_interf{""};
@@ -305,11 +303,11 @@ private:
         {
             session_path = manager->LookupInterface(interf);
         }
-        catch (const TunInterfaceException& excp)
+        catch (const TunInterfaceException &excp)
         {
             throw CommandException("log", std::string(excp.GetRawError()));
         }
-        catch (const std::exception& excp)
+        catch (const std::exception &excp)
         {
             throw CommandException("log", std::string(excp.what()));
         }
@@ -356,7 +354,7 @@ private:
             {
                 session_proxy->SetLogVerbosity(log_level);
             }
-            catch (std::exception& e)
+            catch (std::exception &e)
             {
                 // Log level might be incorrect, but we don't exit because
                 // of that - as it might be we've been waiting for a session
@@ -367,8 +365,7 @@ private:
         }
 
         // Setup the SessionLogger object for the provided session path
-        session_log = SessionLogger::create(dbus, OpenVPN3DBus_interf_backends,
-                                            session_path);
+        session_log = SessionLogger::create(dbus, OpenVPN3DBus_interf_backends, session_path);
     }
 };
 
@@ -410,7 +407,7 @@ static int cmd_log(ParsedArgs::Ptr args)
         || args->Present("interface"))
     {
         std::string session_path = "";
-        logattach.reset(new LogAttach (main_loop, dbuscon));
+        logattach.reset(new LogAttach(main_loop, dbuscon));
 
         if (args->Present("log-level"))
         {
@@ -438,7 +435,8 @@ static int cmd_log(ParsedArgs::Ptr args)
         // occur with the same object path.  Filtering would not make any
         // difference on the end result.
         config_log.reset(new Logger(dbuscon.GetConnection(),
-                                    OpenVPN3DBus_interf_configuration, ""));
+                                    OpenVPN3DBus_interf_configuration,
+                                    ""));
     }
 
     // Start the main loop.  This will exit on SIGINT or SIGTERM signals only
@@ -467,18 +465,28 @@ SingleCommand::Ptr prepare_command_log()
     cmd.reset(new SingleCommand("log",
                                 "Receive log events as they occur",
                                 cmd_log));
-    cmd->AddOption("session-path", "SESSION-PATH", true,
+    cmd->AddOption("session-path",
+                   "SESSION-PATH",
+                   true,
                    "Receive log events for a specific session",
                    arghelper_session_paths);
-    cmd->AddOption("config", 'c', "CONFIG-NAME", true,
+    cmd->AddOption("config",
+                   'c',
+                   "CONFIG-NAME",
+                   true,
                    "Alternative to --session-path, where configuration "
                    "profile name is used instead",
                    arghelper_log_config_names);
-    cmd->AddOption("interface", 'I', "INTERFACE", true,
+    cmd->AddOption("interface",
+                   'I',
+                   "INTERFACE",
+                   true,
                    "Alternative to --session-path, where tun interface name "
                    "is used instead",
                    arghelper_managed_interfaces);
-    cmd->AddOption("log-level", "LOG-LEVEL", true,
+    cmd->AddOption("log-level",
+                   "LOG-LEVEL",
+                   true,
                    "Set the log verbosity level of messages to be shown (default: 4)",
                    arghelper_log_levels);
     cmd->AddOption("config-events",

@@ -49,12 +49,13 @@ int main(int argc, char **argv)
     {
         std::cout << "Generating a few devices ... " << std::endl;
         std::vector<std::string> genpaths;
-        for (int i=0; i < 10; i++)
+        for (int i = 0; i < 10; i++)
         {
-            std::string devname ="testdev" + std::to_string(i);
+            std::string devname = "testdev" + std::to_string(i);
             std::string devpath = netcfgmgr.CreateVirtualInterface(devname);
             std::cout << "    Device created: " << devname << " ... "
-                      << devpath << std::endl;;
+                      << devpath << std::endl;
+            ;
             genpaths.push_back(devpath);
         }
         std::cout << std::endl;
@@ -63,11 +64,11 @@ int main(int argc, char **argv)
         std::vector<std::string> devpaths = netcfgmgr.FetchInterfaceList();
         std::vector<std::string> our_devs{};
         size_t match_count = 0;
-        for (const auto& p : devpaths)
+        for (const auto &p : devpaths)
         {
             std::cout << "    Device path: " << p << " ... ";
             bool found = false;
-            for (const auto& chk : genpaths)
+            for (const auto &chk : genpaths)
             {
                 if (chk == p)
                 {
@@ -103,12 +104,13 @@ int main(int argc, char **argv)
                       << "    Devices not created by us: " << not_our_devs
                       << std::endl
                       << "    Total devices: " << devpaths.size()
-                      << std::endl << std::endl;
+                      << std::endl
+                      << std::endl;
         }
 
 
         std::cout << "Removing devices we created... " << std::endl;
-        for (const auto& p : our_devs)
+        for (const auto &p : our_devs)
         {
             std::cout << "    Removing: " << p << std::endl;
             NetCfgProxy::Device dev(conn.GetConnection(), p);
@@ -129,18 +131,20 @@ int main(int argc, char **argv)
         else
         {
             std::cout << "    SUCCESS: All our devices removed: "
-                       << devpaths.size() - not_our_devs
+                      << devpaths.size() - not_our_devs
                       << std::endl;
         }
         std::cout << std::endl;
     }
-    catch (std::exception& excp)
+    catch (std::exception &excp)
     {
-        std::cerr << "** FAILURE: " << excp.what() << std::endl;;
+        std::cerr << "** FAILURE: " << excp.what() << std::endl;
+        ;
         return 2;
     }
     std::cout << std::endl
               << "OVERALL RESULT: " << (failures == 0 ? "PASS" : "FAIL")
-              << std::endl << std::endl;
+              << std::endl
+              << std::endl;
     return (failures == 0 ? 0 : 3);
 }

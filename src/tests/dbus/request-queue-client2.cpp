@@ -30,10 +30,11 @@
 
 using namespace openvpn;
 
-void dump_requires_slot(ClientAttentionType type, ClientAttentionGroup group, struct RequiresSlot& reqdata)
+
+void dump_requires_slot(ClientAttentionType type, ClientAttentionGroup group, struct RequiresSlot &reqdata)
 {
-    unsigned int t = (unsigned int) type;
-    unsigned int g = (unsigned int) group;
+    unsigned int t = (unsigned int)type;
+    unsigned int g = (unsigned int)group;
 
     std::cout << "        Type: [" << std::to_string(t) << "] " << ClientAttentionType_str[t] << std::endl
               << "       Group: [" << std::to_string(g) << "] " << ClientAttentionGroup_str[g] << std::endl
@@ -41,9 +42,11 @@ void dump_requires_slot(ClientAttentionType type, ClientAttentionGroup group, st
               << "        Name: " << reqdata.name << std::endl
               << "       Value: " << reqdata.value << std::endl
               << " Description: " << reqdata.user_description << std::endl
-              << "    Provided: " << (reqdata.provided ? "True": "False") << std::endl
+              << "    Provided: " << (reqdata.provided ? "True" : "False") << std::endl
               << "------------------------------------------------------------" << std::endl;
 }
+
+
 
 int main()
 {
@@ -60,7 +63,7 @@ int main()
 
     try
     {
-        for (auto& type_group : queue.QueueCheckTypeGroup())
+        for (auto &type_group : queue.QueueCheckTypeGroup())
         {
             ClientAttentionType type;
             ClientAttentionGroup group;
@@ -69,7 +72,7 @@ int main()
             std::vector<struct RequiresSlot> slots;
             queue.QueueFetchAll(slots, type, group);
 
-            for (auto& s : slots)
+            for (auto &s : slots)
             {
                 dump_requires_slot(type, group, s);
             }

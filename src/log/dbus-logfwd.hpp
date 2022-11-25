@@ -37,6 +37,7 @@ template <typename C>
 using LogFwdProcessor = std::shared_ptr<C>;
 
 
+
 /**
  *  The LogForwardBase is a helper class, setting up a LogServiceProxy and
  *  LogConsumer and setup everything related for the ProxyLogEvent method call.
@@ -50,11 +51,11 @@ using LogFwdProcessor = std::shared_ptr<C>;
  *
  *  @tparam C   The class name of the class implementing LogForwardBase
  */
-template<typename C>
+template <typename C>
 class LogForwardBase : public LogConsumer,
                        public std::enable_shared_from_this<LogForwardBase<C>>
 {
-public:
+  public:
     /**
      *  Helper method to create a std::shared_ptr<> of the implementing class
      *
@@ -65,8 +66,8 @@ public:
      * @return       Returns a LogFwdProcessor (aka std::shared_ptr<C>) of
      *               the created object.
      */
-    template<typename ... T>
-    static LogFwdProcessor<C> create(T&& ... args)
+    template <typename... T>
+    static LogFwdProcessor<C> create(T &&...args)
     {
         return LogFwdProcessor<C>(new C(std::forward<T>(args)...));
     }
@@ -98,7 +99,7 @@ public:
     virtual void StatusChangeEvent(const std::string sender_name,
                                    const std::string interface_name,
                                    const std::string obj_path,
-                                   const StatusEvent& status)
+                                   const StatusEvent &status)
     {
     }
 
@@ -127,11 +128,11 @@ public:
     }
 
 
-protected:
-    LogForwardBase(DBus& dbusc,
-                   const std::string& interf,
-                   const std::string& session_path)
-       : LogConsumer(dbusc.GetConnection(), interf, session_path, "")
+  protected:
+    LogForwardBase(DBus &dbusc,
+                   const std::string &interf,
+                   const std::string &session_path)
+        : LogConsumer(dbusc.GetConnection(), interf, session_path, "")
     {
         Subscribe(session_path, "StatusChange");
         session_proxy.reset(new OpenVPN3SessionProxy(dbusc, session_path));
@@ -146,7 +147,7 @@ protected:
             {
                 session_proxy->LogForward(false);
             }
-            catch (const DBusException&)
+            catch (const DBusException &)
             {
                 // Ignore errors related to disabling the log forwarding
                 // here.  The session might already be closed
@@ -155,7 +156,7 @@ protected:
     }
 
 
-private:
+  private:
     OpenVPN3SessionProxy::Ptr session_proxy = {};
     bool session_closed = false;
 
@@ -177,9 +178,7 @@ private:
         }
         else
         {
-            SignalHandler(sender_name, obj_path, interface_name, signal_name,
-                          parameters);
+            SignalHandler(sender_name, obj_path, interface_name, signal_name, parameters);
         }
-
     }
 };

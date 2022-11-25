@@ -31,20 +31,23 @@
 #include "log/logwriter.hpp"
 #include "log/logwriters/syslog.hpp"
 
+
+
 int main()
 {
     bool test_passed = true;
     try
     {
-        struct log_facility_mapping_t {
+        struct log_facility_mapping_t
+        {
             const std::string name;
             const int facility;
             const bool should_pass;
         };
 
         //  Various inputs to test, with their expected test result
-        static const struct log_facility_mapping_t test_facilities[] =
-            {
+        static const struct log_facility_mapping_t test_facilities[] = {
+            // clang-format off
                 {"LOG_AUTH",     LOG_AUTH,     true},
                 {"LOG_AUTHPRIV", LOG_AUTHPRIV, true},
                 {"LOG_CRON",     LOG_CRON,     true},
@@ -67,10 +70,10 @@ int main()
                 {"LOG_UUCP",     LOG_UUCP,     true},
                 {"LOG_INVALID",  -1,           false},
                 {"",             -1,           false}
-            };
+            // clang-format on
+        };
 
-
-        for (auto const& fac : test_facilities)
+        for (auto const &fac : test_facilities)
         {
             try
             {
@@ -96,11 +99,10 @@ int main()
                 }
 
                 std::cout << "PASS: Tested: \"" << fac.name << "\""
-                              << " == " << fac.facility
-                              << std::endl;
-
+                          << " == " << fac.facility
+                          << std::endl;
             }
-            catch (SyslogException& excp)
+            catch (SyslogException &excp)
             {
                 if (fac.should_pass)
                 {
@@ -112,19 +114,20 @@ int main()
                     continue;
                 }
                 std::cout << "PASS: Tested: \"" << fac.name << "\""
-                              << " threw a SyslogException: " << excp.what()
-                              << std::endl;
+                          << " threw a SyslogException: " << excp.what()
+                          << std::endl;
             }
         }
-    } catch (std::exception& excp)
+    }
+    catch (std::exception &excp)
     {
         std::cout << "Unexpected exception: " << excp.what() << std::endl;
         return 2;
     }
 
-    std::cout << "All tests completed" << std::endl << std::endl;
+    std::cout << "All tests completed" << std::endl
+              << std::endl;
     std::cout << "Test " << (test_passed ? "PASSED" : " ** FAILED **")
               << std::endl;
     return test_passed ? 0 : 1;
 }
-

@@ -46,6 +46,7 @@
 using namespace openvpn;
 using namespace NetCfg;
 
+
 /**
  *  Main D-Bus entry-point object for the net.openvpn.v3.netcfg service
  *
@@ -54,7 +55,7 @@ class NetCfgServiceObject : public DBusObject,
                             public DBusConnectionCreds,
                             public RC<thread_unsafe_refcount>
 {
-public:
+  public:
     typedef RCPtr<NetCfgServiceObject> Ptr;
 
     /**
@@ -120,7 +121,6 @@ public:
         }
     }
 
-
     ~NetCfgServiceObject() override
     {
     }
@@ -179,14 +179,13 @@ public:
                              + "'" + device_name + "')");
                 std::string dev_path = createVirtualDevice(conn, sender, device_name);
                 retval = g_variant_new("(o)", dev_path.c_str());
-
             }
             else if ("FetchInterfaceList" == method_name)
             {
                 // Build up an array of object paths to available devices
                 GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("ao"));
 
-                for (const auto& dev : devices)
+                for (const auto &dev : devices)
                 {
                     g_variant_builder_add(bld, "o", dev.first.c_str());
                 }
@@ -223,8 +222,9 @@ public:
                 if (!subscriptions)
                 {
                     signal.LogWarn("Ignored NotificationSubscribe request "
-                                    "from " + sender + ", "
-                                    "subscription management disabled");
+                                   "from "
+                                   + sender
+                                   + ", subscription management disabled");
                     throw NetCfgException("Notification subscription disabled");
                 }
 
@@ -248,8 +248,9 @@ public:
                 if (!subscriptions)
                 {
                     signal.LogWarn("Ignored NotificationUnsubscribe request "
-                                    "from " + sender + ", "
-                                    "subscription management disabled");
+                                   "from "
+                                   + sender
+                                   + ", subscription management disabled");
                     throw NetCfgException("Notification subscription disabled");
                 }
 
@@ -265,7 +266,7 @@ public:
                 // from an admin user
                 std::string sub(sender);
                 uid_t uid = GetUID(sender);
-                if (0 == uid )
+                if (0 == uid)
                 {
                     gchar *sub_c = nullptr;
                     g_variant_get(params, "(s)", &sub_c);
@@ -282,7 +283,7 @@ public:
                 }
 
                 subscriptions->Unsubscribe(sub);
-                signal.LogVerb2("Unsubscribed subscription: '"+ sub + "'");
+                signal.LogVerb2("Unsubscribed subscription: '" + sub + "'");
                 IdleCheck_RefDec();
             }
             else if ("NotificationSubscriberList" == method_name)
@@ -290,14 +291,15 @@ public:
                 if (!subscriptions)
                 {
                     signal.LogWarn("Ignored NotificationSubscriberList "
-                                    "request from " + sender + ", "
-                                    "subscription management disabled");
+                                   "request from "
+                                   + sender
+                                   + ", subscription management disabled");
                     throw NetCfgException("Notification subscription disabled");
                 }
 
                 // Only allow this method to be accessible by root
                 uid_t uid = GetUID(sender);
-                if (0 != uid )
+                if (0 != uid)
                 {
                     throw DBusCredentialsException(uid,
                                                    "net.openvpn.v3.error.acl.denied",
@@ -316,17 +318,17 @@ public:
             g_dbus_method_invocation_return_value(invoc, retval);
             return;
         }
-        catch (DBusCredentialsException& excp)
+        catch (DBusCredentialsException &excp)
         {
             signal.LogCritical(excp.what());
             excp.SetDBusError(invoc);
         }
-        catch (const NetCfgDeviceException& excp)
+        catch (const NetCfgDeviceException &excp)
         {
             signal.LogCritical(excp.what());
             excp.SetDBusError(invoc, "net.openvpn.v3.netcfg.error");
         }
-        catch (const std::exception& excp)
+        catch (const std::exception &excp)
         {
             std::string errmsg = "Failed executing D-Bus call '" + method_name + "': " + excp.what();
             GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.netcfg.error.generic",
@@ -343,24 +345,29 @@ public:
         }
     }
 
-    std::string createVirtualDevice(GDBusConnection *conn, const std::string& sender, const std::string& dev_name)
+
+    std::string createVirtualDevice(GDBusConnection *conn,
+                                    const std::string &sender,
+                                    const std::string &dev_name)
     {
         std::string dev_path = OpenVPN3DBus_rootp_netcfg + "/"
                                + std::to_string(creds.GetPID(sender))
                                + "_" + dev_name;
-        NetCfgDevice *device = new NetCfgDevice(conn,
-                                                [self = Ptr(this), dev_path]()
-                                                {
-                                                    self->remove_device_object(dev_path);
-                                                },
-                                                creds.GetUID(sender),
-                                                creds.GetPID(sender),
-                                                dev_path,
-                                                dev_name, resolver, subscriptions.get(),
-                                                signal.GetLogLevel(),
-                                                signal.GetLogWriter(),
-                                           options);
-
+        NetCfgDevice *device = new NetCfgDevice(
+            conn,
+            [self = Ptr(this), dev_path]()
+            {
+            self->remove_device_object(dev_path);
+            },
+            creds.GetUID(sender),
+            creds.GetPID(sender),
+            dev_path,
+            dev_name,
+            resolver,
+            subscriptions.get(),
+            signal.GetLogLevel(),
+            signal.GetLogWriter(),
+            options);
 
         IdleCheck_RefInc();
         device->IdleCheck_Register(IdleCheck_Get());
@@ -370,7 +377,7 @@ public:
         signal.LogInfo(std::string("Virtual device '") + dev_name + "'"
                        + " registered on " + dev_path
                        + " (owner uid " + std::to_string(creds.GetUID(sender))
-                       + ", owner pid "+ std::to_string(creds.GetPID(sender)) + ")");
+                       + ", owner pid " + std::to_string(creds.GetPID(sender)) + ")");
 
         return dev_path;
     }
@@ -392,12 +399,12 @@ public:
      *          returned and the error must be returned via a GError
      *          object.
      */
-    GVariant * callback_get_property(GDBusConnection *conn,
-                                     const std::string sender,
-                                     const std::string obj_path,
-                                     const std::string intf_name,
-                                     const std::string property_name,
-                                     GError **error) override
+    GVariant *callback_get_property(GDBusConnection *conn,
+                                    const std::string sender,
+                                    const std::string obj_path,
+                                    const std::string intf_name,
+                                    const std::string property_name,
+                                    GError **error) override
     {
         try
         {
@@ -437,8 +444,7 @@ public:
         }
         catch (...)
         {
-            g_set_error(error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                        "Unknown error");
+            g_set_error(error, G_IO_ERROR, G_IO_ERROR_FAILED, "Unknown error");
         }
         g_set_error(error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, "Unknown property");
         return NULL;
@@ -461,13 +467,13 @@ public:
      *         confirmation on success.  On failures, an exception is thrown.
      *
      */
-    GVariantBuilder * callback_set_property(GDBusConnection *conn,
-                                            const std::string sender,
-                                            const std::string obj_path,
-                                            const std::string intf_name,
-                                            const std::string property_name,
-                                            GVariant *value,
-                                            GError **error) override
+    GVariantBuilder *callback_set_property(GDBusConnection *conn,
+                                           const std::string sender,
+                                           const std::string obj_path,
+                                           const std::string intf_name,
+                                           const std::string property_name,
+                                           GVariant *value,
+                                           GError **error) override
     {
         try
         {
@@ -481,39 +487,45 @@ public:
                 {
                     throw DBusPropertyException(G_IO_ERROR,
                                                 G_IO_ERROR_INVALID_DATA,
-                                                obj_path, intf_name,
+                                                obj_path,
+                                                intf_name,
                                                 property_name,
                                                 "Invalid log level");
                 }
                 signal.SetLogLevel(log_level);
                 return build_set_property_response(property_name,
-                                                   (guint32) log_level);
+                                                   (guint32)log_level);
             }
         }
-        catch (DBusPropertyException&)
+        catch (DBusPropertyException &)
         {
             throw;
         }
-        catch (DBusException& excp)
+        catch (DBusException &excp)
         {
-            throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                        obj_path, intf_name, property_name,
+            throw DBusPropertyException(G_IO_ERROR,
+                                        G_IO_ERROR_FAILED,
+                                        obj_path,
+                                        intf_name,
+                                        property_name,
                                         excp.what());
         }
-        throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                    obj_path, intf_name, property_name,
+        throw DBusPropertyException(G_IO_ERROR,
+                                    G_IO_ERROR_FAILED,
+                                    obj_path,
+                                    intf_name,
+                                    property_name,
                                     "Invalid property");
     }
 
 
-private:
+  private:
     NetCfgSignals signal;
     DNS::SettingsManager::Ptr resolver;
     DBusConnectionCreds creds;
     std::map<std::string, NetCfgDevice *> devices;
     NetCfgOptions options;
     NetCfgSubscriptions::Ptr subscriptions;
-
 
     /**
      *  Validate that the sender is allowed to do network configuration.
@@ -523,7 +535,7 @@ private:
      */
     void validate_sender(std::string sender)
     {
-        return;  // FIXME: Currently disabled
+        return; // FIXME: Currently disabled
 
         // Only the session manager is susposed to talk to the
         // the backend VPN client service
@@ -531,8 +543,7 @@ private:
         {
             throw DBusCredentialsException(GetUID(sender),
                                            "net.openvpn.v3.error.acl.denied",
-                                           "You are not a session manager"
-                                           );
+                                           "You are not a session manager");
         }
     }
 
@@ -541,13 +552,13 @@ private:
      * Clean up function that removes all objects that are still around from
      * a process like registred virtual devices and socket protections
      */
-    void cleanup_process_resources(pid_t pid, GDBusConnection* conn)
+    void cleanup_process_resources(pid_t pid, GDBusConnection *conn)
     {
         signal.LogInfo(std::string("Cleaning up resources for PID ")
-                           + std::to_string(pid) + ".");
+                       + std::to_string(pid) + ".");
 
         // Just normal loop here, since we delete from the container while modifying it
-        for (auto it = devices.cbegin(); it != devices.cend(); )
+        for (auto it = devices.cbegin(); it != devices.cend();)
         {
             auto tundev = it->second;
             if (tundev->getCreatorPID() == pid)
@@ -566,6 +577,7 @@ private:
         }
         openvpn::cleanup_protected_sockets(pid);
     }
+
 
     /**
      * Callback function used by NetCfgDevice instances to remove
@@ -593,7 +605,8 @@ private:
      *          This will always be a boolean true value on success.  In case
      *          of errors, a NetCfgException is thrown.
      */
-    GVariant* protect_socket(pid_t creator_pid, GDBusConnection *conn,
+    GVariant *protect_socket(pid_t creator_pid,
+                             GDBusConnection *conn,
                              GDBusMethodInvocation *invoc,
                              GVariant *params)
     {
@@ -613,18 +626,18 @@ private:
         // routing loops
 
         std::string tunif;
-        const auto& it = devices.find(dev_path);
+        const auto &it = devices.find(dev_path);
         if (it != devices.end())
         {
-            const auto& dev = *it->second;
+            const auto &dev = *it->second;
             tunif = dev.get_device_name();
         }
 
         signal.LogInfo(std::string("Socket protect called for socket ")
-                           + std::to_string(fd)
-                           + ", remote: '" + remote
-                           + "', tun: '" + tunif
-                           + "', ipv6: " + (ipv6 ? "yes" : "no"));
+                       + std::to_string(fd)
+                       + ", remote: '" + remote
+                       + "', tun: '" + tunif
+                       + "', ipv6: " + (ipv6 ? "yes" : "no"));
 
         if (options.so_mark >= 0)
         {
@@ -653,9 +666,10 @@ private:
 };
 
 
+
 class NetworkCfgService : public DBus
 {
-public:
+  public:
     /**
      *  Initializes the NetworkCfgService object
      *
@@ -681,7 +695,6 @@ public:
     {
     }
 
-
     ~NetworkCfgService() = default;
 
 
@@ -705,16 +718,18 @@ public:
     void callback_bus_acquired()
     {
         // Setup a signal object of the backend
-        signal.reset(new NetCfgSignals(GetConnection(), LogGroup::NETCFG,
-                                       OpenVPN3DBus_rootp_netcfg, logwr));
+        signal.reset(new NetCfgSignals(GetConnection(),
+                                       LogGroup::NETCFG,
+                                       OpenVPN3DBus_rootp_netcfg,
+                                       logwr));
         signal->SetLogLevel(default_log_level);
 
         // Create a new OpenVPN3 client session object
         srv_obj.reset(new NetCfgServiceObject(GetConnection(),
                                               default_log_level,
                                               resolver,
-                                              logwr, options
-                                              ));
+                                              logwr,
+                                              options));
         srv_obj->RegisterObject(GetConnection());
         if (!options.signal_broadcast)
         {
@@ -728,7 +743,7 @@ public:
         }
 
         signal->Debug("NetCfg service registered on '" + GetBusName()
-                       + "': " + OpenVPN3DBus_rootp_netcfg);
+                      + "': " + OpenVPN3DBus_rootp_netcfg);
 
         // Log which redirect method is in use
         signal->LogVerb1(options.str());
@@ -759,9 +774,7 @@ public:
      * @param conn     Connection where this event happened
      * @param busname  A string of the acquired bus name
      */
-    void callback_name_acquired(GDBusConnection *conn, std::string busname)
-    {
-    };
+    void callback_name_acquired(GDBusConnection *conn, std::string busname){};
 
 
     /**
@@ -787,7 +800,7 @@ public:
     };
 
 
-private:
+  private:
     DNS::SettingsManager::Ptr resolver;
     LogWriter *logwr;
 

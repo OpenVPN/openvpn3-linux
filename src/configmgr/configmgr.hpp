@@ -17,8 +17,7 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#ifndef OPENVPN3_DBUS_CONFIGMGR_HPP
-#define OPENVPN3_DBUS_CONFIGMGR_HPP
+#pragma once
 
 #include <functional>
 #include <map>
@@ -47,10 +46,9 @@ using namespace openvpn;
  * This mostly just wraps the LogSender class and predefines LogGroup to always
  * be CONFIGMGR.
  */
-
 class ConfigManagerSignals : public LogSender
 {
-public:
+  public:
     /**
      *  Declares the ConfigManagerSignals object
      *
@@ -62,11 +60,15 @@ public:
      * @param logwr       Pointer to a LogWriter object for file logging.
      *                    Can be nullptr, which results in no active file logging.
      */
-    ConfigManagerSignals(GDBusConnection *conn, std::string object_path,
-                         unsigned int default_log_level, LogWriter *logwr,
+    ConfigManagerSignals(GDBusConnection *conn,
+                         std::string object_path,
+                         unsigned int default_log_level,
+                         LogWriter *logwr,
                          bool signal_broadcast = true)
-        : LogSender(conn, LogGroup::CONFIGMGR,
-                    OpenVPN3DBus_interf_configuration, object_path,
+        : LogSender(conn,
+                    LogGroup::CONFIGMGR,
+                    OpenVPN3DBus_interf_configuration,
+                    object_path,
                     logwr),
           logwr(logwr),
           signal_broadcast(signal_broadcast)
@@ -78,7 +80,6 @@ public:
             AddTargetBusName(credsprx.GetUniqueBusID(OpenVPN3DBus_name_log));
         }
     }
-
 
     virtual ~ConfigManagerSignals() = default;
 
@@ -94,6 +95,7 @@ public:
         return signal_broadcast;
     }
 
+
     /**
      *  Whenever a FATAL error happens, the process is expected to stop.
      *  (The exit step is not yet implemented)
@@ -107,10 +109,11 @@ public:
     }
 
 
-private:
+  private:
     LogWriter *logwr = nullptr;
     bool signal_broadcast = true;
 };
+
 
 
 /**
@@ -119,26 +122,27 @@ private:
 template <>
 class PropertyType<std::vector<OverrideValue>> : public PropertyTypeBase<std::vector<OverrideValue>>
 {
-public:
+  public:
     PropertyType<std::vector<OverrideValue>>(DBusObject *obj_arg,
-                                          std::string name_arg,
-                                          std::string dbus_acl_arg,
-                                          bool allow_mngr_arg,
-                                          std::vector<OverrideValue>& value_arg)
+                                             std::string name_arg,
+                                             std::string dbus_acl_arg,
+                                             bool allow_mngr_arg,
+                                             std::vector<OverrideValue> &value_arg)
         : PropertyTypeBase<std::vector<OverrideValue>>(obj_arg,
-                                                     name_arg,
-                                                     dbus_acl_arg,
-                                                     allow_mngr_arg,
-                                                     value_arg)
+                                                       name_arg,
+                                                       dbus_acl_arg,
+                                                       allow_mngr_arg,
+                                                       value_arg)
     {
     }
+
 
     virtual GVariant *GetValue() const override
     {
         GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
-        for (const auto& e : this->value)
+        for (const auto &e : this->value)
         {
-            GVariant* value;
+            GVariant *value;
             if (OverrideType::string == e.override.type)
             {
                 value = g_variant_new("s", e.strValue.c_str());
@@ -149,15 +153,17 @@ public:
             }
             g_variant_builder_add(bld, "{sv}", e.override.key.c_str(), value);
         }
-        GVariant* ret = g_variant_builder_end(bld);
+        GVariant *ret = g_variant_builder_end(bld);
         g_variant_builder_unref(bld);
         return ret;
     }
 
-    virtual const char* GetDBusType() const override
+
+    virtual const char *GetDBusType() const override
     {
         return "a{sv}";
     }
+
 
     // This property is readonly and need to be modified with Add/UnsetOverride
     virtual GVariantBuilder *SetValue(GVariant *value_arg) override
@@ -165,6 +171,7 @@ public:
         return nullptr;
     }
 };
+
 
 
 /**
@@ -179,7 +186,7 @@ class ConfigurationObject : public DBusObject,
                             public ConfigManagerSignals,
                             public DBusCredentials
 {
-public:
+  public:
     /**
      *  Constructor creating a new ConfigurationObject
      *
@@ -201,12 +208,15 @@ public:
      */
     ConfigurationObject(GDBusConnection *dbuscon,
                         std::function<void()> remove_callback,
-                        std::string objpath, unsigned int default_log_level,
-                        LogWriter *logwr, bool signal_broadcast,
-                        uid_t creator, std::string state_dir, GVariant *params)
+                        std::string objpath,
+                        unsigned int default_log_level,
+                        LogWriter *logwr,
+                        bool signal_broadcast,
+                        uid_t creator,
+                        std::string state_dir,
+                        GVariant *params)
         : DBusObject(objpath),
-          ConfigManagerSignals(dbuscon, objpath, default_log_level, logwr,
-                               signal_broadcast),
+          ConfigManagerSignals(dbuscon, objpath, default_log_level, logwr, signal_broadcast),
           DBusCredentials(dbuscon, creator),
           remove_callback(remove_callback),
           import_tstamp(std::time(nullptr)),
@@ -239,14 +249,20 @@ public:
         }
     }
 
+
     ConfigurationObject(GDBusConnection *dbuscon,
-                        const std::string& fname, Json::Value profile,
+                        const std::string &fname,
+                        Json::Value profile,
                         std::function<void()> remove_callback,
                         unsigned int default_log_level,
-                        LogWriter *logwr, bool signal_broadcast)
+                        LogWriter *logwr,
+                        bool signal_broadcast)
         : DBusObject(profile["object_path"].asString()),
-          ConfigManagerSignals(dbuscon, profile["object_path"].asString(),
-                               default_log_level, logwr, signal_broadcast),
+          ConfigManagerSignals(dbuscon,
+                               profile["object_path"].asString(),
+                               default_log_level,
+                               logwr,
+                               signal_broadcast),
           DBusCredentials(dbuscon, profile["owner"].asUInt64()),
           remove_callback(remove_callback),
           properties(this),
@@ -264,15 +280,15 @@ public:
         valid = profile["valid"].asBool();
 
         SetPublicAccess(profile["public_access"].asBool());
-        for (const auto& id : profile["acl"])
+        for (const auto &id : profile["acl"])
         {
             GrantAccess(id.asUInt());
         }
 
-        for (const auto& ovkey : profile["overrides"].getMemberNames())
+        for (const auto &ovkey : profile["overrides"].getMemberNames())
         {
             Json::Value ov = profile["overrides"][ovkey];
-            switch(ov.type())
+            switch (ov.type())
             {
             case Json::ValueType::booleanValue:
                 set_override(ovkey.c_str(), ov.asBool());
@@ -291,6 +307,7 @@ public:
 
         initialize_configuration(true);
     }
+
 
     ~ConfigurationObject()
     {
@@ -323,10 +340,10 @@ public:
         Json::Value ret;
 
         ret["object_path"] = GetObjectPath();
-        ret["owner"] = (uint32_t) GetOwnerUID();
+        ret["owner"] = (uint32_t)GetOwnerUID();
         ret["name"] = name;
-        ret["import_timestamp"] = (uint32_t) import_tstamp;
-        ret["last_used_timestamp"] = (uint32_t) last_use_tstamp;
+        ret["import_timestamp"] = (uint32_t)import_tstamp;
+        ret["last_used_timestamp"] = (uint32_t)last_use_tstamp;
         ret["locked_down"] = locked_down;
         ret["transfer_owner_session"] = transfer_owner_sess;
         ret["readonly"] = readonly;
@@ -337,11 +354,11 @@ public:
         ret["dco"] = dco;
 
         ret["public_access"] = GetPublicAccess();
-        for (const auto& e : GetAccessList())
+        for (const auto &e : GetAccessList())
         {
             ret["acl"].append(e);
         }
-        for (const auto& ov : override_list)
+        for (const auto &ov : override_list)
         {
             switch (ov.override.type)
             {
@@ -356,7 +373,8 @@ public:
             default:
                 THROW_DBUSEXCEPTION("ConfigurationObject",
                                     "Invalid override type for key "
-                                    "'" + ov.override.key + "'");
+                                    "'" + ov.override.key
+                                        + "'");
             }
         }
 
@@ -421,7 +439,7 @@ public:
                     {
                         ovpn_uid = lookup_uid(OPENVPN_USERNAME);
                     }
-                    catch (const LookupException& excp)
+                    catch (const LookupException &excp)
                     {
                         excp.SetDBusError(invoc);
                         return;
@@ -443,7 +461,7 @@ public:
                         update_persistent_file();
                     }
                 }
-                catch (DBusException& excp)
+                catch (DBusException &excp)
                 {
                     std::string err(excp.what());
                     if (err.find("NameHasNoOwner: Could not get UID of name") == std::string::npos)
@@ -455,7 +473,7 @@ public:
                 }
                 return;
             }
-            catch (DBusCredentialsException& excp)
+            catch (DBusCredentialsException &excp)
             {
                 LogWarn(excp.what());
                 excp.SetDBusError(invoc);
@@ -491,7 +509,7 @@ public:
                 // not a security feature.  Security is handled via ACLs.
                 return;
             }
-            catch (DBusCredentialsException& excp)
+            catch (DBusCredentialsException &excp)
             {
                 LogWarn(excp.what());
                 excp.SetDBusError(invoc);
@@ -501,9 +519,9 @@ public:
         {
             if (readonly)
             {
-                g_dbus_method_invocation_return_dbus_error (invoc,
-                                                            "net.openvpn.v3.error.ReadOnly",
-                                                            "Configuration is sealed and readonly");
+                g_dbus_method_invocation_return_dbus_error(invoc,
+                                                           "net.openvpn.v3.error.ReadOnly",
+                                                           "Configuration is sealed and readonly");
                 return;
             }
             try
@@ -514,7 +532,7 @@ public:
                 update_persistent_file();
                 return;
             }
-            catch (DBusCredentialsException& excp)
+            catch (DBusCredentialsException &excp)
             {
                 LogWarn(excp.what());
                 excp.SetDBusError(invoc);
@@ -545,20 +563,20 @@ public:
                 }
 
                 LogInfo("Setting configuration override '" + std::string(key)
-                            + "' to '" + newValue + "' by UID " + std::to_string(GetUID(sender)));
+                        + "' to '" + newValue + "' by UID " + std::to_string(GetUID(sender)));
 
                 g_free(key);
-                //g_variant_unref(val);
+                // g_variant_unref(val);
                 g_dbus_method_invocation_return_value(invoc, NULL);
                 update_persistent_file();
                 return;
             }
-            catch (DBusCredentialsException& excp)
+            catch (DBusCredentialsException &excp)
             {
                 LogWarn(excp.what());
                 excp.SetDBusError(invoc);
             }
-            catch (DBusException& excp)
+            catch (DBusException &excp)
             {
                 LogWarn(excp.what());
                 excp.SetDBusError(invoc, "net.openvpn.v3.configmgr.error");
@@ -578,10 +596,10 @@ public:
                 CheckOwnerAccess(sender);
                 gchar *key = nullptr;
                 g_variant_get(params, "(s)", &key);
-                if(remove_override(key))
+                if (remove_override(key))
                 {
                     LogInfo("Unset configuration override '" + std::string(key)
-                                + "' by UID " + std::to_string(GetUID(sender)));
+                            + "' by UID " + std::to_string(GetUID(sender)));
 
                     g_dbus_method_invocation_return_value(invoc, NULL);
                 }
@@ -590,15 +608,15 @@ public:
                     std::stringstream err;
                     err << "Override '" << std::string(key) << "' has "
                         << "not been set";
-                    g_dbus_method_invocation_return_dbus_error (invoc,
-                                                                "net.openvpn.v3.error.OverrideNotSet",
-                                                                err.str().c_str());
+                    g_dbus_method_invocation_return_dbus_error(invoc,
+                                                               "net.openvpn.v3.error.OverrideNotSet",
+                                                               err.str().c_str());
                 }
                 g_free(key);
                 update_persistent_file();
                 return;
             }
-            catch (DBusCredentialsException& excp)
+            catch (DBusCredentialsException &excp)
             {
                 LogWarn(excp.what());
                 excp.SetDBusError(invoc);
@@ -608,9 +626,9 @@ public:
         {
             if (readonly)
             {
-                g_dbus_method_invocation_return_dbus_error (invoc,
-                                                            "net.openvpn.v3.error.ReadOnly",
-                                                            "Configuration is sealed and readonly");
+                g_dbus_method_invocation_return_dbus_error(invoc,
+                                                           "net.openvpn.v3.error.ReadOnly",
+                                                           "Configuration is sealed and readonly");
                 return;
             }
 
@@ -624,11 +642,11 @@ public:
                 g_dbus_method_invocation_return_value(invoc, NULL);
 
                 LogInfo("Access granted to UID " + std::to_string(uid)
-                         + " by UID " + std::to_string(GetUID(sender)));
+                        + " by UID " + std::to_string(GetUID(sender)));
                 update_persistent_file();
                 return;
             }
-            catch (DBusCredentialsException& excp)
+            catch (DBusCredentialsException &excp)
             {
                 LogWarn(excp.what());
                 excp.SetDBusError(invoc);
@@ -638,9 +656,9 @@ public:
         {
             if (readonly)
             {
-                g_dbus_method_invocation_return_dbus_error (invoc,
-                                                            "net.openvpn.v3.error.ReadOnly",
-                                                            "Configuration is sealed and readonly");
+                g_dbus_method_invocation_return_dbus_error(invoc,
+                                                           "net.openvpn.v3.error.ReadOnly",
+                                                           "Configuration is sealed and readonly");
                 return;
             }
 
@@ -654,11 +672,11 @@ public:
                 g_dbus_method_invocation_return_value(invoc, NULL);
 
                 LogInfo("Access revoked for UID " + std::to_string(uid)
-                         + " by UID " + std::to_string(GetUID(sender)));
+                        + " by UID " + std::to_string(GetUID(sender)));
                 update_persistent_file();
                 return;
             }
-            catch (DBusCredentialsException& excp)
+            catch (DBusCredentialsException &excp)
             {
                 LogWarn(excp.what());
                 excp.SetDBusError(invoc);
@@ -670,20 +688,21 @@ public:
             {
                 CheckOwnerAccess(sender);
 
-                if (valid) {
+                if (valid)
+                {
                     readonly = true;
                     g_dbus_method_invocation_return_value(invoc, NULL);
                     update_persistent_file();
                 }
                 else
                 {
-                    g_dbus_method_invocation_return_dbus_error (invoc,
-                                                                "net.openvpn.v3.error.InvalidData",
-                                                                "Configuration is not currently valid");
+                    g_dbus_method_invocation_return_dbus_error(invoc,
+                                                               "net.openvpn.v3.error.InvalidData",
+                                                               "Configuration is not currently valid");
                 }
                 return;
             }
-            catch (DBusCredentialsException& excp)
+            catch (DBusCredentialsException &excp)
             {
                 LogWarn(excp.what());
                 excp.SetDBusError(invoc);
@@ -711,7 +730,7 @@ public:
                 delete this;
                 return;
             }
-            catch (DBusCredentialsException& excp)
+            catch (DBusCredentialsException &excp)
             {
                 LogWarn(excp.what());
                 excp.SetDBusError(invoc);
@@ -739,12 +758,12 @@ public:
      *          returned and the error must be returned via a GError
      *          object.
      */
-    GVariant * callback_get_property(GDBusConnection *conn,
-                                     const std::string sender,
-                                     const std::string obj_path,
-                                     const std::string intf_name,
-                                     const std::string property_name,
-                                     GError **error)
+    GVariant *callback_get_property(GDBusConnection *conn,
+                                    const std::string sender,
+                                    const std::string obj_path,
+                                    const std::string intf_name,
+                                    const std::string property_name,
+                                    GError **error)
     {
         IdleCheck_UpdateTimestamp();
 
@@ -766,16 +785,16 @@ public:
             allow_mngr = true;
         }
 
-
         // Properties only available for approved users
-        try {
+        try
+        {
             CheckACL(sender, allow_mngr);
 
             GVariant *ret = NULL;
 
-            if ("name"  == property_name)
+            if ("name" == property_name)
             {
-                ret = g_variant_new_string (name.c_str());
+                ret = g_variant_new_string(name.c_str());
             }
             else if ("public_access" == property_name)
             {
@@ -783,7 +802,7 @@ public:
             }
             else if ("acl" == property_name)
             {
-                    ret = GLibUtils::GVariantFromVector(GetAccessList());
+                ret = GLibUtils::GVariantFromVector(GetAccessList());
             }
             else if ("persistent" == property_name)
             {
@@ -795,15 +814,15 @@ public:
             }
             else
             {
-                g_set_error (error,
-                             G_IO_ERROR,
-                             G_IO_ERROR_FAILED,
-                             "Unknown property");
+                g_set_error(error,
+                            G_IO_ERROR,
+                            G_IO_ERROR_FAILED,
+                            "Unknown property");
             }
 
             return ret;
         }
-        catch (DBusCredentialsException& excp)
+        catch (DBusCredentialsException &excp)
         {
             LogWarn(excp.what());
             excp.SetDBusError(error, G_IO_ERROR, G_IO_ERROR_FAILED);
@@ -828,19 +847,22 @@ public:
      *         D-Bus library to issue the required PropertiesChanged signal.
      *         If an error occurres, the DBusPropertyException is thrown.
      */
-    GVariantBuilder * callback_set_property(GDBusConnection *conn,
-                                            const std::string sender,
-                                            const std::string obj_path,
-                                            const std::string intf_name,
-                                            const std::string property_name,
-                                            GVariant *value,
-                                            GError **error)
+    GVariantBuilder *callback_set_property(GDBusConnection *conn,
+                                           const std::string sender,
+                                           const std::string obj_path,
+                                           const std::string intf_name,
+                                           const std::string property_name,
+                                           GVariant *value,
+                                           GError **error)
     {
         IdleCheck_UpdateTimestamp();
         if (readonly)
         {
-            throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_READ_ONLY,
-                                        obj_path, intf_name, property_name,
+            throw DBusPropertyException(G_IO_ERROR,
+                                        G_IO_ERROR_READ_ONLY,
+                                        obj_path,
+                                        intf_name,
+                                        property_name,
                                         "Configuration object is read-only");
         }
 
@@ -848,7 +870,7 @@ public:
         {
             CheckOwnerAccess(sender);
 
-            GVariantBuilder * ret = NULL;
+            GVariantBuilder *ret = NULL;
             if (("name" == property_name) && conn)
             {
                 gsize len = 0;
@@ -859,8 +881,8 @@ public:
             {
                 ret = properties.SetValue(property_name, value);
                 LogInfo("Configuration lock-down flag set to "
-                         + (locked_down ? std::string("true") : std::string("false"))
-                         + " by UID " + std::to_string(GetUID(sender)));
+                        + (locked_down ? std::string("true") : std::string("false"))
+                        + " by UID " + std::to_string(GetUID(sender)));
             }
             else if (("public_access" == property_name) && conn)
             {
@@ -868,8 +890,8 @@ public:
                 SetPublicAccess(acl_public);
                 ret = build_set_property_response(property_name, acl_public);
                 LogInfo("Public access set to "
-                         + (acl_public ? std::string("true") : std::string("false"))
-                         + " by UID " + std::to_string(GetUID(sender)));
+                        + (acl_public ? std::string("true") : std::string("false"))
+                        + " by UID " + std::to_string(GetUID(sender)));
             }
             else if (conn && properties.Exists(property_name))
             {
@@ -877,19 +899,25 @@ public:
             }
             else
             {
-                throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                            obj_path, intf_name, property_name,
+                throw DBusPropertyException(G_IO_ERROR,
+                                            G_IO_ERROR_FAILED,
+                                            obj_path,
+                                            intf_name,
+                                            property_name,
                                             "Denied");
             };
 
             update_persistent_file();
             return ret;
         }
-        catch (DBusCredentialsException& excp)
+        catch (DBusCredentialsException &excp)
         {
             LogWarn(excp.what());
-            throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                        obj_path, intf_name, property_name,
+            throw DBusPropertyException(G_IO_ERROR,
+                                        G_IO_ERROR_FAILED,
+                                        obj_path,
+                                        intf_name,
+                                        property_name,
                                         excp.what());
         }
     };
@@ -906,16 +934,16 @@ public:
      */
     OverrideValue set_override(const gchar *key, GVariant *value)
     {
-        const ValidOverride& vo = GetConfigOverride(key);
+        const ValidOverride &vo = GetConfigOverride(key);
         if (!vo.valid())
         {
             THROW_DBUSEXCEPTION("ConfigurationObject",
                                 "Invalid override key '" + std::string(key)
-                                + "'");
+                                    + "'");
         }
 
         // Ensure that a previous override value is remove
-        (void) remove_override(key);
+        (void)remove_override(key);
 
         std::string g_type(g_variant_get_type_string(value));
         if ("s" == g_type)
@@ -942,19 +970,19 @@ public:
      * @return  Returns the OverrideValue object added to the
      *          array of override settings
      */
-    template<typename T>
+    template <typename T>
     OverrideValue set_override(const gchar *key, T value)
     {
-        const ValidOverride& vo = GetConfigOverride(key);
+        const ValidOverride &vo = GetConfigOverride(key);
         if (!vo.valid())
         {
             THROW_DBUSEXCEPTION("ConfigurationObject",
                                 "Invalid override key '" + std::string(key)
-                                + "'");
+                                    + "'");
         }
 
         // Ensure that a previous override value is remove
-        (void) remove_override(key);
+        (void)remove_override(key);
 
         switch (vo.type)
         {
@@ -966,7 +994,7 @@ public:
         default:
             THROW_DBUSEXCEPTION("ConfigurationObject",
                                 "Unsupported data type for key '"
-                                + std::string(key) + "'");
+                                    + std::string(key) + "'");
         }
     }
 
@@ -1018,41 +1046,41 @@ public:
         properties.AddBinding(new PropertyType<decltype(override_list)>(this, "overrides", "read", true, override_list));
         properties.AddBinding(new PropertyType<bool>(this, "dco", "readwrite", true, dco));
 
-        std::string introsp_xml ="<node name='" + GetObjectPath() + "'>"
-            "    <interface name='net.openvpn.v3.configuration'>"
-            "        <method name='Fetch'>"
-            "            <arg direction='out' type='s' name='config'/>"
-            "        </method>"
-            "        <method name='FetchJSON'>"
-            "            <arg direction='out' type='s' name='config_json'/>"
-            "        </method>"
-            "        <method name='SetOption'>"
-            "            <arg direction='in' type='s' name='option'/>"
-            "            <arg direction='in' type='s' name='value'/>"
-            "        </method>"
-            "        <method name='SetOverride'>"
-            "            <arg direction='in' type='s' name='name'/>"
-            "            <arg direction='in' type='v' name='value'/>"
-            "        </method>"
-            "        <method name='UnsetOverride'>"
-            "            <arg direction='in' type='s' name='name'/>"
-            "        </method>"
-            "        <method name='AccessGrant'>"
-            "            <arg direction='in' type='u' name='uid'/>"
-            "        </method>"
-            "        <method name='AccessRevoke'>"
-            "            <arg direction='in' type='u' name='uid'/>"
-            "        </method>"
-            "        <method name='Seal'/>"
-            "        <method name='Remove'/>"
-            "        <property type='u' name='owner' access='read'/>"
-            "        <property type='au' name='acl' access='read'/>"
-            "        <property type='s' name='name' access='readwrite'/>"
-            "        <property type='b' name='public_access' access='readwrite'/>"
-            "        <property type='b' name='persistent' access='read'/>"
-            + properties.GetIntrospectionXML() +
-            "    </interface>"
-            "</node>";
+        std::string introsp_xml = "<node name='" + GetObjectPath() + "'>"
+                                  + "    <interface name='net.openvpn.v3.configuration'>"
+                                    "        <method name='Fetch'>"
+                                    "            <arg direction='out' type='s' name='config'/>"
+                                    "        </method>"
+                                    "        <method name='FetchJSON'>"
+                                    "            <arg direction='out' type='s' name='config_json'/>"
+                                    "        </method>"
+                                    "        <method name='SetOption'>"
+                                    "            <arg direction='in' type='s' name='option'/>"
+                                    "            <arg direction='in' type='s' name='value'/>"
+                                    "        </method>"
+                                    "        <method name='SetOverride'>"
+                                    "            <arg direction='in' type='s' name='name'/>"
+                                    "            <arg direction='in' type='v' name='value'/>"
+                                    "        </method>"
+                                    "        <method name='UnsetOverride'>"
+                                    "            <arg direction='in' type='s' name='name'/>"
+                                    "        </method>"
+                                    "        <method name='AccessGrant'>"
+                                    "            <arg direction='in' type='u' name='uid'/>"
+                                    "        </method>"
+                                    "        <method name='AccessRevoke'>"
+                                    "            <arg direction='in' type='u' name='uid'/>"
+                                    "        </method>"
+                                    "        <method name='Seal'/>"
+                                    "        <method name='Remove'/>"
+                                    "        <property type='u' name='owner' access='read'/>"
+                                    "        <property type='au' name='acl' access='read'/>"
+                                    "        <property type='s' name='name' access='readwrite'/>"
+                                    "        <property type='b' name='public_access' access='readwrite'/>"
+                                    "        <property type='b' name='persistent' access='read'/>"
+                                  + properties.GetIntrospectionXML()
+                                  + "    </interface>"
+                                  + "</node>";
         ParseIntrospectionXML(introsp_xml);
     }
 
@@ -1073,7 +1101,7 @@ public:
     }
 
 
-private:
+  private:
     std::function<void()> remove_callback;
     std::string name = {};
     std::time_t import_tstamp = {};
@@ -1092,6 +1120,7 @@ private:
 };
 
 
+
 /**
  *  The ConfigManagerObject is the main object for the Configuration Manager
  *  D-Bus service.  Whenever any user (D-Bus clients) accesses the main
@@ -1108,8 +1137,8 @@ class ConfigManagerObject : public DBusObject,
                             public ConfigManagerSignals,
                             public RC<thread_safe_refcount>
 {
-public:
-    typedef  RCPtr<ConfigManagerObject> Ptr;
+  public:
+    typedef RCPtr<ConfigManagerObject> Ptr;
 
     /**
      *  Constructor initializing the ConfigManagerObject to be registered on
@@ -1124,12 +1153,13 @@ public:
      *                         targeted for the log service (false)
      *
      */
-    ConfigManagerObject(GDBusConnection *dbusc, const std::string objpath,
-                        unsigned int default_log_level, LogWriter *logwr,
+    ConfigManagerObject(GDBusConnection *dbusc,
+                        const std::string objpath,
+                        unsigned int default_log_level,
+                        LogWriter *logwr,
                         bool signal_broadcast)
         : DBusObject(objpath),
-          ConfigManagerSignals(dbusc, objpath, default_log_level, logwr,
-                               signal_broadcast),
+          ConfigManagerSignals(dbusc, objpath, default_log_level, logwr, signal_broadcast),
           dbuscon(dbusc),
           creds(dbusc)
     {
@@ -1163,6 +1193,7 @@ public:
         Debug("ConfigManagerObject registered on '" + OpenVPN3DBus_interf_configuration + "':" + objpath);
     }
 
+
     ~ConfigManagerObject()
     {
         LogVerb2("Shutting down");
@@ -1180,7 +1211,7 @@ public:
      * @param stdir  std::string containing the file system directory for
      *               the persistent configuration profile storage
      */
-    void SetStateDirectory(const std::string& stdir)
+    void SetStateDirectory(const std::string &stdir)
     {
         if (!state_dir.empty())
         {
@@ -1191,18 +1222,18 @@ public:
 
         // Load all the already saved persistent configurations before
         // continuing.
-        for (const auto& fname : get_persistent_config_file_list(state_dir))
+        for (const auto &fname : get_persistent_config_file_list(state_dir))
         {
             try
             {
                 import_persistent_configuration(fname);
             }
-            catch (const openvpn::option_error& excp)
+            catch (const openvpn::option_error &excp)
             {
-                LogCritical("Could not import configuration profile " +
-                            fname + ": " + std::string(excp.what()));
+                LogCritical("Could not import configuration profile " + fname + ": "
+                            + std::string(excp.what()));
             }
-            catch (const DBusException& excp)
+            catch (const DBusException &excp)
             {
                 std::string err(excp.what());
                 if (err.find("failed: An object is already exported for the interface") != std::string::npos)
@@ -1214,7 +1245,7 @@ public:
                     throw;
                 }
             }
-            catch (const std::exception& excp)
+            catch (const std::exception &excp)
             {
                 LogCritical("Invalid persistent configuration file " + fname
                             + ": " + std::string(excp.what()));
@@ -1254,23 +1285,24 @@ public:
 
             try
             {
-                cfgobj = new ConfigurationObject(dbuscon,
-                                                 [self=Ptr(this), cfgpath]()
-                                                 {
-                                                    self->remove_config_object(cfgpath);
-                                                 },
-                                                 cfgpath,
-                                                 GetLogLevel(),
-                                                 GetLogWriterPtr(),
-                                                 GetSignalBroadcast(),
-                                                 creds.GetUID(sender),
-                                                 state_dir,
-                                                 params);
+                cfgobj = new ConfigurationObject(
+                    dbuscon,
+                    [self = Ptr(this), cfgpath]()
+                    {
+                    self->remove_config_object(cfgpath);
+                    },
+                    cfgpath,
+                    GetLogLevel(),
+                    GetLogWriterPtr(),
+                    GetSignalBroadcast(),
+                    creds.GetUID(sender),
+                    state_dir,
+                    params);
 
                 register_config_object(cfgobj, "created");
                 g_dbus_method_invocation_return_value(invoc, g_variant_new("(o)", cfgpath.c_str()));
             }
-            catch (const openvpn::option_error& excp)
+            catch (const openvpn::option_error &excp)
             {
                 std::string em{"Invalid configuration profile: "};
                 em += std::string(excp.what());
@@ -1285,16 +1317,17 @@ public:
         {
             // Build up an array of object paths to available config objects
             GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("ao"));
-            for (auto& item : config_objects)
+            for (auto &item : config_objects)
             {
-                try {
+                try
+                {
                     // We check if the caller is allowed to access this
                     // configuration object.  If not, an exception is thrown
                     // and we will just ignore that exception and continue
                     item.second->CheckACL(sender);
                     g_variant_builder_add(bld, "o", item.first.c_str());
                 }
-                catch (DBusCredentialsException& excp)
+                catch (DBusCredentialsException &excp)
                 {
                     // Ignore credentials exceptions.  It means the
                     // caller does not have access this configuration object
@@ -1330,7 +1363,7 @@ public:
 
             // Build up an array of object paths to available config objects
             GVariantBuilder *found_paths = g_variant_builder_new(G_VARIANT_TYPE("ao"));
-            for (const auto& item : config_objects)
+            for (const auto &item : config_objects)
             {
                 if (item.second->GetConfigName() == cfgname)
                 {
@@ -1341,9 +1374,10 @@ public:
                         // and we will just ignore that exception and continue
                         item.second->CheckACL(sender);
                         g_variant_builder_add(found_paths,
-                                              "o", item.first.c_str());
+                                              "o",
+                                              item.first.c_str());
                     }
-                    catch (DBusCredentialsException& excp)
+                    catch (DBusCredentialsException &excp)
                     {
                         // Ignore credentials exceptions.  It means the
                         // caller does not have access this configuration object
@@ -1371,7 +1405,7 @@ public:
             uid_t new_uid = 0;
             g_variant_get(params, "(ou)", &cfgpath, &new_uid);
 
-            for (const auto& ci : config_objects)
+            for (const auto &ci : config_objects)
             {
                 if (ci.first == cfgpath)
                 {
@@ -1414,12 +1448,12 @@ public:
      * @return  Returns always NULL, as there are no properties in the
      *          ConfigManagerObject.
      */
-    GVariant * callback_get_property(GDBusConnection *conn,
-                                     const std::string sender,
-                                     const std::string obj_path,
-                                     const std::string intf_name,
-                                     const std::string property_name,
-                                     GError **error)
+    GVariant *callback_get_property(GDBusConnection *conn,
+                                    const std::string sender,
+                                    const std::string obj_path,
+                                    const std::string intf_name,
+                                    const std::string property_name,
+                                    GError **error)
     {
         IdleCheck_UpdateTimestamp();
         GVariant *ret = nullptr;
@@ -1430,10 +1464,10 @@ public:
         }
         else
         {
-            g_set_error (error,
-                         G_IO_ERROR,
-                         G_IO_ERROR_FAILED,
-                         "Unknown property");
+            g_set_error(error,
+                        G_IO_ERROR,
+                        G_IO_ERROR_FAILED,
+                        "Unknown property");
         }
         return ret;
     };
@@ -1457,19 +1491,19 @@ public:
      * @return Will always throw an exception as there are no properties to
      *         modify.
      */
-    GVariantBuilder * callback_set_property(GDBusConnection *conn,
-                                            const std::string sender,
-                                            const std::string obj_path,
-                                            const std::string intf_name,
-                                            const std::string property_name,
-                                            GVariant *value,
-                                            GError **error)
+    GVariantBuilder *callback_set_property(GDBusConnection *conn,
+                                           const std::string sender,
+                                           const std::string obj_path,
+                                           const std::string intf_name,
+                                           const std::string property_name,
+                                           GVariant *value,
+                                           GError **error)
     {
         THROW_DBUSEXCEPTION("ConfigManagerObject", "get property not implemented");
     }
 
 
-private:
+  private:
     GDBusConnection *dbuscon;
     DBusConnectionCreds creds;
     std::string state_dir;
@@ -1486,7 +1520,7 @@ private:
      *                  was processed.
      */
     void register_config_object(ConfigurationObject *cfgobj,
-                                const std::string& operation)
+                                const std::string &operation)
     {
         IdleCheck_RefInc();
         cfgobj->IdleCheck_Register(IdleCheck_Get());
@@ -1515,7 +1549,7 @@ private:
      *
      * @throws  Throws DBusException if the directory cannot be opened
      */
-    std::vector<std::string> get_persistent_config_file_list(const std::string& directory)
+    std::vector<std::string> get_persistent_config_file_list(const std::string &directory)
     {
         DIR *dirfd = nullptr;
         struct dirent *entry = nullptr;
@@ -1538,13 +1572,13 @@ private:
             //     string length == 41 and last 5 characters are ".json"
             std::string fname(entry->d_name);
             if (41 != fname.size()
-               || ".json" != fname.substr(36, 5))
+                || ".json" != fname.substr(36, 5))
             {
                 continue;
             }
 
             std::stringstream fullpath;
-            fullpath <<  directory << "/" << fname;
+            fullpath << directory << "/" << fname;
 
             // Filter out only files and symbolic links
             struct stat stbuf;
@@ -1590,7 +1624,7 @@ private:
      *
      * @param fname  std::string with the filename to import
      */
-    void import_persistent_configuration(const std::string& fname)
+    void import_persistent_configuration(const std::string &fname)
     {
         LogVerb1("Loading persistent configuration: " + fname);
 
@@ -1604,10 +1638,10 @@ private:
         // remove callback function required to create the
         // configuration object
         std::string cfgpath = data["object_path"].asString();
-        auto remove_cb = [self=Ptr(this), cfgpath]()
-                           {
-                              self->remove_config_object(cfgpath);
-                           };
+        auto remove_cb = [self = Ptr(this), cfgpath]()
+        {
+            self->remove_config_object(cfgpath);
+        };
 
         // Create the internal representation of the configuration,
         // which is used when registering the configuration on the D-Bus
@@ -1640,6 +1674,7 @@ private:
 };
 
 
+
 /**
  *  Main D-Bus service implementation of the Configuration Manager.
  *
@@ -1650,7 +1685,7 @@ private:
  */
 class ConfigManagerDBus : public DBus
 {
-public:
+  public:
     /**
      * Constructor creating a D-Bus service for the Configuration Manager.
      *
@@ -1659,8 +1694,7 @@ public:
      * @param signal_broadcast Should signals be broadcasted (true) or
      *                         targeted for the log service (false)
      */
-    ConfigManagerDBus(GDBusConnection *conn, LogWriter *logwr,
-                      bool signal_broadcast)
+    ConfigManagerDBus(GDBusConnection *conn, LogWriter *logwr, bool signal_broadcast)
         : DBus(conn,
                OpenVPN3DBus_name_configuration,
                OpenVPN3DBus_rootp_configuration,
@@ -1675,10 +1709,12 @@ public:
                                                 "ConfigurationManager"));
     };
 
+
     ~ConfigManagerDBus()
     {
         procsig->ProcessChange(StatusMinor::PROC_STOPPED);
     }
+
 
     /**
      *  Sets the log level to use for the configuration manager main object
@@ -1701,7 +1737,7 @@ public:
      * @param stdir  std::string containing the directory where to load and
      *               save persistent configuration profiles.
      */
-    void SetStateDirectory(const std::string& stdir)
+    void SetStateDirectory(const std::string &stdir)
     {
         state_dir = stdir;
     }
@@ -1713,8 +1749,10 @@ public:
      */
     void callback_bus_acquired()
     {
-        cfgmgr.reset(new ConfigManagerObject(GetConnection(), GetRootPath(),
-                                             default_log_level, logwr,
+        cfgmgr.reset(new ConfigManagerObject(GetConnection(),
+                                             GetRootPath(),
+                                             default_log_level,
+                                             logwr,
                                              signal_broadcast));
         cfgmgr->RegisterObject(GetConnection());
 
@@ -1724,12 +1762,12 @@ public:
             {
                 cfgmgr->SetStateDirectory(state_dir);
             }
-            catch (const DBusException& excp)
+            catch (const DBusException &excp)
             {
                 LogEvent ev{LogGroup::CONFIGMGR,
                             LogCategory::CRIT,
                             std::string("Error parsing --state-dir: ")
-                            + std::string(excp.what())};
+                                + std::string(excp.what())};
                 if (logwr)
                 {
                     logwr->Write(ev);
@@ -1756,9 +1794,7 @@ public:
      * @param conn     Connection where this event happened
      * @param busname  A string of the acquired bus name
      */
-    void callback_name_acquired(GDBusConnection *conn, std::string busname)
-    {
-    };
+    void callback_name_acquired(GDBusConnection *conn, std::string busname){};
 
 
     /**
@@ -1773,10 +1809,11 @@ public:
     {
         THROW_DBUSEXCEPTION("ConfigManagerDBus",
                             "openvpn3-service-configmgr could not register '"
-                            + busname + "' on the D-Bus");
+                                + busname + "' on the D-Bus");
     };
 
-private:
+
+  private:
     unsigned int default_log_level = 6; // LogCategory::DEBUG
     LogWriter *logwr = nullptr;
     bool signal_broadcast = true;
@@ -1784,5 +1821,3 @@ private:
     ConfigManagerObject::Ptr cfgmgr;
     ProcessSignalProducer::Ptr procsig;
 };
-
-#endif // OPENVPN3_DBUS_CONFIGMGR_HPP

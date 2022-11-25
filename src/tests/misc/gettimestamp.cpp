@@ -27,10 +27,9 @@
 
 #include "common/timestamp.hpp"
 
+
 int main()
 {
     std::cout << "Current Timestamp: " << GetTimestamp() << std::endl;
     return 0;
 }
-
-

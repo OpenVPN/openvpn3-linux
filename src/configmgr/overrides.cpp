@@ -27,19 +27,22 @@
 
 #include "overrides.hpp"
 
-const ValidOverride & GetConfigOverride(const std::string & key, bool ignoreCase)
+
+const ValidOverride &GetConfigOverride(const std::string &key, bool ignoreCase)
 {
-    for (const auto& vo: configProfileOverrides)
+    for (const auto &vo : configProfileOverrides)
     {
-        if (vo.key==key)
+        if (vo.key == key)
         {
-           return vo;
+            return vo;
         }
 
         // This is appearently the best way to do a case insenstive
         // comparision in C++
-        if (ignoreCase && std::equal(vo.key.begin(), vo.key.end(), key.begin(),
-            [](char a, char b) { return std::tolower(a) == std::tolower(b);} ))
+        if (ignoreCase && std::equal(vo.key.begin(), vo.key.end(), key.begin(), [](char a, char b)
+                                     {
+            return std::tolower(a) == std::tolower(b);
+            }))
         {
             return vo;
         }

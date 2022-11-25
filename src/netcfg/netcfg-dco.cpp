@@ -31,8 +31,12 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-NetCfgDCO::NetCfgDCO(GDBusConnection *dbuscon, const std::string& objpath,
-                     const std::string& dev_name, pid_t backend_pid, LogWriter *logwr)
+
+NetCfgDCO::NetCfgDCO(GDBusConnection *dbuscon,
+                     const std::string &objpath,
+                     const std::string &dev_name,
+                     pid_t backend_pid,
+                     LogWriter *logwr)
     : DBusObject(objpath + "/dco"),
       signal(dbuscon, LogGroup::NETCFG, objpath, logwr),
       fds{},
@@ -83,10 +87,9 @@ NetCfgDCO::NetCfgDCO(GDBusConnection *dbuscon, const std::string& objpath,
     {
         genl.reset(new GeNLImpl(io_context,
                                 if_nametoindex(dev_name.c_str()),
-                                this)
-                   );
+                                this));
     }
-    catch (const std::exception& ex)
+    catch (const std::exception &ex)
     {
         std::string err{"Error initializing GeNL: " + std::string{ex.what()}};
         signal.LogError(err);
@@ -94,20 +97,19 @@ NetCfgDCO::NetCfgDCO(GDBusConnection *dbuscon, const std::string& objpath,
         throw NetCfgException(err);
     }
 
-    th.reset(new std::thread([self=Ptr(this)]()
+    th.reset(new std::thread([self = Ptr(this)]()
                              {
-                                 self->io_context.run();
-                             }
-                            )
-        );
+        self->io_context.run();
+    }));
 
-    openvpn_io::post(io_context, [self=Ptr(this)]()
-                                 {
-                                         self->queue_read_pipe(nullptr);
-                                         self->genl->register_packet();
-                                 }
-                     );
+    openvpn_io::post(io_context,
+                     [self = Ptr(this)]()
+                     {
+        self->queue_read_pipe(nullptr);
+        self->genl->register_packet();
+    });
 }
+
 
 void NetCfgDCO::teardown()
 {
@@ -139,6 +141,7 @@ void NetCfgDCO::teardown()
     }
 }
 
+
 void NetCfgDCO::queue_read_pipe(PacketFrom *pkt)
 {
     if (!pkt)
@@ -147,31 +150,37 @@ void NetCfgDCO::queue_read_pipe(PacketFrom *pkt)
     }
     pkt->buf.reset(0, 2048, 0);
     pipe->async_read_some(pkt->buf.mutable_buffer(),
-        [self=Ptr(this), pkt=PacketFrom::SPtr(pkt)](const openvpn_io::error_code& error, const size_t bytes_recvd) mutable
+                          [self = Ptr(this), pkt = PacketFrom::SPtr(pkt)](const openvpn_io::error_code &error,
+                                                                          const size_t bytes_recvd) mutable
+                          {
+        if (!error)
         {
-            if (!error)
-            {
-                uint32_t peer_id;
+            uint32_t peer_id;
 
-                if (bytes_recvd < sizeof(peer_id)) {
-                    std::stringstream os;
-                    os << "Received message too small on pipe, size=" << bytes_recvd;
-                    self->signal.LogError(os.str());
-                } else {
-                    std::memcpy(&peer_id, pkt->buf.data(), sizeof(peer_id));
-                    self->genl->send_data(peer_id, pkt->buf.data() + sizeof(peer_id),
-                                          bytes_recvd - sizeof(peer_id));
-                }
-                self->queue_read_pipe(pkt.release());
+            if (bytes_recvd < sizeof(peer_id))
+            {
+                std::stringstream os;
+                os << "Received message too small on pipe, size=" << bytes_recvd;
+                self->signal.LogError(os.str());
             }
+            else
+            {
+                std::memcpy(&peer_id, pkt->buf.data(), sizeof(peer_id));
+                self->genl->send_data(peer_id,
+                                      pkt->buf.data() + sizeof(peer_id),
+                                      bytes_recvd - sizeof(peer_id));
+            }
+            self->queue_read_pipe(pkt.release());
         }
-    );
+    });
 }
+
 
 void NetCfgDCO::callback_destructor()
 {
     teardown();
 }
+
 
 NetCfgDCO::~NetCfgDCO()
 {
@@ -181,46 +190,50 @@ NetCfgDCO::~NetCfgDCO()
 #endif
 }
 
+
 bool NetCfgDCO::available()
 {
     return GeNLImpl::available();
 }
+
 
 void NetCfgDCO::tun_read_handler(BufferAllocated &buf)
 {
     pipe->write_some(buf.const_buffer());
 }
 
-GVariant* NetCfgDCO::callback_get_property(GDBusConnection *conn,
+
+GVariant *NetCfgDCO::callback_get_property(GDBusConnection *conn,
                                            const std::string sender,
                                            const std::string obj_path,
                                            const std::string intf_name,
                                            const std::string property_name,
                                            GError **error)
 {
-    g_set_error(error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-                "Unknown property");
+    g_set_error(error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, "Unknown property");
     return nullptr;
 }
 
-GVariantBuilder* NetCfgDCO::callback_set_property(GDBusConnection *conn,
-                                            const std::string sender,
-                                            const std::string obj_path,
-                                            const std::string intf_name,
-                                            const std::string property_name,
-                                            GVariant *value,
-                                            GError **error)
+
+GVariantBuilder *NetCfgDCO::callback_set_property(GDBusConnection *conn,
+                                                  const std::string sender,
+                                                  const std::string obj_path,
+                                                  const std::string intf_name,
+                                                  const std::string property_name,
+                                                  GVariant *value,
+                                                  GError **error)
 {
     throw NetCfgException("Not implemented");
 }
 
+
 void NetCfgDCO::callback_method_call(GDBusConnection *conn,
-                              const std::string sender,
-                              const std::string obj_path,
-                              const std::string intf_name,
-                              const std::string method_name,
-                              GVariant *params,
-                              GDBusMethodInvocation *invoc)
+                                     const std::string sender,
+                                     const std::string obj_path,
+                                     const std::string intf_name,
+                                     const std::string method_name,
+                                     GVariant *params,
+                                     GDBusMethodInvocation *invoc)
 {
     try
     {
@@ -254,17 +267,24 @@ void NetCfgDCO::callback_method_call(GDBusConnection *conn,
             IPv4::Addr vpn4 = IPv4::Addr::from_string(vpn4_str);
             IPv6::Addr vpn6 = IPv6::Addr::from_string(vpn6_str);
 
-            openvpn_io::post(io_context, [peer_id, transport_fd, sa, salen, vpn4, vpn6, self=Ptr(this)]()
-                                         {
-                                             self->genl->new_peer(peer_id, transport_fd, (struct sockaddr *)&sa, salen, vpn4, vpn6);
-                                         }
-                );
+            openvpn_io::post(io_context,
+                             [peer_id, transport_fd, sa, salen, vpn4, vpn6, self = Ptr(this)]()
+                             {
+                self->genl->new_peer(peer_id,
+                                     transport_fd,
+                                     (struct sockaddr *)&sa,
+                                     salen,
+                                     vpn4,
+                                     vpn6);
+            });
 
             retval = g_variant_new("()");
-        } else if ("NewKey" == method_name)
+        }
+        else if ("NewKey" == method_name)
         {
             new_key(params);
-        } else if ("SwapKeys" == method_name)
+        }
+        else if ("SwapKeys" == method_name)
         {
             swap_keys(params);
         }
@@ -274,33 +294,30 @@ void NetCfgDCO::callback_method_call(GDBusConnection *conn,
 
             unsigned int peer_id;
             int keepalive_interval, keepalive_timeout;
-            g_variant_get(params, "(uuu)", &peer_id,
-                          &keepalive_interval, &keepalive_timeout);
+            g_variant_get(params, "(uuu)", &peer_id, &keepalive_interval, &keepalive_timeout);
 
-            openvpn_io::post(io_context, [peer_id,
-                                          keepalive_interval,
-                                          keepalive_timeout,
-                                          self=Ptr(this)]()
+            openvpn_io::post(io_context,
+                             [peer_id, keepalive_interval, keepalive_timeout, self = Ptr(this)]()
                              {
-                                     self->genl->set_peer(peer_id,
-                                                          keepalive_interval,
-                                                          keepalive_timeout);
-                             });
+                self->genl->set_peer(peer_id,
+                                     keepalive_interval,
+                                     keepalive_timeout);
+            });
 
             retval = g_variant_new("()");
         }
 
         g_dbus_method_invocation_return_value(invoc, retval);
     }
-    catch (DBusCredentialsException& excp)
+    catch (DBusCredentialsException &excp)
     {
         signal.LogCritical(excp.what());
         excp.SetDBusError(invoc);
     }
-    catch (const std::exception& excp)
+    catch (const std::exception &excp)
     {
         std::string errmsg = "Failed executing D-Bus call '"
-                            + method_name + "': " + excp.what();
+                             + method_name + "': " + excp.what();
         GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.netcfg.error.generic",
                                                       errmsg.c_str());
         g_dbus_method_invocation_return_gerror(invoc, err);
@@ -315,7 +332,8 @@ void NetCfgDCO::callback_method_call(GDBusConnection *conn,
     }
 }
 
-void NetCfgDCO::new_key(GVariant* params)
+
+void NetCfgDCO::new_key(GVariant *params)
 {
     GLibUtils::checkParams(__func__, params, "(us)", 2);
 
@@ -324,30 +342,31 @@ void NetCfgDCO::new_key(GVariant* params)
     DcoKeyConfig dco_kc;
     dco_kc.ParseFromString(base64->decode(g_variant_get_string(g_variant_get_child_value(params, 1), 0)));
 
-    auto copyKeyDirection = [](const DcoKeyConfig_KeyDirection& src, KoRekey::KeyDirection& dst)
-        {
-            dst.cipher_key = reinterpret_cast<const unsigned char*>(src.cipher_key().data());
-            std::memcpy(dst.nonce_tail, src.nonce_tail().data(), sizeof(dst.nonce_tail));
-            dst.cipher_key_size = src.cipher_key_size();
-        };
+    auto copyKeyDirection = [](const DcoKeyConfig_KeyDirection &src, KoRekey::KeyDirection &dst)
+    {
+        dst.cipher_key = reinterpret_cast<const unsigned char *>(src.cipher_key().data());
+        std::memcpy(dst.nonce_tail, src.nonce_tail().data(), sizeof(dst.nonce_tail));
+        dst.cipher_key_size = src.cipher_key_size();
+    };
 
-    openvpn_io::post(io_context, [=, self=Ptr(this)]()
-                                 {
-                                     KoRekey::KeyConfig kc;
-                                     std::memset(&kc, 0, sizeof(kc));
-                                     kc.key_id = dco_kc.key_id();
-                                     kc.remote_peer_id = dco_kc.remote_peer_id();
-                                     kc.cipher_alg = dco_kc.cipher_alg();
+    openvpn_io::post(io_context,
+                     [=, self = Ptr(this)]()
+                     {
+        KoRekey::KeyConfig kc;
+        std::memset(&kc, 0, sizeof(kc));
+        kc.key_id = dco_kc.key_id();
+        kc.remote_peer_id = dco_kc.remote_peer_id();
+        kc.cipher_alg = dco_kc.cipher_alg();
 
-                                     copyKeyDirection(dco_kc.encrypt(),
-                                                      kc.encrypt);
-                                     copyKeyDirection(dco_kc.decrypt(),
-                                                      kc.decrypt);
+        copyKeyDirection(dco_kc.encrypt(),
+                         kc.encrypt);
+        copyKeyDirection(dco_kc.decrypt(),
+                         kc.decrypt);
 
-                                     self->genl->new_key(key_slot, &kc);
-                                 }
-        );
+        self->genl->new_key(key_slot, &kc);
+    });
 }
+
 
 void NetCfgDCO::swap_keys(GVariant *params)
 {
@@ -355,9 +374,10 @@ void NetCfgDCO::swap_keys(GVariant *params)
 
     unsigned int peer_id = GLibUtils::ExtractValue<unsigned int>(params, 0);
 
-    openvpn_io::post(io_context, [=, self=Ptr(this)]()
-    {
+    openvpn_io::post(io_context,
+                     [=, self = Ptr(this)]()
+                     {
         self->genl->swap_keys(peer_id);
     });
 }
-#endif  // ENABLE_OVPNDCO
+#endif // ENABLE_OVPNDCO

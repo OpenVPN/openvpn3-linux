@@ -27,8 +27,7 @@
  *         the glue between the client D-Bus service and the library API.
  */
 
-#ifndef OPENVPN3_CORE_CLIENT
-#define OPENVPN3_CORE_CLIENT
+#pragma once
 
 #include <iostream>
 #include <thread>
@@ -61,37 +60,44 @@ using namespace openvpn;
 #define CLIENTBASECLASS NetCfgTunBuilder<ClientAPI::OpenVPNClient>
 #else
 #define CLIENTBASECLASS DummyTunBuilder
-class DummyTunBuilder: public  ClientAPI::OpenVPNClient
+class DummyTunBuilder : public ClientAPI::OpenVPNClient
 {
-public:
-    DummyTunBuilder(GDBusConnection *dbusconn, BackendSignals *signal,
-                    const std::string& session_token) {}
+  public:
+    DummyTunBuilder(GDBusConnection *dbusconn, BackendSignals *signal, const std::string &session_token)
+    {
+    }
+
 
     bool socket_protect(int, std::string, bool) override
     {
         return true;
     }
 
+
     std::string tun_builder_get_session_name()
     {
         return session_name;
     }
+
 
     std::string netcfg_get_device_path()
     {
         return "";
     }
 
+
     std::string netcfg_get_device_name()
     {
         return "";
     }
 
-protected:
+
+  protected:
     bool disabled_dns_config;
     std::string dns_scope = "global";
 
-private:
+
+  private:
     std::string session_name;
 };
 #endif
@@ -102,7 +108,7 @@ private:
 class CoreVPNClient : public CLIENTBASECLASS,
                       public RC<thread_safe_refcount>
 {
-public:
+  public:
     typedef RCPtr<CoreVPNClient> Ptr;
 
     /**
@@ -116,14 +122,16 @@ public:
      *                    will be used to process dynamic challenge
      *                    interactions and more.
      */
-    CoreVPNClient(GDBusConnection *dbusconn, BackendSignals *signal,
-                  RequiresQueue *userinputq, const std::string session_token)
-            : CLIENTBASECLASS(dbusconn, signal, session_token),
-              disabled_socket_protect_fd(false),
-              signal(signal),
-              userinputq(userinputq),
-              failed_signal_sent(false),
-              run_status(StatusMinor::CONN_INIT)
+    CoreVPNClient(GDBusConnection *dbusconn,
+                  BackendSignals *signal,
+                  RequiresQueue *userinputq,
+                  const std::string session_token)
+        : CLIENTBASECLASS(dbusconn, signal, session_token),
+          disabled_socket_protect_fd(false),
+          signal(signal),
+          userinputq(userinputq),
+          failed_signal_sent(false),
+          run_status(StatusMinor::CONN_INIT)
     {
     }
 
@@ -133,15 +141,18 @@ public:
         disabled_socket_protect_fd = val;
     }
 
+
     void set_dns_resolver_scope(const std::string scope)
     {
         dns_scope = scope;
     }
 
+
     void disable_dns_config(bool val)
     {
         disabled_dns_config = val;
     }
+
 
     /**
      *  Do we have a dynamic challenge?
@@ -204,10 +215,7 @@ public:
     }
 
 
-protected:
-
-
-private:
+  private:
     std::string dc_cookie;
     unsigned long evntcount = 0;
     bool disabled_socket_protect_fd;
@@ -218,6 +226,7 @@ private:
     StatusMinor run_status;
     bool initial_connection = true;
 
+
     bool socket_protect(int socket, std::string remote, bool ipv6) override
     {
         if (disabled_socket_protect_fd)
@@ -226,7 +235,6 @@ private:
             signal->LogVerb2("Socket Protect with FD has been disabled");
         }
         return CLIENTBASECLASS::socket_protect(socket, remote, ipv6);
-
     }
 
 
@@ -238,7 +246,7 @@ private:
      *
      * @param ev  A ClientAPI::Event object with the current event.
      */
-    virtual void event(const ClientAPI::Event& ev) override
+    virtual void event(const ClientAPI::Event &ev) override
     {
         evntcount++;
 
@@ -257,22 +265,25 @@ private:
             if (ClientAPI::OpenVPNClientHelper::parse_dynamic_challenge(dc_cookie, dc))
             {
                 userinputq->RequireAdd(
-                                ClientAttentionType::CREDENTIALS,
-                                ClientAttentionGroup::CHALLENGE_DYNAMIC,
-                                "dynamic_challenge", dc.challenge,
-                                dc.echo == 0);
+                    ClientAttentionType::CREDENTIALS,
+                    ClientAttentionGroup::CHALLENGE_DYNAMIC,
+                    "dynamic_challenge",
+                    dc.challenge,
+                    dc.echo == 0);
 
                 // Save the dynamic challenge cookie in the userinputq object.
                 // This is due to this object will be wiped after the
                 // disconnect, so we can't save any states in this object.
                 unsigned int dcrid = userinputq->RequireAdd(
-                                       ClientAttentionType::CREDENTIALS,
-                                       ClientAttentionGroup::CHALLENGE_DYNAMIC,
-                                       "dynamic_challenge_cookie", "",
-                                       true);
+                    ClientAttentionType::CREDENTIALS,
+                    ClientAttentionGroup::CHALLENGE_DYNAMIC,
+                    "dynamic_challenge_cookie",
+                    "",
+                    true);
                 userinputq->UpdateEntry(ClientAttentionType::CREDENTIALS,
                                         ClientAttentionGroup::CHALLENGE_DYNAMIC,
-                                        dcrid, dc_cookie);
+                                        dcrid,
+                                        dc_cookie);
                 signal->AttentionReq(ClientAttentionType::CREDENTIALS,
                                      ClientAttentionGroup::CHALLENGE_DYNAMIC,
                                      dc.challenge);
@@ -288,14 +299,17 @@ private:
 
             userinputq->RequireAdd(ClientAttentionType::CREDENTIALS,
                                    ClientAttentionGroup::HTTP_PROXY_CREDS,
-                                   "http_proxy_user", "HTTP proxy username",
+                                   "http_proxy_user",
+                                   "HTTP proxy username",
                                    false);
             userinputq->RequireAdd(ClientAttentionType::CREDENTIALS,
                                    ClientAttentionGroup::HTTP_PROXY_CREDS,
-                                   "http_proxy_pass", "HTTP proxy password",
+                                   "http_proxy_pass",
+                                   "HTTP proxy password",
                                    true);
             signal->AttentionReq(ClientAttentionType::CREDENTIALS,
-                                 ClientAttentionGroup::HTTP_PROXY_CREDS, "");
+                                 ClientAttentionGroup::HTTP_PROXY_CREDS,
+                                 "");
             signal->StatusChange(StatusMajor::CONNECTION,
                                  StatusMinor::CFG_REQUIRE_USER,
                                  "HTTP proxy credentials");
@@ -463,12 +477,14 @@ private:
         }
     }
 
-    void open_url(std::string& url, const std::string& flags)
+
+    void open_url(std::string &url, const std::string &flags)
     {
         // We currently ignore the flags since we do not have an
         // internal webview or proxy implementation
         signal->AttentionReq(ClientAttentionType::CREDENTIALS,
-                             ClientAttentionGroup::OPEN_URL, url);
+                             ClientAttentionGroup::OPEN_URL,
+                             url);
         signal->StatusChange(StatusMajor::SESSION,
                              StatusMinor::SESS_AUTH_URL,
                              url);
@@ -483,14 +499,14 @@ private:
      *
      * @param log  The ClientAPI::LogInfo object to act upon
      */
-    virtual void log(const ClientAPI::LogInfo& log) override
+    virtual void log(const ClientAPI::LogInfo &log) override
     {
         // Log events going via log() are to be considered debug information
         signal->Debug(log.text);
     }
 
 
-    virtual void external_pki_cert_request(ClientAPI::ExternalPKICertRequest& certreq) override
+    virtual void external_pki_cert_request(ClientAPI::ExternalPKICertRequest &certreq) override
     {
         std::cout << "*** external_pki_cert_request" << std::endl;
         certreq.error = true;
@@ -499,7 +515,7 @@ private:
     }
 
 
-    virtual void external_pki_sign_request(ClientAPI::ExternalPKISignRequest& signreq) override
+    virtual void external_pki_sign_request(ClientAPI::ExternalPKISignRequest &signreq) override
     {
         std::cout << "*** external_pki_sign_request" << std::endl;
         signreq.error = true;
@@ -510,7 +526,6 @@ private:
 
     virtual bool pause_on_connection_timeout() override
     {
-            return false;
+        return false;
     }
 };
-#endif // OPENVPN3_CORE_CLIENT

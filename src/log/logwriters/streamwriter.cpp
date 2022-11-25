@@ -34,11 +34,10 @@
 //  StreamLogWriter - implementation
 //
 
-StreamLogWriter::StreamLogWriter(std::ostream& dst)
+StreamLogWriter::StreamLogWriter(std::ostream &dst)
     : LogWriter(), dest(dst)
 {
 }
-
 
 StreamLogWriter::~StreamLogWriter()
 {
@@ -52,9 +51,9 @@ const std::string StreamLogWriter::GetLogWriterInfo() const
 }
 
 
-void StreamLogWriter::Write(const std::string& data,
-                            const std::string& colour_init,
-                            const std::string& colour_reset)
+void StreamLogWriter::Write(const std::string &data,
+                            const std::string &colour_init,
+                            const std::string &colour_reset)
 {
     if (log_meta && !metadata.empty())
     {
@@ -62,7 +61,7 @@ void StreamLogWriter::Write(const std::string& data,
              << colour_init;
         if (prepend_meta)
         {
-             dest << metadata.GetMetaValue(prepend_label);
+            dest << metadata.GetMetaValue(prepend_label);
         }
         dest << metadata << colour_reset
              << std::endl;
@@ -80,27 +79,32 @@ void StreamLogWriter::Write(const std::string& data,
 }
 
 
+
 //
 //  ColourStreamWriter - implementation
 //
-ColourStreamWriter::ColourStreamWriter(std::ostream& dst, ColourEngine *ce)
+ColourStreamWriter::ColourStreamWriter(std::ostream &dst, ColourEngine *ce)
     : StreamLogWriter(dst), colours(ce)
 {
 }
+
 
 const std::string ColourStreamWriter::GetLogWriterInfo() const
 {
     return std::string("ColourStreamWriter");
 }
 
+
 void ColourStreamWriter::Write(const LogGroup grp,
                                const LogCategory ctg,
-                               const std::string& data)
+                               const std::string &data)
 {
     switch (colours->GetColourMode())
     {
     case ColourEngine::ColourMode::BY_CATEGORY:
-        LogWriter::Write(grp, ctg, data,
+        LogWriter::Write(grp,
+                         ctg,
+                         data,
                          colours->ColourByCategory(ctg),
                          colours->Reset());
         return;
@@ -110,7 +114,9 @@ void ColourStreamWriter::Write(const LogGroup grp,
             std::string grpcol = colours->ColourByGroup(grp);
             // Highlights parts of the log event which are higher than LogCategory::INFO
             std::string ctgcol = (LogCategory::INFO < ctg ? colours->ColourByCategory(ctg) : grpcol);
-            LogWriter::Write(grp, ctg, grpcol + data,
+            LogWriter::Write(grp,
+                             ctg,
+                             grpcol + data,
                              ctgcol,
                              colours->Reset());
         }

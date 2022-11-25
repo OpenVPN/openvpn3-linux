@@ -31,7 +31,7 @@
 //
 
 LogFilter::LogFilter(unsigned int loglvl) noexcept
-        : log_level(loglvl)
+    : log_level(loglvl)
 {
 }
 
@@ -52,16 +52,16 @@ unsigned int LogFilter::GetLogLevel() noexcept
 }
 
 
-void LogFilter::AddPathFilter(const std::string& path)
+void LogFilter::AddPathFilter(const std::string &path)
 {
     filter_paths.push_back(path);
     std::sort(filter_paths.begin(), filter_paths.end());
 }
 
 
-bool LogFilter::LogFilterAllow(const LogEvent& logev) noexcept
+bool LogFilter::LogFilterAllow(const LogEvent &logev) noexcept
 {
-    switch(logev.category)
+    switch (logev.category)
     {
     case LogCategory::DEBUG:
         return log_level >= 6;
@@ -81,7 +81,7 @@ bool LogFilter::LogFilterAllow(const LogEvent& logev) noexcept
 }
 
 
-bool LogFilter::AllowPath(const std::string& path) noexcept
+bool LogFilter::AllowPath(const std::string &path) noexcept
 {
     if (filter_paths.size() < 1)
     {
@@ -96,47 +96,46 @@ bool LogFilter::AllowPath(const std::string& path) noexcept
 //  LogSender class implementation
 //
 
-LogSender::LogSender(GDBusConnection *dbuscon, const LogGroup lgroup,
+LogSender::LogSender(GDBusConnection *dbuscon,
+                     const LogGroup lgroup,
                      std::string interf,
                      std::string objpath,
                      LogWriter *lgwr)
-        : DBusSignalProducer(dbuscon, "", interf, objpath),
-          LogFilter(3),
-          logwr(lgwr),
-          log_group(lgroup)
+    : DBusSignalProducer(dbuscon, "", interf, objpath),
+      LogFilter(3),
+      logwr(lgwr),
+      log_group(lgroup)
 {
 }
 
 
 const std::string LogSender::GetLogIntrospection()
 {
-    return
-        "        <signal name='Log'>"
-        "            <arg type='u' name='group' direction='out'/>"
-        "            <arg type='u' name='level' direction='out'/>"
-        "            <arg type='s' name='message' direction='out'/>"
-        "        </signal>";
+    return "        <signal name='Log'>"
+           "            <arg type='u' name='group' direction='out'/>"
+           "            <arg type='u' name='level' direction='out'/>"
+           "            <arg type='s' name='message' direction='out'/>"
+           "        </signal>";
 }
 
 
 const std::string LogSender::GetStatusChangeIntrospection()
 {
-    return
-        "        <signal name='StatusChange'>"
-        "            <arg type='u' name='code_major' direction='out'/>"
-        "            <arg type='u' name='code_minor' direction='out'/>"
-        "            <arg type='s' name='message' direction='out'/>"
-        "        </signal>";
+    return "        <signal name='StatusChange'>"
+           "            <arg type='u' name='code_major' direction='out'/>"
+           "            <arg type='u' name='code_minor' direction='out'/>"
+           "            <arg type='s' name='message' direction='out'/>"
+           "        </signal>";
 }
 
 
-void LogSender::StatusChange(const StatusEvent& statusev)
+void LogSender::StatusChange(const StatusEvent &statusev)
 {
     Send("StatusChange", statusev.GetGVariantTuple());
 }
 
 
-void LogSender::ProxyLog(const LogEvent& logev, const std::string& path)
+void LogSender::ProxyLog(const LogEvent &logev, const std::string &path)
 {
     // Don't proxy an empty log message and if the log level filtering
     // allows it.  The filtering is done against the LogCategory of
@@ -153,7 +152,7 @@ void LogSender::ProxyLog(const LogEvent& logev, const std::string& path)
 }
 
 
-void LogSender::ProxyStatusChange(const StatusEvent& status, const std::string& path)
+void LogSender::ProxyStatusChange(const StatusEvent &status, const std::string &path)
 {
     if (!status.empty() && AllowPath(path))
     {
@@ -162,8 +161,7 @@ void LogSender::ProxyStatusChange(const StatusEvent& status, const std::string& 
 }
 
 
-void LogSender::Log(const LogEvent& logev, bool duplicate_check,
-                    const std::string& target)
+void LogSender::Log(const LogEvent &logev, bool duplicate_check, const std::string &target)
 {
     // Don't log an empty messages or if log level filtering allows it
     // The filtering is done against the LogCategory of the message
@@ -182,7 +180,7 @@ void LogSender::Log(const LogEvent& logev, bool duplicate_check,
     }
     last_logevent = logev;
 
-    if( logwr )
+    if (logwr)
     {
         logwr->Write(logev);
     }
@@ -248,7 +246,7 @@ LogEvent LogSender::GetLastLogEvent() const
 }
 
 
-LogWriter * LogSender::GetLogWriter()
+LogWriter *LogSender::GetLogWriter()
 {
     return logwr;
 }
@@ -262,8 +260,8 @@ LogConsumer::LogConsumer(GDBusConnection *dbuscon,
                          std::string interf,
                          std::string objpath,
                          std::string busn)
-        : DBusSignalSubscription(dbuscon, busn, interf, objpath, "Log"),
-          LogFilter(6) // By design, accept all kinds of log messages when receiving
+    : DBusSignalSubscription(dbuscon, busn, interf, objpath, "Log"),
+      LogFilter(6) // By design, accept all kinds of log messages when receiving
 {
 }
 
@@ -277,13 +275,11 @@ void LogConsumer::callback_signal_handler(GDBusConnection *connection,
 {
     if ("Log" == signal_name)
     {
-        process_log_event(sender_name, interface_name, obj_path,
-                          parameters);
+        process_log_event(sender_name, interface_name, obj_path, parameters);
     }
     else
     {
-        ProcessSignal(sender_name, obj_path, interface_name,
-                      signal_name, parameters);
+        ProcessSignal(sender_name, obj_path, interface_name, signal_name, parameters);
     }
 }
 
@@ -300,13 +296,13 @@ LogConsumerProxyException::LogConsumerProxyException(LogProxyExceptionType t) no
 
 
 LogConsumerProxyException::LogConsumerProxyException(LogProxyExceptionType t,
-                          const std::string& message_str) noexcept
+                                                     const std::string &message_str) noexcept
     : type(t), message(std::move(message_str))
 {
 }
 
 
-const char* LogConsumerProxyException::what() const noexcept
+const char *LogConsumerProxyException::what() const noexcept
 {
     return message.c_str();
 }
@@ -324,8 +320,10 @@ LogProxyExceptionType LogConsumerProxyException::GetExceptionType() const noexce
 //
 
 LogConsumerProxy::LogConsumerProxy(GDBusConnection *dbuscon,
-                 std::string src_interf, std::string src_objpath,
-                 std::string dst_interf, std::string dst_objpath)
+                                   std::string src_interf,
+                                   std::string src_objpath,
+                                   std::string dst_interf,
+                                   std::string dst_objpath)
     : LogConsumer(dbuscon, src_interf, src_objpath),
       LogSender(dbuscon, LogGroup::UNDEFINED, dst_interf, dst_objpath)
 {
@@ -340,11 +338,10 @@ void LogConsumerProxy::process_log_event(const std::string sender,
     try
     {
         LogEvent logev(params);
-        LogEvent ev = InterceptLogEvent(sender, interface,
-                                        object_path, logev);
+        LogEvent ev = InterceptLogEvent(sender, interface, object_path, logev);
         ProxyLog(ev);
     }
-    catch (const LogConsumerProxyException& excp)
+    catch (const LogConsumerProxyException &excp)
     {
         switch (excp.GetExceptionType())
         {
@@ -362,7 +359,7 @@ void LogConsumerProxy::process_log_event(const std::string sender,
             THROW_LOGEXCEPTION("LogConsmerProxy:  Unknown error");
         }
     }
-    catch(...)
+    catch (...)
     {
         throw;
     }

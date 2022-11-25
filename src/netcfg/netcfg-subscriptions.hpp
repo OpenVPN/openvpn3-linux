@@ -35,7 +35,7 @@
  */
 class NetCfgSubscriptions : public RC<thread_safe_refcount>
 {
-public:
+  public:
     typedef RCPtr<NetCfgSubscriptions> Ptr;
 
     /**
@@ -44,10 +44,7 @@ public:
      */
     typedef std::map<std::string, std::uint16_t> NetCfgNotifSubscriptions;
 
-
     NetCfgSubscriptions() = default;
-
-
     ~NetCfgSubscriptions() = default;
 
 
@@ -61,9 +58,9 @@ public:
      *
      * @return Returns a std::string with the introspection XML fragment.
      */
-    static std::string GenIntrospection(const std::string& name_subscribe,
-                                        const std::string& name_unsubscribe,
-                                        const std::string& name_list)
+    static std::string GenIntrospection(const std::string &name_subscribe,
+                                        const std::string &name_unsubscribe,
+                                        const std::string &name_list)
     {
         std::stringstream introsp;
         introsp << "        <method name='" << name_subscribe << "'>"
@@ -93,7 +90,7 @@ public:
      * @throws Throws NetCfgException with an error message which can be sent
      *         back to the caller.
      */
-    void Subscribe(const std::string& sender, uint32_t filter_flags);
+    void Subscribe(const std::string &sender, uint32_t filter_flags);
 
 
     /**
@@ -103,7 +100,7 @@ public:
      *
      * @throws NetCfgException if the subscription cannot be found.
      */
-    void Unsubscribe(const std::string& subscriber);
+    void Unsubscribe(const std::string &subscriber);
 
 
     /**
@@ -113,7 +110,7 @@ public:
      *          and the subscription filter mask.
      *          D-Bus data type: (a(su))
      */
-    GVariant* List();
+    GVariant *List();
 
 
     /**
@@ -125,14 +122,14 @@ public:
      * @return  Returns a std::vector<std::string> of all subscribers who
      *          have subscribed to this change type
      */
-    std::vector<std::string> GetSubscribersList(const NetCfgChangeEvent& ev) const
+    std::vector<std::string> GetSubscribersList(const NetCfgChangeEvent &ev) const
     {
         // Loop through all subscribers and identify who wants this
         // notification.
         std::vector<std::string> targets;
-        for (const auto& s : subscriptions)
+        for (const auto &s : subscriptions)
         {
-            if ((uint16_t) ev.type & s.second)
+            if ((uint16_t)ev.type & s.second)
             {
                 targets.push_back(s.first);
             }
@@ -141,6 +138,6 @@ public:
     }
 
 
-private:
+  private:
     NetCfgNotifSubscriptions subscriptions;
 };

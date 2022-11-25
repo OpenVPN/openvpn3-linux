@@ -41,7 +41,7 @@ std::string arghelper_config_paths()
     OpenVPN3ConfigurationProxy confmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration);
 
     std::stringstream res;
-    for (auto& cfg : confmgr.FetchAvailableConfigs())
+    for (auto &cfg : confmgr.FetchAvailableConfigs())
     {
         if (cfg.empty())
         {
@@ -66,14 +66,14 @@ std::string arghelper_config_names()
     OpenVPN3ConfigurationProxy confmgr(conn, OpenVPN3DBus_rootp_configuration);
 
     std::vector<std::string> cfgnames;
-    for (const auto& cfgp : confmgr.FetchAvailableConfigs())
+    for (const auto &cfgp : confmgr.FetchAvailableConfigs())
     {
         OpenVPN3ConfigurationProxy cfg(conn, cfgp);
         std::string cfgname = cfg.GetStringProperty("name");
 
         // Filter out duplicates
         bool found = false;
-        for (const auto& chk : cfgnames)
+        for (const auto &chk : cfgnames)
         {
             if (chk == cfgname)
             {
@@ -89,7 +89,7 @@ std::string arghelper_config_names()
 
     // Generate the final string which will be returned
     std::stringstream res;
-    for (const auto& n : cfgnames)
+    for (const auto &n : cfgnames)
     {
         if (n.empty())
         {
@@ -111,7 +111,7 @@ std::string arghelper_session_paths()
     OpenVPN3SessionMgrProxy sessmgr(G_BUS_TYPE_SYSTEM);
 
     std::stringstream res;
-    for (auto& session : sessmgr.FetchAvailableSessionPaths())
+    for (auto &session : sessmgr.FetchAvailableSessionPaths())
     {
         if (session.empty())
         {
@@ -128,7 +128,7 @@ std::string arghelper_managed_interfaces()
     OpenVPN3SessionMgrProxy sessmgr(G_BUS_TYPE_SYSTEM);
 
     std::stringstream res;
-    for (const auto& dev : sessmgr.FetchManagedInterfaces())
+    for (const auto &dev : sessmgr.FetchManagedInterfaces())
     {
         if (dev.empty())
         {
@@ -153,14 +153,14 @@ std::string arghelper_config_names_sessions()
     OpenVPN3SessionMgrProxy sessmgr(conn);
 
     std::vector<std::string> cfgnames;
-    for (const auto& sesp : sessmgr.FetchAvailableSessionPaths())
+    for (const auto &sesp : sessmgr.FetchAvailableSessionPaths())
     {
         OpenVPN3SessionProxy sess(conn, sesp);
         std::string cfgname = sess.GetStringProperty("config_name");
 
         // Filter out duplicates
         bool found = false;
-        for (const auto& chk : cfgnames)
+        for (const auto &chk : cfgnames)
         {
             if (chk == cfgname)
             {
@@ -176,7 +176,7 @@ std::string arghelper_config_names_sessions()
 
     // Generate the final string which will be returned
     std::stringstream res;
-    for (const auto& n : cfgnames)
+    for (const auto &n : cfgnames)
     {
         if (n.empty())
         {
@@ -196,7 +196,7 @@ std::string arghelper_config_names_sessions()
 std::string arghelper_unset_overrides()
 {
     std::stringstream out;
-    for (const ValidOverride & vo: configProfileOverrides)
+    for (const ValidOverride &vo : configProfileOverrides)
     {
         out << vo.key << " ";
     }
@@ -259,8 +259,8 @@ std::string arghelper_log_levels()
  * @throws  Throws CommandException if no or more than one configuration
  *          paths were found.
  */
-std::string retrieve_config_path(const std::string& cmd,
-                                 const std::string& config_name)
+std::string retrieve_config_path(const std::string &cmd,
+                                 const std::string &config_name)
 {
     OpenVPN3ConfigurationProxy cfgmgr(G_BUS_TYPE_SYSTEM,
                                       OpenVPN3DBus_rootp_configuration);

@@ -39,7 +39,7 @@ int main(int argc, char **argv)
                   OVPN3CLI_PROGDESCR);
 
     // Register commands
-    for (const auto& cmd : OVPN3CLI_COMMANDS_LIST)
+    for (const auto &cmd : OVPN3CLI_COMMANDS_LIST)
     {
         cmds.RegisterCommand(cmd());
     }
@@ -49,17 +49,18 @@ int main(int argc, char **argv)
     {
         return cmds.ProcessCommandLine(argc, argv);
     }
-    catch (const DBusProxyAccessDeniedException& e)
+    catch (const DBusProxyAccessDeniedException &e)
     {
-        std::cerr << "** ERROR **  " <<  e.what() << std::endl;
+        std::cerr << "** ERROR **  " << e.what() << std::endl;
 
         if (std::getenv("OPENVPN_DEBUG") != nullptr)
         {
-            std::cerr << "DEBUG: " << std::endl << e.getDebug() << std::endl;
+            std::cerr << "DEBUG: " << std::endl
+                      << e.getDebug() << std::endl;
         }
         return 7;
     }
-    catch (CommandException& e)
+    catch (CommandException &e)
     {
         if (e.gotErrorMessage())
         {
@@ -67,7 +68,7 @@ int main(int argc, char **argv)
         }
         return 8;
     }
-    catch (std::exception& e)
+    catch (std::exception &e)
     {
         std::cerr << "** ERROR ** " << e.what() << std::endl;
         return 9;

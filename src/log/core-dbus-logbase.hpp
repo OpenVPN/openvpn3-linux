@@ -35,6 +35,7 @@
 #include "dbus/core.hpp"
 #include "log/dbus-log.hpp"
 
+
 namespace openvpn {
 
 /**
@@ -49,7 +50,7 @@ namespace openvpn {
 class CoreDBusLogBase : public LogBase,
                         public LogSender
 {
-public:
+  public:
     typedef RCPtr<CoreDBusLogBase> Ptr;
 
     /**
@@ -62,25 +63,25 @@ public:
      * @param logwr     LogWriter object to handle local logging
      */
     CoreDBusLogBase(GDBusConnection *dbuscon,
-                    std::string interface, LogGroup lgrp,
+                    std::string interface,
+                    LogGroup lgrp,
                     LogWriter *logwr)
-        : LogSender(dbuscon, lgrp,
-                    interface,
-                    OpenVPN3DBus_rootp_netcfg, logwr),
+        : LogSender(dbuscon, lgrp, interface, OpenVPN3DBus_rootp_netcfg, logwr),
           log_context(this)
     {
         SetLogLevel(6);
         Debug("OpenVPN 3 Core library logging initialized");
     }
 
-    virtual void log(const std::string& str) override
+
+    virtual void log(const std::string &str) override
     {
         std::string l(str);
-        l.erase(l.find_last_not_of(" \n")+1); // rtrim
+        l.erase(l.find_last_not_of(" \n") + 1); // rtrim
         Debug("[Core] " + l);
     }
 
-private:
+  private:
     Log::Context log_context;
 };
 } // namespace openvpn

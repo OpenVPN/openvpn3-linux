@@ -46,12 +46,12 @@ using namespace openvpn;
 //  LoggerProxy class implementation
 //
 LoggerProxy::LoggerProxy(GDBusConnection *dbc,
-                         const std::string& creat,
+                         const std::string &creat,
                          std::function<void()> remove_cb,
-                         const std::string& obj_path,
-                         const std::string& target,
-                         const std::string& src_path,
-                         const std::string& src_interf,
+                         const std::string &obj_path,
+                         const std::string &target,
+                         const std::string &src_path,
+                         const std::string &src_interf,
                          const unsigned int loglvl)
     : DBusObject(obj_path),
       DBusConnectionCreds(dbc),
@@ -61,20 +61,20 @@ LoggerProxy::LoggerProxy(GDBusConnection *dbc,
       log_target(target), log_level(loglvl), session_path(src_path)
 {
     props.AddBinding(new PropertyType<unsigned int>(
-            this, "log_level", "readwrite", true, log_level));
+        this, "log_level", "readwrite", true, log_level));
     props.AddBinding(new PropertyType<std::string>(
-            this, "target", "read", true, log_target));
+        this, "target", "read", true, log_target));
     props.AddBinding(new PropertyType<std::string>(
-            this, "session_path", "read", true, session_path));
+        this, "session_path", "read", true, session_path));
 
     std::stringstream introspection_xml;
     introspection_xml << "<node name='" << obj_path << "'>"
-            << "    <interface name='" << OpenVPN3DBus_interf_log << "'>"
-            << "        <method name='Remove'/>"
-            << GetLogIntrospection()
-            << props.GetIntrospectionXML()
-            << "    </interface>"
-            << "</node>";
+                      << "    <interface name='" << OpenVPN3DBus_interf_log << "'>"
+                      << "        <method name='Remove'/>"
+                      << GetLogIntrospection()
+                      << props.GetIntrospectionXML()
+                      << "    </interface>"
+                      << "</node>";
 
     ParseIntrospectionXML(introspection_xml);
 
@@ -123,13 +123,14 @@ void LoggerProxy::callback_method_call(GDBusConnection *conn,
             return;
         }
     }
-    catch (DBusCredentialsException& excp)
+    catch (DBusCredentialsException &excp)
     {
         excp.SetDBusError(invoc);
     }
 }
 
-GVariant* LoggerProxy::callback_get_property(GDBusConnection *conn,
+
+GVariant *LoggerProxy::callback_get_property(GDBusConnection *conn,
                                              const std::string sender,
                                              const std::string obj_path,
                                              const std::string intf_name,
@@ -145,7 +146,7 @@ GVariant* LoggerProxy::callback_get_property(GDBusConnection *conn,
             return props.GetValue(property_name);
         }
     }
-    catch (DBusCredentialsException& excp)
+    catch (DBusCredentialsException &excp)
     {
         excp.SetDBusError(error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED);
     }
@@ -154,7 +155,7 @@ GVariant* LoggerProxy::callback_get_property(GDBusConnection *conn,
 }
 
 
-GVariantBuilder* LoggerProxy::callback_set_property(GDBusConnection *conn,
+GVariantBuilder *LoggerProxy::callback_set_property(GDBusConnection *conn,
                                                     const std::string sender,
                                                     const std::string obj_path,
                                                     const std::string intf_name,
@@ -166,7 +167,7 @@ GVariantBuilder* LoggerProxy::callback_set_property(GDBusConnection *conn,
     {
         check_access(sender);
     }
-    catch (DBusCredentialsException& excp)
+    catch (DBusCredentialsException &excp)
     {
         excp.SetDBusError(error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED);
     }
@@ -174,16 +175,16 @@ GVariantBuilder* LoggerProxy::callback_set_property(GDBusConnection *conn,
 }
 
 
-void LoggerProxy::check_access(const std::string& sender) const
+void LoggerProxy::check_access(const std::string &sender) const
 {
     // Only allow the creator of this proxy (typically the session manager)
     // and the root user access
     if ((sender != creator) && 0 == GetUID(sender))
     {
-        throw DBusCredentialsException(sender, "net.openvpn.v3.log.acl",
-                                    "Access Denied,  invalid caller.");
+        throw DBusCredentialsException(sender, "net.openvpn.v3.log.acl", "Access Denied,  invalid caller.");
     }
 }
+
 
 
 //
@@ -193,8 +194,8 @@ LogServiceManager::LogServiceManager(GDBusConnection *dbcon,
                                      const std::string objpath,
                                      LogWriter *logwr,
                                      const unsigned int log_level)
-        : DBusObject(objpath), DBusConnectionCreds(dbcon),
-          dbuscon(dbcon), logwr(logwr), log_level(log_level)
+    : DBusObject(objpath), DBusConnectionCreds(dbcon),
+      dbuscon(dbcon), logwr(logwr), log_level(log_level)
 {
     // Restrict extended access in this log service from these
     // well-known bus names primarily.
@@ -209,35 +210,35 @@ LogServiceManager::LogServiceManager(GDBusConnection *dbcon,
 
     std::stringstream introspection_xml;
     introspection_xml << "<node name='" << objpath << "'>"
-    << "    <interface name='" << OpenVPN3DBus_interf_log << "'>"
-    << "        <method name='Attach'>"
-    << "            <arg type='s' name='interface' direction='in'/>"
-    << "        </method>"
-    << "        <method name='AssignSession'>"
-    << "            <arg type='o' name='session_path' direction='in'/>"
-    << "            <arg type='s' name='interface' direction='in'/>"
-    << "        </method>"
-    << "        <method name='Detach'>"
-    << "            <arg type='s' name='interface' direction='in'/>"
-    << "        </method>"
-    << "        <method name='GetSubscriberList'>"
-    << "            <arg type='a(ssss)' name='subscribers' direction='out'/>"
-    << "        </method>"
-    << "        <method name='ProxyLogEvents'>"
-    << "            <arg type='s' name='target_address' direction='in'/>"
-    << "            <arg type='o' name='session_path' direction='in'/>"
-    << "            <arg type='o' name='proxy_path' direction='out'/>"
-    << "        </method>"
-    << "        <property type='s' name='version' access='read'/>"
-    << "        <property type='s' name='config_file' access='read'/>"
-    << "        <property name='log_method' type='s' access='read'/>"
-    << "        <property name='log_level' type='u' access='readwrite'/>"
-    << "        <property name='log_dbus_details' type='b' access='readwrite'/>"
-    << "        <property name='log_prefix_logtag' type='b' access='readwrite'/>"
-    << "        <property name='timestamp' type='b' access='readwrite'/>"
-    << "        <property name='num_attached' type='u' access='read'/>"
-    << "    </interface>"
-    << "</node>";
+                      << "    <interface name='" << OpenVPN3DBus_interf_log << "'>"
+                      << "        <method name='Attach'>"
+                      << "            <arg type='s' name='interface' direction='in'/>"
+                      << "        </method>"
+                      << "        <method name='AssignSession'>"
+                      << "            <arg type='o' name='session_path' direction='in'/>"
+                      << "            <arg type='s' name='interface' direction='in'/>"
+                      << "        </method>"
+                      << "        <method name='Detach'>"
+                      << "            <arg type='s' name='interface' direction='in'/>"
+                      << "        </method>"
+                      << "        <method name='GetSubscriberList'>"
+                      << "            <arg type='a(ssss)' name='subscribers' direction='out'/>"
+                      << "        </method>"
+                      << "        <method name='ProxyLogEvents'>"
+                      << "            <arg type='s' name='target_address' direction='in'/>"
+                      << "            <arg type='o' name='session_path' direction='in'/>"
+                      << "            <arg type='o' name='proxy_path' direction='out'/>"
+                      << "        </method>"
+                      << "        <property type='s' name='version' access='read'/>"
+                      << "        <property type='s' name='config_file' access='read'/>"
+                      << "        <property name='log_method' type='s' access='read'/>"
+                      << "        <property name='log_level' type='u' access='readwrite'/>"
+                      << "        <property name='log_dbus_details' type='b' access='readwrite'/>"
+                      << "        <property name='log_prefix_logtag' type='b' access='readwrite'/>"
+                      << "        <property name='timestamp' type='b' access='readwrite'/>"
+                      << "        <property name='num_attached' type='u' access='read'/>"
+                      << "    </interface>"
+                      << "</node>";
     ParseIntrospectionXML(introspection_xml);
 }
 
@@ -251,12 +252,12 @@ void LogServiceManager::SetConfigFile(LogServiceConfigFile::Ptr cfgf)
     }
     configuration = cfgf;
 
-    for (const auto& opt : configuration->GetOptions())
+    for (const auto &opt : configuration->GetOptions())
     {
         if ("log-level" == opt)
         {
             log_level = configuration->GetIntValue(opt);
-            for (const auto& l : loggers)
+            for (const auto &l : loggers)
             {
                 l.second->SetLogLevel(log_level);
             }
@@ -322,8 +323,7 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
                 l << "Duplicate: " << *tag << "  " << tag->tag;
 
                 logwr->AddMetaCopy(meta);
-                logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN,
-                                      l.str()));
+                logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN, l.str()));
 
                 GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.log",
                                                               "Already registered");
@@ -332,15 +332,13 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
                 return;
             }
 
-            loggers[tag->hash].reset(new Logger(dbuscon, logwr, tag,
-                                               sender, interface, log_level));
+            loggers[tag->hash].reset(new Logger(dbuscon, logwr, tag, sender, interface, log_level));
 
             std::stringstream l;
             l << "Attached: " << *tag << "  " << tag->tag;
 
             logwr->AddMetaCopy(meta);
-            logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2,
-                                  l.str()));
+            logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2, l.str()));
             IdleCheck_RefInc();
 
             g_dbus_method_invocation_return_value(invoc, NULL);
@@ -360,9 +358,9 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
             {
                 LogTag::Ptr tag = LogTag::create(sender, interface);
                 logger_session[sesspath] = tag->hash;
-                logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::DEBUG,
-                                      "Assigned session " + sesspath
-                                      + " to " + tag->str()));
+                logwr->Write(LogEvent(LogGroup::LOGGER,
+                                      LogCategory::DEBUG,
+                                      "Assigned session " + sesspath + " to " + tag->str()));
                 g_dbus_method_invocation_return_value(invoc, NULL);
                 return;
             }
@@ -376,9 +374,7 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
                 g_dbus_method_invocation_return_gerror(invoc, err);
                 g_error_free(err);
                 return;
-
             }
-
         }
         else if ("Detach" == meth_name)
         {
@@ -391,12 +387,11 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
                 l << "Not found: " << tag << " " << tag->tag;
 
                 logwr->AddMetaCopy(meta);
-                logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN,
-                                      l.str()));
+                logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN, l.str()));
 
                 GError *err = g_dbus_error_new_for_dbus_error(
-                                "net.openvpn.v3.error.log",
-                                "Log registration not found");
+                    "net.openvpn.v3.error.log",
+                    "Log registration not found");
                 g_dbus_method_invocation_return_gerror(invoc, err);
                 g_error_free(err);
                 return;
@@ -408,16 +403,15 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
             // Do a reverse lookup in logger_session to retrieve
             // the key to delete from the logger_sesion index
             auto it = std::find_if(logger_session.begin(),
-                                  logger_session.end(),
-                                  [tag](const auto& e)
-                                  {
-                                      return e.second == tag->hash;
-                                  });
+                                   logger_session.end(),
+                                   [tag](const auto &e)
+                                   {
+                return e.second == tag->hash;
+            });
             if (logger_session.end() != it)
             {
                 logger_session.erase(it->first);
             }
-
 
             // Unsubscribe from signals from a D-Bus service/client
             loggers.erase(tag->hash);
@@ -425,8 +419,7 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
             l << "Detached: " << *tag << "  " << tag->tag;
 
             logwr->AddMetaCopy(meta);
-            logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2,
-                                  l.str()));
+            logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2, l.str()));
             IdleCheck_RefDec();
             g_dbus_method_invocation_return_value(invoc, NULL);
         }
@@ -437,22 +430,22 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
             if (nullptr == bld)
             {
                 GError *err = g_dbus_error_new_for_dbus_error(
-                                "net.openvpn.v3.error.log",
-                                "Could not generate subscribers list");
+                    "net.openvpn.v3.error.log",
+                    "Could not generate subscribers list");
                 g_dbus_method_invocation_return_gerror(invoc, err);
                 g_error_free(err);
                 return;
             }
 
-            for (const auto& l : loggers)
+            for (const auto &l : loggers)
             {
                 Logger::Ptr sub = l.second;
-                g_variant_builder_add(bld, "(ssss)",
+                g_variant_builder_add(bld,
+                                      "(ssss)",
                                       std::to_string(l.first).c_str(),
                                       sub->GetBusName().c_str(),
                                       sub->GetInterface().c_str(),
                                       sub->GetObjectPath().c_str());
-
             }
             g_dbus_method_invocation_return_value(invoc,
                                                   GLibUtils::wrapInTuple(bld));
@@ -465,9 +458,9 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
                 std::string p = add_log_proxy(params, sender);
                 g_dbus_method_invocation_return_value(invoc,
                                                       g_variant_new("(o)",
-                                                              p.c_str()));
+                                                                    p.c_str()));
             }
-            catch (DBusException& err)
+            catch (DBusException &err)
             {
                 err.SetDBusError(invoc, "net.openvpn.v3.log.proxy.error");
             }
@@ -483,18 +476,17 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
             return;
         }
     }
-    catch (DBusCredentialsException& excp)
+    catch (DBusCredentialsException &excp)
     {
         logwr->AddMetaCopy(meta);
-        logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::CRIT,
-                              excp.what()));
+        logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::CRIT, excp.what()));
         excp.SetDBusError(invoc);
         return;
     }
 }
 
 
-GVariant* LogServiceManager::callback_get_property(GDBusConnection *conn,
+GVariant *LogServiceManager::callback_get_property(GDBusConnection *conn,
                                                    const std::string sender,
                                                    const std::string obj_path,
                                                    const std::string intf_name,
@@ -554,16 +546,14 @@ GVariant* LogServiceManager::callback_get_property(GDBusConnection *conn,
     }
     catch (...)
     {
-        g_set_error(error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                    "Unknown error");
+        g_set_error(error, G_IO_ERROR, G_IO_ERROR_FAILED, "Unknown error");
     }
     g_set_error(error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, "Unknown property");
     return NULL;
 }
 
 
-
-GVariantBuilder* LogServiceManager::callback_set_property(GDBusConnection *conn,
+GVariantBuilder *LogServiceManager::callback_set_property(GDBusConnection *conn,
                                                           const std::string sender,
                                                           const std::string obj_path,
                                                           const std::string intf_name,
@@ -589,32 +579,34 @@ GVariantBuilder* LogServiceManager::callback_set_property(GDBusConnection *conn,
             {
                 throw DBusPropertyException(G_IO_ERROR,
                                             G_IO_ERROR_INVALID_DATA,
-                                            obj_path, intf_name,
+                                            obj_path,
+                                            intf_name,
                                             property_name,
                                             "Invalid log level");
             }
             log_level = new_log_level;
-            for (const auto& l : loggers)
+            for (const auto &l : loggers)
             {
                 l.second->SetLogLevel(log_level);
             }
             std::stringstream l;
             l << "Log level changed to " << std::to_string(log_level);
             logwr->AddMetaCopy(meta);
-            logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1,
-                                  l.str()));
+            logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1, l.str()));
             ret = build_set_property_response(property_name,
-                                               (guint32) log_level);
+                                              (guint32)log_level);
         }
         else if ("log_dbus_details" == property_name)
         {
             // First check if this will cause a change
-            bool newval= g_variant_get_boolean(value);
+            bool newval = g_variant_get_boolean(value);
             if (logwr->LogMetaEnabled() == newval)
             {
                 // Nothing changes ... make some noise about it
-                throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                            obj_path, intf_name,
+                throw DBusPropertyException(G_IO_ERROR,
+                                            G_IO_ERROR_FAILED,
+                                            obj_path,
+                                            intf_name,
                                             property_name,
                                             "New value the same as current value");
             }
@@ -625,10 +617,9 @@ GVariantBuilder* LogServiceManager::callback_set_property(GDBusConnection *conn,
             // Log the change
             std::stringstream l;
             l << "D-Bus details logging has changed to "
-              << (newval? "enabled" : "disabled");
+              << (newval ? "enabled" : "disabled");
             logwr->AddMetaCopy(meta);
-            logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1,
-                                  l.str()));
+            logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1, l.str()));
 
             ret = build_set_property_response(property_name, newval);
         }
@@ -639,8 +630,10 @@ GVariantBuilder* LogServiceManager::callback_set_property(GDBusConnection *conn,
             if (logwr->MessagePrependEnabled() == newval)
             {
                 // Nothing changes ... make some noise about it
-                throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                            obj_path, intf_name,
+                throw DBusPropertyException(G_IO_ERROR,
+                                            G_IO_ERROR_FAILED,
+                                            obj_path,
+                                            intf_name,
                                             property_name,
                                             "New value the same as current value");
             }
@@ -651,10 +644,9 @@ GVariantBuilder* LogServiceManager::callback_set_property(GDBusConnection *conn,
             // Log the change
             std::stringstream l;
             l << "Log tag message prefix setting has changed to "
-              << (newval? "enabled" : "disabled");
+              << (newval ? "enabled" : "disabled");
             logwr->AddMetaCopy(meta);
-            logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1,
-                                  l.str()));
+            logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1, l.str()));
 
             ret = build_set_property_response(property_name, newval);
         }
@@ -665,8 +657,10 @@ GVariantBuilder* LogServiceManager::callback_set_property(GDBusConnection *conn,
             if (logwr->TimestampEnabled() == newtstamp)
             {
                 // Nothing changes ... make some noise about it
-                throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                            obj_path, intf_name,
+                throw DBusPropertyException(G_IO_ERROR,
+                                            G_IO_ERROR_FAILED,
+                                            obj_path,
+                                            intf_name,
                                             property_name,
                                             "New value the same as current value");
             }
@@ -687,25 +681,27 @@ GVariantBuilder* LogServiceManager::callback_set_property(GDBusConnection *conn,
 
             logwr->AddMetaCopy(meta);
             logwr->Write(LogEvent(
-                            LogGroup::LOGGER,
-                            (newtstamp == timestamp
-                             ? LogCategory::VERB1 : LogCategory::ERROR),
-                            l.str()));
+                LogGroup::LOGGER,
+                (newtstamp == timestamp
+                     ? LogCategory::VERB1
+                     : LogCategory::ERROR),
+                l.str()));
             if (newtstamp != timestamp)
             {
                 throw DBusPropertyException(G_IO_ERROR,
                                             G_IO_ERROR_READ_ONLY,
-                                            obj_path, intf_name,
+                                            obj_path,
+                                            intf_name,
                                             property_name,
                                             "Log timestamp is read-only");
             }
             ret = build_set_property_response(property_name,
-                                               timestamp);
+                                              timestamp);
         }
 
         if (configuration)
         {
-            configuration->SetValue("log-level", (int) log_level);
+            configuration->SetValue("log-level", (int)log_level);
             if (logwr)
             {
                 configuration->SetValue("service-log-dbus-details",
@@ -719,18 +715,24 @@ GVariantBuilder* LogServiceManager::callback_set_property(GDBusConnection *conn,
         }
         return ret;
     }
-    catch (DBusPropertyException&)
+    catch (DBusPropertyException &)
     {
         throw;
     }
-    catch (DBusException& excp)
+    catch (DBusException &excp)
     {
-        throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                    obj_path, intf_name, property_name,
+        throw DBusPropertyException(G_IO_ERROR,
+                                    G_IO_ERROR_FAILED,
+                                    obj_path,
+                                    intf_name,
+                                    property_name,
                                     excp.what());
     }
-    throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                obj_path, intf_name, property_name,
+    throw DBusPropertyException(G_IO_ERROR,
+                                G_IO_ERROR_FAILED,
+                                obj_path,
+                                intf_name,
+                                property_name,
                                 "Invalid property");
 }
 
@@ -743,7 +745,7 @@ void LogServiceManager::validate_sender(std::string sender, std::string allow)
     auto chk = allow_list;
     chk.push_back(allow);
 
-    for (const auto& i : chk)
+    for (const auto &i : chk)
     {
         // Check if the senders unique bus id matches any of the ones
         // we allow
@@ -752,7 +754,7 @@ void LogServiceManager::validate_sender(std::string sender, std::string allow)
         {
             uniqid = GetUniqueBusID(i);
         }
-        catch (DBusException& excp)
+        catch (DBusException &excp)
         {
             // Ignore exceptions, most likely it cannot find the
             // well-known bus name it looks for.  So we use the
@@ -774,7 +776,7 @@ void LogServiceManager::validate_sender(std::string sender, std::string allow)
                                        "net.openvpn.v3.error.acl.denied",
                                        "Access denied");
     }
-    catch (DBusException&)
+    catch (DBusException &)
     {
         throw DBusCredentialsException(sender,
                                        "net.openvpn.v3.error.acl.denied",
@@ -783,7 +785,7 @@ void LogServiceManager::validate_sender(std::string sender, std::string allow)
 }
 
 
-std::string LogServiceManager::check_busname_vpn_client(const std::string& chk_busn) const
+std::string LogServiceManager::check_busname_vpn_client(const std::string &chk_busn) const
 {
     // All VPN backend client processes has a well-known D-Bus name which
     // starts with:
@@ -802,11 +804,11 @@ std::string LogServiceManager::check_busname_vpn_client(const std::string& chk_b
     {
         pid_t pid = DBusConnectionCreds::GetPID(chk_busn);
         std::string well_known_name = OpenVPN3DBus_name_backends_be
-                                    + std::to_string(pid);
+                                      + std::to_string(pid);
         std::string verify_name = DBusConnectionCreds::GetUniqueBusID(well_known_name);
         return (verify_name == chk_busn ? well_known_name : "");
     }
-    catch (const DBusException&)
+    catch (const DBusException &)
     {
         // Well-known bus name not found
         return "";
@@ -814,7 +816,7 @@ std::string LogServiceManager::check_busname_vpn_client(const std::string& chk_b
 }
 
 
-std::string LogServiceManager::add_log_proxy(GVariant *params, const std::string& sender)
+std::string LogServiceManager::add_log_proxy(GVariant *params, const std::string &sender)
 {
     GLibUtils::checkParams(__func__, params, "(so)", 2);
     const std::string target = GLibUtils::ExtractValue<std::string>(params, 0);
@@ -826,27 +828,27 @@ std::string LogServiceManager::add_log_proxy(GVariant *params, const std::string
     {
         log_tag = logger_session.at(session_path);
     }
-    catch (const std::out_of_range&)
+    catch (const std::out_of_range &)
     {
-        std::string err = "No VPN session exists with '" + session_path +"'";
-        logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN,
-                     "ProxyLogEvents(" + target + "): " + err));
+        std::string err = "No VPN session exists with '" + session_path + "'";
+        logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN, "ProxyLogEvents(" + target + "): " + err));
         THROW_DBUSEXCEPTION("LogServiceManager", err);
     }
 
-
     std::string path = generate_path_uuid(OpenVPN3DBus_rootp_log + "/proxy", 'l');
 
-
-    auto rm_callback = [self=(LogServiceManager*) this, target]()
-                    {
-                        self->remove_log_proxy(target);
-                    };
-    LoggerProxy* logprx = new LoggerProxy(GetConnection(),
-                                         sender, rm_callback,
-                                         path, target,
-                                         session_path, OpenVPN3DBus_interf_backends,
-                                         log_level);
+    auto rm_callback = [self = (LogServiceManager *)this, target]()
+    {
+        self->remove_log_proxy(target);
+    };
+    LoggerProxy *logprx = new LoggerProxy(GetConnection(),
+                                          sender,
+                                          rm_callback,
+                                          path,
+                                          target,
+                                          session_path,
+                                          OpenVPN3DBus_interf_backends,
+                                          log_level);
 
     IdleCheck_RefInc();
     logproxies[target] = logprx;
@@ -854,13 +856,16 @@ std::string LogServiceManager::add_log_proxy(GVariant *params, const std::string
     // Enable log forwarding in main Logger object for client session
     loggers[log_tag]->AddLogForward(logprx, target);
 
-    logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1,
+    logwr->Write(LogEvent(LogGroup::LOGGER,
+                          LogCategory::VERB1,
                           "Added new log proxy by " + sender
-                          + " - session: " + session_path
-                          + ", target: " + target + ", tag: " + std::to_string(log_tag)));
+                              + " - session: " + session_path
+                              + ", target: " + target
+                              + ", tag: " + std::to_string(log_tag)));
 
     return logproxies[target]->GetObjectPath();
 }
+
 
 void LogServiceManager::remove_log_proxy(const std::string target)
 {
@@ -888,35 +893,38 @@ void LogServiceManager::remove_log_proxy(const std::string target)
         log_tag = logger_session.at(session_path);
         loggers.at(log_tag)->RemoveLogForward(target);
 #if OPENVPN_DEBUG
-        logwr->Write(LogGroup::LOGGER, LogCategory::DEBUG,
+        logwr->Write(LogGroup::LOGGER,
+                     LogCategory::DEBUG,
                      std::string("remove_log_proxy: ")
-                     + "target=" + target + ", "
-                     + "session_path=" + session_path + ", "
-                     + "log_tag=" + std::to_string(log_tag));
+                         + "target=" + target + ", "
+                         + "session_path=" + session_path + ", "
+                         + "log_tag=" + std::to_string(log_tag));
 #endif
-
     }
-    catch (const std::out_of_range&)
+    catch (const std::out_of_range &)
     {
         // If the log_tag was not found, the VPN client backend process
         // has already detached itself from the lgo service.
         if (log_tag > 0)
         {
-            logwr->Write(LogGroup::LOGGER, LogCategory::WARN,
+            logwr->Write(LogGroup::LOGGER,
+                         LogCategory::WARN,
                          std::string("Could not find session/logger for RemoveLogForward() call: ")
-                         + "target=" + target + ", "
-                         + "session_path=" + session_path + ", "
-                         + "log_tag=" + std::to_string(log_tag));
+                             + "target=" + target + ", "
+                             + "session_path=" + session_path + ", "
+                             + "log_tag=" + std::to_string(log_tag));
         }
     }
 
     // With the log forwarding removed in the Logger object, we can
     // erase the LoggerProxy object.
     logproxies.erase(target);
-    logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB1,
+    logwr->Write(LogEvent(LogGroup::LOGGER,
+                          LogCategory::VERB1,
                           "Removed log proxy: " + target));
     IdleCheck_RefDec();
 }
+
 
 
 //
@@ -926,9 +934,8 @@ void LogServiceManager::remove_log_proxy(const std::string target)
 LogService::LogService(GDBusConnection *dbuscon,
                        LogWriter *logwr,
                        unsigned int log_level)
-        : DBus(dbuscon, OpenVPN3DBus_name_log, OpenVPN3DBus_rootp_log,
-                OpenVPN3DBus_interf_log),
-          logwr(logwr), log_level(log_level)
+    : DBus(dbuscon, OpenVPN3DBus_name_log, OpenVPN3DBus_rootp_log, OpenVPN3DBus_interf_log),
+      logwr(logwr), log_level(log_level)
 {
 }
 
@@ -946,7 +953,8 @@ void LogService::callback_bus_acquired()
     // real work.
     logmgr.reset(new LogServiceManager(GetConnection(),
                                        OpenVPN3DBus_rootp_log,
-                                       logwr, log_level));
+                                       logwr,
+                                       log_level));
     if (configuration)
     {
         logmgr->SetConfigFile(configuration);
@@ -970,5 +978,5 @@ void LogService::callback_name_lost(GDBusConnection *conn, std::string busname)
 {
     THROW_DBUSEXCEPTION("LogServiceManager",
                         "openvpn3-service-logger could not register '"
-                        + busname + "'");
+                            + busname + "'");
 };

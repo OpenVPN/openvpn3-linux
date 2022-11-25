@@ -35,14 +35,14 @@
 
 namespace unittest {
 
-std::string test_empty(const StatusEvent& ev, const bool expect)
+std::string test_empty(const StatusEvent &ev, const bool expect)
 {
     bool r = ev.empty();
     if (expect != r)
     {
         return std::string("test_empty():  ")
-                + "ev.empty() = " + (r ? "true" : "false")
-                + " [expected: " + (expect ? "true" : "false") + "]";
+               + "ev.empty() = " + (r ? "true" : "false")
+               + " [expected: " + (expect ? "true" : "false") + "]";
     }
 
     r = (StatusMajor::UNSET == ev.major
@@ -51,12 +51,11 @@ std::string test_empty(const StatusEvent& ev, const bool expect)
     if (expect != r)
     {
         return std::string("test_empty() - Member check:  ")
-               + "(" + std::to_string((unsigned) ev.major) + ", "
-               + std::to_string((unsigned) ev.minor) + "', "
-               +  "message.size=" + std::to_string(ev.message.size()) + ") ..."
+               + "(" + std::to_string((unsigned)ev.major) + ", "
+               + std::to_string((unsigned)ev.minor) + "', "
+               + "message.size=" + std::to_string(ev.message.size()) + ") ..."
                + " is " + (r ? "EMPTY" : "NON-EMPTY")
-               + " [expected: " +  (expect ? "EMPTY" : "NON-EMPTY") + "]";
-
+               + " [expected: " + (expect ? "EMPTY" : "NON-EMPTY") + "]";
     }
     return "";
 };
@@ -89,8 +88,7 @@ TEST(StatusEvent, reset)
 
 TEST(StatusEvent, init_with_values_2)
 {
-    StatusEvent populated2(StatusMajor::PROCESS, StatusMinor::PROC_STOPPED,
-                           "Just testing");
+    StatusEvent populated2(StatusMajor::PROCESS, StatusMinor::PROC_STOPPED, "Just testing");
     std::string res = test_empty(populated2, false);
     ASSERT_TRUE(res.empty()) << res;
 }
@@ -98,12 +96,10 @@ TEST(StatusEvent, init_with_values_2)
 
 TEST(StatusEvent, reset_2)
 {
-    StatusEvent populated2(StatusMajor::PROCESS, StatusMinor::PROC_STOPPED,
-                           "Just testing");
+    StatusEvent populated2(StatusMajor::PROCESS, StatusMinor::PROC_STOPPED, "Just testing");
     populated2.reset();
     std::string res = test_empty(populated2, true);
     ASSERT_TRUE(res.empty()) << res;
-
 }
 
 
@@ -111,9 +107,10 @@ TEST(StatusEvent, parse_gvariant_invalid_data)
 {
     GVariant *data = nullptr;
     data = g_variant_new("(uuss)",
-                         (guint) StatusMajor::CONFIG,
-                         (guint) StatusMinor::CFG_OK,
-                         "Test status", "Invalid data");
+                         (guint)StatusMajor::CONFIG,
+                         (guint)StatusMinor::CFG_OK,
+                         "Test status",
+                         "Invalid data");
 
     ASSERT_THROW(StatusEvent parsed(data),
                  DBusException);
@@ -127,12 +124,9 @@ TEST(StatusEvent, parse_gvariant_invalid_data)
 TEST(StatusEvent, parse_gvariant_valid_dict)
 {
     GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
-    g_variant_builder_add (b, "{sv}", "major",
-                           g_variant_new_uint32((guint) StatusMajor::CONFIG));
-    g_variant_builder_add (b, "{sv}", "minor",
-                           g_variant_new_uint32((guint) StatusMinor::CFG_OK));
-    g_variant_builder_add (b, "{sv}", "status_message",
-                          g_variant_new_string("Test status"));
+    g_variant_builder_add(b, "{sv}", "major", g_variant_new_uint32((guint)StatusMajor::CONFIG));
+    g_variant_builder_add(b, "{sv}", "minor", g_variant_new_uint32((guint)StatusMinor::CFG_OK));
+    g_variant_builder_add(b, "{sv}", "status_message", g_variant_new_string("Test status"));
     GVariant *data = g_variant_builder_end(b);
     g_variant_builder_unref(b);
 
@@ -147,8 +141,8 @@ TEST(StatusEvent, parse_gvariant_valid_dict)
 TEST(StatusEvent, parse_gvariant_valid_tuple)
 {
     GVariant *data = g_variant_new("(uus)",
-                                   (guint) StatusMajor::CONFIG,
-                                   (guint) StatusMinor::CFG_REQUIRE_USER,
+                                   (guint)StatusMajor::CONFIG,
+                                   (guint)StatusMinor::CFG_REQUIRE_USER,
                                    "Parse testing again");
     StatusEvent parsed(data);
     ASSERT_EQ(parsed.major, StatusMajor::CONFIG);
@@ -161,8 +155,7 @@ TEST(StatusEvent, parse_gvariant_valid_tuple)
 
 TEST(StatusEvent, GetGVariantTuple)
 {
-    StatusEvent reverse(StatusMajor::CONNECTION, StatusMinor::CONN_INIT,
-                        "Yet another test");
+    StatusEvent reverse(StatusMajor::CONNECTION, StatusMinor::CONN_INIT, "Yet another test");
     GVariant *revparse = reverse.GetGVariantTuple();
     guint maj = 0;
     guint min = 0;
@@ -171,8 +164,8 @@ TEST(StatusEvent, GetGVariantTuple)
     std::string msg(msg_c);
     g_free(msg_c);
 
-    ASSERT_EQ((StatusMajor) maj, reverse.major);
-    ASSERT_EQ((StatusMinor) min, reverse.minor);
+    ASSERT_EQ((StatusMajor)maj, reverse.major);
+    ASSERT_EQ((StatusMinor)min, reverse.minor);
     ASSERT_EQ(msg, reverse.message);
 
     g_variant_unref(revparse);
@@ -181,8 +174,7 @@ TEST(StatusEvent, GetGVariantTuple)
 
 TEST(StatusEvent, GetVariantDict)
 {
-    StatusEvent dicttest(StatusMajor::SESSION, StatusMinor::SESS_NEW,
-                         "Moar testing is needed");
+    StatusEvent dicttest(StatusMajor::SESSION, StatusMinor::SESS_NEW, "Moar testing is needed");
     GVariant *revparse = dicttest.GetGVariantDict();
 
     // Reuse the parser in StatusEvent.  As that has already passed the
@@ -196,7 +188,7 @@ TEST(StatusEvent, GetVariantDict)
 }
 
 
-std::string test_compare(const StatusEvent& lhs, const StatusEvent& rhs, const bool expect)
+std::string test_compare(const StatusEvent &lhs, const StatusEvent &rhs, const bool expect)
 {
     bool r = (lhs.major == rhs.major
               && lhs.minor == rhs.minor
@@ -206,9 +198,9 @@ std::string test_compare(const StatusEvent& lhs, const StatusEvent& rhs, const b
         std::stringstream err;
         err << "StatusEvent compare check FAIL: "
             << "{" << lhs << "} == {" << rhs << "} returned "
-            << ( r ? "true": "false")
+            << (r ? "true" : "false")
             << " - expected: "
-            << (expect ? "true": "false");
+            << (expect ? "true" : "false");
         return err.str();
     }
 
@@ -220,9 +212,9 @@ std::string test_compare(const StatusEvent& lhs, const StatusEvent& rhs, const b
         std::stringstream err;
         err << "Negative StatusEvent compare check FAIL: "
             << "{" << lhs << "} == {" << rhs << "} returned "
-            << ( r ? "true": "false")
+            << (r ? "true" : "false")
             << " - expected: "
-            << (expect ? "true": "false");
+            << (expect ? "true" : "false");
         return err.str();
     }
     return "";
@@ -275,8 +267,7 @@ TEST(StatusEvent, compare_neq_1)
 TEST(StatusEvent, compare_neq_2)
 {
     StatusEvent ev(StatusMajor::SESSION, StatusMinor::PKCS11_DECRYPT, "var1");
-    StatusEvent chk(StatusMajor::SESSION, StatusMinor::SESS_BACKEND_COMPLETED,
-                    "var1");
+    StatusEvent chk(StatusMajor::SESSION, StatusMinor::SESS_BACKEND_COMPLETED, "var1");
     std::string res = test_compare(ev, chk, false);
     ASSERT_TRUE(res.empty()) << res;
 }
@@ -302,8 +293,7 @@ TEST(StatusEvent, operator_neq_1)
 TEST(StatusEvent, operator_neq_2)
 {
     StatusEvent ev(StatusMajor::SESSION, StatusMinor::PKCS11_DECRYPT, "var1");
-    StatusEvent chk(StatusMajor::SESSION, StatusMinor::SESS_BACKEND_COMPLETED,
-                    "var1");
+    StatusEvent chk(StatusMajor::SESSION, StatusMinor::SESS_BACKEND_COMPLETED, "var1");
     ASSERT_TRUE(ev != chk);
 }
 
@@ -318,8 +308,7 @@ TEST(StatusEvent, operator_neq_3)
 
 TEST(StatusEvent, stringstream)
 {
-    StatusEvent status(StatusMajor::CONFIG, StatusMinor::CONN_CONNECTING,
-                       "In progress");
+    StatusEvent status(StatusMajor::CONFIG, StatusMinor::CONN_CONNECTING, "In progress");
 #ifdef DEBUG_CORE_EVENTS
     status.show_numeric_status = false; // DEBUG_CORE_EVENTS enables this by default
 #endif
@@ -336,7 +325,7 @@ TEST(StatusEvent, stringstream)
 
 
     StatusEvent status2(StatusMajor::SESSION,
-                       StatusMinor::SESS_BACKEND_COMPLETED);
+                        StatusMinor::SESS_BACKEND_COMPLETED);
     std::stringstream chk2;
     status2.show_numeric_status = true;
     chk2 << status2;

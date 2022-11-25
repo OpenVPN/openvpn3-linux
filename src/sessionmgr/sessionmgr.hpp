@@ -29,9 +29,7 @@
  *         used to establish SessionObjects, one for each VPN tunnel started.
  */
 
-
-#ifndef OPENVPN3_DBUS_SESSIONMGR_HPP
-#define OPENVPN3_DBUS_SESSIONMGR_HPP
+#pragma once
 
 #include <cstring>
 #include <functional>
@@ -59,6 +57,7 @@
 
 using namespace openvpn;
 
+
 /**
  * Helper class to tackle signals sent by the session manager
  *
@@ -67,13 +66,14 @@ using namespace openvpn;
  */
 class SessionManagerSignals : public LogSender
 {
-public:
-    SessionManagerSignals(GDBusConnection *conn, std::string object_path,
-                          unsigned int log_level, LogWriter *logwr,
+  public:
+    SessionManagerSignals(GDBusConnection *conn,
+                          std::string object_path,
+                          unsigned int log_level,
+                          LogWriter *logwr,
                           bool signal_broadcast)
-            : LogSender(conn, LogGroup::SESSIONMGR,
-                        OpenVPN3DBus_interf_sessions, object_path, logwr),
-              signal_broadcast(signal_broadcast)
+        : LogSender(conn, LogGroup::SESSIONMGR, OpenVPN3DBus_interf_sessions, object_path, logwr),
+          signal_broadcast(signal_broadcast)
     {
         SetLogLevel(log_level);
         if (!signal_broadcast)
@@ -114,8 +114,9 @@ public:
      */
     void Debug(std::string msg)
     {
-            LogSender::Debug(msg);
+        LogSender::Debug(msg);
     }
+
 
     /**
      *  An extended debug log function, which adds D-Bus message details
@@ -128,13 +129,14 @@ public:
      */
     void Debug(std::string busname, std::string path, pid_t pid, std::string msg)
     {
-            std::stringstream debug;
-            debug << "pid=" << std::to_string(pid)
-                  << ", busname=" << busname
-                  << ", path=" << path
-                  << ", message=" << msg;
-            LogSender::Debug(debug.str());
+        std::stringstream debug;
+        debug << "pid=" << std::to_string(pid)
+              << ", busname=" << busname
+              << ", path=" << path
+              << ", message=" << msg;
+        LogSender::Debug(debug.str());
     }
+
 
     /**
      *  Sends a StatusChange signal with a text message
@@ -146,9 +148,10 @@ public:
      */
     void StatusChange(const StatusMajor major, const StatusMinor minor, std::string msg)
     {
-        GVariant *params = g_variant_new("(uus)", (guint) major, (guint) minor, msg.c_str());
+        GVariant *params = g_variant_new("(uus)", (guint)major, (guint)minor, msg.c_str());
         Send("StatusChange", params);
     }
+
 
     /**
      *  A simpler StatusChange signal sender, without a text message
@@ -158,11 +161,12 @@ public:
      */
     void StatusChange(const StatusMajor major, const StatusMinor minor)
     {
-        GVariant *params = g_variant_new("(uus)", (guint) major, (guint) minor, "");
+        GVariant *params = g_variant_new("(uus)", (guint)major, (guint)minor, "");
         Send("StatusChange", params);
     }
 
-private:
+
+  private:
     bool signal_broadcast = true;
 };
 
@@ -176,7 +180,7 @@ private:
 class SessionStatusChange : public DBusSignalSubscription,
                             public DBusSignalProducer
 {
-public:
+  public:
     /**
      *  Constructor preparing the proxy of StatusChange events
      *
@@ -194,15 +198,17 @@ public:
                         std::string bus_name,
                         std::string interface,
                         std::string session_path)
-        : DBusSignalSubscription(conn, bus_name, interface,
+        : DBusSignalSubscription(conn,
+                                 bus_name,
+                                 interface,
                                  OpenVPN3DBus_rootp_backends_session,
                                  "StatusChange"),
-          DBusSignalProducer(conn, "", OpenVPN3DBus_interf_sessions,
-                             session_path),
+          DBusSignalProducer(conn, "", OpenVPN3DBus_interf_sessions, session_path),
           backend_busname(bus_name),
           last_status()
     {
     }
+
 
     /**
      *  Callback function used by the D-Bus library whenever a signal we are
@@ -250,7 +256,7 @@ public:
         // If the last status received was CONNECTION:CONN_AUTH_FAILED,
         // preserve this status message
         if (!(StatusMajor::CONNECTION == last_status.major
-            && StatusMinor::CONN_AUTH_FAILED == last_status.minor))
+              && StatusMinor::CONN_AUTH_FAILED == last_status.minor))
         {
             last_status = s;
         }
@@ -265,11 +271,11 @@ public:
      *
      * @return  Returns a GVariant object containing the last signal sent
      */
-    GVariant * GetLastStatusChange()
+    GVariant *GetLastStatusChange()
     {
-        if( last_status.empty())
+        if (last_status.empty())
         {
-            return NULL;  // Nothing have been logged, nothing to report
+            return NULL; // Nothing have been logged, nothing to report
         }
         return last_status.GetGVariantTuple();
     }
@@ -285,7 +291,7 @@ public:
      */
     bool CompareStatus(GVariant *status_chk)
     {
-        if ( last_status.empty() )
+        if (last_status.empty())
         {
             // No status logged, so it is not possible to compare it.
             // Return false, as uncomparable statuses means we need to handle
@@ -297,32 +303,35 @@ public:
         return last_status == chk;
     }
 
-private:
+
+  private:
     std::string backend_busname;
     StatusEvent last_status;
 };
 
 
-enum class DCOstatus : unsigned short {
+
+enum class DCOstatus : unsigned short
+{
     UNCHANGED,
     MODIFIED,
     LOCKED
 };
 
 
+
 class SessionLogProxy : public LogServiceProxy
 {
-public:
+  public:
     using Ptr = std::shared_ptr<SessionLogProxy>;
 
-    SessionLogProxy(GDBusConnection* dbc,
-                    const std::string& target_,
-                    const std::string& session_path)
+    SessionLogProxy(GDBusConnection *dbc,
+                    const std::string &target_,
+                    const std::string &session_path)
         : LogServiceProxy(dbc), target(target_)
     {
         logproxy = ProxyLogEvents(target, session_path);
     }
-
 
     ~SessionLogProxy()
     {
@@ -332,6 +341,7 @@ public:
             logproxy.reset();
         }
     }
+
 
     const std::string GetLogProxyPath() const
     {
@@ -347,10 +357,12 @@ public:
         }
     }
 
-private:
+
+  private:
     std::string target = {};
     LogProxy::Ptr logproxy = nullptr;
 };
+
 
 using SessionLogProxyList = std::map<std::string, SessionLogProxy::Ptr>;
 
@@ -366,7 +378,7 @@ class SessionObject : public DBusObject,
                       public DBusCredentials,
                       public SessionManagerSignals
 {
-public:
+  public:
     /**
      *  Constructor creating a new SessionObject
      *
@@ -385,14 +397,15 @@ public:
     SessionObject(GDBusConnection *dbuscon,
                   std::function<void()> remove_callback,
                   uid_t owner,
-                  std::string objpath, std::string cfg_path,
-                  unsigned int manager_log_level, LogWriter *logwr,
+                  std::string objpath,
+                  std::string cfg_path,
+                  unsigned int manager_log_level,
+                  LogWriter *logwr,
                   bool signal_broadcast)
         : DBusObject(objpath),
           DBusSignalSubscription(dbuscon, "", OpenVPN3DBus_interf_backends, ""),
           DBusCredentials(dbuscon, owner),
-          SessionManagerSignals(dbuscon, objpath, manager_log_level, logwr,
-                                signal_broadcast),
+          SessionManagerSignals(dbuscon, objpath, manager_log_level, logwr, signal_broadcast),
           remove_callback(remove_callback),
           be_proxy(nullptr),
           restrict_log_access(true),
@@ -467,31 +480,32 @@ public:
 
         try
         {
-                // Start a new backend process via the openvpn3-service-backendstart
-                // (net.openvpn.v3.backends) service.  A random backend token is
-                // created and sent to the backend process.  When the backend process
-                // have initialized, it reports back to the session manager using
-                // this token as a reference.  This is used to tie the backend process
-                // to this specific SessionObject.
-                backend_token = generate_path_uuid("", 't');
+            // Start a new backend process via the openvpn3-service-backendstart
+            // (net.openvpn.v3.backends) service.  A random backend token is
+            // created and sent to the backend process.  When the backend process
+            // have initialized, it reports back to the session manager using
+            // this token as a reference.  This is used to tie the backend process
+            // to this specific SessionObject.
+            backend_token = generate_path_uuid("", 't');
 
-                auto backend_start = DBusProxy(G_BUS_TYPE_SYSTEM,
-                                               OpenVPN3DBus_name_backends,
-                                               OpenVPN3DBus_interf_backends,
-                                               OpenVPN3DBus_rootp_backends);
-                backend_start.Ping(); // Wake up the backend service first
-                (void) backend_start.GetServiceVersion();
+            auto backend_start = DBusProxy(G_BUS_TYPE_SYSTEM,
+                                           OpenVPN3DBus_name_backends,
+                                           OpenVPN3DBus_interf_backends,
+                                           OpenVPN3DBus_rootp_backends);
+            backend_start.Ping(); // Wake up the backend service first
+            (void)backend_start.GetServiceVersion();
 
-                GVariant *res_g = backend_start.Call("StartClient",
-                                                      g_variant_new("(s)", backend_token.c_str()));
-                if (NULL == res_g) {
-                        THROW_DBUSEXCEPTION("SessionObject",
-                                            "Failed to extract the result of the "
-                                            "StartClient request");
-                }
-                g_variant_get(res_g, "(u)", &backend_pid);
+            GVariant *res_g = backend_start.Call("StartClient",
+                                                 g_variant_new("(s)", backend_token.c_str()));
+            if (NULL == res_g)
+            {
+                THROW_DBUSEXCEPTION("SessionObject",
+                                    "Failed to extract the result of the "
+                                    "StartClient request");
+            }
+            g_variant_get(res_g, "(u)", &backend_pid);
         }
-        catch (DBusException& excp)
+        catch (DBusException &excp)
         {
             StatusChange(StatusMajor::SESSION, StatusMinor::PROC_STOPPED);
             LogCritical(excp.what());
@@ -503,9 +517,10 @@ public:
         // start the openvpn3-service-client process, which will fork() once
         // to be completely independent.  When this last fork() happens,
         // the backend will report back its final PID.
-        StatusChange(StatusMajor::SESSION, StatusMinor::PROC_STARTED,
-                             "session_path=" + DBusObject::GetObjectPath()
-                             + ", backend_pid=" + std::to_string(backend_pid));
+        StatusChange(StatusMajor::SESSION,
+                     StatusMinor::PROC_STARTED,
+                     "session_path=" + DBusObject::GetObjectPath()
+                         + ", backend_pid=" + std::to_string(backend_pid));
         Debug("SessionObject registered on '" + OpenVPN3DBus_interf_sessions + "': "
               + objpath + " [backend_token=" + backend_token + "]");
 
@@ -514,6 +529,7 @@ public:
             << ", owner: " << lookup_username(owner);
         LogVerb1(msg.str());
     }
+
 
     ~SessionObject()
     {
@@ -531,6 +547,7 @@ public:
         remove_callback();
         IdleCheck_RefDec();
     }
+
 
     /**
      *  Retrieve the initial configuration profile name used for this session.
@@ -562,7 +579,7 @@ public:
         {
             return be_proxy->GetStringProperty("device_name");
         }
-        catch (const DBusException& excp)
+        catch (const DBusException &excp)
         {
             // Ignore errors, just report an empty device name
             return "";
@@ -602,7 +619,7 @@ public:
             gchar *busn = nullptr;
             gchar *sesstoken_c = nullptr;
             pid_t be_pid;
-            g_variant_get (params, "(ssi)", &busn, &sesstoken_c, &be_pid);
+            g_variant_get(params, "(ssi)", &busn, &sesstoken_c, &be_pid);
 
             be_conn = conn;
             be_busname = std::string(busn);
@@ -638,7 +655,7 @@ public:
                 SetLogLevel(default_session_log_level);
                 LogVerb2("Backend VPN client process registered");
             }
-            catch (DBusException& err)
+            catch (DBusException &err)
             {
                 LogError("Could not register backend process, removing session object");
                 Debug(be_busname, be_path, backend_pid, std::string(err.what()));
@@ -664,14 +681,15 @@ public:
                 shutdown(true, (StatusMinor::CONN_FAILED == status.minor));
             }
         }
-        else if ((signal_name =="AttentionRequired")
+        else if ((signal_name == "AttentionRequired")
                  && (interface_name == OpenVPN3DBus_interf_backends))
         {
-                // Proxy this signal directly to the front-end processes
-                // listening
-                Send("AttentionRequired", params);
+            // Proxy this signal directly to the front-end processes
+            // listening
+            Send("AttentionRequired", params);
         }
     }
+
 
     /**
      *  Callback method which is called each time a D-Bus method call occurs
@@ -709,7 +727,8 @@ public:
             {
                 THROW_DBUSEXCEPTION("SessionObject", "No backend proxy connection available. Backend died?");
             }
-            try {
+            try
+            {
                 ping = ping_backend();
                 if (unlikely(!ping))
                 {
@@ -722,7 +741,7 @@ public:
                 ping = false;
                 THROW_DBUSEXCEPTION("SessionObject",
                                     "Backend did not respond: "
-                                    + std::string(dbserr.GetRawError()));
+                                        + std::string(dbserr.GetRawError()));
             }
 
             if (!registered)
@@ -750,7 +769,7 @@ public:
                     auto verb = (unsigned int)be_proxy->GetUIntProperty("log_level");
                     SetLogLevel(verb);
                 }
-                catch (const DBusException&)
+                catch (const DBusException &)
                 {
                     LogCritical("Could not retrieve the client backend log level");
                 }
@@ -770,7 +789,7 @@ public:
                 be_proxy->Call("Pause", params);
                 LogVerb2("Pausing connection");
             }
-            else if ("Resume"  == method_name)
+            else if ("Resume" == method_name)
             {
                 CheckACL(sender, true);
                 be_proxy->Call("Resume");
@@ -789,7 +808,7 @@ public:
                     CheckACL(sender);
                     be_proxy->Call("Ready");
                 }
-                catch (DBusException& dberr)
+                catch (DBusException &dberr)
                 {
                     GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.sessions.error",
                                                                   dberr.what());
@@ -807,7 +826,7 @@ public:
                     g_dbus_method_invocation_return_value(invoc, res);
                     g_variant_unref(res);
                 }
-                catch (RequiresQueueException& excp)
+                catch (RequiresQueueException &excp)
                 {
                     excp.GenerateDBusError(invoc);
                 }
@@ -822,7 +841,7 @@ public:
                     g_dbus_method_invocation_return_value(invoc, res);
                     g_variant_unref(res);
                 }
-                catch (RequiresQueueException& excp)
+                catch (RequiresQueueException &excp)
                 {
                     excp.GenerateDBusError(invoc);
                 }
@@ -845,7 +864,7 @@ public:
                     g_dbus_method_invocation_return_value(invoc, res);
                     g_variant_unref(res);
                 }
-                catch (RequiresQueueException& excp)
+                catch (RequiresQueueException &excp)
                 {
                     // Convert this exception into an error sent back
                     // to the requester as a D-Bus error instead.
@@ -893,9 +912,9 @@ public:
                 if (enable)
                 {
                     log_proxies[sender].reset(
-                            new SessionLogProxy(DBusSignalSubscription::GetConnection(),
-                                                sender,
-                                                DBusObject::GetObjectPath()));
+                        new SessionLogProxy(DBusSignalSubscription::GetConnection(),
+                                            sender,
+                                            DBusObject::GetObjectPath()));
                     LogInfo("Added log forwarding to " + sender);
                 }
                 else
@@ -905,9 +924,10 @@ public:
                         log_proxies.at(sender).reset();
                         log_proxies.erase(sender);
                     }
-                    catch(const std::exception& e)
+                    catch (const std::exception &e)
                     {
-                        LogCritical("logproxies.erase(" + sender + ") failed:" + std::string(e.what()));
+                        LogCritical("logproxies.erase(" + sender + ") failed:"
+                                    + std::string(e.what()));
                     }
                     LogInfo("Removed log forwarding from " + sender);
                 }
@@ -926,12 +946,12 @@ public:
             }
             g_dbus_method_invocation_return_value(invoc, NULL);
         }
-        catch (DBusException& dberr)
+        catch (DBusException &dberr)
         {
             bool do_selfdestruct = false;
             std::string errmsg;
 
-            Debug("Exception [callback_method_call("+ method_name + ")]: "
+            Debug("Exception [callback_method_call(" + method_name + ")]: "
                   + dberr.GetRawError());
 
             if (!registered && "Disconnect" == method_name)
@@ -959,10 +979,11 @@ public:
                     LogCritical("Forced session shutdown before backend registration");
                     do_selfdestruct = true;
                 }
-                catch (DBusException& dberr)
+                catch (DBusException &dberr)
                 {
                 }
-                StatusChange(StatusMajor::SESSION, StatusMinor::PROC_KILLED,
+                StatusChange(StatusMajor::SESSION,
+                             StatusMinor::PROC_KILLED,
                              "Backend process did not complete registration");
                 g_dbus_method_invocation_return_value(invoc, NULL);
             }
@@ -976,21 +997,23 @@ public:
                 {
                     shutdown(true, true); // Ensure the backend client process have stopped
                 }
-                catch (DBusException& dberr)
+                catch (DBusException &dberr)
                 {
                     // Ignore any errors for now.
                 }
                 errmsg = "Backend VPN process has died.  Session is no longer valid.";
                 if (!selfdestruct_complete)
                 {
-                    StatusChange(StatusMajor::SESSION, StatusMinor::PROC_KILLED, "Backend process died");
+                    StatusChange(StatusMajor::SESSION,
+                                 StatusMinor::PROC_KILLED,
+                                 "Backend process died");
                     do_selfdestruct = true;
                 }
             }
             else
             {
                 errmsg = "Failed communicating with VPN backend: "
-                       + std::string(dberr.GetRawError());
+                         + std::string(dberr.GetRawError());
             }
 
             if (registered && !selfdestruct_complete && !do_selfdestruct)
@@ -1001,7 +1024,7 @@ public:
             if (!errmsg.empty())
             {
                 GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.sessions.error",
-                                                          errmsg.c_str());
+                                                              errmsg.c_str());
                 g_dbus_method_invocation_return_gerror(invoc, err);
                 g_error_free(err);
             }
@@ -1011,7 +1034,7 @@ public:
                 selfdestruct(conn);
             }
         }
-        catch (DBusCredentialsException& excp)
+        catch (DBusCredentialsException &excp)
         {
             LogWarn(excp.what());
             excp.SetDBusError(invoc);
@@ -1038,12 +1061,12 @@ public:
      *          returned and the error must be returned via a GError
      *          object.
      */
-    GVariant * callback_get_property(GDBusConnection *conn,
-                                     const std::string sender,
-                                     const std::string obj_path,
-                                     const std::string intf_name,
-                                     const std::string property_name,
-                                     GError **error)
+    GVariant *callback_get_property(GDBusConnection *conn,
+                                    const std::string sender,
+                                    const std::string obj_path,
+                                    const std::string intf_name,
+                                    const std::string property_name,
+                                    GError **error)
     {
         if (!registered)
         {
@@ -1058,20 +1081,19 @@ public:
         {
             CheckACL_allowRoot(sender);
         }
-        catch (DBusCredentialsException& excp)
+        catch (DBusCredentialsException &excp)
         {
             LogWarn(excp.what());
             excp.SetDBusError(error, G_IO_ERROR, G_IO_ERROR_FAILED);
             return NULL;
         }
-        catch (const DBusException& excp)
+        catch (const DBusException &excp)
         {
             std::string err(excp.what());
 
             if (err.find("Could not get UID of name") != std::string::npos)
             {
-                g_set_error(error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                            "Backend service unavailable");
+                g_set_error(error, G_IO_ERROR, G_IO_ERROR_FAILED, "Backend service unavailable");
             }
             else
             {
@@ -1080,7 +1102,6 @@ public:
             }
             return NULL;
         }
-
 
         GVariant *ret = NULL;
         if ("owner" == property_name)
@@ -1093,7 +1114,7 @@ public:
             {
                 ret = be_proxy->GetProperty("device_path");
             }
-            catch (DBusException&)
+            catch (DBusException &)
             {
                 g_set_error(error,
                             G_IO_ERROR,
@@ -1104,7 +1125,7 @@ public:
         }
         else if ("restrict_log_access" == property_name)
         {
-            ret = g_variant_new_boolean (restrict_log_access);
+            ret = g_variant_new_boolean(restrict_log_access);
         }
         else if ("last_log" == property_name)
         {
@@ -1112,7 +1133,7 @@ public:
             {
                 ret = be_proxy->GetProperty("last_log_line");
             }
-            catch (DBusException&)
+            catch (DBusException &)
             {
                 ret = GLibUtils::CreateEmptyBuilderFromType("a{sv}");
             }
@@ -1127,7 +1148,9 @@ public:
             {
                 if (!be_proxy->CheckObjectExists())
                 {
-                    g_set_error(error, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_OBJECT,
+                    g_set_error(error,
+                                G_DBUS_ERROR,
+                                G_DBUS_ERROR_UNKNOWN_OBJECT,
                                 "Backend object not available");
                     return NULL;
                 }
@@ -1140,13 +1163,17 @@ public:
                 }
                 if (NULL == ret)
                 {
-                    g_set_error(error, G_DBUS_ERROR, G_DBUS_ERROR_NO_REPLY,
+                    g_set_error(error,
+                                G_DBUS_ERROR,
+                                G_DBUS_ERROR_NO_REPLY,
                                 "No status changes have been logged yet");
                 }
             }
-            catch (DBusException& excp)
+            catch (DBusException &excp)
             {
-                g_set_error(error, G_DBUS_ERROR, G_IO_ERROR_FAILED,
+                g_set_error(error,
+                            G_DBUS_ERROR,
+                            G_IO_ERROR_FAILED,
                             "Failed retrieving connection status");
                 ret = NULL;
             }
@@ -1157,15 +1184,19 @@ public:
             {
                 if (!be_proxy->CheckObjectExists())
                 {
-                    g_set_error(error, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_OBJECT,
+                    g_set_error(error,
+                                G_DBUS_ERROR,
+                                G_DBUS_ERROR_UNKNOWN_OBJECT,
                                 "Backend object not available");
                     return NULL;
                 }
                 ret = be_proxy->GetProperty("statistics");
             }
-            catch (DBusException& exp)
+            catch (DBusException &exp)
             {
-                g_set_error(error, G_DBUS_ERROR, G_IO_ERROR_FAILED,
+                g_set_error(error,
+                            G_DBUS_ERROR,
+                            G_IO_ERROR_FAILED,
                             "Failed retrieving connection statistics");
                 ret = NULL;
             }
@@ -1176,7 +1207,7 @@ public:
             {
                 ret = be_proxy->GetProperty("device_name");
             }
-            catch (DBusException&)
+            catch (DBusException &)
             {
                 g_set_error(error,
                             G_IO_ERROR,
@@ -1187,11 +1218,11 @@ public:
         }
         else if ("config_path" == property_name)
         {
-            ret = g_variant_new_string (config_path.c_str());
+            ret = g_variant_new_string(config_path.c_str());
         }
         else if ("config_name" == property_name)
         {
-            ret = g_variant_new_string (config_name.c_str());
+            ret = g_variant_new_string(config_name.c_str());
         }
         else if ("dco" == property_name)
         {
@@ -1199,7 +1230,7 @@ public:
             {
                 ret = be_proxy->GetProperty("dco");
             }
-            catch (DBusException&)
+            catch (DBusException &)
             {
                 // If the DCO flag of the backend process could not be
                 // retrieved, return our current setting
@@ -1211,9 +1242,9 @@ public:
             try
             {
                 std::string sn(be_proxy->GetStringProperty("session_name"));
-                ret = g_variant_new_string (sn.c_str());
+                ret = g_variant_new_string(sn.c_str());
             }
-            catch (const DBusException& excp)
+            catch (const DBusException &excp)
             {
                 // Ignore errors in this case; this is informal details
                 return g_variant_new_string("");
@@ -1221,12 +1252,12 @@ public:
         }
         else if ("backend_pid" == property_name)
         {
-            ret = g_variant_new_uint32 (backend_pid);
+            ret = g_variant_new_uint32(backend_pid);
         }
         else if ("log_forwards" == property_name)
         {
             std::vector<std::string> paths = {};
-            for (const auto& it : log_proxies)
+            for (const auto &it : log_proxies)
             {
                 paths.push_back(it.second->GetLogProxyPath());
             }
@@ -1234,7 +1265,7 @@ public:
         }
         else if ("log_verbosity" == property_name)
         {
-            ret = g_variant_new_uint32 (GetLogLevel());
+            ret = g_variant_new_uint32(GetLogLevel());
         }
         else if ("public_access" == property_name)
         {
@@ -1272,13 +1303,13 @@ public:
      *         D-Bus library to issue the required PropertiesChanged signal.
      *         If an error occurres, the DBusPropertyException is thrown.
      */
-    GVariantBuilder * callback_set_property(GDBusConnection *conn,
-                                            const std::string sender,
-                                            const std::string obj_path,
-                                            const std::string intf_name,
-                                            const std::string property_name,
-                                            GVariant *value,
-                                            GError **error)
+    GVariantBuilder *callback_set_property(GDBusConnection *conn,
+                                           const std::string sender,
+                                           const std::string obj_path,
+                                           const std::string intf_name,
+                                           const std::string property_name,
+                                           GVariant *value,
+                                           GError **error)
     {
         /*
           std::cout << "[SessionObject] set_property(): "
@@ -1309,15 +1340,18 @@ public:
                 CheckOwnerAccess(sender);
             }
         }
-        catch (DBusCredentialsException& excp)
+        catch (DBusCredentialsException &excp)
         {
             LogWarn(excp.what());
             Debug("SetProperty - Object path: " + obj_path
                   + ", interface=" + intf_name
                   + ", property_name=" + property_name
                   + ", sender=" + sender);
-            throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                        obj_path, intf_name, property_name,
+            throw DBusPropertyException(G_IO_ERROR,
+                                        G_IO_ERROR_FAILED,
+                                        obj_path,
+                                        intf_name,
+                                        property_name,
                                         excp.what());
         }
 
@@ -1333,8 +1367,10 @@ public:
                 }
                 else
                 {
-                    throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                                obj_path, intf_name,
+                    throw DBusPropertyException(G_IO_ERROR,
+                                                G_IO_ERROR_FAILED,
+                                                obj_path,
+                                                intf_name,
                                                 property_name,
                                                 "DCO setting cannot be changed now");
                 }
@@ -1352,10 +1388,12 @@ public:
                 {
                     SetLogLevel(log_verb);
                 }
-                catch (const LogException& excp)
+                catch (const LogException &excp)
                 {
-                    throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                                obj_path, intf_name,
+                    throw DBusPropertyException(G_IO_ERROR,
+                                                G_IO_ERROR_FAILED,
+                                                obj_path,
+                                                intf_name,
                                                 property_name,
                                                 excp.what());
                 }
@@ -1367,45 +1405,49 @@ public:
                         be_proxy->SetProperty("log_level", log_verb);
                     }
                 }
-                catch (const DBusException& e)
+                catch (const DBusException &e)
                 {
                     LogCritical("Could not set the VPN backend log level");
                     Debug("Backend log-level error: "
                           + std::string(e.GetRawError()));
                 }
                 return build_set_property_response(property_name,
-                                                   (guint32) log_verb);
+                                                   (guint32)log_verb);
             }
             else if (("public_access" == property_name) && conn)
             {
                 bool acl_public = g_variant_get_boolean(value);
                 SetPublicAccess(acl_public);
                 LogInfo("Public access set to "
-                         + (acl_public ? std::string("true") :
-                                         std::string("false"))
-                         + " by uid " + std::to_string(GetUID(sender)));
+                        + (acl_public ? std::string("true") : std::string("false"))
+                        + " by uid " + std::to_string(GetUID(sender)));
                 return build_set_property_response(property_name, acl_public);
             }
         }
-        catch (DBusException& excp)
+        catch (DBusException &excp)
         {
-            throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                        obj_path, intf_name, property_name,
+            throw DBusPropertyException(G_IO_ERROR,
+                                        G_IO_ERROR_FAILED,
+                                        obj_path,
+                                        intf_name,
+                                        property_name,
                                         excp.what());
         }
-        throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                    obj_path, intf_name, property_name,
+        throw DBusPropertyException(G_IO_ERROR,
+                                    G_IO_ERROR_FAILED,
+                                    obj_path,
+                                    intf_name,
+                                    property_name,
                                     "Invalid property");
     }
-
 
     /**
      *  Clean-up function triggered by the D-Bus library when an object
      *  is removed from the D-Bus
      */
-    void callback_destructor ()
+    void callback_destructor()
     {
-        if( nullptr != sig_statuschg)
+        if (nullptr != sig_statuschg)
         {
             delete sig_statuschg;
             sig_statuschg = nullptr;
@@ -1413,12 +1455,12 @@ public:
     };
 
 
-private:
+  private:
     unsigned int default_session_log_level = 4; // LogCategory::INFO messages
     std::function<void()> remove_callback;
     DBusProxy *be_proxy;
     bool restrict_log_access;
-    SessionLogProxyList log_proxies= {};
+    SessionLogProxyList log_proxies = {};
     std::time_t session_created;
     std::string config_path;
     std::string config_name;
@@ -1462,7 +1504,7 @@ private:
                     ping_backend();
                     attempts = 0;
                 }
-                catch (const DBusException& excp)
+                catch (const DBusException &excp)
                 {
                     --attempts;
                     if (attempts > 0)
@@ -1496,7 +1538,7 @@ private:
 
             // Retrieve the ACL and ownership transfer information from configmgr
             auto cfgprx = OpenVPN3ConfigurationProxy(G_BUS_TYPE_SYSTEM,
-                                                         config_path);
+                                                     config_path);
             if (cfgprx.GetTransferOwnerSession())
             {
                 uid_t curr_owner = GetOwnerUID();
@@ -1528,13 +1570,14 @@ private:
             }
             config_name = std::string(cfgname_c);
             Debug("New session registered: " + DBusObject::GetObjectPath());
-            StatusChange(StatusMajor::SESSION, StatusMinor::SESS_NEW,
+            StatusChange(StatusMajor::SESSION,
+                         StatusMinor::SESS_NEW,
                          "session_path=" + DBusObject::GetObjectPath()
-                         + " backend_busname=" + be_busname
-                         + " backend_path=" + be_path);
+                             + " backend_busname=" + be_busname
+                             + " backend_path=" + be_path);
             registered = true;
         }
-        catch (DBusException& err)
+        catch (DBusException &err)
         {
             THROW_DBUSEXCEPTION("SessionObject", err.what());
         }
@@ -1558,7 +1601,8 @@ private:
         }
 
         GVariant *res_g = NULL;
-        try {
+        try
+        {
             // This Ping() is the BackendClientObject responding,
             // which ensures the VPN client process is initialized
             res_g = be_proxy->Call("Ping");
@@ -1603,7 +1647,7 @@ private:
                 sig_statuschg->ProxyStatus(be_status);
             }
         }
-        catch (DBusException& excp)
+        catch (DBusException &excp)
         {
             // Ignore these failures for now.  It most commonly means
             // the backend process has closed/shut-down - this is scenario
@@ -1631,11 +1675,11 @@ private:
     {
         try
         {
-            be_proxy->Call( (!forced ? "Disconnect" : "ForceShutdown"), true );
+            be_proxy->Call((!forced ? "Disconnect" : "ForceShutdown"), true);
             // Wait for child to exit
             sleep(2); // FIXME: Catch the ProcessChange StatusMinor::PROC_STOPPED signal from backend
         }
-        catch (DBusException& excp)
+        catch (DBusException &excp)
         {
             Debug(excp.what());
             // FIXME: For now, we just ignore any errors here - the
@@ -1645,11 +1689,15 @@ private:
         // Remove this session object
         if (!forced)
         {
-            StatusChange(StatusMajor::SESSION, StatusMinor::PROC_STOPPED, "Session closed");
+            StatusChange(StatusMajor::SESSION,
+                         StatusMinor::PROC_STOPPED,
+                         "Session closed");
         }
         else
         {
-            StatusChange(StatusMajor::SESSION, StatusMinor::PROC_KILLED, "Session closed, killed backend client");
+            StatusChange(StatusMajor::SESSION,
+                         StatusMinor::PROC_KILLED,
+                         "Session closed, killed backend client");
         }
 
         if (selfdestruct_flag)
@@ -1696,6 +1744,7 @@ private:
 };
 
 
+
 /**
  *   A SessionManagerObject is the main entry point when starting new
  *   VPN tunnels.  It should only exist a single SessionManagerObject during
@@ -1705,7 +1754,7 @@ class SessionManagerObject : public DBusObject,
                              public SessionManagerSignals,
                              public RC<thread_safe_refcount>
 {
-public:
+  public:
     typedef RCPtr<SessionManagerObject> Ptr;
 
     /**
@@ -1718,12 +1767,13 @@ public:
      *                 disablefile log.
      *
      */
-    SessionManagerObject(GDBusConnection *dbuscon, const std::string objpath,
-                         unsigned int manager_log_level, LogWriter *logwr,
+    SessionManagerObject(GDBusConnection *dbuscon,
+                         const std::string objpath,
+                         unsigned int manager_log_level,
+                         LogWriter *logwr,
                          bool signal_broadcast)
         : DBusObject(objpath),
-          SessionManagerSignals(dbuscon, objpath, manager_log_level, logwr,
-                                signal_broadcast),
+          SessionManagerSignals(dbuscon, objpath, manager_log_level, logwr, signal_broadcast),
           dbuscon(dbuscon),
           creds(dbuscon)
     {
@@ -1760,8 +1810,9 @@ public:
         ParseIntrospectionXML(introspection_xml);
 
         Debug("SessionManagerObject registered on '" + OpenVPN3DBus_interf_sessions + "': "
-                      + objpath);
+              + objpath);
     }
+
 
     ~SessionManagerObject()
     {
@@ -1800,7 +1851,7 @@ public:
             // Retrieve the configuration path for the tunnel
             // from the request
             gchar *config_path_s = nullptr;
-            g_variant_get (params, "(o)", &config_path_s);
+            g_variant_get(params, "(o)", &config_path_s);
             auto config_path = std::string(config_path_s);
             g_free(config_path_s);
 
@@ -1809,10 +1860,10 @@ public:
             std::string sesspath = generate_path_uuid(OpenVPN3DBus_rootp_sessions, 's');
 
             // Create the new object and register it in D-Bus
-            auto callback = [self=Ptr(this), sesspath]()
-                            {
-                                self->remove_session_object(sesspath);
-                            };
+            auto callback = [self = Ptr(this), sesspath]()
+            {
+                self->remove_session_object(sesspath);
+            };
             SessionObject *session = new SessionObject(conn,
                                                        callback,
                                                        creds.GetUID(sender),
@@ -1827,8 +1878,7 @@ public:
             session_objects[sesspath] = session;
             SessionManager::Event ev{sesspath,
                                      SessionManager::EventType::SESS_CREATED,
-                                     creds.GetUID(sender)
-                                     };
+                                     creds.GetUID(sender)};
             Broadcast(OpenVPN3DBus_interf_sessions,
                       OpenVPN3DBus_rootp_sessions,
                       "SessionManagerEvent",
@@ -1839,7 +1889,7 @@ public:
             g_dbus_method_invocation_return_value(invoc, g_variant_new("(o)", sesspath.c_str()));
         }
         else if ("FetchAvailableSessions" == method_name
-                || "FetchManagedInterfaces" == method_name)
+                 || "FetchManagedInterfaces" == method_name)
         {
             bool ret_iface = ("FetchManagedInterfaces" == method_name);
 
@@ -1847,9 +1897,10 @@ public:
             // session objects
             GVariantBuilder *bld;
             bld = g_variant_builder_new(G_VARIANT_TYPE(ret_iface ? "as" : "ao"));
-            for (auto& item : session_objects)
+            for (auto &item : session_objects)
             {
-                try {
+                try
+                {
                     // We check if the caller is allowed to access this
                     // session object.  If not, an exception is thrown
                     // and we will just ignore that exception and continue
@@ -1863,7 +1914,7 @@ public:
                         g_variant_builder_add(bld, "o", item.first.c_str());
                     }
                 }
-                catch (DBusCredentialsException& excp)
+                catch (DBusCredentialsException &excp)
                 {
                     // Ignore credentials exceptions.  It means the
                     // caller does not have access this session object
@@ -1900,7 +1951,7 @@ public:
             // Build up an array of object paths to sessions with a matching
             // configuration profile name
             GVariantBuilder *found_paths = g_variant_builder_new(G_VARIANT_TYPE("ao"));
-            for (const auto& item : session_objects)
+            for (const auto &item : session_objects)
             {
                 if (item.second->GetConfigName() == cfgname)
                 {
@@ -1911,9 +1962,10 @@ public:
                         // and we will just ignore that exception and continue
                         item.second->CheckACL(sender);
                         g_variant_builder_add(found_paths,
-                                              "o", item.first.c_str());
+                                              "o",
+                                              item.first.c_str());
                     }
-                    catch (DBusCredentialsException& excp)
+                    catch (DBusCredentialsException &excp)
                     {
                         // Ignore credentials exceptions.  It means the
                         // caller does not have access this configuration object
@@ -1940,7 +1992,7 @@ public:
             g_free(iface_c);
 
             GVariant *ret = nullptr;
-            for (const auto& item : session_objects)
+            for (const auto &item : session_objects)
             {
                 if (item.second->GetDeviceName() == iface)
                 {
@@ -1979,7 +2031,7 @@ public:
             uid_t new_uid = 0;
             g_variant_get(params, "(ou)", &sesspath, &new_uid);
 
-            for (const auto& si : session_objects)
+            for (const auto &si : session_objects)
             {
                 if (si.first == sesspath)
                 {
@@ -2022,12 +2074,12 @@ public:
      * @return  Returns always NULL, as there are no properties in the
      *          SessionManagerObject.
      */
-    GVariant * callback_get_property(GDBusConnection *conn,
-                                     const std::string sender,
-                                     const std::string obj_path,
-                                     const std::string intf_name,
-                                     const std::string property_name,
-                                     GError **error)
+    GVariant *callback_get_property(GDBusConnection *conn,
+                                    const std::string sender,
+                                    const std::string obj_path,
+                                    const std::string intf_name,
+                                    const std::string property_name,
+                                    GError **error)
     {
         IdleCheck_UpdateTimestamp();
         GVariant *ret = nullptr;
@@ -2038,13 +2090,14 @@ public:
         }
         else
         {
-            g_set_error (error,
-                         G_IO_ERROR,
-                         G_IO_ERROR_FAILED,
-                         "Unknown property");
+            g_set_error(error,
+                        G_IO_ERROR,
+                        G_IO_ERROR_FAILED,
+                        "Unknown property");
         }
         return ret;
     };
+
 
     /**
      *  Callback method which is used each time a SessionManagerObject
@@ -2064,22 +2117,23 @@ public:
      * @return Will always throw an execption as there are no properties to
      *         modify.
      */
-    GVariantBuilder * callback_set_property(GDBusConnection *conn,
-                                            const std::string sender,
-                                            const std::string obj_path,
-                                            const std::string intf_name,
-                                            const std::string property_name,
-                                            GVariant *value,
-                                            GError **error)
+    GVariantBuilder *callback_set_property(GDBusConnection *conn,
+                                           const std::string sender,
+                                           const std::string obj_path,
+                                           const std::string intf_name,
+                                           const std::string property_name,
+                                           GVariant *value,
+                                           GError **error)
     {
         THROW_DBUSEXCEPTION("SessionManagerObject", "set property not implemented");
     }
 
 
-private:
+  private:
     GDBusConnection *dbuscon;
     DBusConnectionCreds creds;
     std::map<std::string, SessionObject *> session_objects;
+
 
     void remove_session_object(const std::string sesspath)
     {
@@ -2097,12 +2151,13 @@ private:
 };
 
 
+
 /**
  * Main D-Bus service implementation of the Session Manager
  */
 class SessionManagerDBus : public DBus
 {
-public:
+  public:
     /**
      * Constructor creating a D-Bus service for the Session Manager.
      *
@@ -2112,8 +2167,7 @@ public:
      *                  disablefile log.
      *
      */
-    SessionManagerDBus(GDBusConnection *conn, LogWriter *logwr,
-                       bool signal_broadcast)
+    SessionManagerDBus(GDBusConnection *conn, LogWriter *logwr, bool signal_broadcast)
         : DBus(conn,
                OpenVPN3DBus_name_sessions,
                OpenVPN3DBus_rootp_sessions,
@@ -2127,6 +2181,7 @@ public:
                                                 OpenVPN3DBus_interf_sessions,
                                                 "SessionManager"));
     };
+
 
     ~SessionManagerDBus()
     {
@@ -2160,8 +2215,10 @@ public:
     {
         // Create a SessionManagerObject which will be the main entrance
         // point to this service
-        managobj.reset(new SessionManagerObject(GetConnection(), GetRootPath(),
-                                                manager_log_level, logwr,
+        managobj.reset(new SessionManagerObject(GetConnection(),
+                                                GetRootPath(),
+                                                manager_log_level,
+                                                logwr,
                                                 signal_broadcast));
 
         // Register this object to on the D-Bus
@@ -2186,9 +2243,7 @@ public:
      * @param conn     Connection where this event happened
      * @param busname  A string of the acquired bus name
      */
-    void callback_name_acquired(GDBusConnection *conn, std::string busname)
-    {
-    };
+    void callback_name_acquired(GDBusConnection *conn, std::string busname){};
 
 
     /**
@@ -2203,15 +2258,14 @@ public:
     {
         THROW_DBUSEXCEPTION("SessionManagerDBus",
                             "openvpn3-service-sessionmgr could not register '"
-                            + busname + "' on the D-Bus");
+                                + busname + "' on the D-Bus");
     };
 
-private:
+
+  private:
     unsigned int manager_log_level = 6; // LogCategory::DEBUG
     LogWriter *logwr = nullptr;
     bool signal_broadcast = true;
     SessionManagerObject::Ptr managobj;
     ProcessSignalProducer::Ptr procsig;
 };
-
-#endif // OPENVPN3_DBUS_SESSIONMGR_HPP

@@ -23,7 +23,6 @@
  * @brief  Provides an API for retrieving OS/platform details
  */
 
-
 #include <sys/utsname.h>
 #include <exception>
 
@@ -37,14 +36,15 @@
  */
 class PlatformInfoException : public std::exception
 {
-public:
-  PlatformInfoException(const std::string& err);
+  public:
+    PlatformInfoException(const std::string &err);
 
-  virtual const char* what() const noexcept;
+    virtual const char *what() const noexcept;
 
-private:
-  std::string errormsg = {};
+  private:
+    std::string errormsg = {};
 };
+
 
 
 /**
@@ -58,13 +58,14 @@ private:
 class PlatformInfo : public DBusProxy
 {
   public:
-   /**
-    *  Construct a new PlatformInfo object
-    *
-    *  @param con Pointer to a GDBusConnection, for D-Bus calls
-    *             to the org.freedesktop.hostname1 service.
-    */
-    PlatformInfo(GDBusConnection* con);
+    /**
+     *  Construct a new PlatformInfo object
+     *
+     *  @param con Pointer to a GDBusConnection, for D-Bus calls
+     *             to the org.freedesktop.hostname1 service.
+     */
+    PlatformInfo(GDBusConnection *con);
+
 
     /**
      *  Return a string containing OS/distribution details.  It
@@ -77,6 +78,7 @@ class PlatformInfo : public DBusProxy
      */
     const std::string str() const;
 
+
     /**
      *  ostream << operator for stream printing the PlatformInfo string
      *
@@ -85,7 +87,7 @@ class PlatformInfo : public DBusProxy
      *  @param pinf            PlatformInfo object to print
      *  @return std::ostream&
      */
-    friend std::ostream& operator<<(std::ostream& os , const PlatformInfo& pinf)
+    friend std::ostream &operator<<(std::ostream &os, const PlatformInfo &pinf)
     {
         return os << pinf.str();
     }

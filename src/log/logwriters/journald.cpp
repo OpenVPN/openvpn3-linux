@@ -38,15 +38,18 @@
 #include "log/logwriters/journald.hpp"
 
 
+
 JournaldWriter::JournaldWriter()
     : LogWriter()
 {
 }
 
+
 const std::string JournaldWriter::GetLogWriterInfo() const
 {
     return std::string("journald");
 }
+
 
 bool JournaldWriter::TimestampEnabled()
 {
@@ -54,49 +57,52 @@ bool JournaldWriter::TimestampEnabled()
 }
 
 
-void JournaldWriter::Write(const std::string& data,
-                           const std::string& colour_init,
-                           const std::string& colour_reset)
+void JournaldWriter::Write(const std::string &data,
+                           const std::string &colour_init,
+                           const std::string &colour_reset)
 {
-    JournaldWriter::Write(LogEvent(LogGroup::UNDEFINED, LogCategory::INFO,
+    JournaldWriter::Write(LogEvent(LogGroup::UNDEFINED,
+                                   LogCategory::INFO,
                                    data));
 }
 
 
-void JournaldWriter::Write(const LogGroup grp, const LogCategory ctg,
-           const std::string& data,
-           const std::string& colour_init,
-           const std::string& colour_reset)
+void JournaldWriter::Write(const LogGroup grp,
+                           const LogCategory ctg,
+                           const std::string &data,
+                           const std::string &colour_init,
+                           const std::string &colour_reset)
 {
     JournaldWriter::Write(LogEvent(grp, ctg, data));
 }
 
-void JournaldWriter::Write(const LogEvent& event)
+
+void JournaldWriter::Write(const LogEvent &event)
 {
     // We need extra elements for O3_SESSION_TOKEN,
     // O3_LOG_GROUP, O3_LOG_CATEGORY, MESSAGE and
     // the NULL termination
-    struct iovec *l = (struct iovec *) calloc(sizeof(struct iovec)+2,
-                                              metadata.size()+6);
+    struct iovec *l = (struct iovec *)calloc(sizeof(struct iovec) + 2,
+                                             metadata.size() + 6);
     size_t i = 0;
-    for (const auto& mdr : metadata.GetMetaDataRecords(true, false))
+    for (const auto &mdr : metadata.GetMetaDataRecords(true, false))
     {
         std::string md = std::string("O3_") + mdr;
-        l[i++] = {(char *) strdup(md.c_str()), md.length()};
+        l[i++] = {(char *)strdup(md.c_str()), md.length()};
     }
 
     std::string st("O3_SESSION_TOKEN=");
     if (!event.session_token.empty())
     {
         st += event.session_token;
-        l[i++] = {(char *) strdup(st.c_str()), st.length()};
+        l[i++] = {(char *)strdup(st.c_str()), st.length()};
     }
 
     std::string lg("O3_LOG_GROUP=" + event.GetLogGroupStr());
-    l[i++] = {(char *) strdup(lg.c_str()), lg.length()};
+    l[i++] = {(char *)strdup(lg.c_str()), lg.length()};
 
     std::string lc("O3_LOG_CATEGORY=" + event.GetLogCategoryStr());
-    l[i++] = {(char *) strdup(lc.c_str()), lc.length()};
+    l[i++] = {(char *)strdup(lc.c_str()), lc.length()};
 
     std::string m("MESSAGE=");
     if (prepend_prefix && prepend_meta)
@@ -105,7 +111,7 @@ void JournaldWriter::Write(const LogEvent& event)
     }
 
     m += event.message;
-    l[i++] = {(char *) strdup(m.c_str()), m.length()};
+    l[i++] = {(char *)strdup(m.c_str()), m.length()};
     l[i] = {NULL};
 
     int r = sd_journal_sendv(l, i);
@@ -126,4 +132,4 @@ void JournaldWriter::Write(const LogEvent& event)
     prepend_label.clear();
     metadata.clear();
 }
-#endif  // HAVE_SYSTEMD
+#endif // HAVE_SYSTEMD

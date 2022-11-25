@@ -27,11 +27,12 @@
 
 #include "sessionmgr/proxy-sessionmgr.hpp"
 
+
 int main(int argc, char **argv)
 {
     if (argc != 2)
     {
-        std::cout << "Usage: " << argv[0] << "<session object path>" << std::endl;
+        std::cout << "Usage: " << argv[0] << " <session object path>" << std::endl;
         return 1;
     }
 
@@ -43,20 +44,19 @@ int main(int argc, char **argv)
 
         std::cout << "        Status: " << status << std::endl;
         std::cout << "----------------------------------------" << std::endl;
-        std::cout << "  Status major: [" << std::to_string((unsigned int) status.major)
+        std::cout << "  Status major: [" << std::to_string((unsigned int)status.major)
                   << "] " << std::endl;
-        std::cout << "  Status minor: [" << std::to_string((unsigned int) status.minor)
-                      << "] " << std::endl;
-        std::cout << "Status message: " << "[len: " << status.message.size()
+        std::cout << "  Status minor: [" << std::to_string((unsigned int)status.minor)
+                  << "] " << std::endl;
+        std::cout << "Status message: "
+                  << "[len: " << status.message.size()
                   << "] " << status.message
                   << std::endl;
         return 0;
     }
-    catch (std::exception& err)
+    catch (std::exception &err)
     {
         std::cout << "** ERROR ** " << err.what() << std::endl;
         return 2;
     }
 }
-
-

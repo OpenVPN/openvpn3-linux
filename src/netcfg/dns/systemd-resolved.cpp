@@ -75,7 +75,7 @@ void SystemdResolved::Apply(const ResolverSettings::Ptr settings)
     if (upd.enable)
     {
 
-        for (const auto& r : settings->GetNameServers())
+        for (const auto &r : settings->GetNameServers())
         {
             if (!IP::Addr::is_valid(r))
             {
@@ -87,7 +87,7 @@ void SystemdResolved::Apply(const ResolverSettings::Ptr settings)
                                                   addr.to_string()));
         }
 
-        for (const auto& sd : settings->GetSearchDomains())
+        for (const auto &sd : settings->GetSearchDomains())
         {
             upd.search.push_back(SearchDomain(sd, false));
         }
@@ -103,7 +103,7 @@ void SystemdResolved::Apply(const ResolverSettings::Ptr settings)
 
 void SystemdResolved::Commit(NetCfgSignals *signal)
 {
-    for (auto& upd : update_queue)
+    for (auto &upd : update_queue)
     {
         if (upd.disabled)
         {
@@ -125,17 +125,17 @@ void SystemdResolved::Commit(NetCfgSignals *signal)
                 upd.link->Revert();
             }
         }
-        catch (const DBusProxyAccessDeniedException& excp)
+        catch (const DBusProxyAccessDeniedException &excp)
         {
             signal->LogCritical("systemd-resolved: " + std::string(excp.what()));
             upd.disabled = true;
         }
-        catch (const DBusException& excp)
+        catch (const DBusException &excp)
         {
             signal->LogCritical("systemd-resolved: " + std::string(excp.what()));
             upd.disabled = true;
         }
-        catch (const std::exception& excp)
+        catch (const std::exception &excp)
         {
             signal->LogError("systemd-resolved: " + std::string(excp.what()));
             upd.disabled = true;

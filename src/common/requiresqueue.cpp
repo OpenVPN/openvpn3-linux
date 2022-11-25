@@ -40,17 +40,20 @@
 #include "dbus/core.hpp"
 #include "requiresqueue.hpp"
 
+
+
 /*
  *  RequiresSlot
  */
 RequiresSlot::RequiresSlot()
     : id(0),
       type(ClientAttentionType::UNSET),
-       group(ClientAttentionGroup::UNSET),
-       name(""), value(""), user_description(""),
-       hidden_input(false), provided(false)
+      group(ClientAttentionGroup::UNSET),
+      name(""), value(""), user_description(""),
+      hidden_input(false), provided(false)
 {
 }
+
 
 
 /*
@@ -71,7 +74,7 @@ RequiresQueueException::RequiresQueueException(std::string errname, std::string 
 }
 
 
-const char* RequiresQueueException::what() const noexcept
+const char *RequiresQueueException::what() const noexcept
 {
     return what_.c_str();
 }
@@ -86,6 +89,7 @@ void RequiresQueueException::GenerateDBusError(GDBusMethodInvocation *invocation
 }
 
 
+
 /*
  *  RequiresQueue
  */
@@ -95,14 +99,16 @@ RequiresQueue::RequiresQueue()
 {
 }
 
+
 RequiresQueue::~RequiresQueue()
 {
 }
 
-std::string RequiresQueue::IntrospectionMethods(const std::string& meth_qchktypegr,
-                                                const std::string& meth_queuefetch,
-                                                const std::string& meth_queuechk,
-                                                const std::string& meth_provideresp)
+
+std::string RequiresQueue::IntrospectionMethods(const std::string &meth_qchktypegr,
+                                                const std::string &meth_queuefetch,
+                                                const std::string &meth_queuechk,
+                                                const std::string &meth_provideresp)
 {
     std::stringstream introspection;
     introspection << "    <method name='" << meth_qchktypegr << "'>"
@@ -163,12 +169,12 @@ void RequiresQueue::QueueFetch(GDBusMethodInvocation *invocation,
     g_variant_get(parameters, "(uuu)", &type, &group, &id);
 
     // Fetch the requested slot id
-    for (auto& e : slots)
+    for (auto &e : slots)
     {
         if (id == e.id)
         {
-            if (e.type == (ClientAttentionType) type
-                && e.group == (ClientAttentionGroup) group)
+            if (e.type == (ClientAttentionType)type
+                && e.group == (ClientAttentionGroup)group)
             {
                 if (e.provided)
                 {
@@ -195,12 +201,13 @@ void RequiresQueue::QueueFetch(GDBusMethodInvocation *invocation,
 
 void RequiresQueue::UpdateEntry(ClientAttentionType type,
                                 ClientAttentionGroup group,
-                                unsigned int id, std::string newvalue)
+                                unsigned int id,
+                                std::string newvalue)
 {
-    for (auto& e : slots)
+    for (auto &e : slots)
     {
-        if (e.type ==  type
-            && e.group == (ClientAttentionGroup) group
+        if (e.type == type
+            && e.group == (ClientAttentionGroup)group
             && e.id == id)
         {
             if (!e.provided)
@@ -213,7 +220,7 @@ void RequiresQueue::UpdateEntry(ClientAttentionType type,
             {
                 throw RequiresQueueException("net.openvpn.v3.error.input-already-provided",
                                              "Request ID " + std::to_string(id)
-                                             + " has already been provided");
+                                                 + " has already been provided");
             }
         }
     }
@@ -233,30 +240,29 @@ void RequiresQueue::UpdateEntry(GDBusMethodInvocation *invocation,
     unsigned int group;
     guint id;
     gchar *value = nullptr;
-    g_variant_get(indata, "(uuus)",
-                  &type,
-                  &group,
-                  &id,
-                  &value);
+    g_variant_get(indata, "(uuus)", &type, &group, &id, &value);
 
     if (NULL == value)
     {
         throw RequiresQueueException("net.openvpn.v3.error.invalid-input",
                                      "No value provided for RequiresSlot ID "
-                                     + std::to_string(id));
+                                         + std::to_string(id));
     }
 
-    UpdateEntry((ClientAttentionType) type, (ClientAttentionGroup) group, id,
+    UpdateEntry((ClientAttentionType)type,
+                (ClientAttentionGroup)group,
+                id,
                 std::string(value));
     g_dbus_method_invocation_return_value(invocation, NULL);
-    g_free(value);  // Avoid leak
+    g_free(value); // Avoid leak
 }
 
 
 void RequiresQueue::ResetValue(ClientAttentionType type,
-                               ClientAttentionGroup group, unsigned int id)
+                               ClientAttentionGroup group,
+                               unsigned int id)
 {
-    for (auto& e : slots)
+    for (auto &e : slots)
     {
         if (e.type == type && e.group == group && e.id == id)
         {
@@ -273,7 +279,7 @@ std::string RequiresQueue::GetResponse(ClientAttentionType type,
                                        ClientAttentionGroup group,
                                        unsigned int id)
 {
-    for (auto& e : slots)
+    for (auto &e : slots)
     {
         if (e.type == type && e.group == group && e.id == id)
         {
@@ -292,7 +298,7 @@ std::string RequiresQueue::GetResponse(ClientAttentionType type,
                                        ClientAttentionGroup group,
                                        std::string name)
 {
-    for (auto& e : slots)
+    for (auto &e : slots)
     {
         if (e.type == type && e.group == group && e.name == name)
         {
@@ -311,7 +317,7 @@ unsigned int RequiresQueue::QueueCount(ClientAttentionType type,
                                        ClientAttentionGroup group)
 {
     unsigned int ret = 0;
-    for (auto& e : slots)
+    for (auto &e : slots)
     {
         if (type == e.type && group == e.group)
         {
@@ -326,13 +332,13 @@ std::vector<RequiresQueue::ClientAttTypeGroup> RequiresQueue::QueueCheckTypeGrou
 {
     std::vector<RequiresQueue::ClientAttTypeGroup> ret;
 
-    for (auto& e : slots)
+    for (auto &e : slots)
     {
         if (!e.provided)
         {
             // Check if we've already spotted this type/group
             bool found = false;
-            for (auto& r : ret)
+            for (auto &r : ret)
             {
                 ClientAttentionType t;
                 ClientAttentionGroup g;
@@ -362,12 +368,12 @@ void RequiresQueue::QueueCheckTypeGroup(GDBusMethodInvocation *invocation)
 
     GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("a(uu)"));
     assert(NULL != bld);
-    for (auto& e : qchk_res)
+    for (auto &e : qchk_res)
     {
         ClientAttentionType t;
         ClientAttentionGroup g;
         std::tie(t, g) = e;
-        g_variant_builder_add(bld, "(uu)", (unsigned int) t, (unsigned int) g);
+        g_variant_builder_add(bld, "(uu)", (unsigned int)t, (unsigned int)g);
     }
 
     // Wrap the GVariant array into a tuple which GDBus expects
@@ -385,7 +391,7 @@ std::vector<unsigned int> RequiresQueue::QueueCheck(ClientAttentionType type,
                                                     ClientAttentionGroup group)
 {
     std::vector<unsigned int> ret;
-    for (auto& e : slots)
+    for (auto &e : slots)
     {
         if (type == e.type
             && group == e.group
@@ -406,10 +412,10 @@ void RequiresQueue::QueueCheck(GDBusMethodInvocation *invocation, GVariant *para
 
     // Convert the std::vector to a GVariant based array GDBus can use
     // as the method call response
-    std::vector<unsigned int> qchk_result = QueueCheck((ClientAttentionType) type,
-                                                       (ClientAttentionGroup) group);
+    std::vector<unsigned int> qchk_result = QueueCheck((ClientAttentionType)type,
+                                                       (ClientAttentionGroup)group);
     GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("au"));
-    for (auto& e : qchk_result)
+    for (auto &e : qchk_result)
     {
         g_variant_builder_add(bld, "u", e);
     }
@@ -428,7 +434,7 @@ void RequiresQueue::QueueCheck(GDBusMethodInvocation *invocation, GVariant *para
 unsigned int RequiresQueue::QueueCheckAll()
 {
     unsigned int ret = 0;
-    for (auto& e : slots)
+    for (auto &e : slots)
     {
         if (!e.provided)
         {
@@ -440,9 +446,9 @@ unsigned int RequiresQueue::QueueCheckAll()
 
 
 bool RequiresQueue::QueueAllDone()
-    {
-        return QueueCheckAll() == 0;
-    }
+{
+    return QueueCheckAll() == 0;
+}
 
 
 bool RequiresQueue::QueueDone(ClientAttentionType type, ClientAttentionGroup group)
@@ -460,5 +466,5 @@ bool RequiresQueue::QueueDone(GVariant *parameters)
     gchar *value = nullptr;
     g_variant_get(parameters, "(uuus)", &type, &group, &id, &value);
 
-    return QueueCheck((ClientAttentionType) type, (ClientAttentionGroup) group).size() == 0;
+    return QueueCheck((ClientAttentionType)type, (ClientAttentionGroup)group).size() == 0;
 }

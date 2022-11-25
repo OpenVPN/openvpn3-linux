@@ -41,9 +41,10 @@ namespace DNS {
 //
 
 SettingsManager::SettingsManager(ResolverBackendInterface::Ptr be)
-                  : backend(be)
+    : backend(be)
 {
 }
+
 
 SettingsManager::~SettingsManager() = default;
 
@@ -99,25 +100,27 @@ void SettingsManager::ApplySettings(NetCfgSignals *signal)
                 std::vector<std::string> name_servers = settings->GetNameServers(true);
                 if (name_servers.size() > 0)
                 {
-                    for (const auto& s : name_servers)
+                    for (const auto &s : name_servers)
                     {
                         notif.push_back(NetCfgChangeEvent(NetCfgChangeType::DNS_SERVER_REMOVED,
-                                                          "", {{"dns_server", s}}));
+                                                          "",
+                                                          {{"dns_server", s}}));
                     }
                 }
 
                 std::vector<std::string> search_domains = settings->GetSearchDomains(true);
                 if (search_domains.size() > 0)
                 {
-                    for (const auto& s : search_domains)
+                    for (const auto &s : search_domains)
                     {
                         notif.push_back(NetCfgChangeEvent(NetCfgChangeType::DNS_SEARCH_REMOVED,
-                                                          "", {{"search_domain", s}}));
+                                                          "",
+                                                          {{"search_domain", s}}));
                     }
                 }
 
                 // Send all NetworkChange events in the notification queue
-                for (const auto& ev : notif)
+                for (const auto &ev : notif)
                 {
                     signal->NetworkChange(ev);
                 }
@@ -130,7 +133,6 @@ void SettingsManager::ApplySettings(NetCfgSignals *signal)
     {
         resolvers.erase(idx);
     }
-
 }
 
 

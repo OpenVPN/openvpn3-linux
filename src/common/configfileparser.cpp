@@ -38,27 +38,32 @@
 
 using namespace Configuration;
 
+
 //
 //   struct Configuration::OptionMapEntry
 //
 
-OptionMapEntry::OptionMapEntry(std::string option, std::string field_label,
-                               std::string description, OptionValueType type)
+OptionMapEntry::OptionMapEntry(std::string option,
+                               std::string field_label,
+                               std::string description,
+                               OptionValueType type)
     : option(option), field_label(field_label), description(description),
       exclusive_group(""),
       type(type), present(false), present_value(false), value("")
 {
 }
 
-
-OptionMapEntry::OptionMapEntry(std::string option, std::string field_label,
+OptionMapEntry::OptionMapEntry(std::string option,
+                               std::string field_label,
                                std::string exclusive_group,
-                               std::string description, OptionValueType type)
+                               std::string description,
+                               OptionValueType type)
     : option(option), field_label(field_label), description(description),
       exclusive_group(exclusive_group),
       type(type), present(false), present_value(false), value("")
 {
 }
+
 
 
 //
@@ -77,19 +82,18 @@ const std::string File::GetFilename() const
 }
 
 
-void File::Parse(Json::Value& config)
+void File::Parse(Json::Value &config)
 {
     configure_mapping();
 
     // Copy the values and set the present flag in the
     // configured OptionMap (map) for JSON fields being recognised
-    for (const auto& elm : config.getMemberNames())
+    for (const auto &elm : config.getMemberNames())
     {
-        auto it = std::find_if(map.begin(), map.end(),
-                               [elm](OptionMapEntry e)
+        auto it = std::find_if(map.begin(), map.end(), [elm](OptionMapEntry e)
                                {
-                                    return elm == e.field_label;
-                               });
+            return elm == e.field_label;
+        });
         if (map.end() == it)
         {
             // Field not found, skip it
@@ -98,7 +102,7 @@ void File::Parse(Json::Value& config)
         it->present = true;
         if (OptionValueType::Present == it->type)
         {
-            if( config[elm].isString())
+            if (config[elm].isString())
             {
                 // backwards compat parsing.
                 // May be removed some time after the v25 release
@@ -117,7 +121,7 @@ void File::Parse(Json::Value& config)
 }
 
 
-void File::Load(const std::string& cfgfile)
+void File::Load(const std::string &cfgfile)
 {
     std::string fname = cfgfile.empty() ? config_filename : cfgfile;
     if (fname.empty())
@@ -152,10 +156,9 @@ void File::Load(const std::string& cfgfile)
         buf >> jcfg;
         Parse(jcfg);
     }
-    catch (const Json::Exception& excp)
+    catch (const Json::Exception &excp)
     {
-        throw ConfigFileException(fname, "Error parsing file:"
-                                  + std::string(excp.what()));
+        throw ConfigFileException(fname, "Error parsing file:" + std::string(excp.what()));
     }
 }
 
@@ -165,7 +168,7 @@ std::vector<std::string> File::GetOptions(bool all_configured)
     configure_mapping();
 
     std::vector<std::string> opts;
-    for (const auto& e : map)
+    for (const auto &e : map)
     {
         if (e.present || all_configured)
         {
@@ -180,15 +183,16 @@ std::vector<std::string> File::GetOptions(bool all_configured)
 }
 
 
-bool File::IsPresent(const std::string& key)
+bool File::IsPresent(const std::string &key)
 {
     configure_mapping();
 
-    auto it = std::find_if(map.begin(), map.end(),
+    auto it = std::find_if(map.begin(),
+                           map.end(),
                            [key](OptionMapEntry e)
                            {
-                                return key == e.option;
-                           });
+        return key == e.option;
+    });
     if (it == map.end())
     {
         throw OptionNotFound(key);
@@ -198,15 +202,16 @@ bool File::IsPresent(const std::string& key)
 }
 
 
-const std::string File::GetValue(const std::string& key)
+const std::string File::GetValue(const std::string &key)
 {
     configure_mapping();
 
-    auto it = std::find_if(map.begin(), map.end(),
+    auto it = std::find_if(map.begin(),
+                           map.end(),
                            [key](OptionMapEntry e)
                            {
-                                return key == e.option;
-                           });
+        return key == e.option;
+    });
     if (it == map.end())
     {
         throw OptionNotFound(key);
@@ -224,27 +229,26 @@ const std::string File::GetValue(const std::string& key)
 }
 
 
-const int File::GetIntValue(const std::string& key)
+const int File::GetIntValue(const std::string &key)
 {
     return std::stoi(File::GetValue(key));
 }
 
 
-const bool File::GetBoolValue(const std::string& key)
+const bool File::GetBoolValue(const std::string &key)
 {
     return (File::GetValue(key) == "true");
 }
 
 
-void File::SetValue(const std::string& key, const std::string& value)
+void File::SetValue(const std::string &key, const std::string &value)
 {
     configure_mapping();
 
-    auto it = std::find_if(map.begin(), map.end(),
-                           [key](OptionMapEntry e)
+    auto it = std::find_if(map.begin(), map.end(), [key](OptionMapEntry e)
                            {
-                                return key == e.option;
-                           });
+        return key == e.option;
+    });
     if (it == map.end())
     {
         throw OptionNotFound(key);
@@ -264,25 +268,24 @@ void File::SetValue(const std::string& key, const std::string& value)
 }
 
 
-void File::SetValue(const std::string& key, const int value)
+void File::SetValue(const std::string &key, const int value)
 {
     File::SetValue(key, std::to_string(value));
 }
 
 
-void File::SetValue(const std::string& key, const bool value)
+void File::SetValue(const std::string &key, const bool value)
 {
     File::SetValue(key, std::string(value ? "true" : "false"));
 }
 
 
-void File::UnsetOption(const std::string& key)
+void File::UnsetOption(const std::string &key)
 {
-    auto it = std::find_if(map.begin(), map.end(),
-                           [key](OptionMapEntry e)
+    auto it = std::find_if(map.begin(), map.end(), [key](OptionMapEntry e)
                            {
-                                return key == e.option;
-                           });
+        return key == e.option;
+    });
     if (it == map.end())
     {
         throw OptionNotFound(key);
@@ -300,7 +303,7 @@ void File::CheckExclusiveOptions()
     //  Create a map of all exclusive groups and
     //  which options each belongs to
     std::map<std::string, std::vector<std::string>> groups;
-    for (const auto& e : map)
+    for (const auto &e : map)
     {
         if (e.exclusive_group.empty())
         {
@@ -312,10 +315,10 @@ void File::CheckExclusiveOptions()
 
     //  Go through each option in each group and
     //  check if a value is present for that option
-    for (const auto& grp : groups)
+    for (const auto &grp : groups)
     {
         std::vector<std::string> used;
-        for (const auto& opt : grp.second)
+        for (const auto &opt : grp.second)
         {
             if (IsPresent(opt))
             {
@@ -342,11 +345,10 @@ std::vector<std::string> File::GetRelatedExclusiveOptions(const std::string opti
     std::vector<std::string> ret{};
 
     // Find the option in the mapping
-    auto s = std::find_if(map.begin(), map.end(),
-                          [option](OptionMapEntry e)
+    auto s = std::find_if(map.begin(), map.end(), [option](OptionMapEntry e)
                           {
-                            return option == e.option;
-                          });
+        return option == e.option;
+    });
 
     if (map.end() == s || s->exclusive_group.empty())
     {
@@ -356,7 +358,7 @@ std::vector<std::string> File::GetRelatedExclusiveOptions(const std::string opti
 
     // Find all other options in the same option group as
     // the option just looked up
-    for (const auto& m : map)
+    for (const auto &m : map)
     {
         // Ignore empty exclusive_groups or itself
         if (m.exclusive_group.empty() || m.option == option)
@@ -379,7 +381,7 @@ Json::Value File::Generate()
     configure_mapping();
 
     Json::Value ret;
-    for (const auto& e : map)
+    for (const auto &e : map)
     {
         if (e.present)
         {
@@ -391,8 +393,10 @@ Json::Value File::Generate()
             {
                 ret[e.field_label] = e.value;
             }
-            std::string comment = std::string("//  Option --") + e.option + " :: " + e.description;
-            ret[e.field_label].setComment(comment, Json::CommentPlacement::commentBefore);
+            std::string comment = std::string("//  Option --")
+                                  + e.option + " :: " + e.description;
+            ret[e.field_label].setComment(comment,
+                                          Json::CommentPlacement::commentBefore);
         }
     }
     return ret;
@@ -422,7 +426,7 @@ void File::Save(const std::string cfgfname)
 
 bool File::empty() const
 {
-    for (const auto& e : map)
+    for (const auto &e : map)
     {
         if (e.present)
         {
@@ -442,11 +446,12 @@ void File::configure_mapping()
     }
 }
 
+
 #ifdef OPENVPN_DEBUG
 void File::Dump() const
 {
     std::cout << "-------- DUMP -------" << std::endl;
-    for (const auto& e : map)
+    for (const auto &e : map)
     {
         std::cout << e;
     }

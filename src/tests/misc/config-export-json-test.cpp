@@ -33,6 +33,7 @@
 
 using namespace openvpn;
 
+
 int main(int argc, char **argv)
 {
 
@@ -41,7 +42,8 @@ int main(int argc, char **argv)
     {
         std::cerr << "Reading configuration from stdin" << std::endl;
 
-        for (std::string line; std::getline(std::cin, line);) {
+        for (std::string line; std::getline(std::cin, line);)
+        {
             conf << line << std::endl;
         }
     }
@@ -52,17 +54,18 @@ int main(int argc, char **argv)
         conf << file.rdbuf();
     }
 
-    ProfileMergeFromString pm(conf.str(), "",
+    ProfileMergeFromString pm(conf.str(),
+                              "",
                               ProfileMerge::FOLLOW_FULL,
                               ProfileParseLimits::MAX_LINE_SIZE,
                               ProfileParseLimits::MAX_PROFILE_SIZE);
 
     OptionList::Limits limits("profile is too large",
-                      ProfileParseLimits::MAX_PROFILE_SIZE,
-                      ProfileParseLimits::OPT_OVERHEAD,
-                      ProfileParseLimits::TERM_OVERHEAD,
-                      ProfileParseLimits::MAX_LINE_SIZE,
-                      ProfileParseLimits::MAX_DIRECTIVE_SIZE);
+                              ProfileParseLimits::MAX_PROFILE_SIZE,
+                              ProfileParseLimits::OPT_OVERHEAD,
+                              ProfileParseLimits::TERM_OVERHEAD,
+                              ProfileParseLimits::MAX_LINE_SIZE,
+                              ProfileParseLimits::MAX_DIRECTIVE_SIZE);
     OptionListJSON options;
     options.parse_from_config(pm.profile_content(), &limits);
     std::cout << options.json_export() << std::endl;

@@ -38,10 +38,10 @@ TEST(PlatformInfo, DBus)
     {
         dbc.Connect();
     }
-    catch (const DBusException& e)
+    catch (const DBusException &e)
     {
         GTEST_SKIP() << std::string("Could not connect to D-Bus ## ")
-                        + std::string(e.what());
+                            + std::string(e.what());
     }
 
     PlatformInfo plinfo(dbc.GetConnection());

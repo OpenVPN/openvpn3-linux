@@ -29,11 +29,13 @@
 #include "dbus/core.hpp"
 #include "sessionmgr/proxy-sessionmgr.hpp"
 
+
+
 int main(int argc, char **argv)
 {
     OpenVPN3SessionMgrProxy sessproxy(G_BUS_TYPE_SYSTEM);
 
-    for (auto& path : sessproxy.FetchAvailableSessionPaths())
+    for (auto &path : sessproxy.FetchAvailableSessionPaths())
     {
         std::cout << path << std::endl;
     }

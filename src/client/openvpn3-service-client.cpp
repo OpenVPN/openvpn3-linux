@@ -54,24 +54,26 @@
 #include "log/proxy-log.hpp"
 #include "backend-signals.hpp"
 
-
 #define USE_TUN_BUILDER
 #include "core-client.hpp"
 
 using namespace openvpn;
 
+
 #define THROW_CLIENTEXCEPTION(m) throw ClientException(m, __FILE__, __LINE__, __FUNCTION__)
 class ClientException : public DBusException
 {
-public:
+  public:
     ClientException(const std::string msg,
-                    const char* file,
+                    const char *file,
                     const int line,
-                    const char* method)
+                    const char *method)
         : DBusException("Client", msg, file, line, method)
     {
     }
 };
+
+
 
 /**
  *  Class managing a specific VPN client tunnel.  This object has its own
@@ -83,7 +85,7 @@ class BackendClientObject : public DBusObject,
                             public DBusConnectionCreds,
                             public RC<thread_safe_refcount>
 {
-public:
+  public:
     typedef RCPtr<BackendClientObject> Ptr;
 
     /**
@@ -98,9 +100,12 @@ public:
      *                       is provided on the command line when starting
      *                       this openvpn3-service-client process.
      */
-    BackendClientObject(GDBusConnection *conn, std::string bus_name,
-                         std::string objpath, std::string session_token,
-                         unsigned int default_log_level, LogWriter *logwr)
+    BackendClientObject(GDBusConnection *conn,
+                        std::string bus_name,
+                        std::string objpath,
+                        std::string session_token,
+                        unsigned int default_log_level,
+                        LogWriter *logwr)
         : DBusObject(objpath),
           DBusConnectionCreds(conn),
           dbusconn(conn),
@@ -162,8 +167,8 @@ public:
                           << "        <property type='b' name='dco' access='readwrite'/>"
                           << "        <property type='o' name='device_path' access='read'/>"
                           << "        <property type='s' name='device_name' access='read'/>"
-                          <<  "    </interface>"
-                          <<  "</node>";
+                          << "    </interface>"
+                          << "</node>";
         ParseIntrospectionXML(introspection_xml);
 
         // Tell the session manager we are ready.  This
@@ -176,10 +181,10 @@ public:
                     OpenVPN3DBus_interf_backends,
                     "RegistrationRequest",
                     g_variant_new("(ssi)",
-                                  bus_name.c_str(), session_token.c_str(),
+                                  bus_name.c_str(),
+                                  session_token.c_str(),
                                   getpid()));
     }
-
 
     ~BackendClientObject()
     {
@@ -227,7 +232,7 @@ public:
      */
     void DisableSocketProtect(bool val)
     {
-       disabled_socket_protect = val;
+        disabled_socket_protect = val;
     }
 
 
@@ -265,7 +270,7 @@ public:
             // expected to be in an active connection.
             if (vpnclient)
             {
-                switch(vpnclient->GetRunStatus())
+                switch (vpnclient->GetRunStatus())
                 {
                 case StatusMinor::CFG_REQUIRE_USER: // Requires reconnect
                 case StatusMinor::CONN_DISCONNECTED:
@@ -349,7 +354,7 @@ public:
                 // specific object.
                 //
                 // The Ping caller is expected to just receive true.
-                g_dbus_method_invocation_return_value(invoc, g_variant_new("(b)", (bool) true));
+                g_dbus_method_invocation_return_value(invoc, g_variant_new("(b)", (bool)true));
                 return;
             }
             else if ("Ready" == method_name)
@@ -369,9 +374,10 @@ public:
             {
                 // This starts the connection against a VPN server
 
-                if( !registered )
+                if (!registered)
                 {
-                    THROW_DBUSEXCEPTION("BackendServiceObject", "Backend service is not initialized");
+                    THROW_DBUSEXCEPTION("BackendServiceObject",
+                                        "Backend service is not initialized");
                 }
 
                 // This re-initializes the client object.  If we have already
@@ -382,12 +388,13 @@ public:
                 {
                     initialize_client();
                 }
-                catch (ClientException& excp)
+                catch (ClientException &excp)
                 {
-                    signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::PROC_KILLED,
+                    signal.StatusChange(StatusMajor::CONNECTION,
+                                        StatusMinor::PROC_KILLED,
                                         excp.GetRawError());
                     signal.LogFATAL("Failed to initialize client: "
-                                       + std::string(excp.GetRawError()));
+                                    + std::string(excp.GetRawError()));
                     excp.SetDBusError(invoc, "net.openvpn.v3.error.client");
                     return;
                 }
@@ -410,17 +417,20 @@ public:
 
                 if (!registered || !vpnclient)
                 {
-                    THROW_DBUSEXCEPTION("BackendServiceObject", "Backend service is not initialized");
+                    THROW_DBUSEXCEPTION("BackendServiceObject",
+                                        "Backend service is not initialized");
                 }
 
                 signal.LogInfo("Stopping connection");
-                signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_DISCONNECTING);
+                signal.StatusChange(StatusMajor::CONNECTION,
+                                    StatusMinor::CONN_DISCONNECTING);
                 vpnclient->stop();
                 if (client_thread)
                 {
                     client_thread->join();
                 }
-                signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_DONE);
+                signal.StatusChange(StatusMajor::CONNECTION,
+                                    StatusMinor::CONN_DONE);
 
                 // Shutting down our selves.
                 RemoveObject(dbusconn);
@@ -433,7 +443,7 @@ public:
                     kill(getpid(), SIGTERM);
                 }
             }
-            else if ("UserInputQueueGetTypeGroup"  == method_name)
+            else if ("UserInputQueueGetTypeGroup" == method_name)
             {
                 // Return an array of tuples of ClientAttentionTypes and
                 // ClientAttentionGroups which needs to be satisfied before
@@ -444,13 +454,13 @@ public:
                 {
                     userinputq.QueueCheckTypeGroup(invoc);
                 }
-                catch (RequiresQueueException& excp)
+                catch (RequiresQueueException &excp)
                 {
                     excp.GenerateDBusError(invoc);
                 }
                 return; // QueueCheckTypeGroup() have fed invoc with a result already
             }
-            else if ("UserInputQueueFetch"  == method_name)
+            else if ("UserInputQueueFetch" == method_name)
             {
                 // Retrieves a specific RequiresQueue item which the front-end
                 // needs to satisfy.
@@ -459,7 +469,7 @@ public:
                 {
                     userinputq.QueueFetch(invoc, params);
                 }
-                catch (RequiresQueueException& excp)
+                catch (RequiresQueueException &excp)
                 {
                     excp.GenerateDBusError(invoc);
                 }
@@ -481,7 +491,8 @@ public:
 
                 if (!registered)
                 {
-                    THROW_DBUSEXCEPTION("BackendServiceObject", "Backend service is not initialized");
+                    THROW_DBUSEXCEPTION("BackendServiceObject",
+                                        "Backend service is not initialized");
                 }
 
                 if (userinputq.QueueDone(params))
@@ -500,9 +511,10 @@ public:
                 // The reason message provided with this call is sent to the
                 // log.
 
-                if( !registered || !vpnclient )
+                if (!registered || !vpnclient)
                 {
-                    THROW_DBUSEXCEPTION("BackendServiceObject", "Backend service is not initialized");
+                    THROW_DBUSEXCEPTION("BackendServiceObject",
+                                        "Backend service is not initialized");
                 }
 
                 if (paused)
@@ -515,23 +527,26 @@ public:
                 }
 
                 gchar *reason_str = nullptr;
-                g_variant_get (params, "(s)", &reason_str);
+                g_variant_get(params, "(s)", &reason_str);
                 std::string reason(reason_str);
 
                 signal.LogInfo("Pausing connection");
-                signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_PAUSING,
+                signal.StatusChange(StatusMajor::CONNECTION,
+                                    StatusMinor::CONN_PAUSING,
                                     "Reason: " + reason);
                 vpnclient->pause(reason);
                 paused = true;
-                signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_PAUSED);
+                signal.StatusChange(StatusMajor::CONNECTION,
+                                    StatusMinor::CONN_PAUSED);
             }
             else if ("Resume" == method_name)
             {
                 // Resumes an already paused VPN session
 
-                if( !registered || !vpnclient )
+                if (!registered || !vpnclient)
                 {
-                    THROW_DBUSEXCEPTION("BackendServiceObject", "Backend service is not initialized");
+                    THROW_DBUSEXCEPTION("BackendServiceObject",
+                                        "Backend service is not initialized");
                 }
 
                 if (!paused)
@@ -544,7 +559,8 @@ public:
                 }
 
                 signal.LogInfo("Resuming connection");
-                signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_RESUMING);
+                signal.StatusChange(StatusMajor::CONNECTION,
+                                    StatusMinor::CONN_RESUMING);
                 vpnclient->resume();
                 paused = false;
             }
@@ -556,10 +572,12 @@ public:
 
                 if (!registered || !vpnclient)
                 {
-                    THROW_DBUSEXCEPTION("BackendServiceObject", "Backend service is not initialized");
+                    THROW_DBUSEXCEPTION("BackendServiceObject",
+                                        "Backend service is not initialized");
                 }
                 signal.LogInfo("Restarting connection");
-                signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_RECONNECTING);
+                signal.StatusChange(StatusMajor::CONNECTION,
+                                    StatusMinor::CONN_RECONNECTING);
                 paused = false;
                 vpnclient->reconnect(0);
             }
@@ -572,8 +590,10 @@ public:
                 // by the session manager.
 
                 signal.LogInfo("Forcing shutdown of backend process for "
-                                "token " + session_token);
-                signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_DONE);
+                               "token "
+                               + session_token);
+                signal.StatusChange(StatusMajor::CONNECTION,
+                                    StatusMinor::CONN_DONE);
 
                 // Shutting down our selves.
                 RemoveObject(dbusconn);
@@ -592,12 +612,12 @@ public:
             }
             g_dbus_method_invocation_return_value(invoc, NULL);
         }
-        catch (DBusCredentialsException& excp)
+        catch (DBusCredentialsException &excp)
         {
             signal.LogCritical(excp.what());
             excp.SetDBusError(invoc);
         }
-        catch (const std::exception& excp)
+        catch (const std::exception &excp)
         {
             std::string errmsg = "Failed executing D-Bus call '" + method_name + "': " + excp.what();
             GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.backend.error.standard",
@@ -613,6 +633,7 @@ public:
             g_error_free(err);
         }
     }
+
 
     /**
      *   Callback which is used each time a BackendClientObject D-Bus property
@@ -633,14 +654,15 @@ public:
      *          returned and the error must be returned via a GError
      *          object.
      */
-    GVariant * callback_get_property(GDBusConnection *conn,
-                                     const std::string sender,
-                                     const std::string obj_path,
-                                     const std::string intf_name,
-                                     const std::string property_name,
-                                     GError **error)
+    GVariant *callback_get_property(GDBusConnection *conn,
+                                    const std::string sender,
+                                    const std::string obj_path,
+                                    const std::string intf_name,
+                                    const std::string property_name,
+                                    GError **error)
     {
-        try {
+        try
+        {
             // Some properties can be read without any restrictions ...
             if ("session_path" == property_name)
             {
@@ -675,10 +697,9 @@ public:
                 GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sx}"));
                 if (vpnclient)
                 {
-                    for (auto& sd : vpnclient->GetStats())
+                    for (auto &sd : vpnclient->GetStats())
                     {
-                        g_variant_builder_add (b, "{sx}",
-                                               sd.key.c_str(), sd.value);
+                        g_variant_builder_add(b, "{sx}", sd.key.c_str(), sd.value);
                     }
                 }
                 GVariant *ret = g_variant_builder_end(b);
@@ -708,19 +729,19 @@ public:
                 return GLibUtils::CreateEmptyBuilderFromType("a{sv}");
             }
         }
-        catch (DBusCredentialsException& excp)
+        catch (DBusCredentialsException &excp)
         {
             signal.LogCritical(excp.what());
             excp.SetDBusError(error, G_IO_ERROR, G_IO_ERROR_FAILED);
         }
         catch (...)
         {
-            g_set_error(error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                        "Unknown error");
+            g_set_error(error, G_IO_ERROR, G_IO_ERROR_FAILED, "Unknown error");
         }
         g_set_error(error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, "Unknown property");
         return NULL;
     }
+
 
     /**
      *  Callback method which is used each time a BackendClientObject
@@ -740,13 +761,13 @@ public:
      * @return Will always throw an exception as there are no properties to
      *         modify.
      */
-    GVariantBuilder * callback_set_property(GDBusConnection *conn,
-                                            const std::string sender,
-                                            const std::string obj_path,
-                                            const std::string intf_name,
-                                            const std::string property_name,
-                                            GVariant *value,
-                                            GError **error)
+    GVariantBuilder *callback_set_property(GDBusConnection *conn,
+                                           const std::string sender,
+                                           const std::string obj_path,
+                                           const std::string intf_name,
+                                           const std::string property_name,
+                                           GVariant *value,
+                                           GError **error)
     {
         try
         {
@@ -758,35 +779,41 @@ public:
                 unsigned int log_verb = g_variant_get_uint32(value);
                 signal.SetLogLevel(log_verb);
                 return build_set_property_response(property_name,
-                                                   (guint32) log_verb);
+                                                   (guint32)log_verb);
             }
             else if ("dco" == property_name)
             {
                 vpnconfig.dco = g_variant_get_boolean(value);
-                signal.LogVerb1(std::string("Session Manager change: DCO ") +
-                                (vpnconfig.dco ? "enabled" : "disabled"));
+                signal.LogVerb1(std::string("Session Manager change: DCO ")
+                                + (vpnconfig.dco ? "enabled" : "disabled"));
                 return build_set_property_response(property_name, vpnconfig.dco);
             }
         }
-        catch (DBusCredentialsException& excp)
+        catch (DBusCredentialsException &excp)
         {
             signal.LogCritical(excp.what());
             excp.SetDBusError(error, G_IO_ERROR, G_IO_ERROR_FAILED);
         }
-        catch (DBusException& excp)
+        catch (DBusException &excp)
         {
-            throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                        obj_path, intf_name, property_name,
+            throw DBusPropertyException(G_IO_ERROR,
+                                        G_IO_ERROR_FAILED,
+                                        obj_path,
+                                        intf_name,
+                                        property_name,
                                         excp.what());
         }
 
-        throw DBusPropertyException(G_IO_ERROR, G_IO_ERROR_FAILED,
-                                    obj_path, intf_name, property_name,
+        throw DBusPropertyException(G_IO_ERROR,
+                                    G_IO_ERROR_FAILED,
+                                    obj_path,
+                                    intf_name,
+                                    property_name,
                                     "Invalid property");
     }
 
 
-private:
+  private:
     GDBusConnection *dbusconn;
     GMainLoop *mainloop;
     BackendSignals signal;
@@ -825,8 +852,8 @@ private:
         if (GetUniqueBusID(OpenVPN3DBus_name_sessions) != sender)
         {
             std::string err = "Caller " + sender
-                            + " (pid " + std::to_string(GetPID(sender))
-                            + ", uid " + std::to_string(GetUID(sender))
+                              + " (pid " + std::to_string(GetPID(sender))
+                              + ", uid " + std::to_string(GetUID(sender))
                               + ") is not a session manager";
             throw DBusCredentialsException(GetUID(sender),
                                            "net.openvpn.v3.error.acl.denied",
@@ -844,8 +871,11 @@ private:
 
         try
         {
-            signal.Debug(std::string("[Connect] DCO flag: ") + (vpnconfig.dco ? "enabled" : "disabled"));
-            signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_CONNECTING, "");
+            signal.Debug(std::string("[Connect] DCO flag: ")
+                         + (vpnconfig.dco ? "enabled" : "disabled"));
+            signal.StatusChange(StatusMajor::CONNECTION,
+                                StatusMinor::CONN_CONNECTING,
+                                "");
             ClientAPI::Status status = vpnclient->connect();
             if (status.error)
             {
@@ -862,11 +892,11 @@ private:
                                     msg.str());
             }
         }
-        catch (openvpn::Exception& excp)
+        catch (openvpn::Exception &excp)
         {
             signal.LogFATAL(excp.what());
         }
-   }
+    }
 
 
     /**
@@ -892,13 +922,15 @@ private:
 
             bool provide_creds = false;
             if (userinputq.QueueCount(ClientAttentionType::CREDENTIALS,
-                                      ClientAttentionGroup::USER_PASSWORD) > 0)
+                                      ClientAttentionGroup::USER_PASSWORD)
+                > 0)
             {
                 creds.username = userinputq.GetResponse(ClientAttentionType::CREDENTIALS,
                                                         ClientAttentionGroup::USER_PASSWORD,
                                                         "username");
                 if (userinputq.QueueCount(ClientAttentionType::CREDENTIALS,
-                                          ClientAttentionGroup::CHALLENGE_DYNAMIC) == 0)
+                                          ClientAttentionGroup::CHALLENGE_DYNAMIC)
+                    == 0)
                 {
                     creds.password = userinputq.GetResponse(ClientAttentionType::CREDENTIALS,
                                                             ClientAttentionGroup::USER_PASSWORD,
@@ -907,7 +939,8 @@ private:
                 }
 
                 if (userinputq.QueueCount(ClientAttentionType::CREDENTIALS,
-                                          ClientAttentionGroup::CHALLENGE_STATIC) > 0)
+                                          ClientAttentionGroup::CHALLENGE_STATIC)
+                    > 0)
                 {
                     creds.response = userinputq.GetResponse(ClientAttentionType::CREDENTIALS,
                                                             ClientAttentionGroup::CHALLENGE_STATIC,
@@ -918,11 +951,12 @@ private:
             }
 
             if (userinputq.QueueCount(ClientAttentionType::CREDENTIALS,
-                                      ClientAttentionGroup::CHALLENGE_DYNAMIC) > 0)
+                                      ClientAttentionGroup::CHALLENGE_DYNAMIC)
+                > 0)
             {
                 creds.dynamicChallengeCookie = userinputq.GetResponse(ClientAttentionType::CREDENTIALS,
-                                                        ClientAttentionGroup::CHALLENGE_DYNAMIC,
-                                                        "dynamic_challenge_cookie");
+                                                                      ClientAttentionGroup::CHALLENGE_DYNAMIC,
+                                                                      "dynamic_challenge_cookie");
                 creds.response = userinputq.GetResponse(ClientAttentionType::CREDENTIALS,
                                                         ClientAttentionGroup::CHALLENGE_DYNAMIC,
                                                         "dynamic_challenge");
@@ -930,16 +964,15 @@ private:
             }
 
             if (userinputq.QueueCount(ClientAttentionType::CREDENTIALS,
-                                      ClientAttentionGroup::HTTP_PROXY_CREDS) > 0)
+                                      ClientAttentionGroup::HTTP_PROXY_CREDS)
+                > 0)
             {
-                creds.http_proxy_user =
-                    userinputq.GetResponse(ClientAttentionType::CREDENTIALS,
-                                           ClientAttentionGroup::HTTP_PROXY_CREDS,
-                                           "http_proxy_user");
-                creds.http_proxy_pass =
-                    userinputq.GetResponse(ClientAttentionType::CREDENTIALS,
-                                           ClientAttentionGroup::HTTP_PROXY_CREDS,
-                                           "http_proxy_pass");
+                creds.http_proxy_user = userinputq.GetResponse(ClientAttentionType::CREDENTIALS,
+                                                               ClientAttentionGroup::HTTP_PROXY_CREDS,
+                                                               "http_proxy_user");
+                creds.http_proxy_pass = userinputq.GetResponse(ClientAttentionType::CREDENTIALS,
+                                                               ClientAttentionGroup::HTTP_PROXY_CREDS,
+                                                               "http_proxy_pass");
                 provide_creds = true;
             }
 
@@ -953,7 +986,8 @@ private:
                 }
 
                 std::stringstream msg;
-                msg << "Username/password provided successfully" << " for '"
+                msg << "Username/password provided successfully"
+                    << " for '"
                     << (creds.username.empty() ? creds.http_proxy_user : creds.username) << "'";
                 signal.LogVerb1(msg.str());
                 if (!creds.response.empty())
@@ -978,20 +1012,19 @@ private:
                 }
                 client_thread = nullptr;
             }
-            client_thread.reset(new std::thread([self=Ptr(this)]()
+            client_thread.reset(new std::thread([self = Ptr(this)]()
                                                 {
-                                                    self->run_connection_thread();
-                                                }
-                                               ));
+                self->run_connection_thread();
+            }));
         }
-        catch(const DBusException& err)
+        catch (const DBusException &err)
         {
-            signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::PROC_KILLED,
+            signal.StatusChange(StatusMajor::CONNECTION,
+                                StatusMinor::PROC_KILLED,
                                 err.what());
             signal.LogFATAL("Client thread exception: " + std::string(err.what()));
             THROW_DBUSEXCEPTION("BackendServiceObject", std::string(err.what()));
         }
-
     }
 
 
@@ -1007,13 +1040,13 @@ private:
 
         // Create a new VPN client object, which is handling the
         // tunnel itself.
-        vpnclient.reset(new CoreVPNClient(dbusconn, &signal, &userinputq,
-                                          session_token));
+        vpnclient.reset(new CoreVPNClient(dbusconn, &signal, &userinputq, session_token));
         vpnclient->disable_socket_protect(disabled_socket_protect);
         vpnclient->disable_dns_config(ignore_dns_cfg);
 
         if (userinputq.QueueCount(ClientAttentionType::CREDENTIALS,
-                                  ClientAttentionGroup::PK_PASSPHRASE) > 0)
+                                  ClientAttentionGroup::PK_PASSPHRASE)
+            > 0)
         {
             vpnconfig.privateKeyPassword = userinputq.GetResponse(ClientAttentionType::CREDENTIALS,
                                                                   ClientAttentionGroup::PK_PASSPHRASE,
@@ -1036,7 +1069,7 @@ private:
             parsed_opts.parse_from_config(vpnconfig.content, &limits);
             parsed_opts.update_map();
         }
-        catch (const std::exception& excp)
+        catch (const std::exception &excp)
         {
             THROW_CLIENTEXCEPTION("Configuration pre-parsing failed: "
                                   + std::string(excp.what()));
@@ -1080,7 +1113,7 @@ private:
                     signal.SetLogLevel(v);
                 }
             }
-            catch (const LogException&)
+            catch (const LogException &)
             {
                 signal.LogCritical("Invalid --verb level in configuration profile");
             }
@@ -1097,7 +1130,7 @@ private:
             machineid.success();
             vpnconfig.hwAddrOverride = machineid.get();
         }
-        catch (const MachineIDException& excp)
+        catch (const MachineIDException &excp)
         {
             signal.LogCritical("Could not set a unique host ID: "
                                + excp.GetError());
@@ -1112,8 +1145,7 @@ private:
             statusmsg << "config_path=" << configpath << ", "
                       << "eval_message='" << cfgeval.message << "'";
             signal.LogError("Failed to parse configuration: " + cfgeval.message);
-            signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CFG_ERROR,
-                                statusmsg.str());
+            signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CFG_ERROR, statusmsg.str());
             signal.Debug(statusmsg.str());
             vpnclient = nullptr;
             THROW_CLIENTEXCEPTION("Configuration parsing failed: " + cfgeval.message);
@@ -1122,27 +1154,31 @@ private:
         if (!vpnconfig.disableClientCert && cfgeval.externalPki)
         {
             std::string errmsg = "Failed to parse configuration: "
-                "Configuration requires external PKI which is not implemented yet.";
+                                 "Configuration requires external PKI which is not implemented yet.";
             signal.LogError(errmsg);
             THROW_CLIENTEXCEPTION(errmsg);
         }
 
-        signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CFG_OK,
-                            "config_path=" + configpath);
+        signal.StatusChange(StatusMajor::CONNECTION, StatusMinor::CFG_OK, "config_path=" + configpath);
 
         // Do we need username/password?  Or does this configuration allow the
         // client to log in automatically?
         if (!cfgeval.autologin
             && userinputq.QueueCount(ClientAttentionType::CREDENTIALS,
-                                     ClientAttentionGroup::USER_PASSWORD) == 0)
+                                     ClientAttentionGroup::USER_PASSWORD)
+                   == 0)
         {
             // FIXME: Consider to have --auth-nocache approach as well
             userinputq.RequireAdd(ClientAttentionType::CREDENTIALS,
                                   ClientAttentionGroup::USER_PASSWORD,
-                                  "username", "Auth User name", false);
+                                  "username",
+                                  "Auth User name",
+                                  false);
             userinputq.RequireAdd(ClientAttentionType::CREDENTIALS,
                                   ClientAttentionGroup::USER_PASSWORD,
-                                  "password", "Auth Password", true);
+                                  "password",
+                                  "Auth Password",
+                                  true);
 
             if (!cfgeval.staticChallenge.empty())
             {
@@ -1166,7 +1202,9 @@ private:
         {
             userinputq.RequireAdd(ClientAttentionType::CREDENTIALS,
                                   ClientAttentionGroup::PK_PASSPHRASE,
-                                  "pk_passphrase", "Private key passphrase", true);
+                                  "pk_passphrase",
+                                  "Private key passphrase",
+                                  true);
             signal.AttentionReq(ClientAttentionType::CREDENTIALS,
                                 ClientAttentionGroup::PK_PASSPHRASE,
                                 "Private key passphrase needed");
@@ -1205,7 +1243,8 @@ private:
             std::vector<OverrideValue> overrides = cfg_proxy.GetOverrides();
 
             // Parse the configuration
-            ProfileMergeFromString pm(cfg_proxy.GetConfig(), "",
+            ProfileMergeFromString pm(cfg_proxy.GetConfig(),
+                                      "",
                                       ProfileMerge::FOLLOW_NONE,
                                       ProfileParseLimits::MAX_LINE_SIZE,
                                       ProfileParseLimits::MAX_PROFILE_SIZE);
@@ -1220,14 +1259,14 @@ private:
                 PlatformInfo platinfo(dbusconn);
                 vpnconfig.platformVersion = platinfo.str();
             }
-            catch(const std::exception &ex)
+            catch (const std::exception &ex)
             {
                 signal.LogError(ex.what());
             }
 
             set_overrides(overrides);
         }
-        catch (std::exception& e)
+        catch (std::exception &e)
         {
             // This should normally not happen
             signal.LogFATAL("** EXCEPTION ** openvpn3-service-client/fetch_config():"
@@ -1236,9 +1275,10 @@ private:
         return config_name;
     }
 
-    void set_overrides(std::vector<OverrideValue> & overrides)
+
+    void set_overrides(std::vector<OverrideValue> &overrides)
     {
-        for (const auto & override: overrides)
+        for (const auto &override : overrides)
         {
             bool valid_override = false;
             if (override.override.key == "server-override")
@@ -1394,7 +1434,6 @@ private:
             }
         }
     }
-
 };
 
 
@@ -1405,7 +1444,7 @@ private:
  */
 class BackendClientDBus : public DBus
 {
-public:
+  public:
     /**
      *  Initializes the BackendClientDBus object
      *
@@ -1416,8 +1455,10 @@ public:
      *                   command line.  This is used when signalling back
      *                   to the session manager.
      */
-    BackendClientDBus(pid_t start_pid, GBusType bus_type,
-                      std::string sesstoken, LogWriter *logwr)
+    BackendClientDBus(pid_t start_pid,
+                      GBusType bus_type,
+                      std::string sesstoken,
+                      LogWriter *logwr)
         : DBus(bus_type,
                OpenVPN3DBus_name_backends_be + to_string(getpid()),
                OpenVPN3DBus_rootp_sessions,
@@ -1429,9 +1470,7 @@ public:
           be_obj(nullptr),
           disabled_socket_protect(false),
           signal(nullptr),
-          signal_broadcast(false)
-    {
-    };
+          signal_broadcast(false){};
 
     ~BackendClientDBus()
     {
@@ -1444,10 +1483,10 @@ public:
             }
             procsig->ProcessChange(StatusMinor::PROC_STOPPED);
         }
-        catch (const std::exception& excp)
+        catch (const std::exception &excp)
         {
             std::cerr << "** ERROR **  Failed closing down D-Bus connection: "
-                      <<  std::string(excp.what());
+                      << std::string(excp.what());
         }
     }
 
@@ -1466,6 +1505,7 @@ public:
             be_obj->SetMainLoop(ml);
         }
     }
+
 
     /**
      *  Sets the default log level when the backend client starts.  This
@@ -1505,8 +1545,9 @@ public:
      */
     void DisableSocketProtect(bool val)
     {
-       disabled_socket_protect = val;
+        disabled_socket_protect = val;
     }
+
 
     /**
      *  This callback is called when the service was successfully registered
@@ -1524,7 +1565,7 @@ public:
                                                               OpenVPN3DBus_interf_backends);
                 logservice->Attach(OpenVPN3DBus_interf_sessions);
             }
-            catch (DBusException& excp)
+            catch (DBusException &excp)
             {
                 std::cout << "FATAL ERROR: openvpn3-service-client could not "
                           << "attach to the log service: "
@@ -1535,7 +1576,8 @@ public:
 
         // Create a new OpenVPN3 client session object
         object_path = OpenVPN3DBus_rootp_backends_session;
-        be_obj.reset(new BackendClientObject(GetConnection(), GetBusName(),
+        be_obj.reset(new BackendClientObject(GetConnection(),
+                                             GetBusName(),
                                              object_path,
                                              session_token,
                                              default_log_level,
@@ -1545,17 +1587,21 @@ public:
         be_obj->RegisterObject(GetConnection());
 
         // Setup a signal object of the backend
-        signal.reset(new BackendSignals(GetConnection(), LogGroup::BACKENDPROC,
-                                        session_token, logwr));
+        signal.reset(new BackendSignals(GetConnection(),
+                                        LogGroup::BACKENDPROC,
+                                        session_token,
+                                        logwr));
         signal->EnableBroadcast(signal_broadcast);
         signal->SetLogLevel(default_log_level);
         signal->LogVerb2("Backend client process started as pid " + std::to_string(start_pid)
                          + " daemonized as pid " + std::to_string(getpid()));
         signal->Debug("BackendClientDBus registered on '" + GetBusName()
-                       + "': " + object_path);
+                      + "': " + object_path);
 
-        procsig.reset(new ProcessSignalProducer(GetConnection(), OpenVPN3DBus_interf_backends,
-                                            object_path, "VPN-Client"));
+        procsig.reset(new ProcessSignalProducer(GetConnection(),
+                                                OpenVPN3DBus_interf_backends,
+                                                object_path,
+                                                "VPN-Client"));
         procsig->ProcessChange(StatusMinor::PROC_STARTED);
     }
 
@@ -1570,10 +1616,7 @@ public:
      * @param conn     Connection where this event happened
      * @param busname  A string of the acquired bus name
      */
-    void callback_name_acquired(GDBusConnection *conn, std::string busname)
-    {
-    };
-
+    void callback_name_acquired(GDBusConnection *conn, std::string busname){};
 
     /**
      *  This is called each time the well-known bus name is removed from the
@@ -1587,11 +1630,11 @@ public:
     {
         THROW_DBUSEXCEPTION("BackendClientDBus",
                             "openvpn3-service-client could not register '"
-                            + busname + "' on the D-Bus");
+                                + busname + "' on the D-Bus");
     };
 
 
-private:
+  private:
     unsigned int default_log_level = 3; // LogCategory::INFO messages
     pid_t start_pid;
     std::string session_token;
@@ -1606,17 +1649,19 @@ private:
 };
 
 
-void start_client_thread(pid_t start_pid, const std::string argv0,
-                        const std::string sesstoken,
-                        bool disable_socket_protect,
-                        int log_level, bool signal_broadcast,
-                        LogWriter *logwr)
+
+void start_client_thread(pid_t start_pid,
+                         const std::string argv0,
+                         const std::string sesstoken,
+                         bool disable_socket_protect,
+                         int log_level,
+                         bool signal_broadcast,
+                         LogWriter *logwr)
 {
     InitProcess::Init init;
     std::cout << get_version(argv0) << std::endl;
 
-    BackendClientDBus backend_service(start_pid, G_BUS_TYPE_SYSTEM,
-                                      sesstoken, logwr);
+    BackendClientDBus backend_service(start_pid, G_BUS_TYPE_SYSTEM, sesstoken, logwr);
     if (log_level > 0)
     {
         backend_service.SetDefaultLogLevel(log_level);
@@ -1637,6 +1682,7 @@ void start_client_thread(pid_t start_pid, const std::string argv0,
 }
 
 
+
 int client_service(ParsedArgs::Ptr args)
 {
     auto extra = args->GetAllExtraArgs();
@@ -1651,7 +1697,7 @@ int client_service(ParsedArgs::Ptr args)
 
     // Open a log destination, if requested
     std::ofstream logfs;
-    std::streambuf * logstream;
+    std::streambuf *logstream;
     std::unique_ptr<std::ostream> logfile;
     LogWriter::Ptr logwr = nullptr;
     ColourEngine::Ptr colourengine = nullptr;
@@ -1673,15 +1719,14 @@ int client_service(ParsedArgs::Ptr args)
         if (args->Present("colour"))
         {
             colourengine.reset(new ANSIColours());
-             logwr.reset(new ColourStreamWriter(*logfile,
-                                                colourengine.get()));
+            logwr.reset(new ColourStreamWriter(*logfile,
+                                               colourengine.get()));
         }
         else
         {
             logwr.reset(new StreamLogWriter(*logfile));
         }
     }
-
 
     // Save the current pid, for logging later on
     pid_t start_pid = getpid();
@@ -1690,7 +1735,8 @@ int client_service(ParsedArgs::Ptr args)
     // and --no-setsid is used.  This can make gdb debugging simpler.
     if (!args->Present("no-setsid") && (-1 == setsid()))
     {
-        std::cerr << "** ERROR ** Failed getting a new process session ID:" << strerror(errno) << std::endl;
+        std::cerr << "** ERROR ** Failed getting a new process session ID:"
+                  << strerror(errno) << std::endl;
         return 3;
     }
 
@@ -1706,13 +1752,16 @@ int client_service(ParsedArgs::Ptr args)
     {
         try
         {
-            start_client_thread(getpid(), args->GetArgv0(), extra[0],
+            start_client_thread(getpid(),
+                                args->GetArgv0(),
+                                extra[0],
                                 args->Present("disable-protect-socket"),
-                                log_level, args->Present("signal-broadcast"),
+                                log_level,
+                                args->Present("signal-broadcast"),
                                 logwr.get());
             return 0;
         }
-        catch (std::exception& excp)
+        catch (std::exception &excp)
         {
             std::cout << "FATAL ERROR: " << excp.what() << std::endl;
             return 3;
@@ -1732,13 +1781,16 @@ int client_service(ParsedArgs::Ptr args)
     {
         try
         {
-            start_client_thread(start_pid, args->GetArgv0(), extra[0],
+            start_client_thread(start_pid,
+                                args->GetArgv0(),
+                                extra[0],
                                 args->Present("disable-protect-socket"),
-                                log_level, args->Present("signal-broadcast"),
+                                log_level,
+                                args->Present("signal-broadcast"),
                                 logwr.get());
             return 0;
         }
-        catch (std::exception& excp)
+        catch (std::exception &excp)
         {
             std::cout << "FATAL ERROR: " << excp.what() << std::endl;
             return 3;
@@ -1757,26 +1809,35 @@ int client_service(ParsedArgs::Ptr args)
 }
 
 
+
 int main(int argc, char **argv)
 {
-    SingleCommand argparser(argv[0], "OpenVPN 3 VPN Client backend service",
-                            client_service);
+    SingleCommand argparser(argv[0], "OpenVPN 3 VPN Client backend service", client_service);
     argparser.AddVersionOption();
-    argparser.AddOption("log-level", "LOG-LEVEL", true,
+    argparser.AddOption("log-level",
+                        "LOG-LEVEL",
+                        true,
                         "Sets the default log verbosity level (valid values 0-6, default 4)");
-    argparser.AddOption("log-file", "FILE" , true,
+    argparser.AddOption("log-file",
+                        "FILE",
+                        true,
                         "Write log data to FILE.  Use 'stdout:' for console logging.");
-    argparser.AddOption("colour", 0,
+    argparser.AddOption("colour",
+                        0,
                         "Make the log lines colourful");
-    argparser.AddOption("signal-broadcast", 0,
+    argparser.AddOption("signal-broadcast",
+                        0,
                         "Broadcast all D-Bus signals instead of targeted unicast");
-    argparser.AddOption("disable-protect-socket", 0,
+    argparser.AddOption("disable-protect-socket",
+                        0,
                         "Disable the socket protect call on the UDP/TCP socket. "
                         "This is needed on systems not supporting this feature");
 #if OPENVPN_DEBUG
-    argparser.AddOption("no-fork", 0,
+    argparser.AddOption("no-fork",
+                        0,
                         "Debug option: Do not fork a child to be run in the background.");
-    argparser.AddOption("no-setsid", 0,
+    argparser.AddOption("no-setsid",
+                        0,
                         "Debug option: Do not not call setsid(3) when forking process.");
 #endif
 
@@ -1784,13 +1845,13 @@ int main(int argc, char **argv)
     {
         return argparser.RunCommand(simple_basename(argv[0]), argc, argv);
     }
-    catch (const LogServiceProxyException& excp)
+    catch (const LogServiceProxyException &excp)
     {
         std::cout << "** ERROR ** " << excp.what() << std::endl;
         std::cout << "            " << excp.debug_details() << std::endl;
         return 2;
     }
-    catch (CommandException& excp)
+    catch (CommandException &excp)
     {
         std::cout << excp.what() << std::endl;
         return 2;

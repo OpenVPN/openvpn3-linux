@@ -26,7 +26,6 @@
  *         resolver service which picks these files some elsewhere.
  */
 
-
 #include <algorithm>
 #include <cstdio>
 #include <fstream>
@@ -46,13 +45,14 @@
 
 using namespace NetCfg::DNS;
 
+
 //
 //  NetCfg::DNS::FileGenerator
 //
 
-FileGenerator::FileGenerator(const std::string& filename,
-                             const std::string& backup_filename)
-        : filename(filename), backup_filename(backup_filename)
+FileGenerator::FileGenerator(const std::string &filename,
+                             const std::string &backup_filename)
+    : filename(filename), backup_filename(backup_filename)
 {
 }
 
@@ -62,7 +62,7 @@ FileGenerator::~FileGenerator()
 }
 
 
-void FileGenerator::SetFilename(const std::string& fname) noexcept
+void FileGenerator::SetFilename(const std::string &fname) noexcept
 {
     filename = fname;
 }
@@ -74,7 +74,7 @@ const std::string FileGenerator::GetFilename() const noexcept
 }
 
 
-void FileGenerator::SetBackupFilename(const std::string& bfname) noexcept
+void FileGenerator::SetBackupFilename(const std::string &bfname) noexcept
 {
     backup_filename = bfname;
 }
@@ -123,7 +123,7 @@ void FileGenerator::Write()
         }
         if (0 != std::rename(filename.c_str(), backup_filename.c_str()))
         {
-            throw NetCfgException("Could not rename '" + filename +"'"
+            throw NetCfgException("Could not rename '" + filename + "'"
                                   + " to '" + backup_filename + "'");
         }
         backup_active = true;
@@ -131,9 +131,10 @@ void FileGenerator::Write()
 
     // Open the destination file, generate contents and write to disk
     std::fstream output(filename, output.out);
-    for (const auto& line : file_contents)
+    for (const auto &line : file_contents)
     {
-        output << line << std::endl;;
+        output << line << std::endl;
+        ;
     }
 }
 
@@ -179,20 +180,21 @@ void FileGenerator::RestoreBackup()
  * @param fname  std::string of filename to look for
  * @return  Returns true if file exists, otherwise false.
  */
-bool FileGenerator::file_exists (const std::string& fname) noexcept
+bool FileGenerator::file_exists(const std::string &fname) noexcept
 {
     struct stat buffer;
-    return (stat (fname.c_str(), &buffer) == 0);
+    return (stat(fname.c_str(), &buffer) == 0);
 }
+
 
 
 //
 //  NetCfg::DNS::ResolvConfFile
 //
 
-ResolvConfFile::ResolvConfFile(const std::string& filename,
-               const std::string& backup_filename)
-        : FileGenerator(filename, backup_filename)
+ResolvConfFile::ResolvConfFile(const std::string &filename,
+                               const std::string &backup_filename)
+    : FileGenerator(filename, backup_filename)
 {
 }
 
@@ -212,7 +214,7 @@ const ApplySettingsMode ResolvConfFile::GetApplyMode() const noexcept
 const std::string ResolvConfFile::GetBackendInfo() const noexcept
 {
     std::string ret = std::string("ResolvConf file backend. Using: ")
-                    + "'" + GetFilename() + "'";
+                      + "'" + GetFilename() + "'";
     if (!GetBackupFilename().empty())
     {
         ret += "  Backup file: '" + GetBackupFilename() + "'";
@@ -238,40 +240,48 @@ void ResolvConfFile::Apply(const ResolverSettings::Ptr settings)
     if (settings->GetEnabled())
     {
         vpn_name_servers.insert(vpn_name_servers.end(),
-                                srvs.begin(), srvs.end());
-        for (const auto& e : srvs)
+                                srvs.begin(),
+                                srvs.end());
+        for (const auto &e : srvs)
         {
             NetCfgChangeEvent ev(NetCfgChangeType::DNS_SERVER_ADDED,
-                                 "", {{"dns_server", e}});
+                                 "",
+                                 {{"dns_server", e}});
             notification_queue.push_back(ev);
         }
 
         vpn_search_domains.insert(vpn_search_domains.end(),
-                                  dmns.begin(), dmns.end());
-        for (const auto& e : dmns)
+                                  dmns.begin(),
+                                  dmns.end());
+        for (const auto &e : dmns)
         {
             NetCfgChangeEvent ev(NetCfgChangeType::DNS_SEARCH_ADDED,
-                                 "", {{"search_domain", e}});
+                                 "",
+                                 {{"search_domain", e}});
             notification_queue.push_back(ev);
         }
     }
     else
     {
         vpn_name_servers_removed.insert(vpn_name_servers_removed.end(),
-                                        srvs.begin(), srvs.end());
-        for (const auto& e : srvs)
+                                        srvs.begin(),
+                                        srvs.end());
+        for (const auto &e : srvs)
         {
             NetCfgChangeEvent ev(NetCfgChangeType::DNS_SERVER_REMOVED,
-                                 "", {{"dns_server", e}});
+                                 "",
+                                 {{"dns_server", e}});
             notification_queue.push_back(ev);
         }
 
         vpn_search_domains_removed.insert(vpn_search_domains_removed.end(),
-                                          dmns.begin(), dmns.end());
-        for (const auto& e : dmns)
+                                          dmns.begin(),
+                                          dmns.end());
+        for (const auto &e : dmns)
         {
             NetCfgChangeEvent ev(NetCfgChangeType::DNS_SEARCH_REMOVED,
-                                 "", {{"search_domain", e}});
+                                 "",
+                                 {{"search_domain", e}});
             notification_queue.push_back(ev);
         }
     }
@@ -324,7 +334,7 @@ void ResolvConfFile::Commit(NetCfgSignals *signal)
             signal->LogWarn("DNS Scope change ignored. Only global scope supported");
         }
 
-        for (const auto& ev : notification_queue)
+        for (const auto &ev : notification_queue)
         {
             signal->NetworkChange(ev);
         }
@@ -340,6 +350,7 @@ void ResolvConfFile::Restore()
     RestoreBackup();
 }
 
+
 #ifdef ENABLE_DEBUG
 /**
  *  Do a forceful read of the resolv.conf file and parse it
@@ -350,27 +361,32 @@ void ResolvConfFile::Debug_Fetch()
     parse();
 }
 
+
 void ResolvConfFile::Debug_Write()
 {
     generate();
     FileGenerator::Write();
 }
 
+
 std::vector<std::string> ResolvConfFile::Debug_Get_dns_servers()
 {
     std::vector<std::string> ret;
     ret = vpn_name_servers;
     ret.insert(ret.end(),
-               sys_name_servers.begin(), sys_name_servers.end());
+               sys_name_servers.begin(),
+               sys_name_servers.end());
     return ret;
 }
+
 
 std::vector<std::string> ResolvConfFile::Debug_Get_search_domains()
 {
     std::vector<std::string> ret;
     ret = vpn_search_domains;
     ret.insert(ret.end(),
-               sys_search_domains.begin(), sys_search_domains.end());
+               sys_search_domains.begin(),
+               sys_search_domains.end());
     return ret;
 }
 
@@ -380,42 +396,42 @@ std::string ResolvConfFile::Dump()
     std::stringstream ret;
 
     int i = 0;
-    for (const auto& e : vpn_search_domains)
+    for (const auto &e : vpn_search_domains)
     {
         ret << "vpn_search_domains  [" << i << "]: " << e << std::endl;
         ++i;
     }
 
     i = 0;
-    for (const auto& e : vpn_search_domains_removed)
+    for (const auto &e : vpn_search_domains_removed)
     {
         ret << "vpn_search_domains_removed  [" << i << "]: " << e << std::endl;
         ++i;
     }
 
     i = 0;
-    for (const auto& e : sys_search_domains)
+    for (const auto &e : sys_search_domains)
     {
         ret << "sys_search_domains  [" << i << "]: " << e << std::endl;
         ++i;
     }
 
     i = 0;
-    for (const auto& e : vpn_name_servers)
+    for (const auto &e : vpn_name_servers)
     {
         ret << "vpn_dns_servers [" << i << "]: " << e << std::endl;
         ++i;
     }
 
     i = 0;
-    for (const auto& e : vpn_name_servers_removed)
+    for (const auto &e : vpn_name_servers_removed)
     {
         ret << "vpn_dns_servers_removed [" << i << "]: " << e << std::endl;
         ++i;
     }
 
     i = 0;
-    for (const auto& e : sys_name_servers)
+    for (const auto &e : sys_name_servers)
     {
         ret << "sys_dns_servers [" << i << "]: " << e << std::endl;
         ++i;
@@ -432,7 +448,7 @@ void ResolvConfFile::parse()
     unprocessed_lines.clear();
 
     // Parse the currently active resolv.conf settings
-    for (const auto& line : file_contents)
+    for (const auto &line : file_contents)
     {
         if (line.find("nameserver ") == 0)
         {
@@ -443,12 +459,12 @@ void ResolvConfFile::parse()
             size_t idx = 0;
             do
             {
-                idx = line.find(" ", idx+1);
+                idx = line.find(" ", idx + 1);
                 if (std::string::npos != idx)
                 {
-                    rslv_search.push_back(line.substr(idx+1, line.substr(idx+1).find(" ")));
+                    rslv_search.push_back(line.substr(idx + 1, line.substr(idx + 1).find(" ")));
                 }
-            } while( std::string::npos != idx );
+            } while (std::string::npos != idx);
         }
         else if (line.find("#") == 0 || line.size() < 1)
         {
@@ -472,7 +488,7 @@ void ResolvConfFile::parse()
     // not found in "local" settings (from VPN sessions) to be
     // considered system settings
     //
-    for (const auto& srv : rslv_servers)
+    for (const auto &srv : rslv_servers)
     {
         auto sys = std::find(sys_name_servers.begin(),
                              sys_name_servers.end(),
@@ -492,7 +508,7 @@ void ResolvConfFile::parse()
         }
     }
 
-    for (const auto& srch : rslv_search)
+    for (const auto &srch : rslv_search)
     {
         auto sys = std::find(sys_search_domains.begin(),
                              sys_search_domains.end(),
@@ -530,11 +546,11 @@ void ResolvConfFile::generate()
     //  'search <list-of-domains>' line
     //
     std::stringstream dns_search_line;
-    for (const auto& e : vpn_search_domains)
+    for (const auto &e : vpn_search_domains)
     {
         dns_search_line << " " << e;
     }
-    for (const auto& e : sys_search_domains)
+    for (const auto &e : sys_search_domains)
     {
         dns_search_line << " " << e;
     }
@@ -550,7 +566,7 @@ void ResolvConfFile::generate()
     {
         file_contents.push_back("");
         file_contents.push_back("# OpenVPN defined name servers");
-        for (const auto& e : vpn_name_servers)
+        for (const auto &e : vpn_name_servers)
         {
             file_contents.push_back("nameserver " + e);
         }
@@ -560,7 +576,7 @@ void ResolvConfFile::generate()
     {
         file_contents.push_back("");
         file_contents.push_back("# System defined name servers");
-        for (const auto& e : sys_name_servers)
+        for (const auto &e : sys_name_servers)
         {
             file_contents.push_back("nameserver " + e);
         }
@@ -574,7 +590,7 @@ void ResolvConfFile::generate()
     {
         file_contents.push_back("");
         file_contents.push_back("# Other system settings");
-        for (const auto& e : unprocessed_lines)
+        for (const auto &e : unprocessed_lines)
         {
             file_contents.push_back(e);
         }

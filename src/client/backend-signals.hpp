@@ -32,17 +32,14 @@
 #include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"
 
-
 class BackendSignals : public LogSender,
                        public DBusConnectionCreds,
                        public RC<thread_unsafe_refcount>
 {
-public:
+  public:
     typedef RCPtr<BackendSignals> Ptr;
-    BackendSignals(GDBusConnection *conn, LogGroup lgroup,
-                   std::string session_token, LogWriter *logwr)
-        : LogSender(conn, lgroup, OpenVPN3DBus_interf_backends,
-                    OpenVPN3DBus_rootp_backends_session, logwr),
+    BackendSignals(GDBusConnection *conn, LogGroup lgroup, std::string session_token, LogWriter *logwr)
+        : LogSender(conn, lgroup, OpenVPN3DBus_interf_backends, OpenVPN3DBus_rootp_backends_session, logwr),
           DBusConnectionCreds(conn),
           session_token(session_token)
     {
@@ -50,26 +47,31 @@ public:
         configure_signal_targets();
     }
 
+
     void EnableBroadcast(bool brdcst) noexcept
     {
         broadcast = brdcst;
         configure_signal_targets();
     }
 
+
     const std::string GetSessionPath() const
     {
         return get_object_path();
     }
 
-    void SetSessionPath(const std::string& session_path)
+
+    void SetSessionPath(const std::string &session_path)
     {
         set_object_path(session_path);
     }
+
 
     const std::string GetLogIntrospection() override
     {
         return LogEvent::GetIntrospection("Log", true);
     }
+
 
     /**
      *  Reimplement LogSender::Log() to prefix all messages with
@@ -77,7 +79,7 @@ public:
      *
      * @param logev  LogEvent object containing the log message to log.
      */
-    void Log(const LogEvent& logev, bool duplicate_check = false, const std::string& target = "") final
+    void Log(const LogEvent &logev, bool duplicate_check = false, const std::string &target = "") final
     {
         LogEvent l(logev, session_token);
         LogSender::Log(l, duplicate_check, logger_busname);
@@ -95,12 +97,12 @@ public:
         // This is essentially a glib2 hack, to allow on going signals to
         // be properly sent before we shut down.
         delayed_shutdown.reset(new std::thread([]()
-                {
-                    sleep(3);
-                    kill(getpid(), SIGHUP);
-                }
-        ));
+                                               {
+            sleep(3);
+            kill(getpid(), SIGHUP);
+        }));
     }
+
 
     /**
      * Sends a StatusChange signal
@@ -119,6 +121,7 @@ public:
         SendTarget(logger_busname, "StatusChange", status.GetGVariantTuple());
     }
 
+
     /**
      * Sends a StatusChange signal, without sending a string message
      *
@@ -129,6 +132,7 @@ public:
     {
         StatusChange(major, minor, "");
     }
+
 
     /**
      * Sends an AttentionRequired signal, which tells a front-end that this
@@ -142,9 +146,10 @@ public:
                       const ClientAttentionGroup att_group,
                       std::string msg)
     {
-        GVariant *params = g_variant_new("(uus)", (guint) att_type, (guint) att_group, msg.c_str());
+        GVariant *params = g_variant_new("(uus)", (guint)att_type, (guint)att_group, msg.c_str());
         SendTarget(sessionmgr_busname, "AttentionRequired", params);
     }
+
 
     /**
      *  Retrieve the last status message processed
@@ -152,17 +157,17 @@ public:
      * @return  Returns a GVariant Glib2 object containing a key/value
      *          dictionary of the last signal sent
      */
-    GVariant * GetLastStatusChange()
+    GVariant *GetLastStatusChange()
     {
-        if( status.empty() )
+        if (status.empty())
         {
-            return NULL;  // Nothing have been logged, nothing to report
+            return NULL; // Nothing have been logged, nothing to report
         }
         return status.GetGVariantTuple();
     }
 
 
-private:
+  private:
     const unsigned int default_log_level = 6; // LogCategory::DEBUG
     bool broadcast = false;
     std::string session_token;
@@ -170,7 +175,6 @@ private:
     std::string logger_busname = {};
     StatusEvent status;
     std::unique_ptr<std::thread> delayed_shutdown;
-
 
     void configure_signal_targets()
     {
@@ -184,6 +188,5 @@ private:
             sessionmgr_busname = {};
             logger_busname = {};
         }
-
     }
 };

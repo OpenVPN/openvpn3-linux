@@ -31,7 +31,6 @@
 typedef std::shared_ptr<openvpn::Xml::Document> XmlDocPtr;
 #endif
 
-
 #include "dbus/connection.hpp"
 #include "glibutils.hpp"
 
@@ -40,11 +39,11 @@ typedef std::shared_ptr<openvpn::Xml::Document> XmlDocPtr;
 #define DBUS_PROXY_CALL_TIMEOUT 5000
 
 
-class DBusProxyAccessDeniedException: std::exception
+class DBusProxyAccessDeniedException : std::exception
 {
-public:
-    DBusProxyAccessDeniedException(const std::string& method,
-                          const std::string& debug)
+  public:
+    DBusProxyAccessDeniedException(const std::string &method,
+                                   const std::string &debug)
         : debug(debug)
     {
         std::stringstream err;
@@ -52,27 +51,26 @@ public:
         error = err.str();
     }
 
-    virtual const char* what() const noexcept
+    virtual const char *what() const noexcept
     {
         return error.c_str();
     }
 
-
-    virtual const char* getDebug() const noexcept
+    virtual const char *getDebug() const noexcept
     {
         return debug.c_str();
     }
 
-
-private:
+  private:
     std::string error;
     std::string debug;
 };
 
 
+
 class DBusProxy : public DBus
 {
-public:
+  public:
     DBusProxy(GBusType bus_type,
               std::string busname,
               std::string interf,
@@ -93,11 +91,10 @@ public:
                                     object_path);
     }
 
-
     DBusProxy(GBusType bus_type,
-              std::string const & busname,
-              std::string const & interf,
-              std::string const & objpath,
+              std::string const &busname,
+              std::string const &interf,
+              std::string const &objpath,
               bool hold_setup_proxy)
         : DBus(bus_type),
           proxy(nullptr),
@@ -118,11 +115,10 @@ public:
         }
     }
 
-
     DBusProxy(GDBusConnection *dbusconn,
-              std::string const & busname,
-              std::string const & interf,
-              std::string const & objpath)
+              std::string const &busname,
+              std::string const &interf,
+              std::string const &objpath)
         : DBus(dbusconn),
           proxy(nullptr),
           property_proxy(nullptr),
@@ -139,11 +135,10 @@ public:
                                     object_path);
     }
 
-
     DBusProxy(GDBusConnection *dbusconn,
-              std::string const & busname,
-              std::string const & interf,
-              std::string const & objpath,
+              std::string const &busname,
+              std::string const &interf,
+              std::string const &objpath,
               bool hold_setup_proxy)
         : DBus(dbusconn),
           proxy(nullptr),
@@ -164,11 +159,10 @@ public:
         }
     }
 
-
-    DBusProxy(DBus const & dbusobj,
-              std::string const & busname,
-              std::string const & interf,
-              std::string const & objpath)
+    DBusProxy(DBus const &dbusobj,
+              std::string const &busname,
+              std::string const &interf,
+              std::string const &objpath)
         : DBus(dbusobj),
           proxy(nullptr),
           property_proxy(nullptr),
@@ -185,11 +179,10 @@ public:
                                     object_path);
     }
 
-
-    DBusProxy(DBus const & dbusobj,
-              std::string const & busname,
-              std::string const & interf,
-              std::string const & objpath,
+    DBusProxy(DBus const &dbusobj,
+              std::string const &busname,
+              std::string const &interf,
+              std::string const &objpath,
               bool hold_setup_proxy)
         : DBus(dbusobj),
           proxy(nullptr),
@@ -201,7 +194,7 @@ public:
           proxy_init(false),
           property_proxy_init(false)
     {
-        if( !hold_setup_proxy )
+        if (!hold_setup_proxy)
         {
             proxy = SetupProxy(bus_name, interface, object_path);
             property_proxy = SetupProxy(bus_name,
@@ -232,6 +225,7 @@ public:
         }
     }
 
+
     /**
      *  Retrieve the object path this proxy is accessing
      *
@@ -249,16 +243,14 @@ public:
         call_flags = flags;
     }
 
-
 #ifdef HAVE_TINYXML
     XmlDocPtr Introspect()
     {
-        GDBusProxy* introsprx = SetupProxy(bus_name,
-                                          "org.freedesktop.DBus.Introspectable",
-                                          object_path);
+        GDBusProxy *introsprx = SetupProxy(bus_name,
+                                           "org.freedesktop.DBus.Introspectable",
+                                           object_path);
 
-        GVariant* res = dbus_proxy_call(introsprx, "Introspect", nullptr,
-                                        false, G_DBUS_CALL_FLAGS_NONE);
+        GVariant *res = dbus_proxy_call(introsprx, "Introspect", nullptr, false, G_DBUS_CALL_FLAGS_NONE);
         if (nullptr == res)
         {
             THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
@@ -273,6 +265,7 @@ public:
         return doc;
     }
 #endif
+
 
     /**
      *  Some service expose a 'version' property in the main manager
@@ -291,18 +284,18 @@ public:
             {
                 return GetStringProperty("version");
             }
-            catch(DBusProxyAccessDeniedException& excp)
+            catch (DBusProxyAccessDeniedException &excp)
             {
                 return std::string(""); // Consider this an unknown version
             }
-            catch (DBusException& excp)
+            catch (DBusException &excp)
             {
                 std::string err(excp.what());
                 if (err.find("No such interface 'org.freedesktop.DBus.Properties' on object") == std::string::npos)
                 {
                     if ((err.find(": No such property 'version'") != std::string::npos))
                     {
-                        return std::string("");  // Consider this as an unknown version but not an error
+                        return std::string(""); // Consider this as an unknown version but not an error
                     }
                 }
                 sleep(delay);
@@ -314,8 +307,7 @@ public:
             }
         }
         THROW_DBUSEXCEPTION("DBusProxy",
-                            "Could not establish a connection with "
-                            "'" + bus_name + "'");
+                            "Could not establish a connection with '" + bus_name + "'");
     }
 
 
@@ -330,7 +322,7 @@ public:
     {
         GDBusProxy *proxy = SetupProxy("org.freedesktop.DBus",
                                        "org.freedesktop.DBus",
-                                           "/");
+                                       "/");
         for (int i = 5; i > 0; --i)
         {
             try
@@ -341,8 +333,8 @@ public:
                                                             bus_name.c_str(),
                                                             0 // Not in use by D-Bus
                                                             ),
-                                               false,
-                                               G_DBUS_CALL_FLAGS_NONE);
+                                              false,
+                                              G_DBUS_CALL_FLAGS_NONE);
                 if (r)
                 {
                     GLibUtils::checkParams(__func__, r, "(u)", 1);
@@ -366,13 +358,12 @@ public:
                     return;
                 }
             }
-            catch (DBusException& excp)
+            catch (DBusException &excp)
             {
                 if (1 == i)
                 {
                     THROW_DBUSEXCEPTION("DBusProxy",
-                                        "D-Bus service '"
-                                        + bus_name + "' did not start");
+                                        "D-Bus service '" + bus_name + "' did not start");
                 }
                 sleep(1);
             }
@@ -400,8 +391,8 @@ public:
      *          throw an exception if the the D-Bus method calls fails or
      *          the property proxy interface has not been configured.
      */
-    bool CheckObjectExists(const unsigned int allow_tries=1,
-                           const unsigned int sleep_us=1000)
+    bool CheckObjectExists(const unsigned int allow_tries = 1,
+                           const unsigned int sleep_us = 1000)
     {
         if (!property_proxy_init)
         {
@@ -420,21 +411,22 @@ public:
                 GVariant *empty = dbus_proxy_call(property_proxy,
                                                   "GetAll",
                                                   g_variant_new("(s)", interface.c_str()),
-                                                  false, call_flags);
+                                                  false,
+                                                  call_flags);
                 if (empty)
                 {
                     g_variant_unref(empty);
                 }
                 return true;
             }
-            catch (DBusProxyAccessDeniedException& excp)
+            catch (DBusProxyAccessDeniedException &excp)
             {
                 // This is fine in this case, it means we don't
                 // have access to all properties which again means the
                 // object must exist.
                 return true;
             }
-            catch (DBusException& excp)
+            catch (DBusException &excp)
             {
                 std::string err(excp.what());
                 if ((err.find("Name \"") != std::string::npos)
@@ -469,10 +461,10 @@ public:
     void Ping()
     {
         GDBusProxy *peer_proxy = SetupProxy(bus_name,
-                                           "org.freedesktop.DBus.Peer",
-                                           "/");
+                                            "org.freedesktop.DBus.Peer",
+                                            "/");
 
-        for (int i=0; i < 3; i++)
+        for (int i = 0; i < 3; i++)
         {
             try
             {
@@ -480,8 +472,7 @@ public:
                 // we want to make this call synchronous and wait for
                 // this call to truly have happened.  Then we just
                 // throw away the empty response, to avoid a memleak.
-                GVariant *empty = dbus_proxy_call(peer_proxy, "Ping",
-                                                  NULL, false, call_flags);
+                GVariant *empty = dbus_proxy_call(peer_proxy, "Ping", NULL, false, call_flags);
                 if (empty)
                 {
                     g_variant_unref(empty);
@@ -489,13 +480,13 @@ public:
                 usleep(400); // Add some additional gracetime
                 return;
             }
-            catch (DBusException& excp)
+            catch (DBusException &excp)
             {
                 if (2 == i)
                 {
                     THROW_DBUSEXCEPTION("DBusProxy",
                                         "D-Bus service '"
-                                        + bus_name + "' did not respond");
+                                            + bus_name + "' did not respond");
                 }
                 sleep(1);
             }
@@ -503,11 +494,11 @@ public:
     }
 
 
-    std::string GetNameOwner(const std::string& name)
+    std::string GetNameOwner(const std::string &name)
     {
         GDBusProxy *proxy = SetupProxy("org.freedesktop.DBus",
                                        "org.freedesktop.DBus",
-                                           "/");
+                                       "/");
         GVariant *r = dbus_proxy_call(proxy,
                                       "GetNameOwner",
                                       g_variant_new("(s)", name.c_str()),
@@ -524,19 +515,19 @@ public:
     }
 
 
-    int StartServiceByName(const std::string& name)
+    int StartServiceByName(const std::string &name)
     {
         GDBusProxy *proxy = SetupProxy("org.freedesktop.DBus",
                                        "org.freedesktop.DBus",
-                                           "/");
+                                       "/");
         GVariant *r = dbus_proxy_call(proxy,
                                       "StartServiceByName",
                                       g_variant_new("(su)",
                                                     name.c_str(),
                                                     0 // Not in use by D-Bus
                                                     ),
-                                       false,
-                                       G_DBUS_CALL_FLAGS_NONE);
+                                      false,
+                                      G_DBUS_CALL_FLAGS_NONE);
         if (r)
         {
             GLibUtils::checkParams(__func__, r, "(u)", 1);
@@ -546,42 +537,40 @@ public:
         }
         THROW_DBUSEXCEPTION("StartServiceByName",
                             std::string("Failed requesting starting of ")
-                            + "service '" + name + "' ");
+                                + "service '" + name + "' ");
     }
 
 
-    GVariant * Call(std::string method, GVariant *params, bool noresponse = false) const
+    GVariant *Call(std::string method, GVariant *params, bool noresponse = false) const
     {
-        return dbus_proxy_call(proxy, method, params, noresponse,
-                               call_flags);
+        return dbus_proxy_call(proxy, method, params, noresponse, call_flags);
     }
 
 
-    GVariant * Call(std::string method, bool noresponse = false) const
+    GVariant *Call(std::string method, bool noresponse = false) const
     {
-        return dbus_proxy_call(proxy, method, NULL, noresponse,
-                               call_flags);
+        return dbus_proxy_call(proxy, method, NULL, noresponse, call_flags);
     }
 
-    GVariant * CallGetFD(std::string method, int& fd, bool noresponse = false) const
+
+    GVariant *CallGetFD(std::string method, int &fd, bool noresponse = false) const
     {
-        return dbus_proxy_call(proxy, method, NULL, noresponse,
-                               call_flags, &fd);
+        return dbus_proxy_call(proxy, method, NULL, noresponse, call_flags, &fd);
     }
+
 
     /**
      * Will send an additional fd in addition to the normal function call.
      * This method will *not* take ownership of the fd. The caller needs
      * to close the fd if it is not needed anymore
      */
-    GVariant * CallSendFD(std::string method, GVariant* params, int fd, bool noresponse = false) const
+    GVariant *CallSendFD(std::string method, GVariant *params, int fd, bool noresponse = false) const
     {
-        return dbus_proxy_call(proxy, method, params, noresponse,
-                               call_flags, nullptr, fd);
+        return dbus_proxy_call(proxy, method, params, noresponse, call_flags, nullptr, fd);
     }
 
 
-    GVariant * GetProperty(std::string property) const
+    GVariant *GetProperty(std::string property) const
     {
         if (!property_proxy)
         {
@@ -604,7 +593,7 @@ public:
                                                                   property.c_str()),
                                                     G_DBUS_CALL_FLAGS_NONE,
                                                     DBUS_PROXY_CALL_TIMEOUT,
-                                                    NULL,        // GCancellable
+                                                    NULL, // GCancellable
                                                     &error);
         if (!response && !error)
         {
@@ -628,8 +617,8 @@ public:
             THROW_DBUSEXCEPTION("DBusProxy", errmsg.str());
         }
 
-        GVariant* chld = g_variant_get_child_value(response, 0);
-        GVariant* ret = g_variant_get_variant(chld);
+        GVariant *chld = g_variant_get_child_value(response, 0);
+        GVariant *ret = g_variant_get_variant(chld);
         g_variant_unref(chld);
         g_variant_unref(response);
         return ret;
@@ -695,7 +684,7 @@ public:
                                                              value),
                                                G_DBUS_CALL_FLAGS_NONE,
                                                DBUS_PROXY_CALL_TIMEOUT,
-                                               NULL,        // GCancellable
+                                               NULL, // GCancellable
                                                &error);
         if (!ret && !error)
         {
@@ -717,7 +706,8 @@ public:
                    << "'" << property << "': " << error->message;
             g_error_free(error);
             THROW_DBUSEXCEPTION("DBusProxy", errmsg.str());
-        }            g_variant_unref(ret);
+        }
+        g_variant_unref(ret);
     }
 
 
@@ -739,21 +729,25 @@ public:
     }
 
 
-protected:
+  protected:
     GDBusProxy *proxy;
     GDBusProxy *property_proxy;
 
-    GDBusProxy * SetupProxy(std::string busn, std::string intf, std::string objp)
+
+    GDBusProxy *SetupProxy(std::string busn, std::string intf, std::string objp)
     {
-        if (busn.empty()) {
+        if (busn.empty())
+        {
             THROW_DBUSEXCEPTION("DBusProxy", "Bus name cannot be empty");
         }
 
-        if (intf.empty()) {
+        if (intf.empty())
+        {
             THROW_DBUSEXCEPTION("DBusProxy", "Interface cannot be empty");
         }
 
-        if (objp.empty()) {
+        if (objp.empty())
+        {
             THROW_DBUSEXCEPTION("DBusProxy", "Object path cannot be empty");
         }
 
@@ -780,11 +774,11 @@ protected:
         GError *error = NULL;
         GDBusProxy *retprx = g_dbus_proxy_new_sync(GetConnection(),
                                                    G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES,
-                                                   NULL,             // GDBusInterfaceInfo
-                                                   busn.c_str(),     // aka. destination
+                                                   NULL,         // GDBusInterfaceInfo
+                                                   busn.c_str(), // aka. destination
                                                    objp.c_str(),
                                                    intf.c_str(),
-                                                   NULL,             // GCancellable
+                                                   NULL, // GCancellable
                                                    &error);
         if (!retprx || error)
         {
@@ -810,17 +804,18 @@ protected:
     }
 
 
-    GDBusProxy * SetupProxy()
+    GDBusProxy *SetupProxy()
     {
         return SetupProxy(bus_name, interface, object_path);
     }
 
 
-protected:
+  protected:
     std::string bus_name;
     std::string interface;
 
-private:
+
+  private:
     std::string object_path;
     GDBusCallFlags call_flags;
     bool proxy_init;
@@ -829,11 +824,13 @@ private:
     // Note we only implement single fd out/in for the fd API since that
     // is all we currently need and handling fd extraction here makes
     // error handling easier
-    GVariant * dbus_proxy_call(GDBusProxy *prx, std::string method,
-                               GVariant *params, bool noresponse,
-                               GDBusCallFlags flags,
-                               int *fd_out = nullptr,
-                               int fd_in = -1) const
+    GVariant *dbus_proxy_call(GDBusProxy *prx,
+                              std::string method,
+                              GVariant *params,
+                              bool noresponse,
+                              GDBusCallFlags flags,
+                              int *fd_out = nullptr,
+                              int fd_in = -1) const
     {
         if (method.empty())
         {
@@ -841,7 +838,7 @@ private:
         }
 
         // Ensure we still have a valid connection
-        (void) GetConnection();
+        (void)GetConnection();
 
         GError *error = nullptr;
         GVariant *ret = nullptr;
@@ -854,19 +851,19 @@ private:
             {
                 ret = g_dbus_proxy_call_sync(prx,
                                              method.c_str(),
-                                             params,      // parameters to method
+                                             params, // parameters to method
                                              flags,
                                              DBUS_PROXY_CALL_TIMEOUT,
-                                             nullptr,        // GCancellable
+                                             nullptr, // GCancellable
                                              &error);
             }
             else
             {
                 /* Default these pointers to their "not used" value */
                 GUnixFDList *fdlist = nullptr;
-                GUnixFDList** out_fdlist_ptr = nullptr;
+                GUnixFDList **out_fdlist_ptr = nullptr;
 
-                if (fd_in >=0)
+                if (fd_in >= 0)
                 {
                     fdlist = g_unix_fd_list_new();
                     g_unix_fd_list_append(fdlist, fd_in, &error);
@@ -879,15 +876,15 @@ private:
                 {
                     ret = g_dbus_proxy_call_with_unix_fd_list_sync(prx,
                                                                    method.c_str(),
-                                                                   params,      // parameters to method
+                                                                   params, // parameters to method
                                                                    flags,
                                                                    DBUS_PROXY_CALL_TIMEOUT,
-                                                                   fdlist,     // fd_list (to send)
+                                                                   fdlist, // fd_list (to send)
                                                                    out_fdlist_ptr,
-                                                                   nullptr,        // GCancellable
+                                                                   nullptr, // GCancellable
                                                                    &error);
                 }
-                if(ret && !error && fd_out)
+                if (ret && !error && fd_out)
                 {
                     *fd_out = g_unix_fd_list_get(out_fdlist, 0, &error);
                     GLibUtils::unref_fdlist(out_fdlist);
@@ -922,12 +919,10 @@ private:
         }
         else
         {
-            g_dbus_proxy_call(prx, method.c_str(), params,
-                              flags,
-                              DBUS_PROXY_CALL_TIMEOUT,
-                              nullptr,     // GCancellable
-                              nullptr,     // Response callback, not needed here
-                              nullptr);    // user_data, not needed due to no callback
+            g_dbus_proxy_call(prx, method.c_str(), params, flags, DBUS_PROXY_CALL_TIMEOUT,
+                              nullptr,  // GCancellable
+                              nullptr,  // Response callback, not needed here
+                              nullptr); // user_data, not needed due to no callback
             return nullptr;
         }
     }

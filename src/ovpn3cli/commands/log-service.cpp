@@ -63,13 +63,11 @@ static int manage_config_file(ParsedArgs::Ptr args,
             if ((config.IsPresent("syslog") || config.IsPresent("journald"))
                 && (config.IsPresent("log-file") || config.IsPresent("colour")))
             {
-                throw ExclusiveOptionError({"syslog", "journald",
-                                            "log-file", "colour"});
+                throw ExclusiveOptionError({"syslog", "journald", "log-file", "colour"});
             }
             config.CheckExclusiveOptions();
-
         }
-        catch (const ConfigFileException& excp)
+        catch (const ConfigFileException &excp)
         {
             if ("config-show" == cfgmode)
             {
@@ -78,7 +76,7 @@ static int manage_config_file(ParsedArgs::Ptr args,
                 return 2;
             }
         }
-        catch (const ExclusiveOptionError& err)
+        catch (const ExclusiveOptionError &err)
         {
             std::cerr << std::endl
                       << "==================================="
@@ -89,7 +87,8 @@ static int manage_config_file(ParsedArgs::Ptr args,
             std::cerr << " *** " << err.what() << std::endl;
             std::cerr << "==================================="
                       << "==================================="
-                      << std::endl << std::endl;
+                      << std::endl
+                      << std::endl;
         }
 
         if ("config-show" == cfgmode)
@@ -115,19 +114,19 @@ static int manage_config_file(ParsedArgs::Ptr args,
             {
                 throw CommandException("log-service",
                                        "A value must be given to --"
-                                       + cfgmode + " " + optname);
+                                           + cfgmode + " " + optname);
             }
             else if ("config-unset" == cfgmode && values.size() > 0)
             {
                 throw CommandException("log-service",
                                        "No value can be given to --"
-                                       + cfgmode + " " + optname);
+                                           + cfgmode + " " + optname);
             }
             else if (values.size() > 1)
             {
                 throw CommandException("log-service",
                                        "Only a single value can be given to --"
-                                       + cfgmode + " " + optname);
+                                           + cfgmode + " " + optname);
             }
             else if (values.size() == 1)
             {
@@ -152,16 +151,17 @@ static int manage_config_file(ParsedArgs::Ptr args,
                           << "openvpn3-service-logger restarts"
                           << std::endl;
             }
-            catch (const ExclusiveOptionError& err)
+            catch (const ExclusiveOptionError &err)
             {
                 std::cerr << "Configuration NOT changed due to the "
-                          << "following error:" << std::endl << std::endl;
+                          << "following error:" << std::endl
+                          << std::endl;
                 std::cerr << " *** " << err.what() << std::endl
                           << std::endl;
             }
         }
     }
-    catch (const OptionNotFound&)
+    catch (const OptionNotFound &)
     {
         // Nothing to do; options not present
     }
@@ -187,11 +187,12 @@ static int cmd_log_service(ParsedArgs::Ptr args)
         try
         {
             std::vector<std::string> cfgopts = {"config-show",
-                                                "config-set", "config-unset"};
+                                                "config-set",
+                                                "config-unset"};
             std::string cfgmode = args->Present(cfgopts);
             return manage_config_file(args, cfgmode);
         }
-        catch (const OptionNotFound&)
+        catch (const OptionNotFound &)
         {
             // If no config file related options were found,
             // continue with the runtime configurations
@@ -207,7 +208,7 @@ static int cmd_log_service(ParsedArgs::Ptr args)
         if (args->Present("log-level"))
         {
             newlev = std::atoi(args->GetValue("log-level", 0).c_str());
-            if ( curlev != newlev )
+            if (curlev != newlev)
             {
                 std::stringstream t;
                 t << "            (Was: " << curlev << ")";
@@ -222,7 +223,7 @@ static int cmd_log_service(ParsedArgs::Ptr args)
         if (args->Present("timestamp"))
         {
             newtstamp = args->GetBoolValue("timestamp", 0);
-            if ( curtstamp != newtstamp)
+            if (curtstamp != newtstamp)
             {
                 std::stringstream t;
                 if (newtstamp)
@@ -243,7 +244,7 @@ static int cmd_log_service(ParsedArgs::Ptr args)
         if (args->Present("dbus-details"))
         {
             newdbusdetails = args->GetBoolValue("dbus-details", 0);
-            if ( curdbusdetails != newdbusdetails)
+            if (curdbusdetails != newdbusdetails)
             {
                 std::stringstream t;
                 if (newdbusdetails)
@@ -264,7 +265,7 @@ static int cmd_log_service(ParsedArgs::Ptr args)
         if (args->Present("enable-log-prefix"))
         {
             newlogprefix = args->GetBoolValue("enable-log-prefix", 0);
-            if ( curlogprefix != newlogprefix )
+            if (curlogprefix != newlogprefix)
             {
                 std::stringstream t;
                 if (newlogprefix)
@@ -293,18 +294,18 @@ static int cmd_log_service(ParsedArgs::Ptr args)
                       << "Bus name" << std::setw(4) << " "
                       << "Interface" << std::setw(25) << " "
                       << "Object path" << std::endl;
-            std::cout <<  std::setw(120) << std::setfill('-')
+            std::cout << std::setw(120) << std::setfill('-')
                       << "-" << std::endl;
             std::cout << std::setfill(' ');
 
-            for (const auto& e : list)
+            for (const auto &e : list)
             {
                 std::string pid;
                 try
                 {
-                   pid = std::to_string(creds.GetPID(e.busname));
+                    pid = std::to_string(creds.GetPID(e.busname));
                 }
-                catch (DBusException&)
+                catch (DBusException &)
                 {
                     pid = "-";
                 }
@@ -315,7 +316,7 @@ static int cmd_log_service(ParsedArgs::Ptr args)
                           << e.interface << std::setw(34 - e.interface.length()) << " "
                           << e.object_path << std::endl;
             }
-            std::cout <<  std::setw(120) << std::setfill('-')
+            std::cout << std::setw(120) << std::setfill('-')
                       << "-" << std::endl;
         }
         else
@@ -341,12 +342,12 @@ static int cmd_log_service(ParsedArgs::Ptr args)
                       << newlev << old_loglev << std::endl;
         }
     }
-    catch (DBusProxyAccessDeniedException& excp)
+    catch (DBusProxyAccessDeniedException &excp)
     {
         std::string rawerr(excp.what());
         throw CommandException("log-service", rawerr);
     }
-    catch (DBusException& excp)
+    catch (DBusException &excp)
     {
         std::string rawerr(excp.what());
         throw CommandException("log-service",
@@ -364,11 +365,9 @@ static std::string arghelper_logger_config_keys()
     // These options are already handled differently, and does not require
     // a restart of the service
     std::vector<std::string> ignore = {
-            "log-level", "timestamp", "service-log-dbus-details",
-            "no-logtag-prefix"
-    };
+        "log-level", "timestamp", "service-log-dbus-details", "no-logtag-prefix"};
 
-    for (const auto& o : cfg.GetOptions(true))
+    for (const auto &o : cfg.GetOptions(true))
     {
         if (std::find(ignore.begin(), ignore.end(), o) == ignore.end())
         {
@@ -385,29 +384,46 @@ SingleCommand::Ptr prepare_command_log_service()
     cmd.reset(new SingleCommand("log-service",
                                 "Manage the OpenVPN 3 Log service",
                                 cmd_log_service));
-    cmd->AddOption("log-level", "LOG-LEVEL", true,
+    cmd->AddOption("log-level",
+                   "LOG-LEVEL",
+                   true,
                    "Set the log level used by the log service.",
                    arghelper_log_levels);
-    cmd->AddOption("timestamp", "true/false", true,
+    cmd->AddOption("timestamp",
+                   "true/false",
+                   true,
                    "Set the timestamp flag used by the log service",
                    arghelper_boolean);
-    cmd->AddOption("dbus-details", "true/false", true,
+    cmd->AddOption("dbus-details",
+                   "true/false",
+                   true,
                    "Log D-Bus sender, object path and method details of log sender",
                    arghelper_boolean);
-    cmd->AddOption("enable-log-prefix", "true/false", true,
+    cmd->AddOption("enable-log-prefix",
+                   "true/false",
+                   true,
                    "(journald log mode only) Enable log tag prefix in log lines",
                    arghelper_boolean);
     cmd->AddOption("list-subscriptions",
                    "List all subscriptions which has attached to the log service");
     cmd->AddOption("config-show",
                    "Show the current configuration file used by log-service");
-    cmd->AddOption("config-set", 0, "CONFIG-KEY", true,
+    cmd->AddOption("config-set",
+                   0,
+                   "CONFIG-KEY",
+                   true,
                    "Sets a configuration option and saves it in the config file",
                    arghelper_logger_config_keys);
-    cmd->AddOption("config-unset", 0, "CONFIG-KEY", true,
+    cmd->AddOption("config-unset",
+                   0,
+                   "CONFIG-KEY",
+                   true,
                    "Removes a configuration option and updates the config file",
                    arghelper_logger_config_keys);
-    cmd->AddOption("config-file-override", 0, "CONFIG-FILE", true,
+    cmd->AddOption("config-file-override",
+                   0,
+                   "CONFIG-FILE",
+                   true,
                    "Overrides the default configuration file (default file "
                    "provivded by openvpn3-service-logger)");
 

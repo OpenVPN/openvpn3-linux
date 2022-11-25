@@ -34,12 +34,14 @@
 
 class Logger : public LogConsumer
 {
-public:
+  public:
     typedef std::shared_ptr<Logger> Ptr;
 
-    Logger(GDBusConnection *dbuscon, LogWriter *logwr,
-           const LogTag::Ptr tag, const std::string& busname,
-           const std::string& interf,
+    Logger(GDBusConnection *dbuscon,
+           LogWriter *logwr,
+           const LogTag::Ptr tag,
+           const std::string &busname,
+           const std::string &interf,
            const unsigned int log_level = 3)
         : LogConsumer(dbuscon, interf, "", busname),
           logwr(logwr),
@@ -68,14 +70,15 @@ public:
      * @param prx     A raw pointer to the LogSender object
      * @param logid   std::string with a unique ID to this log forwarder
      */
-    void AddLogForward(LogSender* prx, const std::string& logid)
+    void AddLogForward(LogSender *prx, const std::string &logid)
     {
         if (logid.empty())
         {
             THROW_DBUSEXCEPTION("Logger", "No LogID set in LogSender object");
         }
         log_forwards[logid] = prx;
-        logwr->Write(LogGroup::LOGGER, LogCategory::DEBUG,
+        logwr->Write(LogGroup::LOGGER,
+                     LogCategory::DEBUG,
                      "[Logger] Log forward added for " + logid);
     }
 
@@ -89,7 +92,8 @@ public:
     {
         log_forwards[logid] = nullptr;
         log_forwards.erase(logid);
-        logwr->Write(LogGroup::LOGGER, LogCategory::DEBUG,
+        logwr->Write(LogGroup::LOGGER,
+                     LogCategory::DEBUG,
                      "[Logger] Log forward removed for " + logid);
     }
 
@@ -97,13 +101,13 @@ public:
     void ConsumeLogEvent(const std::string sender,
                          const std::string interface,
                          const std::string object_path,
-                         const LogEvent& logev) override
+                         const LogEvent &logev) override
     {
-        for (const auto& e : exclude_loggroup)
+        for (const auto &e : exclude_loggroup)
         {
             if (e == logev.group)
             {
-                return;  // Don't do anything if this LogGroup is filtered
+                return; // Don't do anything if this LogGroup is filtered
             }
         }
 
@@ -127,7 +131,7 @@ public:
         {
             LogEvent proxy_event(logev);
             proxy_event.RemoveToken();
-            for (const auto& lfwd : log_forwards)
+            for (const auto &lfwd : log_forwards)
             {
                 if (lfwd.second)
                 {
@@ -149,7 +153,7 @@ public:
             // Fail-safe: Only care about StatusChange signals
             return;
         }
-        for (const auto& lfwd : log_forwards)
+        for (const auto &lfwd : log_forwards)
         {
             StatusEvent status(parameters);
             lfwd.second->ProxyStatusChange(status, obj_path);
@@ -157,9 +161,9 @@ public:
     }
 
 
-private:
+  private:
     LogWriter *logwr;
     LogTag::Ptr log_tag;
     std::vector<LogGroup> exclude_loggroup;
-    std::map<std::string, LogSender*> log_forwards = {};
+    std::map<std::string, LogSender *> log_forwards = {};
 };

@@ -88,5 +88,5 @@ std::string arghelper_boolean();
  */
 std::string arghelper_log_levels();
 
-std::string retrieve_config_path(const std::string& cmd,
-                                 const std::string& config_name);
+std::string retrieve_config_path(const std::string &cmd,
+                                 const std::string &config_name);

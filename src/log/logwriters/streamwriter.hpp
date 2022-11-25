@@ -31,19 +31,20 @@
 #include "log/logwriter.hpp"
 #include "log/colourengine.hpp"
 
+
 /**
  *  LogWriter implementation, using std::ostream
  */
 class StreamLogWriter : public LogWriter
 {
-public:
+  public:
     /**
      *  Initialize the StreamLogWriter
      *
      * @param dest  std::ostream to be used as the log destination
      *
      */
-    StreamLogWriter(std::ostream& dst);
+    StreamLogWriter(std::ostream &dst);
     virtual ~StreamLogWriter();
 
     const std::string GetLogWriterInfo() const override;
@@ -62,13 +63,14 @@ public:
      * @param colour_reset std::string to be printed after the log data
      *                     to reset colour selection.  Empty by default.
      */
-    void Write(const std::string& data,
-               const std::string& colour_init = "",
-               const std::string& colour_reset = "") override;
+    void Write(const std::string &data,
+               const std::string &colour_init = "",
+               const std::string &colour_reset = "") override;
 
-protected:
-    std::ostream& dest;
+  protected:
+    std::ostream &dest;
 };
+
 
 
 /**
@@ -78,7 +80,7 @@ protected:
  */
 class ColourStreamWriter : public StreamLogWriter
 {
-public:
+  public:
     /**
      *  Initializes the colourful log writer
      *
@@ -86,11 +88,10 @@ public:
      * @param ce    ColourEngine object which provides knows how to
      *              do the proper colouring.
      */
-    ColourStreamWriter(std::ostream& dst, ColourEngine *ce);
+    ColourStreamWriter(std::ostream &dst, ColourEngine *ce);
     virtual ~ColourStreamWriter() = default;
 
     const std::string GetLogWriterInfo() const override;
-
 
     /*
      * Explicitly tells the compiler that we want to not to override an
@@ -100,10 +101,9 @@ public:
     using StreamLogWriter::Write;
 
     void Write(const LogGroup grp,
-                       const LogCategory ctg,
-                       const std::string& data) override;
+               const LogCategory ctg,
+               const std::string &data) override;
 
-
-private:
+  private:
     ColourEngine *colours = nullptr;
 };

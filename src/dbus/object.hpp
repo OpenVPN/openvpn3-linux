@@ -19,7 +19,9 @@
 
 #pragma once
 
+#include <gio/gio.h>
 #include "idlecheck.hpp"
+
 
 /**
  *  DBusObject is the object which carries data, methods
@@ -48,26 +50,24 @@
  */
 class DBusObject
 {
-public:
-    DBusObject(std::string obj_path, std::string introspection_xml) :
-        registered(false),
-        object_path(obj_path),
-        object_id(0),
-        idle_checker(nullptr)
+  public:
+    DBusObject(std::string obj_path, std::string introspection_xml)
+        : registered(false),
+          object_path(obj_path),
+          object_id(0),
+          idle_checker(nullptr)
     {
         ParseIntrospectionXML(introspection_xml);
     }
 
-
-    DBusObject(std::string obj_path) :
-        registered(false),
-        object_path(obj_path),
-        object_id(0),
-        idle_checker(nullptr),
-        introspection(nullptr)
+    DBusObject(std::string obj_path)
+        : registered(false),
+          object_path(obj_path),
+          object_id(0),
+          idle_checker(nullptr),
+          introspection(nullptr)
     {
     }
-
 
     virtual ~DBusObject()
     {
@@ -168,6 +168,8 @@ public:
     /**
      *  Called each time a D-Bus client calls an object method
      */
+    // clang-format off
+    // bug in clang-format causes "= 0" to be wrapped
     virtual void callback_method_call(GDBusConnection *conn,
                                       const std::string sender,
                                       const std::string obj_path,
@@ -175,21 +177,21 @@ public:
                                       const std::string meth_name,
                                       GVariant *params,
                                       GDBusMethodInvocation *invoc) = 0;
+    // clang-format on
 
 
-    GVariant * _dbus_get_property_internal(GDBusConnection *conn,
-                                           const std::string sender,
-                                           const std::string obj_path,
-                                           const std::string intf_name,
-                                           const std::string property_name,
-                                           GError **error)
+    GVariant *_dbus_get_property_internal(GDBusConnection *conn,
+                                          const std::string sender,
+                                          const std::string obj_path,
+                                          const std::string intf_name,
+                                          const std::string property_name,
+                                          GError **error)
     {
         try
         {
-            return callback_get_property(conn, sender, obj_path,
-                                         intf_name, property_name, error);
+            return callback_get_property(conn, sender, obj_path, intf_name, property_name, error);
         }
-        catch (DBusPropertyException& err)
+        catch (DBusPropertyException &err)
         {
             err.SetDBusError(error);
             return NULL;
@@ -200,12 +202,15 @@ public:
     /**
      *  Called each time a D-Bus client attempts to read a D-Bus object property
      */
-    virtual GVariant * callback_get_property(GDBusConnection *conn,
-                                             const std::string sender,
-                                             const std::string obj_path,
-                                             const std::string intf_name,
-                                             const std::string property_name,
-                                             GError **error) = 0;
+    // clang-format off
+    // bug in clang-format causes "= 0" to be wrapped
+    virtual GVariant *callback_get_property(GDBusConnection *conn,
+                                            const std::string sender,
+                                            const std::string obj_path,
+                                            const std::string intf_name,
+                                            const std::string property_name,
+                                            GError **error) = 0;
+    // clang-format on
 
 
     /**
@@ -240,16 +245,16 @@ public:
             if (NULL != ret)
             {
                 GError *local_err = NULL;
-                g_dbus_connection_emit_signal (conn,
-                                               NULL,
-                                               obj_path,
-                                               "org.freedesktop.DBus.Properties",
-                                               "PropertiesChanged",
-                                               g_variant_new ("(sa{sv}as)",
-                                                              intf_name,
-                                                              ret,
-                                                              NULL),
-                                               &local_err);
+                g_dbus_connection_emit_signal(conn,
+                                              NULL,
+                                              obj_path,
+                                              "org.freedesktop.DBus.Properties",
+                                              "PropertiesChanged",
+                                              g_variant_new("(sa{sv}as)",
+                                                            intf_name,
+                                                            ret,
+                                                            NULL),
+                                              &local_err);
                 g_variant_builder_unref(ret);
 
                 if (local_err)
@@ -284,7 +289,7 @@ public:
 
             return (NULL != ret);
         }
-        catch (DBusPropertyException& err)
+        catch (DBusPropertyException &err)
         {
             err.SetDBusError(error);
             return false;
@@ -295,13 +300,16 @@ public:
     /**
      *  Called each time a D-Bus client attempts to modify a D-Bus object property
      */
-    virtual GVariantBuilder * callback_set_property(GDBusConnection *conn,
-                                           const std::string sender,
-                                           const std::string obj_path,
-                                           const std::string intf_name,
-                                           const std::string property_name,
-                                           GVariant *value,
-                                           GError **error) = 0;
+    // clang-format off
+    // bug in clang-format causes "= 0" to be wrapped
+    virtual GVariantBuilder *callback_set_property(GDBusConnection *conn,
+                                                   const std::string sender,
+                                                   const std::string obj_path,
+                                                   const std::string intf_name,
+                                                   const std::string property_name,
+                                                   GVariant *value,
+                                                   GError **error) = 0;
+    // clang-format on
 
 
     /**
@@ -318,15 +326,16 @@ public:
      *          _dbus_set_property_internal()
      *
      */
-    GVariantBuilder * build_set_property_response(std::string property, std::string value)
+    GVariantBuilder *build_set_property_response(std::string property, std::string value)
     {
-        GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE_ARRAY);
-        g_variant_builder_add (builder,
-                               "{sv}",
-                               property.c_str(),
-                               g_variant_new_string (value.c_str()));
+        GVariantBuilder *builder = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
+        g_variant_builder_add(builder,
+                              "{sv}",
+                              property.c_str(),
+                              g_variant_new_string(value.c_str()));
         return builder;
     }
+
 
     /**
      *  Simple helper wrapper preparing the signal response needed by call_set_property()
@@ -342,13 +351,13 @@ public:
      *          _dbus_set_property_internal()
      *
      */
-    GVariantBuilder * build_set_property_response(std::string property, const gboolean value)
+    GVariantBuilder *build_set_property_response(std::string property, const gboolean value)
     {
-        GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE_ARRAY);
-        g_variant_builder_add (builder,
-                               "{sv}",
-                               property.c_str(),
-                               g_variant_new_boolean (value));
+        GVariantBuilder *builder = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
+        g_variant_builder_add(builder,
+                              "{sv}",
+                              property.c_str(),
+                              g_variant_new_boolean(value));
         return builder;
     }
 
@@ -367,9 +376,9 @@ public:
      *          _dbus_set_property_internal()
      *
      */
-    GVariantBuilder * build_set_property_response(std::string property, const guint value)
+    GVariantBuilder *build_set_property_response(std::string property, const guint value)
     {
-        GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE_ARRAY);
+        GVariantBuilder *builder = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
         g_variant_builder_add(builder,
                               "{sv}",
                               property.c_str(),
@@ -392,9 +401,9 @@ public:
      *          _dbus_set_property_internal()
      *
      */
-    GVariantBuilder * build_set_property_response(std::string property, const uint64_t value)
+    GVariantBuilder *build_set_property_response(std::string property, const uint64_t value)
     {
-        GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE_ARRAY);
+        GVariantBuilder *builder = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
         g_variant_builder_add(builder,
                               "{sv}",
                               property.c_str(),
@@ -417,9 +426,9 @@ public:
      *          _dbus_set_property_internal()
      *
      */
-    GVariantBuilder * build_set_property_response(std::string property, const std::time_t value)
+    GVariantBuilder *build_set_property_response(std::string property, const std::time_t value)
     {
-        return build_set_property_response(property, (uint64_t) value);
+        return build_set_property_response(property, (uint64_t)value);
     }
 
 
@@ -429,9 +438,12 @@ public:
      *  function is called from RemoveObject() right after the object is unregistered
      *  from the D-Bus.
      */
-    virtual void callback_destructor () {}
+    virtual void callback_destructor()
+    {
+    }
 
-protected:
+
+  protected:
     /**
      *  Parses and processes the introspection XML document
      *  describing this object.  This is used when registering this object
@@ -443,7 +455,8 @@ protected:
     {
         if (registered)
         {
-            THROW_DBUSEXCEPTION("DBusObject", "Object is already registered in D-Bus. "
+            THROW_DBUSEXCEPTION("DBusObject",
+                                "Object is already registered in D-Bus. "
                                 "Cannot modify the introspection document.");
         }
 
@@ -451,7 +464,8 @@ protected:
         introspection = g_dbus_node_info_new_for_xml(xmlstr.c_str(), &error);
         if (NULL == introspection || NULL != error)
         {
-            THROW_DBUSEXCEPTION("DBusObject", "Failed to parse introspection XML:" + std::string(error->message));
+            THROW_DBUSEXCEPTION("DBusObject",
+                                "Failed to parse introspection XML:" + std::string(error->message));
         }
     }
 
@@ -463,7 +477,7 @@ protected:
      *
      *  @param xmlstr  std::stringstream containing the introspection XML document to use
      */
-    void ParseIntrospectionXML(std::stringstream& xmlstr)
+    void ParseIntrospectionXML(std::stringstream &xmlstr)
     {
         ParseIntrospectionXML(xmlstr.str());
     }
@@ -475,18 +489,19 @@ protected:
      */
     void IdleCheck_UpdateTimestamp()
     {
-        if( idle_checker )
+        if (idle_checker)
         {
             idle_checker->UpdateTimestamp();
         }
     }
+
 
     /**
      *  Get the object pointer to the registered IdleCheck object
      *
      *  @returns Returns a pointer to an IdleCheck object or nullptr if not set/registered
      */
-    IdleCheck * IdleCheck_Get()
+    IdleCheck *IdleCheck_Get()
     {
         return idle_checker;
     }
@@ -510,12 +525,13 @@ protected:
     }
 
 
-private:
+  private:
     bool registered;
     std::string object_path;
     guint object_id;
     IdleCheck *idle_checker;
     GDBusNodeInfo *introspection;
+
 
     /**
      *  Callback loook-up table for D-Bus
@@ -523,38 +539,37 @@ private:
     GDBusInterfaceVTable dbusobj_interface_vtable = {
         dbusobject_callback_method_call,
         dbusobject_callback_get_property,
-        dbusobject_callback_set_property
-    };
-
+        dbusobject_callback_set_property};
 
     static void dbusobject_callback_method_call(GDBusConnection *conn,
-                                                 const gchar *sender,
-                                                 const gchar *obj_path,
-                                                 const gchar *intf_name,
-                                                 const gchar *meth_name,
-                                                 GVariant *params,
-                                                 GDBusMethodInvocation *invoc,
-                                                 gpointer this_ptr)
+                                                const gchar *sender,
+                                                const gchar *obj_path,
+                                                const gchar *intf_name,
+                                                const gchar *meth_name,
+                                                GVariant *params,
+                                                GDBusMethodInvocation *invoc,
+                                                gpointer this_ptr)
     {
-        class DBusObject *obj = (class DBusObject *) this_ptr;
+        class DBusObject *obj = (class DBusObject *)this_ptr;
         obj->callback_method_call(conn,
                                   std::string(sender),
                                   std::string(obj_path),
                                   std::string(intf_name),
                                   std::string(meth_name),
-                                  params, invoc);
+                                  params,
+                                  invoc);
     }
 
 
-    static GVariant * dbusobject_callback_get_property(GDBusConnection *conn,
-                                                       const gchar *sender,
-                                                       const gchar *obj_path,
-                                                       const gchar *intf_name,
-                                                       const gchar *property_name,
-                                                       GError **error,
-                                                       gpointer this_ptr)
+    static GVariant *dbusobject_callback_get_property(GDBusConnection *conn,
+                                                      const gchar *sender,
+                                                      const gchar *obj_path,
+                                                      const gchar *intf_name,
+                                                      const gchar *property_name,
+                                                      GError **error,
+                                                      gpointer this_ptr)
     {
-        class DBusObject *obj = (class DBusObject *) this_ptr;
+        class DBusObject *obj = (class DBusObject *)this_ptr;
         return obj->_dbus_get_property_internal(conn,
                                                 std::string(sender),
                                                 std::string(obj_path),
@@ -573,11 +588,13 @@ private:
                                                      GError **error,
                                                      gpointer this_ptr)
     {
-        class DBusObject *obj = (class DBusObject *) this_ptr;
-        return obj->_dbus_set_property_internal(conn, sender,
-                                                obj_path, intf_name,
-                                                property_name, value,
+        class DBusObject *obj = (class DBusObject *)this_ptr;
+        return obj->_dbus_set_property_internal(conn,
+                                                sender,
+                                                obj_path,
+                                                intf_name,
+                                                property_name,
+                                                value,
                                                 error);
     }
 };
-

@@ -29,12 +29,10 @@
 #include "dbus/glibutils.hpp"
 
 
-SessionManager::Event::Event(const std::string& path,
+SessionManager::Event::Event(const std::string &path,
                              EventType type,
                              uid_t owner)
-    : path(path), type(type), owner(owner)
-{
-};
+    : path(path), type(type), owner(owner){};
 
 
 SessionManager::Event::Event(GVariant *params)
@@ -46,11 +44,11 @@ SessionManager::Event::Event(GVariant *params)
     }
 
     path = GLibUtils::ExtractValue<std::string>(params, 0);
-    type = (SessionManager::EventType) GLibUtils::ExtractValue<uint16_t>(params, 1);
+    type = (SessionManager::EventType)GLibUtils::ExtractValue<uint16_t>(params, 1);
     owner = GLibUtils::ExtractValue<uid_t>(params, 2);
 
     if (type > SessionManager::EventType::SESS_DESTROYED
-                    || type < SessionManager::EventType::SESS_CREATED)
+        || type < SessionManager::EventType::SESS_CREATED)
     {
         THROW_SESSIONMGR("Invalid SessionManager::EventType value");
     }
@@ -65,30 +63,29 @@ bool SessionManager::Event::empty() const noexcept
 }
 
 
-GVariant* SessionManager::Event::GetGVariant() const noexcept
+GVariant *SessionManager::Event::GetGVariant() const noexcept
 {
     GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("(oqu)"));
     g_variant_builder_add(b, "o", path.c_str());
-    g_variant_builder_add(b, "q", (guint16) type);
+    g_variant_builder_add(b, "q", (guint16)type);
     g_variant_builder_add(b, "u", owner);
 
     GVariant *ret = g_variant_builder_end(b);
     g_variant_builder_clear(b);
     g_variant_builder_unref(b);
     return ret;
-
 }
 
 
-bool SessionManager::Event::operator==(const SessionManager::Event& compare) const
+bool SessionManager::Event::operator==(const SessionManager::Event &compare) const
 {
-    return ((compare.type== (const SessionManager::EventType) type)
+    return ((compare.type == (const SessionManager::EventType)type)
             && (compare.owner == owner)
             && (0 == compare.path.compare(path)));
 }
 
 
-bool SessionManager::Event::operator!=(const SessionManager::Event& compare) const
+bool SessionManager::Event::operator!=(const SessionManager::Event &compare) const
 {
     return !(this->operator==(compare));
 }

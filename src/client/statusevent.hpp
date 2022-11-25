@@ -28,6 +28,7 @@
 
 #include "dbus/constants.hpp"
 
+
 /**
  * Carries a status event record as reported by a VPN backend client
  */
@@ -41,8 +42,8 @@ struct StatusEvent
         ALL = 3
     };
 
-    StatusEvent(const StatusMajor maj, const StatusMinor min,
-                const std::string& msg)
+
+    StatusEvent(const StatusMajor maj, const StatusMinor min, const std::string &msg)
     {
         reset();
         major = maj;
@@ -50,20 +51,17 @@ struct StatusEvent
         message = msg;
     }
 
-
-    StatusEvent(const StatusMajor& maj, const StatusMinor& min)
+    StatusEvent(const StatusMajor &maj, const StatusMinor &min)
     {
         reset();
         major = maj;
         minor = min;
     }
 
-
     StatusEvent()
     {
         reset();
     }
-
 
     /**
      * Constructor which parses a GVariant containing either
@@ -101,7 +99,7 @@ struct StatusEvent
         major = StatusMajor::UNSET;
         minor = StatusMinor::UNSET;
         message.clear();
-        print_mode = (uint8_t) PrintMode::ALL;
+        print_mode = (uint8_t)PrintMode::ALL;
 #ifdef DEBUG_CORE_EVENTS
         show_numeric_status = true;
 #else
@@ -129,7 +127,7 @@ struct StatusEvent
      */
     void PrintMode(const StatusEvent::PrintMode m)
     {
-        print_mode = (unsigned short) m;
+        print_mode = (unsigned short)m;
     }
 
 
@@ -157,8 +155,7 @@ struct StatusEvent
      */
     GVariant *GetGVariantTuple() const
     {
-        return g_variant_new("(uus)", (guint32) major, (guint32) minor,
-                             message.c_str());
+        return g_variant_new("(uus)", (guint32)major, (guint32)minor, message.c_str());
     }
 
 
@@ -172,13 +169,10 @@ struct StatusEvent
     GVariant *GetGVariantDict() const
     {
         GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
-        g_variant_builder_add (b, "{sv}", "major",
-                               g_variant_new_uint32((guint) major));
-        g_variant_builder_add (b, "{sv}", "minor",
-                               g_variant_new_uint32((guint) minor));
-        g_variant_builder_add (b, "{sv}", "status_message",
-                               g_variant_new_string(message.c_str()));
-        GVariant *data= g_variant_builder_end(b);
+        g_variant_builder_add(b, "{sv}", "major", g_variant_new_uint32((guint)major));
+        g_variant_builder_add(b, "{sv}", "minor", g_variant_new_uint32((guint)minor));
+        g_variant_builder_add(b, "{sv}", "status_message", g_variant_new_string(message.c_str()));
+        GVariant *data = g_variant_builder_end(b);
         g_variant_builder_unref(b);
         return data;
     }
@@ -195,7 +189,7 @@ struct StatusEvent
      * @return  Returns the provided std::ostream together with the
      *          decoded StatusEvent information
      */
-    friend std::ostream& operator<<(std::ostream& os , const StatusEvent& s)
+    friend std::ostream &operator<<(std::ostream &os, const StatusEvent &s)
     {
         if ((StatusMajor::UNSET == s.major)
             && (StatusMinor::UNSET == s.minor)
@@ -209,43 +203,44 @@ struct StatusEvent
             std::stringstream status_str;
 
             status_num << "[";
-            if (s.print_mode & (uint8_t) StatusEvent::PrintMode::MAJOR)
+            if (s.print_mode & (uint8_t)StatusEvent::PrintMode::MAJOR)
             {
-                status_num << std::to_string((unsigned) s.major);
-                status_str << StatusMajor_str[(unsigned) s.major];
+                status_num << std::to_string((unsigned)s.major);
+                status_str << StatusMajor_str[(unsigned)s.major];
             }
-            if (s.print_mode == (uint8_t) StatusEvent::PrintMode::ALL)
+            if (s.print_mode == (uint8_t)StatusEvent::PrintMode::ALL)
             {
                 status_num << ",";
                 status_str << ", ";
             }
-            if (s.print_mode & (uint8_t) StatusEvent::PrintMode::MINOR)
+            if (s.print_mode & (uint8_t)StatusEvent::PrintMode::MINOR)
             {
-                status_num << std::to_string((unsigned) s.minor);
-                status_str << StatusMinor_str[(unsigned) s.minor];
+                status_num << std::to_string((unsigned)s.minor);
+                status_str << StatusMinor_str[(unsigned)s.minor];
             }
             status_num << "] ";
 
             return os << (s.show_numeric_status ? status_num.str() : "")
                       << status_str.str()
-                      << (s.print_mode != (uint8_t) StatusEvent::PrintMode::NONE
-                          && !s.message.empty() ? ": " : "")
+                      << (s.print_mode != (uint8_t)StatusEvent::PrintMode::NONE
+                                  && !s.message.empty()
+                              ? ": "
+                              : "")
                       << (!s.message.empty() ? s.message : "");
         }
     }
 
 
-    bool operator==(const StatusEvent& compare) const
+    bool operator==(const StatusEvent &compare) const
     {
-        return ((compare.major == (const StatusMajor) major)
-               && (compare.minor == (const StatusMinor) minor)
-               && (0 == compare.message.compare(message)));
+        return ((compare.major == (const StatusMajor)major)
+                && (compare.minor == (const StatusMinor)minor)
+                && (0 == compare.message.compare(message)));
     }
 
-
-    bool operator!=(const StatusEvent& compare) const
+    bool operator!=(const StatusEvent &compare) const
     {
-        return !(this->operator ==(compare));
+        return !(this->operator==(compare));
     }
 
     StatusMajor major;
@@ -254,7 +249,8 @@ struct StatusEvent
     uint8_t print_mode;
     bool show_numeric_status;
 
-private:
+
+  private:
     /**
      *   Parses a GVvariant dictionary containing the status object
      */
@@ -270,29 +266,30 @@ private:
         if (!d)
         {
             THROW_DBUSEXCEPTION("StatusEvent", "Incorrect StatusEvent dict "
-                                "(missing 'major')");
+                                               "(missing 'major')");
         }
         v = g_variant_get_uint32(d);
-        major = (StatusMajor) v;
+        major = (StatusMajor)v;
         g_variant_unref(d);
 
         d = g_variant_lookup_value(status, "minor", G_VARIANT_TYPE_UINT32);
         if (!d)
         {
             THROW_DBUSEXCEPTION("StatusEvent", "Incorrect StatusEvent dict "
-                                "(missing 'minor')");
+                                               "(missing 'minor')");
         }
         v = g_variant_get_uint32(d);
-        minor = (StatusMinor) v;
+        minor = (StatusMinor)v;
         g_variant_unref(d);
 
         gsize len;
         d = g_variant_lookup_value(status,
-                                   "status_message", G_VARIANT_TYPE_STRING);
+                                   "status_message",
+                                   G_VARIANT_TYPE_STRING);
         if (!d)
         {
             THROW_DBUSEXCEPTION("StatusEvent", "Incorrect StatusEvent dict "
-                                "(missing 'status_message')");
+                                               "(missing 'status_message')");
         }
         message = std::string(g_variant_get_string(d, &len));
         g_variant_unref(d);
@@ -307,7 +304,7 @@ private:
 
     /**
      *   Parses a GVvariant (uus) tupple containing the status object
-    */
+     */
     void parse_tuple(GVariant *status)
     {
         guint maj = 0;
@@ -316,8 +313,8 @@ private:
         g_variant_get(status, "(uus)", &maj, &min, &msg);
 
         reset();
-        major = (StatusMajor) maj;
-        minor = (StatusMinor) min;
+        major = (StatusMajor)maj;
+        minor = (StatusMinor)min;
         if (msg)
         {
             message = std::string(msg);

@@ -40,35 +40,35 @@ using namespace openvpn;
 
 class LogFwdSubscription : public LogForwardBase<LogFwdSubscription>
 {
-public:
-    LogFwdSubscription(GMainLoop* mainloop,
-                       DBus& dbc,
-                       const std::string& path,
-                       const std::string& interf = "")
+  public:
+    LogFwdSubscription(GMainLoop *mainloop,
+                       DBus &dbc,
+                       const std::string &path,
+                       const std::string &interf = "")
         : LogForwardBase(dbc, interf, path),
           main_loop(mainloop)
     {
     }
 
-protected:
+  protected:
     void ConsumeLogEvent(const std::string sender_name,
                          const std::string interface_name,
                          const std::string obj_path,
                          const LogEvent &logev) final
     {
         std::cout << " LogEvent{sender=" << sender_name
-                << ", interface=" << interface_name
-                << ", path=" << obj_path << "} : " << logev << std::endl;
+                  << ", interface=" << interface_name
+                  << ", path=" << obj_path << "} : " << logev << std::endl;
     }
 
     void StatusChangeEvent(const std::string sender_name,
                            const std::string interface_name,
                            const std::string obj_path,
-                           const StatusEvent& status) final
+                           const StatusEvent &status) final
     {
         std::cout << " StatusChange{sender=" << sender_name
-                << ", interface=" << interface_name
-                << ", path=" << obj_path << "} : " << status << std::endl;
+                  << ", interface=" << interface_name
+                  << ", path=" << obj_path << "} : " << status << std::endl;
 
         if (status.Check(StatusMajor::CONNECTION, StatusMinor::CONN_DISCONNECTED))
         {
@@ -79,9 +79,10 @@ protected:
         }
     }
 
-private:
-    GMainLoop* main_loop = nullptr;
+  private:
+    GMainLoop *main_loop = nullptr;
 };
+
 
 
 int main(int argc, char **argv)
@@ -138,7 +139,7 @@ int main(int argc, char **argv)
         std::cout << "D-Bus bus name: " << dbus.GetUniqueBusName() << std::endl;
         g_main_loop_run(main_loop);
     }
-    catch (const DBusProxyAccessDeniedException& e)
+    catch (const DBusProxyAccessDeniedException &e)
     {
         std::cerr << "** ERROR ** " << e.what() << std::endl;
         std::cerr << "            " << e.getDebug() << std::endl;

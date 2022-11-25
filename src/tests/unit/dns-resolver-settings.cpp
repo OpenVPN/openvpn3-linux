@@ -100,7 +100,7 @@ TEST(DNSResolverSettings, MultipleEntries)
         r1->AddNameServer(ns.str());
 
         std::stringstream sd;
-        sd << "test" << std::to_string(i+1) << ".example.net";
+        sd << "test" << std::to_string(i + 1) << ".example.net";
         r1->AddSearchDomain(sd.str());
     }
 
@@ -115,7 +115,7 @@ TEST(DNSResolverSettings, MultipleEntries)
         EXPECT_STREQ(nslist[i].c_str(), ns.str().c_str());
 
         std::stringstream sd;
-        sd << "test" << std::to_string(i+1) << ".example.net";
+        sd << "test" << std::to_string(i + 1) << ".example.net";
         EXPECT_STREQ(sdlist[i].c_str(), sd.str().c_str());
     }
 }
@@ -153,7 +153,7 @@ TEST(DNSResolverSettings, ClearEntries)
         r1->AddNameServer(ns.str());
 
         std::stringstream sd;
-        sd << "test" << std::to_string(i+1) << ".example.com";
+        sd << "test" << std::to_string(i + 1) << ".example.com";
         r1->AddSearchDomain(sd.str());
     }
 
@@ -180,7 +180,7 @@ TEST(DNSResolverSettings, string)
         r1.AddNameServer(ns.str());
 
         std::stringstream sd;
-        sd << "test" << std::to_string(i+1) << ".example.community";
+        sd << "test" << std::to_string(i + 1) << ".example.community";
         r1.AddSearchDomain(sd.str());
     }
 
@@ -210,7 +210,7 @@ TEST(DNSResolverSettings, string_Ptr)
         r1->AddNameServer(ns.str());
 
         std::stringstream sd;
-        sd << "test" << std::to_string(i+10) << ".example.community";
+        sd << "test" << std::to_string(i + 10) << ".example.community";
         r1->AddSearchDomain(sd.str());
     }
 
@@ -235,7 +235,7 @@ TEST(DNSResolverSettings, GVariantTests_SingleNameServer)
 
     // Insert a single name server and search domain
     std::vector<std::string> ns = {{"9.9.9.9"}};
-    GVariant* d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(ns));
+    GVariant *d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(ns));
     std::string res = r1->AddNameServers(d);
     ASSERT_STREQ(res.c_str(), "9.9.9.9");
     g_variant_unref(d);
@@ -258,7 +258,7 @@ TEST(DNSResolverSettings, GVariantTests_SingleSearchDomain)
 
     // Insert a single name server and search domain
     std::vector<std::string> sd = {{"sub0.example.net"}};
-    GVariant* d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(sd));
+    GVariant *d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(sd));
     r1.AddSearchDomains(d);
     g_variant_unref(d);
 
@@ -280,13 +280,12 @@ TEST(DNSResolverSettings, GVariantTests_MultipleEntries)
 
     // Insert a single name server and search domain
     std::vector<std::string> ns = {{"10.0.0.1", "10.0.2.2", "10.0.3.3"}};
-    GVariant* d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(ns));
+    GVariant *d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(ns));
     std::string res = r1->AddNameServers(d);
     ASSERT_STREQ(res.c_str(), "10.0.0.1, 10.0.2.2, 10.0.3.3");
     g_variant_unref(d);
 
-    std::vector<std::string> sd = {{"sub1.example.net", "sub2.example.com",
-                                    "sub3.example.org", "sub4.test.example"}};
+    std::vector<std::string> sd = {{"sub1.example.net", "sub2.example.com", "sub3.example.org", "sub4.test.example"}};
     d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(sd));
     r1->AddSearchDomains(d);
     g_variant_unref(d);
@@ -313,13 +312,13 @@ TEST(DNSResolverSettings, GVariantTests_DuplicatedEntries)
 
     // Insert a single name server and search domain
     std::vector<std::string> ns = {{"10.0.0.1", "10.0.0.2", "10.0.0.2"}};
-    GVariant* d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(ns));
+    GVariant *d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(ns));
     r1->AddNameServers(d);
     g_variant_unref(d);
     ASSERT_EQ(r1->GetNameServers().size(), 2);
 
-    std::vector<std::string> sd = {{"sub1.example.net", "sub2.example.com",
-                                    "sub1.example.net", "sub2.example.com"}};
+    std::vector<std::string> sd = {
+        {"sub1.example.net", "sub2.example.com", "sub1.example.net", "sub2.example.com"}};
     d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(sd));
     r1->AddSearchDomains(d);
     g_variant_unref(d);

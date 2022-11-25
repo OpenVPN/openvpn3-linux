@@ -25,18 +25,21 @@
 
 #pragma once
 
+#include "config.h"
+#include "log/logwriter.hpp"
+
+
 #ifdef HAVE_SYSTEMD
 /**
  *  LogWriter implementation, writing to systemd journal
  */
 class JournaldWriter : public LogWriter
 {
-public:
+  public:
     JournaldWriter();
     virtual ~JournaldWriter() = default;
 
     const std::string GetLogWriterInfo() const override;
-
 
     /**
      *  We presume journald will always add timestamps to its logging,
@@ -50,13 +53,16 @@ public:
      */
     bool TimestampEnabled() override;
 
-    void Write(const std::string& data,
-               const std::string& colour_init = "",
-               const std::string& colour_reset = "") override;
-    void Write(const LogGroup grp, const LogCategory ctg,
-               const std::string& data,
-               const std::string& colour_init,
-               const std::string& colour_reset) override;
-    void Write(const LogEvent& event) override;
+    void Write(const std::string &data,
+               const std::string &colour_init = "",
+               const std::string &colour_reset = "") override;
+
+    void Write(const LogGroup grp,
+               const LogCategory ctg,
+               const std::string &data,
+               const std::string &colour_init,
+               const std::string &colour_reset) override;
+
+    void Write(const LogEvent &event) override;
 };
 #endif // HAVE_SYSTEMD

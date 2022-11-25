@@ -34,7 +34,7 @@
 
 namespace unittest {
 
-std::string test_empty(const NetCfgChangeEvent& ev, const bool expect)
+std::string test_empty(const NetCfgChangeEvent &ev, const bool expect)
 {
     bool r = ev.empty();
 
@@ -51,7 +51,7 @@ std::string test_empty(const NetCfgChangeEvent& ev, const bool expect)
     if (expect != r)
     {
         return std::string("test_empty() - Member check:  ")
-               + "(" + std::to_string((unsigned) ev.type) + ", "
+               + "(" + std::to_string((unsigned)ev.type) + ", "
                + "'" + ev.device + "', "
                + "details.size=" + std::to_string(ev.details.size()) + ") ..."
                + " is " + (r ? "EMPTY" : "NON-EMPTY")
@@ -71,8 +71,10 @@ TEST(NetCfgChangeEvent, init_empty)
 
 TEST(NetCfgChangeEvent, init_with_values)
 {
-    NetCfgChangeEvent populated1(NetCfgChangeType::DEVICE_ADDED, "test-dev",
+    NetCfgChangeEvent populated1(NetCfgChangeType::DEVICE_ADDED,
+                                 "test-dev",
                                  {{"some_key", "Some detail"}});
+
     std::string res = test_empty(populated1, false);
     ASSERT_TRUE(res.empty()) << res;
 }
@@ -80,7 +82,8 @@ TEST(NetCfgChangeEvent, init_with_values)
 
 TEST(NetCfgChangeEvent, reset)
 {
-    NetCfgChangeEvent populated1(NetCfgChangeType::DEVICE_ADDED, "test-dev",
+    NetCfgChangeEvent populated1(NetCfgChangeType::DEVICE_ADDED,
+                                 "test-dev",
                                  {{"some_key", "Some detail"}});
     populated1.reset();
     std::string res = test_empty(populated1, true);
@@ -90,9 +93,9 @@ TEST(NetCfgChangeEvent, reset)
 
 TEST(NetCfgChangeEvent, stringstream)
 {
-    NetCfgChangeEvent event(NetCfgChangeType::IPADDR_ADDED, "testdev",
-                            {{"ip_address", "2001:db8:a050::1"},
-                             {"prefix", "64"}});
+    NetCfgChangeEvent event(NetCfgChangeType::IPADDR_ADDED,
+                            "testdev",
+                            {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
     std::stringstream chk;
     chk << event;
     std::string expect("Device testdev - IP Address Added: ip_address='2001:db8:a050::1', prefix='64'");
@@ -103,9 +106,9 @@ TEST(NetCfgChangeEvent, stringstream)
 
 TEST(NetCfgChangeEvent, gvariant_GetVariant)
 {
-    NetCfgChangeEvent g_state(NetCfgChangeType::ROUTE_ADDED, "tun22",
-                              {{"ip_address", "2001:db8:a050::1"},
-                               {"prefix", "64"}});
+    NetCfgChangeEvent g_state(NetCfgChangeType::ROUTE_ADDED,
+                              "tun22",
+                              {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
     GVariant *chk = g_state.GetGVariant();
     gchar *dmp = g_variant_print(chk, true);
     std::string dump_check(dmp);
@@ -119,9 +122,9 @@ TEST(NetCfgChangeEvent, gvariant_GetVariant)
 
 TEST(NetCfgChangeEvent, gvariant_get)
 {
-    NetCfgChangeEvent g_state(NetCfgChangeType::ROUTE_ADDED, "tun22",
-                              {{"ip_address", "2001:db8:a050::1"},
-                               {"prefix", "64"}});
+    NetCfgChangeEvent g_state(NetCfgChangeType::ROUTE_ADDED,
+                              "tun22",
+                              {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
     GVariant *chk = g_state.GetGVariant();
 
     guint type = 0;
@@ -145,7 +148,7 @@ TEST(NetCfgChangeEvent, gvariant_get)
     }
     g_variant_iter_free(det_g);
 
-    ASSERT_EQ(type, (guint) g_state.type);
+    ASSERT_EQ(type, (guint)g_state.type);
     ASSERT_EQ(dev_s, g_state.device);
     ASSERT_EQ(det_s, g_state.details);
     g_free(dev_s);
@@ -154,9 +157,9 @@ TEST(NetCfgChangeEvent, gvariant_get)
 
 TEST(NetCfgChangeEvent, parse_gvariant_valid_data)
 {
-    NetCfgChangeEvent event(NetCfgChangeType::ROUTE_ADDED, "tun33",
-                            {{"ip_address", "2001:db8:a050::1"},
-                             {"prefix", "64"}});
+    NetCfgChangeEvent event(NetCfgChangeType::ROUTE_ADDED,
+                            "tun33",
+                            {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
 
     //
     // Build up an GVariant object similar to what we would retrieve
@@ -165,11 +168,11 @@ TEST(NetCfgChangeEvent, parse_gvariant_valid_data)
     // All values below here must match the values as provided in event
     //
     GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("(usa{ss})"));
-    g_variant_builder_add(b, "u", (guint32) NetCfgChangeType::ROUTE_ADDED);
+    g_variant_builder_add(b, "u", (guint32)NetCfgChangeType::ROUTE_ADDED);
     g_variant_builder_add(b, "s", "tun33");
 
     // Add the details - key/value dictionary
-    g_variant_builder_open(b, G_VARIANT_TYPE ("a{ss}"));
+    g_variant_builder_open(b, G_VARIANT_TYPE("a{ss}"));
 
     // Add IP address
     g_variant_builder_open(b, G_VARIANT_TYPE("{ss}"));
@@ -205,20 +208,21 @@ TEST(NetCfgChangeEvent, parse_gvariant_invalid_data)
     g_variant_unref(invalid);
 }
 
-std::string test_compare(const NetCfgChangeEvent& lhs,
-                         const NetCfgChangeEvent& rhs, const bool expect)
+std::string test_compare(const NetCfgChangeEvent &lhs,
+                         const NetCfgChangeEvent &rhs,
+                         const bool expect)
 {
     bool r = (lhs.type == rhs.type
               && lhs.device == rhs.device
-              && lhs.details== rhs.details);
+              && lhs.details == rhs.details);
     if (r != expect)
     {
         std::stringstream err;
         err << "NetCfgChangeEvent compare check FAIL: "
             << "{" << lhs << "} == {" << rhs << "} returned "
-            << ( r ? "true": "false")
+            << (r ? "true" : "false")
             << " - expected: "
-            << (expect ? "true": "false");
+            << (expect ? "true" : "false");
         return err.str();
     }
 
@@ -230,9 +234,9 @@ std::string test_compare(const NetCfgChangeEvent& lhs,
         std::stringstream err;
         err << "Negative NetCfgChangeEvent compare check FAIL: "
             << "{" << lhs << "} == {" << rhs << "} returned "
-            << ( r ? "true": "false")
+            << (r ? "true" : "false")
             << " - expected: "
-            << (expect ? "true": "false");
+            << (expect ? "true" : "false");
         return err.str();
     }
     return "";
@@ -241,12 +245,12 @@ std::string test_compare(const NetCfgChangeEvent& lhs,
 
 TEST(NetCfgChangeEvent, compare_eq)
 {
-    NetCfgChangeEvent s1(NetCfgChangeType::ROUTE_ADDED, "tun22",
-                         {{"ip_address", "2001:db8:a050::1"},
-                          {"prefix", "64"}});
-    NetCfgChangeEvent s2(NetCfgChangeType::ROUTE_ADDED, "tun22",
-                         {{"ip_address", "2001:db8:a050::1"},
-                          {"prefix", "64"}});
+    NetCfgChangeEvent s1(NetCfgChangeType::ROUTE_ADDED,
+                         "tun22",
+                         {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
+    NetCfgChangeEvent s2(NetCfgChangeType::ROUTE_ADDED,
+                         "tun22",
+                         {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
     std::string res = test_compare(s1, s2, true);
     ASSERT_TRUE(res.empty()) << res;
 }
@@ -254,21 +258,22 @@ TEST(NetCfgChangeEvent, compare_eq)
 
 TEST(NetCfgChangeEvent, operator_eq)
 {
-    NetCfgChangeEvent s1(NetCfgChangeType::ROUTE_ADDED, "tun22",
-                         {{"ip_address", "2001:db8:a050::1"},
-                          {"prefix", "64"}});
-    NetCfgChangeEvent s2(NetCfgChangeType::ROUTE_ADDED, "tun22",
-                         {{"ip_address", "2001:db8:a050::1"},
-                          {"prefix", "64"}});
+    NetCfgChangeEvent s1(NetCfgChangeType::ROUTE_ADDED,
+                         "tun22",
+                         {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
+    NetCfgChangeEvent s2(NetCfgChangeType::ROUTE_ADDED,
+                         "tun22",
+                         {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
     ASSERT_TRUE(s1 == s2);
 }
 
 TEST(NetCfgChangeEvent, compare_neq)
 {
-    NetCfgChangeEvent s1(NetCfgChangeType::ROUTE_ADDED, "tun22",
-                         {{"ip_address", "2001:db8:a050::1"},
-                          {"prefix", "64"}});
-    NetCfgChangeEvent s2(NetCfgChangeType::DNS_SERVER_REMOVED, "tun11",
+    NetCfgChangeEvent s1(NetCfgChangeType::ROUTE_ADDED,
+                         "tun22",
+                         {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
+    NetCfgChangeEvent s2(NetCfgChangeType::DNS_SERVER_REMOVED,
+                         "tun11",
                          {{"dns_server", "127.0.0.1"}});
     std::string res = test_compare(s1, s2, false);
     ASSERT_TRUE(res.empty()) << res;
@@ -277,10 +282,11 @@ TEST(NetCfgChangeEvent, compare_neq)
 
 TEST(NetCfgChangeEvent, operator_neq)
 {
-    NetCfgChangeEvent s1(NetCfgChangeType::ROUTE_ADDED, "tun22",
-                         {{"ip_address", "2001:db8:a050::1"},
-                          {"prefix", "64"}});
-    NetCfgChangeEvent s2(NetCfgChangeType::DNS_SERVER_REMOVED, "tun11",
+    NetCfgChangeEvent s1(NetCfgChangeType::ROUTE_ADDED,
+                         "tun22",
+                         {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
+    NetCfgChangeEvent s2(NetCfgChangeType::DNS_SERVER_REMOVED,
+                         "tun11",
                          {{"dns_server", "127.0.0.1"}});
     ASSERT_TRUE(s1 != s2);
 }

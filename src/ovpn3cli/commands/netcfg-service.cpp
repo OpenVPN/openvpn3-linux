@@ -44,7 +44,7 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
     {
         prx.reset(new NetCfgProxy::Manager(dbuscon.GetConnection()));
     }
-    catch(const DBusException&)
+    catch (const DBusException &)
     {
         // If --config-file-override is present, we expect
         // the user to want to do configuration changes directly
@@ -58,7 +58,7 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
             return 3;
         }
     }
-    catch(const NetCfgProxyException& excp)
+    catch (const NetCfgProxyException &excp)
     {
         std::cerr << "Could not reach OpenVPN 3 Network Configuration Service: "
                   << excp.GetError() << std::endl;
@@ -68,8 +68,10 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
     try
     {
         DBusConnectionCreds creds(dbuscon.GetConnection());
-        args->CheckExclusiveOptions({{"unsubscribe", "list-subscribers",
-                                      "config-show", "config-set",
+        args->CheckExclusiveOptions({{"unsubscribe",
+                                      "list-subscribers",
+                                      "config-show",
+                                      "config-set",
                                       "config-unset"}});
 
         if (args->Present("unsubscribe"))
@@ -85,14 +87,14 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
         {
             std::cout << "Current subsribers: " << std::endl;
 
-            for (const auto& sub : prx->NotificationSubscriberList())
+            for (const auto &sub : prx->NotificationSubscriberList())
             {
                 std::cout << "- " << sub.first
                           << " (PID "
                           << std::to_string(creds.GetPID(sub.first)) << ")"
                           << std::endl;
 
-                for (const auto& e : NetCfgChangeEvent::FilterMaskList(sub.second))
+                for (const auto &e : NetCfgChangeEvent::FilterMaskList(sub.second))
                 {
                     std::cout << "        " << e << std::endl;
                 }
@@ -107,7 +109,8 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
         try
         {
             std::vector<std::string> cfgopts = {"config-show",
-                                                "config-set", "config-unset"};
+                                                "config-set",
+                                                "config-unset"};
             std::string cfgmode = args->Present(cfgopts);
             std::string config_file{};
             NetCfgConfigFile config;
@@ -126,7 +129,7 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
                           << std::endl;
                 config.Load(config_file);
             }
-            catch (const ConfigFileException& excp)
+            catch (const ConfigFileException &excp)
             {
                 if ("config-show" == cfgmode)
                 {
@@ -142,7 +145,7 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
             {
                 config.CheckExclusiveOptions();
             }
-            catch (const ExclusiveOptionError& err)
+            catch (const ExclusiveOptionError &err)
             {
                 std::cerr << std::endl
                           << "==================================="
@@ -153,7 +156,8 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
                 std::cerr << " *** " << err.what() << std::endl;
                 std::cerr << "==================================="
                           << "==================================="
-                          << std::endl << std::endl;
+                          << std::endl
+                          << std::endl;
             }
 
             if ("config-show" == cfgmode)
@@ -179,19 +183,19 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
                 {
                     throw CommandException("netcfg-service",
                                            "A value must be given to --"
-                                           + cfgmode + " " + optname);
+                                               + cfgmode + " " + optname);
                 }
                 else if ("config-unset" == cfgmode && values.size() > 0)
                 {
                     throw CommandException("netcfg-service",
                                            "No value can be given to --"
-                                           + cfgmode + " " + optname);
+                                               + cfgmode + " " + optname);
                 }
                 else if (values.size() > 1)
                 {
                     throw CommandException("netcfg-service",
                                            "Only a single value can be given to --"
-                                           + cfgmode + " " + optname);
+                                               + cfgmode + " " + optname);
                 }
                 else if (values.size() == 1)
                 {
@@ -216,30 +220,31 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
                               << "openvpn3-service-netcfg restarts"
                               << std::endl;
                 }
-                catch (const ExclusiveOptionError& err)
+                catch (const ExclusiveOptionError &err)
                 {
                     std::cerr << "Configuration NOT changed due to the "
-                              << "following error:" << std::endl << std::endl;
+                              << "following error:" << std::endl
+                              << std::endl;
                     std::cerr << " *** " << err.what() << std::endl
                               << std::endl;
                 }
             }
         }
-        catch (const OptionNotFound&)
+        catch (const OptionNotFound &)
         {
             // Nothing to do; options not present
         }
         return 0;
     }
-    catch (const ExclusiveOptionError& excp)
+    catch (const ExclusiveOptionError &excp)
     {
         throw CommandException("netcfg-service", excp.what());
     }
-    catch (const DBusException& excp)
+    catch (const DBusException &excp)
     {
         throw CommandException("netcfg-service", excp.what());
     }
-    catch (const DBusProxyAccessDeniedException& excp)
+    catch (const DBusProxyAccessDeniedException &excp)
     {
         throw CommandException("netcfg-service", excp.what());
     }
@@ -281,7 +286,7 @@ std::string arghelper_netcfg_config_keys()
 {
     NetCfgConfigFile cfg;
     std::stringstream r;
-    for (const auto& o : cfg.GetOptions(true))
+    for (const auto &o : cfg.GetOptions(true))
     {
         r << o << " ";
     }
@@ -298,23 +303,33 @@ SingleCommand::Ptr prepare_command_netcfg_service()
                                 cmd_netcfg_service));
     cmd->AddOption("config-show",
                    "Show the current configuration file used by netcfg-service");
-    cmd->AddOption("config-set", 0, "CONFIG-KEY", true,
+    cmd->AddOption("config-set",
+                   0,
+                   "CONFIG-KEY",
+                   true,
                    "Sets a configuration option and saves it in the config file",
                    arghelper_netcfg_config_keys);
-    cmd->AddOption("config-unset", 0, "CONFIG-KEY", true,
+    cmd->AddOption("config-unset",
+                   0,
+                   "CONFIG-KEY",
+                   true,
                    "Removes a configuration option and updates the config file",
                    arghelper_netcfg_config_keys);
-    cmd->AddOption("config-file-override", 0, "CONFIG-FILE", true,
+    cmd->AddOption("config-file-override",
+                   0,
+                   "CONFIG-FILE",
+                   true,
                    "Overrides the default configuration file (default file "
                    "provivded by openvpn3-service-netcfg)");
     cmd->AddOption("list-subscribers",
                    "List all D-Bus services subscribed to "
                    "NetworkChange signals");
-    cmd->AddOption("unsubscribe", 0, "DBUS-UNIQUE-NAME", true,
+    cmd->AddOption("unsubscribe",
+                   0,
+                   "DBUS-UNIQUE-NAME",
+                   true,
                    "Unsubscribe a specific subscriber",
                    arghelper_netcfg_subscribers);
 
     return cmd;
 }
-
-

@@ -40,9 +40,9 @@ int main(int argc, char **argv)
         bool nonexist_fail = false;
         try
         {
-            (void) lookup_uid("nonexiting_user");
+            (void)lookup_uid("nonexiting_user");
         }
-        catch (const LookupException& excp)
+        catch (const LookupException &excp)
         {
             nonexist_fail = true;
         }
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
                 std::cout << "UID " << uid << " was not found" << std::endl;
             }
         }
-        catch (const LookupException& excp)
+        catch (const LookupException &excp)
         {
             std::cout << "** ERROR ** " << excp.str() << std::endl;
         }

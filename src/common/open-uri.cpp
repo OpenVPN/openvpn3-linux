@@ -31,7 +31,9 @@
 #include <gio/gdesktopappinfo.h>
 #include "open-uri.hpp"
 
-OpenURIresult open_uri(const std::string& uri)
+
+
+OpenURIresult open_uri(const std::string &uri)
 {
     GError *error = nullptr; // RIAA not possible: crosses initialization of ‘GError* error’
     OpenURIresult ret = NewOpenURIresult();
@@ -51,11 +53,11 @@ OpenURIresult open_uri(const std::string& uri)
     {
         ret->status = OpenURIstatus::FAIL;
         ret->message = std::string("Failed to open URI: ")
-                     + std::string(error->message);
+                       + std::string(error->message);
         g_clear_error(&error);
     }
 
- exit:
+exit:
     g_free(scheme);
     return ret;
 }

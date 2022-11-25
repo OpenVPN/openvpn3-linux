@@ -18,9 +18,9 @@
 //
 
 /**
- * @file   logwriter.cpp
+ * @file   logwriter-tests.cpp
  *
- * @brief  Simple unit test for the LogWriter interfaces.
+ * @brief  Simple independent unit test for the LogWriter interfaces.
  */
 
 #include <iostream>
@@ -41,7 +41,7 @@
  * @param w  LogWriter instance to run tests on
  *
  */
-void run_test_1(LogWriter& w)
+void run_test_1(LogWriter &w)
 {
     w.Write("**** run_test_1()");
     w.Write("Log line 1 with timestamp");
@@ -64,7 +64,7 @@ void run_test_1(LogWriter& w)
  *
  * @param w LogWriter instance to run tests on
  */
-void run_test_2(LogWriter& w)
+void run_test_2(LogWriter &w)
 {
     w.Write("**** run_test_2()");
     for (int group = 1; group < LogGroupCount; group++)
@@ -76,10 +76,9 @@ void run_test_2(LogWriter& w)
                 w.AddMeta("prepend", "!! ---> Prepended data <--- ", true);
                 w.PrependMeta("prepend", true);
             }
-            w.Write((LogGroup) group, (LogCategory) catg,
-                        std::string("LogGroup/LogCategory test line: ")
-                        + std::to_string(group) + ":"
-                        + std::to_string(catg));
+            w.Write((LogGroup)group,
+                    (LogCategory)catg,
+                    std::string("LogGroup/LogCategory test line: ") + std::to_string(group) + ":" + std::to_string(catg));
         }
     }
 }
@@ -92,29 +91,29 @@ void run_test_2(LogWriter& w)
  *
  * @param w LogWriter instance to run tests on
  */
-void run_test_3(LogWriter& w)
+void run_test_3(LogWriter &w)
 {
     w.Write("**** run_test_3()");
     for (int group = 1; group < LogGroupCount; group++)
     {
         for (int catg = 1; catg < 9; catg++)
         {
-                if ((catg % 3) == 0)
-                {
-                    std::stringstream s;
-                    s << "!! ---> Prepended data <--- "
-                      << ((catg % 2) == 0 ? "[with meta prepend] " : "");
-                    w.AddMeta("prepend", s.str(), true);
-                    w.PrependMeta("prepend", (catg % 2) == 0);
-                }
-                LogEvent ev((LogGroup) group, (LogCategory) catg,
-                            std::string("LogEvent() test line: ")
-                            + std::to_string(group) + ":"
-                            + std::to_string(catg));
-                w.AddMeta("meta", "Meta data for test line:"
-                          + std::to_string(group) + ":"
-                          + std::to_string(catg));
-                w.Write(ev);
+            if ((catg % 3) == 0)
+            {
+                std::stringstream s;
+                s << "!! ---> Prepended data <--- "
+                  << ((catg % 2) == 0 ? "[with meta prepend] " : "");
+                w.AddMeta("prepend", s.str(), true);
+                w.PrependMeta("prepend", (catg % 2) == 0);
+            }
+            LogEvent ev((LogGroup)group,
+                        (LogCategory)catg,
+                        std::string("LogEvent() test line: ")
+                            + std::to_string(group) + ":" + std::to_string(catg));
+            w.AddMeta("meta",
+                      "Meta data for test line:"
+                          + std::to_string(group) + ":" + std::to_string(catg));
+            w.Write(ev);
         }
     }
 }
@@ -123,7 +122,7 @@ void run_test_3(LogWriter& w)
 /**
  *  Tests turning on and off the meta line logging
  */
-void run_test_4(LogWriter& w)
+void run_test_4(LogWriter &w)
 {
     w.Write("**** run_test_4() - every other line has a meta log line");
     for (int i = 1; i < 10; i++)
@@ -147,7 +146,8 @@ int main(int argc, char **argv)
     run_test_2(lfw);
     run_test_3(lfw);
     run_test_4(lfw);
-    std::cout << std::endl << std::endl;
+    std::cout << std::endl
+              << std::endl;
 
     // Similar to the previous text/plain test, but uses the colours variant.
     // Still logging to stdout
@@ -161,7 +161,8 @@ int main(int argc, char **argv)
     run_test_2(cfw);
     run_test_3(cfw);
     run_test_4(cfw);
-    std::cout << std::endl << std::endl;
+    std::cout << std::endl
+              << std::endl;
 
     std::cout << "Testing ColourWriter, mode: by group" << std::endl
               << "----------------------------------------------------------"
@@ -180,7 +181,8 @@ int main(int argc, char **argv)
     run_test_2(slw);
     run_test_3(slw);
     run_test_4(slw);
-    std::cout << "Check the syslog for results" << std::endl << std::endl;
+    std::cout << "Check the syslog for results" << std::endl
+              << std::endl;
 
 #if HAVE_SYSTEMD
     // Test the systemd-journald implementation of LogWriter.  To validate these
@@ -193,9 +195,11 @@ int main(int argc, char **argv)
     run_test_2(jlw);
     run_test_3(jlw);
     run_test_4(jlw);
-    std::cout << "Check the systemd-journald for results" << std::endl << std::endl;
+    std::cout << "Check the systemd-journald for results" << std::endl
+              << std::endl;
 #endif // HAVE_SYSTEMD
 
-    std::cout << "All tests done" << std::endl << std::endl;
+    std::cout << "All tests done" << std::endl
+              << std::endl;
     return 0;
 }

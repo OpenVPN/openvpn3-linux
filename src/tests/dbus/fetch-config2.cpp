@@ -32,29 +32,31 @@
 
 using namespace openvpn;
 
+
+
 int main(int argc, char **argv)
 {
-        if (argc != 2) {
-            std::cout << "Usage: " << argv[0] << " <config obj path>" << std::endl;
-            return 1;
-        }
+    if (argc != 2)
+    {
+        std::cout << "Usage: " << argv[0] << " <config obj path>" << std::endl;
+        return 1;
+    }
 
-        //        OpenVPN3ConfigurationProxy config(G_BUS_TYPE_SYSTEM, argv[1]);
-        DBus dbusobj(G_BUS_TYPE_SYSTEM);
-        dbusobj.Connect();
+    //        OpenVPN3ConfigurationProxy config(G_BUS_TYPE_SYSTEM, argv[1]);
+    DBus dbusobj(G_BUS_TYPE_SYSTEM);
+    dbusobj.Connect();
 
-        OpenVPN3ConfigurationProxy config(dbusobj, argv[1]);
+    OpenVPN3ConfigurationProxy config(dbusobj, argv[1]);
 
-        std::cout << "Configuration: " << std::endl;
-        std::cout << "  - Name:       " << config.GetStringProperty("name") << std::endl;
-        std::cout << "  - Read only:  " << (config.GetBoolProperty("readonly") ? "Yes" : "No") << std::endl;
-        std::cout << "  - Persistent: " << (config.GetBoolProperty("persistent") ? "Yes" : "No") << std::endl;
-        std::cout << "  - Usage:      " << (config.GetBoolProperty("single_use") ? "Once" : "Multiple times") << std::endl;
-        std::cout << "--------------------------------------------------" << std::endl;
-        std::cout << config.GetJSONConfig() << std::endl;
-        std::cout << "--------------------------------------------------" << std::endl;
-        std::cout << "** DONE" << std::endl;
+    std::cout << "Configuration: " << std::endl;
+    std::cout << "  - Name:       " << config.GetStringProperty("name") << std::endl;
+    std::cout << "  - Read only:  " << (config.GetBoolProperty("readonly") ? "Yes" : "No") << std::endl;
+    std::cout << "  - Persistent: " << (config.GetBoolProperty("persistent") ? "Yes" : "No") << std::endl;
+    std::cout << "  - Usage:      " << (config.GetBoolProperty("single_use") ? "Once" : "Multiple times") << std::endl;
+    std::cout << "--------------------------------------------------" << std::endl;
+    std::cout << config.GetJSONConfig() << std::endl;
+    std::cout << "--------------------------------------------------" << std::endl;
+    std::cout << "** DONE" << std::endl;
 
-        return 0;
+    return 0;
 }
-

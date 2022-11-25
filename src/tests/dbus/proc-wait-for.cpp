@@ -37,6 +37,7 @@
 
 using namespace openvpn;
 
+
 struct app_data
 {
     const char *interface;
@@ -47,26 +48,31 @@ struct app_data
     DBus *dbus;
 };
 
-void * wait_for_process_loop(gpointer data)
+
+
+void *wait_for_process_loop(gpointer data)
 {
-    struct app_data *appdata = (struct app_data *) data;
+    struct app_data *appdata = (struct app_data *)data;
 
     ProcessSignalWatcher procsub(appdata->dbus->GetConnection());
     StatusMinor res = StatusMinor::UNSET;
-    do {
+    do
+    {
         std::cout << "Waiting for the process signal to happen (timeout 10 seconds)" << std::endl;
         res = procsub.WaitForProcess(std::string(appdata->interface), std::string(appdata->processname));
-        std::cout << "status(" << std::to_string((uint8_t) appdata->status) << ") == "
-                  << "res(" << std::to_string((uint8_t) res) << ") is "
+        std::cout << "status(" << std::to_string((uint8_t)appdata->status) << ") == "
+                  << "res(" << std::to_string((uint8_t)res) << ") is "
                   << (res == appdata->status ? "True" : "False") << std::endl;
-        std::cout << "Caught : " << StatusMinor_str[(uint8_t) res] << std::endl;
-    } while (((uint8_t) res != (uint8_t) appdata->status)
-             && appdata->main_running != false );
+        std::cout << "Caught : " << StatusMinor_str[(uint8_t)res] << std::endl;
+    } while (((uint8_t)res != (uint8_t)appdata->status)
+             && appdata->main_running != false);
 
     g_main_loop_quit(appdata->mainloop);
     g_thread_exit(0);
     return NULL;
 }
+
+
 
 int main(int argc, char **argv)
 {
@@ -75,9 +81,9 @@ int main(int argc, char **argv)
         std::cout << "Usage: " << argv[0] << " <interface name> <process name> <status>" << std::endl;
         std::cout << std::endl;
         std::cout << "Valid status values: " << std::endl;
-        std::cout << "   PROC_STARTED -> use " << std::to_string((uint8_t) StatusMinor::PROC_STARTED) << std::endl;
-        std::cout << "   PROC_STOPPED -> use " << std::to_string((uint8_t) StatusMinor::PROC_STOPPED) << std::endl;
-        std::cout << "   PROC_KILLED -> use " << std::to_string((uint8_t) StatusMinor::PROC_KILLED) << std::endl;
+        std::cout << "   PROC_STARTED -> use " << std::to_string((uint8_t)StatusMinor::PROC_STARTED) << std::endl;
+        std::cout << "   PROC_STOPPED -> use " << std::to_string((uint8_t)StatusMinor::PROC_STOPPED) << std::endl;
+        std::cout << "   PROC_KILLED -> use " << std::to_string((uint8_t)StatusMinor::PROC_KILLED) << std::endl;
         std::cout << std::endl;
         return 1;
     }
@@ -89,11 +95,10 @@ int main(int argc, char **argv)
     struct app_data appdata = {
         .interface = argv[1],
         .processname = argv[2],
-        .status  = (StatusMinor) atoi(argv[3]),
+        .status = (StatusMinor)atoi(argv[3]),
         .mainloop = g_main_loop_new(NULL, FALSE),
         .main_running = true,
-        .dbus = &dbus
-    };
+        .dbus = &dbus};
 
     GThread *workerthread = g_thread_new("worker", wait_for_process_loop, &appdata);
 
@@ -111,5 +116,5 @@ int main(int argc, char **argv)
     g_thread_join(workerthread);
     g_thread_unref(workerthread);
 
-   return 0;
+    return 0;
 }

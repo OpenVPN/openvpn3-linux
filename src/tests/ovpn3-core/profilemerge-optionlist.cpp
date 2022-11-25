@@ -37,11 +37,15 @@
 
 using namespace openvpn;
 
+
 int cmd_pm_optlist_test(ParsedArgs::Ptr args)
 {
-    try {
+    try
+    {
         args->Present({"config", "option", "dump", "dump-json"});
-    } catch (const OptionNotFound& e) {
+    }
+    catch (const OptionNotFound &e)
+    {
         throw CommandException("pm+optlist-test", "Missing options");
     }
 
@@ -49,7 +53,9 @@ int cmd_pm_optlist_test(ParsedArgs::Ptr args)
     // The ProfileMerge will ensure that all needed
     // files are embedded into the configuration we
     // send to and store in the Configuration Manager
-    ProfileMerge pm(args->GetValue("config", 0), "", "",
+    ProfileMerge pm(args->GetValue("config", 0),
+                    "",
+                    "",
                     ProfileMerge::FOLLOW_FULL,
                     ProfileParseLimits::MAX_LINE_SIZE,
                     ProfileParseLimits::MAX_PROFILE_SIZE);
@@ -85,7 +91,7 @@ int cmd_pm_optlist_test(ParsedArgs::Ptr args)
         }
         return 0;
     }
-    catch (std::exception& e)
+    catch (std::exception &e)
     {
         std::cout << "Not found: " << e.what() << std::endl;
         return 1;
@@ -93,22 +99,20 @@ int cmd_pm_optlist_test(ParsedArgs::Ptr args)
 }
 
 
+
 int main(int argc, char **argv)
 {
     try
     {
-        SingleCommand argparser(argv[0], "ProfileMerge+OptionList tester",
-                                cmd_pm_optlist_test);
-        argparser.AddOption("config", 'c', "FILE", true,
-                            "Configuration file to process");
-        argparser.AddOption("option", 'o', "CONFIG-OPTION", true,
-                            "Configuration option to extract and print");
+        SingleCommand argparser(argv[0], "ProfileMerge+OptionList tester", cmd_pm_optlist_test);
+        argparser.AddOption("config", 'c', "FILE", true, "Configuration file to process");
+        argparser.AddOption("option", 'o', "CONFIG-OPTION", true, "Configuration option to extract and print");
         argparser.AddOption("dump", "Dump parsed config to console");
         argparser.AddOption("dump-json", "Dump parsed config to console as JSON");
 
         return argparser.RunCommand(simple_basename(argv[0]), argc, argv);
     }
-    catch (CommandException& e)
+    catch (CommandException &e)
     {
         if (e.gotErrorMessage())
         {
@@ -117,6 +121,3 @@ int main(int argc, char **argv)
         return 2;
     }
 }
-
-
-

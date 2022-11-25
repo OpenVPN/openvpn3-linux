@@ -26,8 +26,7 @@
  *         a RequiresQueue.
  */
 
-#ifndef OPENVPN3_DBUS_PROXY_REQUIRESQUEUE_HPP
-#define OPENVPN3_DBUS_PROXY_REQUIRESQUEUE_HPP
+#pragma once
 
 #include "dbus/core.hpp"
 #include "common/requiresqueue.hpp"
@@ -42,7 +41,7 @@ using namespace openvpn;
  */
 class DBusRequiresQueueProxy : public DBusProxy
 {
-public:
+  public:
     /**
      *  Initialize the D-Bus proxy for RequiresQueue.  This constructor
      *  will setup its own connection object.
@@ -67,8 +66,14 @@ public:
      * The method names must match the defined introspection of the service
      * side.
      */
-    DBusRequiresQueueProxy(GBusType bus_type, std::string destination , std::string interface, std::string objpath,
-                           std::string method_quechktypegroup, std::string method_queuefetch, std::string method_queuecheck, std::string method_providereponse)
+    DBusRequiresQueueProxy(GBusType bus_type,
+                           std::string destination,
+                           std::string interface,
+                           std::string objpath,
+                           std::string method_quechktypegroup,
+                           std::string method_queuefetch,
+                           std::string method_queuecheck,
+                           std::string method_providereponse)
         : DBusProxy(bus_type, destination, interface, objpath),
           method_quechktypegroup(method_quechktypegroup),
           method_queuefetch(method_queuefetch),
@@ -101,8 +106,14 @@ public:
      * The method names must match the defined introspection of the service
      * side.
      */
-    DBusRequiresQueueProxy(DBus & dbusobj, std::string destination , std::string interface, std::string objpath,
-                           std::string method_quechktypegroup, std::string method_queuefetch, std::string method_queuecheck, std::string method_providereponse)
+    DBusRequiresQueueProxy(DBus &dbusobj,
+                           std::string destination,
+                           std::string interface,
+                           std::string objpath,
+                           std::string method_quechktypegroup,
+                           std::string method_queuefetch,
+                           std::string method_queuecheck,
+                           std::string method_providereponse)
         : DBusProxy(dbusobj.GetConnection(), destination, interface, objpath),
           method_quechktypegroup(method_quechktypegroup),
           method_queuefetch(method_queuefetch),
@@ -122,7 +133,9 @@ public:
      * @param group      ClientAttentionGroup of the slot to retrieve
      * @param id         Unsigned int of the slot ID to retrieve
      */
-    struct RequiresSlot QueueFetch(ClientAttentionType type, ClientAttentionGroup group, unsigned int id)
+    struct RequiresSlot QueueFetch(ClientAttentionType type,
+                                   ClientAttentionGroup group,
+                                   unsigned int id)
     {
         GVariant *slot = Call(method_queuefetch, g_variant_new("(uuu)", type, group, id));
         if (NULL == slot)
@@ -145,10 +158,12 @@ public:
      * @param type   ClientAttentionType to retrieve
      * @param group  ClientAttentionGroup to retrieve
      */
-    void QueueFetchAll(std::vector<struct RequiresSlot>& slots, ClientAttentionType type, ClientAttentionGroup group)
+    void QueueFetchAll(std::vector<struct RequiresSlot> &slots,
+                       ClientAttentionType type,
+                       ClientAttentionGroup group)
     {
         std::vector<unsigned int> reqids = QueueCheck(type, group);
-        for (auto& id : reqids)
+        for (auto &id : reqids)
         {
             slots.push_back(QueueFetch(type, group, id));
         }
@@ -181,7 +196,7 @@ public:
             unsigned int t;
             unsigned int g;
             g_variant_get(e, "(uu)", &t, &g);
-            ret.push_back(std::make_tuple((ClientAttentionType) t, (ClientAttentionGroup) g));
+            ret.push_back(std::make_tuple((ClientAttentionType)t, (ClientAttentionGroup)g));
             g_variant_unref(e);
         }
         g_variant_unref(res);
@@ -200,7 +215,8 @@ public:
      * @return  Returns a std::vector<unsigned int> with slot ID references
      *          to unresolved RequiresSlot items.
      */
-    std::vector<unsigned int> QueueCheck(ClientAttentionType type, ClientAttentionGroup group)
+    std::vector<unsigned int> QueueCheck(ClientAttentionType type,
+                                         ClientAttentionGroup group)
     {
         GVariant *res = Call(method_queuecheck, g_variant_new("(uu)", type, group));
         if (NULL == res)
@@ -229,10 +245,14 @@ public:
      *
      * @param slot  A RequiresSlot item containing the needed information.
      */
-    void ProvideResponse(struct RequiresSlot& slot)
+    void ProvideResponse(struct RequiresSlot &slot)
     {
-        GVariant *res = Call(method_provideresponse, g_variant_new("(uuus)",
-                    slot.type, slot.group, slot.id, slot.value.c_str()));
+        GVariant *res = Call(method_provideresponse,
+                             g_variant_new("(uuus)",
+                                           slot.type,
+                                           slot.group,
+                                           slot.id,
+                                           slot.value.c_str()));
         if (NULL == res)
         {
             THROW_DBUSEXCEPTION("DBusRequiresQueueProxy", "Failed during call to QueueCheck()");
@@ -241,7 +261,7 @@ public:
     }
 
 
-private:
+  private:
     std::string method_quechktypegroup;
     std::string method_queuefetch;
     std::string method_queuecheck;
@@ -276,7 +296,8 @@ private:
             gchar *name = nullptr;
             gchar *descr = nullptr;
             gboolean hidden_input;
-            g_variant_get(indata, "(uuussb)",
+            g_variant_get(indata,
+                          "(uuussb)",
                           &type,
                           &group,
                           &id,
@@ -284,8 +305,8 @@ private:
                           &descr,
                           &hidden_input);
 
-            result.type = (ClientAttentionType) type;
-            result.group = (ClientAttentionGroup) group;
+            result.type = (ClientAttentionType)type;
+            result.group = (ClientAttentionGroup)group;
             result.id = id;
             if (name)
             {
@@ -303,5 +324,3 @@ private:
         throw RequiresQueueException("Failed parsing the requires queue result");
     }
 };
-
-#endif // OPENVPN3_DBUS_PROXY_REQUIRESQUEUE_HPP

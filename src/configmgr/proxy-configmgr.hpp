@@ -17,8 +17,7 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#ifndef OPENVPN3_DBUS_PROXY_CONFIG_HPP
-#define OPENVPN3_DBUS_PROXY_CONFIG_HPP
+#pragma once
 
 #include <vector>
 
@@ -27,13 +26,16 @@
 
 using namespace openvpn;
 
-class OpenVPN3ConfigurationProxy : public DBusProxy {
-public:
+
+class OpenVPN3ConfigurationProxy : public DBusProxy
+{
+  public:
     OpenVPN3ConfigurationProxy(GBusType bus_type, std::string object_path)
         : DBusProxy(bus_type,
                     OpenVPN3DBus_name_configuration,
                     OpenVPN3DBus_interf_configuration,
-                    "", true)
+                    "",
+                    true)
     {
         proxy = SetupProxy(OpenVPN3DBus_name_configuration,
                            OpenVPN3DBus_interf_configuration,
@@ -46,15 +48,16 @@ public:
         // when accessing the main management object
         if (OpenVPN3DBus_rootp_configuration == object_path)
         {
-            (void) GetServiceVersion();
+            (void)GetServiceVersion();
         }
     }
 
-    OpenVPN3ConfigurationProxy(DBus& dbusobj, std::string object_path)
+    OpenVPN3ConfigurationProxy(DBus &dbusobj, std::string object_path)
         : DBusProxy(dbusobj.GetConnection(),
                     OpenVPN3DBus_name_configuration,
                     OpenVPN3DBus_interf_configuration,
-                    "", true)
+                    "",
+                    true)
     {
         proxy = SetupProxy(OpenVPN3DBus_name_configuration,
                            OpenVPN3DBus_interf_configuration,
@@ -66,13 +69,12 @@ public:
         // when accessing the main management object
         if (OpenVPN3DBus_rootp_configuration == object_path)
         {
-            (void) GetServiceVersion();
+            (void)GetServiceVersion();
         }
     }
 
 
-    std::string Import(std::string name, std::string config_blob,
-                       bool single_use, bool persistent)
+    std::string Import(std::string name, std::string config_blob, bool single_use, bool persistent)
     {
         GVariant *res = Call("Import",
                              g_variant_new("(ssbb)",
@@ -180,6 +182,7 @@ public:
         return ret;
     }
 
+
     std::string GetConfig()
     {
         GVariant *res = Call("Fetch");
@@ -197,6 +200,7 @@ public:
         return ret;
     }
 
+
     void Remove()
     {
         GVariant *res = Call("Remove");
@@ -207,6 +211,7 @@ public:
         }
         g_variant_unref(res);
     }
+
 
     void SetName(std::string name)
     {
@@ -239,7 +244,6 @@ public:
     {
         return GetBoolProperty("locked_down");
     }
-
 
     /**
      *  Manipulate the public-access flag.  When public-access is set to
@@ -400,8 +404,7 @@ public:
             GVariant *val = nullptr;
             g_variant_get(override, "{sv}", &key, &val);
 
-
-            const ValidOverride& vo = GetConfigOverride(key);
+            const ValidOverride &vo = GetConfigOverride(key);
             if (!vo.valid())
             {
                 THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
@@ -412,7 +415,6 @@ public:
                 gsize len = 0;
                 std::string v(g_variant_get_string(val, &len));
                 ret.push_back(OverrideValue(vo, v));
-
             }
             else if (OverrideType::boolean == vo.type)
             {
@@ -424,6 +426,7 @@ public:
         g_variant_iter_free(override_iter);
         return ret;
     }
+
 
     /**
      * Adds a bool override to this object.
@@ -440,7 +443,7 @@ public:
             THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
                                 "SetOverride for bool called for non-bool override");
         }
-        GVariant* val = g_variant_new("b", value);
+        GVariant *val = g_variant_new("b", value);
         Call("SetOverride", g_variant_new("(sv)", override.key.c_str(), val));
     }
 
@@ -460,14 +463,14 @@ public:
             THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
                                 "SetOverride for string called for non-string override");
         }
-        GVariant* val = g_variant_new("s", value.c_str());
+        GVariant *val = g_variant_new("s", value.c_str());
         Call("SetOverride", g_variant_new("(sv)", override.key.c_str(), val));
     }
 
 
-    const ValidOverride& LookupOverride(const std::string key)
+    const ValidOverride &LookupOverride(const std::string key)
     {
-        for (const ValidOverride& vo: configProfileOverrides)
+        for (const ValidOverride &vo : configProfileOverrides)
         {
             if (vo.key == key)
             {
@@ -477,6 +480,7 @@ public:
         THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
                             "Invalid override key:" + key);
     }
+
 
     /**
      * Removes an override from this object.
@@ -522,5 +526,3 @@ public:
         return ret;
     }
 };
-
-#endif // OPENVPN3_DBUS_PROXY_CONFIG_HPP

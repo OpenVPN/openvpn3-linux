@@ -23,7 +23,6 @@
  * @brief  Collection of all LogWriter implementations in a single include file
  */
 
-
 #pragma once
 
 #include "journald.hpp"

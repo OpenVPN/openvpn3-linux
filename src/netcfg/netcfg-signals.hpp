@@ -30,19 +30,22 @@
 #include "netcfg-changeevent.hpp"
 #include "netcfg-subscriptions.hpp"
 
+
 class NetCfgSignals : public LogSender,
                       public RC<thread_unsafe_refcount>
 {
-public:
+  public:
     typedef RCPtr<NetCfgSignals> Ptr;
 
-    NetCfgSignals(GDBusConnection *conn, LogGroup lgroup,
-                  std::string object_path, LogWriter *logwr)
-        : LogSender(conn, lgroup, OpenVPN3DBus_interf_netcfg,
-                    object_path, logwr)
+    NetCfgSignals(GDBusConnection *conn,
+                  LogGroup lgroup,
+                  std::string object_path,
+                  LogWriter *logwr)
+        : LogSender(conn, lgroup, OpenVPN3DBus_interf_netcfg, object_path, logwr)
     {
         SetLogLevel(default_log_level);
     }
+
 
     /**
      * Sends a FATAL log messages and kills itself
@@ -76,14 +79,16 @@ public:
     }
 
 
-    void NetworkChange(const NetCfgChangeEvent& ev) const
+    void NetworkChange(const NetCfgChangeEvent &ev) const
     {
         GVariant *e = ev.GetGVariant();
         if (subscriptions)
         {
             Send(subscriptions->GetSubscribersList(ev),
-                 get_interface(), get_object_path(),
-                 "NetworkChange", e);
+                 get_interface(),
+                 get_object_path(),
+                 "NetworkChange",
+                 e);
         }
         else
         {
@@ -96,7 +101,7 @@ public:
     }
 
 
-private:
+  private:
     const unsigned int default_log_level = 6; // LogCategory::DEBUG
     NetCfgSubscriptions::Ptr subscriptions;
 };

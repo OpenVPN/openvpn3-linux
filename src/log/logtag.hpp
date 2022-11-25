@@ -29,6 +29,7 @@
 #include <memory>
 #include <string>
 
+
 /**
  *  This provides a more generic interface to generate and process
  *  the log tags and hashes used to separate log events from various
@@ -45,12 +46,13 @@ struct LogTag
      * @param interface  std::string of the D-Bus interface sending events
      *
      */
-    LogTag(std::string sender, std::string interface, const bool default_encaps=true);
+    LogTag(std::string sender, std::string interface, const bool default_encaps = true);
 
     LogTag();
-    LogTag(const LogTag& cp);
+    LogTag(const LogTag &cp);
 
     virtual ~LogTag();
+
 
     static LogTag::Ptr create()
     {
@@ -59,9 +61,10 @@ struct LogTag
         return r;
     }
 
+
     static LogTag::Ptr create(const std::string &sender,
                               const std::string &interface,
-                              const bool default_encaps=true)
+                              const bool default_encaps = true)
     {
         LogTag::Ptr r;
         r.reset(new LogTag(sender, interface, default_encaps));
@@ -84,16 +87,18 @@ struct LogTag
      * @return  Returns a std::string containing the tag this sender and
      *          interface will use
      */
-     virtual const std::string str(const bool override) const;
+    virtual const std::string str(const bool override) const;
 
-     /**
-      *  This is the same as the @str(const bool) variant, just that it will
-      *  use the default_encaps setting given to the constructor.
-      *
+
+    /**
+     *  This is the same as the @str(const bool) variant, just that it will
+     *  use the default_encaps setting given to the constructor.
+     *
      * @return  Returns a std::string containing the tag this sender and
      *          interface will use
-      */
-     const std::string str() const;
+     */
+    const std::string str() const;
+
 
     /**
      *  Write a formatted tag string via iostreams
@@ -104,13 +109,12 @@ struct LogTag
      * @return  Returns the provided std::ostream together with the
      *          decoded LogEvent information
      */
-    friend std::ostream& operator<<(std::ostream& os , const LogTag& ltag)
+    friend std::ostream &operator<<(std::ostream &os, const LogTag &ltag)
     {
         return os << ltag.str();
     }
 
-
-    std::string tag{};    /**<  Contains the string used for the hash generation */
-    size_t hash{};        /**<  Contains the hash value for this LogTag */
-    bool encaps = true;   /**<  Encapsulate the hash value in "{tag:...}" */
+    std::string tag{};  /**<  Contains the string used for the hash generation */
+    size_t hash{};      /**<  Contains the hash value for this LogTag */
+    bool encaps = true; /**<  Encapsulate the hash value in "{tag:...}" */
 };

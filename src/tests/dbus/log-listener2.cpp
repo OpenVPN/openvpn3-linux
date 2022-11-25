@@ -36,28 +36,30 @@
 
 using namespace openvpn;
 
+
 class Logger : public LogConsumer
 {
-public:
+  public:
     Logger(GDBusConnection *dbuscon, std::string tag, std::string interf)
         : LogConsumer(dbuscon, interf, ""),
           log_tag(tag)
     {
     }
 
-    void ConsumeLogEvent(const std::string sender, const std::string interface,
+    void ConsumeLogEvent(const std::string sender,
+                         const std::string interface,
                          const std::string object_path,
-                         const LogEvent& logev)
+                         const LogEvent &logev)
     {
         std::cout << log_tag << ":: sender=" << sender
-                  << ", interface=" << interface
-                  << " path=" << object_path << std::endl
+                  << ", interface=" << interface << " path=" << object_path << std::endl
                   << "       " << logev << std::endl;
     }
 
-private:
+  private:
     std::string log_tag;
 };
+
 
 
 int main(int argc, char **argv)

@@ -42,20 +42,21 @@ struct RequiresSlot
 {
     RequiresSlot();
 
-    unsigned int id;               ///< Unique ID per type/group
-    ClientAttentionType type;      ///< Type categorization of the requirement
-    ClientAttentionGroup group;    ///< Group categorization of the
-                                   ///< requirement
-    std::string name;              ///< Variable name of the requirement, used
-                                   ///< by the service backend to more easily
-                                   ///< retrieve a specific slot
-    std::string value;             ///< Value provided by the front-end
-    std::string user_description;  ///< Description the front-end can show
-                                   ///< to a user
-    bool hidden_input;             ///< Should user's input be masked?
-    bool provided;                 ///< Have the front-end already provided
-                                   ///< the requested information?
+    unsigned int id;              ///< Unique ID per type/group
+    ClientAttentionType type;     ///< Type categorization of the requirement
+    ClientAttentionGroup group;   ///< Group categorization of the
+                                  ///< requirement
+    std::string name;             ///< Variable name of the requirement, used
+                                  ///< by the service backend to more easily
+                                  ///< retrieve a specific slot
+    std::string value;            ///< Value provided by the front-end
+    std::string user_description; ///< Description the front-end can show
+                                  ///< to a user
+    bool hidden_input;            ///< Should user's input be masked?
+    bool provided;                ///< Have the front-end already provided
+                                  ///< the requested information?
 };
+
 
 
 /**
@@ -65,7 +66,7 @@ struct RequiresSlot
  */
 class RequiresQueueException : public std::exception
 {
-public:
+  public:
     /**
      *  Used for errors which is not classified.
      *
@@ -83,8 +84,7 @@ public:
 
     virtual ~RequiresQueueException() noexcept = default;
 
-    virtual const char* what() const noexcept;
-
+    virtual const char *what() const noexcept;
 
     /**
      *  Sets the state/error in a D-Bus response which will be sent to
@@ -96,11 +96,12 @@ public:
     void GenerateDBusError(GDBusMethodInvocation *invocation);
 
 
-private:
+  private:
     std::string error;
     std::string errorname;
     std::string what_;
 };
+
 
 
 /**
@@ -109,7 +110,7 @@ private:
 
 class RequiresQueue
 {
-public:
+  public:
     typedef std::tuple<ClientAttentionType, ClientAttentionGroup> ClientAttTypeGroup;
 
     RequiresQueue();
@@ -132,10 +133,11 @@ public:
      * @return  Returns a string with the various <method/> tags describing
      *          the required input arguments and what these methods returns.
      */
-    static std::string IntrospectionMethods(const std::string& meth_qchktypegr,
-                                            const std::string& meth_queuefetch,
-                                            const std::string& meth_queuechk,
-                                            const std::string& meth_provideresp);
+    static std::string IntrospectionMethods(const std::string &meth_qchktypegr,
+                                            const std::string &meth_queuefetch,
+                                            const std::string &meth_queuechk,
+                                            const std::string &meth_provideresp);
+
 
     /**
      * Adds a user request requirement to the queue.
@@ -187,8 +189,7 @@ public:
      *  @param newvalue  The new value for this record
      *
      */
-    void UpdateEntry(ClientAttentionType type, ClientAttentionGroup group,
-                     unsigned int id, std::string newvalue);
+    void UpdateEntry(ClientAttentionType type, ClientAttentionGroup group, unsigned int id, std::string newvalue);
 
 
     /**
@@ -223,7 +224,8 @@ public:
      *         exception is thrown.
      */
     void ResetValue(ClientAttentionType type,
-                    ClientAttentionGroup group, unsigned int id);
+                    ClientAttentionGroup group,
+                    unsigned int id);
 
 
     /**
@@ -237,7 +239,8 @@ public:
      *         provided by the user, otherwise an exception is thrown.
      */
     std::string GetResponse(ClientAttentionType type,
-                            ClientAttentionGroup group, unsigned int id);
+                            ClientAttentionGroup group,
+                            unsigned int id);
 
 
     /**
@@ -251,7 +254,8 @@ public:
      *         provided by the user, otherwise an exception is thrown.
      */
     std::string GetResponse(ClientAttentionType type,
-                            ClientAttentionGroup group, std::string name);
+                            ClientAttentionGroup group,
+                            std::string name);
 
 
     /**
@@ -373,37 +377,36 @@ public:
         _DumpQueue(std::cout);
     }
 
-
     /**
      *  Dumps all the RequiresSlot items of a current RequiresQueue to the
      *  provided output stream
      *
      *  @param logdst   Output stream where to put the dump
      */
-    void _DumpQueue(std::ostream& logdst)
+    void _DumpQueue(std::ostream &logdst)
     {
-        for (auto& e : slots)
+        for (auto &e : slots)
         {
-        logdst << "          Id: " << e.id << std::endl
-               << "         Key: " << e.name << std::endl
-               << "        Type: [" << std::to_string((int) e.type) << "] "
-               << ClientAttentionType_str[(int)e.type] << std::endl
-               << "       Group: [" << std::to_string((int) e.group) << "] "
-               << ClientAttentionGroup_str[(int)e.group] << std::endl
-               << "       Value: " << e.value << std::endl
-               << " Description: " << e.user_description << std::endl
-               << "Hidden input: " << (e.hidden_input ? "True": "False")
-               << std::endl
-               << "    Provided: " << (e.provided ? "True": "False")
-               << std::endl
-               << "-----------------------------------------------------"
-               << std::endl;
+            logdst << "          Id: " << e.id << std::endl
+                   << "         Key: " << e.name << std::endl
+                   << "        Type: [" << std::to_string((int)e.type) << "] "
+                   << ClientAttentionType_str[(int)e.type] << std::endl
+                   << "       Group: [" << std::to_string((int)e.group) << "] "
+                   << ClientAttentionGroup_str[(int)e.group] << std::endl
+                   << "       Value: " << e.value << std::endl
+                   << " Description: " << e.user_description << std::endl
+                   << "Hidden input: " << (e.hidden_input ? "True" : "False")
+                   << std::endl
+                   << "    Provided: " << (e.provided ? "True" : "False")
+                   << std::endl
+                   << "-----------------------------------------------------"
+                   << std::endl;
         }
     }
 #endif
 
 
-private:
+  private:
     std::map<unsigned int, unsigned int> reqids;
     std::vector<struct RequiresSlot> slots;
 
@@ -420,8 +423,6 @@ private:
      */
     unsigned int get_reqid_index(ClientAttentionType type, ClientAttentionGroup group)
     {
-        return ((unsigned int)type *100) + (unsigned int)group;
-
+        return ((unsigned int)type * 100) + (unsigned int)group;
     }
-
 };

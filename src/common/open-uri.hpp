@@ -24,17 +24,19 @@
  *         to automatically open web based authentication URLs in a browser.
  */
 
-
 #pragma once
 
 #include <memory>
 
-enum class OpenURIstatus : std::uint8_t {
-    UNKNOWN,            /**< Status not known */
-    SUCCESS,            /**< URI was opened successfully */
-    FAIL,               /**< Did not manage to open the URI in any browser */
-    INVALID             /**< URI is invalid/could not parse the URI */
+
+enum class OpenURIstatus : std::uint8_t
+{
+    UNKNOWN, /**< Status not known */
+    SUCCESS, /**< URI was opened successfully */
+    FAIL,    /**< Did not manage to open the URI in any browser */
+    INVALID  /**< URI is invalid/could not parse the URI */
 };
+
 
 
 struct OpenURIresult_
@@ -47,15 +49,18 @@ struct OpenURIresult_
           message()
     {
     }
-
 };
 typedef std::unique_ptr<OpenURIresult_> OpenURIresult;
+
+
 static inline OpenURIresult NewOpenURIresult()
 {
     OpenURIresult r;
     r.reset(new OpenURIresult_());
     return r;
 }
+
+
 
 /**
  *  Opens the provided URI (typically an HTTP/HTTPS address) via the
@@ -66,4 +71,4 @@ static inline OpenURIresult NewOpenURIresult()
  *  @return Returns OpenURIresult with a result of the success or indication
  *          of what failed
  */
-OpenURIresult open_uri(const std::string& uri);
+OpenURIresult open_uri(const std::string &uri);

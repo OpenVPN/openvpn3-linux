@@ -42,14 +42,13 @@ using namespace openvpn;
 
 class SigSubscription : public DBusSignalSubscription
 {
-public:
-    SigSubscription(DBus& dbusobj,
-                    const std::string& bus_name,
-                    const std::string& interface,
-                    const std::string& object_path,
-                    const std::string& signal_name)
-       : DBusSignalSubscription(dbusobj, bus_name, interface,
-                                object_path, signal_name)
+  public:
+    SigSubscription(DBus &dbusobj,
+                    const std::string &bus_name,
+                    const std::string &interface,
+                    const std::string &object_path,
+                    const std::string &signal_name)
+        : DBusSignalSubscription(dbusobj, bus_name, interface, object_path, signal_name)
     {
     }
 
@@ -65,7 +64,7 @@ public:
         // and can be a bit too disturbing
         if (object_path.find("/org/freedesktop/NetworkManager/") != std::string::npos)
         {
-            //std::cout << "NM signal ignored" << std::endl;
+            // std::cout << "NM signal ignored" << std::endl;
             return;
         }
 
@@ -87,7 +86,7 @@ public:
         {
             guint major, minor;
             gchar *msg = nullptr;
-            g_variant_get (parameters, "(uus)", &major, &minor, &msg);
+            g_variant_get(parameters, "(uus)", &major, &minor, &msg);
 
             std::cout << "-- Status Change: interface=" << interface_name
                       << ", path=" << object_path
@@ -95,17 +94,18 @@ public:
                       << ", " << std::to_string(minor) << "] "
                       << StatusMajor_str[major]
                       << " - " << StatusMinor_str[minor];
-            if (msg && strlen(msg) > 0) {
+            if (msg && strlen(msg) > 0)
+            {
                 std::cout << ", " << msg;
             }
             std::cout << std::endl;
         }
-        else if (signal_name =="ProcessChange")
+        else if (signal_name == "ProcessChange")
         {
             guint minor;
             gchar *procname = nullptr;
             guint pid;
-            g_variant_get (parameters, "(usu)", &minor, &procname, &pid);
+            g_variant_get(parameters, "(usu)", &minor, &procname, &pid);
 
             std::cout << "-- Process Change: interface=" << interface_name
                       << ", path=" << object_path
@@ -120,7 +120,7 @@ public:
             guint type;
             guint group;
             gchar *message = nullptr;
-            g_variant_get (parameters, "(uus)", &type, &group, &message);
+            g_variant_get(parameters, "(uus)", &type, &group, &message);
 
             std::cout << "-- User Attention Required: "
                       << "sender=" << sender_name
@@ -143,12 +143,11 @@ public:
             std::string typestr{g_variant_get_type_string(parameters)};
             if ("(uus)" == typestr)
             {
-                g_variant_get (parameters, "(uus)", &group, &catg, &message);
+                g_variant_get(parameters, "(uus)", &group, &catg, &message);
             }
             else if ("(uuss)" == typestr)
             {
-                g_variant_get (parameters, "(uuss)", &group, &catg,
-                               &sesstok, &message);
+                g_variant_get(parameters, "(uuss)", &group, &catg, &sesstok, &message);
             }
             else
             {
@@ -175,7 +174,7 @@ public:
                       << "sender=" << sender_name
                       << ", interface=" << interface_name
                       << ", path=" << object_path
-                      << ": [" << std::to_string((std::uint8_t) ev.type)
+                      << ": [" << std::to_string((std::uint8_t)ev.type)
                       << "] " << ev
                       << std::endl;
         }
@@ -184,11 +183,11 @@ public:
             SessionManager::Event ev(parameters);
 
             std::cout << "-- SessionManagerEvent: "
-                            << "[sender=" << sender_name
-                            << ", interface=" << interface_name
-                            << ", path=" << object_path
-                            << "] " << ev
-                            << std::endl;
+                      << "[sender=" << sender_name
+                      << ", interface=" << interface_name
+                      << ", path=" << object_path
+                      << "] " << ev
+                      << std::endl;
         }
         else
         {
@@ -203,10 +202,11 @@ public:
 };
 
 
+
 int main(int argc, char **argv)
 {
     std::string sig_name = (argc > 1 ? argv[1] : "");
-    std::string interf   = (argc > 2 ? argv[2] : "");
+    std::string interf = (argc > 2 ? argv[2] : "");
     std::string obj_path = (argc > 3 ? argv[3] : "");
     std::string bus_name = (argc > 4 ? argv[4] : "");
 
@@ -216,8 +216,7 @@ int main(int argc, char **argv)
         dbus.Connect();
         std::cout << "Connected to D-Bus" << std::endl;
 
-        SigSubscription subscription(dbus, bus_name, interf,
-                                           obj_path, sig_name);
+        SigSubscription subscription(dbus, bus_name, interf, obj_path, sig_name);
 
         std::cout << "Subscribed" << std::endl
                   << "Bus name:    " << (bus_name.empty() ? bus_name : "(not set)") << std::endl
@@ -230,7 +229,7 @@ int main(int argc, char **argv)
         g_unix_signal_add(SIGTERM, stop_handler, main_loop);
         g_main_loop_run(main_loop);
     }
-    catch (const DBusException& excp)
+    catch (const DBusException &excp)
     {
         std::cerr << "EXCEPTION: " << excp.what() << std::endl;
         return 2;

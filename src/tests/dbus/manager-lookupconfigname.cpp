@@ -32,9 +32,11 @@
 #include "configmgr/proxy-configmgr.hpp"
 #include "sessionmgr/proxy-sessionmgr.hpp"
 
+
+
 class ManagerProxy
 {
-public:
+  public:
     ManagerProxy(std::string manager)
         : manager(manager)
     {
@@ -70,11 +72,13 @@ public:
                             "Invalid manager name:" + manager);
     }
 
-private:
+  private:
     std::string manager = "";
     std::unique_ptr<OpenVPN3ConfigurationProxy> cfgmgr = nullptr;
     std::unique_ptr<OpenVPN3SessionMgrProxy> sessmgr = nullptr;
 };
+
+
 
 int main(int argc, char **argv)
 {
@@ -87,9 +91,9 @@ int main(int argc, char **argv)
 
     ManagerProxy mgrprx(argv[1]);
     std::cout << "Lookup up configuration paths for '"
-              << argv[2] << "' in the "<< argv[1] << std::endl;
+              << argv[2] << "' in the " << argv[1] << std::endl;
     unsigned int i = 0;
-    for (const auto& p : mgrprx.LookupConfigName(argv[2]))
+    for (const auto &p : mgrprx.LookupConfigName(argv[2]))
     {
         std::cout << " - " << p << std::endl;
         ++i;
@@ -98,5 +102,3 @@ int main(int argc, char **argv)
               << (i != 1 ? "s" : "") << std::endl;
     return 0;
 }
-
-

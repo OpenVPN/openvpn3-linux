@@ -24,4 +24,4 @@
 #define OVPN3CLI_COMMANDS_LIST command_list_openvpn3
 
 #include "commands/commands.hpp"
-#include "ovpn3cli.hpp"  // main() is implemented here
+#include "ovpn3cli.hpp" // main() is implemented here

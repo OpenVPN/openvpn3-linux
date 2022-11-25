@@ -53,8 +53,8 @@ TEST(MachineID, not_implemented)
 namespace unittest {
 class ReferenceID
 {
-public:
-    ReferenceID(const std::string& filename)
+  public:
+    ReferenceID(const std::string &filename)
     {
         uuid_t id_bin;
         uuid_generate_random(id_bin);
@@ -73,7 +73,7 @@ public:
         }
 
         refid = hash_sha256(std::string("OpenVPN 3") + std::string(uuid_str)
-                + std::string("Linux"));
+                            + std::string("Linux"));
     }
 
     std::string get() const noexcept
@@ -82,10 +82,11 @@ public:
     }
 
 
-private:
+  private:
     std::string refid{};
 
-    std::string hash_sha256(const std::string& input) {
+    std::string hash_sha256(const std::string &input)
+    {
         // Initialise an OpenSSL message digest context for SHA256
         const EVP_MD *md = EVP_sha256();
         assert(nullptr != md);
@@ -104,9 +105,10 @@ private:
 
         // Format the calculated hash as a readable hex string
         std::stringstream output;
-        for(unsigned int i = 0; i < len; i++) {
-                output << std::setw(2) << std::setfill('0')
-                       << std::hex << (int) hash[i];
+        for (unsigned int i = 0; i < len; i++)
+        {
+            output << std::setw(2) << std::setfill('0')
+                   << std::hex << (int)hash[i];
         }
         return std::string(output.str());
     }
@@ -114,14 +116,14 @@ private:
 
 class MachineIDTest : public ::testing::Test
 {
-protected:
+  protected:
     void SetUp() override
     {
         try
         {
             refid.reset(new ReferenceID("unit-test_machine-id"));
         }
-        catch (MachineIDException& excp)
+        catch (MachineIDException &excp)
         {
             FAIL() << excp.what();
         }
@@ -132,11 +134,10 @@ protected:
         ::unlink("unit-test_machine-id");
     }
 
-public:
+  public:
     std::unique_ptr<ReferenceID> refid;
 
-private:
-
+  private:
 };
 
 
@@ -168,17 +169,17 @@ TEST_F(MachineIDTest, get_systemd_api)
         struct stat s;
         if (0 == stat("/etc/machine-id", &s))
         {
-          if (1 > s.st_size)
-          {
-              expect_src = MachineID::SourceType::SYSTEM;
-              note = std::string("/etc/machine-id was empty, ")
-                   + "expecing SourceType::SYSTEM";
-          }
+            if (1 > s.st_size)
+            {
+                expect_src = MachineID::SourceType::SYSTEM;
+                note = std::string("/etc/machine-id was empty, ")
+                       + "expecing SourceType::SYSTEM";
+            }
         }
         else
         {
-              expect_src = MachineID::SourceType::SYSTEM;
-              note = std::string("/etc/machine-id was inaccessible, ")
+            expect_src = MachineID::SourceType::SYSTEM;
+            note = std::string("/etc/machine-id was inaccessible, ")
                    + "expecing SourceType::SYSTEM";
         }
     }
@@ -186,7 +187,7 @@ TEST_F(MachineIDTest, get_systemd_api)
     {
         expect_src = MachineID::SourceType::SYSTEM;
         note = std::string("/etc/machine-id was inaccessible, ")
-             + "expecing SourceType::SYSTEM";
+               + "expecing SourceType::SYSTEM";
     }
 
     MachineID machid;
@@ -197,9 +198,9 @@ TEST_F(MachineIDTest, get_systemd_api)
                   << note << std::endl;
     }
 #else
-  {
-      GTEST_SKIP() << "Needed systemd API not available or unsuable";
-  }
+    {
+        GTEST_SKIP() << "Needed systemd API not available or unsuable";
+    }
 #endif
 }
 
@@ -229,5 +230,5 @@ TEST_F(MachineIDTest, fail_machine_id_save)
     ASSERT_THROW(machid.success(), MachineIDException);
 }
 
-}  // namespace unittest
+} // namespace unittest
 #endif // USE_OPENSSL

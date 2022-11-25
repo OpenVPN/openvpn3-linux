@@ -32,90 +32,96 @@
 
 using namespace openvpn;
 
+
 namespace NetCfg {
 namespace DNS {
 namespace resolved {
 
-    struct ResolverRecord
+
+struct ResolverRecord
+{
+    typedef std::vector<ResolverRecord> List;
+
+    ResolverRecord(unsigned short family, std::string server);
+    ResolverRecord(GVariant *entry);
+    virtual ~ResolverRecord() = default;
+
+    GVariant *GetGVariant() const;
+
+    unsigned short family;
+    std::string server;
+};
+
+
+
+struct SearchDomain
+{
+    typedef std::vector<SearchDomain> List;
+
+    SearchDomain(std::string srch, bool rout);
+    SearchDomain(GVariant *entry);
+    virtual ~SearchDomain() = default;
+
+    GVariant *GetGVariant() const;
+
+    std::string search;
+    bool routing;
+};
+
+
+
+class Exception : public std::exception
+{
+  public:
+    Exception(const std::string &err)
+        : errmsg(err)
     {
-        typedef std::vector<ResolverRecord> List;
+    }
+    virtual ~Exception() = default;
 
-        ResolverRecord(unsigned short family, std::string server);
-        ResolverRecord(GVariant *entry);
-        virtual ~ResolverRecord() = default;
-
-        GVariant *GetGVariant() const;
-
-        unsigned short family;
-        std::string server;
-    };
-
-
-    struct SearchDomain
+    virtual const char *what() const noexcept
     {
-        typedef std::vector<SearchDomain> List;
+        return errmsg.c_str();
+    }
 
-        SearchDomain(std::string srch, bool rout);
-        SearchDomain(GVariant *entry);
-        virtual ~SearchDomain() = default;
-
-        GVariant *GetGVariant() const;
-
-        std::string search;
-        bool routing;
-    };
+  private:
+    std::string errmsg;
+};
 
 
-    class Exception : public std::exception
-    {
-    public:
-        Exception(const std::string& err)
-            : errmsg(err)
-        {
-        }
-        virtual ~Exception() = default;
 
-        virtual const char* what() const noexcept
-        {
-            return errmsg.c_str();
-        }
+class Link : public DBusProxy,
+             public virtual RC<thread_unsafe_refcount>
+{
+  public:
+    typedef RCPtr<Link> Ptr;
 
-    private:
-        std::string errmsg;
-    };
+    Link(GDBusConnection *dbuscon, const std::string path);
+    virtual ~Link() = default;
 
-
-    class Link : public DBusProxy,
-                 public virtual RC<thread_unsafe_refcount>
-    {
-    public:
-        typedef RCPtr<Link> Ptr;
-
-        Link(GDBusConnection* dbuscon, const std::string path);
-        virtual ~Link() = default;
-
-        const std::string GetPath() const;
-        const std::vector<std::string> GetDNSServers() const;
-        void SetDNSServers(const ResolverRecord::List& servers) const;
-        const std::string GetCurrentDNSServer() const;
-        const SearchDomain::List GetDomains() const;
-        void SetDomains(const SearchDomain::List& doms) const;
-        bool GetDefaultRoute() const;
-        void SetDefaultRoute(const bool route) const;
-        void Revert() const;
-    };
+    const std::string GetPath() const;
+    const std::vector<std::string> GetDNSServers() const;
+    void SetDNSServers(const ResolverRecord::List &servers) const;
+    const std::string GetCurrentDNSServer() const;
+    const SearchDomain::List GetDomains() const;
+    void SetDomains(const SearchDomain::List &doms) const;
+    bool GetDefaultRoute() const;
+    void SetDefaultRoute(const bool route) const;
+    void Revert() const;
+};
 
 
-    class Manager : public DBusProxy
-    {
-    public:
-        Manager(GDBusConnection* dbuscon);
-        virtual ~Manager() = default;
 
-        Link::Ptr RetrieveLink(const std::string dev_name);
+class Manager : public DBusProxy
+{
+  public:
+    Manager(GDBusConnection *dbuscon);
+    virtual ~Manager() = default;
 
-        std::string GetLink(unsigned int if_idx);
-    };
+    Link::Ptr RetrieveLink(const std::string dev_name);
+
+    std::string GetLink(unsigned int if_idx);
+};
 } // namespace resolved
 } // namespace DNS
 } // namespace NetCfg

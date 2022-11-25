@@ -49,10 +49,12 @@ constexpr char package_version_str[] = PACKAGE_GUIVERSION;
 constexpr char package_version_str[] = "git:" CONFIGURE_GIT_REVISION CONFIGURE_GIT_FLAGS;
 #endif
 
-const char * package_version()
+
+const char *package_version()
 {
     return package_version_str;
 }
+
 
 void drop_root()
 {
@@ -88,7 +90,7 @@ void drop_root()
 
     if (geteuid() == 0)
     {
-        std::cout << "[INFO] Dropping root user privileges to "<< OPENVPN_USERNAME << std::endl;
+        std::cout << "[INFO] Dropping root user privileges to " << OPENVPN_USERNAME << std::endl;
 
         // Retrieve the user information
         struct passwd *userinfo = getpwnam(OPENVPN_USERNAME);
@@ -106,10 +108,11 @@ void drop_root()
         if (-1 == setresuid(uid, uid, uid))
         {
             throw std::runtime_error("Could not set the new user ID (" + std::to_string(uid) + ") "
-                                + "for the user " + OPENVPN_USERNAME);
+                                     + "for the user " + OPENVPN_USERNAME);
         }
     }
 }
+
 
 /**
  *  Returns a string containing a version reference of the build.
@@ -140,7 +143,8 @@ std::string get_version(std::string component)
     ver << " built on " __DATE__ " " __TIME__;
 #endif // OPENVPN_DEBUG
 #endif // OPENVPN_TUN_BUILDER_BASE_H
-    ver << std::endl << openvpn_copyright;
+    ver << std::endl
+        << openvpn_copyright;
 
     return ver.str();
 }
@@ -150,11 +154,12 @@ const std::string get_guiversion()
 {
 #ifdef CONFIGURE_GIT_REVISION
     return std::string(PACKAGE_NAME)
-            + "#git:" + std::string(CONFIGURE_GIT_REVISION CONFIGURE_GIT_FLAGS);
+           + "#git:" + std::string(CONFIGURE_GIT_REVISION CONFIGURE_GIT_FLAGS);
 #else
     return std::string(PACKAGE_NAME "/" PACKAGE_GUIVERSION);
 #endif
 }
+
 
 /**
  *  GLib2 interrupt/signal handler.  This is used to gracefully shutdown

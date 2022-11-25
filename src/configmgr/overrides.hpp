@@ -35,14 +35,14 @@ enum class OverrideType
 /**
  * Helper classes to store the list of overrides
  */
-struct ValidOverride {
+struct ValidOverride
+{
     ValidOverride(std::string key, OverrideType type, std::string help)
         : key(key), type(type), help(help)
     {
     }
 
-    ValidOverride(std::string key, OverrideType type,
-                  std::string help, std::string (*argument_helper)())
+    ValidOverride(std::string key, OverrideType type, std::string help, std::string (*argument_helper)())
         : key(key), type(type), help(help), argument_helper(argument_helper)
     {
     }
@@ -57,18 +57,19 @@ struct ValidOverride {
     std::string key;
     OverrideType type;
     std::string help;
-    std::string (*argument_helper)()=nullptr;
+    std::string (*argument_helper)() = nullptr;
 };
 
 
-struct OverrideValue {
-    OverrideValue(const ValidOverride& override, bool value)
+struct OverrideValue
+{
+    OverrideValue(const ValidOverride &override, bool value)
         : override(override), boolValue(value)
     {
     }
 
 
-    OverrideValue(const ValidOverride& override, std::string value)
+    OverrideValue(const ValidOverride &override, std::string value)
         : override(override), strValue(value)
     {
     }
@@ -81,6 +82,7 @@ struct OverrideValue {
 
 
 const ValidOverride configProfileOverrides[] = {
+    // clang-format off
     {"server-override", OverrideType::string,
      "Replace the remote, connecting to this server instead the server specified in the configuration"},
 
@@ -148,12 +150,14 @@ const ValidOverride configProfileOverrides[] = {
 
     {"proxy-auth-cleartext", OverrideType::boolean,
      "Allows clear text HTTP authentication"}
+// clang-format on
 };
 
 
 const ValidOverride invalidOverride(std::string("invalid"),
-                                    OverrideType::invalid, "Invalid override");
+                                    OverrideType::invalid,
+                                    "Invalid override");
 
 
-const ValidOverride & GetConfigOverride(const std::string& key,
-                                        bool ignoreCase = false);
+const ValidOverride &GetConfigOverride(const std::string &key,
+                                       bool ignoreCase = false);

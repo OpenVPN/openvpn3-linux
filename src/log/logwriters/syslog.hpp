@@ -34,25 +34,26 @@
 
 class SyslogException : public std::exception
 {
-public:
-    SyslogException(const std::string& err)
+  public:
+    SyslogException(const std::string &err)
         : err(err)
     {
     }
 
-    virtual const char* what() const noexcept
+    virtual const char *what() const noexcept
     {
         return err.c_str();
     }
 
-private:
+  private:
     std::string err;
 };
 
 
+
 class SyslogWriter : public LogWriter
 {
-public:
+  public:
     /**
      *  Initialize the SyslogWriter
      *
@@ -61,7 +62,7 @@ public:
      * @param log_facility  Syslog facility to use for log messages.
      *                      (Default: LOG_DAEMON)
      */
-    SyslogWriter(const std::string& prgname = NULL,
+    SyslogWriter(const std::string &prgname = NULL,
                  const int log_facility = LOG_DAEMON);
     virtual ~SyslogWriter();
 
@@ -79,7 +80,6 @@ public:
      */
     bool TimestampEnabled() override;
 
-
     /**
      *  Converts a string specifying a syslog log facility
      *  to the appropriate into syslog integer value.  See syslog(3)
@@ -90,38 +90,37 @@ public:
      * @return Returns the integer reference to the log facility,
      *         compliant to syslog(3).  In case of an invalid
      */
-    static inline int ConvertLogFacility(const std::string& facility)
+    static inline int ConvertLogFacility(const std::string &facility)
     {
-        struct log_facility_mapping_t {
+        struct log_facility_mapping_t
+        {
             const std::string name;
             const int facility;
         };
 
-        static const struct log_facility_mapping_t log_facilities[] =
-            {
-                {"LOG_AUTH",     LOG_AUTH},
-                {"LOG_AUTHPRIV", LOG_AUTHPRIV},
-                {"LOG_CRON",     LOG_CRON},
-                {"LOG_DAEMON",   LOG_DAEMON},
-                {"LOG_FTP",      LOG_FTP},
-                {"LOG_KERN",     LOG_KERN},
-                {"LOG_LOCAL0",   LOG_LOCAL0},
-                {"LOG_LOCAL1",   LOG_LOCAL1},
-                {"LOG_LOCAL2",   LOG_LOCAL2},
-                {"LOG_LOCAL3",   LOG_LOCAL3},
-                {"LOG_LOCAL4",   LOG_LOCAL4},
-                {"LOG_LOCAL5",   LOG_LOCAL5},
-                {"LOG_LOCAL6",   LOG_LOCAL6},
-                {"LOG_LOCAL7",   LOG_LOCAL7},
-                {"LOG_LPR",      LOG_LPR},
-                {"LOG_MAIL",     LOG_MAIL},
-                {"LOG_NEWS",     LOG_NEWS},
-                {"LOG_SYSLOG",   LOG_SYSLOG},
-                {"LOG_USER",     LOG_USER},
-                {"LOG_UUCP",     LOG_UUCP}
-            };
+        static const struct log_facility_mapping_t log_facilities[] = {
+            {"LOG_AUTH", LOG_AUTH},
+            {"LOG_AUTHPRIV", LOG_AUTHPRIV},
+            {"LOG_CRON", LOG_CRON},
+            {"LOG_DAEMON", LOG_DAEMON},
+            {"LOG_FTP", LOG_FTP},
+            {"LOG_KERN", LOG_KERN},
+            {"LOG_LOCAL0", LOG_LOCAL0},
+            {"LOG_LOCAL1", LOG_LOCAL1},
+            {"LOG_LOCAL2", LOG_LOCAL2},
+            {"LOG_LOCAL3", LOG_LOCAL3},
+            {"LOG_LOCAL4", LOG_LOCAL4},
+            {"LOG_LOCAL5", LOG_LOCAL5},
+            {"LOG_LOCAL6", LOG_LOCAL6},
+            {"LOG_LOCAL7", LOG_LOCAL7},
+            {"LOG_LPR", LOG_LPR},
+            {"LOG_MAIL", LOG_MAIL},
+            {"LOG_NEWS", LOG_NEWS},
+            {"LOG_SYSLOG", LOG_SYSLOG},
+            {"LOG_USER", LOG_USER},
+            {"LOG_UUCP", LOG_UUCP}};
 
-        for (auto const& m : log_facilities)
+        for (auto const &m : log_facilities)
         {
             if (facility == m.name)
             {
@@ -132,16 +131,19 @@ public:
     }
 
 
-    void Write(const std::string& data,
-                       const std::string& colour_init = "",
-                       const std::string& colour_reset = "") override;
+    void Write(const std::string &data,
+               const std::string &colour_init = "",
+               const std::string &colour_reset = "") override;
 
-    void Write(const LogGroup grp, const LogCategory ctg,
-                       const std::string& data,
-                       const std::string& colour_init,
-                       const std::string& colour_reset) override;
 
-private:
+    void Write(const LogGroup grp,
+               const LogCategory ctg,
+               const std::string &data,
+               const std::string &colour_init,
+               const std::string &colour_reset) override;
+
+
+  private:
     char *progname = nullptr;
 
     /**
@@ -154,7 +156,7 @@ private:
      */
     static inline int logcatg2syslog(LogCategory catg)
     {
-        switch(catg)
+        switch (catg)
         {
         case LogCategory::DEBUG:
             return LOG_DEBUG;
@@ -180,6 +182,3 @@ private:
         }
     }
 };
-
-
-

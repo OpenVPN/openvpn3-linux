@@ -87,7 +87,7 @@ int cmd_send(ParsedArgs::Ptr args)
     if (extra.size() > 0)
     {
         msg = "";
-        for (const auto& t : extra)
+        for (const auto &t : extra)
         {
             msg += t + " ";
         }
@@ -105,7 +105,7 @@ int cmd_send(ParsedArgs::Ptr args)
             sleep(1); // Wait for the logger to settle this new attachment
         }
 
-        LogSender sig(dbus.GetConnection(), (LogGroup) lgrp, intf, path);
+        LogSender sig(dbus.GetConnection(), (LogGroup)lgrp, intf, path);
         sig.Send("Log", g_variant_new("(uus)", lgrp, lctg, msg.c_str()));
         std::cout << "Log signal sent" << std::endl;
 
@@ -115,15 +115,13 @@ int cmd_send(ParsedArgs::Ptr args)
             std::cout << "Detaching log" << std::endl;
             logsrvprx.Detach(intf);
         }
-
     }
-    catch (std::exception& err)
+    catch (std::exception &err)
     {
         std::cerr << err.what() << std::endl;
         return 1;
     }
     return 0;
-
 }
 
 
@@ -134,34 +132,26 @@ int main(int argc, char **argv)
                   "openvpn3-service-logger (net.openvpn.v3.log)");
 
     SingleCommand::Ptr props;
-    props.reset(new SingleCommand("props", "Gets and sets properties",
-                                  cmd_props));
-    props->AddOption("log-level", 'l', "LEVEL", true,
-                     "Sets the log verbosity");
-    props->AddOption("timestamp", 't', "BOOLEAN", true,
-                     "Sets the timestamp flag for log events. Valid values: true, false");
-    props->AddOption("dbus-details", 'D', "BOOLEAN", true,
-                     "Sets the D-Bus details logging flag for log events");
+    props.reset(new SingleCommand("props", "Gets and sets properties", cmd_props));
+    props->AddOption("log-level", 'l', "LEVEL", true, "Sets the log verbosity");
+    props->AddOption("timestamp", 't', "BOOLEAN", true, "Sets the timestamp flag for log events. Valid values: true, false");
+    props->AddOption("dbus-details", 'D', "BOOLEAN", true, "Sets the D-Bus details logging flag for log events");
     cmds.RegisterCommand(props);
 
     SingleCommand::Ptr send;
     send.reset(new SingleCommand("send", "Sends log events", cmd_send));
     send->AddOption("attach", 'a', "Do an Attach() method call before sending log event");
-    send->AddOption("object-path", 'o', "PATH", true,
-                    "D-Bus path to use as the signal origin (default: /net/openvpn/v3/logtest)");
-    send->AddOption("interface", 'i', "STRING", true,
-                    "Interface string to use when sending log events (default: net.openvpn.v3.logtest");
-    send->AddOption("group", 'g', "INTEGER", true,
-                    "LogGroup value to use for the log event");
-    send->AddOption("category", 'c', "INTEGER", true,
-                    "LogCategory value to use for the log event");
+    send->AddOption("object-path", 'o', "PATH", true, "D-Bus path to use as the signal origin (default: /net/openvpn/v3/logtest)");
+    send->AddOption("interface", 'i', "STRING", true, "Interface string to use when sending log events (default: net.openvpn.v3.logtest");
+    send->AddOption("group", 'g', "INTEGER", true, "LogGroup value to use for the log event");
+    send->AddOption("category", 'c', "INTEGER", true, "LogCategory value to use for the log event");
     cmds.RegisterCommand(send);
 
     try
     {
         return cmds.ProcessCommandLine(argc, argv);
     }
-    catch (CommandException& e)
+    catch (CommandException &e)
     {
         if (e.gotErrorMessage())
         {
@@ -170,5 +160,3 @@ int main(int argc, char **argv)
         return 9;
     }
 }
-
-
