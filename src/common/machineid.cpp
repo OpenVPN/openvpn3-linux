@@ -59,7 +59,7 @@ std::string MachineIDException::GetError() const noexcept
 }
 
 
-const char *MachineIDException::what()
+const char *MachineIDException::what() const noexcept
 {
     return error.c_str();
 }

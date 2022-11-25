@@ -31,12 +31,12 @@
 #define OPENVPN3_MACHINEID std::string(std::string(OPENVPN3_STATEDIR) + "/machine-id")
 
 
-class MachineIDException : std::exception
+class MachineIDException : public std::exception
 {
   public:
     MachineIDException(const std::string &msg) noexcept;
     std::string GetError() const noexcept;
-    const char *what();
+    const char *what() const noexcept override;
 
   private:
     std::string error;

@@ -39,7 +39,7 @@ typedef std::shared_ptr<openvpn::Xml::Document> XmlDocPtr;
 #define DBUS_PROXY_CALL_TIMEOUT 5000
 
 
-class DBusProxyAccessDeniedException : std::exception
+class DBusProxyAccessDeniedException : public std::exception
 {
   public:
     DBusProxyAccessDeniedException(const std::string &method,
@@ -51,7 +51,7 @@ class DBusProxyAccessDeniedException : std::exception
         error = err.str();
     }
 
-    virtual const char *what() const noexcept
+    const char *what() const noexcept override
     {
         return error.c_str();
     }

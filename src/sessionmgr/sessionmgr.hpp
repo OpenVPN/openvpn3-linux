@@ -99,7 +99,7 @@ class SessionManagerSignals : public LogSender
      *
      * @param msg  Message to sent to the log subscribers
      */
-    void LogFATAL(std::string msg)
+    void LogFATAL(std::string msg) override
     {
         Log(LogEvent(log_group, LogCategory::FATAL, msg));
         StatusChange(StatusMajor::SESSION, StatusMinor::PROC_KILLED, msg);
@@ -112,9 +112,9 @@ class SessionManagerSignals : public LogSender
      *
      * @param msg  Message to log
      */
-    void Debug(std::string msg)
+    void Debug(std::string msg, bool duplicate_check = false) override
     {
-        LogSender::Debug(msg);
+        LogSender::Debug(msg, duplicate_check);
     }
 
 

@@ -51,7 +51,7 @@ class NetCfgException : public std::exception
 
 
 
-class NetCfgDeviceException : std::exception
+class NetCfgDeviceException : public std::exception
 {
   public:
     NetCfgDeviceException(const std::string objpath,
