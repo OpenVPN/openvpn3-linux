@@ -433,4 +433,43 @@ TEST(LogEvent, stringstream)
 }
 
 
+TEST(LogEvent, stringstream_multiline)
+{
+    // Check formatting without LogPrefix and no indenting of NL
+    std::stringstream msg1;
+    msg1 << "Log line 1" << std::endl
+         << "Log line 2" << std::endl
+         << "Log Line 3";
+    LogEvent ev1(LogGroup::LOGGER, LogCategory::DEBUG, msg1.str());
+    EXPECT_EQ(ev1.str(0, false), msg1.str());
+
+    // Check formatting with LogPrefix and no indenting of NL
+    std::stringstream msg1prfx;
+    msg1prfx << LogPrefix(LogGroup::LOGGER, LogCategory::DEBUG) << msg1.str();
+    EXPECT_EQ(ev1.str(), msg1prfx.str());
+
+    // Check formatting via stream with LogPrefix and no indenting of NL
+    std::stringstream ev1_chk0;
+    ev1_chk0 << ev1;
+    EXPECT_EQ(ev1_chk0.str(), msg1prfx.str());
+
+    // Check formatting without LogPrefix and 5 space indenting of NL
+    std::stringstream msg1ind5;
+    msg1ind5 << "Log line 1" << std::endl
+             << "     Log line 2" << std::endl
+             << "     Log Line 3";
+    EXPECT_EQ(ev1.str(5, false), msg1ind5.str());
+
+    // Check formatting with LogPrefix and 5 space indenting of NL, default str()
+    std::stringstream msg1indprfx;
+    msg1indprfx << LogPrefix(LogGroup::LOGGER, LogCategory::DEBUG) << msg1ind5.str();
+    ev1.indent_nl = 5;
+    EXPECT_EQ(ev1.str(), msg1indprfx.str());
+
+    // Check formatting via stream with LogPrefix and 5 space indenting of NL (default formatting)
+    std::stringstream ev1_chk5;
+    ev1_chk5 << ev1;
+    EXPECT_EQ(ev1_chk5.str(), msg1indprfx.str());
+}
+
 } // namespace unittest

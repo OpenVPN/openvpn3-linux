@@ -26,6 +26,7 @@
 #pragma once
 
 #include <algorithm>
+#include <iomanip>
 #include <string>
 #include <gio/gio.h>
 
@@ -302,6 +303,68 @@ struct LogEvent
 
 
     /**
+     *  Extract a formatted std::string of the log event.
+     *
+     *  The indent argument controls if indent width to use
+     *  when a log message contains multiple lines.  The
+     *  following lines will be indented with this width.
+     *
+     *  The optional prefix argument enables or disables the
+     *  log group and category string added before the log
+     *  message.  The default is to enable this prefix.
+     *
+     * @param indent              unsigned short of the number of spaces to
+     *                            use for indenting
+     * @param prefix              bool enabling/disabling log group/category prefix
+     * @return const std::string  Returns a formatted string of the log event.
+     */
+    const std::string str(unsigned short indent, bool prefix = true) const
+    {
+        std::ostringstream r;
+        if (prefix)
+        {
+            r << LogPrefix(group, category);
+        }
+        if (indent > 0)
+        {
+            std::stringstream msg;
+            std::string line;
+            msg << message;
+            bool first = true;
+            while (std::getline(msg, line, '\n'))
+            {
+                if (!first)
+                {
+                    r << std::endl
+                      << std::setw(indent) << std::setfill(' ') << " ";
+                }
+                first = false;
+                r << line;
+            }
+        }
+        else
+        {
+            r << message;
+        }
+
+        return std::string(r.str());
+    }
+
+
+    /**
+     *  Simple wrapper of the @str(unsigned short, bool) method.
+     *  This  will consider the indent level set via the indent_nl
+     *  member variable.
+     *
+     * @return const std::string  Returs a formatted string of the log event
+     */
+    const std::string str() const
+    {
+        return str(indent_nl, true);
+    }
+
+
+    /**
      *  Makes it possible to write LogEvents in a readable format
      *  via iostreams, such as 'std::cout << event', where event is a
      *  LogEvent object.
@@ -314,7 +377,7 @@ struct LogEvent
      */
     friend std::ostream &operator<<(std::ostream &os, const LogEvent &ev)
     {
-        return os << LogPrefix(ev.group, ev.category) << ev.message;
+        return os << ev.str();
     }
 
 
@@ -347,6 +410,7 @@ struct LogEvent
     std::string session_token = {};
     std::string message = {};
     Format format = Format::AUTO;
+    unsigned short indent_nl = 0;
 
 
   private:
