@@ -400,6 +400,29 @@ TEST(LogEvent, operator_neq_message)
 }
 
 
+TEST(LogEvent, group_category_string_parser)
+{
+    for (uint8_t g = 0; g < LogGroupCount; g++)
+    {
+        for (uint8_t c = 0; c < 9; c++)
+        {
+            std::string msg1 = "Message without session token";
+            LogEvent ev1(LogGroup_str[g], LogCategory_str[c], msg1);
+            LogEvent chk_ev1((LogGroup)g, (LogCategory)c, msg1);
+            std::string res1 = test_compare(ev1, chk_ev1, true);
+            EXPECT_TRUE(res1.empty()) << res1;
+
+            std::string msg2 = "Message with session token";
+            std::string sesstok = "SESSION_TOKEN";
+            LogEvent ev2(LogGroup_str[g], LogCategory_str[c], sesstok, msg2);
+            LogEvent chk_ev2((LogGroup)g, (LogCategory)c, sesstok, msg2);
+            std::string res2 = test_compare(ev2, chk_ev2, true);
+            EXPECT_TRUE(res2.empty()) << res2;
+        }
+    }
+}
+
+
 TEST(LogEvent, stringstream)
 {
     LogEvent logev(LogGroup::LOGGER, LogCategory::DEBUG, "Debug message");

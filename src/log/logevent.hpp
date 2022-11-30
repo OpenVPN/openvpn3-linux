@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <string>
 #include <gio/gio.h>
 
@@ -94,6 +95,37 @@ struct LogEvent
     {
         remove_trailing_nl();
         format = Format::SESSION_TOKEN;
+    }
+
+
+    LogEvent(const std::string &grp_s,
+             const std::string &ctg_s,
+             const std::string &msg)
+        : message(msg)
+    {
+        parse_group_category(grp_s, ctg_s);
+        remove_trailing_nl();
+        format = Format::NORMAL;
+    }
+
+
+    LogEvent(const std::string &grp_s,
+             const std::string &ctg_s,
+             const std::string &sess_token,
+             const std::string &msg)
+        : message(msg)
+    {
+        parse_group_category(grp_s, ctg_s);
+        remove_trailing_nl();
+        if (sess_token.empty())
+        {
+            format = Format::NORMAL;
+        }
+        else
+        {
+            session_token = sess_token;
+            format = Format::SESSION_TOKEN;
+        }
     }
 
 
@@ -417,5 +449,24 @@ struct LogEvent
             session_token = GLibUtils::ExtractValue<std::string>(logevent, 2);
             message = std::string(GLibUtils::ExtractValue<std::string>(logevent, 3));
         }
+    }
+
+    /**
+     *  Parses group and category strings to the appropriate LogGroup
+     *  and LogGroup enum values.  This method sets the group and category members
+     *  directly and does not return any values.  String values not found will
+     *  result in the UNDEFINED value being set.
+     *
+     * @param grp_s std::string containing the human readable LogGroup string
+     * @param ctg_s std::string containing the human readable LogCategory string
+     */
+    void parse_group_category(const std::string &grp_s, const std::string &ctg_s)
+    {
+        auto grp_item = std::find(LogGroup_str.begin(), LogGroup_str.end(), grp_s);
+        group = (grp_item != LogGroup_str.end() ? (LogGroup)(std::distance(LogGroup_str.begin(), grp_item))
+                                                : LogGroup::UNDEFINED);
+        auto catg_item = std::find(LogCategory_str.begin(), LogCategory_str.end(), ctg_s);
+        category = (catg_item != LogCategory_str.end() ? (LogCategory)(std::distance(LogCategory_str.begin(), catg_item))
+                                                       : LogCategory::UNDEFINED);
     }
 };
