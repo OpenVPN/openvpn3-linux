@@ -310,10 +310,10 @@ struct LogEvent
     }
 
 
-    LogGroup group;
-    LogCategory category;
-    std::string session_token;
-    std::string message;
+    LogGroup group = LogGroup::UNDEFINED;
+    LogCategory category = LogCategory::UNDEFINED;
+    std::string session_token = {};
+    std::string message = {};
     Format format = Format::AUTO;
 
 
