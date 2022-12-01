@@ -101,6 +101,7 @@ src/tests/dbus/statusevent-selftest
 src/tests/dbus/netcfg-systemd-resolved-basic
 src/tests/misc/config-export-json-test
 src/tests/misc/gettimestamp
+src/tests/misc/journal-log-parse-test
 src/tests/misc/json-config-import-test
 src/tests/misc/log-prefix-selftest
 src/tests/misc/logwriter-tests
