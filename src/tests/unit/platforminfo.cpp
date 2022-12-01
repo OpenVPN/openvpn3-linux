@@ -45,6 +45,20 @@ TEST(PlatformInfo, DBus)
     }
 
     PlatformInfo plinfo(dbc.GetConnection());
+
+    try
+    {
+        plinfo.GetStringProperty("OperatingSystemCPEName");
+    }
+    catch (const DBusException& e)
+    {
+        const std::string what{e.what()};
+        if (what.find("was not provided by any") != std::string::npos)
+        {
+            GTEST_SKIP() << "A required service isn't available ## " + what;
+        }
+    }
+
     std::string s{plinfo.str()};
     ASSERT_TRUE(s.find("generic:") == std::string::npos)
         << "PlatformInfo D-Bus call failed";
