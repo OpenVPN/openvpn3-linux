@@ -41,6 +41,9 @@ SingleCommand::Ptr prepare_command_config_dump();
 SingleCommand::Ptr prepare_command_config_remove();
 SingleCommand::Ptr prepare_command_configs_list();
 
+// Commands provided in journal.cpp
+SingleCommand::Ptr prepare_command_journal();
+
 // Commands provided in log.cpp
 SingleCommand::Ptr prepare_command_log();
 
@@ -107,6 +110,9 @@ std::vector<PrepareCommand> command_list_openvpn3admin = {
     prepare_command_version,
     prepare_command_variables,
 
+#ifdef HAVE_SYSTEMD
+    prepare_command_journal,
+#endif
     prepare_command_log_service,
     prepare_command_netcfg_service,
 #ifdef HAVE_TINYXML

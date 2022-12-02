@@ -69,6 +69,7 @@ MAN_SECTION_7 = \
 
 MAN_SECTION_8 = \
 	openvpn3-admin.8 \
+	openvpn3-admin-journal.8
 	openvpn3-admin-log-service.8 \
 	openvpn3-admin-netcfg-service.8 \
 	openvpn3-admin-sessionmgr-service.8 \
