@@ -1,5 +1,12 @@
+//  SPDX-License-Identifier: AGPL-3.0-only
+//
+//  Copyright (C) 2019 - 2022  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2019 - 2022  Arne Schwabe <arne@openvpn.net>
+//
+//
 // This file is used to build in the internal Jenkins build system.
 // It might be also useful for external CI/CD
+//
 import org.jenkinsci.plugins.pipeline.modeldefinition.Utils
 
 properties([

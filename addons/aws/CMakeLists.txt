@@ -1,3 +1,5 @@
+#  SPDX-License-Identifier: AGPL-3.0-only
+
 cmake_minimum_required(VERSION 3.10)
 project(openvpn3_linux C CXX)
 set(CMAKE_CXX_STANDARD 14)
