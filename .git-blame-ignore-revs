@@ -1,0 +1,9 @@
+# This FILE allows git blame to ignore reformatting changes and instead
+# shows the previous commit that changed the line.
+#
+# Use the command below to always ignore specific commits
+#
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# First major code style update
+d0b1772aa1d82befc0dcb9149ab85daf96b581c3
