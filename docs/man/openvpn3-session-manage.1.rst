@@ -50,9 +50,10 @@ OPTIONS
                 the current log level will be shown.
 
 --timeout SECS
-                Defines how long it will attempt to reestablish the connection
+                Defines how long it will attempt to re-establish the connection
                 when restarting or resuming a session.  Default is to never
-                time out.
+                time out.  If a timeout is not provided, the connection
+                re-establishing will happen in the background.
 
 -P, --pause
                 Suspends/pauses the running VPN session.  This is not a

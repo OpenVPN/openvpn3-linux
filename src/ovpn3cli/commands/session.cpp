@@ -219,12 +219,6 @@ static void start_session(OpenVPN3SessionProxy::Ptr session,
             {
             case SessionStartMode::START:
                 session->Connect();
-                if (background)
-                {
-                    std::cout << "Session started in the background" << std::endl;
-
-                    return;
-                }
                 break;
 
             case SessionStartMode::RESUME:
@@ -240,6 +234,12 @@ static void start_session(OpenVPN3SessionProxy::Ptr session,
             default:
                 // This should never be triggered
                 throw SessionException("Unknown SessionStartMode");
+            }
+
+            if (background)
+            {
+                std::cout << "Session is running in the background" << std::endl;
+                return;
             }
 
             // Attempt to connect until the given timeout has been reached.
@@ -1078,13 +1078,13 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
         case mode_resume:
             std::cout << "Resuming session: " << sesspath
                       << std::endl;
-            start_session(session, SessionStartMode::RESUME, timeout);
+            start_session(session, SessionStartMode::RESUME, timeout, timeout < 0);
             return 0;
 
         case mode_restart:
             std::cout << "Restarting session: " << sesspath
                       << std::endl;
-            start_session(session, SessionStartMode::RESTART, timeout);
+            start_session(session, SessionStartMode::RESTART, timeout, timeout < 0);
             return 0;
 
         case mode_disconnect:
