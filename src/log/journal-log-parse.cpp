@@ -118,7 +118,7 @@ std::string LogEntry::extract_journal_field(sd_journal *journal, const std::stri
     if (r < 1 && data)
     {
         int skip = field.length() + 1;
-        return std::string(&data[skip]);
+        return std::string(&data[skip], l - skip);
     }
     return std::string();
 }
