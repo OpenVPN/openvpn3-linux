@@ -13,7 +13,9 @@
  *         log lines from the systemd-journald
  */
 
+#include "config.h"
 
+#ifdef HAVE_SYSTEMD
 
 #include <algorithm>
 #include <iostream>
@@ -341,3 +343,5 @@ LogEntries Parse::Retrieve()
 
 } // namespace Journald
 } // namespace Log
+
+#endif // HAVE_SYSTEMD

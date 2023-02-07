@@ -14,6 +14,9 @@
  *         from the systemd-journald
  */
 
+#include "config.h"
+
+#ifdef HAVE_SYSTEMD
 #include <iostream>
 #include "common/cmdargparser.hpp"
 #include "log/journal-log-parse.hpp"
@@ -90,3 +93,5 @@ SingleCommand::Ptr prepare_command_journal()
 
     return jrnlcmd;
 }
+
+#endif // HAVE_SYSTEMD

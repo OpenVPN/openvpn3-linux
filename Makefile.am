@@ -250,7 +250,6 @@ noinst_PROGRAMS += \
 	src/tests/ovpn3-core/profilemerge-optionlist \
 	src/tests/misc/config-export-json-test \
 	src/tests/misc/gettimestamp \
-	src/tests/misc/journal-log-parse-test \
 	src/tests/misc/json-config-import-test \
 	src/tests/misc/log-prefix-selftest \
 	src/tests/misc/logwriter-tests \
@@ -322,10 +321,14 @@ src_tests_misc_gettimestamp_SOURCES = \
 	src/tests/misc/gettimestamp.cpp \
 	src/common/timestamp.cpp
 
+if HAVE_SYSTEMD
+noinst_PROGRAMS += src/tests/misc/journal-log-parse-test
+
 src_tests_misc_journal_log_parse_test_SOURCES = \
 	src/tests/misc/journal-log-parse-test.cpp \
 	src/log/journal-log-parse.cpp \
 	src/log/journal-log-parse.hpp
+endif
 
 src_tests_misc_json_config_import_test_SOURCES = \
 	src/tests/misc/json-config-import-test.cpp

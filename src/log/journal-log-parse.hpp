@@ -15,6 +15,9 @@
 
 #pragma once
 
+#include "config.h"
+
+#ifdef HAVE_SYSTEMD
 #include <systemd/sd-journal.h>
 #include <json/json.h>
 
@@ -237,3 +240,5 @@ class Parse
 
 } // namespace Journald
 } // namespace Log
+
+#endif // HAVE_SYSTEMD

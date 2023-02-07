@@ -129,6 +129,7 @@ if test "$have_libsystemd" = "yes"; then
                        []
                       )
 fi
+AM_CONDITIONAL([HAVE_SYSTEMD], [test "$have_systemd_libs" = "yes"])
 AC_SUBST([HAVE_SYSTEMD])
 if test "$have_systemd_libs" = "yes"; then
         AC_DEFINE([HAVE_SYSTEMD], [1],
