@@ -15,6 +15,7 @@ policy_module(openvpn3_service, 1.0.0)
 require {
         type proc_net_t;
         type systemd_hostnamed_t;
+        type syslogd_var_run_t;
         class file read;
         class unix_dgram_socket { create_socket_perms sendto };
         class udp_socket rw_socket_perms;
@@ -154,3 +155,4 @@ files_read_etc_files(openvpn3_client_t)
 auth_use_nsswitch(openvpn3_client_t)
 miscfiles_read_localization(openvpn3_client_t)
 sysnet_dns_name_resolve(openvpn3_client_t)
+logging_send_syslog_msg(openvpn3_client_t)
