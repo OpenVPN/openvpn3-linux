@@ -1,6 +1,6 @@
 //  OpenVPN 3 Linux client -- Next generation OpenVPN client
 //
-//  SPDX-License-Identifier: AGPL-3.0-onl
+//  SPDX-License-Identifier: AGPL-3.0-only
 //
 //  Copyright (C) 2022         OpenVPN Inc <sales@openvpn.net>
 //  Copyright (C) 2022         David Sommerseth <davids@openvpn.net>
