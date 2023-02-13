@@ -300,7 +300,25 @@ static void start_session(OpenVPN3SessionProxy::Ptr session,
                 {
                     throw ReadyException(s.message);
                 }
-
+                else if (s.minor == StatusMinor::CONN_FAILED)
+                {
+                    try
+                    {
+                        {
+                            session->Disconnect();
+                        }
+                    }
+                    catch (...)
+                    {
+                        // ignore errors
+                    }
+                    std::string err = "Failed to start the connection";
+                    if (s.message.find("PEM_PASSWORD_FAIL") != std::string::npos)
+                    {
+                        err += ", incorrect Private Key passphrase";
+                    }
+                    throw SessionException(err);
+                }
                 // Check if an SIGINT / CTRL-C event has occurred.
                 // If it has, disconnect the connection attempt and abort.
                 if (sigint_received)
@@ -370,6 +388,7 @@ static void start_session(OpenVPN3SessionProxy::Ptr session,
                                 if (!sigint_received)
                                 {
                                     session->ProvideResponse(r);
+                                    loops = 10;
                                 }
                                 done = true;
                             }

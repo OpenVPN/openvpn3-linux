@@ -132,6 +132,8 @@ def StatusHandler(major, minor, msg):
         mainloop.quit()
     if StatusMajor.CONNECTION == maj and StatusMinor.CONN_AUTH_FAILED == min:
         mainloop.quit()
+    if StatusMajor.CONNECTION == maj and StatusMinor.CONN_FAILED == min:
+        mainloop.quit()
     if StatusMajor.CONNECTION == maj and StatusMinor.CONN_DISCONNECTED == min:
         mainloop.quit()
     if StatusMajor.CONNECTION == maj and StatusMinor.CFG_REQUIRE_USER == min:
@@ -294,7 +296,11 @@ def start_tunnel(bus, cfgobj, opts):
                         connected = False
 
                     elif StatusMinor.CONN_AUTH_FAILED == status['minor']:
-                        print(' Authentication failed')
+                        print('Authentication failed')
+                        done = True
+                        exit_code = 3
+                    elif StatusMinor.CONN_FAILED == status['minor']:
+                        print('Connection failed')
                         done = True
                         exit_code = 3
                     else:  # Not handled status codes
