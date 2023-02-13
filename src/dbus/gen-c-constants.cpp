@@ -145,6 +145,7 @@ int main(int argc, char **argv)
     MAP(ClientAttentionGroup, client_att_group, "PK_PASSPHRASE", PK_PASSPHRASE);
     MAP(ClientAttentionGroup, client_att_group, "CHALLENGE_STATIC", CHALLENGE_STATIC);
     MAP(ClientAttentionGroup, client_att_group, "CHALLENGE_DYNAMIC", CHALLENGE_DYNAMIC);
+    MAP(ClientAttentionGroup, client_att_group, "CHALLENGE_AUTH_PENDING", CHALLENGE_AUTH_PENDING);
     MAP(ClientAttentionGroup, client_att_group, "PKCS11_SIGN", PKCS11_SIGN);
     MAP(ClientAttentionGroup, client_att_group, "PKCS11_DECRYPT", PKCS11_DECRYPT);
     MAP(ClientAttentionGroup, client_att_group, "OPEN_URL", OPEN_URL);
