@@ -342,23 +342,58 @@ static void start_session(OpenVPN3SessionProxy::Ptr session,
 
                 if (ClientAttentionType::CREDENTIALS == type)
                 {
+                    sigaction(SIGINT, &sact, NULL);
                     std::vector<struct RequiresSlot> reqslots;
                     session->QueueFetchAll(reqslots, type, group);
                     for (auto &r : reqslots)
                     {
-                        std::cout << r.user_description << ": ";
-                        if (r.hidden_input)
+                        bool done = false;
+                        if (sigint_received)
                         {
-                            set_console_echo(false);
+                            break;
                         }
-                        std::getline(std::cin, r.value);
-                        if (r.hidden_input)
+                        while (!done && !sigint_received)
                         {
-                            std::cout << std::endl;
-                            set_console_echo(true);
+                            try
+                            {
+                                std::cout << r.user_description << ": ";
+                                if (r.hidden_input)
+                                {
+                                    set_console_echo(false);
+                                }
+                                std::getline(std::cin, r.value);
+                                if (r.hidden_input)
+                                {
+                                    std::cout << std::endl;
+                                    set_console_echo(true);
+                                }
+                                if (!sigint_received)
+                                {
+                                    session->ProvideResponse(r);
+                                }
+                                done = true;
+                            }
+                            catch (const DBusException &excp)
+                            {
+                                std::string err(excp.what());
+                                if (err.find("No value provided for") != std::string::npos)
+                                {
+                                    std::cerr << "** ERROR **   Empty input not allowed" << std::endl;
+                                }
+                                else
+                                {
+                                    done = true;
+                                    sigint_received = true;
+                                }
+                            }
                         }
-                        session->ProvideResponse(r);
                     }
+                }
+                if (sigint_received)
+                {
+                    std::cerr << "** Aborted **" << std::endl;
+                    session->Disconnect();
+                    return;
                 }
             }
         }
