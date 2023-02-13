@@ -74,8 +74,8 @@ int main()
             std::cerr << "-- ERROR -- | empty response from queue.QueueCheckTypeGroup() |" << std::endl;
             return 1;
         }
-        bool up, cs, cd, pk;
-        up = cs = cd = pk = false;
+        bool up, cs, cd, pk, ap;
+        up = cs = cd = pk = ap = false;
         for (auto &type_group : res)
         {
             ClientAttentionType type;
@@ -97,6 +97,10 @@ int main()
 
             case ClientAttentionGroup::PK_PASSPHRASE:
                 pk = true;
+                break;
+
+            case ClientAttentionGroup::CHALLENGE_AUTH_PENDING:
+                ap = true;
                 break;
 
             default:
@@ -125,7 +129,7 @@ int main()
                 }
             }
         }
-        if (!up || !cs || !cd || !pk)
+        if (!up || !cs || !cd || !pk || !ap)
         {
             std::cerr << "-- ERROR -- | one of type groups is missing |" << std::endl;
             return 1;

@@ -141,6 +141,7 @@ class ReqQueueMain : public DBusObject
             queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "password", "Test Auth Password", true);
             queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_DYNAMIC, "dynamic_challenge", "Test Dynamic Challenge", true);
             queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_STATIC, "static_challenge", "Test Static Challenge", true);
+            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_AUTH_PENDING, "auth_pending", "Pending Auth Challenge", false);
             g_dbus_method_invocation_return_value(invocation, NULL);
             return;
         }
@@ -231,6 +232,7 @@ void selftest()
         queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "password", "Selftest Auth Password", true);
         queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_DYNAMIC, "dynamic_challenge", "Selftest Dynamic Challenge", true);
         queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_STATIC, "static_challenge", "Selftest static Challenge", true);
+        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_AUTH_PENDING, "auth_pending", "Selftest Pending Auth", false);
 
 
         // Test QueueCheckTypeGroup()
@@ -282,7 +284,7 @@ void selftest()
         std::cout << "GetResponse('password') = " << queue.GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "password") << std::endl;
         std::cout << "GetResponse('dynamic_challenge') = " << queue.GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_DYNAMIC, "dynamic_challenge") << std::endl;
         std::cout << "GetResponse('static_challenge') = " << queue.GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_STATIC, "static_challenge") << std::endl;
-
+        std::cout << "GetResponse('auth_pending') = " << queue.GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_AUTH_PENDING, "auth_pending") << std::endl;
         // Checking some out-of-bounds variables
         try
         {
