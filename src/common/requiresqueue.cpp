@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <exception>
 #include <cassert>
+#include <stdint.h>
 
 #include "config.h"
 #include "dbus/core.hpp"
@@ -152,18 +153,18 @@ unsigned int RequiresQueue::RequireAdd(ClientAttentionType type,
 void RequiresQueue::QueueFetch(GDBusMethodInvocation *invocation,
                                GVariant *parameters)
 {
-    unsigned int type;
-    unsigned int group;
-    unsigned int id;
-    g_variant_get(parameters, "(uuu)", &type, &group, &id);
+    GLibUtils::checkParams(__func__, parameters, "(uuu)", 3);
+    ClientAttentionType type = (ClientAttentionType)GLibUtils::ExtractValue<uint32_t>(parameters, 0);
+    ClientAttentionGroup group = (ClientAttentionGroup)GLibUtils::ExtractValue<uint32_t>(parameters, 1);
+    guint id = GLibUtils::ExtractValue<uint32_t>(parameters, 2);
 
     // Fetch the requested slot id
     for (auto &e : slots)
     {
         if (id == e.id)
         {
-            if (e.type == (ClientAttentionType)type
-                && e.group == (ClientAttentionGroup)group)
+            if (e.type == type
+                && e.group == group)
             {
                 if (e.provided)
                 {
@@ -225,25 +226,21 @@ void RequiresQueue::UpdateEntry(GDBusMethodInvocation *invocation,
     // Typically used by the function parsing user provided data
     // usually a backend process who asked for user input
     //
-    unsigned int type;
-    unsigned int group;
-    guint id;
-    gchar *value = nullptr;
-    g_variant_get(indata, "(uuus)", &type, &group, &id, &value);
+    GLibUtils::checkParams(__func__, indata, "(uuus)", 4);
+    ClientAttentionType type = (ClientAttentionType)GLibUtils::ExtractValue<uint32_t>(indata, 0);
+    ClientAttentionGroup group = (ClientAttentionGroup)GLibUtils::ExtractValue<uint32_t>(indata, 1);
+    guint id = GLibUtils::ExtractValue<uint32_t>(indata, 2);
+    std::string value = GLibUtils::ExtractValue<std::string>(indata, 3);
 
-    if (NULL == value)
+    if (value.empty())
     {
         throw RequiresQueueException("net.openvpn.v3.error.invalid-input",
                                      "No value provided for RequiresSlot ID "
                                          + std::to_string(id));
     }
 
-    UpdateEntry((ClientAttentionType)type,
-                (ClientAttentionGroup)group,
-                id,
-                std::string(value));
+    UpdateEntry(type, group, id, value);
     g_dbus_method_invocation_return_value(invocation, NULL);
-    g_free(value); // Avoid leak
 }
 
 
@@ -395,14 +392,13 @@ std::vector<unsigned int> RequiresQueue::QueueCheck(ClientAttentionType type,
 
 void RequiresQueue::QueueCheck(GDBusMethodInvocation *invocation, GVariant *parameters)
 {
-    unsigned int type;
-    unsigned int group;
-    g_variant_get(parameters, "(uu)", &type, &group);
+    GLibUtils::checkParams(__func__, parameters, "(uu)", 2);
+    ClientAttentionType type = (ClientAttentionType)GLibUtils::ExtractValue<uint32_t>(parameters, 0);
+    ClientAttentionGroup group = (ClientAttentionGroup)GLibUtils::ExtractValue<uint32_t>(parameters, 1);
 
     // Convert the std::vector to a GVariant based array GDBus can use
     // as the method call response
-    std::vector<unsigned int> qchk_result = QueueCheck((ClientAttentionType)type,
-                                                       (ClientAttentionGroup)group);
+    std::vector<unsigned int> qchk_result = QueueCheck(type, group);
     GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("au"));
     for (auto &e : qchk_result)
     {
@@ -449,11 +445,10 @@ bool RequiresQueue::QueueDone(ClientAttentionType type, ClientAttentionGroup gro
 bool RequiresQueue::QueueDone(GVariant *parameters)
 {
     // First, grab the slot ID ...
-    unsigned int type;
-    unsigned int group;
-    unsigned int id;
-    gchar *value = nullptr;
-    g_variant_get(parameters, "(uuus)", &type, &group, &id, &value);
+    GLibUtils::checkParams(__func__, parameters, "(uuus)", 4);
+    ClientAttentionType type = (ClientAttentionType)GLibUtils::ExtractValue<uint32_t>(parameters, 0);
+    ClientAttentionGroup group = (ClientAttentionGroup)GLibUtils::ExtractValue<uint32_t>(parameters, 1);
 
-    return QueueCheck((ClientAttentionType)type, (ClientAttentionGroup)group).size() == 0;
+    // Check if there are any elements needing attentions in that slot ID
+    return QueueCheck(type, group).size() == 0;
 }
