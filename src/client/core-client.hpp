@@ -20,6 +20,7 @@
 #pragma once
 
 #include <iostream>
+#include <string>
 #include <thread>
 #include <mutex>
 
@@ -45,6 +46,54 @@
 #include "core-client-netcfg.hpp"
 
 using namespace openvpn;
+
+
+class ParseCR_TEXT
+{
+  public:
+    ParseCR_TEXT(const std::string req)
+    {
+        std::stringstream r(req);
+        std::string tok = {};
+        bool crtext_found = false;
+        bool flags_parsed = false;
+        while (std::getline(r, tok, ':'))
+        {
+            if (!crtext_found && "CR_TEXT" == tok)
+            {
+                crtext_found = true;
+            }
+            else if (crtext_found && !flags_parsed)
+            {
+                flags_parsed = true;
+                response = (tok.find("R") != std::string::npos);
+                echo = (tok.find("E") == std::string::npos);
+            }
+            else if (crtext_found && flags_parsed && challenge.empty())
+            {
+                challenge = tok;
+            }
+        }
+
+        valid = crtext_found && flags_parsed && !challenge.empty();
+    }
+
+
+    const bool Valid() const noexcept
+    {
+        return valid;
+    }
+
+    std::string challenge = {};
+    bool response = false;
+    bool echo = false;
+
+
+  private:
+    bool valid = false;
+};
+
+
 
 #if defined(USE_TUN_BUILDER)
 #define CLIENTBASECLASS NetCfgTunBuilder<ClientAPI::OpenVPNClient>
@@ -205,6 +254,13 @@ class CoreVPNClient : public CLIENTBASECLASS,
     }
 
 
+
+    void SendAuthPendingResponse(const std::string &value)
+    {
+        post_cc_msg("CR_RESPONSE," + base64->encode(value));
+    }
+
+
   private:
     std::string dc_cookie;
     unsigned long evntcount = 0;
@@ -215,6 +271,7 @@ class CoreVPNClient : public CLIENTBASECLASS,
     bool failed_signal_sent;
     StatusMinor run_status;
     bool initial_connection = true;
+    unsigned int auth_pending_timeout = 0;
 
 
     bool socket_protect(int socket, std::string remote, bool ipv6) override
@@ -283,6 +340,27 @@ class CoreVPNClient : public CLIENTBASECLASS,
                 run_status = StatusMinor::CFG_REQUIRE_USER;
             }
         }
+        else if ("AUTH_PENDING" == ev.name)
+        {
+            auth_pending_timeout = 3600; // Default: 1 hour timeout
+            std::stringstream evinf;
+            evinf << ev.info;
+            std::string tok = {};
+            bool timeout_found = false;
+            while (std::getline(evinf, tok, ' '))
+            {
+                if (!timeout_found && "timeout" == tok)
+                {
+                    timeout_found = true;
+                }
+                else if (timeout_found)
+                {
+                    auth_pending_timeout = std::atoi(tok.c_str());
+                }
+            }
+            signal->Debug("Auth pending request received, timeout: "
+                          + std::string(std::to_string(auth_pending_timeout)));
+        }
         else if ("PROXY_NEED_CREDS" == ev.name)
         {
             signal->Debug("PROXY_NEED_CREDS: |" + ev.info + "|");
@@ -325,6 +403,46 @@ class CoreVPNClient : public CLIENTBASECLASS,
                     std::string flags = extra.substr(0, flags_end);
                     std::string url = extra.substr(flags_end + 1);
                     open_url(url, flags);
+                }
+            }
+            else if (auth_pending_timeout && string::starts_with(ev.info, "CR_TEXT:"))
+            {
+                signal->Debug("Parsing CR_TEXT");
+                ParseCR_TEXT crtext(ev.info);
+
+                if (crtext.Valid())
+                {
+                    if (crtext.response)
+                    {
+                        userinputq->RequireAdd(
+                            ClientAttentionType::CREDENTIALS,
+                            ClientAttentionGroup::CHALLENGE_AUTH_PENDING,
+                            "auth_pending",
+                            crtext.challenge,
+                            crtext.echo);
+
+                        signal->AttentionReq(ClientAttentionType::CREDENTIALS,
+                                             ClientAttentionGroup::CHALLENGE_AUTH_PENDING,
+                                             crtext.challenge);
+                        signal->StatusChange(StatusMajor::CONNECTION,
+                                             StatusMinor::CFG_REQUIRE_USER, // FIXME: -> CHALLENGE
+                                             crtext.challenge);
+                        run_status = StatusMinor::SESS_AUTH_CHALLENGE;
+                    }
+                    else
+                    {
+                        signal->LogInfo(crtext.challenge);
+                    }
+                }
+                else
+                {
+                    run_status = StatusMinor::CONN_AUTH_FAILED;
+                    signal->LogError("Failed to decode AUTH_PENDING request");
+                    signal->Debug("AUTH_PENDING ERROR: name='" + ev.name + "', info='" + ev.info + "'");
+                    signal->StatusChange(StatusMajor::CONNECTION,
+                                         run_status,
+                                         "Failed to decode authentication request from server");
+                    failed_signal_sent = true;
                 }
             }
             else

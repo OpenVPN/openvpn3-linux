@@ -28,6 +28,8 @@
 #include <exception>
 #include <sstream>
 
+#include <openvpn/common/base64.hpp>
+
 #define SHUTDOWN_NOTIF_PROCESS_NAME "openvpn3-service-client"
 #include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
@@ -375,6 +377,19 @@ class BackendClientObject : public DBusObject,
                 // tried to connectbut got an AUTH_FAILED, either due to wrong
                 // credentials or a dynamic challenge from the server, we
                 // need to re-establish the vpnclient object.
+                //
+                // However, if we have received an on going AUTH_PENDING,
+                // the session is already running and we ignore new Connect calls
+                // to not interrupt the session.
+                //
+                // TODO: Should even more status codes be ignored?  Like CONNECTED and CONNECTING?
+                //        Only allow disconnected status codes?
+                //
+                if (vpnclient && StatusMinor::SESS_AUTH_CHALLENGE == vpnclient->GetRunStatus())
+                {
+                    g_dbus_method_invocation_return_value(invoc, NULL);
+                    return;
+                }
                 try
                 {
                     initialize_client();
@@ -495,6 +510,19 @@ class BackendClientObject : public DBusObject,
                     return;
                 }
                 userinputq.UpdateEntry(invoc, params);
+
+
+                if (userinputq.QueueCount(ClientAttentionType::CREDENTIALS,
+                                          ClientAttentionGroup::CHALLENGE_AUTH_PENDING)
+                    > 0)
+                {
+                    std::string cr_resp = userinputq.GetResponse(ClientAttentionType::CREDENTIALS,
+                                                                 ClientAttentionGroup::CHALLENGE_AUTH_PENDING,
+                                                                 "auth_pending");
+                    vpnclient->SendAuthPendingResponse(cr_resp);
+                    // No further processing is needed, as auth pending replies are sent
+                    // instantly to the server as a Control Channel message
+                }
             }
             else if ("Pause" == method_name)
             {
@@ -1242,7 +1270,7 @@ class BackendClientObject : public DBusObject,
             vpnconfig.guiVersion = get_guiversion();
             vpnconfig.info = true;
             vpnconfig.content = pm.profile_content();
-            vpnconfig.ssoMethods = "openurl,webauth";
+            vpnconfig.ssoMethods = "openurl,webauth,crtext";
             vpnconfig.dco = dco;
 
             try
@@ -1743,6 +1771,7 @@ int client_service(ParsedArgs::Ptr args)
     {
         try
         {
+            openvpn::base64_init_static();
             start_client_thread(getpid(),
                                 args->GetArgv0(),
                                 extra[0],
@@ -1750,6 +1779,7 @@ int client_service(ParsedArgs::Ptr args)
                                 log_level,
                                 args->Present("signal-broadcast"),
                                 logwr.get());
+            openvpn::base64_uninit_static();
             return 0;
         }
         catch (std::exception &excp)
@@ -1772,6 +1802,7 @@ int client_service(ParsedArgs::Ptr args)
     {
         try
         {
+            openvpn::base64_init_static();
             start_client_thread(start_pid,
                                 args->GetArgv0(),
                                 extra[0],
@@ -1779,6 +1810,7 @@ int client_service(ParsedArgs::Ptr args)
                                 log_level,
                                 args->Present("signal-broadcast"),
                                 logwr.get());
+            openvpn::base64_uninit_static();
             return 0;
         }
         catch (std::exception &excp)
