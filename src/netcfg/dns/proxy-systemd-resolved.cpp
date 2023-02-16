@@ -283,6 +283,20 @@ Manager::Manager(GDBusConnection *dbuscon)
                 "org.freedesktop.resolve1.Manager",
                 "/org/freedesktop/resolve1")
 {
+    // Check if org.freedesktop.resolve1 (systemd-resolved) is available.
+    // This is a pre-condition for this integration to work at all.
+    try
+    {
+        (void)StartServiceByName("org.freedesktop.resolve1");
+        (void)GetNameOwner("org.freedesktop.resolve1");
+    }
+    catch (const DBusException &excp)
+    {
+        throw Exception(std::string("Could not reach ")
+                        + "org.freedesktop.resolve1 (systemd-resolved). "
+                        + "Ensure this service is running and available.");
+    }
+
     // Check for presence of org.freedesktop.PolicyKit1
     // This service is needed to be allowed to send update requests
     // to systemd-resolved as the 'openvpn' user which net.openvpn.v3.netcfg
