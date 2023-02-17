@@ -852,12 +852,33 @@ std::string SingleCommand::gen_help(const std::string arg0)
     r << arg0 << ": " << command << " - " << description << std::endl;
     r << std::endl;
 
+    std::stringstream cmt_before;
+    for (const auto &c : comments)
+    {
+        cmt_before << c.GetComment(CommentPlacement::BEFORE_OPTS);
+    }
+    if (!cmt_before.str().empty())
+    {
+        r << cmt_before.str() << std::endl;
+    }
+
     for (const auto &opt : options)
     {
         for (const auto &l : opt->gen_help_line())
         {
             r << "   " << l << std::endl;
         }
+    }
+
+    std::stringstream cmt_after;
+    for (const auto &c : comments)
+    {
+        cmt_after << c.GetComment(CommentPlacement::AFTER_OPTS);
+    }
+    if (!cmt_after.str().empty())
+    {
+        r << std::endl
+          << cmt_after.str();
     }
     return r.str();
 }

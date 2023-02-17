@@ -565,6 +565,34 @@ class SingleCommand : public RC<thread_unsafe_refcount>
     typedef RCPtr<SingleCommand> Ptr;
 
     /**
+     *  Comments to a command can add further description or details.
+     *  They can be printed both before or after the list of options.
+     */
+    enum class CommentPlacement
+    {
+        BEFORE_OPTS,
+        AFTER_OPTS
+    };
+
+    struct CommandComment
+    {
+        CommandComment(const CommentPlacement &p, const std::string &c)
+            : placement(p), comment(c)
+        {
+        }
+
+        const std::string GetComment(const CommentPlacement &p) const
+        {
+            return (p == placement ? comment + "\n" : "");
+        }
+
+        const CommentPlacement placement;
+        const std::string comment;
+    };
+    using CmdComments = std::vector<CommandComment>;
+
+
+    /**
      *  Define a new command to the binary
      *
      * @param command      std::string of the command name you want to use
@@ -600,6 +628,12 @@ class SingleCommand : public RC<thread_unsafe_refcount>
      * @return Returns a std::string with the alias
      */
     const std::string GetAliasCommand() const;
+
+
+    void AddComment(const CommentPlacement &p, const std::string &c)
+    {
+        comments.push_back(CommandComment(p, c));
+    }
 
 
     /**
@@ -827,6 +861,7 @@ class SingleCommand : public RC<thread_unsafe_refcount>
   private:
     const std::string command;
     const std::string description;
+    CmdComments comments;
     const commandPtr command_func;
     std::string alias_cmd;
     std::string alias_remark;

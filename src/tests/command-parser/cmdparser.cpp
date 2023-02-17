@@ -120,6 +120,7 @@ int main(int argc, char **argv)
 
     SingleCommand::Ptr test1_cmd;
     test1_cmd.reset(new SingleCommand("test1", "Test command 1", cmd_dump_arg_test));
+    test1_cmd->AddComment(SingleCommand::CommentPlacement::BEFORE_OPTS, "Various option parsing tests for the option parser");
     test1_cmd->AddOption("set-value", 's', "key", true, "Set a variable");
     test1_cmd->AddOption("test-func1", "Just testing more options");
     test1_cmd->AddOption("test-func2", 'f', "string", false, "Just another test");
@@ -129,12 +130,16 @@ int main(int argc, char **argv)
 
     SingleCommand::Ptr test2_cmd;
     test2_cmd.reset(new SingleCommand("test2", "Test command two", cmd_multiply));
+    test2_cmd->AddComment(SingleCommand::CommentPlacement::AFTER_OPTS, "These tests and options doesn't really do that much");
     test2_cmd->AddOption("multiply", 'm', "values", true, "Multiply two numbers", arghelper_random_numbers);
     test2_cmd->AddOption("bool-test", 'b', "<true|false>", true, "Test of a boolean option", arghelp_boolean);
     cmds.RegisterCommand(test2_cmd);
 
     SingleCommand::Ptr test3_cmd;
     test3_cmd.reset(new SingleCommand("test3", "Test command 3", cmd_dump_arg_test));
+    test3_cmd->AddComment(SingleCommand::CommentPlacement::BEFORE_OPTS, "Yet more testing, a comment before the option");
+    test3_cmd->AddComment(SingleCommand::CommentPlacement::AFTER_OPTS, "And more comments below");
+    test3_cmd->AddComment(SingleCommand::CommentPlacement::AFTER_OPTS, "This one even has two lines of comments");
     test3_cmd->AddOption("opt-string", 'o', "string-1", false, "Optional strings");
     cmds.RegisterCommand(test3_cmd);
 
