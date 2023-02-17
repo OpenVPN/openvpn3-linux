@@ -108,6 +108,23 @@ PKG_CHECK_MODULES(
 )
 
 dnl
+dnl  Check for SELinux user-space support library  (used by openvpn3-admin init-setup)
+dnl
+PKG_CHECK_MODULES(
+        [LIBSELINUX],
+        [libselinux >= 2.8],
+        [have_libselinux="yes"],
+        []
+)
+AM_CONDITIONAL([HAVE_LIBSELINUX], [test "$have_libselinux" = "yes"])
+AC_SUBST([HAVE_LIBSELINUX])
+if test "$have_libselinux" = "yes"; then
+        CFLAGS="${CFLAGS} ${LIBSELINUX_CFLAGS}"
+        LIBS="${LIBS} ${LIBSELINUX_LIBS}"
+        AC_DEFINE([HAVE_LIBSELINUX], [1], [libselinux available])
+fi
+
+dnl
 dnl  Check for systemd libraries; used for an alternative MachineID implementation
 dnl
 PKG_CHECK_MODULES(
@@ -602,7 +619,6 @@ if test "${enable_selinux_build}" = "yes"; then
                                 [enable_selinux_build="no"])])
 
    AC_SUBST([selinux_devel_path])
-
 
    if test "${enable_selinux_build}" = "yes"; then
         AC_DEFINE([ENABLE_SELINUX_BUILD], [1], [Build SELinux policy and enable related code paths])
