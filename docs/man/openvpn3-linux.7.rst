@@ -187,6 +187,7 @@ SEE ALSO
 ========
 ``openvpn2``\(1)
 ``openvpn3``\(1)
+``openvpn3-admin-init-config``\(8)
 ``openvpn3-autoload``\(8)
 ``openvpn3-service-backendstart``\(8)
 ``openvpn3-service-client``\(8)

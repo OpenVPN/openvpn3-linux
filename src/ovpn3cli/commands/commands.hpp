@@ -30,6 +30,9 @@ SingleCommand::Ptr prepare_command_config_dump();
 SingleCommand::Ptr prepare_command_config_remove();
 SingleCommand::Ptr prepare_command_configs_list();
 
+// Commands provided in init-config.cpp
+SingleCommand::Ptr prepare_command_initcfg();
+
 // Commands provided in journal.cpp
 SingleCommand::Ptr prepare_command_journal();
 
@@ -105,7 +108,8 @@ std::vector<PrepareCommand> command_list_openvpn3admin = {
     prepare_command_log_service,
     prepare_command_netcfg_service,
 #ifdef HAVE_TINYXML
-    prepare_command_sessionmgr_service
+    prepare_command_sessionmgr_service,
 #endif
+    prepare_command_initcfg,
 };
 #endif // OVPN3CLI_OPENVPN3ADMIN

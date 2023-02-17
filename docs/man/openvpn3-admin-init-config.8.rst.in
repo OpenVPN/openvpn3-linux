@@ -1,0 +1,67 @@
+==========================
+openvpn3-admin-journal
+==========================
+
+----------------------
+OpenVPN 3 Linux client
+----------------------
+
+:Manual section: 8
+:Manual group: OpenVPN 3 Linux
+
+SYNOPSIS
+========
+| ``openvpn3-admin init-config`` ``[OPTIONS]``
+| ``openvpn3-admin init-config`` ``-h`` | ``--help``
+
+
+DESCRIPTION
+===========
+This is a configuration helper command, which will attempt to auto-detect
+features on the running system and configure OpenVPN 3 Linux accordingly.
+
+The state directory used by the OpenVPN 3 Linux services will also have
+the ownership and access adjusted to match the requirements.
+
+For systems with SELinux available, it will also ensure the SELinux file
+contexts of directories needed by OpenVPN 3 Linux services are correctly
+labelled.
+
+By default, this command will not write any configuration files to disk.
+Only the state directory will be created if missing in addition to file and
+directory access being properly setup.
+
+When this command is instructed to write configuration files, it will
+only do this if no configuration files are present.  If this command is
+forced to write configuration files, it will only change settings needed
+to be modified.  All other changes should be preserved.
+
+*NOTE* This command must be run as `root`.
+
+OPTIONS
+=======
+
+-h, --help      Print  usage and help details to the terminal
+
+--write-configs
+                Write configuration files to disk with settings
+                found needed.  It will not overwrite any existing
+                configuration files by default.
+
+
+--force
+                Force this command to modify existing configuration files.
+
+--state-dir DIRNAME
+                Set the directory where OpenVPN 3 Linux will store the
+                state and configuration files.  By default this directory
+                is `@OPENVPN_STATEDIR@`.
+
+
+SEE ALSO
+========
+
+``openvpn3-admin-log-service``\(8)
+``openvpn3-admin-netcfg-service``\(8)
+``openvpn3-service-logger``\(8)
+``openvpn3-service-logger``\(8)

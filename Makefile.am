@@ -586,6 +586,7 @@ src_ovpn3cli_openvpn3_admin_SOURCES = \
 	src/ovpn3cli/commands/commands.hpp \
 	src/ovpn3cli/commands/variables.cpp \
 	src/ovpn3cli/commands/version.cpp \
+	src/ovpn3cli/commands/init-config.cpp \
 	src/ovpn3cli/commands/journal.cpp \
 	src/ovpn3cli/commands/log-service.cpp \
 	src/ovpn3cli/commands/netcfg-service.cpp \
@@ -600,7 +601,8 @@ src_ovpn3cli_openvpn3_admin_SOURCES = \
 	src/common/utils.cpp \
 	src/log/journal-log-parse.cpp \
 	src/log/journal-log-parse.hpp \
-	src/netcfg/proxy-netcfg-mgr.cpp
+	src/netcfg/proxy-netcfg-mgr.cpp \
+	src/netcfg/dns/proxy-systemd-resolved.cpp
 nodist_src_ovpn3cli_openvpn3_admin_SOURCES=$(DCO_KEYCONFIG_PB_SOURCES)
 src_ovpn3cli_openvpn3_admin_CXXFLAGS=$(AM_CXXFLAGS) -DOVPN3CLI_OPENVPN3ADMIN
 if HAVE_TINYXML

@@ -41,6 +41,10 @@ variables ``[--machine-id]``
                 used to derive the value.  This value is sent to OpenVPN
                 servers in the IV_HWADDR variable.
 
+init-config
+                Helper command to auto-detect some host specific
+                settings and configure OpenVPN 3 Linux accordingly.
+
 log-service
                 Manage the OpenVPN 3 Log service
 
