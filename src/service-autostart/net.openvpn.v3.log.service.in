@@ -2,11 +2,11 @@
 #
 #  SPDX-License-Identifier: AGPL-3.0-only
 #
-#  Copyright (C) 2018 - 2022  OpenVPN Inc <sales@openvpn.net>
-#  Copyright (C) 2018 - 2022  David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
+#  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
 #
 
 [D-BUS Service]
 Name=net.openvpn.v3.log
 User=@OPENVPN_USERNAME@
-Exec=@LIBEXEC_PATH@/openvpn3-service-logger --service --state-dir "@OPENVPN_STATEDIR@" --log-level 4 --journald
+Exec=@LIBEXEC_PATH@/openvpn3-service-logger --service --state-dir "@OPENVPN_STATEDIR@" --log-level 4 @LOG_BACKEND@

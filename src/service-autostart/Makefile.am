@@ -2,16 +2,23 @@
 #
 #  SPDX-License-Identifier: AGPL-3.0-only
 #
-#  Copyright (C) 2017 - 2022  OpenVPN Inc <sales@openvpn.net>
-#  Copyright (C) 2017 - 2022  David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
+#  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
 #
 #
+
+if HAVE_SYSTEMD
+LOG_BACKEND = --journald
+else
+LOG_BACKEND = --syslog
+endif
 
 %.service : %.service.in Makefile
 	$(AM_V_GEN)sed -e 's|\@LIBEXEC_PATH\@|$(pkglibexecdir)|' \
 		       -e 's|\@OPENVPN_USERNAME\@|$(OPENVPN_USERNAME)|' \
 		       -e 's|\@OPENVPN_STATEDIR\@|$(openvpn3_statedir)|' \
 		       -e 's|\@DNS_RESOLVER_CONFIG\@|$(dns_resolver_config)|' \
+		       -e 's|\@LOG_BACKEND\@|$(LOG_BACKEND)|' \
 		$< > $@.tmp && mv $@.tmp $@
 
 MAINTAINERCLEANFILES = \
