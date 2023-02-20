@@ -2,9 +2,9 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2017 - 2022  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2017 - 2022  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018 - 2022  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 - 2023  Arne Schwabe <arne@openvpn.net>
 //
 
 #pragma once

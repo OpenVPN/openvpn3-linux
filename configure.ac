@@ -2,8 +2,8 @@ dnl  OpenVPN 3 Linux client -- Next generation OpenVPN client
 dnl
 dnl  SPDX-License-Identifier: AGPL-3.0-only
 dnl
-dnl  Copyright (C) 2017 - 2022  OpenVPN Inc <sales@openvpn.net>
-dnl  Copyright (C) 2017 - 2022  David Sommerseth <davids@openvpn.net>
+dnl  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
+dnl  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
 dnl
 dnl
 dnl  Process this file with autoconf to produce a configure script.

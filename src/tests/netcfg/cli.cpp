@@ -6,7 +6,7 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2012 - 2022  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2012 - 2023  OpenVPN Inc <sales@openvpn.net>
 //
 
 // OpenVPN 3 test client

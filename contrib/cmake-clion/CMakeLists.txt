@@ -1,8 +1,8 @@
 #  SPDX-License-Identifier: AGPL-3.0-only
 #
-#  Copyright (C) 2019 - 2022  OpenVPN Inc <sales@openvpn.net>
-#  Copyright (C) 2019 - 2022  Lev Stipakov <lev@openvpn.net>
-#  Copyright (C) 2019 - 2022  Arne Schwabe <arne@openvpn.net>
+#  Copyright (C) 2019 - 2023  OpenVPN Inc <sales@openvpn.net>
+#  Copyright (C) 2019 - 2023  Lev Stipakov <lev@openvpn.net>
+#  Copyright (C) 2019 - 2023  Arne Schwabe <arne@openvpn.net>
 #
 
 # This file is supposed to be linked from the root of openvpn3-linux

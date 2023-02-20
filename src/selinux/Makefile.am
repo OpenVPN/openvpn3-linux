@@ -2,8 +2,8 @@
 #
 #  SPDX-License-Identifier: AGPL-3.0-only
 #
-#  Copyright (C) 2018 - 2022  OpenVPN Inc <sales@openvpn.net>
-#  Copyright (C) 2018 - 2022  David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
+#  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
 #
 
 # The SELinux build method doesn't like parallel builds, so disable it here
