@@ -17,6 +17,13 @@ SYNOPSIS
 
 DESCRIPTION
 ===========
+
+NOTE!
+          This feature is deprecated in favour of the
+          ``openvpn3-session@.service`` systemd unit.
+
+          Please see `openvpn3-systemd`\(1) for more details.
+
 The **openvpn3-autoload** utility is used to automatically load and
 optionally start VPN configuration profiles from a specific directory.
 As the OpenVPN 3 Linux client provides fine grained control on both
@@ -423,4 +430,5 @@ SEE ALSO
 
 ``openvpn3``\(1)
 ``openvpn3-config-manage``\(1)
-
+``openvpn3-config-manage``\(1)
+``openvpn3-systemd``\(1)

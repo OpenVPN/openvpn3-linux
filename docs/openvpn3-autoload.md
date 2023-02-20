@@ -1,3 +1,11 @@
+## NOTE!
+
+The `openvpn3-autoload` feature is being deprecated in favour of
+the newer and better [`openvpn3-session@.service`](docs/man/openvpn3-systemd.8.rst)
+systemd service unit approach.  Please migrate to this approach
+as soon as possible.
+
+
 OpenVPN 3 Autoload feature
 ==========================
 
@@ -21,11 +29,6 @@ file.  The base part of filename must be identical with the
 An `.autoload` file consists of several sections and all sections and
 properties within any section are optional.
 
-## WARNING!
-This spec is under development and it may change.
-The reference implementation at any time will be the
-`openvpn3-autoload` Python script.  And there might be features
-described in this document which is not implemented yet.
 
 ## Main section: autostart
 
@@ -49,9 +52,6 @@ This section contains authentication related settings.
         "autologin": BOOLEAN,
         "$VARNAME": "VALUE"
     }
-
-#### user-auth: autologin
-**TBD**
 
 #### user-auth: $VARNAME
 The OpenVPN 3 `UserInputQueue` API uses an internal variable name in
@@ -255,92 +255,6 @@ server on the system.  Valid strings are:
 Setting this to True will disable modifying the local DNS for this
 configuration profile when the tunnel is started.
 
-
-## Section: log
-
-    "log": {
-            "level": LOG_LEVEL,
-            "destination": {
-                    "service":  "SERVICE",
-                    [... service specific settings ...]
-        }
-    }
-
-#### log: level
-Defines the log verbosity level to be logged.  The higher the value
-is, the more verbose the logging will be.  Valid log levels are `0` to
-`6`, where `6` will only be available if debug logging has been
-enabled.
-
-#### log: destination
-This sub-section will contain different types of settings, depending
-on the defined service.  The "service" property is required and must
-be a string where the following values are accepted:
-
- - `"file"`
- - `"syslog"`
- - `"journal"`
- - `"windows-event"`
-
-
-### Log service: file
-The "file" log service is the most primitive one, which does all
-logging to a defined file.
-
-	{
-        "service": "file",
-        "destination": "FILENAME",
-        "log-rotate-size": INTEGER
-    }
-
-#### file - Log Service Property: destination
-This is a file path where to write log data.  If no full path is
-provided, it will use the current directory of where the VPN client
-was started
-
-#### file - Log Service Property: log-rotate-size
-This is an unsigned integer defining the maximum size (in MB) of the
-log file can grow before it gets rotated.
-
-### Log service: syslog
-The "syslog" log service uses the standard syslog interface most
-commonly available on the Unix based platforms
-
-    {
-        "service": "syslog",
-        "facility": "FACILITY"
-    }
-
-#### syslog - Log Service Property: facility
-This is a string defining which syslog facility to send the log data
-to.  Valid values are defined by the openlog() function.  Most common
-values will most likely be:
-
- - "`LOG_DAEMON`" (default)
- - "`LOG_LOCAL0`" ... "`LOG_LOCAL7`"
- - "`LOG_SYSLOG`"
- - "`LOG_USER`"
-
-
-### Log service: journal
-**TBD**
-
-This is Linux specific and it will send log data directly to the
-systemd journal.
-
-    {
-        "service": "journal",
-	}
-
-#### Log service: windows-event
-**TBD**
-
-This is Windows specific and it will send log data directly to the
-Windows Event Log
-
-	{
-        "service": "windows-event",
-	}
 
 ## Section: acl
 This defines some primitive access control parameters to the
