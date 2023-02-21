@@ -142,6 +142,14 @@ class LogServiceProxy : public DBusProxy
   public:
     typedef std::shared_ptr<LogServiceProxy> Ptr;
 
+    enum class Changed
+    {
+        LOGLEVEL = 1 << 1,
+        TSTAMP = 1 << 2,
+        DBUS_DETAILS = 1 << 3,
+        LOGTAG_PREFIX = 1 << 4
+    };
+
     /**
      *  Initialize the LogServiceProxy.
      *
@@ -315,6 +323,7 @@ class LogServiceProxy : public DBusProxy
     void SetLogLevel(unsigned int loglvl)
     {
         SetProperty("log_level", loglvl);
+        flag_change(Changed::LOGLEVEL);
     }
 
 
@@ -342,6 +351,7 @@ class LogServiceProxy : public DBusProxy
     void SetTimestampFlag(bool tstamp)
     {
         SetProperty("timestamp", tstamp);
+        flag_change(Changed::TSTAMP);
     }
 
 
@@ -392,6 +402,7 @@ class LogServiceProxy : public DBusProxy
     void SetLogTagPrepend(const bool logprep)
     {
         SetProperty("log_prefix_logtag", logprep);
+        flag_change(Changed::LOGTAG_PREFIX);
     }
 
 
@@ -429,9 +440,17 @@ class LogServiceProxy : public DBusProxy
 
 
   private:
+    uint8_t changes;
+
+
     static bool logsubscribers_sort(const LogSubscriberEntry &lhs,
                                     const LogSubscriberEntry &rhs)
     {
         return lhs.busname < rhs.busname;
+    }
+
+    void flag_change(const Changed &c)
+    {
+        changes |= (uint8_t)c;
     }
 };
