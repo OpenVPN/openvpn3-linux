@@ -308,8 +308,12 @@ class LogServiceProxy : public DBusProxy
      *
      * @return  Returns an unsigned int of the log level (0-6).
      */
-    unsigned int GetLogLevel()
+    unsigned int GetLogLevel(const bool oldval = false) const
     {
+        if (oldval && CheckChange(Changed::LOGLEVEL))
+        {
+            return old_loglev;
+        }
         return GetUIntProperty("log_level");
     }
 
@@ -322,6 +326,16 @@ class LogServiceProxy : public DBusProxy
      */
     void SetLogLevel(unsigned int loglvl)
     {
+        if (!CheckChange(Changed::LOGLEVEL))
+        {
+            old_loglev = GetLogLevel();
+        }
+
+        if (old_loglev == loglvl)
+        {
+            return;
+        }
+
         SetProperty("log_level", loglvl);
         flag_change(Changed::LOGLEVEL);
     }
@@ -333,8 +347,12 @@ class LogServiceProxy : public DBusProxy
      * @return  Returns true if log events will be prefixed with at
      *          timestamp.
      */
-    bool GetTimestampFlag()
+    bool GetTimestampFlag(const bool oldval = false) const
     {
+        if (oldval && CheckChange(Changed::TSTAMP))
+        {
+            return old_tstamp;
+        }
         return GetBoolProperty("timestamp");
     }
 
@@ -350,6 +368,16 @@ class LogServiceProxy : public DBusProxy
      */
     void SetTimestampFlag(bool tstamp)
     {
+        if (!CheckChange(Changed::TSTAMP))
+        {
+            old_tstamp = GetTimestampFlag();
+        }
+
+        if (old_tstamp == tstamp)
+        {
+            return;
+        }
+
         SetProperty("timestamp", tstamp);
         flag_change(Changed::TSTAMP);
     }
@@ -360,8 +388,12 @@ class LogServiceProxy : public DBusProxy
      *
      * @return  Returns true if D-Bus details are being added to the logs
      */
-    bool GetDBusDetailsLogging()
+    bool GetDBusDetailsLogging(const bool oldval = false) const
     {
+        if (oldval && CheckChange(Changed::DBUS_DETAILS))
+        {
+            return old_dbusdet;
+        }
         return GetBoolProperty("log_dbus_details");
     }
 
@@ -375,17 +407,31 @@ class LogServiceProxy : public DBusProxy
      */
     void SetDBusDetailsLogging(bool dbus_details)
     {
+        if (!CheckChange(Changed::DBUS_DETAILS))
+        {
+            old_dbusdet = GetDBusDetailsLogging();
+        }
+
+        if (old_dbusdet == dbus_details)
+        {
+            return;
+        }
+
         SetProperty("log_dbus_details", dbus_details);
+        flag_change(Changed::DBUS_DETAILS);
     }
 
 
     /**
      *  Retrieve the flag controlling if log messages to the system logs
      *  should be prepended with a log tag
-     * @return
      */
-    bool GetLogTagPrepend()
+    bool GetLogTagPrepend(const bool oldval = false) const
     {
+        if (oldval && CheckChange(Changed::LOGTAG_PREFIX))
+        {
+            return old_logtagp;
+        }
         return GetBoolProperty("log_prefix_logtag");
     }
 
@@ -401,8 +447,31 @@ class LogServiceProxy : public DBusProxy
      */
     void SetLogTagPrepend(const bool logprep)
     {
+        if (!CheckChange(Changed::LOGTAG_PREFIX))
+        {
+            old_logtagp = GetLogTagPrepend();
+        }
+
+        if (old_logtagp == logprep)
+        {
+            return;
+        }
+
         SetProperty("log_prefix_logtag", logprep);
         flag_change(Changed::LOGTAG_PREFIX);
+    }
+
+
+    /**
+     *  Check if a certain setting has been changed
+     *
+     * @param c       Changed flag to check
+     *
+     * @return Returns true if this setting has been changed
+     */
+    const bool CheckChange(const Changed &c) const
+    {
+        return (changes & (uint8_t)c);
     }
 
 
@@ -441,6 +510,10 @@ class LogServiceProxy : public DBusProxy
 
   private:
     uint8_t changes;
+    unsigned int old_loglev = 0;
+    bool old_tstamp = false;
+    bool old_dbusdet = false;
+    bool old_logtagp = false;
 
 
     static bool logsubscribers_sort(const LogSubscriberEntry &lhs,
