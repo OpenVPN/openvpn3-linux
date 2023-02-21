@@ -157,6 +157,110 @@ static int manage_config_file(ParsedArgs::Ptr args,
     return 0;
 }
 
+
+
+static void logsrv_list_subscriptions(LogServiceProxy &logsrvprx)
+{
+    DBusConnectionCreds creds(logsrvprx.GetConnection());
+    LogSubscribers list = logsrvprx.GetSubscriberList();
+
+    if (list.size() == 0)
+    {
+        std::cout << "No attached log subscriptions" << std::endl;
+        return;
+    }
+
+    std::cout << "Tag" << std::setw(22) << " "
+              << "PID" << std::setw(4) << " "
+              << "Bus name" << std::setw(4) << " "
+              << "Interface" << std::setw(25) << " "
+              << "Object path" << std::endl;
+    std::cout << std::setw(120) << std::setfill('-')
+              << "-" << std::endl;
+    std::cout << std::setfill(' ');
+
+    for (const auto &e : list)
+    {
+        std::string pid;
+        try
+        {
+            pid = std::to_string(creds.GetPID(e.busname));
+        }
+        catch (DBusException &)
+        {
+            pid = "-";
+        }
+
+        std::cout << e.tag << std::setw(25 - e.tag.length()) << " "
+                  << pid << std::setw(7 - pid.length()) << " "
+                  << e.busname << std::setw(12 - e.busname.length()) << " "
+                  << e.interface << std::setw(34 - e.interface.length()) << " "
+                  << e.object_path << std::endl;
+    }
+    std::cout << std::setw(120) << std::setfill('-')
+              << "-" << std::endl;
+}
+
+
+static inline std::string print_change(const bool changed, const bool oldval)
+{
+    if (changed)
+    {
+        std::stringstream r;
+        r << "   (was " << (oldval ? "enabled" : "disabled") << ")";
+        return r.str();
+    }
+    return "";
+}
+
+
+static inline std::string print_change(const bool changed, const unsigned int oldval)
+{
+    if (changed)
+    {
+        std::stringstream r;
+        r << "          (was " << std::to_string(oldval) << ")";
+        return r.str();
+    }
+    return "";
+}
+
+
+static void print_logger_settings(LogServiceProxy &logsrvprx)
+{
+    std::string log_method = logsrvprx.GetLogMethod();
+    std::cout << "                 Log method: "
+              << log_method << std::endl;
+    std::cout << " Attached log subscriptions: "
+              << logsrvprx.GetNumAttached() << std::endl;
+
+    std::cout << "             Log timestamps: "
+              << (logsrvprx.GetTimestampFlag() ? "enabled" : "disabled")
+              << print_change(logsrvprx.CheckChange(LogServiceProxy::Changed::TSTAMP),
+                              logsrvprx.GetTimestampFlag(true))
+              << std::endl;
+
+    if ("journald" == log_method)
+    {
+        std::cout << "     Log tag prefix enabled: "
+                  << (logsrvprx.GetLogTagPrepend() ? "enabled" : "disabled")
+                  << print_change(logsrvprx.CheckChange(LogServiceProxy::Changed::LOGTAG_PREFIX),
+                                  logsrvprx.GetLogTagPrepend(true))
+                  << std::endl;
+    }
+
+    std::cout << "          Log D-Bus details: "
+              << (logsrvprx.GetDBusDetailsLogging() ? "enabled" : "disabled")
+              << print_change(logsrvprx.CheckChange(LogServiceProxy::Changed::DBUS_DETAILS),
+                              logsrvprx.GetDBusDetailsLogging(true))
+              << std::endl;
+
+    std::cout << "          Current log level: " << std::to_string(logsrvprx.GetLogLevel())
+              << print_change(logsrvprx.CheckChange(LogServiceProxy::Changed::LOGLEVEL),
+                              logsrvprx.GetLogLevel(true))
+              << std::endl;
+}
+
 /**
  *  openvpn3 log-service
  *
@@ -191,145 +295,33 @@ static int cmd_log_service(ParsedArgs::Ptr args)
         dbus.Connect();
         LogServiceProxy logsrvprx(dbus.GetConnection());
 
-        std::string old_loglev("");
-        unsigned int curlev = logsrvprx.GetLogLevel();
-        unsigned int newlev = curlev;
-        if (args->Present("log-level"))
-        {
-            newlev = std::atoi(args->GetValue("log-level", 0).c_str());
-            if (curlev != newlev)
-            {
-                std::stringstream t;
-                t << "            (Was: " << curlev << ")";
-                old_loglev = t.str();
-                logsrvprx.SetLogLevel(newlev);
-            }
-        }
-
-        std::string old_tstamp("");
-        bool curtstamp = logsrvprx.GetTimestampFlag();
-        bool newtstamp = curtstamp;
-        if (args->Present("timestamp"))
-        {
-            newtstamp = args->GetBoolValue("timestamp", 0);
-            if (curtstamp != newtstamp)
-            {
-                std::stringstream t;
-                if (newtstamp)
-                {
-                    // simple alignment trick
-                    t << " ";
-                }
-                t << "     (Was: "
-                  << (curtstamp ? "enabled" : "disabled") << ")";
-                old_tstamp = t.str();
-                logsrvprx.SetTimestampFlag(newtstamp);
-            }
-        }
-
-        std::string old_dbusdetails("");
-        bool curdbusdetails = logsrvprx.GetDBusDetailsLogging();
-        bool newdbusdetails = curdbusdetails;
-        if (args->Present("dbus-details"))
-        {
-            newdbusdetails = args->GetBoolValue("dbus-details", 0);
-            if (curdbusdetails != newdbusdetails)
-            {
-                std::stringstream t;
-                if (newdbusdetails)
-                {
-                    // simple alignment trick
-                    t << " ";
-                }
-                t << "     (Was: "
-                  << (curdbusdetails ? "enabled" : "disabled") << ")";
-                old_dbusdetails = t.str();
-                logsrvprx.SetDBusDetailsLogging(newdbusdetails);
-            }
-        }
-
-        std::string oldlogprefix("");
-        bool curlogprefix = logsrvprx.GetLogTagPrepend();
-        bool newlogprefix = curlogprefix;
-        if (args->Present("enable-log-prefix"))
-        {
-            newlogprefix = args->GetBoolValue("enable-log-prefix", 0);
-            if (curlogprefix != newlogprefix)
-            {
-                std::stringstream t;
-                if (newlogprefix)
-                {
-                    t << " ";
-                }
-                t << "     (Was: "
-                  << (curlogprefix ? "enabled" : "disabled") << ")";
-                oldlogprefix = t.str();
-                logsrvprx.SetLogTagPrepend(newlogprefix);
-            }
-        }
-
         if (args->Present("list-subscriptions"))
         {
-            DBusConnectionCreds creds(dbus.GetConnection());
-            LogSubscribers list = logsrvprx.GetSubscriberList();
-            if (list.size() == 0)
-            {
-                std::cout << "No attached log subscriptions" << std::endl;
-                return 0;
-            }
-
-            std::cout << "Tag" << std::setw(22) << " "
-                      << "PID" << std::setw(4) << " "
-                      << "Bus name" << std::setw(4) << " "
-                      << "Interface" << std::setw(25) << " "
-                      << "Object path" << std::endl;
-            std::cout << std::setw(120) << std::setfill('-')
-                      << "-" << std::endl;
-            std::cout << std::setfill(' ');
-
-            for (const auto &e : list)
-            {
-                std::string pid;
-                try
-                {
-                    pid = std::to_string(creds.GetPID(e.busname));
-                }
-                catch (DBusException &)
-                {
-                    pid = "-";
-                }
-
-                std::cout << e.tag << std::setw(25 - e.tag.length()) << " "
-                          << pid << std::setw(7 - pid.length()) << " "
-                          << e.busname << std::setw(12 - e.busname.length()) << " "
-                          << e.interface << std::setw(34 - e.interface.length()) << " "
-                          << e.object_path << std::endl;
-            }
-            std::cout << std::setw(120) << std::setfill('-')
-                      << "-" << std::endl;
+            logsrv_list_subscriptions(logsrvprx);
+            return 0;
         }
-        else
+
+        if (args->Present("log-level"))
         {
-            std::string log_method = logsrvprx.GetLogMethod();
-            std::cout << "                 Log method: "
-                      << log_method << std::endl;
-            std::cout << " Attached log subscriptions: "
-                      << logsrvprx.GetNumAttached() << std::endl;
-            std::cout << "             Log timestamps: "
-                      << (newtstamp ? "enabled" : "disabled")
-                      << old_tstamp << std::endl;
-            if ("journald" == log_method)
-            {
-                std::cout << "     Log tag prefix enabled: "
-                          << (newlogprefix ? "enabled" : "disabled")
-                          << oldlogprefix << std::endl;
-            }
-            std::cout << "          Log D-Bus details: "
-                      << (newdbusdetails ? "enabled" : "disabled")
-                      << old_dbusdetails << std::endl;
-            std::cout << "          Current log level: "
-                      << newlev << old_loglev << std::endl;
+            logsrvprx.SetLogLevel(std::atoi(args->GetValue("log-level", 0).c_str()));
         }
+
+        if (args->Present("timestamp"))
+        {
+            logsrvprx.SetTimestampFlag(args->GetBoolValue("timestamp", 0));
+        }
+
+        if (args->Present("dbus-details"))
+        {
+            logsrvprx.SetDBusDetailsLogging(args->GetBoolValue("dbus-details", 0));
+        }
+
+        if (args->Present("enable-log-prefix"))
+        {
+            logsrvprx.SetLogTagPrepend(args->GetBoolValue("enable-log-prefix", 0));
+        }
+
+        print_logger_settings(logsrvprx);
     }
     catch (DBusProxyAccessDeniedException &excp)
     {
