@@ -678,7 +678,7 @@ AC_ARG_VAR([OPENVPN3_STATEDIR], [OpenVPN 3 state directory (default: ${localstat
 if test -n "${OPENVPN3_STATEDIR}"; then
         openvpn3_statedir="${OPENVPN3_STATEDIR}"
 else
-        openvpn3_statedir="${localstatedir}/lib/openvpn3"
+        AX_RECURSIVE_EVAL([${localstatedir}/lib/openvpn3], [openvpn3_statedir])
 fi
 AC_SUBST([openvpn3_statedir])
 AC_DEFINE_UNQUOTED([OPENVPN3_STATEDIR],["${openvpn3_statedir}"], [Path to OpenVPN 3 state directory])
