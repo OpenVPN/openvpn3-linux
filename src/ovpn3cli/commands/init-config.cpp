@@ -496,6 +496,31 @@ void selinux_restorecon(const setup_config &setupcfg)
     std::cout << std::endl
               << "* Ensuring SELinux file labels are correct" << std::endl;
 
+    int s;
+    if (selinux_getenforcemode(&s) != 0)
+    {
+        std::cout << "    - Could not retrieve SELinux status; skipping" << std::endl;
+        return;
+    }
+    switch (s)
+    {
+    case -1:
+        std::cout << "    - SELinux status: Not enabled; skipping" << std::endl;
+        return;
+
+    case 0:
+        std::cout << "    - SElinux status: Permissive mode" << std::endl;
+        break;
+
+    case 1:
+        std::cout << "    - SELinux status: Enforcing mode" << std::endl;
+        break;
+
+    default:
+        std::cout << "    - SELinux status: Unkown; skipping" << std::endl;
+        return;
+    }
+
     int r = selinux_restorecon(setupcfg.statedir.c_str(),
                                SELINUX_RESTORECON_RECURSE
                                    | SELINUX_RESTORECON_IGNORE_DIGEST
