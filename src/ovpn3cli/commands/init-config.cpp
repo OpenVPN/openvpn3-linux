@@ -109,8 +109,20 @@ void save_config_file(Configuration::File &cfg, const std::string cfgname, const
         }
         std::cout << "    !! Configuration file UNCHANGED" << std::endl;
     }
-    chmod(cfgname.c_str(), 0644);
-    chown(cfgname.c_str(), setupcfg.openvpn_uid, setupcfg.openvpn_gid);
+
+    if (!openvpn::file_exists(cfgname))
+    {
+        return;
+    }
+
+    if (0 != chmod(cfgname.c_str(), 0644))
+    {
+        std::cout << "    ** ERROR ** Failed to change the file access on the config file (chmod 0644)" << std::endl;
+    }
+    if (0 != chown(cfgname.c_str(), setupcfg.openvpn_uid, setupcfg.openvpn_gid))
+    {
+        std::cout << "    ** ERROR ** Failed to change the file ownership on the config file" << std::endl;
+    }
 }
 
 
