@@ -557,7 +557,7 @@ subscribing to D-Bus signals as well to handle various the states a VPN session
 will go through.  This is fairly simple to do using the already available
 openvpn3 Python module.  Example code can be found in the
 `OpenVPN 3 Linux source tree`_ [#srctree]_
-or by studying the source code of ``openvpn2``\(1) and ``openvpn3-autoload``\(8),
+or by studying the source code of ``openvpn2``\(1) and ``openvpn3-systemd``\(8),
 which both are Python scripts.
 
 Configurations and sessions managed via D-Bus by your own scripts can still be

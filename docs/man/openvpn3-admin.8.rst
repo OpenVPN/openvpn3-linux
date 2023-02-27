@@ -67,9 +67,12 @@ SEE ALSO
 ========
 
 ``openvpn3``\(1)
+``openvpn3-admin-init-config``\(8)
+``openvpn3-admin-journal``\(8)
 ``openvpn3-admin-log-service``\(8)
 ``openvpn3-admin-netcfg-service``\(8)
 ``openvpn3-admin-sessionmgr-service``\(8)
+``openvpn3-admin-variables``\(8)
 ``openvpn3-service-logger``\(8)
 ``openvpn3-service-netcfg``\(8)
 ``openvpn3-service-sessionmgr``\(8)
