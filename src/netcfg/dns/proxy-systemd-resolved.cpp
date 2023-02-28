@@ -281,14 +281,19 @@ Manager::Manager(GDBusConnection *dbuscon)
     : DBusProxy(dbuscon,
                 "org.freedesktop.resolve1",
                 "org.freedesktop.resolve1.Manager",
-                "/org/freedesktop/resolve1")
+                "/org/freedesktop/resolve1",
+                true)
 {
     // Check if org.freedesktop.resolve1 (systemd-resolved) is available.
-    // This is a pre-condition for this integration to work at all.
+    // We test this by connecting to the service.
+    //
+    // This is a pre-condition for this integration to work at all.  If
+    // this is not available, openvpn3-service-netcfg should continue to
+    // run without DNS configured.
     try
     {
-        (void)StartServiceByName("org.freedesktop.resolve1");
-        (void)GetNameOwner("org.freedesktop.resolve1");
+        ProxyConnect();
+        Ping();
     }
     catch (const DBusException &excp)
     {

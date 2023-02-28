@@ -272,6 +272,7 @@ void configure_netcfg(const setup_config &setupcfg)
         DBus conn(G_BUS_TYPE_SYSTEM);
         conn.Connect();
         resolved::Manager resolvd(conn.GetConnection());
+        resolvd.Ping();
         resolver = DNSresolver::RESOLVED;
         std::cout << "    Found systemd-resolved" << std::endl;
     }
