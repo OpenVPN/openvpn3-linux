@@ -119,7 +119,6 @@ TEST(LogEvent, log_category_str)
     }
 }
 
-
 TEST(LogEvent, parse_gvariant_tuple_invalid)
 {
     GVariant *data = g_variant_new("(uuis)",
@@ -459,6 +458,42 @@ TEST(LogEvent, stringstream_multiline)
     std::stringstream ev1_chk5;
     ev1_chk5 << ev1;
     EXPECT_EQ(ev1_chk5.str(), msg1indprfx.str());
+}
+
+
+TEST(LogEvent, stringstream_grp_ctg_limits)
+{
+    for (uint8_t g = 0; g <= LogGroupCount; g++)
+    {
+        for (uint8_t c = 0; c < 10; c++)
+        {
+            LogEvent ev((LogGroup)g, (LogCategory)c, "some message string");
+            std::stringstream msg;
+            msg << ev;
+
+            // Construct expected string manually
+            std::stringstream chk;
+            if (LogGroup::UNDEFINED != (LogGroup)g)
+            {
+                chk << (g < LogGroupCount ? LogGroup_str[g] : "[group:10]");
+            }
+            if (LogCategory::UNDEFINED != (LogCategory)c)
+            {
+                if (LogGroup::UNDEFINED != (LogGroup)g)
+                {
+                    chk << " ";
+                }
+                chk << (c < 9 ? LogCategory_str[c] : "[category:9]");
+            }
+            if (LogGroup::UNDEFINED != (LogGroup)g
+                || LogCategory::UNDEFINED != (LogCategory)c)
+            {
+                chk << ": ";
+            }
+            chk << "some message string";
+            EXPECT_EQ(ev.str(), chk.str());
+        }
+    }
 }
 
 } // namespace unittest

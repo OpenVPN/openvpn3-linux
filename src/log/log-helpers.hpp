@@ -124,6 +124,11 @@ const std::array<const std::string, 9> LogCategory_str = {
 
 inline const std::string LogPrefix(LogGroup group, LogCategory catg)
 {
+    if (LogGroup::UNDEFINED == group && LogCategory::UNDEFINED == catg)
+    {
+        return std::string();
+    }
+
     std::stringstream grp_str;
     if ((uint8_t)group >= LogGroupCount)
     {
@@ -145,7 +150,18 @@ inline const std::string LogPrefix(LogGroup group, LogCategory catg)
     }
 
     std::stringstream ret;
-    ret << grp_str.str() << " "
-        << catg_str.str() << ": ";
+    if (LogGroup::UNDEFINED != group)
+    {
+        ret << grp_str.str();
+    }
+    if (LogCategory::UNDEFINED != catg)
+    {
+        if (LogGroup::UNDEFINED != group)
+        {
+            ret << " ";
+        }
+        ret << catg_str.str();
+    }
+    ret << ": ";
     return ret.str();
 }
