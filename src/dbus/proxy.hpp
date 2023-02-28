@@ -61,30 +61,10 @@ class DBusProxy : public DBus
 {
   public:
     DBusProxy(GBusType bus_type,
-              std::string busname,
-              std::string interf,
-              std::string objpath)
-        : DBus(bus_type),
-          proxy(nullptr),
-          property_proxy(nullptr),
-          bus_name(std::move(busname)),
-          interface(std::move(interf)),
-          object_path(std::move(objpath)),
-          call_flags(G_DBUS_CALL_FLAGS_NONE),
-          proxy_init(false),
-          property_proxy_init(false)
-    {
-        proxy = SetupProxy(bus_name, interface, object_path);
-        property_proxy = SetupProxy(bus_name,
-                                    "org.freedesktop.DBus.Properties",
-                                    object_path);
-    }
-
-    DBusProxy(GBusType bus_type,
               std::string const &busname,
               std::string const &interf,
               std::string const &objpath,
-              bool hold_setup_proxy)
+              bool hold_setup_proxy = false)
         : DBus(bus_type),
           proxy(nullptr),
           property_proxy(nullptr),
@@ -107,28 +87,8 @@ class DBusProxy : public DBus
     DBusProxy(GDBusConnection *dbusconn,
               std::string const &busname,
               std::string const &interf,
-              std::string const &objpath)
-        : DBus(dbusconn),
-          proxy(nullptr),
-          property_proxy(nullptr),
-          bus_name(busname),
-          interface(interf),
-          object_path(objpath),
-          call_flags(G_DBUS_CALL_FLAGS_NONE),
-          proxy_init(false),
-          property_proxy_init(false)
-    {
-        proxy = SetupProxy(bus_name, interface, object_path);
-        property_proxy = SetupProxy(bus_name,
-                                    "org.freedesktop.DBus.Properties",
-                                    object_path);
-    }
-
-    DBusProxy(GDBusConnection *dbusconn,
-              std::string const &busname,
-              std::string const &interf,
               std::string const &objpath,
-              bool hold_setup_proxy)
+              bool hold_setup_proxy = false)
         : DBus(dbusconn),
           proxy(nullptr),
           property_proxy(nullptr),
@@ -151,28 +111,8 @@ class DBusProxy : public DBus
     DBusProxy(DBus const &dbusobj,
               std::string const &busname,
               std::string const &interf,
-              std::string const &objpath)
-        : DBus(dbusobj),
-          proxy(nullptr),
-          property_proxy(nullptr),
-          bus_name(busname),
-          interface(interf),
-          object_path(objpath),
-          call_flags(G_DBUS_CALL_FLAGS_NONE),
-          proxy_init(false),
-          property_proxy_init(false)
-    {
-        proxy = SetupProxy(bus_name, interface, object_path);
-        property_proxy = SetupProxy(bus_name,
-                                    "org.freedesktop.DBus.Properties",
-                                    object_path);
-    }
-
-    DBusProxy(DBus const &dbusobj,
-              std::string const &busname,
-              std::string const &interf,
               std::string const &objpath,
-              bool hold_setup_proxy)
+              bool hold_setup_proxy = false)
         : DBus(dbusobj),
           proxy(nullptr),
           property_proxy(nullptr),
