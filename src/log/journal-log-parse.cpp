@@ -88,9 +88,16 @@ const Json::Value LogEntry::GetJSON() const
         Json::Value logev;
 
         logev["LOG_GROUP"] = (uint8_t)event.group;
-        logev["LOG_GROUP_STRING"] = event.GetLogGroupStr();
+        if (LogGroup::UNDEFINED != event.group)
+        {
+            logev["LOG_GROUP_STRING"] = event.GetLogGroupStr();
+        }
+
         logev["LOG_CATEGORY"] = (uint8_t)event.category;
-        logev["LOG_CATEGORY_STRING"] = event.GetLogCategoryStr();
+        if (LogCategory::UNDEFINED != event.category)
+        {
+            logev["LOG_CATEGORY_STRING"] = event.GetLogCategoryStr();
+        }
 
         if (!event.session_token.empty())
         {
