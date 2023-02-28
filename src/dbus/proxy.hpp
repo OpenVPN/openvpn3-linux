@@ -77,10 +77,7 @@ class DBusProxy : public DBus
     {
         if (!hold_setup_proxy)
         {
-            proxy = SetupProxy(bus_name, interface, object_path);
-            property_proxy = SetupProxy(bus_name,
-                                        "org.freedesktop.DBus.Properties",
-                                        object_path);
+            ProxyConnect();
         }
     }
 
@@ -101,10 +98,7 @@ class DBusProxy : public DBus
     {
         if (!hold_setup_proxy)
         {
-            proxy = SetupProxy(bus_name, interface, object_path);
-            property_proxy = SetupProxy(bus_name,
-                                        "org.freedesktop.DBus.Properties",
-                                        object_path);
+            ProxyConnect();
         }
     }
 
@@ -125,10 +119,7 @@ class DBusProxy : public DBus
     {
         if (!hold_setup_proxy)
         {
-            proxy = SetupProxy(bus_name, interface, object_path);
-            property_proxy = SetupProxy(bus_name,
-                                        "org.freedesktop.DBus.Properties",
-                                        object_path);
+            ProxyConnect();
         }
     }
 
@@ -736,6 +727,21 @@ class DBusProxy : public DBus
     GDBusProxy *SetupProxy()
     {
         return SetupProxy(bus_name, interface, object_path);
+    }
+
+
+    void ProxyConnect()
+    {
+        if (!proxy_init)
+        {
+            proxy = SetupProxy(bus_name, interface, object_path);
+        }
+        if (!property_proxy_init)
+        {
+            property_proxy = SetupProxy(bus_name,
+                                        "org.freedesktop.DBus.Properties",
+                                        object_path);
+        }
     }
 
 
