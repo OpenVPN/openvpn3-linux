@@ -2,9 +2,9 @@
 openvpn3-config-acl
 ===================
 
-----------------------
-OpenVPN 3 Linux client
-----------------------
+---------------------------------------------------------
+OpenVPN 3 Linux Management - Configuration Access Control
+---------------------------------------------------------
 
 :Manual section: 1
 :Manual group: OpenVPN 3 Linux

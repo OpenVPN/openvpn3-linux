@@ -2,9 +2,9 @@
 openvpn3-config-remove
 ======================
 
-----------------------
-OpenVPN 3 Linux client
-----------------------
+----------------------------------------------
+OpenVPN 3 Linux - Delete Configuration Profile
+----------------------------------------------
 
 :Manual section: 1
 :Manual group: OpenVPN 3 Linux

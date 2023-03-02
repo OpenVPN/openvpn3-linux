@@ -2,9 +2,9 @@
 openvpn3-config-manage
 ======================
 
-----------------------
-OpenVPN 3 Linux client
-----------------------
+--------------------------------------------------
+OpenVPN 3 Linux - Configuration Profile Management
+--------------------------------------------------
 
 :Manual section: 1
 :Manual group: OpenVPN 3 Linux

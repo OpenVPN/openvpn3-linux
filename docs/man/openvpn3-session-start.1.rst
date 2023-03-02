@@ -2,9 +2,9 @@
 openvpn3-session-start
 ======================
 
-----------------------
-OpenVPN 3 Linux client
-----------------------
+---------------------------------------
+OpenVPN 3 Linux - Starting VPN Sessions
+---------------------------------------
 
 :Manual section: 1
 :Manual group: OpenVPN 3 Linux

@@ -2,9 +2,9 @@
 openvpn3-config-import
 ======================
 
-----------------------
-OpenVPN 3 Linux client
-----------------------
+---------------------------------------------
+OpenVPN 3 Linux - Configuration File Importer
+---------------------------------------------
 
 :Manual section: 1
 :Manual group: OpenVPN 3 Linux

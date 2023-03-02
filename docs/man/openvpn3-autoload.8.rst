@@ -2,9 +2,9 @@
 openvpn3-autoload
 =================
 
-------------------------------------------------------
-Automated OpenVPN 3 Linux configuration profile loader
-------------------------------------------------------
+--------------------------------------------------------
+OpenVPN 3 Linux - Automated configuration profile loader
+--------------------------------------------------------
 
 :Manual section: 8
 :Manual group: OpenVPN 3 Linux

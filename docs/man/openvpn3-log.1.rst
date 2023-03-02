@@ -2,9 +2,9 @@
 openvpn3-log
 ============
 
-----------------------
-OpenVPN 3 Linux client
-----------------------
+---------------------------------------
+OpenVPN 3 Linux - Real-time session log
+---------------------------------------
 
 :Manual section: 1
 :Manual group: OpenVPN 3 Linux

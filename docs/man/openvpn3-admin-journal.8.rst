@@ -2,9 +2,9 @@
 openvpn3-admin-journal
 ==========================
 
-----------------------
-OpenVPN 3 Linux client
-----------------------
+---------------------------------------------
+OpenVPN 3 Linux - systemd-journald log viewer
+---------------------------------------------
 
 :Manual section: 8
 :Manual group: OpenVPN 3 Linux

@@ -2,9 +2,9 @@
 openvpn3-session-auth
 =====================
 
-----------------------
-OpenVPN 3 Linux client
-----------------------
+---------------------------------------------------
+OpenVPN 3 Linux - VPN Session Authentication helper
+---------------------------------------------------
 
 :Manual section: 1
 :Manual group: OpenVPN 3 Linux

@@ -2,9 +2,9 @@
 openvpn3-session-stats
 ======================
 
-----------------------
-OpenVPN 3 Linux client
-----------------------
+----------------------------------------
+OpenVPN 3 Linux - VPN session statistics
+----------------------------------------
 
 :Manual section: 1
 :Manual group: OpenVPN 3 Linux

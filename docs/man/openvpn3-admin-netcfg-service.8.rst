@@ -2,9 +2,9 @@
 openvpn3-admin-netcfg-service
 =============================
 
-----------------------
-OpenVPN 3 Linux client
-----------------------
+--------------------------------------------------------------
+OpenVPN 3 Linux Administration - Network Configuration Service
+--------------------------------------------------------------
 
 :Manual section: 8
 :Manual group: OpenVPN 3 Linux

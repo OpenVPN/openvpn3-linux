@@ -2,9 +2,9 @@
 openvpn3-as
 ===========
 
------------------------------------
-OpenVPN 3 Access Server integration
------------------------------------
+------------------------------------------
+OpenVPN 3 Access Server Profile Downloader
+------------------------------------------
 
 :Manual section: 1
 :Manual group: OpenVPN 3 Linux

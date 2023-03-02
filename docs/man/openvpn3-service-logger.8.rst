@@ -2,9 +2,9 @@
 openvpn3-service-logger
 =======================
 
-----------------------
-OpenVPN 3 Linux client
-----------------------
+--------------------------------------
+OpenVPN 3 Linux - Internal Log Service
+--------------------------------------
 
 :Manual section: 8
 :Manual group: OpenVPN 3 Linux

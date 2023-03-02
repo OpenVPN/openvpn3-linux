@@ -2,9 +2,9 @@
 openvpn3-session-acl
 ====================
 
-----------------------
-OpenVPN 3 Linux client
-----------------------
+---------------------------------------------------
+OpenVPN 3 Linux - Session Access Control Management
+---------------------------------------------------
 
 :Manual section: 1
 :Manual group: OpenVPN 3 Linux

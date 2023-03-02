@@ -2,9 +2,9 @@
 openvpn3-configs-list
 =====================
 
-----------------------
-OpenVPN 3 Linux client
-----------------------
+---------------------------------------------
+OpenVPN 3 Linux - List Configuration Profiles
+---------------------------------------------
 
 :Manual section: 1
 :Manual group: OpenVPN 3 Linux

@@ -2,9 +2,9 @@
 openvpn3
 ========
 
-----------------------
-OpenVPN 3 Linux client
-----------------------
+-------------------------------------------------------
+OpenVPN 3 Linux - Administration Command Line Interface
+-------------------------------------------------------
 
 :Manual section: 8
 :Manual group: OpenVPN 3 Linux

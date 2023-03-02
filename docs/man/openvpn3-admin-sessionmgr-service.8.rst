@@ -2,9 +2,9 @@
 openvpn3-admin-sessionmgr-service
 =================================
 
-----------------------
-OpenVPN 3 Linux client
-----------------------
+--------------------------------------------------------
+OpenVPN 3 Linux Administration - Session Manager Service
+--------------------------------------------------------
 
 :Manual section: 8
 :Manual group: OpenVPN 3 Linux

@@ -2,9 +2,9 @@
 openvpn2
 ========
 
---------------------------------------
-OpenVPN 2 front-end to OpenVPN 3 Linux
---------------------------------------
+------------------------------------
+OpenVPN 2 wrapper to OpenVPN 3 Linux
+------------------------------------
 
 :Manual section: 1
 :Manual group: OpenVPN 3 Linux
@@ -17,8 +17,8 @@ SYNOPSIS
 
 DESCRIPTION
 ===========
-The **openvpn2** front-end to OpenVPN 3 Linux attempts to provide a similar
-command line interface as the classic **OpenVPN 2.x** releases.  Since
+The **openvpn2** command line wrapper to OpenVPN 3 Linux attempts to provide a
+similar command line interface as the classic **OpenVPN 2.x** releases.  Since
 **OpenVPN 3** does not support all the options available in **OpenVPN 2.x**,
 some options is not available or will be ignored.
 

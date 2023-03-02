@@ -2,9 +2,9 @@
 openvpn3-session-manage
 =======================
 
-----------------------
-OpenVPN 3 Linux client
-----------------------
+----------------------------------------
+OpenVPN 3 Linux - VPN Session Management
+----------------------------------------
 
 :Manual section: 1
 :Manual group: OpenVPN 3 Linux

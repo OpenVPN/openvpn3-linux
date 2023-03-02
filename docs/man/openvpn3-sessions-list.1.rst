@@ -2,9 +2,9 @@
 openvpn3-sessions-list
 ======================
 
-----------------------
-OpenVPN 3 Linux client
-----------------------
+-------------------------------------
+OpenVPN 3 Linux - VPN Session Listing
+-------------------------------------
 
 :Manual section: 1
 :Manual group: OpenVPN 3 Linux

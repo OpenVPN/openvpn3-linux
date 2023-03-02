@@ -2,9 +2,9 @@
 openvpn3-systemd
 ================
 
-----------------------
-OpenVPN 3 Linux client
-----------------------
+---------------------------------------------
+OpenVPN 3 Linux - systemd service integration
+---------------------------------------------
 
 :Manual section: 1
 :Manual group: OpenVPN 3 Linux
