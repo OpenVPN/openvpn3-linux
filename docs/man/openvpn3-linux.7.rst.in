@@ -2,9 +2,9 @@
 openvpn3-linux
 ==============
 
--------------------------------
-OpenVPN 3 Linux client overview
--------------------------------
+------------------------
+OpenVPN 3 Linux Overview
+------------------------
 
 :Manual section: 7
 :Manual group: OpenVPN 3 Linux
@@ -12,20 +12,36 @@ OpenVPN 3 Linux client overview
 
 DESCRIPTION
 ===========
-The OpenVPN 3 Linux client is a completely different VPN client compared to
-the more classic OpenVPN 2.x generation.  Where OpenVPN 2.x is simplistic
-in all kind of integration aspects, it carries several challenges due to the
-security enhancements on more modern Linux distributions.
+OpenVPN 3 Linux is an OpenVPN platform which builds on capabilities available
+on newer Linux distributions.  Compared to the more classic OpenVPN 2.x
+generation, OpenVPN 3 Linux covers many more aspects of the VPN configuration
+and session life-cycle.
 
-The OpenVPN 3 Linux client is a complete rewrite and makes use of the facilities
-available on modern Linux distributions, which enables a safer execution model
-with lesser security traps and obstacles caused by security modules on the
-system.  This allows unprivileged users to start VPN sessions out-of-the-box,
-which also takes care of the complete VPN configuration, including DNS setup.
-In addition, OpenVPN 3 Linux will run with as few privileges as possible in
-every aspect of the application layers.
+To quickly compare them, OpenVPN 2.x is a single process which is responsible
+for a single VPN session.  There are no configuration or session management
+in OpenVPN 2.x itself, it depends on the systemd openvpn-client@.service and
+openvpn-server@.service unit files, the Network Manager OpenVPN plug-in or
+other third-party management tools.
 
-To make this possible, OpenVPN 3 Linux is split up into several parts.
+OpenVPN 3 Linux provides full configuration and session management in addition
+to the VPN tunnel itself.  For example, it has built in privilege separation
+and execution models, for improved process security.  This allows unprivileged
+users to start their own VPN sessions and manage them themselves.  VPN
+configuration files can be shared with other users on the system or kept
+private.
+
+Through this privilege separation model, network configuration aspect of
+the VPN tunnel is split out into its own process which runs with as few
+privileges as possible.  In practice that means it can only to network
+configuration changes.  This network configuration service is also capable
+of setting up the DNS resolver out-of-the-box.  For OpenVPN 2.x to do that,
+it would need to run additional scripts or use specific plug-ins to trigger
+such updates on the system.
+
+With this architecture, OpenVPN 3 Linux is split up into several services
+running independently of each other.  These services are referred to as
+*backend services*.  The interaction with these services happens through
+what is referred to as a *user front-end*.
 
 
 USER FRONT-ENDS
@@ -54,19 +70,19 @@ various components of OpenVPN 3 Linux.
   interfaces to do some management of the various OpenVPN 3 D-Bus
   services.  See ``openvpn3-admin``\(8) for more details.
 
-* ``openvpn3-autoload``
+* ``openvpn3-session@.service`` (``openvpn3-systemd``)
 
-  This is not strictly a utility most users will use too often.  But it
-  can be used to automatically load VPN configuration profiles as well as
-  starting them during boot or login.
+  VPN sessions can be started and managed directly via ``systemctl``\(1)
+  by using the ``openvpn3-session@.service`` service unit.  This also
+  enables VPN sessions to be started automatically during system boot.
+  This service unit uses a helper utility, ``openvpn3-systemd``\(1)
+  which works as a glue layer between the OpenVPN 3 Linux services and
+  ``systemd``
 
 In addition, a Python 3 module is also available making it possible to write
 your own OpenVPN 3 front-ends with little extra efforts.  Both ``openvpn2``
-and ``openvpn3-autoload`` are Python 3 scripts which makes use of this
+and ``openvpn3-systemd`` are Python 3 scripts which makes use of this
 OpenVPN 3 Python module.
-
-OpenVPN 3 Linux also provides an ``openvpn3-systemd``\(8) helper, which
-allows starting and managing VPN sessions via ``systemd``\(1)
 
 
 OPENVPN 3 D-BUS SERVICES
@@ -97,7 +113,7 @@ set of features.
 
   D-Bus name: *net.openvpn.v3.sessions*
 
-* **Backend VPN Client** (``openvpn3-service-client``)
+* **VPN Client Backend** (``openvpn3-service-client``)
 
   This is the core VPN client.  There will be running one such process
   per active VPN session.
@@ -105,10 +121,11 @@ set of features.
   D-Bus name: *net.openvpn.v3.backends.be${PID}*
 
 
-* **Backend VPN Client Starter** (``openvpn3-service-backendstart``)
+* **VPN Backend Starter** (``openvpn3-service-backendstart``)
 
   This is a helper service which is used by the Session Manager to start
-  new Backend VPN Client processes.
+  a new VPN backend service.  When a client profile is requested started,
+  it will start an ``openvpn3-service-client`` process per VPN session.
 
   D-Bus name: *net.openvpn.v3.backends*
 
@@ -131,8 +148,7 @@ set of features.
   D-Bus name: *net.openvpn.v3.log*
 
 All of these services above are D-Bus services which is available on the
-system bus.  They are all automatically started when needed, with the bare
-minimum of privileges they need.
+system bus.  They are all automatically started when needed.
 
 
 D-BUS POLICY
@@ -140,15 +156,19 @@ D-BUS POLICY
 
 D-Bus enforces usage of a policy which defines who can access which D-Bus
 service and which features, objects and properties provided by a D-Bus service.
-This is defined in ``/etc/dbus-1/systemd.d/net.openvpn.v3.conf`` on most
-systems.  The default policy provided by OpenVPN 3 Linux allows all users on the
-system to load, start and manage their own OpenVPN configuration profiles and
-VPN sessions.
 
-All D-Bus services are started on-demand and will also exit automatically if
-being idle for too long.  How long differs between each service.  The
-auto-start configurations can usually be found in these files:
-``/usr/share/dbus-1/system-services/net.openvpn.v3.*.service``.
+The default OpenVPN 3 Linux policy is placed in several files prefixed
+``net.openvpn.v3`` in ``@DBUS_SYSTEM_POLICYDIR@``.  The default policy
+provided by OpenVPN 3 Linux allows all users on the system to load, start
+and manage their own OpenVPN configuration profiles and VPN sessions.
+
+All the D-Bus services will start automatically when their services are
+requested by a front-end.  Each service has their own D-Bus service definition,
+which can be found in ``@DBUS_SYSTEM_SERVICEDIR@/net.openvpn.v3.*.service``.
+
+When an OpenVPN 3 Linux D-Bus service has been idle for a certain time and
+it does not need to preserve any data kept in memory, it will automatically
+stop running.  See the man page for each service to see default idle time.
 
 
 COMPATIBILITY WITH OPENVPN 2.x

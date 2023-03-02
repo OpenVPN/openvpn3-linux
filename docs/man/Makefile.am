@@ -13,6 +13,8 @@
 	$(AM_V_GEN)sed -e 's|\@LIBEXEC_PATH\@|$(pkglibexecdir)|' \
 		       -e 's|\@OPENVPN_USERNAME\@|$(OPENVPN_USERNAME)|' \
 		       -e 's|\@OPENVPN_STATEDIR\@|$(openvpn3_statedir)|' \
+		       -e 's|\@DBUS_SYSTEM_POLICYDIR\@|$(dbus_system_policydir)|' \
+		       -e 's|\@DBUS_SYSTEM_SERVICEDIR\@|$(dbus_system_servicedir)|' \
 		$< > $@.tmp && mv $@.tmp $@
 
 
