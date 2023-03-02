@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "config.h"
 #include <memory>
 #include <gio/gunixfdlist.h>
 
@@ -66,14 +67,9 @@ class DBusProxy : public DBus
               std::string const &objpath,
               bool hold_setup_proxy = false)
         : DBus(bus_type),
-          proxy(nullptr),
-          property_proxy(nullptr),
           bus_name(busname),
           interface(interf),
-          object_path(objpath),
-          call_flags(G_DBUS_CALL_FLAGS_NONE),
-          proxy_init(false),
-          property_proxy_init(false)
+          object_path(objpath)
     {
         if (!hold_setup_proxy)
         {
@@ -87,14 +83,9 @@ class DBusProxy : public DBus
               std::string const &objpath,
               bool hold_setup_proxy = false)
         : DBus(dbusconn),
-          proxy(nullptr),
-          property_proxy(nullptr),
           bus_name(busname),
           interface(interf),
-          object_path(objpath),
-          call_flags(G_DBUS_CALL_FLAGS_NONE),
-          proxy_init(false),
-          property_proxy_init(false)
+          object_path(objpath)
     {
         if (!hold_setup_proxy)
         {
@@ -108,14 +99,9 @@ class DBusProxy : public DBus
               std::string const &objpath,
               bool hold_setup_proxy = false)
         : DBus(dbusobj),
-          proxy(nullptr),
-          property_proxy(nullptr),
           bus_name(busname),
           interface(interf),
-          object_path(objpath),
-          call_flags(G_DBUS_CALL_FLAGS_NONE),
-          proxy_init(false),
-          property_proxy_init(false)
+          object_path(objpath)
     {
         if (!hold_setup_proxy)
         {
@@ -650,10 +636,6 @@ class DBusProxy : public DBus
 
 
   protected:
-    GDBusProxy *proxy;
-    GDBusProxy *property_proxy;
-
-
     GDBusProxy *SetupProxy(std::string busn, std::string intf, std::string objp)
     {
         if (busn.empty())
@@ -745,16 +727,17 @@ class DBusProxy : public DBus
     }
 
 
-  protected:
-    std::string bus_name;
-    std::string interface;
+    GDBusProxy *proxy = nullptr;
+    GDBusProxy *property_proxy = nullptr;
+    std::string bus_name = {};
+    std::string interface = {};
 
 
   private:
-    std::string object_path;
-    GDBusCallFlags call_flags;
-    bool proxy_init;
-    bool property_proxy_init;
+    std::string object_path = {};
+    GDBusCallFlags call_flags = G_DBUS_CALL_FLAGS_NONE;
+    bool proxy_init = false;
+    bool property_proxy_init = false;
 
     // Note we only implement single fd out/in for the fd API since that
     // is all we currently need and handling fd extraction here makes
