@@ -107,7 +107,7 @@ void save_config_file(Configuration::File &cfg, const std::string cfgname, const
         {
             std::cout << "    !! Will not overwrite existing configuration file" << std::endl;
         }
-        std::cout << "    !! Configuration file UNCHANGED" << std::endl;
+        std::cout << "    !! Configuration UNCHANGED" << std::endl;
     }
 
     if (!openvpn::file_exists(cfgname))
@@ -401,7 +401,7 @@ void setup_state_dir(const setup_config &setupcfg)
         std::cout << "    -- State directory is missing - creating it" << std::endl;
         if (0 != ::mkdir(setupcfg.statedir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP))
         {
-            throw CommandException("init-setup", "Failed to create a new state directory");
+            throw CommandException("init-config", "Failed to create a new state directory");
         }
     }
     else
@@ -409,13 +409,13 @@ void setup_state_dir(const setup_config &setupcfg)
         std::cout << "    Directory found" << std::endl;
         if (0 != ::chmod(setupcfg.statedir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP))
         {
-            throw CommandException("init-setup", "Failed fixing access mode to state directory (chmod)");
+            throw CommandException("init-config", "Failed fixing access mode to state directory (chmod)");
         }
     }
 
     if (0 != ::chown(setupcfg.statedir.c_str(), setupcfg.openvpn_uid, setupcfg.openvpn_gid))
     {
-        throw CommandException("init-setup", "Failed to change ownership of state directory");
+        throw CommandException("init-config", "Failed to change ownership of state directory");
     }
 
     std::string cfgdir = setupcfg.statedir + "/configs";
@@ -424,13 +424,13 @@ void setup_state_dir(const setup_config &setupcfg)
         std::cout << "    -- Configurations sub-directory is missing - creating it" << std::endl;
         if (0 != ::mkdir(cfgdir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP))
         {
-            throw CommandException("init-setup", "Failed to create a new configurations sub-directory");
+            throw CommandException("init-config", "Failed to create a new configurations sub-directory");
         }
     }
 
     if (0 != ::chown(cfgdir.c_str(), setupcfg.openvpn_uid, setupcfg.openvpn_gid))
     {
-        throw CommandException("init-setup", "Failed to change ownership of configurations sub-directory");
+        throw CommandException("init-config", "Failed to change ownership of configurations sub-directory");
     }
 }
 
@@ -550,7 +550,7 @@ void selinux_restorecon(const setup_config &setupcfg)
 
 
 /**
- *   Main function for 'openvpn3 init-setup'
+ *   Main function for 'openvpn3 init-config'
  *
  * @param args Pointer to a ParsedArgs object with all pre-parsed command line options
  * @return int  Exit code of the command

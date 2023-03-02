@@ -108,7 +108,7 @@ PKG_CHECK_MODULES(
 )
 
 dnl
-dnl  Check for SELinux user-space support library  (used by openvpn3-admin init-setup)
+dnl  Check for SELinux user-space support library  (used by openvpn3-admin init-config)
 dnl
 PKG_CHECK_MODULES(
         [LIBSELINUX],
