@@ -808,6 +808,9 @@ endif
 #
 #  Development headers
 #
+ovpn3includedir = $(includedir)/openvpn3
+dist_ovpn3include_HEADERS = src/dbus/constants.h
+
 noinst_PROGRAMS += src/dbus/gen-c-constants
 src_dbus_gen_c_constants_SOURCES = \
 	src/dbus/gen-c-constants.cpp
