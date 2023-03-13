@@ -131,7 +131,7 @@ OPTIONS
 --keepalive ARGS
                       Instructs the client to ping the server over the
                       OpenVPN Control Channel every PING_SECONDS.  An optional
-                      argument defines, RECONNECT_SECONDS how long it should go 
+                      argument defines, RECONNECT_SECONDS how long it should go
                       before the client should attempt to reconnect if there
                       is no response from the server.
 

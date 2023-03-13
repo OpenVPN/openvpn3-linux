@@ -55,6 +55,8 @@ MOSTLYCLEANFILES = \
 DOCUMENTATION = \
 	COPYRIGHT.md \
 	README.md \
+	QUICK-START.md \
+	BUILD.md \
 	CLA.md \
 	docs/coding-style.md \
 	docs/dbus \
