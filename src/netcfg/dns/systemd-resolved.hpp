@@ -50,6 +50,7 @@ class SystemdResolved : public ResolverBackendInterface,
     {
         bool enable;
         bool disabled = false;
+        bool default_routing = false;
         resolved::Link::Ptr link;
         resolved::ResolverRecord::List resolver;
         resolved::SearchDomain::List search;

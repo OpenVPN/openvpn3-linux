@@ -78,12 +78,21 @@ void SystemdResolved::Apply(const ResolverSettings::Ptr settings)
 
         for (const auto &sd : settings->GetSearchDomains())
         {
+            // Consider if domains should probably be set to routing domain
+            // https://systemd.io/RESOLVED-VPNS/ - if in split-dns mode (tunnel scope)
+            // TODO: Look into getting routing domains setup for reverse DNS lookups
+            //        based on pushed routes
             upd.search.push_back(SearchDomain(sd, false));
         }
 
         if (settings->GetDNSScope() == DNS::Scope::GLOBAL)
         {
             upd.search.push_back(SearchDomain(".", true));
+            upd.default_routing = true;
+        }
+        else
+        {
+            upd.default_routing = false;
         }
     }
     update_queue.push_back(upd);
@@ -108,6 +117,7 @@ void SystemdResolved::Commit(NetCfgSignals *signal)
                 signal->LogVerb2("systemd-resolved: [" + upd.link->GetPath()
                                  + "] Committing DNS search domains");
                 upd.link->SetDomains(upd.search);
+                upd.link->SetDefaultRoute(upd.default_routing);
             }
             else
             {
