@@ -48,12 +48,12 @@ class SystemdResolved : public ResolverBackendInterface,
      */
     struct updateQueueEntry
     {
-        bool enable;
-        bool disabled = false;
-        bool default_routing = false;
-        resolved::Link::Ptr link;
-        resolved::ResolverRecord::List resolver;
-        resolved::SearchDomain::List search;
+        bool enable;                             ///< enabled by config profile
+        bool disabled = false;                   ///< disabled internally by errors
+        bool default_routing = false;            ///< set the default routing dns flag
+        resolved::Link::Ptr link;                ///< Pointer to the resolved::Link interface object
+        resolved::ResolverRecord::List resolver; ///< List of DNS resolver IP addresses for this link
+        resolved::SearchDomain::List search;     ///< List of DNS search domains to add for this link
     };
 
 
