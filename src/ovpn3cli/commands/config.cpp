@@ -298,6 +298,21 @@ static int config_manage_show(OpenVPN3ConfigurationProxy &conf,
 
     try
     {
+        std::string dns_scope = "(not available)";
+        try
+        {
+            const OverrideValue &ov = conf.GetOverrideValue("dns-scope");
+            if (ov.override.valid())
+            {
+                dns_scope = ov.strValue;
+            }
+        }
+        catch (const DBusException &ex)
+        {
+            dns_scope = "global (default)";
+        }
+
+
         // Right algin the field with explicit width
         std::cout << std::right;
         std::cout << std::setw(32) << "                  Name: "
@@ -311,9 +326,12 @@ static int config_manage_show(OpenVPN3ConfigurationProxy &conf,
                   << (conf.GetDCO() ? "Yes" : "No") << std::endl;
 #endif
 
+        std::cout << std::setw(32) << "    DNS Resolver Scope: "
+                  << dns_scope << std::endl;
+
         std::cout << std::endl
                   << "  Overrides: ";
-        auto overrides = conf.GetOverrides();
+        auto overrides = conf.GetOverrides(false);
         if (overrides.empty() && !showall)
         {
             std::cout << " No overrides set." << std::endl;
@@ -328,6 +346,11 @@ static int config_manage_show(OpenVPN3ConfigurationProxy &conf,
             std::string value = "(not set)";
             for (auto &ov : overrides)
             {
+                if ("dns-scope" == ov.override.key)
+                {
+                    // This override is retrieved in the global block
+                    continue;
+                }
                 if (ov.override.key == vo.key)
                 {
                     if (OverrideType::boolean == ov.override.type)
