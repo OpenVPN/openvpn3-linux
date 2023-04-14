@@ -373,10 +373,27 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      *  Retrieve the list of overrides for this object. The overrides
      *  are key, value pairs
      *
+     *  @param clear_cache  If true the object local cache will be cleared
+     *                      first (default), otherwise the cached result
+     *                      will be returned
+     *
      * @return A list of VpnOverride key, value pairs
      */
-    std::vector<OverrideValue> GetOverrides()
+    std::vector<OverrideValue> GetOverrides(bool clear_cache = true)
     {
+        // If we have cache available ...
+        if (!cached_overrides.empty())
+        {
+            // ... should it be cleared?
+            if (!clear_cache)
+            {
+                return cached_overrides;
+            }
+
+            // ... otherwise, clear it before fetching new data
+            cached_overrides.clear();
+        }
+
         GVariant *res = GetProperty("overrides");
         if (NULL == res)
         {
@@ -413,6 +430,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
                 ret.push_back(OverrideValue(vo, v));
             }
         }
+        cached_overrides = ret;
         g_variant_unref(res);
         g_variant_iter_free(override_iter);
         return ret;
@@ -516,4 +534,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
         g_variant_iter_free(acl);
         return ret;
     }
+
+  private:
+    std::vector<OverrideValue> cached_overrides = {};
 };
