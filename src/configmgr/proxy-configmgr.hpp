@@ -477,6 +477,32 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
     }
 
 
+    /**
+     *  Retrieve an OverrideValue object for a specific configuration
+     *  profile override.
+     *
+     * @param key    std::string of the override key to look up
+     * @return const OverrideValue& to the override value object
+     * @throws DBusException if the override key was not found
+     */
+    const OverrideValue &GetOverrideValue(const std::string &key)
+    {
+        if (cached_overrides.empty())
+        {
+            (void)GetOverrides(true);
+        }
+
+        for (const auto &ov : cached_overrides)
+        {
+            if (ov.override.key == key)
+            {
+                return ov;
+            }
+        }
+        THROW_DBUSEXCEPTION("OpenVPNConfigurationProxy", "Override not found");
+    }
+
+
     const ValidOverride &LookupOverride(const std::string key)
     {
         for (const ValidOverride &vo : configProfileOverrides)
