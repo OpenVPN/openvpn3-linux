@@ -25,12 +25,10 @@ AC_PROG_MAKE_SET
 AC_PROG_MKDIR_P
 AC_DEFINE_UNQUOTED([PACKAGE_GUIVERSION], ["PRODUCT_GUIVERSION"], [Version string to be presented to users/logs])
 
-dnl  This project has C++11 as the minimum C++ standard and C++14 as
-dnl  recommend standard as is not expected to work with any older
-dnl  standards.
-
-AX_CXX_COMPILE_STDCXX(11, noext, [mandatory])
-AX_CXX_COMPILE_STDCXX(14, noext, [optional])
+dnl
+dnl  This project has C++17 as the minimum C++ standard
+dnl
+AX_CXX_COMPILE_STDCXX(17, noext, [mandatory])
 
 dnl
 dnl  This projects provide some Python based utilities, check if the

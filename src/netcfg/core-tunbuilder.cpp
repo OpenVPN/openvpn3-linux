@@ -25,6 +25,7 @@
 #include "common/utils.hpp"
 
 #include "core-tunbuilder.hpp"
+#include <openvpn/tun/tunmtu.hpp>
 #include <openvpn/tun/linux/client/tuncli.hpp>
 #include "netcfg-device.hpp"
 #include "netcfg-signals.hpp"

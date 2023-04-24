@@ -18,6 +18,7 @@
 #define OPENVPN_EXTERN extern
 #include <openvpn/common/base64.hpp>
 
+#include <openvpn/tun/tunmtu.hpp>
 #include <openvpn/tun/linux/client/tunmethods.hpp>
 
 #include <sys/types.h>
