@@ -97,3 +97,6 @@ CLEANFILES = $(MAN_SECTION_1) $(MAN_SECTION_7) $(MAN_SECTION_8) *~
 
 install-data-local :
 	ln -sf openvpn3-config-dump.8 openvpn3-config-show.8
+
+clean-local :
+	-rm -f openvpn3-config-show.8

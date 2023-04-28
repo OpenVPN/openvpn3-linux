@@ -45,3 +45,5 @@ openvpn3/constants.py : openvpn3/gen-python-constants
 
 pkgopenvpn3 : openvpn3/constants.py
 
+clean-local :
+	-rm -rf openvpn3/__pycache__
