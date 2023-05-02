@@ -17,13 +17,15 @@ SYNOPSIS
 
 DESCRIPTION
 ===========
-This will delete an imported configuration profile from the configuration
-manager.
+Manage settings for an imported configuration profile.  This allows to override parts
+of the original config profile.  Note that this will not be reflected in the output
+of ``openvpn3 config-dump``.  Use ``openvpn3 config-manage --show`` to see the existing
+overrides.
 
 OPTIONS
 =======
 
--h, --help              Print  usage and help details to the terminal
+-h, --help              Print usage and help details to the terminal
 
 -o DBUS-PATH, --path DBUS-PATH
                         D-Bus configuration path to the
