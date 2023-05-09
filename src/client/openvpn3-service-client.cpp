@@ -1158,6 +1158,14 @@ class BackendClientObject : public DBusObject,
         // We need to provide a copy of the vpnconfig object, as vpnclient
         // seems to take ownership
         cfgeval = vpnclient->eval_config(ClientAPI::Config(vpnconfig));
+        if (vpnconfig.dco && !cfgeval.dcoCompatible)
+        {
+            signal.LogError("DCO could not be enabled due to issues in the configuration");
+            signal.Debug(cfgeval.dcoIncompatibilityReason);
+            vpnconfig.dco = false;
+            cfgeval = vpnclient->eval_config(ClientAPI::Config(vpnconfig));
+        }
+
         if (cfgeval.error)
         {
             std::stringstream statusmsg;
