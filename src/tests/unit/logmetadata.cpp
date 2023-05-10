@@ -35,6 +35,17 @@ TEST(LogMetaDataValue, constructor)
     EXPECT_STREQ(mdv2.GetValue().c_str(), "another value");
     EXPECT_TRUE(mdv2.skip);
 
+    LogMetaDataValue mdi1("numeric", -31415);
+    EXPECT_STREQ(mdi1.label.c_str(), "numeric");
+    EXPECT_STREQ(mdi1.GetValue().c_str(), "-31415");
+    EXPECT_FALSE(mdi1.skip);
+
+    LogMetaDataValue mdi2("numeric2", 4032918, true);
+    EXPECT_STREQ(mdi2.label.c_str(), "numeric2");
+    EXPECT_STREQ(mdi2.GetValue().c_str(), "4032918");
+    EXPECT_TRUE(mdi2.skip);
+
+
     LogTag::Ptr tag = LogTag::create("dummysender", "dummyinterface");
     LogMetaDataValue mdv3("tag", tag);
     EXPECT_STREQ(mdv3.label.c_str(), "tag");
@@ -56,6 +67,19 @@ TEST(LogMetaDataValue, create)
     EXPECT_STREQ(mdv2->label.c_str(), "labelB");
     EXPECT_STREQ(mdv2->GetValue().c_str(), "A different value");
     EXPECT_TRUE(mdv2->skip);
+
+    LogMetaDataValue::Ptr mdi1 = LogMetaDataValue::create("labelC",
+                                                          -12345);
+    EXPECT_STREQ(mdi1->label.c_str(), "labelC");
+    EXPECT_STREQ(mdi1->GetValue().c_str(), "-12345");
+    EXPECT_FALSE(mdi1->skip);
+
+    LogMetaDataValue::Ptr mdi2 = LogMetaDataValue::create("labelD",
+                                                          67890,
+                                                          true);
+    EXPECT_STREQ(mdi2->label.c_str(), "labelD");
+    EXPECT_STREQ(mdi2->GetValue().c_str(), "67890");
+    EXPECT_TRUE(mdi2->skip);
 
     LogTag::Ptr tag = LogTag::create("dummysender", "dummyinterface");
     LogMetaDataValue::Ptr mdv3 = LogMetaDataValue::create("tag", tag);

@@ -35,6 +35,22 @@ LogMetaDataValue::LogMetaDataValue(const std::string &l,
 }
 
 LogMetaDataValue::LogMetaDataValue(const std::string &l,
+                                   const unsigned int &v,
+                                   bool s)
+    : label(l), str_value(std::to_string(v)), logtag(nullptr), skip(s)
+{
+    type = Type::LOGMETA_STRING;
+}
+
+LogMetaDataValue::LogMetaDataValue(const std::string &l,
+                                   const int &v,
+                                   bool s)
+    : label(l), str_value(std::to_string(v)), logtag(nullptr), skip(s)
+{
+    type = Type::LOGMETA_STRING;
+}
+
+LogMetaDataValue::LogMetaDataValue(const std::string &l,
                                    const LogTag::Ptr v,
                                    bool s)
     : label(l), str_value(""), logtag(v), skip(s)

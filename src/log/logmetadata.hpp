@@ -37,6 +37,8 @@ struct LogMetaDataValue
     using Ptr = std::shared_ptr<LogMetaDataValue>;
 
     LogMetaDataValue(const std::string &l, const std::string &v, bool s = false);
+    LogMetaDataValue(const std::string &l, const unsigned int &v, bool s = false);
+    LogMetaDataValue(const std::string &l, const int &v, bool s = false);
     LogMetaDataValue(const std::string &l, const LogTag::Ptr v, bool s = false);
 
 
@@ -75,6 +77,7 @@ struct LogMetaDataValue
      * @return  Returns a std::string of this objects value
      */
     const std::string GetValue(const bool logtag_encaps = true) const;
+
 
 
     friend std::ostream &operator<<(std::ostream &os, const LogMetaDataValue mdv)
