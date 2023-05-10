@@ -340,6 +340,19 @@ void ResolvConfFile::Restore()
 }
 
 
+const std::vector<std::string> ResolvConfFile::GetNameServers(bool only_sys)
+{
+    Read();
+    parse();
+    std::vector<std::string> ret = sys_name_servers;
+    if (!only_sys)
+    {
+        ret.insert(ret.end(), vpn_name_servers.begin(), vpn_name_servers.end());
+    }
+    return ret;
+}
+
+
 #ifdef ENABLE_DEBUG
 /**
  *  Do a forceful read of the resolv.conf file and parse it

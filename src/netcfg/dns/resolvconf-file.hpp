@@ -202,6 +202,14 @@ class ResolvConfFile : public FileGenerator,
      */
     void Restore();
 
+    /**
+     *  Retrieve all loaded and configured DNS servers
+     *
+     * @return std::vector<std::string> containing list of DNS servers
+     */
+    const std::vector<std::string> GetNameServers(bool only_sys = false);
+
+
 #ifdef ENABLE_DEBUG
     /**
      *  Misc debug methods used by test programs
