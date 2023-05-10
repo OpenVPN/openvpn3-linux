@@ -32,6 +32,7 @@
 #include "common/lookup.hpp"
 #include "log/service-configfile.hpp"
 #include "netcfg/netcfg-configfile.hpp"
+#include "netcfg/dns/resolvconf-file.hpp"
 
 #ifdef HAVE_SYSTEMD
 #include "netcfg/dns/proxy-systemd-resolved.hpp"
@@ -296,11 +297,37 @@ void configure_netcfg(const setup_config &setupcfg)
             if ((st.st_size > 0)
                 && ((st.st_mode & (S_IRUSR | S_IWUSR)) > 0))
             {
+                std::cout << "    Found accessible /etc/resolv.conf" << std::endl;
+
+                if (DNSresolver::RESOLVED == resolver)
+                {
+                    // Parse the resolv.conf file to see if systemd-resolved
+                    // is configured or not
+                    std::cout << "    Parsing /etc/resolv.conf ... ";
+                    ResolvConfFile r("/etc/resolv.conf");
+                    std::cout << "Done" << std::endl;
+
+                    // Reset the resolver in this case, if systemd-resolved
+                    // is not configured in /etc/resolv.conf we can't use
+                    // that approach.
+                    resolver = DNSresolver::NONE;
+                    for (const auto &ns : r.GetNameServers())
+                    {
+                        if ("127.0.0.53" == ns)
+                        {
+                            std::cout << "    Found systemd-resolved configured "
+                                      << "(" << ns << ") in /etc/resolv.conf "
+                                      << std::endl;
+                            resolver = DNSresolver::RESOLVED;
+                            break;
+                        }
+                    }
+                }
+
                 if (DNSresolver::NONE == resolver)
                 {
                     resolver = DNSresolver::RESOLVCONF;
                 }
-                std::cout << "    Found accessible /etc/resolv.conf" << std::endl;
             }
             else
             {

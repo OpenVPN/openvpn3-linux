@@ -600,11 +600,15 @@ src_ovpn3cli_openvpn3_admin_SOURCES = \
 	src/common/machineid.hpp \
 	src/common/lookup.cpp \
 	src/common/lookup.hpp \
+	src/common/timestamp.cpp \
 	src/common/utils.cpp \
 	src/log/journal-log-parse.cpp \
 	src/log/journal-log-parse.hpp \
 	src/netcfg/proxy-netcfg-mgr.cpp \
-	src/netcfg/dns/proxy-systemd-resolved.cpp
+	src/netcfg/dns/proxy-systemd-resolved.cpp \
+	src/netcfg/dns/resolvconf-file.cpp \
+	src/netcfg/dns/resolver-settings.cpp \
+	src/netcfg/netcfg-changeevent.cpp
 nodist_src_ovpn3cli_openvpn3_admin_SOURCES=$(DCO_KEYCONFIG_PB_SOURCES)
 src_ovpn3cli_openvpn3_admin_CXXFLAGS=$(AM_CXXFLAGS) -DOVPN3CLI_OPENVPN3ADMIN
 if HAVE_TINYXML
