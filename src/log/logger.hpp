@@ -149,6 +149,10 @@ class Logger : public LogConsumer
         }
     }
 
+    LogTag::Ptr GetLogTagPtr() const
+    {
+        return log_tag;
+    }
 
   private:
     LogWriter *logwr;
