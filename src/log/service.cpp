@@ -301,6 +301,8 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
 
         if ("Attach" == meth_name)
         {
+            cleanup_subscriptions();
+
             LogTag::Ptr tag = LogTag::create(sender, interface);
 
             // Subscribe to signals from a new D-Bus service/client
@@ -396,6 +398,8 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
         }
         else if ("GetSubscriberList" == meth_name)
         {
+            cleanup_subscriptions();
+
             GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("a(ssss)"));
 
             if (nullptr == bld)
@@ -928,6 +932,44 @@ void LogServiceManager::remove_log_subscription(LogTag::Ptr tag)
 }
 
 
+void LogServiceManager::cleanup_subscriptions()
+{
+    //  First identify all subscriptions being dead
+    try
+    {
+        DBusConnectionCreds creds(GetConnection());
+        std::vector<Logger::Ptr> cleanup_list;
+        for (const auto &l : loggers)
+        {
+            Logger::Ptr logp = l.second;
+            try
+            {
+                creds.GetPID(logp->GetBusName());
+            }
+            catch (const DBusException &)
+            {
+                cleanup_list.push_back(logp);
+            }
+        }
+
+        //  Then remove all identified ones
+        //  This order is important, as remove_log_subscription() will
+        //  modify the loggers map.
+        LogMetaData meta;
+        meta.AddMeta("internal_method", "LogServiceManager::cleanup_subscriptions");
+        for (const auto &l : cleanup_list)
+        {
+            logwr->AddMetaCopy(meta);
+            remove_log_subscription(l->GetLogTagPtr());
+        }
+    }
+    catch (...)
+    {
+        logwr->Write(LogEvent(LogGroup::LOGGER,
+                              LogCategory::ERROR,
+                              "cleanup_subscriptions() failed to setup DBusConnectionCreds object"));
+    }
+}
 
 //
 //  LogService class implementation
