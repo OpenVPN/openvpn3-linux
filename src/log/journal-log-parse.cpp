@@ -43,6 +43,7 @@ LogEntry::LogEntry(sd_journal *journal)
     method = extract_journal_field(journal, "O3_METHOD");
     property = extract_journal_field(journal, "O3_PROPERTY");
     object_path = extract_journal_field(journal, "O3_OBJECT_PATH");
+    int_method = extract_journal_field(journal, "O3_INTERNAL_METHOD");
     logtag = extract_journal_field(journal, "O3_LOGTAG");
     pid = extract_journal_field(journal, "_PID");
     event = LogEvent(extract_journal_field(journal, "O3_LOG_GROUP"),
@@ -70,6 +71,10 @@ const Json::Value LogEntry::GetJSON() const
     if (!method.empty())
     {
         ret["O3_METHOD"] = method;
+    }
+    if (!int_method.empty())
+    {
+        ret["O3_INTERNAL_METHOD"] = int_method;
     }
     if (!property.empty())
     {

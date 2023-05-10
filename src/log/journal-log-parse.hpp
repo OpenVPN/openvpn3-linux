@@ -79,6 +79,7 @@ struct LogEntry
     std::string method = {};      //<  D-Bus method related to the log event, if present
     std::string property = {};    //<  D-Bus object property related to the log event, if present
     std::string object_path = {}; //<  D-Bus object path of the log event producer, if present
+    std::string int_method = {};  //<  Internal method doing the call
     std::string logtag = {};      //<  OpenVPN 3 Linux LogTag value of the log event producer, if present
     std::string pid = {};         //<  Process ID of the logger process
     LogEvent event = {};          //<  Reconstructed LogTag object of the log event
