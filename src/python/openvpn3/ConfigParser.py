@@ -956,8 +956,9 @@ class ConfigParser():
                     embedded_key = None
                 else:
                     # When outside an embedded blob, copy the option and its
-                    # arguments to be parsed further
-                    cfg.append('--' + opt)
+                    # arguments to be parsed further.  Remove additional
+                    # comments using the semicolon separator
+                    cfg.append('--' + opt.split(';')[0])
 
             # Parse the collected arguments further and merge them with the
             # already parsed argument
