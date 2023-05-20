@@ -5,10 +5,10 @@ The primary Linux distributions targeted and regularly tested are:
 
   - CentOS 7 and 8
   - Debian 11 and newer
-  - Fedora 36 and newer
+  - Fedora 37 and newer
   - Red Hat Enterprise Linux (RHEL) 7 and newer
   - Scientific Linux 7
-  - Ubuntu 18.04 and newer
+  - Ubuntu 20.04 and newer
 
 This list is not an exclusive list, and it will most likely work
 on all other distributions with recent enough dependencies.
@@ -139,23 +139,9 @@ First install the package dependencies needed to run the build.
 
       # apt-get install libssl-dev libssl1.1
 
-  For Ubuntu 16.04 LTS, which ships with OpenSSL 1.0:
-
-      # apt-get install libssl-dev libssl1.0.0
-
 - Building with mbed TLS (alternative):
 
       # apt-get install libmbedtls-dev
-
-- Additional Debian 9 and Ubuntu 16.04 Python requirements
-
-  The ``openvpn3`` Python module requires the ``IntFlag`` extension in the
-  `enum`` module.  This was introduced in the Python 3.6 distribution.
-  OpenVPN 3 Linux implements a workaround for this in distributions which can
-  install the ``aenum`` module via ``pip3``
-
-      # apt-get install python3-pip
-      # pip3 install aenum
 
 - Generic build requirements:
 
