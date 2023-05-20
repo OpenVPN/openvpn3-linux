@@ -215,7 +215,7 @@ class LogServiceManager : public DBusObject,
 
     std::string add_log_proxy(GVariant *params, const std::string &sender);
     void remove_log_proxy(const std::string target);
-    void remove_log_subscription(const LogTag::Ptr tag);
+    void remove_log_subscription(const LogTag::Ptr tag, pid_t pid = -1);
 
     void cleanup_subscriptions();
 };

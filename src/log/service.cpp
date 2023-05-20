@@ -303,6 +303,22 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
         {
             cleanup_subscriptions();
 
+            pid_t caller_pid = -1;
+            try
+            {
+                caller_pid = GetPID(sender);
+            }
+            catch (const DBusException &)
+            {
+                // Ignore this attempt; the caller could have stopped
+                logwr->Write(LogEvent(LogGroup::LOGGER,
+                                      LogCategory::WARN,
+                                      "Ignoring Attach call from " + sender
+                                          + ", pid not found for this sender"));
+                g_dbus_method_invocation_return_value(invoc, NULL);
+                return;
+            }
+
             LogTag::Ptr tag = LogTag::create(sender, interface);
 
             // Subscribe to signals from a new D-Bus service/client
@@ -311,7 +327,8 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
             if (loggers.find(tag->hash) != loggers.end())
             {
                 std::stringstream l;
-                l << "Duplicate: " << *tag << "  " << tag->tag;
+                l << "Duplicate: " << *tag << "  " << tag->tag
+                  << ", pid " << std::to_string(caller_pid);
 
                 logwr->AddMetaCopy(meta);
                 logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN, l.str()));
@@ -326,7 +343,8 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
             loggers[tag->hash].reset(new Logger(dbuscon, logwr, tag, sender, interface, log_level));
 
             std::stringstream l;
-            l << "Attached: " << *tag << "  " << tag->tag;
+            l << "Attached: " << *tag << "  " << tag->tag
+              << ", pid " << std::to_string(caller_pid);
 
             logwr->AddMetaCopy(meta);
             logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2, l.str()));
@@ -371,11 +389,26 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
         {
             LogTag::Ptr tag = LogTag::create(sender, interface);
 
+            pid_t caller_pid = -1;
+            try
+            {
+                caller_pid = GetPID(sender);
+            }
+            catch (const DBusException &)
+            {
+                // Ignore this attempt; the caller could have stopped
+                logwr->Write(LogEvent(LogGroup::LOGGER,
+                                      LogCategory::WARN,
+                                      "Unexpected Detach call from " + sender
+                                          + ", pid not found for this sender"));
+            }
+
             // Ensure the requested logger is truly configured
             if (loggers.find(tag->hash) == loggers.end())
             {
                 std::stringstream l;
-                l << "Not found: " << tag << " " << tag->tag;
+                l << "Not found: " << tag << " " << tag->tag
+                  << ", pid " << std::to_string(caller_pid);
 
                 logwr->AddMetaCopy(meta);
                 logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::WARN, l.str()));
@@ -392,7 +425,7 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
             validate_sender(sender, loggers[tag->hash]->GetBusName());
 
             logwr->AddMetaCopy(meta);
-            remove_log_subscription(tag);
+            remove_log_subscription(tag, caller_pid);
 
             g_dbus_method_invocation_return_value(invoc, NULL);
         }
@@ -901,7 +934,7 @@ void LogServiceManager::remove_log_proxy(const std::string target)
 }
 
 
-void LogServiceManager::remove_log_subscription(LogTag::Ptr tag)
+void LogServiceManager::remove_log_subscription(LogTag::Ptr tag, pid_t pid)
 {
     if (!tag)
     {
@@ -924,6 +957,10 @@ void LogServiceManager::remove_log_subscription(LogTag::Ptr tag)
 
     std::stringstream l;
     l << "Detached: " << *tag << "  " << tag->tag;
+    if (0 < pid)
+    {
+        l << ", pid " << std::to_string(pid);
+    }
     logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2, l.str()));
 
     // Unsubscribe from signals from a D-Bus service/client
