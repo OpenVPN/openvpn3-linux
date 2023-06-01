@@ -36,9 +36,9 @@
 
 #ifdef HAVE_SYSTEMD
 #include "netcfg/dns/proxy-systemd-resolved.hpp"
-using namespace NetCfg::DNS;
 #endif
 
+using namespace NetCfg::DNS;
 
 /**
  *  Settings provided via the command line to the init-config command
