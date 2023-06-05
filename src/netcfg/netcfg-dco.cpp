@@ -94,13 +94,6 @@ NetCfgDCO::NetCfgDCO(GDBusConnection *dbuscon,
                              {
         self->io_context.run();
     }));
-
-    openvpn_io::post(io_context,
-                     [self = Ptr(this)]()
-                     {
-        self->queue_read_pipe(nullptr);
-        self->genl->register_packet();
-    });
 }
 
 
@@ -132,40 +125,6 @@ void NetCfgDCO::teardown()
     {
         th->join();
     }
-}
-
-
-void NetCfgDCO::queue_read_pipe(PacketFrom *pkt)
-{
-    if (!pkt)
-    {
-        pkt = new PacketFrom();
-    }
-    pkt->buf.reset(0, 2048, 0);
-    pipe->async_read_some(pkt->buf.mutable_buffer(),
-                          [self = Ptr(this), pkt = PacketFrom::SPtr(pkt)](const openvpn_io::error_code &error,
-                                                                          const size_t bytes_recvd) mutable
-                          {
-        if (!error)
-        {
-            uint32_t peer_id;
-
-            if (bytes_recvd < sizeof(peer_id))
-            {
-                std::stringstream os;
-                os << "Received message too small on pipe, size=" << bytes_recvd;
-                self->signal.LogError(os.str());
-            }
-            else
-            {
-                std::memcpy(&peer_id, pkt->buf.data(), sizeof(peer_id));
-                self->genl->send_data(peer_id,
-                                      pkt->buf.data() + sizeof(peer_id),
-                                      bytes_recvd - sizeof(peer_id));
-            }
-            self->queue_read_pipe(pkt.release());
-        }
-    });
 }
 
 
