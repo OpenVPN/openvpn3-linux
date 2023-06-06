@@ -46,10 +46,12 @@ LogEntry::LogEntry(sd_journal *journal)
     int_method = extract_journal_field(journal, "O3_INTERNAL_METHOD");
     logtag = extract_journal_field(journal, "O3_LOGTAG");
     pid = extract_journal_field(journal, "_PID");
+
+    std::string msg = extract_journal_field(journal, "MESSAGE");
     event = LogEvent(extract_journal_field(journal, "O3_LOG_GROUP"),
                      extract_journal_field(journal, "O3_LOG_CATEGORY"),
                      extract_journal_field(journal, "O3_SESSION_TOKEN"),
-                     extract_journal_field(journal, "MESSAGE"));
+                     strip_logtag(logtag, msg));
 }
 
 
@@ -135,6 +137,22 @@ std::string LogEntry::extract_journal_field(sd_journal *journal, const std::stri
         return std::string(&data[skip], l - skip);
     }
     return std::string();
+}
+
+
+const std::string LogEntry::strip_logtag(const std::string &logtag, std::string &logmsg)
+{
+    if (logtag.empty())
+    {
+        return logmsg;
+    }
+    auto logtagpos = logmsg.find(logtag);
+    if (std::string::npos == logtagpos)
+    {
+        return logmsg;
+    }
+    logmsg.erase(logtagpos - 5, logtag.size() + 7);
+    return logmsg;
 }
 
 

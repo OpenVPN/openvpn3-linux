@@ -95,6 +95,17 @@ struct LogEntry
      */
     std::string extract_journal_field(sd_journal *journal, const std::string &field) const;
 
+
+    /**
+     *  Removes the logtag string from the logmsg if it is found in the
+     *  log message string. The input logmsg string may be modified.
+     *
+     * @param logtag  std::string containing the log tag string to search for
+     * @param logmsg  std::string containing the log message
+     * @return std::string The cleaned up log message without log tag
+     */
+    const std::string strip_logtag(const std::string &logtag, std::string &logmsg);
+
     /**
      *  Extract the epoch (in microseconds) of the log event
      *
