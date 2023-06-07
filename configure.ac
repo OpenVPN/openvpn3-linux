@@ -470,21 +470,6 @@ AC_ARG_ENABLE(
 )
 
 dnl
-dnl  Configure path for the ovpn-dco kernel module source directory.
-dnl
-dnl  This is similar to the core librariy, there is an embedded
-dnl  version in this tree which will be used by default.  The
-dnl  git checkout inside the ovpn-dco/ directory is managed via git
-dnl  submodule.
-dnl
-AC_ARG_VAR([DCO_SOURCEDIR], [Alternative ovpn-dco kernel module source directory])
-if test -z "${DCO_SOURCEDIR}"; then
-    DCO_SOURCEDIR="${srcdir}/ovpn-dco"
-fi
-AC_MSG_NOTICE([Using ovpn-dco source directory: ${DCO_SOURCEDIR}])
-AC_SUBST([DCO_SOURCEDIR])
-
-dnl
 dnl Include generic netlink library used by core library code which talks to ovpn-dco
 dnl
 if test "$enable_dco" = "yes"; then
@@ -502,7 +487,7 @@ if test "$enable_dco" = "yes"; then
     )
     AC_SUBST(PROTOBUF_LIBS)
 
-    DCO_CXXFLAGS="-I${DCO_SOURCEDIR}/include/uapi -DENABLE_OVPNDCO ${LIBNL_GENL_CFLAGS}"
+    DCO_CXXFLAGS="-DENABLE_OVPNDCO ${LIBNL_GENL_CFLAGS}"
     AC_CHECK_PROG([PROTOC], [protoc], [protoc])
     if test -z "${PROTOC}"; then
        AC_MSG_ERROR([ProtoBuf compiler "protoc" not found.])
