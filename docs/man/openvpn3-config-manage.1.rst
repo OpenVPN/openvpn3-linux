@@ -47,6 +47,16 @@ OPTIONS
 -s, --show
                         Show the current profile settings
 
+--exists
+                        Checks if a configuration profile exists.  Requires
+                        either ``--config`` or ``--path``.  Will exit
+                        with `0` if configuration profile is found, otherwise
+                        `1`.
+
+--quiet
+                        Don't display informative information when using
+                        ``--exists``.
+
 --dco BOOL
                         Enable kernel based Data Channel Offload.  This moves
                         the tunnelled network traffic to be handled inside the

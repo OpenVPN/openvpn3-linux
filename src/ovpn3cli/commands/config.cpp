@@ -388,6 +388,39 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
         throw CommandException("config-manage", "No configuration provided "
                                                 "(--path, --config)");
     }
+    bool quiet = args->Present("quiet");
+    if (args->Present("exists"))
+    {
+        try
+        {
+            std::string path = (args->Present("config")
+                                    ? retrieve_config_path("config-manage",
+                                                           args->GetValue("config", 0))
+                                    : args->GetValue("path", 0));
+            OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path);
+            if (!conf.CheckObjectExists())
+            {
+                throw CommandException("config-manage",
+                                       "Configuration does not exist");
+            }
+            if (!quiet)
+            {
+                std::cout << "Configuration '" << conf.GetStringProperty("name")
+                          << "' is present" << std::endl;
+            }
+            return 0;
+        }
+        catch (const CommandException &excp)
+        {
+            if (!quiet)
+            {
+                std::cout << excp.what() << std::endl;
+            }
+            return 1;
+        }
+    }
+
+
     bool override_present = false;
     for (const ValidOverride &vo : configProfileOverrides)
     {
@@ -585,6 +618,10 @@ SingleCommand::Ptr prepare_command_config_manage()
     cmd->AddOption("show",
                    's',
                    "Show current configuration options");
+    cmd->AddOption("exists",
+                   "Checks if a specific configuration file exists");
+    cmd->AddOption("quiet",
+                   "Don't write anything to terminal unless strictly needed");
 #ifdef ENABLE_OVPNDCO
     cmd->AddOption("dco",
                    "<true|false>",
