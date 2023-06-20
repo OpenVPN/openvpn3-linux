@@ -18,6 +18,27 @@
 using namespace openvpn;
 
 
+class CfgMgrProxyException : std::exception
+{
+  public:
+    CfgMgrProxyException(const std::string &errmsg)
+        : errormsg(errmsg)
+    {
+    }
+
+
+    const char *what() const noexcept
+    {
+        return errormsg.c_str();
+    }
+
+
+  private:
+    std::string errormsg = {};
+};
+
+
+
 class OpenVPN3ConfigurationProxy : public DBusProxy
 {
   public:
@@ -484,7 +505,16 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     void AddTag(const std::string &tag) const
     {
-        Call("AddTag", g_variant_new("(s)", tag.c_str()));
+        try
+        {
+            Call("AddTag", g_variant_new("(s)", tag.c_str()));
+        }
+        catch (const DBusException &excp)
+        {
+            std::stringstream e;
+            e << excp.GetRawError() << ", tag value: " << tag;
+            throw CfgMgrProxyException(e.str().substr(e.str().find(":") + 1));
+        }
     }
 
 
@@ -495,7 +525,16 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     void RemoveTag(const std::string &tag) const
     {
-        Call("RemoveTag", g_variant_new("(s)", tag.c_str()));
+        try
+        {
+            Call("RemoveTag", g_variant_new("(s)", tag.c_str()));
+        }
+        catch (const DBusException &excp)
+        {
+            std::stringstream e;
+            e << excp.GetRawError() << ", tag value: " << tag;
+            throw CfgMgrProxyException(e.str().substr(e.str().find(":") + 1));
+        }
     }
 
 
