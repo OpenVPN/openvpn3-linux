@@ -258,7 +258,7 @@ class ConfigurationManager(object):
     #
     def __init__(self, dbuscon):
         self.__dbuscon = dbuscon
-        
+
         # Retrieve the main configuration manager object
         self.__manager_object = dbuscon.get_object('net.openvpn.v3.configuration',
                                                    '/net/openvpn/v3/configuration')
@@ -337,6 +337,26 @@ class ConfigurationManager(object):
     def LookupConfigName(self, cfgname):
         self.__ping()
         return self.__manager_intf.LookupConfigName(cfgname)
+
+
+    ##
+    #  Retrieves all available configuration profiles with a specific
+    #  assigned tag value.
+    #
+    #  @param tagvalue  Tag value to lookup
+    #  @param only_path Boolean flag (default: False) which changes the
+    #                   returned result to only be a list of D-Bus paths
+    #                   instead of Configuration() objects.
+    #
+    def SearchByTag(self, tagvalue, only_path=False):
+        self.__ping()
+        if only_path is True:
+            return self.__manager_intf.SearchByTag(tagvalue)
+        else:
+            ret = []
+            for p in self.__manager_intf.SearchByTag(tagvalue):
+                ret.append(Configuration(self.__dbuscon, p))
+            return ret
 
 
     ##
