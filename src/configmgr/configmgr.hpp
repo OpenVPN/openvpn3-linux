@@ -826,6 +826,10 @@ class ConfigurationObject : public DBusObject,
                 excp.SetDBusError(invoc);
             }
         }
+        GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.unspecified",
+                                                      "Not implemented");
+        g_dbus_method_invocation_return_gerror(invoc, err);
+        g_error_free(err);
     };
 
 
@@ -1525,6 +1529,10 @@ class ConfigManagerObject : public DBusObject,
             g_error_free(err);
             return;
         }
+        GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.unspecified",
+                                                      "Not implemented");
+        g_dbus_method_invocation_return_gerror(invoc, err);
+        g_error_free(err);
     };
 
 
