@@ -505,6 +505,11 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     void AddTag(const std::string &tag) const
     {
+        if ("system:" == tag.substr(0, 7))
+        {
+            throw CfgMgrProxyException("System tags cannot be added by users");
+        }
+
         try
         {
             Call("AddTag", g_variant_new("(s)", tag.c_str()));
@@ -525,6 +530,11 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     void RemoveTag(const std::string &tag) const
     {
+        if ("system:" == tag.substr(0, 7))
+        {
+            throw CfgMgrProxyException("System tags cannot be removed by users");
+        }
+
         try
         {
             Call("RemoveTag", g_variant_new("(s)", tag.c_str()));
@@ -559,7 +569,11 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
         std::vector<std::string> ret;
         while ((tag = g_variant_iter_next_value(tags)))
         {
-            ret.push_back(GLibUtils::GetVariantValue<std::string>(tag));
+            std::string t = GLibUtils::GetVariantValue<std::string>(tag);
+            if ("system:" != t.substr(0, 7))
+            {
+                ret.push_back(t);
+            }
             g_variant_unref(tag);
         }
         g_variant_iter_free(tags);
