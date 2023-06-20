@@ -312,12 +312,33 @@ static int config_manage_show(OpenVPN3ConfigurationProxy &conf,
             dns_scope = "global (default)";
         }
 
+        std::string tags = "";
+        try
+        {
+            bool first = true;
+            for (const auto &t : conf.GetTags())
+            {
+                tags += (!first ? ", " : "");
+                tags += t;
+                first = false;
+            }
+        }
+        catch (const DBusException &ex)
+        {
+            tags = "(not available)";
+        }
+
 
         // Right algin the field with explicit width
         std::cout << std::right;
         std::cout << std::setw(32) << "                  Name: "
-                  << conf.GetStringProperty("name") << std::endl
-                  << std::setw(32) << "             Read only: "
+                  << conf.GetStringProperty("name") << std::endl;
+        if (!tags.empty())
+        {
+            std::cout << std::setw(32) << "                  Tags: "
+                      << tags << std::endl;
+        }
+        std::cout << std::setw(32) << "             Read only: "
                   << (conf.GetBoolProperty("readonly") ? "Yes" : "No") << std::endl
                   << std::setw(32) << "     Persistent config: "
                   << (conf.GetBoolProperty("persistent") ? "Yes" : "No") << std::endl;
