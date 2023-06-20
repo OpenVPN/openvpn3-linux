@@ -209,6 +209,17 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
     OpenVPN3ConfigurationProxy confmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration);
     confmgr.Ping();
 
+    std::vector<std::string> config_list = {};
+    if (args->Present("filter-tag"))
+    {
+        config_list = confmgr.SearchByTag(args->GetValue("filter-tag", 0));
+    }
+    else
+    {
+        config_list = confmgr.FetchAvailableConfigs();
+    }
+
+
     std::string filter_cfgname = {};
     if (args->Present("filter-config"))
     {
@@ -226,7 +237,7 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
     std::cout << std::setw(32 + 26 + 18 + 2) << std::setfill('-') << "-" << std::endl;
 
     bool first = true;
-    for (auto &cfg : confmgr.FetchAvailableConfigs())
+    for (auto &cfg : config_list)
     {
         if (cfg.empty())
         {
@@ -289,10 +300,16 @@ SingleCommand::Ptr prepare_command_configs_list()
     cmd.reset(new SingleCommand("configs-list",
                                 "List all available configuration profiles",
                                 cmd_configs_list));
+
     cmd->AddOption("filter-config",
                    "NAME-PREFIX",
                    true,
                    "Filter configurations starting with the given prefix");
+
+    cmd->AddOption("filter-tag",
+                   "TAG-VALUE",
+                   true,
+                   "Only list configurations with the given tag");
 
     return cmd;
 }

@@ -29,6 +29,11 @@ OPTIONS
         Filter the list of configuration profiles to only consider
         profiles starting with the given prefix value.
 
+--filter-tag TAG-VALUE
+        Filter the list of configuration profiles to only consider
+        profiles assigned with the given tag value.
+
+
 SEE ALSO
 ========
 
