@@ -459,7 +459,7 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
         }
     }
 
-    if (!args->Present("rename") && !args->Present("show")
+    if ((args->Present({"rename", "show", "tag", "remove-tag"}).empty())
 #ifdef ENABLE_OVPNDCO
         && !args->Present("dco")
 #endif
@@ -467,7 +467,7 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
     {
         throw CommandException("config-manage",
                                "An operation argument is required "
-                               "(--rename, --show, "
+                               "(--rename, --show, --tag, --remove-tag"
                                "--<overrideName>, --unset-override"
 #ifdef ENABLE_OVPNDCO
                                " or --dco"
@@ -496,6 +496,58 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
             conf.SetName(args->GetValue("rename", 0));
             std::cout << "Configuration renamed" << std::endl;
             valid_option = true;
+        }
+
+        if (args->Present("remove-tag"))
+        {
+            valid_option = true;
+            std::string taglist;
+            for (int i = 0; i < args->GetValueLen("remove-tag"); i++)
+            {
+                try
+                {
+                    conf.RemoveTag(args->GetValue("remove-tag", i));
+                    taglist = taglist
+                              + (taglist.empty() ? "" : ", ")
+                              + args->GetValue("remove-tag", i);
+                }
+                catch (const CfgMgrProxyException &err)
+                {
+                    std::cerr << "Warning: " << err.what() << std::endl;
+                }
+            }
+            if (!taglist.empty())
+            {
+                std::cout << "Removed tag"
+                          << (args->GetValueLen("tag") != 1 ? "s" : "") << ": "
+                          << taglist << std::endl;
+            }
+        }
+
+        if (args->Present("tag"))
+        {
+            valid_option = true;
+            std::string taglist;
+            for (int i = 0; i < args->GetValueLen("tag"); i++)
+            {
+                try
+                {
+                    conf.AddTag(args->GetValue("tag", i));
+                    taglist = taglist
+                              + (taglist.empty() ? "" : ", ")
+                              + args->GetValue("tag", i);
+                }
+                catch (const CfgMgrProxyException &err)
+                {
+                    std::cerr << "Warning: " << err.what() << std::endl;
+                }
+            }
+            if (!taglist.empty())
+            {
+                std::cout << "Added tag"
+                          << (args->GetValueLen("tag") != 1 ? "s" : "") << ": "
+                          << taglist << std::endl;
+            }
         }
 
 #ifdef ENABLE_OVPNDCO
@@ -636,6 +688,14 @@ SingleCommand::Ptr prepare_command_config_manage()
                    "NEW-CONFIG-NAME",
                    true,
                    "Renames the configuration");
+    cmd->AddOption("tag",
+                   "TAG-NAME",
+                   true,
+                   "Adds a tag name to the configuration profile");
+    cmd->AddOption("remove-tag",
+                   "TAG-NAME",
+                   true,
+                   "Removes a tag name to the configuration profile");
     cmd->AddOption("show",
                    's',
                    "Show current configuration options");

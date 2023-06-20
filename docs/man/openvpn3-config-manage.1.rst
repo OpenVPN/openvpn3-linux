@@ -44,6 +44,12 @@ OPTIONS
 -r NEW-CONFIG-NAME, --rename NEW-CONFIG-NAME
                         Renames the configuration profile
 
+--tag TAG-VALUE
+                        Adds a tag value to a configuration profile
+
+--remove-tag TAG-VALUE
+                        Remove a tag value from a configuration profile
+
 -s, --show
                         Show the current profile settings
 
