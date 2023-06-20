@@ -289,15 +289,25 @@ class ConfigurationManager(object):
     #                     attempt.
     #  @param persistent  Boolean, should the configuration be saved to disk on
     #                     the system as a persistent configuration profile?
+    #  @param system_tag  String containing a system tag to be assigned during
+    #                     import.  Not used by default.
     #
     #  @return Returns a Configuration object of the imported configuration
     #
-    def Import(self, cfgname, cfg, single_use, persistent):
+    def Import(self, cfgname, cfg, single_use, persistent, system_tag = None):
         self.__ping()
         path = self.__manager_intf.Import(cfgname,    #  config name
                                           cfg,        # config profile str
                                           single_use, # Single-use config
                                           persistent) # Persistent config?
+        if system_tag is not None:
+            # We do this the hard way, as the Configuration object does
+            # not allow system tags to be modified (by design)
+            cfg_obj = self.__dbuscon.get_object('net.openvpn.v3.configuration',
+                                                path)
+            cfg_intf = dbus.Interface(cfg_obj, 'net.openvpn.v3.configuration')
+            cfg_intf.AddTag('system:' + system_tag)
+
         return Configuration(self.__dbuscon, path)
 
 
