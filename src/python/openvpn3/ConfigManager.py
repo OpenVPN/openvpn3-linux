@@ -109,6 +109,45 @@ class Configuration(object):
 
 
     ##
+    #  Adds a tag value to the configuration profile
+    #
+    #   @param tagvalue  String containing the tag value to add
+    #
+    @__delete_check
+    def AddTag(self, tagvalue):
+        if tagvalue.startswith('system:') is True:
+            raise RuntimeError('System tags cannot be added by users')
+
+        self.__config_intf.AddTag(tagvalue)
+
+
+    ##
+    #  Remove a tag value to the configuration profile
+    #
+    #   @param tagvalue  String containing the tag value to remove
+    #
+    @__delete_check
+    def RemoveTag(self, tagvalue):
+        if tagvalue.startswith('system:') is True:
+            raise RuntimeError('System tags cannot be removed by users')
+        self.__config_intf.RemoveTag(tagvalue)
+
+
+    ##
+    #  Retrieve all assigned tags to the configuration profile
+    #
+    #  @returns Returns a tuple of all user accessible tags
+    #
+    @__delete_check
+    def GetTags(self):
+        tags = []
+        for t in self.__prop_intf.Get('net.openvpn.v3.configuration','tags'):
+            if not t.startswith("system:"):
+                tags.append(str(t))
+        return tuple(tags)
+
+
+    ##
     #  Remove the configuration from the configuration manager service
     #
     @__delete_check
