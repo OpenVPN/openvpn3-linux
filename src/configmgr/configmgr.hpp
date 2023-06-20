@@ -1288,6 +1288,10 @@ class ConfigManagerObject : public DBusObject,
                           << "          <arg type='s' name='config_name' direction='in'/>"
                           << "          <arg type='ao' name='config_paths' direction='out'/>"
                           << "        </method>"
+                          << "        <method name='SearchByTag'>"
+                          << "           <arg type='s' name='tag' direction='in'/>"
+                          << "           <arg type='ao' name='paths' direction='out'/>"
+                          << "        </method>"
                           << "        <method name='TransferOwnership'>"
                           << "           <arg type='o' name='path' direction='in'/>"
                           << "           <arg type='u' name='new_owner_uid' direction='in'/>"
@@ -1493,6 +1497,34 @@ class ConfigManagerObject : public DBusObject,
                 }
             }
             g_dbus_method_invocation_return_value(invoc, GLibUtils::wrapInTuple(found_paths));
+            return;
+        }
+        else if ("SearchByTag" == method_name)
+        {
+            GLibUtils::checkParams(__FUNCTION__, params, "(s)");
+            std::string tagname = GLibUtils::ExtractValue<std::string>(params, 0);
+
+            GVariantBuilder *found_tags = g_variant_builder_new(G_VARIANT_TYPE("ao"));
+            for (const auto &item : config_objects)
+            {
+                if (item.second->CheckForTag(tagname))
+                {
+                    try
+                    {
+                        item.second->CheckACL(sender);
+                        g_variant_builder_add(found_tags,
+                                              "o",
+                                              item.second->GetObjectPath().c_str());
+                    }
+                    catch (const DBusCredentialsException &)
+                    {
+                        // Ignore credentials failures; this user does not
+                        // have access to this configuration profile - which
+                        // is fine to ignore in this case
+                    }
+                }
+            }
+            g_dbus_method_invocation_return_value(invoc, GLibUtils::wrapInTuple(found_tags));
             return;
         }
         else if ("TransferOwnership" == method_name)
