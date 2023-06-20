@@ -272,6 +272,14 @@ class ConfigurationObject : public DBusObject,
         dco = profile["dco"].asBool();
         valid = profile["valid"].asBool();
 
+        if (profile["tags"].isArray())
+        {
+            for (const auto &tag : profile["tags"])
+            {
+                tags.push_back(tag.asString());
+            }
+        }
+
         SetPublicAccess(profile["public_access"].asBool());
         for (const auto &id : profile["acl"])
         {
@@ -335,6 +343,14 @@ class ConfigurationObject : public DBusObject,
         ret["object_path"] = GetObjectPath();
         ret["owner"] = (uint32_t)GetOwnerUID();
         ret["name"] = name;
+        if (tags.size() > 0)
+        {
+            for (const auto &tag : tags)
+            {
+                ret["tags"].append(tag);
+            }
+        }
+
         ret["import_timestamp"] = (uint32_t)import_tstamp;
         ret["last_used_timestamp"] = (uint32_t)last_use_tstamp;
         ret["locked_down"] = locked_down;
@@ -648,6 +664,7 @@ class ConfigurationObject : public DBusObject,
             else
             {
                 tags.push_back(tag);
+                update_persistent_file();
                 g_dbus_method_invocation_return_value(invoc, NULL);
             }
             return;
@@ -689,6 +706,7 @@ class ConfigurationObject : public DBusObject,
                 else
                 {
                     tags.erase(tpos);
+                    update_persistent_file();
                     g_dbus_method_invocation_return_value(invoc, NULL);
                 }
             }
