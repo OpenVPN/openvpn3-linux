@@ -25,6 +25,7 @@
 #include "dbus/connection-creds.hpp"
 #include "dbus/exceptions.hpp"
 #include "dbus/object-property.hpp"
+#include "dbus/path.hpp"
 #include "log/ansicolours.hpp"
 #include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"
