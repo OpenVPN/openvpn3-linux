@@ -289,8 +289,9 @@ def main():
         sys.exit(3)
 
     # Import the configuration profile to the configuration manager
-    cfgobj = cfgmgr.Import(profile_name, profile, False, not opts.impersistent)
-    cfgobj.SetProperty('locked_down', True);
+    cfgobj = cfgmgr.Import(profile_name, profile, False, not opts.impersistent,
+                           'openvpn3-as')
+    cfgobj.SetProperty('locked_down', True)
 
     print('-'*60)
     print('Profile imported successfully')
