@@ -478,6 +478,58 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
 
 
     /**
+     *  Adds a tag value to a configuration profile object
+     *
+     * @param tag std::string of the tag value to assign to the object
+     */
+    void AddTag(const std::string &tag) const
+    {
+        Call("AddTag", g_variant_new("(s)", tag.c_str()));
+    }
+
+
+    /**
+     *  Removes a tag value from a configuration profile object
+     *
+     * @param tag std::string of the tag value to remove from the object
+     */
+    void RemoveTag(const std::string &tag) const
+    {
+        Call("RemoveTag", g_variant_new("(s)", tag.c_str()));
+    }
+
+
+    /**
+     * Retrieve a an array of strings of tags assigned to the
+     * configuration profile object
+     *
+     * @return const std::vector<std::string> containing all tags
+     */
+    const std::vector<std::string> GetTags() const
+    {
+        GVariant *res = GetProperty("tags");
+        if (nullptr == res)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
+                                "GetTags() call failed");
+        }
+        GVariantIter *tags = nullptr;
+        g_variant_get(res, "as", &tags);
+
+        GVariant *tag = nullptr;
+        std::vector<std::string> ret;
+        while ((tag = g_variant_iter_next_value(tags)))
+        {
+            ret.push_back(GLibUtils::GetVariantValue<std::string>(tag));
+            g_variant_unref(tag);
+        }
+        g_variant_iter_free(tags);
+        g_variant_unref(res);
+        return ret;
+    }
+
+
+    /**
      *  Retrieve an OverrideValue object for a specific configuration
      *  profile override.
      *
