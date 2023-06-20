@@ -151,6 +151,30 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
     }
 
 
+    /**
+     *  Search for all available configuration profile with a specific
+     *  tag name.
+     *
+     * @param tagname                   std::string containing the tag value to
+     *                                  look for
+     * @return std::vector<std::string> Array of the D-Bus object path
+     *                                  to all found configuration objects
+     */
+    std::vector<std::string> SearchByTag(const std::string &tagname) const
+    {
+        GVariant *res = Call("SearchByTag",
+                             g_variant_new("(s)", tagname.c_str()));
+        if (nullptr == res)
+        {
+            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
+                                "Failed to search for configuration tags");
+        }
+
+        std::vector<std::string> ret = GLibUtils::ParseGVariantList<std::string>(res, "o");
+        return ret;
+    }
+
+
     std::string GetJSONConfig()
     {
         GVariant *res = Call("FetchJSON");
