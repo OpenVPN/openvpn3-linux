@@ -615,6 +615,85 @@ class ConfigurationObject : public DBusObject,
                 excp.SetDBusError(invoc);
             }
         }
+        else if ("AddTag" == method_name)
+        {
+            CheckOwnerAccess(sender);
+            if (readonly)
+            {
+                g_dbus_method_invocation_return_dbus_error(invoc,
+                                                           "net.openvpn.v3.error.ReadOnly",
+                                                           "Configuration is sealed and readonly");
+                return;
+            }
+            GLibUtils::checkParams(__FUNCTION__, params, "(s)", 1);
+            std::string tag = GLibUtils::ExtractValue<std::string>(params, 0);
+            if (tag.empty())
+            {
+                g_dbus_method_invocation_return_dbus_error(invoc,
+                                                           "net.openvpn.v3.error.InvalidData",
+                                                           "Tag value cannot be empty");
+            }
+            else if (tag.length() > 128)
+            {
+                g_dbus_method_invocation_return_dbus_error(invoc,
+                                                           "net.openvpn.v3.error.InvalidData",
+                                                           "Tag value too long");
+            }
+            else if (std::find(tags.begin(), tags.end(), tag) != tags.end())
+            {
+                g_dbus_method_invocation_return_dbus_error(invoc,
+                                                           "net.openvpn.v3.error.InvalidData",
+                                                           "Tag already exists");
+            }
+            else
+            {
+                tags.push_back(tag);
+                g_dbus_method_invocation_return_value(invoc, NULL);
+            }
+            return;
+        }
+        else if ("RemoveTag" == method_name)
+        {
+            CheckOwnerAccess(sender);
+            if (readonly)
+            {
+                g_dbus_method_invocation_return_dbus_error(invoc,
+                                                           "net.openvpn.v3.error.ReadOnly",
+                                                           "Configuration is sealed and readonly");
+                return;
+            }
+
+            GLibUtils::checkParams(__FUNCTION__, params, "(s)", 1);
+            std::string tag = GLibUtils::ExtractValue<std::string>(params, 0);
+            if (tag.empty())
+            {
+                g_dbus_method_invocation_return_dbus_error(invoc,
+                                                           "net.openvpn.v3.error.InvalidData",
+                                                           "Tag value cannot be empty");
+            }
+            else if (tag.length() > 128)
+            {
+                g_dbus_method_invocation_return_dbus_error(invoc,
+                                                           "net.openvpn.v3.error.InvalidData",
+                                                           "Tag value too long");
+            }
+            else
+            {
+                auto tpos = std::find(tags.begin(), tags.end(), tag);
+                if (tpos == tags.end())
+                {
+                    g_dbus_method_invocation_return_dbus_error(invoc,
+                                                               "net.openvpn.v3.error.InvalidData",
+                                                               "Non-existing tag");
+                }
+                else
+                {
+                    tags.erase(tpos);
+                    g_dbus_method_invocation_return_value(invoc, NULL);
+                }
+            }
+            return;
+        }
         else if ("AccessGrant" == method_name)
         {
             if (readonly)
@@ -1038,6 +1117,7 @@ class ConfigurationObject : public DBusObject,
         properties.AddBinding(new PropertyType<bool>(this, "valid", "read", false, valid));
         properties.AddBinding(new PropertyType<decltype(override_list)>(this, "overrides", "read", true, override_list));
         properties.AddBinding(new PropertyType<bool>(this, "dco", "readwrite", true, dco));
+        properties.AddBinding(new PropertyType<decltype(tags)>(this, "tags", "read", false, tags));
 
         std::string introsp_xml = "<node name='" + GetObjectPath() + "'>"
                                   + "    <interface name='net.openvpn.v3.configuration'>"
@@ -1057,6 +1137,12 @@ class ConfigurationObject : public DBusObject,
                                     "        </method>"
                                     "        <method name='UnsetOverride'>"
                                     "            <arg direction='in' type='s' name='name'/>"
+                                    "        </method>"
+                                    "        <method name='AddTag'>"
+                                    "            <arg direction='in' type='s' name='tag'/>"
+                                    "        </method>"
+                                    "        <method name='RemoveTag'>"
+                                    "            <arg direction='in' type='s' name='tag'/>"
                                     "        </method>"
                                     "        <method name='AccessGrant'>"
                                     "            <arg direction='in' type='u' name='uid'/>"
@@ -1110,6 +1196,7 @@ class ConfigurationObject : public DBusObject,
     std::string persistent_file = {};
     OptionListJSON options = {};
     std::vector<OverrideValue> override_list = {};
+    std::vector<std::string> tags = {};
 };
 
 

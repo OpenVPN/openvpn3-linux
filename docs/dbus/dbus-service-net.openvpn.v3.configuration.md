@@ -118,6 +118,8 @@ node /net/openvpn/v3/configuration/${UNIQUE_ID} {
       SetOverride(in  s name,
                   in  v value);
       UnsetOverride(in  s name);
+      AddTag(in  s tag);
+      RemoveTag(in  s tag);
       AccessGrant(in  u uid);
       AccessRevoke(in  u uid);
       Seal();
@@ -135,6 +137,7 @@ node /net/openvpn/v3/configuration/${UNIQUE_ID} {
       readonly a{sv} overrides;
       readonly b readonly;
       readonly b single_use;
+      readonly as tags;
       readwrite b transfer_owner_session;
       readonly u used_count;
       readwrite b dco;
@@ -215,6 +218,31 @@ available are defined in `src/configmgr/overrides.hpp`.
 | In        | name        | string      | The name of the override value to modify                |
 
 
+### Method: `net.openvpn.v3.configuration.AddTag`
+
+A configuration profile can be assigned tag values, to be used by front-ends to categorize or group
+configuration profiles.  These tags does not influence the VPN session in any way.
+
+Tag values cannot be empty and must be no longer than 128 characters.
+
+#### Arguments
+
+| Direction | Name        | Type        | Description                                             |
+|-----------|-------------|-------------|---------------------------------------------------------|
+| In        | tag         | string      | The name of the tag to add to the profile               |
+
+
+### Method: `net.openvpn.v3.configuration.RemoveTag`
+
+This removes an assigned tag from a configuration profile.
+
+#### Arguments
+
+| Direction | Name        | Type        | Description                                             |
+|-----------|-------------|-------------|---------------------------------------------------------|
+| In        | tag         | string      | The name of the tag to remove from the profile          |
+
+
 ### Method: `net.openvpn.v3.configuration.AccessGrant`
 
 By default, only the user ID (UID) who imported the configuration have
@@ -276,6 +304,7 @@ success. If an error occurs, a D-Bus error is returned.
 | overrides     | dictionary       | Read-only  | Contains all the override settings enabled.  This is stored as a key/value based dictionary, where value can be any arbitrary data type |
 | readonly      | boolean          | Read-only  | If set to true, the configuration have been sealed and can no longer be modified |
 | single_use    | boolean          | Read-only  | If set to true, this configuration profile will be automatically removed after the first `Fetch` call. This is intended to be used by command line clients providing a similar user experience as the OpenVPN 2.x versions provides. |
+| tags          | array(string)    | Read-only  | Array of strings with tag values assigned to the profile |
 | transfer_owner_session | boolean | Read/Write | If set to true, another user granted access to this profile will transfer the VPN session ownership back to the profile owner at start up |
 | used_count    | unsigned integer | Read-only  | Number of times Fetch has been called [1]           |
 | dco           | boolean          | Read/Write | If set to true, the VPN tunnel will make use of the kernel accellerated Data Channel Offload feature (requires kernel support) |
