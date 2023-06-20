@@ -391,6 +391,12 @@ class ConfigurationObject : public DBusObject,
     }
 
 
+    bool CheckForTag(const std::string &tagname)
+    {
+        return (std::find(tags.begin(), tags.end(), tagname) != tags.end());
+    }
+
+
     /**
      *  Callback method which is called each time a D-Bus method call occurs
      *  on this ConfigurationObject.
@@ -655,7 +661,7 @@ class ConfigurationObject : public DBusObject,
                                                            "net.openvpn.v3.error.InvalidData",
                                                            "Tag value too long");
             }
-            else if (std::find(tags.begin(), tags.end(), tag) != tags.end())
+            else if (CheckForTag(tag))
             {
                 g_dbus_method_invocation_return_dbus_error(invoc,
                                                            "net.openvpn.v3.error.InvalidData",
