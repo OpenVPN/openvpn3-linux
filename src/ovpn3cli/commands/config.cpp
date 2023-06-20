@@ -494,7 +494,10 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
         if (args->Present("rename"))
         {
             conf.SetName(args->GetValue("rename", 0));
-            std::cout << "Configuration renamed" << std::endl;
+            if (!quiet)
+            {
+                std::cout << "Configuration renamed" << std::endl;
+            }
             valid_option = true;
         }
 
@@ -516,7 +519,7 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
                     std::cerr << "Warning: " << err.what() << std::endl;
                 }
             }
-            if (!taglist.empty())
+            if (!taglist.empty() && !quiet)
             {
                 std::cout << "Removed tag"
                           << (args->GetValueLen("tag") != 1 ? "s" : "") << ": "
@@ -542,7 +545,7 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
                     std::cerr << "Warning: " << err.what() << std::endl;
                 }
             }
-            if (!taglist.empty())
+            if (!taglist.empty() && !quiet)
             {
                 std::cout << "Added tag"
                           << (args->GetValueLen("tag") != 1 ? "s" : "") << ": "
@@ -556,8 +559,11 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
             bool dco = args->GetBoolValue("dco", false);
             conf.SetDCO(dco);
 
-            std::cout << "Kernel based data channel offload support is "
-                      << (dco ? "enabled" : "disabled") << std::endl;
+            if (!quiet)
+            {
+                std::cout << "Kernel based data channel offload support is "
+                          << (dco ? "enabled" : "disabled") << std::endl;
+            }
             valid_option = true;
         }
 #endif
@@ -570,15 +576,21 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
                 {
                     bool value = args->GetBoolValue(vo.key, 0);
                     conf.SetOverride(vo, value);
-                    std::cout << "Override '" + vo.key + "' is " + (value ? "enabled" : "disabled")
-                              << std::endl;
+                    if (!quiet)
+                    {
+                        std::cout << "Override '" + vo.key + "' is " + (value ? "enabled" : "disabled")
+                                  << std::endl;
+                    }
                 }
                 else if (OverrideType::string == vo.type)
                 {
                     std::string value = args->GetValue(vo.key, 0);
                     conf.SetOverride(vo, value);
-                    std::cout << "Set override '" + vo.key + "' to '" + value + "'"
-                              << std::endl;
+                    if (!quiet)
+                    {
+                        std::cout << "Set override '" + vo.key + "' to '" + value + "'"
+                                  << std::endl;
+                    }
                 }
                 valid_option = true;
             }
@@ -600,7 +612,10 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
                 try
                 {
                     conf.UnsetOverride(override);
-                    std::cout << "Unset override '" + override.key + "'" << std::endl;
+                    if (!quiet)
+                    {
+                        std::cout << "Unset override '" + override.key + "'" << std::endl;
+                    }
                     valid_option = true;
                 }
                 catch (DBusException &err)
@@ -608,8 +623,11 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
                     std::string e(err.what());
                     if (e.find("net.openvpn.v3.error.OverrideNotSet") != std::string::npos)
                     {
-                        std::cout << "Override '" << key
-                                  << "' not set" << std::endl;
+                        if (!quiet)
+                        {
+                            std::cout << "Override '" << key
+                                      << "' not set" << std::endl;
+                        }
                     }
                     else
                     {

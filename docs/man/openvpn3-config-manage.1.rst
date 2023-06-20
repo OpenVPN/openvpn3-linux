@@ -60,8 +60,8 @@ OPTIONS
                         `1`.
 
 --quiet
-                        Don't display informative information when using
-                        ``--exists``.
+                        Don't display informative information when modifying
+                        the configuration profile.
 
 --dco BOOL
                         Enable kernel based Data Channel Offload.  This moves
