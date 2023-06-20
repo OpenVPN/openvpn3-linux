@@ -189,6 +189,32 @@ configuration files.
 | In        | value       | string      | String containing the new value of the option           |
 
 
+### Method: `net.openvpn.v3.configuration.SetOverride`
+
+Configuration profile can have override settings changing slightly how the connection to the
+server should happen, DNS settings or other related settings.  The overrides available
+are defined in `src/configmgr/overrides.hpp`.
+
+#### Arguments
+
+| Direction | Name        | Type        | Description                                             |
+|-----------|-------------|-------------|---------------------------------------------------------|
+| In        | name        | string      | The name of the override value to modify                |
+| In        | value       | string      | The value of the override setting                       |
+
+
+### Method: `net.openvpn.v3.configuration.UnsetOverride`
+
+Unsets an override setting, restoring the behaviour to the configuration default.  The overrides
+available are defined in `src/configmgr/overrides.hpp`.
+
+#### Arguments
+
+| Direction | Name        | Type        | Description                                             |
+|-----------|-------------|-------------|---------------------------------------------------------|
+| In        | name        | string      | The name of the override value to modify                |
+
+
 ### Method: `net.openvpn.v3.configuration.AccessGrant`
 
 By default, only the user ID (UID) who imported the configuration have
@@ -250,7 +276,7 @@ success. If an error occurs, a D-Bus error is returned.
 | overrides     | dictionary       | Read-only  | Contains all the override settings enabled.  This is stored as a key/value based dictionary, where value can be any arbitrary data type |
 | readonly      | boolean          | Read-only  | If set to true, the configuration have been sealed and can no longer be modified |
 | single_use    | boolean          | Read-only  | If set to true, this configuration profile will be automatically removed after the first `Fetch` call. This is intended to be used by command line clients providing a similar user experience as the OpenVPN 2.x versions provides. |
-| transfer_owner_session | boolean | Read/Write | If set to true, another user granted access to this profile will transfer the VPN session ownership back to the profile owner at start up | 
+| transfer_owner_session | boolean | Read/Write | If set to true, another user granted access to this profile will transfer the VPN session ownership back to the profile owner at start up |
 | used_count    | unsigned integer | Read-only  | Number of times Fetch has been called [1]           |
 | dco           | boolean          | Read/Write | If set to true, the VPN tunnel will make use of the kernel accellerated Data Channel Offload feature (requires kernel support) |
 | valid         | boolean          | Read-only  | Contains an indication if the configuration profile is considered functional for a VPN session |
