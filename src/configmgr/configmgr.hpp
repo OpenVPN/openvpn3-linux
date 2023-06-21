@@ -1392,179 +1392,27 @@ class ConfigManagerObject : public DBusObject,
         if ("Import" == method_name)
         {
             // Import the configuration
-            std::string cfgpath = generate_path_uuid(OpenVPN3DBus_rootp_configuration, 'x');
-            ConfigurationObject *cfgobj;
-
-            try
-            {
-                cfgobj = new ConfigurationObject(
-                    dbuscon,
-                    [self = Ptr(this), cfgpath]()
-                    {
-                    self->remove_config_object(cfgpath);
-                    },
-                    cfgpath,
-                    GetLogLevel(),
-                    GetLogWriterPtr(),
-                    GetSignalBroadcast(),
-                    creds.GetUID(sender),
-                    state_dir,
-                    params);
-
-                register_config_object(cfgobj, "created");
-                g_dbus_method_invocation_return_value(invoc, g_variant_new("(o)", cfgpath.c_str()));
-            }
-            catch (const openvpn::option_error &excp)
-            {
-                std::string em{"Invalid configuration profile: "};
-                em += std::string(excp.what());
-                GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.import",
-                                                              em.c_str());
-                g_dbus_method_invocation_return_gerror(invoc, err);
-                g_error_free(err);
-                return;
-            }
+            handle_import(sender, params, invoc);
+            return;
         }
         else if ("FetchAvailableConfigs" == method_name)
         {
-            // Build up an array of object paths to available config objects
-            GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("ao"));
-            for (auto &item : config_objects)
-            {
-                try
-                {
-                    // We check if the caller is allowed to access this
-                    // configuration object.  If not, an exception is thrown
-                    // and we will just ignore that exception and continue
-                    item.second->CheckACL(sender);
-                    g_variant_builder_add(bld, "o", item.first.c_str());
-                }
-                catch (DBusCredentialsException &excp)
-                {
-                    // Ignore credentials exceptions.  It means the
-                    // caller does not have access this configuration object
-                }
-            }
-
-            // Wrap up the result into a tuple, which GDBus expects and
-            // put it into the invocation response
-            GVariantBuilder *ret = g_variant_builder_new(G_VARIANT_TYPE_TUPLE);
-            g_variant_builder_add_value(ret, g_variant_builder_end(bld));
-            g_dbus_method_invocation_return_value(invoc,
-                                                  g_variant_builder_end(ret));
-
-            // Clean-up
-            g_variant_builder_unref(bld);
-            g_variant_builder_unref(ret);
+            handle_fetch_avail_configs(sender, params, invoc);
+            return;
         }
         else if ("LookupConfigName" == method_name)
         {
-            gchar *cfgname_c = nullptr;
-            g_variant_get(params, "(s)", &cfgname_c);
-
-            if (nullptr == cfgname_c || strlen(cfgname_c) < 1)
-            {
-                GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.name",
-                                                              "Invalid configuration name");
-                g_dbus_method_invocation_return_gerror(invoc, err);
-                g_error_free(err);
-                return;
-            }
-            std::string cfgname(cfgname_c);
-            g_free(cfgname_c);
-
-            // Build up an array of object paths to available config objects
-            GVariantBuilder *found_paths = g_variant_builder_new(G_VARIANT_TYPE("ao"));
-            for (const auto &item : config_objects)
-            {
-                if (item.second->GetConfigName() == cfgname)
-                {
-                    try
-                    {
-                        // We check if the caller is allowed to access this
-                        // configuration object.  If not, an exception is thrown
-                        // and we will just ignore that exception and continue
-                        item.second->CheckACL(sender);
-                        g_variant_builder_add(found_paths,
-                                              "o",
-                                              item.first.c_str());
-                    }
-                    catch (DBusCredentialsException &excp)
-                    {
-                        // Ignore credentials exceptions.  It means the
-                        // caller does not have access this configuration object
-                    }
-                }
-            }
-            g_dbus_method_invocation_return_value(invoc, GLibUtils::wrapInTuple(found_paths));
+            handle_lookup_config_name(sender, params, invoc);
             return;
         }
         else if ("SearchByTag" == method_name)
         {
-            GLibUtils::checkParams(__FUNCTION__, params, "(s)");
-            std::string tagname = GLibUtils::ExtractValue<std::string>(params, 0);
-
-            GVariantBuilder *found_tags = g_variant_builder_new(G_VARIANT_TYPE("ao"));
-            for (const auto &item : config_objects)
-            {
-                if (item.second->CheckForTag(tagname))
-                {
-                    try
-                    {
-                        item.second->CheckACL(sender);
-                        g_variant_builder_add(found_tags,
-                                              "o",
-                                              item.second->GetObjectPath().c_str());
-                    }
-                    catch (const DBusCredentialsException &)
-                    {
-                        // Ignore credentials failures; this user does not
-                        // have access to this configuration profile - which
-                        // is fine to ignore in this case
-                    }
-                }
-            }
-            g_dbus_method_invocation_return_value(invoc, GLibUtils::wrapInTuple(found_tags));
+            handle_search_by_tag(sender, params, invoc);
             return;
         }
         else if ("TransferOwnership" == method_name)
         {
-            // This feature is quite powerful and is restricted to the
-            // root account only.  This is typically used by openvpn3-autoload
-            // when run during boot where the auto-load configuration wants
-            // the owner to be someone else than root.
-            if (0 != creds.GetUID(sender))
-            {
-                GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.acl.denied",
-                                                              "Access Denied");
-                g_dbus_method_invocation_return_gerror(invoc, err);
-                g_error_free(err);
-                return;
-            }
-            gchar *cfgpath = nullptr;
-            uid_t new_uid = 0;
-            g_variant_get(params, "(ou)", &cfgpath, &new_uid);
-
-            for (const auto &ci : config_objects)
-            {
-                if (ci.first == cfgpath)
-                {
-                    uid_t cur_owner = ci.second->GetOwnerUID();
-                    ci.second->TransferOwnership(new_uid);
-                    g_dbus_method_invocation_return_value(invoc, NULL);
-
-                    std::stringstream msg;
-                    msg << "Transfered ownership from " << cur_owner
-                        << " to " << new_uid
-                        << " on configuration " << cfgpath;
-                    LogInfo(msg.str());
-                    return;
-                }
-            }
-            GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.path",
-                                                          "Invalid configuration path");
-            g_dbus_method_invocation_return_gerror(invoc, err);
-            g_error_free(err);
+            handle_transfer_ownership(sender, params, invoc);
             return;
         }
         GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.unspecified",
@@ -1652,6 +1500,245 @@ class ConfigManagerObject : public DBusObject,
     DBusConnectionCreds creds;
     std::string state_dir;
     std::map<std::string, ConfigurationObject *> config_objects;
+
+
+    //
+    //  D-Bus method handler implementations
+    //
+    //  These handle_*() methods are expected to be called from the
+    //  callback_method_call() method
+    //
+
+    /**
+     *  Implementation of Import() D-Bus method
+     *
+     * @param sender
+     * @param params
+     * @param invoc
+     */
+    void handle_import(const std::string &sender,
+                       GVariant *params,
+                       GDBusMethodInvocation *invoc)
+    {
+        std::string cfgpath = generate_path_uuid(OpenVPN3DBus_rootp_configuration, 'x');
+        ConfigurationObject *cfgobj;
+
+        try
+        {
+            cfgobj = new ConfigurationObject(
+                dbuscon,
+                [self = Ptr(this), cfgpath]()
+                {
+                self->remove_config_object(cfgpath);
+                },
+                cfgpath,
+                GetLogLevel(),
+                GetLogWriterPtr(),
+                GetSignalBroadcast(),
+                creds.GetUID(sender),
+                state_dir,
+                params);
+
+            register_config_object(cfgobj, "created");
+            g_dbus_method_invocation_return_value(invoc, g_variant_new("(o)", cfgpath.c_str()));
+        }
+        catch (const openvpn::option_error &excp)
+        {
+            std::string em{"Invalid configuration profile: "};
+            em += std::string(excp.what());
+            GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.import",
+                                                          em.c_str());
+            g_dbus_method_invocation_return_gerror(invoc, err);
+            g_error_free(err);
+        }
+    }
+
+
+    /**
+     *  Implementation of FetchAvailableConfigs() D-Bus method
+     *
+     * @param sender
+     * @param params
+     * @param invoc
+     */
+    void handle_fetch_avail_configs(const std::string &sender,
+                                    GVariant *params,
+                                    GDBusMethodInvocation *invoc)
+    {
+        // Build up an array of object paths to available config objects
+        GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("ao"));
+        for (auto &item : config_objects)
+        {
+            try
+            {
+                // We check if the caller is allowed to access this
+                // configuration object.  If not, an exception is thrown
+                // and we will just ignore that exception and continue
+                item.second->CheckACL(sender);
+                g_variant_builder_add(bld, "o", item.first.c_str());
+            }
+            catch (DBusCredentialsException &excp)
+            {
+                // Ignore credentials exceptions.  It means the
+                // caller does not have access this configuration object
+            }
+        }
+
+        // Wrap up the result into a tuple, which GDBus expects and
+        // put it into the invocation response
+        GVariantBuilder *ret = g_variant_builder_new(G_VARIANT_TYPE_TUPLE);
+        g_variant_builder_add_value(ret, g_variant_builder_end(bld));
+        g_dbus_method_invocation_return_value(invoc,
+                                              g_variant_builder_end(ret));
+
+        // Clean-up
+        g_variant_builder_unref(bld);
+        g_variant_builder_unref(ret);
+    }
+
+
+    /**
+     *  Implementation of LookupConfigName() D-Bus method
+     *
+     * @param sender
+     * @param params
+     * @param invoc
+     */
+    void handle_lookup_config_name(const std::string &sender,
+                                   GVariant *params,
+                                   GDBusMethodInvocation *invoc)
+    {
+        gchar *cfgname_c = nullptr;
+        g_variant_get(params, "(s)", &cfgname_c);
+
+        if (nullptr == cfgname_c || strlen(cfgname_c) < 1)
+        {
+            GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.name",
+                                                          "Invalid configuration name");
+            g_dbus_method_invocation_return_gerror(invoc, err);
+            g_error_free(err);
+            return;
+        }
+        std::string cfgname(cfgname_c);
+        g_free(cfgname_c);
+
+        // Build up an array of object paths to available config objects
+        GVariantBuilder *found_paths = g_variant_builder_new(G_VARIANT_TYPE("ao"));
+        for (const auto &item : config_objects)
+        {
+            if (item.second->GetConfigName() == cfgname)
+            {
+                try
+                {
+                    // We check if the caller is allowed to access this
+                    // configuration object.  If not, an exception is thrown
+                    // and we will just ignore that exception and continue
+                    item.second->CheckACL(sender);
+                    g_variant_builder_add(found_paths,
+                                          "o",
+                                          item.first.c_str());
+                }
+                catch (DBusCredentialsException &excp)
+                {
+                    // Ignore credentials exceptions.  It means the
+                    // caller does not have access this configuration object
+                }
+            }
+        }
+        g_dbus_method_invocation_return_value(invoc, GLibUtils::wrapInTuple(found_paths));
+    }
+
+
+    /**
+     *  Implementation of SearchByTag() D-Bus method
+     *
+     * @param sender
+     * @param params
+     * @param invoc
+     */
+    void handle_search_by_tag(const std::string &sender,
+                              GVariant *params,
+                              GDBusMethodInvocation *invoc)
+    {
+        GLibUtils::checkParams(__FUNCTION__, params, "(s)");
+        std::string tagname = GLibUtils::ExtractValue<std::string>(params, 0);
+
+        GVariantBuilder *found_tags = g_variant_builder_new(G_VARIANT_TYPE("ao"));
+        for (const auto &item : config_objects)
+        {
+            if (item.second->CheckForTag(tagname))
+            {
+                try
+                {
+                    item.second->CheckACL(sender);
+                    g_variant_builder_add(found_tags,
+                                          "o",
+                                          item.second->GetObjectPath().c_str());
+                }
+                catch (const DBusCredentialsException &)
+                {
+                    // Ignore credentials failures; this user does not
+                    // have access to this configuration profile - which
+                    // is fine to ignore in this case
+                }
+            }
+        }
+        g_dbus_method_invocation_return_value(invoc, GLibUtils::wrapInTuple(found_tags));
+    }
+
+
+    /**
+     *  Implementation of TransferOwnership() D-Bus method
+     *
+     * @param sender
+     * @param params
+     * @param invoc
+     */
+    void handle_transfer_ownership(const std::string &sender,
+                                   GVariant *params,
+                                   GDBusMethodInvocation *invoc)
+    {
+        // This feature is quite powerful and is restricted to the
+        // root account only.  This is typically used by openvpn3-autoload
+        // when run during boot where the auto-load configuration wants
+        // the owner to be someone else than root.
+        if (0 != creds.GetUID(sender))
+        {
+            GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.acl.denied",
+                                                          "Access Denied");
+            g_dbus_method_invocation_return_gerror(invoc, err);
+            g_error_free(err);
+            return;
+        }
+        gchar *cfgpath = nullptr;
+        uid_t new_uid = 0;
+        g_variant_get(params, "(ou)", &cfgpath, &new_uid);
+
+        for (const auto &ci : config_objects)
+        {
+            if (ci.first == cfgpath)
+            {
+                uid_t cur_owner = ci.second->GetOwnerUID();
+                ci.second->TransferOwnership(new_uid);
+                g_dbus_method_invocation_return_value(invoc, NULL);
+
+                std::stringstream msg;
+                msg << "Transfered ownership from " << cur_owner
+                    << " to " << new_uid
+                    << " on configuration " << cfgpath;
+                LogInfo(msg.str());
+                return;
+            }
+        }
+        GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.path",
+                                                      "Invalid configuration path");
+        g_dbus_method_invocation_return_gerror(invoc, err);
+        g_error_free(err);
+    }
+
+    //
+    //  Helper methods for ConfigMangerObject
+    //
 
 
     /**
