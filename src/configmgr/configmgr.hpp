@@ -422,415 +422,106 @@ class ConfigurationObject : public DBusObject,
         IdleCheck_UpdateTimestamp();
         if ("Fetch" == method_name)
         {
+            handler_fetch_config(sender, params, invoc, false);
+
+            // If the fetching user is openvpn (which
+            // openvpn3-service-client runs as), we consider this
+            // configuration to be "used".
+            //
+            // If we don't have an UID for some reason, don't remove
+            // anything.
+            //
             try
             {
-                if (!locked_down)
-                {
-                    CheckACL(sender, true);
-                }
-                else
-                {
-                    // If the configuration is locked down, restrict any
-                    // read-operations to anyone except the backend VPN client
-                    // process (openvpn user) or the configuration profile
-                    // owner
-                    CheckOwnerAccess(sender, true);
-                }
-                g_dbus_method_invocation_return_value(invoc,
-                                                      g_variant_new("(s)",
-                                                                    options.string_export().c_str()));
-
-                // If the fetching user is openvpn (which
-                // openvpn3-service-client runs as), we consider this
-                // configuration to be "used".
-                //
-                // If we don't have an UID for some reason, don't remove
-                // anything.
-                //
+                uid_t ovpn_uid;
                 try
                 {
-                    uid_t ovpn_uid;
-                    try
+                    ovpn_uid = lookup_uid(OPENVPN_USERNAME);
+                }
+                catch (const LookupException &excp)
+                {
+                    excp.SetDBusError(invoc);
+                    return;
+                }
+
+                if (GetUID(sender) == ovpn_uid)
+                {
+                    // If this config is tagged as single-use only then we delete this
+                    // config from memory.
+                    if (single_use)
                     {
-                        ovpn_uid = lookup_uid(OPENVPN_USERNAME);
-                    }
-                    catch (const LookupException &excp)
-                    {
-                        excp.SetDBusError(invoc);
+                        LogVerb2("Single-use configuration fetched");
+                        RemoveObject(conn);
+                        delete this;
                         return;
                     }
-
-                    if (GetUID(sender) == ovpn_uid)
-                    {
-                        // If this config is tagged as single-use only then we delete this
-                        // config from memory.
-                        if (single_use)
-                        {
-                            LogVerb2("Single-use configuration fetched");
-                            RemoveObject(conn);
-                            delete this;
-                            return;
-                        }
-                        used_count++;
-                        last_use_tstamp = std::time(nullptr);
-                        update_persistent_file();
-                    }
+                    used_count++;
+                    last_use_tstamp = std::time(nullptr);
+                    update_persistent_file();
                 }
-                catch (DBusException &excp)
-                {
-                    std::string err(excp.what());
-                    if (err.find("NameHasNoOwner: Could not get UID of name") == std::string::npos)
-                    {
-                        // If the error is related to something else than
-                        // retriving the UID, re-throw the exception
-                        throw;
-                    }
-                }
-                return;
-            }
-            catch (DBusCredentialsException &excp)
-            {
-                LogWarn(excp.what());
-                excp.SetDBusError(invoc);
-            }
-        }
-        else if ("FetchJSON" == method_name)
-        {
-            try
-            {
-                if (!locked_down)
-                {
-                    CheckACL(sender);
-                }
-                else
-                {
-                    // If the configuration is locked down, restrict any
-                    // read-operations to the configuration profile owner
-                    CheckOwnerAccess(sender);
-                }
-
-                std::stringstream jsoncfg;
-                jsoncfg << options.json_export();
-
-                g_dbus_method_invocation_return_value(invoc,
-                                                      g_variant_new("(s)",
-                                                                    jsoncfg.str().c_str()));
-
-                // Do not remove single-use object with this method.
-                // FetchJSON is only used by front-ends, never backends.  So
-                // it still needs to be available when the backend calls Fetch.
-                //
-                // single-use configurations are an automation convenience,
-                // not a security feature.  Security is handled via ACLs.
-                return;
-            }
-            catch (DBusCredentialsException &excp)
-            {
-                LogWarn(excp.what());
-                excp.SetDBusError(invoc);
-            }
-        }
-        else if ("SetOption" == method_name)
-        {
-            if (readonly)
-            {
-                g_dbus_method_invocation_return_dbus_error(invoc,
-                                                           "net.openvpn.v3.error.ReadOnly",
-                                                           "Configuration is sealed and readonly");
-                return;
-            }
-            try
-            {
-                CheckOwnerAccess(sender);
-                // TODO: Implement SetOption
-                g_dbus_method_invocation_return_value(invoc, NULL);
-                update_persistent_file();
-                return;
-            }
-            catch (DBusCredentialsException &excp)
-            {
-                LogWarn(excp.what());
-                excp.SetDBusError(invoc);
-            }
-        }
-        else if ("SetOverride" == method_name)
-        {
-            if (readonly)
-            {
-                g_dbus_method_invocation_return_dbus_error(invoc,
-                                                           "net.openvpn.v3.error.ReadOnly",
-                                                           "Configuration is sealed and readonly");
-                return;
-            }
-            try
-            {
-                CheckOwnerAccess(sender);
-                gchar *key = nullptr;
-                GVariant *val = nullptr;
-                g_variant_get(params, "(sv)", &key, &val);
-
-                const OverrideValue vo = set_override(key, val);
-
-                std::string newValue = vo.strValue;
-                if (OverrideType::boolean == vo.override.type)
-                {
-                    newValue = vo.boolValue ? "true" : "false";
-                }
-
-                LogInfo("Setting configuration override '" + std::string(key)
-                        + "' to '" + newValue + "' by UID " + std::to_string(GetUID(sender)));
-
-                g_free(key);
-                // g_variant_unref(val);
-                g_dbus_method_invocation_return_value(invoc, NULL);
-                update_persistent_file();
-                return;
-            }
-            catch (DBusCredentialsException &excp)
-            {
-                LogWarn(excp.what());
-                excp.SetDBusError(invoc);
             }
             catch (DBusException &excp)
             {
-                LogWarn(excp.what());
-                excp.SetDBusError(invoc, "net.openvpn.v3.configmgr.error");
+                std::string err(excp.what());
+                if (err.find("NameHasNoOwner: Could not get UID of name") == std::string::npos)
+                {
+                    // If the error is related to something else than
+                    // retriving the UID, re-throw the exception
+                    throw;
+                }
             }
+
+            return;
+        }
+        else if ("FetchJSON" == method_name)
+        {
+            handler_fetch_config(sender, params, invoc, true);
+            return;
+        }
+        else if ("SetOption" == method_name)
+        {
+            handler_set_option(sender, params, invoc);
+            return;
+        }
+        else if ("SetOverride" == method_name)
+        {
+            handler_set_override(sender, params, invoc);
+            return;
         }
         else if ("UnsetOverride" == method_name)
         {
-            if (readonly)
-            {
-                g_dbus_method_invocation_return_dbus_error(invoc,
-                                                           "net.openvpn.v3.error.ReadOnly",
-                                                           "Configuration is sealed and readonly");
-                return;
-            }
-            try
-            {
-                CheckOwnerAccess(sender);
-                gchar *key = nullptr;
-                g_variant_get(params, "(s)", &key);
-                if (remove_override(key))
-                {
-                    LogInfo("Unset configuration override '" + std::string(key)
-                            + "' by UID " + std::to_string(GetUID(sender)));
-
-                    g_dbus_method_invocation_return_value(invoc, NULL);
-                }
-                else
-                {
-                    std::stringstream err;
-                    err << "Override '" << std::string(key) << "' has "
-                        << "not been set";
-                    g_dbus_method_invocation_return_dbus_error(invoc,
-                                                               "net.openvpn.v3.error.OverrideNotSet",
-                                                               err.str().c_str());
-                }
-                g_free(key);
-                update_persistent_file();
-                return;
-            }
-            catch (DBusCredentialsException &excp)
-            {
-                LogWarn(excp.what());
-                excp.SetDBusError(invoc);
-            }
+            handler_unset_override(sender, params, invoc);
+            return;
         }
         else if ("AddTag" == method_name)
         {
-            CheckOwnerAccess(sender);
-            if (readonly)
-            {
-                g_dbus_method_invocation_return_dbus_error(invoc,
-                                                           "net.openvpn.v3.error.ReadOnly",
-                                                           "Configuration is sealed and readonly");
-                return;
-            }
-            GLibUtils::checkParams(__FUNCTION__, params, "(s)", 1);
-            std::string tag = GLibUtils::ExtractValue<std::string>(params, 0);
-            if (tag.empty())
-            {
-                g_dbus_method_invocation_return_dbus_error(invoc,
-                                                           "net.openvpn.v3.error.InvalidData",
-                                                           "Tag value cannot be empty");
-            }
-            else if (tag.length() > 128)
-            {
-                g_dbus_method_invocation_return_dbus_error(invoc,
-                                                           "net.openvpn.v3.error.InvalidData",
-                                                           "Tag value too long");
-            }
-            else if (CheckForTag(tag))
-            {
-                g_dbus_method_invocation_return_dbus_error(invoc,
-                                                           "net.openvpn.v3.error.InvalidData",
-                                                           "Tag already exists");
-            }
-            else
-            {
-                tags.push_back(tag);
-                update_persistent_file();
-                g_dbus_method_invocation_return_value(invoc, NULL);
-            }
+            handler_add_tag(sender, params, invoc);
             return;
         }
         else if ("RemoveTag" == method_name)
         {
-            CheckOwnerAccess(sender);
-            if (readonly)
-            {
-                g_dbus_method_invocation_return_dbus_error(invoc,
-                                                           "net.openvpn.v3.error.ReadOnly",
-                                                           "Configuration is sealed and readonly");
-                return;
-            }
-
-            GLibUtils::checkParams(__FUNCTION__, params, "(s)", 1);
-            std::string tag = GLibUtils::ExtractValue<std::string>(params, 0);
-            if (tag.empty())
-            {
-                g_dbus_method_invocation_return_dbus_error(invoc,
-                                                           "net.openvpn.v3.error.InvalidData",
-                                                           "Tag value cannot be empty");
-            }
-            else if (tag.length() > 128)
-            {
-                g_dbus_method_invocation_return_dbus_error(invoc,
-                                                           "net.openvpn.v3.error.InvalidData",
-                                                           "Tag value too long");
-            }
-            else
-            {
-                auto tpos = std::find(tags.begin(), tags.end(), tag);
-                if (tpos == tags.end())
-                {
-                    g_dbus_method_invocation_return_dbus_error(invoc,
-                                                               "net.openvpn.v3.error.InvalidData",
-                                                               "Non-existing tag");
-                }
-                else
-                {
-                    tags.erase(tpos);
-                    update_persistent_file();
-                    g_dbus_method_invocation_return_value(invoc, NULL);
-                }
-            }
+            handler_remove_tag(sender, params, invoc);
             return;
         }
         else if ("AccessGrant" == method_name)
         {
-            if (readonly)
-            {
-                g_dbus_method_invocation_return_dbus_error(invoc,
-                                                           "net.openvpn.v3.error.ReadOnly",
-                                                           "Configuration is sealed and readonly");
-                return;
-            }
-
-            try
-            {
-                CheckOwnerAccess(sender);
-
-                uid_t uid = -1;
-                g_variant_get(params, "(u)", &uid);
-                GrantAccess(uid);
-                g_dbus_method_invocation_return_value(invoc, NULL);
-
-                LogInfo("Access granted to UID " + std::to_string(uid)
-                        + " by UID " + std::to_string(GetUID(sender)));
-                update_persistent_file();
-                return;
-            }
-            catch (DBusCredentialsException &excp)
-            {
-                LogWarn(excp.what());
-                excp.SetDBusError(invoc);
-            }
+            handler_access_grant_revoke(sender, params, invoc, false);
+            return;
         }
         else if ("AccessRevoke" == method_name)
         {
-            if (readonly)
-            {
-                g_dbus_method_invocation_return_dbus_error(invoc,
-                                                           "net.openvpn.v3.error.ReadOnly",
-                                                           "Configuration is sealed and readonly");
-                return;
-            }
-
-            try
-            {
-                CheckOwnerAccess(sender);
-
-                uid_t uid = -1;
-                g_variant_get(params, "(u)", &uid);
-                RevokeAccess(uid);
-                g_dbus_method_invocation_return_value(invoc, NULL);
-
-                LogInfo("Access revoked for UID " + std::to_string(uid)
-                        + " by UID " + std::to_string(GetUID(sender)));
-                update_persistent_file();
-                return;
-            }
-            catch (DBusCredentialsException &excp)
-            {
-                LogWarn(excp.what());
-                excp.SetDBusError(invoc);
-            }
+            handler_access_grant_revoke(sender, params, invoc, true);
+            return;
         }
         else if ("Seal" == method_name)
         {
-            try
-            {
-                CheckOwnerAccess(sender);
-
-                if (valid)
-                {
-                    readonly = true;
-                    g_dbus_method_invocation_return_value(invoc, NULL);
-                    update_persistent_file();
-                }
-                else
-                {
-                    g_dbus_method_invocation_return_dbus_error(invoc,
-                                                               "net.openvpn.v3.error.InvalidData",
-                                                               "Configuration is not currently valid");
-                }
-                return;
-            }
-            catch (DBusCredentialsException &excp)
-            {
-                LogWarn(excp.what());
-                excp.SetDBusError(invoc);
-            }
+            handler_seal(sender, params, invoc);
+            return;
         }
         else if ("Remove" == method_name)
         {
-            try
-            {
-                CheckOwnerAccess(sender);
-                std::string sender_name = lookup_username(GetUID(sender));
-                LogInfo("Configuration '" + name + "' was removed by "
-                        + sender_name);
-                RemoveObject(conn);
-                g_dbus_method_invocation_return_value(invoc, NULL);
-
-                // If this is a persistent config, remove it from
-                // the file system too
-                if (!persistent_file.empty())
-                {
-                    unlink(persistent_file.c_str());
-                    LogVerb2("Persistent configuration profile removed: '"
-                             + persistent_file + "'");
-                }
-                delete this;
-                return;
-            }
-            catch (DBusCredentialsException &excp)
-            {
-                LogWarn(excp.what());
-                excp.SetDBusError(invoc);
-            }
+            handler_remove(conn, sender, params, invoc);
+            return;
         }
         GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.unspecified",
                                                       "Not implemented");
@@ -1225,6 +916,480 @@ class ConfigurationObject : public DBusObject,
     OptionListJSON options = {};
     std::vector<OverrideValue> override_list = {};
     std::vector<std::string> tags = {};
+
+    //
+    //  D-Bus method handler implementations for ConfigurationObject
+    //
+    //  These handle_*() methods are expected to be called from the
+    //  callback_method_call() method
+    //
+
+    /**
+     *  Implementation of Fetch() and FetchJSON() D-Bus methods
+     *
+     * @param sender
+     * @param params
+     * @param invoc
+     */
+    void handler_fetch_config(const std::string &sender,
+                              GVariant *params,
+                              GDBusMethodInvocation *invoc,
+                              bool json_output)
+    {
+        try
+        {
+            if (!locked_down)
+            {
+                // Manager processes does not get an explicit access
+                // the configuration profile as JSON.
+                if (json_output)
+                {
+                    CheckACL(sender);
+                }
+                else
+                {
+                    CheckACL(sender, true);
+                }
+            }
+            else
+            {
+                // If the configuration is locked down, restrict any
+                // read-operations to anyone except the backend VPN client
+                // process (openvpn user) or the configuration profile
+                // owner
+                CheckOwnerAccess(sender, true);
+            }
+
+            std::stringstream config;
+            if (!json_output)
+            {
+                config << options.string_export();
+            }
+            else
+            {
+                config << options.json_export();
+            }
+
+            GVariant *resp = g_variant_new("(s)", config.str().c_str());
+            g_dbus_method_invocation_return_value(invoc, resp);
+        }
+        catch (DBusCredentialsException &excp)
+        {
+            LogWarn(excp.what());
+            excp.SetDBusError(invoc);
+        }
+    }
+
+    /**
+     *
+     *
+     * @param sender
+     * @param params
+     * @param invoc
+     */
+    void handler_fetch_json(const std::string &sender,
+                            GVariant *params,
+                            GDBusMethodInvocation *invoc)
+    {
+        try
+        {
+            if (!locked_down)
+            {
+                CheckACL(sender);
+            }
+            else
+            {
+                // If the configuration is locked down, restrict any
+                // read-operations to the configuration profile owner
+                CheckOwnerAccess(sender);
+            }
+
+            std::stringstream jsoncfg;
+            jsoncfg << options.json_export();
+
+            g_dbus_method_invocation_return_value(invoc,
+                                                  g_variant_new("(s)",
+                                                                jsoncfg.str().c_str()));
+
+            // Do not remove single-use object with this method.
+            // FetchJSON is only used by front-ends, never backends.  So
+            // it still needs to be available when the backend calls Fetch.
+            //
+            // single-use configurations are an automation convenience,
+            // not a security feature.  Security is handled via ACLs.
+        }
+        catch (DBusCredentialsException &excp)
+        {
+            LogWarn(excp.what());
+            excp.SetDBusError(invoc);
+        }
+    }
+
+    /**
+     * Implementation of SetOption() D-Bus method
+     *
+     * TODO: NOT YET IMPLEMENTED
+     *
+     * @param sender
+     * @param params
+     * @param invoc
+     */
+    void handler_set_option(const std::string &sender,
+                            GVariant *params,
+                            GDBusMethodInvocation *invoc)
+    {
+        if (readonly)
+        {
+            g_dbus_method_invocation_return_dbus_error(invoc,
+                                                       "net.openvpn.v3.error.ReadOnly",
+                                                       "Configuration is sealed and readonly");
+            return;
+        }
+        try
+        {
+            CheckOwnerAccess(sender);
+            // TODO: Implement SetOption
+            g_dbus_method_invocation_return_value(invoc, NULL);
+            update_persistent_file();
+        }
+        catch (DBusCredentialsException &excp)
+        {
+            LogWarn(excp.what());
+            excp.SetDBusError(invoc);
+        }
+    }
+
+
+    /**
+     *  Implementation of SetOverride() D-Bus method
+     *
+     * @param sender
+     * @param params
+     * @param invoc
+     */
+    void handler_set_override(const std::string &sender,
+                              GVariant *params,
+                              GDBusMethodInvocation *invoc)
+    {
+        if (readonly)
+        {
+            g_dbus_method_invocation_return_dbus_error(invoc,
+                                                       "net.openvpn.v3.error.ReadOnly",
+                                                       "Configuration is sealed and readonly");
+            return;
+        }
+        try
+        {
+            CheckOwnerAccess(sender);
+            gchar *key = nullptr;
+            GVariant *val = nullptr;
+            g_variant_get(params, "(sv)", &key, &val);
+
+            const OverrideValue vo = set_override(key, val);
+
+            std::string newValue = vo.strValue;
+            if (OverrideType::boolean == vo.override.type)
+            {
+                newValue = vo.boolValue ? "true" : "false";
+            }
+
+            LogInfo("Setting configuration override '" + std::string(key)
+                    + "' to '" + newValue + "' by UID " + std::to_string(GetUID(sender)));
+
+            g_free(key);
+            // g_variant_unref(val);
+            g_dbus_method_invocation_return_value(invoc, NULL);
+            update_persistent_file();
+        }
+        catch (DBusCredentialsException &excp)
+        {
+            LogWarn(excp.what());
+            excp.SetDBusError(invoc);
+        }
+        catch (DBusException &excp)
+        {
+            LogWarn(excp.what());
+            excp.SetDBusError(invoc, "net.openvpn.v3.configmgr.error");
+        }
+    }
+
+
+    /**
+     *  Implementation of UnsetOverride() D-Bus method
+     *
+     * @param sender
+     * @param params
+     * @param invoc
+     */
+    void handler_unset_override(const std::string &sender,
+                                GVariant *params,
+                                GDBusMethodInvocation *invoc)
+    {
+        if (readonly)
+        {
+            g_dbus_method_invocation_return_dbus_error(invoc,
+                                                       "net.openvpn.v3.error.ReadOnly",
+                                                       "Configuration is sealed and readonly");
+            return;
+        }
+        try
+        {
+            CheckOwnerAccess(sender);
+            gchar *key = nullptr;
+            g_variant_get(params, "(s)", &key);
+            if (remove_override(key))
+            {
+                LogInfo("Unset configuration override '" + std::string(key)
+                        + "' by UID " + std::to_string(GetUID(sender)));
+
+                g_dbus_method_invocation_return_value(invoc, NULL);
+            }
+            else
+            {
+                std::stringstream err;
+                err << "Override '" << std::string(key) << "' has "
+                    << "not been set";
+                g_dbus_method_invocation_return_dbus_error(invoc,
+                                                           "net.openvpn.v3.error.OverrideNotSet",
+                                                           err.str().c_str());
+            }
+            g_free(key);
+            update_persistent_file();
+        }
+        catch (DBusCredentialsException &excp)
+        {
+            LogWarn(excp.what());
+            excp.SetDBusError(invoc);
+        }
+    }
+
+
+    /**
+     *  Implementation of AddTag() D-Bus method
+     *
+     * @param sender
+     * @param params
+     * @param invoc
+     */
+    void handler_add_tag(const std::string &sender,
+                         GVariant *params,
+                         GDBusMethodInvocation *invoc)
+    {
+        CheckOwnerAccess(sender);
+        if (readonly)
+        {
+            g_dbus_method_invocation_return_dbus_error(invoc,
+                                                       "net.openvpn.v3.error.ReadOnly",
+                                                       "Configuration is sealed and readonly");
+            return;
+        }
+        GLibUtils::checkParams(__FUNCTION__, params, "(s)", 1);
+        std::string tag = GLibUtils::ExtractValue<std::string>(params, 0);
+        if (tag.empty())
+        {
+            g_dbus_method_invocation_return_dbus_error(invoc,
+                                                       "net.openvpn.v3.error.InvalidData",
+                                                       "Tag value cannot be empty");
+        }
+        else if (tag.length() > 128)
+        {
+            g_dbus_method_invocation_return_dbus_error(invoc,
+                                                       "net.openvpn.v3.error.InvalidData",
+                                                       "Tag value too long");
+        }
+        else if (CheckForTag(tag))
+        {
+            g_dbus_method_invocation_return_dbus_error(invoc,
+                                                       "net.openvpn.v3.error.InvalidData",
+                                                       "Tag already exists");
+        }
+        else
+        {
+            tags.push_back(tag);
+            update_persistent_file();
+            g_dbus_method_invocation_return_value(invoc, NULL);
+        }
+    }
+
+
+    /**
+     *  Implementation of RemoveTag() D-Bus method
+     *
+     * @param sender
+     * @param params
+     * @param invoc
+     */
+    void handler_remove_tag(const std::string &sender,
+                            GVariant *params,
+                            GDBusMethodInvocation *invoc)
+    {
+        CheckOwnerAccess(sender);
+        if (readonly)
+        {
+            g_dbus_method_invocation_return_dbus_error(invoc,
+                                                       "net.openvpn.v3.error.ReadOnly",
+                                                       "Configuration is sealed and readonly");
+            return;
+        }
+
+        GLibUtils::checkParams(__FUNCTION__, params, "(s)", 1);
+        std::string tag = GLibUtils::ExtractValue<std::string>(params, 0);
+        if (tag.empty())
+        {
+            g_dbus_method_invocation_return_dbus_error(invoc,
+                                                       "net.openvpn.v3.error.InvalidData",
+                                                       "Tag value cannot be empty");
+        }
+        else if (tag.length() > 128)
+        {
+            g_dbus_method_invocation_return_dbus_error(invoc,
+                                                       "net.openvpn.v3.error.InvalidData",
+                                                       "Tag value too long");
+        }
+        else
+        {
+            auto tpos = std::find(tags.begin(), tags.end(), tag);
+            if (tpos == tags.end())
+            {
+                g_dbus_method_invocation_return_dbus_error(invoc,
+                                                           "net.openvpn.v3.error.InvalidData",
+                                                           "Non-existing tag");
+            }
+            else
+            {
+                tags.erase(tpos);
+                update_persistent_file();
+                g_dbus_method_invocation_return_value(invoc, NULL);
+            }
+        }
+    }
+
+
+    /**
+     *  Implementation of AccessGrant()/AccessRevoke() D-Bus method
+     *
+     * @param sender
+     * @param params
+     * @param invoc
+     * @param revoke   Boolean flag indicating if it is a grant (false) or
+     *                 revoke (true) operation.
+     */
+    void handler_access_grant_revoke(const std::string &sender,
+                                     GVariant *params,
+                                     GDBusMethodInvocation *invoc,
+                                     bool revoke)
+    {
+        if (readonly)
+        {
+            g_dbus_method_invocation_return_dbus_error(invoc,
+                                                       "net.openvpn.v3.error.ReadOnly",
+                                                       "Configuration is sealed and readonly");
+            return;
+        }
+
+        try
+        {
+            CheckOwnerAccess(sender);
+
+            uid_t uid = -1;
+            g_variant_get(params, "(u)", &uid);
+            if (!revoke)
+            {
+                GrantAccess(uid);
+                LogInfo("Access granted to UID " + std::to_string(uid)
+                        + " by UID " + std::to_string(GetUID(sender)));
+            }
+            else
+            {
+                RevokeAccess(uid);
+                LogInfo("Access revoked for UID " + std::to_string(uid)
+                        + " by UID " + std::to_string(GetUID(sender)));
+            }
+            g_dbus_method_invocation_return_value(invoc, NULL);
+
+            update_persistent_file();
+        }
+        catch (DBusCredentialsException &excp)
+        {
+            LogWarn(excp.what());
+            excp.SetDBusError(invoc);
+        }
+    }
+
+
+    /**
+     *  Implementation of Seal() D-Bus method
+     *
+     * @param sender
+     * @param params
+     * @param invoc
+     */
+    void handler_seal(const std::string &sender,
+                      GVariant *params,
+                      GDBusMethodInvocation *invoc)
+    {
+        try
+        {
+            CheckOwnerAccess(sender);
+
+            if (valid)
+            {
+                readonly = true;
+                g_dbus_method_invocation_return_value(invoc, NULL);
+                update_persistent_file();
+            }
+            else
+            {
+                g_dbus_method_invocation_return_dbus_error(invoc,
+                                                           "net.openvpn.v3.error.InvalidData",
+                                                           "Configuration is not currently valid");
+            }
+        }
+        catch (DBusCredentialsException &excp)
+        {
+            LogWarn(excp.what());
+            excp.SetDBusError(invoc);
+        }
+    }
+
+
+    /**
+     *  Implementation of Remove() D-Bus method
+     *
+     * @param sender
+     * @param params
+     * @param invoc
+     */
+    void handler_remove(GDBusConnection *conn,
+                        const std::string &sender,
+                        GVariant *params,
+                        GDBusMethodInvocation *invoc)
+    {
+        try
+        {
+            CheckOwnerAccess(sender);
+            std::string sender_name = lookup_username(GetUID(sender));
+            LogInfo("Configuration '" + name + "' was removed by "
+                    + sender_name);
+            RemoveObject(conn);
+            g_dbus_method_invocation_return_value(invoc, NULL);
+
+            // If this is a persistent config, remove it from
+            // the file system too
+            if (!persistent_file.empty())
+            {
+                unlink(persistent_file.c_str());
+                LogVerb2("Persistent configuration profile removed: '"
+                         + persistent_file + "'");
+            }
+            delete this;
+        }
+        catch (DBusCredentialsException &excp)
+        {
+            LogWarn(excp.what());
+            excp.SetDBusError(invoc);
+        }
+    }
 };
 
 
