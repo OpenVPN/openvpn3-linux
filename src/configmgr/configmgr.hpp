@@ -424,27 +424,65 @@ class ConfigurationObject : public DBusObject,
         {
             handler_fetch_config(sender, params, invoc, false);
 
-            // If the fetching user is openvpn (which
-            // openvpn3-service-client runs as), we consider this
-            // configuration to be "used".
-            //
-            // If we don't have an UID for some reason, don't remove
-            // anything.
-            //
+            // Check if the requestor is a backend VPN client
+            // (openvpn3-service-client / net.openvpn.v3.backend.be$PID).
+            // If true, then the "used counter" for the profile will be updated
+            // and if the profile is a single-use profile, it will be removed
+            // instantly.
             try
             {
-                uid_t ovpn_uid;
+                bool is_backend_client = false;
                 try
                 {
-                    ovpn_uid = lookup_uid(OPENVPN_USERNAME);
+                    // There are two checks happening here:
+                    //
+                    // 1. Retrieve the PID value of the sender and the
+                    //    well-known bus name for the backend client
+                    //
+                    //    It is expected that the unqiue bus ID is
+                    //    tied to the same process as the well-known bus
+                    //    name, which indicates the correct information has
+                    //    been retrieved.
+                    //
+                    // 2. The well-known busname for the backend
+                    //    client is re-composed and the unique bus ID for
+                    //    this busname is retrieved from the main D-Bus service
+                    //
+                    //    This value will be used to compare the the unique
+                    //    bus ID with the bus ID provided in the "sender"
+                    //    variable.
+                    //
+                    // If both of these checks matches, the check is complete:
+                    // The PID of both the well-known and unique bus IDs
+                    // indicates it is the same process.  And the unique bus ID
+                    // from the well-known bus name (recomposed from the PID)
+                    // matches the unique bus ID from the requestor for this
+                    // call.
+
+                    pid_t sender_pid = GetPID(sender);
+
+                    // Re-compose the well-known bus name from the PID of the
+                    // sender.  If this call comes from a PID not being a
+                    // backend client, it will not be able to retrieve any
+                    // unique bus ID for the sender.
+                    std::string be_name;
+                    be_name = OpenVPN3DBus_name_backends_be
+                              + std::string(std::to_string(sender_pid));
+                    std::string be_unique = GetUniqueBusID(be_name);
+
+                    pid_t be_pid = GetPID(be_name);
+
+                    // Check if everything matches
+                    is_backend_client = (sender_pid == be_pid) && (sender == be_unique);
                 }
-                catch (const LookupException &excp)
+                catch (const DBusException &)
                 {
-                    excp.SetDBusError(invoc);
-                    return;
+                    // If any of these D-Bus checks (GetPID/GetUniqueBusID)
+                    // fails, it is not a backend client service.
+                    is_backend_client = false;
                 }
 
-                if (GetUID(sender) == ovpn_uid)
+                if (is_backend_client)
                 {
                     // If this config is tagged as single-use only then we delete this
                     // config from memory.
