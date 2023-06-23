@@ -1221,7 +1221,7 @@ class ConfigurationObject : public DBusObject,
                                                        "Configuration is sealed and readonly");
             return;
         }
-        GLibUtils::checkParams(__FUNCTION__, params, "(s)", 1);
+        GLibUtils::checkParams(__func__, params, "(s)", 1);
         std::string tag = GLibUtils::ExtractValue<std::string>(params, 0);
         if (tag.empty())
         {
@@ -1270,7 +1270,7 @@ class ConfigurationObject : public DBusObject,
             return;
         }
 
-        GLibUtils::checkParams(__FUNCTION__, params, "(s)", 1);
+        GLibUtils::checkParams(__func__, params, "(s)", 1);
         std::string tag = GLibUtils::ExtractValue<std::string>(params, 0);
         if (tag.empty())
         {
@@ -1863,7 +1863,7 @@ class ConfigManagerObject : public DBusObject,
                               GVariant *params,
                               GDBusMethodInvocation *invoc)
     {
-        GLibUtils::checkParams(__FUNCTION__, params, "(s)");
+        GLibUtils::checkParams(__func__, params, "(s)");
         std::string tagname = GLibUtils::ExtractValue<std::string>(params, 0);
 
         GVariantBuilder *found_tags = g_variant_builder_new(G_VARIANT_TYPE("ao"));
