@@ -1020,50 +1020,6 @@ class ConfigurationObject : public DBusObject,
         }
     }
 
-    /**
-     *
-     *
-     * @param sender
-     * @param params
-     * @param invoc
-     */
-    void handler_fetch_json(const std::string &sender,
-                            GVariant *params,
-                            GDBusMethodInvocation *invoc)
-    {
-        try
-        {
-            if (!locked_down)
-            {
-                CheckACL(sender);
-            }
-            else
-            {
-                // If the configuration is locked down, restrict any
-                // read-operations to the configuration profile owner
-                CheckOwnerAccess(sender);
-            }
-
-            std::stringstream jsoncfg;
-            jsoncfg << options.json_export();
-
-            g_dbus_method_invocation_return_value(invoc,
-                                                  g_variant_new("(s)",
-                                                                jsoncfg.str().c_str()));
-
-            // Do not remove single-use object with this method.
-            // FetchJSON is only used by front-ends, never backends.  So
-            // it still needs to be available when the backend calls Fetch.
-            //
-            // single-use configurations are an automation convenience,
-            // not a security feature.  Security is handled via ACLs.
-        }
-        catch (DBusCredentialsException &excp)
-        {
-            LogWarn(excp.what());
-            excp.SetDBusError(invoc);
-        }
-    }
 
     /**
      * Implementation of SetOption() D-Bus method
