@@ -207,11 +207,22 @@ inline GVariant *CreateVariantValue(std::string value)
  *
  *   @param builder  GVariantBuilder object where to add the value
  *   @param value    Templated value to add to the GVariantBuilder object
+ *   @param override_type (optional) If set, it will use the given type instead
+ *                        of deducting the D-Bus type for T
  */
 template <typename T>
-inline void GVariantBuilderAdd(GVariantBuilder *builder, T value)
+inline void GVariantBuilderAdd(GVariantBuilder *builder,
+                               T value,
+                               const char *override_type = nullptr)
 {
-    g_variant_builder_add(builder, GetDBusDataType<T>(), value);
+    if (override_type)
+    {
+        g_variant_builder_add(builder, override_type, value);
+    }
+    else
+    {
+        g_variant_builder_add(builder, GetDBusDataType<T>(), value);
+    }
 }
 
 /**
@@ -219,11 +230,22 @@ inline void GVariantBuilderAdd(GVariantBuilder *builder, T value)
  *
  *   @param builder  GVariantBuilder object where to add the value
  *   @param value    std::string value to add to the GVariantBuilder object
+ *   @param override_type (optional) If set, it will use the given type instead
+ *                        of using std::string as the expected type
  */
 template <>
-inline void GVariantBuilderAdd(GVariantBuilder *builder, std::string value)
+inline void GVariantBuilderAdd(GVariantBuilder *builder,
+                               std::string value,
+                               const char *override_type)
 {
-    g_variant_builder_add(builder, GetDBusDataType<std::string>(), value.c_str());
+    if (override_type)
+    {
+        g_variant_builder_add(builder, override_type, value.c_str());
+    }
+    else
+    {
+        g_variant_builder_add(builder, GetDBusDataType<std::string>(), value.c_str());
+    }
 }
 
 /**
@@ -231,17 +253,29 @@ inline void GVariantBuilderAdd(GVariantBuilder *builder, std::string value)
  *  array  builder of the D-Bus corresponding data type
  *
  * @param input  std::vector<T> to convert
+ * @param override_type (optional) If set, it will use the given type instead
+ *                      of deducting the D-Bus type for T
  *
  * @return Returns a GVariantBuilder object containing the complete array
  */
 template <typename T>
-inline GVariantBuilder *GVariantBuilderFromVector(const std::vector<T> input)
+inline GVariantBuilder *GVariantBuilderFromVector(const std::vector<T> input,
+                                                  const char *override_type = nullptr)
 {
-    std::string type = "a" + std::string(GetDBusDataType<T>());
+    std::string type = {};
+    if (override_type)
+    {
+        type = std::string("a") + std::string(override_type);
+    }
+    else
+    {
+        type = std::string("a") + std::string(GetDBusDataType<T>());
+    }
+
     GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE(type.c_str()));
     for (const auto &e : input)
     {
-        GVariantBuilderAdd(bld, e);
+        GVariantBuilderAdd(bld, e, override_type);
     }
 
     return bld;
