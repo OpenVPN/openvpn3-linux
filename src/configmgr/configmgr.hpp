@@ -294,10 +294,10 @@ class ConfigurationObject : public DBusObject,
             switch (ov.type())
             {
             case Json::ValueType::booleanValue:
-                set_override(ovkey.c_str(), ov.asBool());
+                set_override(ovkey, ov.asBool());
                 break;
             case Json::ValueType::stringValue:
-                set_override(ovkey.c_str(), ov.asString());
+                set_override(ovkey, ov.asString());
                 break;
             default:
                 THROW_DBUSEXCEPTION("ConfigurationObject",
@@ -704,8 +704,7 @@ class ConfigurationObject : public DBusObject,
             GVariantBuilder *ret = NULL;
             if (("name" == property_name) && conn)
             {
-                gsize len = 0;
-                name = std::string(g_variant_get_string(value, &len));
+                name = GLibUtils::GetVariantValue<std::string>(value);
                 ret = build_set_property_response(property_name, name);
             }
             else if (("locked_down" == property_name) && conn)
@@ -717,7 +716,7 @@ class ConfigurationObject : public DBusObject,
             }
             else if (("public_access" == property_name) && conn)
             {
-                bool acl_public = g_variant_get_boolean(value);
+                bool acl_public = GLibUtils::GetVariantValue<bool>(value);
                 SetPublicAccess(acl_public);
                 ret = build_set_property_response(property_name, acl_public);
                 LogInfo("Public access set to "
@@ -779,13 +778,12 @@ class ConfigurationObject : public DBusObject,
         std::string g_type(g_variant_get_type_string(value));
         if ("s" == g_type)
         {
-            gsize len = 0;
-            std::string v(g_variant_get_string(value, &len));
+            std::string v = GLibUtils::GetVariantValue<std::string>(value);
             return set_override(key, v);
         }
         else if ("b" == g_type)
         {
-            return set_override(key, g_variant_get_boolean(value));
+            return set_override(key, GLibUtils::GetVariantValue<bool>(value));
         }
         THROW_DBUSEXCEPTION("ConfigurationObject",
                             "Unsupported override data type: " + g_type);
@@ -802,7 +800,7 @@ class ConfigurationObject : public DBusObject,
      *          array of override settings
      */
     template <typename T>
-    OverrideValue set_override(const gchar *key, T value)
+    OverrideValue set_override(const std::string &key, T value)
     {
         const ValidOverride &vo = GetConfigOverride(key);
         if (!vo.valid())
@@ -837,7 +835,7 @@ class ConfigurationObject : public DBusObject,
      *
      * @return Returns true on successful removal, otherwise false.
      */
-    bool remove_override(const gchar *key)
+    bool remove_override(const std::string &key)
     {
         for (auto it = override_list.begin(); it != override_list.end(); it++)
         {
@@ -1077,9 +1075,9 @@ class ConfigurationObject : public DBusObject,
         try
         {
             CheckOwnerAccess(sender);
-            gchar *key = nullptr;
-            GVariant *val = nullptr;
-            g_variant_get(params, "(sv)", &key, &val);
+            GLibUtils::checkParams(__func__, params, "(sv)");
+            std::string key = GLibUtils::ExtractValue<std::string>(params, 0);
+            GVariant *val = g_variant_get_child_value(params, 1);
 
             const OverrideValue vo = set_override(key, val);
 
@@ -1092,8 +1090,6 @@ class ConfigurationObject : public DBusObject,
             LogInfo("Setting configuration override '" + std::string(key)
                     + "' to '" + newValue + "' by UID " + std::to_string(GetUID(sender)));
 
-            g_free(key);
-            // g_variant_unref(val);
             g_dbus_method_invocation_return_value(invoc, NULL);
             update_persistent_file();
         }
@@ -1131,8 +1127,9 @@ class ConfigurationObject : public DBusObject,
         try
         {
             CheckOwnerAccess(sender);
-            gchar *key = nullptr;
-            g_variant_get(params, "(s)", &key);
+            GLibUtils::checkParams(__func__, params, "(s)");
+            std::string key = GLibUtils::ExtractValue<std::string>(params, 0);
+
             if (remove_override(key))
             {
                 LogInfo("Unset configuration override '" + std::string(key)
@@ -1143,13 +1140,12 @@ class ConfigurationObject : public DBusObject,
             else
             {
                 std::stringstream err;
-                err << "Override '" << std::string(key) << "' has "
+                err << "Override '" << key << "' has "
                     << "not been set";
                 g_dbus_method_invocation_return_dbus_error(invoc,
                                                            "net.openvpn.v3.error.OverrideNotSet",
                                                            err.str().c_str());
             }
-            g_free(key);
             update_persistent_file();
         }
         catch (DBusCredentialsException &excp)
@@ -1286,9 +1282,9 @@ class ConfigurationObject : public DBusObject,
         try
         {
             CheckOwnerAccess(sender);
+            GLibUtils::checkParams(__func__, params, "(u)");
+            uid_t uid = GLibUtils::ExtractValue<uint32_t>(params, 0);
 
-            uid_t uid = -1;
-            g_variant_get(params, "(u)", &uid);
             if (!revoke)
             {
                 GrantAccess(uid);
@@ -1769,10 +1765,10 @@ class ConfigManagerObject : public DBusObject,
                                    GVariant *params,
                                    GDBusMethodInvocation *invoc)
     {
-        gchar *cfgname_c = nullptr;
-        g_variant_get(params, "(s)", &cfgname_c);
+        GLibUtils::checkParams(__func__, params, "(s)", 1);
+        std::string cfgname = GLibUtils::ExtractValue<std::string>(params, 0);
 
-        if (nullptr == cfgname_c || strlen(cfgname_c) < 1)
+        if (cfgname.empty())
         {
             GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.name",
                                                           "Invalid configuration name");
@@ -1871,9 +1867,9 @@ class ConfigManagerObject : public DBusObject,
             g_error_free(err);
             return;
         }
-        gchar *cfgpath = nullptr;
-        uid_t new_uid = 0;
-        g_variant_get(params, "(ou)", &cfgpath, &new_uid);
+        GLibUtils::checkParams(__func__, params, "(ou)");
+        std::string cfgpath = GLibUtils::ExtractValue<std::string>(params, 0);
+        uid_t new_uid = GLibUtils::ExtractValue<uid_t>(params, 1);
 
         for (const auto &ci : config_objects)
         {
