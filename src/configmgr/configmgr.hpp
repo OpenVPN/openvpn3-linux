@@ -1723,7 +1723,7 @@ class ConfigManagerObject : public DBusObject,
                                     GDBusMethodInvocation *invoc)
     {
         // Build up an array of object paths to available config objects
-        GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("ao"));
+        std::vector<std::string> paths = {};
         for (auto &item : config_objects)
         {
             try
@@ -1732,7 +1732,7 @@ class ConfigManagerObject : public DBusObject,
                 // configuration object.  If not, an exception is thrown
                 // and we will just ignore that exception and continue
                 item.second->CheckACL(sender);
-                g_variant_builder_add(bld, "o", item.first.c_str());
+                paths.push_back(item.first);
             }
             catch (DBusCredentialsException &excp)
             {
@@ -1740,17 +1740,12 @@ class ConfigManagerObject : public DBusObject,
                 // caller does not have access this configuration object
             }
         }
+        GVariantBuilder *bld = GLibUtils::GVariantBuilderFromVector(paths, "o");
 
         // Wrap up the result into a tuple, which GDBus expects and
         // put it into the invocation response
-        GVariantBuilder *ret = g_variant_builder_new(G_VARIANT_TYPE_TUPLE);
-        g_variant_builder_add_value(ret, g_variant_builder_end(bld));
         g_dbus_method_invocation_return_value(invoc,
-                                              g_variant_builder_end(ret));
-
-        // Clean-up
-        g_variant_builder_unref(bld);
-        g_variant_builder_unref(ret);
+                                              GLibUtils::wrapInTuple(bld));
     }
 
 
@@ -1776,11 +1771,8 @@ class ConfigManagerObject : public DBusObject,
             g_error_free(err);
             return;
         }
-        std::string cfgname(cfgname_c);
-        g_free(cfgname_c);
 
-        // Build up an array of object paths to available config objects
-        GVariantBuilder *found_paths = g_variant_builder_new(G_VARIANT_TYPE("ao"));
+        std::vector<std::string> paths = {};
         for (const auto &item : config_objects)
         {
             if (item.second->GetConfigName() == cfgname)
@@ -1791,9 +1783,7 @@ class ConfigManagerObject : public DBusObject,
                     // configuration object.  If not, an exception is thrown
                     // and we will just ignore that exception and continue
                     item.second->CheckACL(sender);
-                    g_variant_builder_add(found_paths,
-                                          "o",
-                                          item.first.c_str());
+                    paths.push_back(item.first);
                 }
                 catch (DBusCredentialsException &excp)
                 {
@@ -1802,6 +1792,9 @@ class ConfigManagerObject : public DBusObject,
                 }
             }
         }
+
+        // Build up an array of object paths to available config objects
+        GVariantBuilder *found_paths = GLibUtils::GVariantBuilderFromVector(paths, "o");
         g_dbus_method_invocation_return_value(invoc, GLibUtils::wrapInTuple(found_paths));
     }
 
@@ -1820,7 +1813,7 @@ class ConfigManagerObject : public DBusObject,
         GLibUtils::checkParams(__func__, params, "(s)");
         std::string tagname = GLibUtils::ExtractValue<std::string>(params, 0);
 
-        GVariantBuilder *found_tags = g_variant_builder_new(G_VARIANT_TYPE("ao"));
+        std::vector<std::string> paths = {};
         for (const auto &item : config_objects)
         {
             if (item.second->CheckForTag(tagname))
@@ -1828,9 +1821,7 @@ class ConfigManagerObject : public DBusObject,
                 try
                 {
                     item.second->CheckACL(sender);
-                    g_variant_builder_add(found_tags,
-                                          "o",
-                                          item.second->GetObjectPath().c_str());
+                    paths.push_back(item.second->GetObjectPath());
                 }
                 catch (const DBusCredentialsException &)
                 {
@@ -1840,6 +1831,7 @@ class ConfigManagerObject : public DBusObject,
                 }
             }
         }
+        GVariantBuilder *found_tags = GLibUtils::GVariantBuilderFromVector(paths, "o");
         g_dbus_method_invocation_return_value(invoc, GLibUtils::wrapInTuple(found_tags));
     }
 
