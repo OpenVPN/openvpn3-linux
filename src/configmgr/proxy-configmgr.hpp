@@ -100,11 +100,9 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
                                 "Failed to import configuration");
         }
 
-        gchar *buf = nullptr;
-        g_variant_get(res, "(o)", &buf);
-        std::string ret(buf);
+        GLibUtils::checkParams(__func__, res, "(o)");
+        std::string ret = GLibUtils::ExtractValue<std::string>(res, 0);
         g_variant_unref(res);
-        g_free(buf);
 
         return ret;
     }
@@ -185,11 +183,9 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
                                 "Failed to retrieve configuration (JSON format)");
         }
 
-        gchar *buf = nullptr;
-        g_variant_get(res, "(s)", &buf);
-        std::string ret(buf);
+        GLibUtils::checkParams(__func__, res, "(s)");
+        std::string ret = GLibUtils::ExtractValue<std::string>(res, 0);
         g_variant_unref(res);
-        g_free(buf);
 
         return ret;
     }
@@ -203,11 +199,9 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
             THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy", "Failed to retrieve configuration");
         }
 
-        gchar *buf = nullptr;
-        g_variant_get(res, "(s)", &buf);
-        std::string ret(buf);
+        GLibUtils::checkParams(__func__, res, "(s)");
+        std::string ret = GLibUtils::ExtractValue<std::string>(res, 0);
         g_variant_unref(res);
-        g_free(buf);
 
         return ret;
     }
@@ -441,13 +435,12 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
             }
             if (OverrideType::string == vo.type)
             {
-                gsize len = 0;
-                std::string v(g_variant_get_string(val, &len));
+                std::string v(GLibUtils::GetVariantValue<std::string>(val));
                 ret.push_back(OverrideValue(vo, v));
             }
             else if (OverrideType::boolean == vo.type)
             {
-                bool v = g_variant_get_boolean(val);
+                bool v = GLibUtils::GetVariantValue<bool>(val);
                 ret.push_back(OverrideValue(vo, v));
             }
         }
@@ -658,7 +651,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
         std::vector<uid_t> ret;
         while ((uid = g_variant_iter_next_value(acl)))
         {
-            ret.push_back(g_variant_get_uint32(uid));
+            ret.push_back(GLibUtils::GetVariantValue<uid_t>(uid));
             g_variant_unref(uid);
         }
         g_variant_unref(res);
