@@ -362,6 +362,41 @@ inline GVariant *CreateEmptyBuilderFromType(const char *type)
 }
 
 
+/**
+ *  Generic parser for lists (arrays) of a single data type into std::vector
+ *
+ * @tparam T              Data type of the std::vector result type
+ * @param params          GVariant pointer to the data to parse
+ * @param override_type   (optional) Override the data type. Normally extracted
+                          via the C++ data type (T), but some types may need
+                          a different D-Bus data type
+ * @param wrapped         Is the result wrapped as a tuple
+ * @return std::vector<T>
+ */
+template <typename T>
+inline std::vector<T> ParseGVariantList(GVariant *params, const char *override_type = nullptr, bool wrapped = true)
+{
+    std::stringstream type = {};
+    type << (wrapped ? "(" : "")
+         << "a"
+         << (override_type ? std::string(override_type) : std::string(GetDBusDataType<T>()))
+         << (wrapped ? ")" : "");
+
+    GVariantIter *list = nullptr;
+    g_variant_get(params, type.str().c_str(), &list);
+
+    std::vector<T> ret = {};
+    GVariant *rec = nullptr;
+    while ((rec = g_variant_iter_next_value(list)))
+    {
+        ret.push_back(GLibUtils::GetVariantValue<T>(rec));
+        g_variant_unref(rec);
+    }
+    g_variant_unref(params);
+    g_variant_iter_free(list);
+    return ret;
+}
+
 
 /**
  *  Validate the data type provided in a GVariant object against
