@@ -122,19 +122,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
             THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
                                 "Failed to retrieve available configurations");
         }
-        GVariantIter *cfgpaths = NULL;
-        g_variant_get(res, "(ao)", &cfgpaths);
-
-        GVariant *path = NULL;
-        std::vector<std::string> ret;
-        while ((path = g_variant_iter_next_value(cfgpaths)))
-        {
-            gsize len;
-            ret.push_back(std::string(g_variant_get_string(path, &len)));
-            g_variant_unref(path);
-        }
-        g_variant_unref(res);
-        g_variant_iter_free(cfgpaths);
+        std::vector<std::string> ret = GLibUtils::ParseGVariantList<std::string>(res, "o");
         return ret;
     }
 
@@ -158,18 +146,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
             THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
                                 "Failed to lookup configuration names");
         }
-        GVariantIter *cfgpaths = nullptr;
-        g_variant_get(res, "(ao)", &cfgpaths);
-
-        GVariant *path = nullptr;
-        std::vector<std::string> ret;
-        while ((path = g_variant_iter_next_value(cfgpaths)))
-        {
-            ret.push_back(GLibUtils::GetVariantValue<std::string>(path));
-            g_variant_unref(path);
-        }
-        g_variant_unref(res);
-        g_variant_iter_free(cfgpaths);
+        std::vector<std::string> ret = GLibUtils::ParseGVariantList<std::string>(res, "o");
         return ret;
     }
 
@@ -555,22 +532,15 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
             THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
                                 "GetTags() call failed");
         }
-        GVariantIter *tags = nullptr;
-        g_variant_get(res, "as", &tags);
 
-        GVariant *tag = nullptr;
         std::vector<std::string> ret;
-        while ((tag = g_variant_iter_next_value(tags)))
+        for (const auto &tag : GLibUtils::ParseGVariantList<std::string>(res, "s", false))
         {
-            std::string t = GLibUtils::GetVariantValue<std::string>(tag);
-            if ("system:" != t.substr(0, 7))
+            if ("system:" != tag.substr(0, 7))
             {
-                ret.push_back(t);
+                ret.push_back(tag);
             }
-            g_variant_unref(tag);
         }
-        g_variant_iter_free(tags);
-        g_variant_unref(res);
         return ret;
     }
 
@@ -644,18 +614,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
             THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
                                 "GetAccessList() call failed");
         }
-        GVariantIter *acl = NULL;
-        g_variant_get(res, "au", &acl);
-
-        GVariant *uid = NULL;
-        std::vector<uid_t> ret;
-        while ((uid = g_variant_iter_next_value(acl)))
-        {
-            ret.push_back(GLibUtils::GetVariantValue<uid_t>(uid));
-            g_variant_unref(uid);
-        }
-        g_variant_unref(res);
-        g_variant_iter_free(acl);
+        std::vector<uid_t> ret = GLibUtils::ParseGVariantList<uid_t>(res, "u", false);
         return ret;
     }
 
