@@ -25,6 +25,8 @@ node /net/openvpn/v3/configuration {
                        out ao config_paths);
       SearchByTag(in  s tag,
                   out ao paths);
+      SearchByOwner(in  s owner,
+                    out ao paths);
       TransferOwnership(in  o path,
                         in  u new_owner_uid);
     signals:
@@ -85,6 +87,18 @@ caller is granted access to which is tagged with the specified tag name.
 |-----------|--------------|--------------|-----------------------------------------------------------------------|
 | In        | tag          | string       | String containing the tag name to search for                          |
 | Out       | config_paths | object paths | An array of object paths of matching and available configuration objects |
+
+
+### Method: `net.openvpn.v3.configuration.SearchByOwner`
+
+This method will return an array of object paths to configuration objects the
+caller is granted access to which is owned by the specified user.
+
+#### Arguments
+| Direction | Name         | Type         | Description                                                           |
+|-----------|--------------|--------------|-----------------------------------------------------------------------|
+| In        | owner        | string       | String containing the owner    to search for                          |
+| Out       | paths        | object paths | An array of object paths of matching and available configuration objects |
 
 
 ### Method: `net.openvpn3.v3.configuration.TransferOwnership`

@@ -1449,6 +1449,10 @@ class ConfigManagerObject : public DBusObject,
                           << "           <arg type='s' name='tag' direction='in'/>"
                           << "           <arg type='ao' name='paths' direction='out'/>"
                           << "        </method>"
+                          << "        <method name='SearchByOwner'>"
+                          << "           <arg type='s' name='owner' direction='in'/>"
+                          << "           <arg type='ao' name='paths' direction='out'/>"
+                          << "        </method>"
                           << "        <method name='TransferOwnership'>"
                           << "           <arg type='o' name='path' direction='in'/>"
                           << "           <arg type='u' name='new_owner_uid' direction='in'/>"
@@ -1565,6 +1569,11 @@ class ConfigManagerObject : public DBusObject,
         else if ("SearchByTag" == method_name)
         {
             handle_search_by_tag(sender, params, invoc);
+            return;
+        }
+        else if ("SearchByOwner" == method_name)
+        {
+            handle_search_by_owner(sender, params, invoc);
             return;
         }
         else if ("TransferOwnership" == method_name)
@@ -1817,6 +1826,53 @@ class ConfigManagerObject : public DBusObject,
         for (const auto &item : config_objects)
         {
             if (item.second->CheckForTag(tagname))
+            {
+                try
+                {
+                    item.second->CheckACL(sender);
+                    paths.push_back(item.second->GetObjectPath());
+                }
+                catch (const DBusCredentialsException &)
+                {
+                    // Ignore credentials failures; this user does not
+                    // have access to this configuration profile - which
+                    // is fine to ignore in this case
+                }
+            }
+        }
+        GVariantBuilder *found_tags = GLibUtils::GVariantBuilderFromVector(paths, "o");
+        g_dbus_method_invocation_return_value(invoc, GLibUtils::wrapInTuple(found_tags));
+    }
+
+
+    /**
+     *  Implementation of SearchByOwner() D-Bus method
+     *
+     * @param sender
+     * @param params
+     * @param invoc
+     */
+    void handle_search_by_owner(const std::string &sender,
+                                GVariant *params,
+                                GDBusMethodInvocation *invoc)
+    {
+        GLibUtils::checkParams(__func__, params, "(s)");
+        std::string owner_str = GLibUtils::ExtractValue<std::string>(params, 0);
+        uid_t owner;
+        try
+        {
+            owner = get_userid(owner_str);
+        }
+        catch (const LookupException &err)
+        {
+            err.SetDBusError(invoc);
+            return;
+        }
+
+        std::vector<std::string> paths = {};
+        for (const auto &item : config_objects)
+        {
+            if (item.second->GetOwnerUID() == owner)
             {
                 try
                 {
