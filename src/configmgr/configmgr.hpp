@@ -15,13 +15,15 @@
 #include <map>
 #include <ctime>
 
+#include "config.h"
+
 #include <openvpn/log/logsimple.hpp>
+#include "dbus/core.hpp"
 #include "common/cmdargparser-exceptions.hpp"
 #include "common/core-extensions.hpp"
 #include "common/lookup.hpp"
 #include "common/utils.hpp"
 #include "configmgr/overrides.hpp"
-#include "dbus/core.hpp"
 #include "dbus/connection-creds.hpp"
 #include "dbus/exceptions.hpp"
 #include "dbus/object-property.hpp"
