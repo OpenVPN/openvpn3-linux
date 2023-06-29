@@ -209,6 +209,12 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
     OpenVPN3ConfigurationProxy confmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration);
     confmgr.Ping();
 
+    std::string filter_cfgname = {};
+    if (args->Present("filter-config"))
+    {
+        filter_cfgname = args->GetValue("filter-config", 0);
+    }
+
     std::cout << "Configuration path" << std::endl;
     std::cout << "Imported" << std::setw(32 - 8) << std::setfill(' ') << " "
               << "Last used" << std::setw(26 - 9) << " "
@@ -228,13 +234,13 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
         }
         OpenVPN3ConfigurationProxy cprx(G_BUS_TYPE_SYSTEM, cfg);
 
-        if (!first)
-        {
-            std::cout << std::endl;
-        }
-        first = false;
-
         std::string name = cprx.GetStringProperty("name");
+        if (!filter_cfgname.empty()
+            && name.substr(0, filter_cfgname.length()) != filter_cfgname)
+        {
+            continue;
+        }
+
         std::string user = lookup_username(cprx.GetUIntProperty("owner"));
 
         std::time_t imp_tstamp = cprx.GetUInt64Property("import_timestamp");
@@ -249,6 +255,12 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
             last_used.erase(last_used.find_last_not_of(" \n") + 1); // rtrim
         }
         unsigned int used_count = cprx.GetUIntProperty("used_count");
+
+        if (!first)
+        {
+            std::cout << std::endl;
+        }
+        first = false;
 
         std::cout << cfg << std::endl;
         std::cout << imported << std::setw(32 - imported.size()) << std::setfill(' ') << " "
@@ -277,6 +289,11 @@ SingleCommand::Ptr prepare_command_configs_list()
     cmd.reset(new SingleCommand("configs-list",
                                 "List all available configuration profiles",
                                 cmd_configs_list));
+    cmd->AddOption("filter-config",
+                   "NAME-PREFIX",
+                   true,
+                   "Filter configurations starting with the given prefix");
+
     return cmd;
 }
 

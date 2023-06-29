@@ -25,6 +25,10 @@ OPTIONS
 
 -h, --help               Print  usage and help details to the terminal
 
+--filter-config NAME-PREFIX
+        Filter the list of configuration profiles to only consider
+        profiles starting with the given prefix value.
+
 SEE ALSO
 ========
 
