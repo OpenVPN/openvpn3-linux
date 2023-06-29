@@ -209,10 +209,16 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
     OpenVPN3ConfigurationProxy confmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration);
     confmgr.Ping();
 
+    args->CheckExclusiveOptions({{"filter-tag", "filter-owner"}});
+
     std::vector<std::string> config_list = {};
     if (args->Present("filter-tag"))
     {
         config_list = confmgr.SearchByTag(args->GetValue("filter-tag", 0));
+    }
+    else if (args->Present("filter-owner"))
+    {
+        config_list = confmgr.SearchByOwner(args->GetValue("filter-owner", 0));
     }
     else
     {
@@ -310,6 +316,10 @@ SingleCommand::Ptr prepare_command_configs_list()
                    "TAG-VALUE",
                    true,
                    "Only list configurations with the given tag");
+    cmd->AddOption("filter-owner",
+                   "OWNER",
+                   true,
+                   "Only list configurations belonging to a user");
 
     return cmd;
 }

@@ -33,6 +33,11 @@ OPTIONS
         Filter the list of configuration profiles to only consider
         profiles assigned with the given tag value.
 
+--filter-owner OWNER
+        Filter the list of configuration profiles to only consider
+        profiles owned by the given user.  Only profiles accessible by
+        the calling user will be listed.
+
 
 SEE ALSO
 ========
