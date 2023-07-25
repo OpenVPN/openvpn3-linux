@@ -25,6 +25,11 @@ OPTIONS
 
 -h, --help               Print  usage and help details to the terminal
 
+--count
+        Instead of listing all configuration profiles, only report the
+        number of configuration profiles found.  This will also consider
+        any filters used.
+
 --filter-config NAME-PREFIX
         Filter the list of configuration profiles to only consider
         profiles starting with the given prefix value.

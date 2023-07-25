@@ -232,17 +232,22 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
         filter_cfgname = args->GetValue("filter-config", 0);
     }
 
-    std::cout << "Configuration path" << std::endl;
-    std::cout << "Imported" << std::setw(32 - 8) << std::setfill(' ') << " "
-              << "Last used" << std::setw(26 - 9) << " "
-              << "Used"
-              << std::endl;
-    std::cout << "Name" << std::setw(58 - 4) << " "
-              << "Owner"
-              << std::endl;
-    std::cout << std::setw(32 + 26 + 18 + 2) << std::setfill('-') << "-" << std::endl;
+    bool only_count = args->Present("count");
+    if (!only_count)
+    {
+        std::cout << "Configuration path" << std::endl;
+        std::cout << "Imported" << std::setw(32 - 8) << std::setfill(' ') << " "
+                  << "Last used" << std::setw(26 - 9) << " "
+                  << "Used"
+                  << std::endl;
+        std::cout << "Name" << std::setw(58 - 4) << " "
+                  << "Owner"
+                  << std::endl;
+        std::cout << std::setw(32 + 26 + 18 + 2) << std::setfill('-') << "-" << std::endl;
+    }
 
     bool first = true;
+    uint32_t cfgcount = 0;
     for (auto &cfg : config_list)
     {
         if (cfg.empty())
@@ -256,6 +261,13 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
             && name.substr(0, filter_cfgname.length()) != filter_cfgname)
         {
             continue;
+        }
+        ++cfgcount;
+
+        if (only_count)
+        {
+            continue;
+            // We don't want to print any config details in this mode
         }
 
         std::string user = lookup_username(cprx.GetUIntProperty("owner"));
@@ -287,7 +299,15 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
         std::cout << name << std::setw(58 - name.size()) << " " << user
                   << std::endl;
     }
-    std::cout << std::setw(32 + 26 + 18 + 2) << std::setfill('-') << "-" << std::endl;
+    if (!only_count)
+    {
+        std::cout << std::setw(32 + 26 + 18 + 2) << std::setfill('-')
+                  << "-" << std::endl;
+    }
+    else
+    {
+        std::cout << "Configurations found: " << std::to_string(cfgcount) << std::endl;
+    }
     return 0;
 }
 
@@ -307,11 +327,12 @@ SingleCommand::Ptr prepare_command_configs_list()
                                 "List all available configuration profiles",
                                 cmd_configs_list));
 
+    cmd->AddOption("count",
+                   "Only report the number of configurations found");
     cmd->AddOption("filter-config",
                    "NAME-PREFIX",
                    true,
                    "Filter configurations starting with the given prefix");
-
     cmd->AddOption("filter-tag",
                    "TAG-VALUE",
                    true,
