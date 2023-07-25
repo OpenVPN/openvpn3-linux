@@ -232,17 +232,29 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
         filter_cfgname = args->GetValue("filter-config", 0);
     }
 
+    bool verbose = args->Present("verbose");
     bool only_count = args->Present("count");
     if (!only_count)
     {
-        std::cout << "Configuration path" << std::endl;
-        std::cout << "Imported" << std::setw(32 - 8) << std::setfill(' ') << " "
-                  << "Last used" << std::setw(26 - 9) << " "
-                  << "Used"
-                  << std::endl;
-        std::cout << "Name" << std::setw(58 - 4) << " "
-                  << "Owner"
-                  << std::endl;
+        if (verbose)
+        {
+            std::cout << "Configuration path" << std::endl;
+            std::cout << "Imported" << std::setw(32 - 8) << std::setfill(' ') << " "
+                      << "Last used" << std::setw(26 - 9) << " "
+                      << "Used"
+                      << std::endl;
+            std::cout << "Configuration Name" << std::setw(58 - 18) << " "
+                      << "Owner"
+                      << std::endl;
+            std::cout << "Tags"
+                      << std::endl;
+        }
+        else
+        {
+            std::cout << "Configuration Name" << std::setw(58 - 18) << std::setfill(' ') << " "
+                      << "Last used"
+                      << std::endl;
+        }
         std::cout << std::setw(32 + 26 + 18 + 2) << std::setfill('-') << "-" << std::endl;
     }
 
@@ -270,34 +282,67 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
             // We don't want to print any config details in this mode
         }
 
-        std::string user = lookup_username(cprx.GetUIntProperty("owner"));
-
-        std::time_t imp_tstamp = cprx.GetUInt64Property("import_timestamp");
-        std::string imported(std::asctime(std::localtime(&imp_tstamp)));
-        imported.erase(imported.find_last_not_of(" \n") + 1); // rtrim
-
         std::time_t last_u_tstamp = cprx.GetUInt64Property("last_used_timestamp");
         std::string last_used;
         if (last_u_tstamp > 0)
         {
-            last_used = std::asctime(std::localtime(&last_u_tstamp));
-            last_used.erase(last_used.find_last_not_of(" \n") + 1); // rtrim
+            std::stringstream tmp;
+            tmp << std::put_time(std::localtime(&last_u_tstamp), "%F %X");
+            last_used = tmp.str();
         }
-        unsigned int used_count = cprx.GetUIntProperty("used_count");
 
-        if (!first)
+        if (!verbose)
         {
-            std::cout << std::endl;
+            std::cout << name << std::setw(58 - name.size()) << std::setfill(' ') << " "
+                      << (last_used.length() > 0 ? last_used : "-")
+                      << std::endl;
         }
-        first = false;
+        else
+        {
+            std::string user = lookup_username(cprx.GetUIntProperty("owner"));
 
-        std::cout << cfg << std::endl;
-        std::cout << imported << std::setw(32 - imported.size()) << std::setfill(' ') << " "
-                  << last_used << std::setw(26 - last_used.size()) << " "
-                  << std::to_string(used_count)
-                  << std::endl;
-        std::cout << name << std::setw(58 - name.size()) << " " << user
-                  << std::endl;
+            std::time_t imp_tstamp = cprx.GetUInt64Property("import_timestamp");
+            std::stringstream imptmp;
+            imptmp << std::put_time(std::localtime(&imp_tstamp), "%F %X");
+            std::string imported = imptmp.str();
+
+            unsigned int used_count = cprx.GetUIntProperty("used_count");
+
+            if (!first)
+            {
+                std::cout << std::endl;
+            }
+            first = false;
+
+            std::cout << cfg << std::endl;
+            std::cout << imported << std::setw(32 - imported.size()) << std::setfill(' ') << " "
+                      << last_used << std::setw(26 - last_used.size()) << " "
+                      << std::to_string(used_count)
+                      << std::endl;
+            std::cout << name << std::setw(58 - name.size()) << " " << user
+                      << std::endl;
+
+            std::cout << "Tags: ";
+            size_t l = 6;
+            size_t tc = 0;
+            for (const auto &t : cprx.GetTags())
+            {
+                if (l > 6)
+                {
+                    std::cout << ", ";
+                }
+                l += t.length() + 2;
+                if (l > 78)
+                {
+                    l = 6;
+                    std::cout << std::endl
+                              << "      ";
+                }
+                std::cout << t;
+                ++tc;
+            }
+            std::cout << (0 == tc ? "(none)" : "") << std::endl;
+        }
     }
     if (!only_count)
     {
@@ -329,6 +374,9 @@ SingleCommand::Ptr prepare_command_configs_list()
 
     cmd->AddOption("count",
                    "Only report the number of configurations found");
+    cmd->AddOption("verbose",
+                   'v',
+                   "Provide more information about each configuration profile");
     cmd->AddOption("filter-config",
                    "NAME-PREFIX",
                    true,

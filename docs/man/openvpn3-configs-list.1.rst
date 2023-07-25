@@ -30,6 +30,9 @@ OPTIONS
         number of configuration profiles found.  This will also consider
         any filters used.
 
+-v, --verbose
+        Provide more details about each configuration profile available.
+
 --filter-config NAME-PREFIX
         Filter the list of configuration profiles to only consider
         profiles starting with the given prefix value.
