@@ -318,10 +318,6 @@ class BackendStarterObject : public DBusObject,
                 }
                 env[idx] = nullptr;
             }
-            else
-            {
-                env = nullptr;
-            }
 
             execve(args[0], args, env);
 
