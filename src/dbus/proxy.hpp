@@ -153,6 +153,7 @@ class DBusProxy : public DBus
         GVariant *res = dbus_proxy_call(introsprx, "Introspect", nullptr, false, G_DBUS_CALL_FLAGS_NONE);
         if (nullptr == res)
         {
+            g_object_unref(introsprx);
             THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
                                 "Failed to call introspect method");
         }
@@ -161,6 +162,7 @@ class DBusProxy : public DBus
         doc.reset(new Xml::Document(GLibUtils::ExtractValue<std::string>(res, 0),
                                     "introspect"));
         g_variant_unref(res);
+        g_object_unref(introsprx);
 
         return doc;
     }
@@ -220,14 +222,14 @@ class DBusProxy : public DBus
      */
     void CheckServiceAvail()
     {
-        GDBusProxy *proxy = SetupProxy("org.freedesktop.DBus",
-                                       "org.freedesktop.DBus",
-                                       "/");
+        GDBusProxy *prx = SetupProxy("org.freedesktop.DBus",
+                                     "org.freedesktop.DBus",
+                                     "/");
         for (int i = 5; i > 0; --i)
         {
             try
             {
-                GVariant *r = dbus_proxy_call(proxy,
+                GVariant *r = dbus_proxy_call(prx,
                                               "StartServiceByName",
                                               g_variant_new("(su)",
                                                             bus_name.c_str(),
@@ -245,7 +247,7 @@ class DBusProxy : public DBus
                     {
                         // When getting a clear evidence the service
                         // is already running, no need to bother more
-                        return;
+                        break;
                     }
 
                     // FIXME:  Try to find better ways to
@@ -255,18 +257,23 @@ class DBusProxy : public DBus
                     //         with CheckObjectExists()?  Using Ping()
                     //         now for the initial testing
                     Ping();
-                    return;
+                    break;
                 }
             }
             catch (DBusException &excp)
             {
                 if (1 == i)
                 {
+                    g_object_unref(prx);
                     THROW_DBUSEXCEPTION("DBusProxy",
                                         "D-Bus service '" + bus_name + "' did not start");
                 }
                 sleep(1);
             }
+        }
+        if (prx && G_IS_OBJECT(prx))
+        {
+            g_object_unref(prx);
         }
     }
 
@@ -378,12 +385,13 @@ class DBusProxy : public DBus
                     g_variant_unref(empty);
                 }
                 usleep(400); // Add some additional gracetime
-                return;
+                break;
             }
             catch (DBusException &excp)
             {
                 if (2 == i)
                 {
+                    g_object_unref(peer_proxy);
                     THROW_DBUSEXCEPTION("DBusProxy",
                                         "D-Bus service '"
                                             + bus_name + "' did not respond");
@@ -391,14 +399,15 @@ class DBusProxy : public DBus
                 sleep(1);
             }
         }
+        g_object_unref(peer_proxy);
     }
 
 
     std::string GetNameOwner(const std::string &name)
     {
-        GDBusProxy *proxy = SetupProxy("org.freedesktop.DBus",
-                                       "org.freedesktop.DBus",
-                                       "/");
+        GDBusProxy *prx = SetupProxy("org.freedesktop.DBus",
+                                     "org.freedesktop.DBus",
+                                     "/");
         GVariant *r = dbus_proxy_call(proxy,
                                       "GetNameOwner",
                                       g_variant_new("(s)", name.c_str()),
@@ -409,18 +418,20 @@ class DBusProxy : public DBus
             GLibUtils::checkParams(__func__, r, "(s)", 1);
             std::string res(GLibUtils::ExtractValue<std::string>(r, 0));
             g_variant_unref(r);
+            g_object_unref(prx);
             return res;
         }
+        g_object_unref(prx);
         THROW_DBUSEXCEPTION("GetNameOwner", "No owner found");
     }
 
 
     int StartServiceByName(const std::string &name)
     {
-        GDBusProxy *proxy = SetupProxy("org.freedesktop.DBus",
-                                       "org.freedesktop.DBus",
-                                       "/");
-        GVariant *r = dbus_proxy_call(proxy,
+        GDBusProxy *prx = SetupProxy("org.freedesktop.DBus",
+                                     "org.freedesktop.DBus",
+                                     "/");
+        GVariant *r = dbus_proxy_call(prx,
                                       "StartServiceByName",
                                       g_variant_new("(su)",
                                                     name.c_str(),
@@ -433,8 +444,11 @@ class DBusProxy : public DBus
             GLibUtils::checkParams(__func__, r, "(u)", 1);
             guint res = GLibUtils::ExtractValue<unsigned int>(r, 0);
             g_variant_unref(r);
+            g_object_unref(prx);
             return res;
         }
+
+        g_object_unref(prx);
         THROW_DBUSEXCEPTION("StartServiceByName",
                             std::string("Failed requesting starting of ")
                                 + "service '" + name + "' ");
