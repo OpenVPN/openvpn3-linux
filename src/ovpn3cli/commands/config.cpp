@@ -618,7 +618,7 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
         {
             valid_option = true;
             std::string taglist;
-            for (int i = 0; i < args->GetValueLen("remove-tag"); i++)
+            for (unsigned int i = 0; i < args->GetValueLen("remove-tag"); i++)
             {
                 try
                 {
@@ -644,7 +644,7 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
         {
             valid_option = true;
             std::string taglist;
-            for (int i = 0; i < args->GetValueLen("tag"); i++)
+            for (unsigned int i = 0; i < args->GetValueLen("tag"); i++)
             {
                 try
                 {
