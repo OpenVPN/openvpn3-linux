@@ -35,7 +35,7 @@ bool failed = false; //<< Is true if the RetrieveServiceVersion() call failed
  * @return Returns a std::string containing the version reference or a
  *         generic explanation if information could not be determined.
  */
-static std::string RetrieveServiceVersion(DBusProxy prx)
+static std::string RetrieveServiceVersion(DBusProxy &prx)
 {
     try
     {

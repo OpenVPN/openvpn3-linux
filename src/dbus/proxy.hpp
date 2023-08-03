@@ -96,6 +96,8 @@ class DBusProxy : public DBus
 
     virtual ~DBusProxy()
     {
+        std::lock_guard<std::mutex> lg(proxy_ptr_change);
+
         if (proxy && G_IS_OBJECT(proxy))
         {
             g_object_unref(proxy);
@@ -698,6 +700,8 @@ class DBusProxy : public DBus
 
     void ProxyConnect()
     {
+        std::lock_guard<std::mutex> lg(proxy_ptr_change);
+
         if (!proxy)
         {
             proxy = SetupProxy(bus_name, interface, object_path);
@@ -711,6 +715,8 @@ class DBusProxy : public DBus
     }
 
 
+  protected:
+    std::mutex proxy_ptr_change;
     GDBusProxy *proxy = nullptr;
     GDBusProxy *property_proxy = nullptr;
     std::string bus_name = {};
