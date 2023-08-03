@@ -104,7 +104,7 @@ class DBusProxy : public DBus
             proxy = nullptr;
         }
 
-        if (property_proxy && G_IS_OBJECT(proxy))
+        if (property_proxy && G_IS_OBJECT(property_proxy))
         {
             g_object_unref(property_proxy);
             property_proxy = nullptr;
