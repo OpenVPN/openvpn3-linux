@@ -112,22 +112,16 @@ class DBusProxy : public DBus
 
     virtual ~DBusProxy()
     {
-        // If this object is using an existing connection;
-        // don't trigger a disconnect.  This variable is
-        // defined and set in the DBus class.
-        if (keep_connection)
-        {
-            return;
-        }
-
-        if (proxy_init)
+        if (proxy && G_IS_OBJECT(proxy))
         {
             g_object_unref(proxy);
+            proxy = nullptr;
         }
 
-        if (property_proxy_init)
+        if (property_proxy && G_IS_OBJECT(proxy))
         {
             g_object_unref(property_proxy);
+            property_proxy = nullptr;
         }
     }
 
@@ -300,7 +294,7 @@ class DBusProxy : public DBus
     bool CheckObjectExists(const unsigned int allow_tries = 1,
                            const unsigned int sleep_us = 1000)
     {
-        if (!property_proxy_init)
+        if (!property_proxy)
         {
             THROW_DBUSEXCEPTION("DBusProxy",
                                 "Property proxy has not been initialized");
@@ -694,14 +688,6 @@ class DBusProxy : public DBus
             g_error_free(error);
             THROW_DBUSEXCEPTION("DBusProxy", errmsg.str());
         }
-        if ("org.freedesktop.DBus.Properties" == intf)
-        {
-            property_proxy_init = true;
-        }
-        else
-        {
-            proxy_init = true;
-        }
         return retprx;
     }
 
@@ -714,11 +700,11 @@ class DBusProxy : public DBus
 
     void ProxyConnect()
     {
-        if (!proxy_init)
+        if (!proxy)
         {
             proxy = SetupProxy(bus_name, interface, object_path);
         }
-        if (!property_proxy_init)
+        if (!property_proxy)
         {
             property_proxy = SetupProxy(bus_name,
                                         "org.freedesktop.DBus.Properties",
@@ -736,8 +722,6 @@ class DBusProxy : public DBus
   private:
     std::string object_path = {};
     GDBusCallFlags call_flags = G_DBUS_CALL_FLAGS_NONE;
-    bool proxy_init = false;
-    bool property_proxy_init = false;
 
     // Note we only implement single fd out/in for the fd API since that
     // is all we currently need and handling fd extraction here makes
