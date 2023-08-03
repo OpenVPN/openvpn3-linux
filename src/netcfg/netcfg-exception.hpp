@@ -116,10 +116,10 @@ class NetCfgDeviceException : public std::exception
 class NetCfgProxyException : public std::exception
 {
   public:
-    NetCfgProxyException(std::string method, std::string err) noexcept
-        : method(std::move(method)), errormsg(std::move(err)),
-          user_error(method + "(): " + err)
+    NetCfgProxyException(std::string meth, std::string err) noexcept
+        : method(std::move(meth)), errormsg(std::move(err))
     {
+        user_error = method + "(): " + errormsg;
     }
 
     ~NetCfgProxyException() override = default;
@@ -140,7 +140,7 @@ class NetCfgProxyException : public std::exception
     }
 
   private:
-    std::string method;
-    std::string errormsg;
-    std::string user_error;
+    std::string method = {};
+    std::string errormsg = {};
+    std::string user_error = {};
 };
