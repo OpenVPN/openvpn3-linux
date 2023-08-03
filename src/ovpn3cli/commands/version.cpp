@@ -75,7 +75,7 @@ int cmd_version(ParsedArgs::Ptr args)
         DBus dbcon(G_BUS_TYPE_SYSTEM);
         dbcon.Connect();
 
-        DBusProxy bckstprx(dbcon,
+        DBusProxy bckstprx(dbcon.GetConnection(),
                            OpenVPN3DBus_name_backends,
                            OpenVPN3DBus_interf_backends,
                            OpenVPN3DBus_rootp_backends);
@@ -84,7 +84,8 @@ int cmd_version(ParsedArgs::Ptr args)
                   << RetrieveServiceVersion(bckstprx) << std::endl
                   << std::endl;
 
-        OpenVPN3ConfigurationProxy cfgprx(dbcon, OpenVPN3DBus_rootp_configuration);
+        OpenVPN3ConfigurationProxy cfgprx(dbcon.GetConnection(),
+                                          OpenVPN3DBus_rootp_configuration);
         std::cout << "  - Configuration Service" << std::endl
                   << "     openvpn3-service-configmgr:    "
                   << RetrieveServiceVersion(cfgprx) << std::endl
@@ -102,7 +103,7 @@ int cmd_version(ParsedArgs::Ptr args)
                   << RetrieveServiceVersion(netcfgprx) << std::endl
                   << std::endl;
 
-        OpenVPN3SessionProxy sessprx(dbcon, OpenVPN3DBus_rootp_sessions);
+        OpenVPN3SessionProxy sessprx(dbcon.GetConnection(), OpenVPN3DBus_rootp_sessions);
         std::cout << "  - Session Manager Service" << std::endl
                   << "     openvpn3-service-sessionmgr:   "
                   << RetrieveServiceVersion(sessprx) << std::endl

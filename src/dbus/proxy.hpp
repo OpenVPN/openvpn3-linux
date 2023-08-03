@@ -93,22 +93,6 @@ class DBusProxy : public DBus
         }
     }
 
-    DBusProxy(DBus const &dbusobj,
-              std::string const &busname,
-              std::string const &interf,
-              std::string const &objpath,
-              bool hold_setup_proxy = false)
-        : DBus(dbusobj),
-          bus_name(busname),
-          interface(interf),
-          object_path(objpath)
-    {
-        if (!hold_setup_proxy)
-        {
-            ProxyConnect();
-        }
-    }
-
 
     virtual ~DBusProxy()
     {

@@ -76,8 +76,8 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
     typedef std::shared_ptr<OpenVPN3SessionProxy> Ptr;
 
     /**
-     * Initilizes the D-Bus client proxy.  This constructor will establish
-     * the D-Bus connection by itself.
+     * Initilizes a proxy connection to the OpenVPN 3 Session Manager.
+     * This constructor will establish the D-Bus connection by itself.
      *
      * @param bus_type   Defines if the connection is on the system or session
      *                   bus.
@@ -102,13 +102,14 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
     }
 
     /**
-     * Initilizes the D-Bus client proxy.  This constructor will use an
-     * existing D-Bus connection object for all D-Bus calls
+     * Initilizes a proxy connection to the OpenVPN 3 Session Manager.
+     * This constructor will use an existing D-Bus connection for the
+     * D-Bus calls
      *
      * @param dbusobj    DBus connection object
      * @param objpath    D-Bus object path to the SessionObject
      */
-    OpenVPN3SessionProxy(DBus &dbusobj, const std::string objpath)
+    OpenVPN3SessionProxy(GDBusConnection *dbusobj, const std::string objpath)
         : DBusRequiresQueueProxy(dbusobj,
                                  OpenVPN3DBus_name_sessions,
                                  OpenVPN3DBus_interf_sessions,
@@ -543,8 +544,8 @@ class OpenVPN3SessionMgrProxy : public DBusProxy
 {
   public:
     /**
-     * Initilizes the D-Bus client proxy.  This constructor will establish
-     * the D-Bus connection by itself.
+     *  Initilizes a proxy connection to the OpenVPN 3 Session Manager.
+     *  This constructor will establish the D-Bus connection by itself.
      *
      * @param bus_type   Defines if the connection is on the system or session
      *                   bus.
@@ -559,8 +560,17 @@ class OpenVPN3SessionMgrProxy : public DBusProxy
         (void)GetServiceVersion();
     }
 
-    OpenVPN3SessionMgrProxy(DBus &dbusobj)
-        : DBusProxy(dbusobj,
+
+    /**
+     *  Initilizes a proxy connection to the OpenVPN 3 Session Manager.
+     *  This constructor will reuse an existing D-Bus connection for all
+     *  D-Bus calls.
+     *
+     * @param con        GDBusConnection * to an established connection
+     * @param objpath    D-Bus object path to the SessionObjectes
+     */
+    OpenVPN3SessionMgrProxy(GDBusConnection *con)
+        : DBusProxy(con,
                     OpenVPN3DBus_name_sessions,
                     OpenVPN3DBus_interf_sessions,
                     OpenVPN3DBus_rootp_sessions)

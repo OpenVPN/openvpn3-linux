@@ -53,12 +53,13 @@ std::string arghelper_config_names()
 {
     DBus conn(G_BUS_TYPE_SYSTEM);
     conn.Connect();
-    OpenVPN3ConfigurationProxy confmgr(conn, OpenVPN3DBus_rootp_configuration);
+    OpenVPN3ConfigurationProxy confmgr(conn.GetConnection(),
+                                       OpenVPN3DBus_rootp_configuration);
 
     std::vector<std::string> cfgnames;
     for (const auto &cfgp : confmgr.FetchAvailableConfigs())
     {
-        OpenVPN3ConfigurationProxy cfg(conn, cfgp);
+        OpenVPN3ConfigurationProxy cfg(conn.GetConnection(), cfgp);
         std::string cfgname = cfg.GetStringProperty("name");
 
         // Filter out duplicates
@@ -140,12 +141,12 @@ std::string arghelper_config_names_sessions()
 {
     DBus conn(G_BUS_TYPE_SYSTEM);
     conn.Connect();
-    OpenVPN3SessionMgrProxy sessmgr(conn);
+    OpenVPN3SessionMgrProxy sessmgr(conn.GetConnection());
 
     std::vector<std::string> cfgnames;
     for (const auto &sesp : sessmgr.FetchAvailableSessionPaths())
     {
-        OpenVPN3SessionProxy sess(conn, sesp);
+        OpenVPN3SessionProxy sess(conn.GetConnection(), sesp);
         std::string cfgname = sess.GetStringProperty("config_name");
 
         // Filter out duplicates

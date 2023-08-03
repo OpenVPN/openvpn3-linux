@@ -35,7 +35,7 @@ int main(int argc, char **argv)
     DBus dbusobj(G_BUS_TYPE_SYSTEM);
     dbusobj.Connect();
 
-    OpenVPN3ConfigurationProxy config(dbusobj, argv[1]);
+    OpenVPN3ConfigurationProxy config(dbusobj.GetConnection(), argv[1]);
 
     std::cout << "Configuration: " << std::endl;
     std::cout << "  - Name:       " << config.GetStringProperty("name") << std::endl;

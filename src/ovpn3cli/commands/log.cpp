@@ -82,7 +82,7 @@ class SessionLogger : public LogForwardBase<SessionLogger>
   public:
     using Ptr = std::shared_ptr<SessionLogger>;
 
-    SessionLogger(DBus &dbscon, std::string interf, std::string objpath)
+    SessionLogger(GDBusConnection *dbscon, std::string interf, std::string objpath)
         : LogForwardBase(dbscon, interf, objpath)
     {
     }
@@ -127,7 +127,7 @@ class LogAttach : public DBusSignalSubscription
                                  OpenVPN3DBus_rootp_sessions),
           mainloop(main_loop), dbus(dbuscon)
     {
-        manager.reset(new OpenVPN3SessionMgrProxy(dbuscon));
+        manager.reset(new OpenVPN3SessionMgrProxy(dbuscon.GetConnection()));
         Subscribe("SessionManagerEvent");
     }
 
@@ -335,7 +335,9 @@ class LogAttach : public DBusSignalSubscription
         }
 
         // Setup the SessionLogger object for the provided session path
-        session_log = SessionLogger::create(dbus, OpenVPN3DBus_interf_backends, session_path);
+        session_log = SessionLogger::create(dbus.GetConnection(),
+                                            OpenVPN3DBus_interf_backends,
+                                            session_path);
     }
 };
 

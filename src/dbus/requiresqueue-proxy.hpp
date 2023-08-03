@@ -77,7 +77,7 @@ class DBusRequiresQueueProxy : public DBusProxy
      *  Initialize the D-Bus proxy for RequiresQueue.  This constructor
      *  will re-use an established connection in a DBus object.
      *
-     * @param dbusobj
+     * @param dbuscon
      * @param destination              String containing the service
      *                                 destination to connect against
      * @param interface                String containing the D-Bus object's
@@ -96,7 +96,7 @@ class DBusRequiresQueueProxy : public DBusProxy
      * The method names must match the defined introspection of the service
      * side.
      */
-    DBusRequiresQueueProxy(DBus &dbusobj,
+    DBusRequiresQueueProxy(GDBusConnection *dbuscon,
                            std::string destination,
                            std::string interface,
                            std::string objpath,
@@ -104,7 +104,7 @@ class DBusRequiresQueueProxy : public DBusProxy
                            std::string method_queuefetch,
                            std::string method_queuecheck,
                            std::string method_providereponse)
-        : DBusProxy(dbusobj.GetConnection(), destination, interface, objpath),
+        : DBusProxy(dbuscon, destination, interface, objpath),
           method_quechktypegroup(method_quechktypegroup),
           method_queuefetch(method_queuefetch),
           method_queuecheck(method_queuecheck),

@@ -67,7 +67,7 @@ int main(int argc, char **argv)
     DBus dbusobj(G_BUS_TYPE_SYSTEM);
     dbusobj.Connect();
 
-    OpenVPN3ConfigurationProxy cfgmgr(dbusobj,
+    OpenVPN3ConfigurationProxy cfgmgr(dbusobj.GetConnection(),
                                       OpenVPN3DBus_rootp_configuration);
     cfgmgr.Ping();
 
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
                                         false,
                                         false);
 
-    OpenVPN3ConfigurationProxy cfgobj(dbusobj, cfgpath);
+    OpenVPN3ConfigurationProxy cfgobj(dbusobj.GetConnection(), cfgpath);
     unsigned int failed = 0;
 
     std::cout << ".. Testing unsetting an unset override ... ";

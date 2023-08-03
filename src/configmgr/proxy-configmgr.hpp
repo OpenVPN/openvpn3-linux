@@ -64,8 +64,9 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
         }
     }
 
-    OpenVPN3ConfigurationProxy(DBus &dbusobj, std::string object_path)
-        : DBusProxy(dbusobj.GetConnection(),
+
+    OpenVPN3ConfigurationProxy(GDBusConnection *con, std::string object_path)
+        : DBusProxy(con,
                     OpenVPN3DBus_name_configuration,
                     OpenVPN3DBus_interf_configuration,
                     "",
@@ -77,6 +78,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
         property_proxy = SetupProxy(OpenVPN3DBus_name_configuration,
                                     "org.freedesktop.DBus.Properties",
                                     object_path);
+
         // Only try to ensure the configuration manager service is available
         // when accessing the main management object
         if (OpenVPN3DBus_rootp_configuration == object_path)

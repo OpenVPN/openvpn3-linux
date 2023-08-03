@@ -117,10 +117,10 @@ class LogForwardBase : public LogConsumer,
 
 
   protected:
-    LogForwardBase(DBus &dbusc,
+    LogForwardBase(GDBusConnection *dbusc,
                    const std::string &interf,
                    const std::string &session_path)
-        : LogConsumer(dbusc.GetConnection(), interf, session_path, "")
+        : LogConsumer(dbusc, interf, session_path, "")
     {
         Subscribe(session_path, "StatusChange");
         session_proxy.reset(new OpenVPN3SessionProxy(dbusc, session_path));

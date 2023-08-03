@@ -31,7 +31,7 @@ class LogFwdSubscription : public LogForwardBase<LogFwdSubscription>
 {
   public:
     LogFwdSubscription(GMainLoop *mainloop,
-                       DBus &dbc,
+                       GDBusConnection *dbc,
                        const std::string &path,
                        const std::string &interf = "")
         : LogForwardBase(dbc, interf, path),
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
     std::string mode{argv[1]};
     std::string session_path{};
 
-    OpenVPN3SessionMgrProxy mgr(dbus);
+    OpenVPN3SessionMgrProxy mgr(dbus.GetConnection());
     if ("--config" == mode)
     {
         std::vector<std::string> sp = mgr.LookupConfigName(argv[2]);
@@ -123,7 +123,7 @@ int main(int argc, char **argv)
     std::cout << "Attaching to session path: " << session_path << std::endl;
     try
     {
-        auto logsub = LogFwdSubscription::create(main_loop, dbus, session_path);
+        auto logsub = LogFwdSubscription::create(main_loop, dbus.GetConnection(), session_path);
         std::cout << "Log level: " << std::to_string(logsub->GetLogLevel()) << std::endl;
         std::cout << "D-Bus bus name: " << dbus.GetUniqueBusName() << std::endl;
         g_main_loop_run(main_loop);
