@@ -394,7 +394,7 @@ class DBusProxy : public DBus
         GDBusProxy *prx = SetupProxy("org.freedesktop.DBus",
                                      "org.freedesktop.DBus",
                                      "/");
-        GVariant *r = dbus_proxy_call(proxy,
+        GVariant *r = dbus_proxy_call(prx,
                                       "GetNameOwner",
                                       g_variant_new("(s)", name.c_str()),
                                       false,
