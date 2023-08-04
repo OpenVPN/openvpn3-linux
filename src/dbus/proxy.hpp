@@ -816,8 +816,10 @@ class DBusProxy : public DBus
 
                 g_dbus_error_strip_remote_error(error);
                 std::stringstream errmsg;
-                errmsg << "Failed calling D-Bus method " << method << ": "
-                       << error->message;
+                errmsg << "Failed calling D-Bus method "
+                       << "[" << g_dbus_proxy_get_name(prx) << "] "
+                       << g_dbus_proxy_get_interface_name(prx) << "." << method
+                       << ": " << error->message;
                 g_error_free(error);
                 THROW_DBUSEXCEPTION("DBusProxy", errmsg.str());
             }
