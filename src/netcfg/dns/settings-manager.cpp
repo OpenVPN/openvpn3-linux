@@ -13,9 +13,6 @@
  * @brief  Main manager object for all DNS resolver settings (implementation)
  */
 
-#include <openvpn/common/rc.hpp>
-using namespace openvpn;
-
 #include "dbus/core.hpp"
 #include "netcfg/netcfg-exception.hpp"
 #include "netcfg/netcfg-signals.hpp"
@@ -52,7 +49,8 @@ const ApplySettingsMode SettingsManager::GetApplyMode() const
 
 ResolverSettings::Ptr SettingsManager::NewResolverSettings()
 {
-    ResolverSettings::Ptr settings = new ResolverSettings(++resolver_idx);
+    ResolverSettings::Ptr settings;
+    settings.reset(new ResolverSettings(++resolver_idx));
     resolvers[resolver_idx] = settings;
     return settings;
 }

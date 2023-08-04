@@ -30,7 +30,8 @@ TEST(DNSResolverSettings, init)
     EXPECT_EQ(r1.GetNameServers().size(), 0);
     EXPECT_EQ(r1.GetSearchDomains().size(), 0);
 
-    ResolverSettings::Ptr r2 = new ResolverSettings(2);
+    ResolverSettings::Ptr r2;
+    r2.reset(new ResolverSettings(2));
     EXPECT_EQ(r2->GetIndex(), 2);
     EXPECT_EQ(r2->GetNameServers().size(), 0);
     EXPECT_EQ(r2->GetSearchDomains().size(), 0);
@@ -46,7 +47,8 @@ TEST(DNSResolverSettings, enabled_flag)
     r1.Disable();
     EXPECT_EQ(r1.GetEnabled(), false);
 
-    ResolverSettings::Ptr r2 = new ResolverSettings(2);
+    ResolverSettings::Ptr r2;
+    r2.reset(new ResolverSettings(2));
     EXPECT_EQ(r2->GetEnabled(), false);
     r2->Enable();
     EXPECT_EQ(r2->GetEnabled(), true);
@@ -57,7 +59,9 @@ TEST(DNSResolverSettings, enabled_flag)
 
 TEST(DNSResolverSettings, AddNameServer)
 {
-    ResolverSettings::Ptr r1 = new ResolverSettings(3);
+    ResolverSettings::Ptr r1;
+    r1.reset(new ResolverSettings(3));
+
     r1->AddNameServer("1.2.3.4");
 
     std::vector<std::string> chk = r1->GetNameServers();
@@ -95,7 +99,8 @@ TEST(DNSResolverSettings, AddNameServer_multiple)
 
 TEST(DNSResolverSettings, AddSearchDomain)
 {
-    ResolverSettings::Ptr r1 = new ResolverSettings(4);
+    ResolverSettings::Ptr r1;
+    r1.reset(new ResolverSettings(4));
     r1->AddSearchDomain("test.example.org");
 
     EXPECT_EQ(r1->GetNameServers().size(), 0);
@@ -107,7 +112,9 @@ TEST(DNSResolverSettings, AddSearchDomain)
 
 TEST(DNSResolverSettings, MultipleEntries)
 {
-    ResolverSettings::Ptr r1 = new ResolverSettings(5);
+    ResolverSettings::Ptr r1;
+    r1.reset(new ResolverSettings(5));
+
     for (int i = 0; i < 5; ++i)
     {
         std::stringstream ns;
@@ -139,7 +146,9 @@ TEST(DNSResolverSettings, MultipleEntries)
 
 TEST(DNSResolverSettings, DuplicatedEntries)
 {
-    ResolverSettings::Ptr r1 = new ResolverSettings(12);
+    ResolverSettings::Ptr r1;
+    r1.reset(new ResolverSettings(12));
+
     r1->AddNameServer("9.9.9.9");
     ASSERT_EQ(r1->GetNameServers().size(), 1);
     r1->AddNameServer("8.7.6.5");
@@ -160,7 +169,9 @@ TEST(DNSResolverSettings, DuplicatedEntries)
 
 TEST(DNSResolverSettings, ClearEntries)
 {
-    ResolverSettings::Ptr r1 = new ResolverSettings(6);
+    ResolverSettings::Ptr r1;
+    r1.reset(new ResolverSettings(6));
+
     for (int i = 0; i < 5; ++i)
     {
         std::stringstream ns;
@@ -217,7 +228,9 @@ TEST(DNSResolverSettings, string)
 
 TEST(DNSResolverSettings, string_Ptr)
 {
-    ResolverSettings::Ptr r1 = new ResolverSettings(8);
+    ResolverSettings::Ptr r1;
+    r1.reset(new ResolverSettings(8));
+
     for (int i = 0; i < 5; ++i)
     {
         std::stringstream ns;
@@ -231,12 +244,12 @@ TEST(DNSResolverSettings, string_Ptr)
     }
 
     std::stringstream chk1;
-    chk1 << r1;
+    chk1 << *r1;
     EXPECT_STREQ(chk1.str().c_str(), "(Settings not enabled)");
 
     r1->Enable();
     std::stringstream chk2;
-    chk2 << r1;
+    chk2 << *r1;
     EXPECT_STREQ(chk2.str().c_str(),
                  "DNS resolvers: 40.41.42.43, 41.42.43.44, 42.43.44.45, "
                  "43.44.45.46, 44.45.46.47 "
@@ -247,7 +260,8 @@ TEST(DNSResolverSettings, string_Ptr)
 
 TEST(DNSResolverSettings, GVariantTests_SingleNameServer)
 {
-    ResolverSettings::Ptr r1 = new ResolverSettings(9);
+    ResolverSettings::Ptr r1;
+    r1.reset(new ResolverSettings(9));
 
     // Insert a single name server and search domain
     std::vector<std::string> ns = {{"9.9.9.9"}};
@@ -263,7 +277,7 @@ TEST(DNSResolverSettings, GVariantTests_SingleNameServer)
 
     r1->Enable();
     std::stringstream chk_str;
-    chk_str << r1;
+    chk_str << *r1;
     ASSERT_STREQ(chk_str.str().c_str(), "DNS resolvers: 9.9.9.9");
 }
 
@@ -292,7 +306,8 @@ TEST(DNSResolverSettings, GVariantTests_SingleSearchDomain)
 
 TEST(DNSResolverSettings, GVariantTests_MultipleEntries)
 {
-    ResolverSettings::Ptr r1 = new ResolverSettings(11);
+    ResolverSettings::Ptr r1;
+    r1.reset(new ResolverSettings(11));
 
     // Insert a single name server and search domain
     std::vector<std::string> ns = {{"10.0.0.1", "10.0.2.2", "10.0.3.3"}};
@@ -314,7 +329,7 @@ TEST(DNSResolverSettings, GVariantTests_MultipleEntries)
 
     r1->Enable();
     std::stringstream chk_str;
-    chk_str << r1;
+    chk_str << *r1;
     ASSERT_STREQ(chk_str.str().c_str(),
                  "DNS resolvers: 10.0.0.1, 10.0.2.2, 10.0.3.3 - "
                  "Search domains: sub1.example.net, sub2.example.com, "
@@ -324,7 +339,8 @@ TEST(DNSResolverSettings, GVariantTests_MultipleEntries)
 
 TEST(DNSResolverSettings, GVariantTests_DuplicatedEntries)
 {
-    ResolverSettings::Ptr r1 = new ResolverSettings(13);
+    ResolverSettings::Ptr r1;
+    r1.reset(new ResolverSettings(13));
 
     // Insert a single name server and search domain
     std::vector<std::string> ns = {{"10.0.0.1", "10.0.0.2", "10.0.0.2"}};

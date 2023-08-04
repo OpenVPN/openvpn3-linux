@@ -15,12 +15,9 @@
  */
 #pragma once
 
+#include <memory>
 #include <sstream>
 #include <vector>
-
-#include <openvpn/common/rc.hpp>
-
-using namespace openvpn;
 
 namespace NetCfg {
 namespace DNS {
@@ -33,10 +30,10 @@ enum class Scope
 };
 
 
-class ResolverSettings : public virtual RC<thread_unsafe_refcount>
+class ResolverSettings
 {
   public:
-    typedef RCPtr<ResolverSettings> Ptr;
+    typedef std::shared_ptr<ResolverSettings> Ptr;
 
     ResolverSettings(ssize_t idx);
     ~ResolverSettings();

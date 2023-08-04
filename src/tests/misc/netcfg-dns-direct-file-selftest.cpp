@@ -43,7 +43,9 @@ int main()
     sysresolvconf->SetFilename("test-system.conf");
     sysresolvconf->Debug_Write();
 
-    ResolverSettings::Ptr settings = new ResolverSettings(1);
+    ResolverSettings::Ptr settings;
+    settings.reset(new ResolverSettings(1));
+
     settings->AddSearchDomain("example.org");
     settings->AddSearchDomain("example.com");
     settings->AddNameServer("1.1.1.1");
@@ -58,7 +60,9 @@ int main()
     sysresolvconf->Debug_Write();
 
     ResolvConfFile fresh1("fresh1.conf");
-    ResolverSettings::Ptr settings2 = new ResolverSettings(2);
+    ResolverSettings::Ptr settings2;
+    settings2.reset(new ResolverSettings(2));
+
     settings2->ClearSearchDomains();
     settings2->ClearNameServers();
     settings2->AddSearchDomain("example.net");
