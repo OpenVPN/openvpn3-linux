@@ -66,6 +66,33 @@ TEST(DNSResolverSettings, AddNameServer)
     EXPECT_STREQ(chk[0].c_str(), "1.2.3.4");
 }
 
+
+TEST(DNSResolverSettings, AddNameServer_multiple)
+{
+    ResolverSettings::Ptr r1;
+    r1.reset(new ResolverSettings(14));
+
+    std::vector<std::string> list = {
+        "1.1.1.1",
+        "2.2.2.2",
+        "3.3.3.3"};
+
+    for (const auto &s : list)
+    {
+        r1->AddNameServer(s);
+    }
+
+    std::vector<std::string> chk = r1->GetNameServers();
+    ASSERT_EQ(chk.size(), 3);
+    EXPECT_EQ(r1->GetSearchDomains().size(), 0);
+
+    for (unsigned int i = 0; i < chk.size(); i++)
+    {
+        EXPECT_STREQ(chk[i].c_str(), list[i].c_str());
+    }
+}
+
+
 TEST(DNSResolverSettings, AddSearchDomain)
 {
     ResolverSettings::Ptr r1 = new ResolverSettings(4);
