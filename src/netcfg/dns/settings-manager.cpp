@@ -58,6 +58,8 @@ ResolverSettings::Ptr SettingsManager::NewResolverSettings()
 
 void SettingsManager::ApplySettings(NetCfgSignals *signal)
 {
+    // The list of ResolverSettings need to be applied in the reverse order.
+    // This ensures the last connected VPN server has precedence.
     for (auto rslv = resolvers.rbegin(); rslv != resolvers.rend(); rslv++)
     {
         if (rslv->second->ChangesAvailable() && !rslv->second->GetRemovable())
@@ -69,7 +71,7 @@ void SettingsManager::ApplySettings(NetCfgSignals *signal)
 
     std::vector<NetCfgChangeEvent> notif; // NetworkChange notification queue
     std::vector<ssize_t> remove_list;
-    for (auto rslv : resolvers)
+    for (const auto &rslv : resolvers)
     {
         ResolverSettings::Ptr settings = rslv.second;
         if (!settings->GetRemovable())
@@ -126,9 +128,9 @@ void SettingsManager::ApplySettings(NetCfgSignals *signal)
 std::vector<std::string> SettingsManager::GetDNSservers() const
 {
     std::vector<std::string> ret;
-    for (auto rslv = resolvers.rbegin(); rslv != resolvers.rend(); rslv++)
+    for (const auto &rslv : resolvers)
     {
-        std::vector<std::string> s = rslv->second->GetNameServers();
+        std::vector<std::string> s = rslv.second->GetNameServers();
         ret.insert(ret.end(), s.begin(), s.end());
     }
     return ret;
@@ -138,9 +140,9 @@ std::vector<std::string> SettingsManager::GetDNSservers() const
 std::vector<std::string> SettingsManager::GetSearchDomains() const
 {
     std::vector<std::string> ret;
-    for (auto rslv = resolvers.rbegin(); rslv != resolvers.rend(); rslv++)
+    for (const auto &rslv : resolvers)
     {
-        std::vector<std::string> s = rslv->second->GetSearchDomains();
+        std::vector<std::string> s = rslv.second->GetSearchDomains();
         ret.insert(ret.end(), s.begin(), s.end());
     }
     return ret;
