@@ -651,7 +651,10 @@ class NetCfgServiceObject : public DBusObject,
             openvpn::cleanup_protected_sockets(creator_pid);
             openvpn::protect_socket_hostroute(tunif, remote, ipv6, creator_pid);
         }
-        close(fd);
+        if (fd >= 0)
+        {
+            close(fd);
+        }
         return g_variant_new("(b)", true);
     }
 };
