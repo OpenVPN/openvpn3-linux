@@ -194,7 +194,15 @@ ResolvConfFile::ResolvConfFile(const std::string &filename,
 
 ResolvConfFile::~ResolvConfFile()
 {
-    RestoreBackup();
+    try
+    {
+        RestoreBackup();
+    }
+    catch (const std::exception &excp)
+    {
+        std::cerr << "EXCEPTION - ResolvConfFile::~ResolvConfFile:"
+                  << excp.what() << std::endl;
+    }
 }
 
 
