@@ -108,7 +108,11 @@ void FileGenerator::Write()
     {
         if (file_exists(backup_filename))
         {
-            std::remove(backup_filename.c_str());
+            // We don't care about the result here.  If it fails,
+            // it might be the file does not exist which is fine.
+            // If the file cannot be removed, the std::rename() afterwards
+            // will complain about that.
+            (void)std::remove(backup_filename.c_str());
         }
         if (0 != std::rename(filename.c_str(), backup_filename.c_str()))
         {
