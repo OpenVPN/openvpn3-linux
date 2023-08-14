@@ -32,21 +32,21 @@ using namespace Configuration;
 //   struct Configuration::OptionMapEntry
 //
 
-OptionMapEntry::OptionMapEntry(std::string option,
-                               std::string field_label,
-                               std::string description,
-                               OptionValueType type)
+OptionMapEntry::OptionMapEntry(const std::string &option,
+                               const std::string &field_label,
+                               const std::string &description,
+                               const OptionValueType type)
     : option(option), field_label(field_label), description(description),
       exclusive_group(""),
       type(type), present(false), present_value(false), value("")
 {
 }
 
-OptionMapEntry::OptionMapEntry(std::string option,
-                               std::string field_label,
-                               std::string exclusive_group,
-                               std::string description,
-                               OptionValueType type)
+OptionMapEntry::OptionMapEntry(const std::string &option,
+                               const std::string &field_label,
+                               const std::string &exclusive_group,
+                               const std::string &description,
+                               const OptionValueType type)
     : option(option), field_label(field_label), description(description),
       exclusive_group(exclusive_group),
       type(type), present(false), present_value(false), value("")

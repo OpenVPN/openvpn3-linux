@@ -45,16 +45,16 @@ enum class OptionValueType : uint8_t
  */
 struct OptionMapEntry
 {
-    OptionMapEntry(std::string option,
-                   std::string file_label,
-                   std::string description,
-                   OptionValueType type);
+    OptionMapEntry(const std::string &option,
+                   const std::string &file_label,
+                   const std::string &description,
+                   const OptionValueType type);
 
-    OptionMapEntry(std::string option,
-                   std::string file_label,
-                   std::string exclusive_group,
-                   std::string description,
-                   OptionValueType type);
+    OptionMapEntry(const std::string &option,
+                   const std::string &file_label,
+                   const std::string &exclusive_group,
+                   const std::string &description,
+                   const OptionValueType type);
 
 
     friend std::ostream &operator<<(std::ostream &os, const OptionMapEntry &e)
