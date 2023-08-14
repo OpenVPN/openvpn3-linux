@@ -804,6 +804,8 @@ RegisterParsedArgs::Ptr SingleCommand::parse_commandline(const std::string &arg0
     }
     catch (...)
     {
+        free(long_opts);
+        long_opts = nullptr;
         throw;
     }
 exit:
