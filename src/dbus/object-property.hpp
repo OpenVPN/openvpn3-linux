@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <map>
+
 #include <openvpn/common/rc.hpp>
 
 #include "dbus/object.hpp"

@@ -10,6 +10,7 @@
 
 #include <gio/gio.h>
 #include "idlecheck.hpp"
+#include "exceptions.hpp"
 
 
 /**

@@ -12,6 +12,7 @@
 #include <sstream>
 
 #include <glib.h>
+#include <gio/gio.h>
 
 #include "config.h"
 

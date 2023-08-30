@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <string>
+
 const char *package_version();
 
 void drop_root();
