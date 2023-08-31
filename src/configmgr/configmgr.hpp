@@ -353,8 +353,8 @@ class ConfigurationObject : public DBusObject,
             }
         }
 
-        ret["import_timestamp"] = (uint64_t)import_tstamp;
-        ret["last_used_timestamp"] = (uint64_t)last_use_tstamp;
+        ret["import_timestamp"] = (Json::Value::UInt64)import_tstamp;
+        ret["last_used_timestamp"] = (Json::Value::UInt64)last_use_tstamp;
         ret["locked_down"] = locked_down;
         ret["transfer_owner_session"] = transfer_owner_sess;
         ret["readonly"] = readonly;

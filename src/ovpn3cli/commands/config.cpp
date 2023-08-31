@@ -355,9 +355,9 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
         {
             Json::Value jcfg;
             jcfg["name"] = name;
-            jcfg["imported_tstamp"] = imp_tstamp;
+            jcfg["imported_tstamp"] = (Json::Value::UInt64)imp_tstamp;
             jcfg["imported"] = imported;
-            jcfg["lastused_tstamp"] = last_u_tstamp;
+            jcfg["lastused_tstamp"] = (Json::Value::UInt64)last_u_tstamp;
             jcfg["lastused"] = last_used;
             jcfg["use_count"] = used_count;
 
