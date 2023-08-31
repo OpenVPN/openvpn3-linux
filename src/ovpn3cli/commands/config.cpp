@@ -15,6 +15,7 @@
  */
 
 #include "config.h"
+#include <json/json.h>
 
 #define USE_TUN_BUILDER
 #include <client/ovpncli.cpp>
@@ -209,9 +210,12 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
     OpenVPN3ConfigurationProxy confmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration);
     confmgr.Ping();
 
-    args->CheckExclusiveOptions({{"filter-tag", "filter-owner"}});
+    args->CheckExclusiveOptions({{"filter-tag", "filter-owner"},
+                                 {"json", "verbose"},
+                                 {"json", "count"}});
 
-    std::vector<std::string> config_list = {};
+    std::vector<std::string>
+        config_list = {};
     if (args->Present("filter-tag"))
     {
         config_list = confmgr.SearchByTag(args->GetValue("filter-tag", 0));
@@ -234,7 +238,8 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
 
     bool verbose = args->Present("verbose");
     bool only_count = args->Present("count");
-    if (!only_count)
+    bool json = args->Present("json");
+    if (!only_count && !json)
     {
         if (verbose)
         {
@@ -260,6 +265,7 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
 
     bool first = true;
     uint32_t cfgcount = 0;
+    Json::Value jsoncfgs;
     for (auto &cfg : config_list)
     {
         if (cfg.empty())
@@ -291,63 +297,106 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
             last_used = tmp.str();
         }
 
-        if (!verbose)
+        std::string user = lookup_username(cprx.GetUIntProperty("owner"));
+        std::time_t imp_tstamp = cprx.GetUInt64Property("import_timestamp");
+        std::stringstream imptmp;
+        imptmp << std::put_time(std::localtime(&imp_tstamp), "%F %X");
+        std::string imported = imptmp.str();
+
+        unsigned int used_count = cprx.GetUIntProperty("used_count");
+
+        if (!json)
         {
-            std::cout << name << std::setw(58 - name.size()) << std::setfill(' ') << " "
-                      << (last_used.length() > 0 ? last_used : "-")
-                      << std::endl;
+            if (!verbose)
+            {
+                std::cout << name << std::setw(58 - name.size()) << std::setfill(' ') << " "
+                          << (last_used.length() > 0 ? last_used : "-")
+                          << std::endl;
+            }
+            else
+            {
+                if (!first)
+                {
+                    std::cout << std::endl;
+                }
+                first = false;
+
+                std::cout << cfg << std::endl;
+                std::cout << imported << std::setw(32 - imported.size()) << std::setfill(' ') << " "
+                          << last_used << std::setw(26 - last_used.size()) << " "
+                          << std::to_string(used_count)
+                          << std::endl;
+                std::cout << name << std::setw(58 - name.size()) << " " << user
+                          << std::endl;
+
+                std::cout << "Tags: ";
+                size_t l = 6;
+                size_t tc = 0;
+                for (const auto &t : cprx.GetTags())
+                {
+                    if (l > 6)
+                    {
+                        std::cout << ", ";
+                    }
+                    l += t.length() + 2;
+                    if (l > 78)
+                    {
+                        l = 6;
+                        std::cout << std::endl
+                                  << "      ";
+                    }
+                    std::cout << t;
+                    ++tc;
+                }
+                std::cout << (0 == tc ? "(none)" : "") << std::endl;
+            }
         }
         else
         {
-            std::string user = lookup_username(cprx.GetUIntProperty("owner"));
+            Json::Value jcfg;
+            jcfg["name"] = name;
+            jcfg["imported_tstamp"] = imp_tstamp;
+            jcfg["imported"] = imported;
+            jcfg["lastused_tstamp"] = last_u_tstamp;
+            jcfg["lastused"] = last_used;
+            jcfg["use_count"] = used_count;
 
-            std::time_t imp_tstamp = cprx.GetUInt64Property("import_timestamp");
-            std::stringstream imptmp;
-            imptmp << std::put_time(std::localtime(&imp_tstamp), "%F %X");
-            std::string imported = imptmp.str();
-
-            unsigned int used_count = cprx.GetUIntProperty("used_count");
-
-            if (!first)
-            {
-                std::cout << std::endl;
-            }
-            first = false;
-
-            std::cout << cfg << std::endl;
-            std::cout << imported << std::setw(32 - imported.size()) << std::setfill(' ') << " "
-                      << last_used << std::setw(26 - last_used.size()) << " "
-                      << std::to_string(used_count)
-                      << std::endl;
-            std::cout << name << std::setw(58 - name.size()) << " " << user
-                      << std::endl;
-
-            std::cout << "Tags: ";
-            size_t l = 6;
-            size_t tc = 0;
             for (const auto &t : cprx.GetTags())
             {
-                if (l > 6)
-                {
-                    std::cout << ", ";
-                }
-                l += t.length() + 2;
-                if (l > 78)
-                {
-                    l = 6;
-                    std::cout << std::endl
-                              << "      ";
-                }
-                std::cout << t;
-                ++tc;
+                jcfg["tags"].append(t);
             }
-            std::cout << (0 == tc ? "(none)" : "") << std::endl;
+            jcfg["dco"] = cprx.GetDCO();
+            jcfg["transfer_session_session"] = cprx.GetTransferOwnerSession();
+
+            Json::Value acl;
+            acl["owner"] = user;
+            acl["locked_down"] = cprx.GetLockedDown();
+            acl["public_access"] = cprx.GetPublicAccess();
+            for (const auto &a : cprx.GetAccessList())
+            {
+                Json::Value d;
+                acl["granted_access"].append(lookup_username(a));
+            }
+            jcfg["acl"] = acl;
+
+            jsoncfgs[cfg] = jcfg;
         }
     }
-    if (!only_count)
+    if (!only_count && !json)
     {
         std::cout << std::setw(32 + 26 + 18 + 2) << std::setfill('-')
                   << "-" << std::endl;
+    }
+    else if (json)
+    {
+        if (jsoncfgs.empty())
+        {
+            std::cout << "{}" << std::endl;
+        }
+        else
+        {
+            std::cout << jsoncfgs << std::endl;
+        }
     }
     else
     {
@@ -374,6 +423,8 @@ SingleCommand::Ptr prepare_command_configs_list()
 
     cmd->AddOption("count",
                    "Only report the number of configurations found");
+    cmd->AddOption("json",
+                   "Format the output as JSON");
     cmd->AddOption("verbose",
                    'v',
                    "Provide more information about each configuration profile");

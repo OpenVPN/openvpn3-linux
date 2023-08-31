@@ -33,6 +33,9 @@ OPTIONS
 -v, --verbose
         Provide more details about each configuration profile available.
 
+--json
+        Format the output as machine-readable JSON
+
 --filter-config NAME-PREFIX
         Filter the list of configuration profiles to only consider
         profiles starting with the given prefix value.
