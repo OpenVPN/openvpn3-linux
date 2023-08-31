@@ -220,7 +220,7 @@ interface net.openvpn.v3.netcfg {
           s message);
       NetworkChange(u type,
                     s device,
-                    s details);
+                    a{ss} details);
     properties:
       readwrite u log_level;
       readonly u owner;
@@ -275,7 +275,7 @@ are resolved in the usual longest-prefix matching fashion.
 #### Arguments
 | Direction | Name         | Type        | Description                                                                  |
 |-----------|--------------|-------------|------------------------------------------------------------------------------|
-| In        | networks     | a(subb)     | An array of networks                                                         | 
+| In        | networks     | a(subb)     | An array of networks                                                         |
 
 A network is specified in the following way:
 
