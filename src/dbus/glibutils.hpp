@@ -376,7 +376,7 @@ inline GVariant *CreateEmptyBuilderFromType(const char *type)
 template <typename T>
 inline std::vector<T> ParseGVariantList(GVariant *params, const char *override_type = nullptr, bool wrapped = true)
 {
-    std::stringstream type = {};
+    std::stringstream type;
     type << (wrapped ? "(" : "")
          << "a"
          << (override_type ? std::string(override_type) : std::string(GetDBusDataType<T>()))
