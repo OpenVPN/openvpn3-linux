@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include <string>
+
+
 enum class OverrideType
 {
     string,
