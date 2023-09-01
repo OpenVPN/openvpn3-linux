@@ -778,11 +778,23 @@ class ConfigurationObject : public DBusObject,
         std::string g_type(g_variant_get_type_string(value));
         if ("s" == g_type)
         {
+            if (OverrideType::string != vo.type)
+            {
+                THROW_DBUSEXCEPTION("ConfigurationObject(SetOverride)",
+                                    "Invalid override data type for '"
+                                        + key + "': " + g_type);
+            }
             std::string v = GLibUtils::GetVariantValue<std::string>(value);
             return set_override(key, v);
         }
         else if ("b" == g_type)
         {
+            if (OverrideType::boolean != vo.type)
+            {
+                THROW_DBUSEXCEPTION("ConfigurationObject(SetOverride)",
+                                    "Invalid override data type for '"
+                                        + key + "': " + g_type);
+            }
             return set_override(key, GLibUtils::GetVariantValue<bool>(value));
         }
         THROW_DBUSEXCEPTION("ConfigurationObject",
