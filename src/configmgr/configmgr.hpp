@@ -1089,7 +1089,7 @@ class ConfigurationObject : public DBusObject,
             CheckOwnerAccess(sender);
             GLibUtils::checkParams(__func__, params, "(sv)");
             std::string key = GLibUtils::ExtractValue<std::string>(params, 0);
-            GVariant *val = g_variant_get_child_value(params, 1);
+            GVariant *val = g_variant_get_variant(g_variant_get_child_value(params, 1));
 
             const OverrideValue vo = set_override(key, val);
 
