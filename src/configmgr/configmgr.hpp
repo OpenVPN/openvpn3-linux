@@ -762,7 +762,7 @@ class ConfigurationObject : public DBusObject,
      * @return  Returns the OverrideValue object added to the
      *          array of override settings
      */
-    OverrideValue set_override(const gchar *key, GVariant *value)
+    OverrideValue set_override(const std::string &key, GVariant *value)
     {
         const ValidOverride &vo = GetConfigOverride(key);
         if (!vo.valid())
