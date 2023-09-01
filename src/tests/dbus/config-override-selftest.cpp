@@ -94,7 +94,7 @@ int main(int argc, char **argv)
     catch (DBusException &excp)
     {
         std::string e(excp.what());
-        if (e.find("net.openvpn.v3.error.OverrideNotSet") != std::string::npos)
+        if (e.find("Override 'ipv6' has not been set") != std::string::npos)
         {
             std::cout << "PASS" << std::endl;
         }
@@ -140,7 +140,7 @@ int main(int argc, char **argv)
     catch (DBusException &excp)
     {
         std::string e(excp.what());
-        if (e.find("net.openvpn.v3.error.OverrideNotSet") != std::string::npos)
+        if (e.find("Override 'non-existing-override' has not been set") != std::string::npos)
         {
             std::cout << "PASS" << std::endl;
         }
@@ -231,7 +231,7 @@ int main(int argc, char **argv)
     catch (DBusException &excp)
     {
         std::string e(excp.what());
-        if (e.find("v3.configmgr.error: Invalid data type for key 'dns-sync-lookup'") != std::string::npos)
+        if (e.find("Invalid override data type for 'dns-sync-lookup':") != std::string::npos)
         {
             std::cout << "PASS" << std::endl;
         }
@@ -277,7 +277,7 @@ int main(int argc, char **argv)
     catch (DBusException &excp)
     {
         std::string e(excp.what());
-        if (e.find("v3.configmgr.error: Invalid data type for key 'server-override'") != std::string::npos)
+        if (e.find("Invalid override data type for 'server-override'") != std::string::npos)
         {
             std::cout << "PASS" << std::endl;
         }
