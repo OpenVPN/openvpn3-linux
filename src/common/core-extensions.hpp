@@ -277,15 +277,28 @@ class OptionListJSON : public openvpn::OptionList
         //        wildcard matches
         //
         std::vector<std::string> ignore_as_options = {
+            "APP_VERIFY_",
+            "AUTOLOGIN_SPEC",
             "CLI_PREF_",
-            "WSHOST",
+            "DYNAMIC",
+            "EXTERNAL_PKI",
+            "GENERIC",
+            "HOST_FIELD",
+            "HOST_LIST_",
+            "HOST_SITE_",
+            "ICON_",
+            "IS_",
+            "ORGANIZATION",
+            "PORTAL_URL",
             "WEB_CA",
-            "IS_"};
+            "WSHOST"};
 
         // These options will be prefixed with "setenv opt"
         std::vector<std::string> rewrite_as_options = {
-            "USERNAME",
-            "PROFILE"};
+            "AUTOLOGIN",
+            "FRIENDLY_NAME",
+            "PROFILE",
+            "USERNAME"};
 
         // Iterate all the std::vector<Option> objects
         // OptionListJSON inherits OptionList which again inherits

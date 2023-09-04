@@ -924,7 +924,7 @@ class ConfigParser():
             embedded_key = None
             for rawopt in [l.strip() for l in fp.readlines() if 0 < len(l.split('## ')[0])]:
                 #
-                # FIXME: This is a hackish workadoun to better handle OpenVPN Access Server
+                # FIXME: This is a hackish workaround to better handle OpenVPN Access Server
                 #        when configured to do web authentication.  This hack will not be
                 #        needed when the OpenVPN 3 Core library properly supports sending
                 #        --auth-token in similar ways to how OpenVPN 2.x behaves.
@@ -932,7 +932,7 @@ class ConfigParser():
                 as_meta_opt = rawopt.split('# OVPN_ACCESS_SERVER_')
                 if len(as_meta_opt) > 1:
                     meta_kv = as_meta_opt[1].strip().split('=')
-                    if not meta_kv in ('USERNAME', 'PROFILE'):
+                    if not meta_kv in ('USERNAME', 'PROFILE', 'AUTOLOGIN'):
                         continue
                     opt = 'setenv opt %s %s' % (meta_kv[0], " ".join(meta_kv[1:]))
                 elif len(rawopt.split('#')) > 1:
