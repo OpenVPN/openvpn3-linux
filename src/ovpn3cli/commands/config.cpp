@@ -623,7 +623,7 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
         }
     }
 
-    if ((args->Present({"rename", "show", "tag", "remove-tag"}).empty())
+    if ((args->Present({"rename", "show", "tag", "remove-tag"}, true).empty())
 #ifdef ENABLE_OVPNDCO
         && !args->Present("dco")
 #endif
