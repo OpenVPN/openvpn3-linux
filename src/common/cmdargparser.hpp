@@ -157,10 +157,13 @@ class ParsedArgs
      *  first match.
      *
      * @param  optlist  std::vector<std::string> of options to check for
+     * @param  no_throw If true it will return an empty string when no match
+     *                  is found; otherwise it will throwOptionNotFound
      * @return Returns std::string of the first matching option.
-     * @throws OptionsNotFound if no option was found
+     * @throws OptionsNotFound if no option was found if no_throw is false.
      */
-    const std::string Present(const std::vector<std::string> optlist) const
+    const std::string Present(const std::vector<std::string> optlist,
+                              const bool no_throw = false) const
     {
         for (const auto &k : optlist)
         {
@@ -168,6 +171,10 @@ class ParsedArgs
             {
                 return k;
             }
+        }
+        if (no_throw)
+        {
+            return "";
         }
         throw OptionNotFound();
     }
