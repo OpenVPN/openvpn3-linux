@@ -318,6 +318,13 @@ class ConfigParser():
                                    + 'for local IPv6 address and REMOTE_ENDP '
                                    + 'as the remote end-point')
 
+        self.__parser.add_argument('--ignore-unknown-option',
+                                   metavar="OPTION",
+                                   action=ConfigParser.OpenVPNvarArgs,
+                                   min_args=1,
+                                   help='Ignore listed options if they are '
+                                   + 'not recognized')
+
         self.__parser.add_argument('--inactive', metavar='SECS [BYTES]',
                                    action=ConfigParser.OpenVPNvarArgs,
                                    min_args=1,

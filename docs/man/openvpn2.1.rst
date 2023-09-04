@@ -119,6 +119,12 @@ OPTIONS
                       its PREFIX.  An optional REMOTE_ENDPOINT can be given
                       at the end.
 
+--ignore-unknown-options OPTION
+                      If the listed OPTION(s) are not understood, the option
+                      parser in the OpenVPN 3 Core library will ignore these
+                      options instead of complaining about unknown or unused
+                      options.
+
 --inactive ARGS
                       This option takes one mandatory argument, SECONDS, which
                       defines how many seconds the tunnel can idle before
