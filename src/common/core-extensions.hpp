@@ -147,6 +147,21 @@ class OptionListJSON : public openvpn::OptionList
         {
             std::string optname(element.ref(0));
 
+            bool skip = false;
+            for (const auto &ignore : ignore_as_metaopts)
+            {
+                if (optname.find(ignore) == 0)
+                {
+                    // Skip Access Server meta-options which should be ignored
+                    skip = true;
+                    break;
+                }
+            }
+            if (skip)
+            {
+                continue;
+            }
+
             Json::Value optval{};
             if (optparser_inline_file(optname))
             {
@@ -267,34 +282,8 @@ class OptionListJSON : public openvpn::OptionList
     {
         std::stringstream cfgstr;
 
-        // FIXME: Hackish workaround for OpenVPN Access Server
-        //        configured to do web authentication.  This is
-        //        only needed until OpenVPN 3 Core library gets
-        //        updated to always preserve and send --auth-token,
-        //        similar to how OpenVPN 2.x behaves.
-        //
-        //        The list of options here are more to be considered
-        //        wildcard matches
-        //
-        std::vector<std::string> ignore_as_options = {
-            "APP_VERIFY_",
-            "AUTOLOGIN_SPEC",
-            "CLI_PREF_",
-            "DYNAMIC",
-            "EXTERNAL_PKI",
-            "GENERIC",
-            "HOST_FIELD",
-            "HOST_LIST_",
-            "HOST_SITE_",
-            "ICON_",
-            "IS_",
-            "ORGANIZATION",
-            "PORTAL_URL",
-            "WEB_CA",
-            "WSHOST"};
-
         // These options will be prefixed with "setenv opt"
-        std::vector<std::string> rewrite_as_options = {
+        std::vector<std::string> rewrite_as_metaopts = {
             "AUTOLOGIN",
             "FRIENDLY_NAME",
             "PROFILE",
@@ -310,7 +299,7 @@ class OptionListJSON : public openvpn::OptionList
 
             // FIXME: Access Server hack
             bool as_skip = false;
-            for (const auto &chk : ignore_as_options)
+            for (const auto &chk : ignore_as_metaopts)
             {
                 if (optname.find(chk) == 0)
                 {
@@ -324,7 +313,7 @@ class OptionListJSON : public openvpn::OptionList
             }
 
             bool setenv_rewrite = false;
-            for (const auto &chk : rewrite_as_options)
+            for (const auto &chk : rewrite_as_metaopts)
             {
                 if (optname.find(chk) == 0)
                 {
@@ -357,6 +346,35 @@ class OptionListJSON : public openvpn::OptionList
 
 
   private:
+    // FIXME: Hackish workaround for OpenVPN Access Server
+    //        configured to do web authentication.  This is
+    //        only needed until OpenVPN 3 Core library gets
+    //        updated to always preserve and send --auth-token,
+    //        similar to how OpenVPN 2.x behaves.
+    //
+    //        The list of options here are more to be considered
+    //        wildcard matches
+    //
+    std::vector<std::string> ignore_as_metaopts = {
+        "ALLOW_UNSIGNED",
+        "APP_VERIFY",
+        "AUTOLOGIN_SPEC",
+        "CLI_PREF_",
+        "DYNAMIC",
+        "EXTERNAL_PKI",
+        "GENERIC",
+        "HOST_FIELD",
+        "HOST_LIST",
+        "SITE_LIST",
+        "ICON_",
+        "IS_",
+        "NO_WEB",
+        "ORGANIZATION",
+        "PORTAL_URL",
+        "WEB_CA",
+        "WSHOST"};
+
+
     /**
      * Parses a Json::Value object and adds it as an Option object to the
      * std::vector<Option> which is part of the OptionList object.
