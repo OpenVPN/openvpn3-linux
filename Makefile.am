@@ -206,7 +206,8 @@ UNIT_TESTS = \
 	src/tests/unit/syslog-facility-mapping.cpp \
 	src/tests/unit/dns-settings-manager-test.cpp \
 	src/tests/unit/dns-resolver-settings.cpp \
-	src/tests/unit/machine-id.cpp
+	src/tests/unit/machine-id.cpp \
+	src/tests/unit/core-extensions.cpp
 
 UNIT_TESTS_DEPS = \
 	src/common/configfileparser.cpp \
