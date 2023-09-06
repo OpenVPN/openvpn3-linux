@@ -4,6 +4,7 @@
 #
 #  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
 #  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2023         Jeremy Fleischman <jeremyfleischman@gmail.com>
 #
 
 ##
@@ -114,6 +115,7 @@ class Session(object):
         self.__log_callback = None
         self.__status_callback = None
         self.__deleted = False
+        self.__log_forward_enabled = False
 
 
     def __del__(self):
@@ -284,23 +286,33 @@ class Session(object):
     #
     #
     def LogCallback(self, cbfnc):
+        if cbfnc is not None and self.__log_callback is not None:
+            # In this case, the program must first disable the
+            # current LogCallback() before setting a new one.
+            raise RuntimeError('LogCallback() is already enabled')
+
+        if cbfnc is None and self.__log_callback is None:
+            # This is fine: disabling a callback when there is no
+            # callback is a simple no-op.
+            return
+
         if cbfnc is not None:
+            # Subscribe to Log signals, which will be processed
+            # by the callback function
             self.__log_callback = cbfnc
             self.__dbuscon.add_signal_receiver(cbfnc,
                                                signal_name='Log',
                                                dbus_interface='net.openvpn.v3.backends',
                                                bus_name='net.openvpn.v3.log',
                                                path=self.__session_path)
-            self.__session_intf.LogForward(True)
         else:
-            try:
-                self.__session_intf.LogForward(False)
-            except dbus.exceptions.DBusException:
-                # If this fails, the session is typically already removed
-                pass
-            self.__dbuscon.remove_signal_receiver(self.__log_callback, 'Log')
-            self.__log_callback = None
+            # Only remove the callback if there actually *is* a callback
+            # currently.
+            if self.__log_callback is not None:
+                self.__dbuscon.remove_signal_receiver(self.__log_callback, 'Log')
+                self.__log_callback = None
 
+        self.__set_log_forward()
 
     ##
     #  Subscribes to the StatusChange signals for this session and register
@@ -310,7 +322,19 @@ class Session(object):
     #     (integer) StatusMajor, (integer) StatusMinor, (string) message
     #
     def StatusChangeCallback(self, cbfnc):
+        if cbfnc is not None and self.__status_callback is not None:
+            # In this case, the program must first disable the
+            # current StatusChangeCallback() before setting a new one.
+            raise RuntimeError('StatusChangeCallback() is already enabled')
+
+        if cbfnc is None and self.__status_callback is None:
+            # This is fine: disabling a callback when there is no
+            # callback is a simple no-op.
+            return
+
         if cbfnc is not None:
+            # Subscribe to StatusChange signals, which will be processed
+            # by the callback function
             self.__status_callback = cbfnc
             self.__dbuscon.add_signal_receiver(cbfnc,
                                                signal_name='StatusChange',
@@ -318,10 +342,14 @@ class Session(object):
                                                bus_name='net.openvpn.v3.log',
                                                path=self.__session_path)
         else:
-            self.__dbuscon.remove_signal_receiver(self.__status_callback,
-                                                  'StatusChange')
-            self.__status_callback = None
+            # Only remove the callback if there actually *is* a callback
+            # currently.
+            if self.__status_callback is not None:
+                self.__dbuscon.remove_signal_receiver(self.__status_callback,
+                                                      'StatusChange')
+                self.__status_callback = None
 
+        self.__set_log_forward()
 
 
     ##
@@ -417,6 +445,30 @@ class Session(object):
     def SetDCO(self, dco):
         self.__prop_intf.Set('net.openvpn.v3.sessions', 'dco', dco)
 
+    ##
+    #  Internal method to enable/disable LogForward as needed.
+    #  Must be called whenever a callback that needs LogForward enabled is
+    #  added or removed.
+    #
+    def __set_log_forward(self):
+        # The LogCallback and the StatusChangeCallback both need LogForward
+        # enabled. In other words, LogForward should be enabled if one or both
+        # of those callbacks are registered.
+        should_log_forward_be_enabled = (
+            self.__log_callback is not None or self.__status_callback is not None
+        )
+
+        if should_log_forward_be_enabled and not self.__log_forward_enabled:
+            self.__session_intf.LogForward(True)
+            self.__log_forward_enabled = True
+        elif not should_log_forward_be_enabled and self.__log_forward_enabled:
+            try:
+                self.__session_intf.LogForward(False)
+            except dbus.exceptions.DBusException:
+                # If this fails, the session is typically already removed
+                pass
+
+            self.__log_forward_enabled = False
 
 
 ##
