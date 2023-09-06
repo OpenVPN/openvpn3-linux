@@ -1070,7 +1070,7 @@ class ConfigParser():
                         raise argparse.ArgumentError(self, err)
 
                     if values[0] not in self.__overrides:
-                        err = 'Invalida override key: %s' % (values[0],)
+                        err = 'Invalid override key: %s' % (values[0],)
                         raise argparse.ArgumentError(self, err)
 
                     dst[values[0]] = ' '.join(values[1:])
