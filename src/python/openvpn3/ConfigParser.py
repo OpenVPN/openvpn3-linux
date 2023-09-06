@@ -187,7 +187,8 @@ class ConfigParser():
             'ipv6', 'dns-setup-disabled', 'dns-sync-lookup',
             'auth-fail-retry', 'proxy-host', 'proxy-port',
             'proxy-username', 'proxy-password',
-            'proxy-auth-cleartext', 'enable-legacy-algorithms']
+            'proxy-auth-cleartext', 'enable-legacy-algorithms',
+            'allow-compression']
 
         self.__parser.add_argument('--auth', metavar='ALG',
                                    action='store',
