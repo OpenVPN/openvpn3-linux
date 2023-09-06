@@ -82,11 +82,13 @@ class ConfigParser():
     def GenerateConfig(self):
         cfg = []
         for opt_key, opt_val in self.__opts.items():
-            if opt_key in ('daemon', 'dco'):
-                # Don't put 'daemon' or 'dco' into the generated config,
-                # that is not a useful option for the OpenVPN 3 backend and we
-                # handle this in the front-end instead.
+            if opt_key in ['daemon', 'dco', 'profile_override']:
+                # Don't put profile overrides, 'daemon' or 'dco' into the
+                # generated config. These are not a valid configuration
+                # options and are sent to the configuration manager
+                # separately
                 continue;
+
             key = opt_key.replace('_', '-')
             if isinstance(opt_val, bool):
                 if opt_val is True:
