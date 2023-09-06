@@ -177,6 +177,16 @@ class ConfigParser():
 
 
     def __init_arguments(self):
+        # List of supported profile overrides.  These do not appear
+        # in the generated configuration, but are profile settings
+        # sent to the Configuration Manager separately
+        profile_overrides = [
+            'server-override', 'port-override', 'proto-override',
+            'ipv6', 'dns-setup-disabled', 'dns-sync-lookup',
+            'auth-fail-retry', 'proxy-host', 'proxy-port',
+            'proxy-username', 'proxy-password',
+            'proxy-auth-cleartext', 'enable-legacy-algorithms']
+
         self.__parser.add_argument('--auth', metavar='ALG',
                                    action='store',
                                    completion_suggestions=['SHA1', 'SHA256', 'SHA384',
@@ -416,18 +426,13 @@ class ConfigParser():
                                    help='TCP/UDP port number for both local '
                                    + 'and remote.')
 
-        profoverrides=['server-override', 'port-override', 'proto-override',
-                       'ipv6', 'dns-setup-disabled', 'dns-sync-lookup',
-                       'auth-fail-retry', 'proxy-host', 'proxy-port',
-                       'proxy-username', 'proxy-password',
-                       'proxy-auth-cleartext', 'enable-legacy-algorithms']
         self.__parser.add_argument('--profile-override',
                                    metavar='OVERRIDE-KEY OVERRIDE-VALUE',
                                    action=ConfigParser.OpenVPNoverrideArgs,
-                                   choices=profoverrides,
+                                   choices=profile_overrides,
                                    help='OpenVPN 3 specific: Override '
                                    + 'specific settings. Valid override keys: '
-                                   + ', '.join(profoverrides))
+                                   + ', '.join(profile_overrides))
 
         self.__parser.add_argument('--proto', metavar='PROTO',
                                    action='store',
