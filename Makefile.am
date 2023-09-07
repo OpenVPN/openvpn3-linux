@@ -556,6 +556,7 @@ src_ovpn3cli_openvpn3_SOURCES = \
 	src/ovpn3cli/commands/commands.hpp \
 	src/ovpn3cli/commands/version.cpp \
 	src/ovpn3cli/commands/config.cpp \
+	src/ovpn3cli/commands/config-import.cpp \
 	src/ovpn3cli/commands/log.cpp \
 	src/ovpn3cli/commands/log-service.cpp \
 	src/ovpn3cli/commands/session.cpp \

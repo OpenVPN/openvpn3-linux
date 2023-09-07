@@ -22,8 +22,10 @@ typedef SingleCommand::Ptr (*PrepareCommand)();
 // Command provided in version.cpp
 SingleCommand::Ptr prepare_command_version();
 
-// Commands provided in config.cpp
+// Commands provided in config-import.cpp
 SingleCommand::Ptr prepare_command_config_import();
+
+// Commands provided in config.cpp
 SingleCommand::Ptr prepare_command_config_manage();
 SingleCommand::Ptr prepare_command_config_acl();
 SingleCommand::Ptr prepare_command_config_dump();
