@@ -1108,7 +1108,54 @@ static int cmd_config_dump(ParsedArgs::Ptr args)
         }
         else
         {
-            std::cout << conf.GetJSONConfig() << std::endl;
+            std::stringstream cfgstr(conf.GetJSONConfig());
+            Json::Value cfgjson;
+            cfgstr >> cfgjson;
+            Json::Value json;
+
+            json["object_path"] = path;
+            json["owner"] = (uint32_t)conf.GetOwner();
+            json["name"] = conf.GetStringProperty("name");
+            for (const auto &tag : conf.GetTags())
+            {
+                json["tags"].append(tag);
+            }
+
+            json["import_timestamp"] = (Json::Value::UInt64)conf.GetUInt64Property("import_timestamp");
+            json["last_used_timestamp"] = (Json::Value::UInt64)conf.GetUInt64Property("last_used_timestamp");
+            json["locked_down"] = conf.GetLockedDown();
+            json["transfer_owner_session"] = conf.GetTransferOwnerSession();
+            json["readonly"] = conf.GetBoolProperty("readonly");
+            json["used_count"] = conf.GetUIntProperty("used_count");
+            json["profile"].append(cfgjson);
+            json["dco"] = conf.GetDCO();
+
+            json["public_access"] = conf.GetPublicAccess();
+            for (const auto &e : conf.GetAccessList())
+            {
+                json["acl"].append(e);
+            }
+            for (const auto &ov : conf.GetOverrides())
+            {
+                switch (ov.override.type)
+                {
+                case OverrideType::boolean:
+                    json["overrides"][ov.override.key] = ov.boolValue;
+                    break;
+
+                case OverrideType::string:
+                    json["overrides"][ov.override.key] = ov.strValue;
+                    break;
+
+                default:
+                    throw CommandException("config-dump",
+                                           "Invalid override type for key "
+                                           "'" + ov.override.key
+                                               + "'");
+                }
+            }
+
+            std::cout << json << std::endl;
         }
         return 0;
     }
