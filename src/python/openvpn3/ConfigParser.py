@@ -1077,11 +1077,33 @@ class ConfigParser():
                         err = 'Missing override value to "%s"' % (values[0],)
                         raise argparse.ArgumentError(self, err)
 
-                    if values[0] not in self.__overrides:
+                    override = values[0]
+                    override_value = values[1:]
+
+                    if override not in self.__overrides:
                         err = 'Invalid override key: %s' % (values[0],)
                         raise argparse.ArgumentError(self, err)
 
-                    dst[values[0]] = ' '.join(values[1:])
+                    # These overrides takes a boolean value
+                    if override in ('auth-fail-retry', 'dns-fallback-google',
+                                    'dns-setup-disabled','dns-sync-lookup',
+                                    'enable-legacy-algorithms', 'persist-tun'):
+                        if type(override_value) is list:
+                            override_value = ''.join(override_value)
+
+                        if override_value.lower() in ('1','yes','true'):
+                            override_value = True
+                        elif override_value.lower() in ('0','no','false'):
+                            override_value = False
+                        else:
+                            raise argparse.ArgumentError(self,
+                                                         'Incorrect boolean value for "%s"' % override)
+
+                    if type(override_value) is list:
+                        dst[override] = ' '.join(override_value)
+                    else:
+                        dst[override] = override_value
+
                 else:
                     err = 'Missing override value to "%s"' % (values,)
                     raise argparse.ArgumentError(self, err)
