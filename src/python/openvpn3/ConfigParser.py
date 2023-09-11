@@ -184,7 +184,7 @@ class ConfigParser():
         # sent to the Configuration Manager separately
         profile_overrides = [
             'server-override', 'port-override', 'proto-override',
-            'ipv6', 'dns-setup-disabled', 'dns-sync-lookup',
+            'ipv6', 'dns-scope', 'dns-setup-disabled', 'dns-sync-lookup',
             'auth-fail-retry', 'proxy-host', 'proxy-port',
             'proxy-username', 'proxy-password',
             'proxy-auth-cleartext', 'enable-legacy-algorithms',
