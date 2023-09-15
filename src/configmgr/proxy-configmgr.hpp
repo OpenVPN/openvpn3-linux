@@ -38,6 +38,18 @@ class CfgMgrProxyException : std::exception
 };
 
 
+enum class CfgMgrFeatures : std::uint32_t
+{
+    // clang-format off
+        UNDEFINED        = 0,        //< Version not identified
+        DEVBUILD         = std::numeric_limits<std::uint32_t>::max()  //< Development build; unreleased
+    // clang-format on
+};
+static inline bool operator&(const CfgMgrFeatures &a, const CfgMgrFeatures &b)
+{
+    return (static_cast<uint32_t>(a) & static_cast<uint32_t>(b)) > 0;
+}
+
 
 class OpenVPN3ConfigurationProxy : public DBusProxy
 {
@@ -60,7 +72,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
         // when accessing the main management object
         if (OpenVPN3DBus_rootp_configuration == object_path)
         {
-            (void)GetServiceVersion();
+            set_feature_flags(GetServiceVersion());
         }
     }
 
@@ -83,8 +95,18 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
         // when accessing the main management object
         if (OpenVPN3DBus_rootp_configuration == object_path)
         {
-            (void)GetServiceVersion();
+            set_feature_flags(GetServiceVersion());
         }
+    }
+
+
+    const bool CheckFeatures(const CfgMgrFeatures &feat)
+    {
+        if (features == CfgMgrFeatures::UNDEFINED)
+        {
+            set_feature_flags(GetServiceVersion());
+        }
+        return features & feat;
     }
 
 
@@ -669,5 +691,20 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
     }
 
   private:
+    CfgMgrFeatures features = CfgMgrFeatures::UNDEFINED;
     std::vector<OverrideValue> cached_overrides = {};
+
+
+    void set_feature_flags(const std::string &vs)
+    {
+        if ('v' == vs[0])
+        {
+            unsigned int v = std::stoi(vs.substr(1));
+        }
+        else
+        {
+            // Development builds are expected to have all features.
+            features = CfgMgrFeatures::DEVBUILD;
+        }
+    }
 };
