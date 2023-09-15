@@ -55,7 +55,7 @@ static inline bool operator&(const CfgMgrFeatures &a, const CfgMgrFeatures &b)
 class OpenVPN3ConfigurationProxy : public DBusProxy
 {
   public:
-    OpenVPN3ConfigurationProxy(GBusType bus_type, std::string object_path)
+    OpenVPN3ConfigurationProxy(GBusType bus_type, std::string object_path, bool force_feature_load = false)
         : DBusProxy(bus_type,
                     OpenVPN3DBus_name_configuration,
                     OpenVPN3DBus_interf_configuration,
@@ -71,14 +71,14 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
 
         // Only try to ensure the configuration manager service is available
         // when accessing the main management object
-        if (OpenVPN3DBus_rootp_configuration == object_path)
+        if ((OpenVPN3DBus_rootp_configuration == object_path) || force_feature_load)
         {
             set_feature_flags(GetServiceVersion());
         }
     }
 
 
-    OpenVPN3ConfigurationProxy(GDBusConnection *con, std::string object_path)
+    OpenVPN3ConfigurationProxy(GDBusConnection *con, std::string object_path, bool force_feature_load = false)
         : DBusProxy(con,
                     OpenVPN3DBus_name_configuration,
                     OpenVPN3DBus_interf_configuration,
@@ -94,7 +94,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
 
         // Only try to ensure the configuration manager service is available
         // when accessing the main management object
-        if (OpenVPN3DBus_rootp_configuration == object_path)
+        if ((OpenVPN3DBus_rootp_configuration == object_path) || force_feature_load)
         {
             set_feature_flags(GetServiceVersion());
         }

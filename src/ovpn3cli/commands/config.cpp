@@ -115,7 +115,7 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
         {
             continue;
         }
-        OpenVPN3ConfigurationProxy cprx(G_BUS_TYPE_SYSTEM, cfg);
+        OpenVPN3ConfigurationProxy cprx(G_BUS_TYPE_SYSTEM, cfg, true);
 
         std::string name = cprx.GetStringProperty("name");
         if (!filter_cfgname.empty()
