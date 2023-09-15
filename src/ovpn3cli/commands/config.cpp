@@ -1124,7 +1124,7 @@ static int cmd_config_dump(ParsedArgs::Ptr args)
                                 ? retrieve_config_path("config-dump",
                                                        args->GetValue("config", 0))
                                 : args->GetValue("path", 0));
-        OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path);
+        OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path, true);
         if (!conf.CheckObjectExists())
         {
             throw CommandException("config-dump",
@@ -1146,9 +1146,13 @@ static int cmd_config_dump(ParsedArgs::Ptr args)
             json["object_path"] = path;
             json["owner"] = (uint32_t)conf.GetOwner();
             json["name"] = conf.GetStringProperty("name");
-            for (const auto &tag : conf.GetTags())
+
+            if (conf.CheckFeatures(CfgMgrFeatures::TAGS))
             {
-                json["tags"].append(tag);
+                for (const auto &tag : conf.GetTags())
+                {
+                    json["tags"].append(tag);
+                }
             }
 
             json["import_timestamp"] = (Json::Value::UInt64)conf.GetUInt64Property("import_timestamp");
