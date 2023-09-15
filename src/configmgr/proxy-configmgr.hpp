@@ -42,6 +42,7 @@ enum class CfgMgrFeatures : std::uint32_t
 {
     // clang-format off
         UNDEFINED        = 0,        //< Version not identified
+        TAGS             = 1,        //< Supports configuration tags
         DEVBUILD         = std::numeric_limits<std::uint32_t>::max()  //< Development build; unreleased
     // clang-format on
 };
@@ -186,6 +187,10 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     std::vector<std::string> SearchByTag(const std::string &tagname) const
     {
+        if (!(features & CfgMgrFeatures::TAGS))
+        {
+            throw CfgMgrProxyException("Tags feature unavailable");
+        }
         GVariant *res = Call("SearchByTag",
                              g_variant_new("(s)", tagname.c_str()));
         if (nullptr == res)
@@ -547,6 +552,10 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     void AddTag(const std::string &tag) const
     {
+        if (!(features & CfgMgrFeatures::TAGS))
+        {
+            throw CfgMgrProxyException("Tags feature unavailable");
+        }
         if ("system:" == tag.substr(0, 7))
         {
             throw CfgMgrProxyException("System tags cannot be added by users");
@@ -572,6 +581,11 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     void RemoveTag(const std::string &tag) const
     {
+        if (!(features & CfgMgrFeatures::TAGS))
+        {
+            throw CfgMgrProxyException("Tags feature unavailable");
+        }
+
         if ("system:" == tag.substr(0, 7))
         {
             throw CfgMgrProxyException("System tags cannot be removed by users");
@@ -598,6 +612,11 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     const std::vector<std::string> GetTags() const
     {
+        if (!(features & CfgMgrFeatures::TAGS))
+        {
+            throw CfgMgrProxyException("Tags feature unavailable");
+        }
+
         GVariant *res = GetProperty("tags");
         if (nullptr == res)
         {
@@ -700,6 +719,10 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
         if ('v' == vs[0])
         {
             unsigned int v = std::stoi(vs.substr(1));
+            if (21 <= v)
+            {
+                features = CfgMgrFeatures::TAGS;
+            }
         }
         else
         {
