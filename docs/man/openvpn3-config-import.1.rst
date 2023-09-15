@@ -41,6 +41,10 @@ OPTIONS
                          profile becomes persistent and will be automatically
                          loaded each time the configuration manager starts.
 
+--tag TAGNAME            Attach a tag label to the imported configuration
+                         file.  This may be used multiple times to add more
+                         tags.
+
 SEE ALSO
 ========
 
@@ -51,4 +55,3 @@ SEE ALSO
 ``openvpn3-config-show``\(1)
 ``openvpn3-configs-list``\(1)
 ``openvpn3-session-start``\(1)
-

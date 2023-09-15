@@ -542,11 +542,12 @@ SingleCommand::Ptr prepare_command_session_stats()
 //////////////////////////////////////////////////////////////////////////
 
 
-// Implemented in config.cpp
-std::string import_config(const std::string filename,
-                          const std::string cfgname,
+// Implemented in config-import.cpp
+std::string import_config(const std::string &filename,
+                          const std::string &cfgname,
                           const bool single_use,
-                          const bool persistent);
+                          const bool persistent,
+                          const std::vector<std::string> &tags);
 
 /**
  *  openvpn3 session-start command
@@ -606,7 +607,7 @@ static int cmd_session_start(ParsedArgs::Ptr args)
                 {
                     throw;
                 }
-                cfgpath = import_config(cfgname, cfgname, true, false);
+                cfgpath = import_config(cfgname, cfgname, true, false, {});
                 std::cout << "Using configuration profile from file: "
                           << cfgname << std::endl;
             }

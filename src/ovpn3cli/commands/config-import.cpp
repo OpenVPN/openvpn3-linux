@@ -13,6 +13,9 @@
  * @brief  Implementation of the openvpn3 config-import command
  */
 
+#include <string>
+#include <vector>
+
 #include "config.h"
 
 #define USE_TUN_BUILDER
@@ -45,10 +48,11 @@ using namespace openvpn;
  *
  *  @return Retuns a string containing the D-Bus object path to the configuration
  */
-std::string import_config(const std::string filename,
-                          const std::string cfgname,
+std::string import_config(const std::string &filename,
+                          const std::string &cfgname,
                           const bool single_use,
-                          const bool persistent)
+                          const bool persistent,
+                          const std::vector<std::string> &tags)
 {
     // Parse the OpenVPN configuration
     // The ProfileMerge will ensure that all needed
@@ -93,6 +97,7 @@ std::string import_config(const std::string filename,
     // Import the configuration fileh
     OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration);
     conf.Ping();
+
     std::string cfgpath = conf.Import(cfgname,
                                       pm.profile_content(),
                                       single_use,
@@ -105,12 +110,33 @@ std::string import_config(const std::string filename,
     // by the core OpenVPN 3 client itself, it needs to be set outside of
     // the configuration profile.  This is by design, mandated by
     // OpenVPN 3 Core library.
-    if (persist_tun)
+    //
+    //  If there is a list of tags for this configuration profile, add
+    //  them to the profile as well.
+    if (persist_tun || !tags.empty())
     {
-        OpenVPN3ConfigurationProxy cfgprx(G_BUS_TYPE_SYSTEM, cfgpath);
-        const ValidOverride &vo = cfgprx.LookupOverride("persist-tun");
-        cfgprx.SetOverride(vo, true);
+        OpenVPN3ConfigurationProxy cfgprx(G_BUS_TYPE_SYSTEM, cfgpath, true);
+
+        if (persist_tun)
+        {
+            const ValidOverride &vo = cfgprx.LookupOverride("persist-tun");
+            cfgprx.SetOverride(vo, true);
+        }
+
+        if (cfgprx.CheckFeatures(CfgMgrFeatures::TAGS))
+        {
+            for (const auto &t : tags)
+            {
+                cfgprx.AddTag(t);
+            }
+        }
+        else
+        {
+            std::cerr << "Tags not supported by Configuration Manager; "
+                      << "skipping tagging" << std::endl;
+        }
     }
+
 
     // Return the object path to this configuration profile
     return cfgpath;
@@ -136,12 +162,22 @@ static int cmd_config_import(ParsedArgs::Ptr args)
     }
     try
     {
+        std::vector<std::string> tags = {};
+        if (args->Present("tag"))
+        {
+            for (const auto &t : args->GetAllValues("tag"))
+            {
+                tags.push_back(t);
+            }
+        };
         std::string name = (args->Present("name") ? args->GetValue("name", 0)
                                                   : args->GetValue("config", 0));
         std::string path = import_config(args->GetValue("config", 0),
                                          name,
                                          false,
-                                         args->Present("persistent"));
+                                         args->Present("persistent"),
+                                         tags);
+
         std::cout << "Configuration imported.  Configuration path: "
                   << path
                   << std::endl;
@@ -181,6 +217,10 @@ SingleCommand::Ptr prepare_command_config_import()
     cmd->AddOption("persistent",
                    'p',
                    "Make the configuration profile persistent through service restarts");
+    cmd->AddOption("tag",
+                   "TAG-NAME",
+                   true,
+                   "Adds a tag name to the configuration profile");
 
     return cmd;
 }
