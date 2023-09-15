@@ -51,7 +51,14 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
         config_list = {};
     if (args->Present("filter-tag"))
     {
-        config_list = confmgr.SearchByTag(args->GetValue("filter-tag", 0));
+        try
+        {
+            config_list = confmgr.SearchByTag(args->GetValue("filter-tag", 0));
+        }
+        catch (DBusException &err)
+        {
+            throw CommandException("configs-list", err.GetRawError());
+        }
     }
     else if (args->Present("filter-owner"))
     {
@@ -84,8 +91,11 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
             std::cout << "Configuration Name" << std::setw(58 - 18) << " "
                       << "Owner"
                       << std::endl;
-            std::cout << "Tags"
-                      << std::endl;
+            if (confmgr.CheckFeatures(CfgMgrFeatures::TAGS))
+            {
+                std::cout << "Tags"
+                          << std::endl;
+            }
         }
         else
         {
@@ -162,26 +172,29 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
                 std::cout << name << std::setw(58 - name.size()) << " " << user
                           << std::endl;
 
-                std::cout << "Tags: ";
-                size_t l = 6;
-                size_t tc = 0;
-                for (const auto &t : cprx.GetTags())
+                if (confmgr.CheckFeatures(CfgMgrFeatures::TAGS))
                 {
-                    if (l > 6)
+                    std::cout << "Tags: ";
+                    size_t l = 6;
+                    size_t tc = 0;
+                    for (const auto &t : cprx.GetTags())
                     {
-                        std::cout << ", ";
+                        if (l > 6)
+                        {
+                            std::cout << ", ";
+                        }
+                        l += t.length() + 2;
+                        if (l > 78)
+                        {
+                            l = 6;
+                            std::cout << std::endl
+                                      << "      ";
+                        }
+                        std::cout << t;
+                        ++tc;
                     }
-                    l += t.length() + 2;
-                    if (l > 78)
-                    {
-                        l = 6;
-                        std::cout << std::endl
-                                  << "      ";
-                    }
-                    std::cout << t;
-                    ++tc;
+                    std::cout << (0 == tc ? "(none)" : "") << std::endl;
                 }
-                std::cout << (0 == tc ? "(none)" : "") << std::endl;
             }
         }
         else
@@ -194,9 +207,12 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
             jcfg["lastused"] = last_used;
             jcfg["use_count"] = used_count;
 
-            for (const auto &t : cprx.GetTags())
+            if (confmgr.CheckFeatures(CfgMgrFeatures::TAGS))
             {
-                jcfg["tags"].append(t);
+                for (const auto &t : cprx.GetTags())
+                {
+                    jcfg["tags"].append(t);
+                }
             }
             jcfg["dco"] = cprx.GetDCO();
             jcfg["transfer_session_session"] = cprx.GetTransferOwnerSession();
@@ -312,12 +328,15 @@ static int config_manage_show(OpenVPN3ConfigurationProxy &conf,
         std::string tags = "";
         try
         {
-            bool first = true;
-            for (const auto &t : conf.GetTags())
+            if (conf.CheckFeatures(CfgMgrFeatures::TAGS))
             {
-                tags += (!first ? ", " : "");
-                tags += t;
-                first = false;
+                bool first = true;
+                for (const auto &t : conf.GetTags())
+                {
+                    tags += (!first ? ", " : "");
+                    tags += t;
+                    first = false;
+                }
             }
         }
         catch (const DBusException &ex)
@@ -498,6 +517,16 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
             valid_option = true;
         }
 
+
+        if (!args->Present({"tag", "remove-tag"}, true).empty())
+        {
+            if (!conf.CheckFeatures(CfgMgrFeatures::TAGS))
+            {
+                throw CommandException("config-manage",
+                                       "The currently running configuration manager does not support tags");
+            }
+        }
+
         if (args->Present("remove-tag"))
         {
             valid_option = true;
@@ -549,6 +578,7 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
                           << taglist << std::endl;
             }
         }
+
 
 #ifdef ENABLE_OVPNDCO
         if (args->Present("dco"))
