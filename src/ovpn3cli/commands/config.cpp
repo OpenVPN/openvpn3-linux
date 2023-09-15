@@ -215,7 +215,7 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
                 }
             }
             jcfg["dco"] = cprx.GetDCO();
-            jcfg["transfer_session_session"] = cprx.GetTransferOwnerSession();
+            jcfg["transfer_owner_session"] = cprx.GetTransferOwnerSession();
 
             Json::Value acl;
             acl["owner"] = user;
