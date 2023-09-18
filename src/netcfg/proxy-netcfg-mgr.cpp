@@ -45,7 +45,7 @@ Manager::Manager(GDBusConnection *dbuscon)
     try
     {
         CheckServiceAvail();
-        (void)GetServiceVersion();
+        (void)GetServiceVersion(OpenVPN3DBus_rootp_netcfg);
     }
     catch (const DBusException &)
     {

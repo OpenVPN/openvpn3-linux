@@ -39,7 +39,7 @@ static std::string RetrieveServiceVersion(DBusProxy &prx)
 {
     try
     {
-        return prx.GetServiceVersion();
+        return prx.GetServiceVersion(prx.GetProxyPath());
     }
     catch (DBusProxyAccessDeniedException &excp)
     {

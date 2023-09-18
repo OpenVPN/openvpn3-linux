@@ -97,7 +97,7 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
         // when accessing the main management object
         if (OpenVPN3DBus_rootp_sessions == objpath)
         {
-            (void)GetServiceVersion();
+            (void)GetServiceVersion(OpenVPN3DBus_rootp_sessions);
         }
     }
 
@@ -123,7 +123,7 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
         // when accessing the main management object
         if (OpenVPN3DBus_rootp_sessions == objpath)
         {
-            (void)GetServiceVersion();
+            (void)GetServiceVersion(OpenVPN3DBus_rootp_sessions);
         }
     }
 
@@ -557,7 +557,7 @@ class OpenVPN3SessionMgrProxy : public DBusProxy
                     OpenVPN3DBus_interf_sessions,
                     OpenVPN3DBus_rootp_sessions)
     {
-        (void)GetServiceVersion();
+        (void)GetServiceVersion(OpenVPN3DBus_rootp_sessions);
     }
 
 
@@ -575,7 +575,7 @@ class OpenVPN3SessionMgrProxy : public DBusProxy
                     OpenVPN3DBus_interf_sessions,
                     OpenVPN3DBus_rootp_sessions)
     {
-        (void)GetServiceVersion();
+        (void)GetServiceVersion(OpenVPN3DBus_rootp_sessions);
     }
 
 

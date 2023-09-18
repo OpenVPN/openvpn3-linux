@@ -163,27 +163,54 @@ class DBusProxy : public DBus
      * @return  Returns a string containing the version of the service
      *
      */
-    std::string GetServiceVersion()
+    std::string GetServiceVersion(const std::string &srvmgr_path)
     {
+        if (!cached_version.empty())
+        {
+            return cached_version;
+        }
+
         int delay = 1;
+        GDBusProxy *vprx = SetupProxy(bus_name,
+                                      "org.freedesktop.DBus.Properties",
+                                      srvmgr_path);
         for (int attempts = 10; attempts > 0; --attempts)
         {
             try
             {
-                return GetStringProperty("version");
+                GVariant *r = dbus_proxy_call(vprx,
+                                              "Get",
+                                              g_variant_new("(ss)",
+                                                            interface.c_str(),
+                                                            "version"),
+                                              false,
+                                              G_DBUS_CALL_FLAGS_NONE);
+
+                if (r)
+                {
+                    GLibUtils::checkParams(__func__, r, "(v)", 1);
+
+                    GVariant *chld = g_variant_get_child_value(r, 0);
+                    GVariant *v = g_variant_get_variant(chld);
+                    cached_version = GLibUtils::GetVariantValue<std::string>(v);
+                    g_variant_unref(v);
+                    g_variant_unref(chld);
+                    g_variant_unref(r);
+                    break;
+                }
             }
             catch (DBusProxyAccessDeniedException &excp)
             {
-                return std::string(""); // Consider this an unknown version
+                // Consider this an unknown version
             }
             catch (DBusException &excp)
             {
                 std::string err(excp.what());
                 if (err.find("No such interface 'org.freedesktop.DBus.Properties' on object") == std::string::npos)
                 {
-                    if ((err.find(": No such property 'version'") != std::string::npos))
+                    if ((err.find(": No such property \"version\"") != std::string::npos))
                     {
-                        return std::string(""); // Consider this as an unknown version but not an error
+                        // Consider this as an unknown version but not an error
                     }
                 }
                 sleep(delay);
@@ -194,8 +221,9 @@ class DBusProxy : public DBus
                 throw;
             }
         }
-        THROW_DBUSEXCEPTION("DBusProxy",
-                            "Could not establish a connection with '" + bus_name + "'");
+
+        g_object_unref(vprx);
+        return cached_version;
     }
 
 
@@ -726,6 +754,7 @@ class DBusProxy : public DBus
   private:
     std::string object_path = {};
     GDBusCallFlags call_flags = G_DBUS_CALL_FLAGS_NONE;
+    std::string cached_version = {};
 
     // Note we only implement single fd out/in for the fd API since that
     // is all we currently need and handling fd extraction here makes

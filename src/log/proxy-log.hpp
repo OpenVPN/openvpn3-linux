@@ -164,7 +164,7 @@ class LogServiceProxy : public DBusProxy
         CheckServiceAvail();
         try
         {
-            (void)GetServiceVersion();
+            (void)GetServiceVersion(OpenVPN3DBus_rootp_log);
         }
         catch (DBusProxyAccessDeniedException &)
         {

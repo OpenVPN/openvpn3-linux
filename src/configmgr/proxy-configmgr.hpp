@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "dbus/core.hpp"
+#include "dbus/exceptions.hpp"
 #include "configmgr/overrides.hpp"
 
 using namespace openvpn;
@@ -73,7 +74,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
         // when accessing the main management object
         if ((OpenVPN3DBus_rootp_configuration == object_path) || force_feature_load)
         {
-            set_feature_flags(GetServiceVersion());
+            set_feature_flags(GetServiceVersion(OpenVPN3DBus_rootp_configuration));
         }
     }
 
@@ -96,7 +97,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
         // when accessing the main management object
         if ((OpenVPN3DBus_rootp_configuration == object_path) || force_feature_load)
         {
-            set_feature_flags(GetServiceVersion());
+            set_feature_flags(GetServiceVersion(OpenVPN3DBus_rootp_configuration));
         }
     }
 
@@ -105,7 +106,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
     {
         if (features == CfgMgrFeatures::UNDEFINED)
         {
-            set_feature_flags(GetServiceVersion());
+            set_feature_flags(GetServiceVersion(OpenVPN3DBus_rootp_configuration));
         }
         return features & feat;
     }

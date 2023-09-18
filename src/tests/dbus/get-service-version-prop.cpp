@@ -37,7 +37,7 @@ int main(int argc, char **argv)
         DBusProxy prx(G_BUS_TYPE_SYSTEM, service, interface, path);
 
         std::cout << "Service version: "
-                  << prx.GetServiceVersion()
+                  << prx.GetServiceVersion(path)
                   << std::endl;
         return 0;
     }
