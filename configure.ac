@@ -383,7 +383,7 @@ else
    AC_MSG_ERROR([Missing openvpn3-core version information. Corrupt package?])
 fi
 AC_MSG_RESULT([${OPENVPN3_CORE_VERSION}])
-OPENVPN3_CORE_CXXFLAGS="-I${OPENVPN3_CORE_SOURCEDIR} -DOPENVPN_VERSION=\\\"${OPENVPN3_CORE_VERSION}\\\""
+OPENVPN3_CORE_CXXFLAGS="-I${OPENVPN3_CORE_SOURCEDIR}"
 AC_SUBST([OPENVPN3_CORE_CXXFLAGS])
 
 dnl
@@ -716,6 +716,9 @@ GIT_CHECKOUT="no"
 if test -n "${GIT}" -a -e "${srcdir}/.git"; then
         AC_DEFINE([HAVE_CONFIG_VERSION_H], [1], [extra version available in config-version.h])
         GIT_CHECKOUT="yes"
+else
+        # This is otherwise found in config-version.h
+        AC_DEFINE_UNQUOTED([OPENVPN_VERSION], ["${OPENVPN3_CORE_VERSION}"], [OpenVPN 3 Core library version; also see config-version.h])
 fi
 AC_MSG_RESULT([checking if this is a git checkout ... ${GIT_CHECKOUT}])
 AM_CONDITIONAL([GIT_CHECKOUT], [test "${GIT_CHECKOUT}" = "yes"])

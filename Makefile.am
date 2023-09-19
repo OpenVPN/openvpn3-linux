@@ -868,6 +868,14 @@ config-version.h:
 	echo "#define CONFIGURE_GIT_REVISION \"$${CONFIGURE_GIT_REVISION}\"" > config-version.h.tmp; \
 	echo "#define CONFIGURE_GIT_FLAGS \"$${CONFIGURE_GIT_CHFILES}$${CONFIGURE_GIT_UNCOMMITTED}\"" >> config-version.h.tmp;
 
+	@if [ -e "$(top_srcdir)/.git" ]; then \
+		echo "#define OPENVPN_VERSION \"`../openvpn3-core/scripts/version`\"" >> config-version.h.tmp ; \
+	elif [ -r "$(top_srcdir)/openvpn3-core-version" ]; then \
+		echo "#define OPENVPN_VERSION \"`cat $(srcdir)/openvpn3-core-version`\"" >> config-version.h.tmp; \
+	else \
+		echo "#error OpenVPN 3 Core library version not identifiable; Corrupt package?" >> config-version.h.tmp ; \
+	fi
+
 	@if ! [ -f config-version.h ] || ! cmp -s config-version.h.tmp config-version.h; then \
 		echo "replacing config-version.h"; \
 		mv config-version.h.tmp config-version.h; \
