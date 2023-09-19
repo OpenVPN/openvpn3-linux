@@ -717,6 +717,13 @@ class ConfigParser():
                              + 'OpenVPN 3 due to different credentials storage '
                              + 'model.')
 
+        ignored.add_argument('--bind',
+                            metavar='KEYWORDS',
+                            action=ConfigParser.IgnoreArg,
+                            nargs='*',
+                            help='Bind to local address and port. Not '
+                            + 'configurable with OpenVPN 3')
+
         ignored.add_argument('--chroot',
                              metavar='DIR',
                              action=ConfigParser.IgnoreArg,
