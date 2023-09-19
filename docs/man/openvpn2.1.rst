@@ -191,6 +191,9 @@ OPTIONS
                           Override connection protocol.
                           Valid values: :code:`tcp` or :code:`udp`
 
+                      :code:`persist-tun`
+                          Alternative approach to set `--persist-tun`.
+
                       :code:`ipv6`
                           Enable or disable IPv6 inside the tunnel.
                           Valid values: :code:`yes`, :code:`no` or :code:`default`
@@ -203,6 +206,10 @@ OPTIONS
                           Allows the connection to use compression.  See
                           ``openvpn3-config-manage``\(1) for details.
                           Valid values: :code:`yes`, :code:`no` or :code:`asym`
+
+                      :code:`dns-fallback-google`
+                          If set to true, the DNS resolver settings will include
+                          Google DNS servers.
 
                       :code:`dns-setup-disabled`
                           Disable configuring pushed DNS settings.
