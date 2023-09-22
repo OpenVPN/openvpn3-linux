@@ -542,9 +542,9 @@ when certain OpenVPN events occur.  OpenVPN 3 Linux is using D-Bus actively and
 it issues several signals as the state changes.  It also means you can write
 your own front-end doing its own calls how you prefer while starting and
 managing the VPN session at the same time.  This allows a much better
-flexibility and allows to adopt VPN session management into the execution flow
-which is needed.  And the implementation can do its own security assessments on
-how it will tackle these scenarios.
+flexibility and allows one to adopt VPN session management into the execution
+flow which is needed.  And the implementation can do its own security
+assessments on how it will tackle these scenarios.
 
 There are at least three ways how to adopt to the OpenVPN 3 model:
 

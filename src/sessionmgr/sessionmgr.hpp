@@ -2031,7 +2031,7 @@ class SessionManagerObject : public DBusObject,
                     g_dbus_method_invocation_return_value(invoc, NULL);
 
                     std::stringstream msg;
-                    msg << "Transfered ownership from " << cur_owner
+                    msg << "Transferred ownership from " << cur_owner
                         << " to " << new_uid
                         << " on session " << sesspath;
                     LogInfo(msg.str());

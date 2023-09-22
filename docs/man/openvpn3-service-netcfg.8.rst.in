@@ -172,8 +172,8 @@ Attribute: idle_exit
 """"""""""""""""""""
 This is the equivalent of the ``--idle-exit`` command line argument.  This
 overrides the default automatic exit logic.  The argument it takes is a
-positive integer of how many minutes it will be allow to run idle, not managing
-any OpenVPN network devices before it shuts down automatically.
+positive integer of how many minutes it will be allowed to run idle, not
+managing any OpenVPN network devices before it shuts down automatically.
 
 Attribute: resolv_conf_file
 """""""""""""""""""""""""""

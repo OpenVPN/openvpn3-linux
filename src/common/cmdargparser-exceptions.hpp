@@ -159,7 +159,7 @@ class OptionException : public CommandArgBaseException
 
 
     /**
-     *  Retrieves the option name where this issue occured.  This is always
+     *  Retrieves the option name where this issue occurred.  This is always
      *  available in this type of exceptions.
      *
      * @return Returns a const char * containing the name of the option

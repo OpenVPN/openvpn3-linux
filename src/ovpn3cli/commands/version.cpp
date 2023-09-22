@@ -111,7 +111,7 @@ int cmd_version(ParsedArgs::Ptr args)
 
         if (failed)
         {
-            std::cout << "** Some errors occured retrieving version information."
+            std::cout << "** Some errors occurred retrieving version information."
                       << std::endl
                       << "** Ensure you run this command as the root or "
                       << OPENVPN_USERNAME << " user."

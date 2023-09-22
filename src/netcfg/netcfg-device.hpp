@@ -288,7 +288,7 @@ class NetCfgDevice : public DBusObject,
         std::string gateway(g_variant_get_string(g_variant_get_child_value(params, 2), 0));
         bool ipv6 = g_variant_get_boolean(g_variant_get_child_value(params, 3));
 
-        signal.LogInfo(std::string("Adding IP Adress ") + ipaddr
+        signal.LogInfo(std::string("Adding IP Address ") + ipaddr
                        + "/" + std::to_string(prefix)
                        + " gw " + gateway + " ipv6: " + (ipv6 ? "yes" : "no"));
 

@@ -481,7 +481,7 @@ class LogServiceProxy : public DBusProxy
         if (!l)
         {
             THROW_DBUSEXCEPTION("LogServiceProxy",
-                                "No subsciber list received");
+                                "No subscriber list received");
         }
         GLibUtils::checkParams(__func__, l, "(a(ssss))", 1);
 

@@ -132,7 +132,7 @@ class NetCfgTunBuilder : public T
             std::stringstream err;
             err << "Error adding IP address " << address
                 << "/" << std::to_string(prefix_length)
-                << " to " << (device ? device->GetDeviceName() : "[unkown]")
+                << " to " << (device ? device->GetDeviceName() : "[unknown]")
                 << ": " << std::string(e.what());
             signal->LogError(err.str());
             return false;

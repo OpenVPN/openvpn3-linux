@@ -91,7 +91,7 @@ OPTIONS
 
 --timestamp BOOL
                 Some of the log destinations supported by
-                ``openvpn3-service-logger`` may allow to log with or without
+                ``openvpn3-service-logger`` may allow one to log with or without
                 timestamps.  This option enables or disables timestamps attached
                 to log events.  Valid arguments: :code:`true`, :code:`false`.
 

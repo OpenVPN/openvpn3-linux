@@ -560,7 +560,7 @@ void selinux_restorecon(const setup_config &setupcfg)
         break;
 
     default:
-        std::cout << "    - SELinux status: Unkown; skipping" << std::endl;
+        std::cout << "    - SELinux status: Unknown; skipping" << std::endl;
         return;
     }
 

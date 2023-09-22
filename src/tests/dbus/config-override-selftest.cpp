@@ -365,7 +365,7 @@ int main(int argc, char **argv)
             }
             else
             {
-                failmsg = "FAIL - Unkown override type";
+                failmsg = "FAIL - Unknown override type";
                 break;
             }
         }
