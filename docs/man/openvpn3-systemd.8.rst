@@ -6,7 +6,7 @@ openvpn3-systemd
 OpenVPN 3 Linux - systemd service integration
 ---------------------------------------------
 
-:Manual section: 1
+:Manual section: 8
 :Manual group: OpenVPN 3 Linux
 
 SYNOPSIS
