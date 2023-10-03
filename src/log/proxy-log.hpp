@@ -142,13 +142,16 @@ class LogServiceProxy : public DBusProxy
   public:
     typedef std::shared_ptr<LogServiceProxy> Ptr;
 
+
     enum class Changed
-    {
-        LOGLEVEL = 1 << 1,
-        TSTAMP = 1 << 2,
-        DBUS_DETAILS = 1 << 3,
-        LOGTAG_PREFIX = 1 << 4
-    };
+    { // clang-format off
+        INITALIZED    = 1 << 1,
+        LOGLEVEL      = 1 << 2,
+        TSTAMP        = 1 << 3,
+        DBUS_DETAILS  = 1 << 4,
+        LOGTAG_PREFIX = 1 << 5
+    }; // clang-format on
+
 
     /**
      *  Initialize the LogServiceProxy.
@@ -165,6 +168,7 @@ class LogServiceProxy : public DBusProxy
         try
         {
             (void)GetServiceVersion(OpenVPN3DBus_rootp_log);
+            cache_initial_settings();
         }
         catch (DBusProxyAccessDeniedException &)
         {
@@ -326,6 +330,7 @@ class LogServiceProxy : public DBusProxy
      */
     void SetLogLevel(unsigned int loglvl)
     {
+        cache_initial_settings();
         if (!CheckChange(Changed::LOGLEVEL))
         {
             old_loglev = GetLogLevel();
@@ -368,6 +373,7 @@ class LogServiceProxy : public DBusProxy
      */
     void SetTimestampFlag(bool tstamp)
     {
+        cache_initial_settings();
         if (!CheckChange(Changed::TSTAMP))
         {
             old_tstamp = GetTimestampFlag();
@@ -407,6 +413,7 @@ class LogServiceProxy : public DBusProxy
      */
     void SetDBusDetailsLogging(bool dbus_details)
     {
+        cache_initial_settings();
         if (!CheckChange(Changed::DBUS_DETAILS))
         {
             old_dbusdet = GetDBusDetailsLogging();
@@ -447,6 +454,7 @@ class LogServiceProxy : public DBusProxy
      */
     void SetLogTagPrepend(const bool logprep)
     {
+        cache_initial_settings();
         if (!CheckChange(Changed::LOGTAG_PREFIX))
         {
             old_logtagp = GetLogTagPrepend();
@@ -509,7 +517,7 @@ class LogServiceProxy : public DBusProxy
 
 
   private:
-    uint8_t changes;
+    uint8_t changes = 0;
     unsigned int old_loglev = 0;
     bool old_tstamp = false;
     bool old_dbusdet = false;
@@ -525,5 +533,18 @@ class LogServiceProxy : public DBusProxy
     void flag_change(const Changed &c)
     {
         changes |= (uint8_t)c;
+    }
+
+    void cache_initial_settings()
+    {
+        if (CheckChange(Changed::INITALIZED))
+        {
+            return;
+        }
+        old_loglev = GetUIntProperty("log_level");
+        old_tstamp = GetBoolProperty("timestamp");
+        old_dbusdet = GetBoolProperty("log_dbus_details");
+        old_logtagp = GetBoolProperty("log_prefix_logtag");
+        flag_change(Changed::INITALIZED);
     }
 };
