@@ -41,7 +41,7 @@ The following dependencies are needed:
 
   https://tls.mbed.org/
 
-* GLib2 2.50 or newer
+* GLib2 2.56 or newer
 
   http://www.gtk.org
   This dependency is due to the GDBus library, which is the D-Bus
@@ -55,7 +55,7 @@ The following dependencies are needed:
 
   http://people.redhat.com/sgrubb/libcap-ng
 
-* liblz4 1.7.3 or newer
+* liblz4 1.8.4 or newer
 
   https://lz4.github.io/lz4
 
@@ -63,7 +63,7 @@ The following dependencies are needed:
 
   https://en.wikipedia.org/wiki/Util-linux
 
-* polkit 0.105 or newer
+* polkit 0.112 or newer
 
   http://www.freedesktop.org/wiki/Software/polkit
 
@@ -86,9 +86,9 @@ The following dependencies are needed:
 
   Only needed when building with DCO support
 
-* (optional) Python 3.5 or newer
+* (optional) Python 3.6 or newer
 
-  If Python 3.5 or newer is found, the openvpn2, openvpn3-autoload utilities
+  If Python 3.6 or newer is found, the openvpn2, openvpn3-autoload utilities
   and the openvpn3 Python module will be built and installed.
 
 * (optional) Python docutils

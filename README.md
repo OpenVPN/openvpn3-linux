@@ -195,17 +195,10 @@ man page and [OpenVPN 3 D-Bus overview](docs/dbus/dbus-overview.md).
 
 
 
-#### TECH PREVIEW: Kernel based Data Channel Offload (DCO) support
-
-**BEWARE - UNDER HEAVY DEVELOPMENT**
-
-     This feature is under heavy development.  It is NOT production
-     ready and the API between the kernel module and OpenVPN 3 Linux may
-     change in incompatible ways for the time being until the API is
-     considered stable.
+####  Kernel based Data Channel Offload (DCO) support
 
 The Data Channel Offload support moves the processing of the OpenVPN data
-channel operations from the client process to the kernel, via the ovpn-dco
+channel operations from the client process to the kernel, via the ovpn-dco-v2
 kernel module.  This means the encryption and decryption of the tunnelled
 network traffic is kept entirely in kernel space instead of being send
 back and forth between the kernel and the OpenVPN client process.  This
@@ -214,17 +207,17 @@ be installed before OpenVPN 3 Linux can make use of this feature.  This is
 shipped in the OpenVPN 3 Linux package repositories or can be built from
 the [source code](https://gitlab.com/openvpn/ovpn-dco/).
 
-The ovpn-dco kernel module currently only support ***Linux kernel 5.4*** and
-newer.  Currently supported distributions with DCO support:
+The ovpn-dco kernel module currently only support ***Linux kernel 5.4***
+and newer.  Currently supported distributions with DCO support:
 
  * CentOS 8
  * Fedora 36 and newer
  * Red Hat Enterprise Linux 8 and newer
  * Ubuntu 20.04 and newer
 
-The ovpn-dco kernel module is currently not functional on RHEL/CentOS due
-to the kernel version is older than 4.18.  OpenVPN 3 Linux will build with
-the ``--enable-dco`` feature but requires a functional ``ovpn-dco``
+The ovpn-dco-v2 kernel module is currently not functional on RHEL/CentOS
+due to the kernel version is older than 4.18.  OpenVPN 3 Linux will build
+with the ``--enable-dco`` feature but requires a functional ``ovpn-dco``
 kernel module to be fully functional.
 
 To build OpenVPN 3 Linux with this support, add ``--enable-dco`` to the
@@ -299,11 +292,13 @@ Debugging
 
 For information about debugging, please see [docs/debugging.md](docs/debugging.md)
 
+
 Building from source
 --------------------
 
 For information about building OpenVPN 3 Linux from source, please
 see [BUILD.md](BUILD.md).
+
 
 Contribution
 ------------
