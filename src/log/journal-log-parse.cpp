@@ -306,9 +306,27 @@ void Parse::AddFilter(const FilterType ft, const std::string &fval) const
     {
     case FilterType::TIMESTAMP:
         {
-            match << fval;
             std::tm t = {};
-            match >> std::get_time(&t, "%Y-%m-%d %H:%M:%S");
+            auto ts = std::time(nullptr);
+            if ("today" == fval || "yesterday" == fval)
+            {
+
+                if ("yesterday" == fval)
+                {
+                    // Shift the offset back 24 hours in seconds
+                    ts -= 24 * 60 * 60;
+                }
+                t = *std::localtime(&ts);
+                t.tm_hour = 0;
+                t.tm_min = 0;
+                t.tm_sec = 0;
+            }
+            else
+            {
+                match << fval;
+                match >> std::get_time(&t, "%Y-%m-%d %H:%M:%S");
+            }
+
             // The journald granularity is microseconds, not seconds
             uint64_t seek_point = ::mktime(&t) * 1000000;
             r = sd_journal_seek_realtime_usec(journal, seek_point);

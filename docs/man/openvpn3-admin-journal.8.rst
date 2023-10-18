@@ -41,7 +41,10 @@ OPTIONS
                 Without this being provided, it will retrieve all log
                 entries available in the systemd-journal.  The ``TIMESTAMP``
                 format is not strict, but the order of the values
-                are important.  These are all valid time-stamp values:
+                are important.  The keywords ``today`` and ``yesterday``
+                are also valid.
+
+                These are all valid time-stamp values:
 
                 ::
 
@@ -50,11 +53,17 @@ OPTIONS
                         --since 2022-12-05
                         --since "2022-12-05 15:00"
                         --since "2022-12-05 15:00:40"
+                        --since today
+                        --since yesterday
 
                 The first line will extract all log entries available
                 starting with January 1, 2022.  The second example
                 will take all entries starting from November 1.  The
                 third one takes all log lines after December 5, 2022.
+
+                Using ``today`` will be the same as using today's date
+                and ``yesterday`` will use date before today.  Both retrieves
+                all entries from midnight that day.
 
 --path DBUS_PATH
                 All OpenVPN 3 services, configuration profiles and VPN
