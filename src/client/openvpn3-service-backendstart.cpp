@@ -383,17 +383,12 @@ class BackendStarterDBus : public DBus
           mainobj(nullptr),
           log_level(log_level),
           signal_broadcast(signal_broadcast),
-          procsig(nullptr),
           client_args(cliargs)
     {
-        procsig.reset(new ProcessSignalProducer(conn,
-                                                OpenVPN3DBus_interf_backends,
-                                                "BackendStarter"));
     };
 
     ~BackendStarterDBus()
     {
-        procsig->ProcessChange(StatusMinor::PROC_STOPPED);
     }
 
 
@@ -417,8 +412,6 @@ class BackendStarterDBus : public DBus
                                                log_level,
                                                signal_broadcast));
         mainobj->RegisterObject(GetConnection());
-
-        procsig->ProcessChange(StatusMinor::PROC_STARTED);
 
         if (idle_checker)
         {
@@ -460,7 +453,6 @@ class BackendStarterDBus : public DBus
     BackendStarterObject::Ptr mainobj;
     unsigned int log_level = 3;
     bool signal_broadcast = true;
-    ProcessSignalProducer::Ptr procsig;
     std::vector<std::string> client_args;
     std::vector<std::string> client_envvars;
 };

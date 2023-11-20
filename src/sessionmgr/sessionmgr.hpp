@@ -2165,18 +2165,13 @@ class SessionManagerDBus : public DBus
                OpenVPN3DBus_interf_sessions),
           logwr(logwr),
           signal_broadcast(signal_broadcast),
-          managobj(nullptr),
-          procsig(nullptr)
+          managobj(nullptr)
     {
-        procsig.reset(new ProcessSignalProducer(GetConnection(),
-                                                OpenVPN3DBus_interf_sessions,
-                                                "SessionManager"));
     };
 
 
     ~SessionManagerDBus()
     {
-        procsig->ProcessChange(StatusMinor::PROC_STOPPED);
     }
 
 
@@ -2214,8 +2209,6 @@ class SessionManagerDBus : public DBus
 
         // Register this object to on the D-Bus
         managobj->RegisterObject(GetConnection());
-
-        procsig->ProcessChange(StatusMinor::PROC_STARTED);
 
         if (nullptr != idle_checker)
         {
@@ -2258,5 +2251,4 @@ class SessionManagerDBus : public DBus
     LogWriter *logwr = nullptr;
     bool signal_broadcast = true;
     SessionManagerObject::Ptr managobj;
-    ProcessSignalProducer::Ptr procsig;
 };

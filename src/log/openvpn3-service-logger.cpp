@@ -325,11 +325,7 @@ static int logger(ParsedArgs::Ptr args)
                                    "No logging enabled. Aborting.");
         }
 
-        ProcessSignalProducer procsig(dbusconn, OpenVPN3DBus_interf_log, "Logger");
-
-        procsig.ProcessChange(StatusMinor::PROC_STARTED);
         g_main_loop_run(main_loop);
-        procsig.ProcessChange(StatusMinor::PROC_STOPPED);
         g_main_loop_unref(main_loop);
 
         // If the idle check is running, wait for it to complete

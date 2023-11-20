@@ -144,7 +144,6 @@ DBUS_SOURCES = \
 	src/dbus/object-property.hpp \
 	src/dbus/path.cpp \
 	src/dbus/path.hpp \
-	src/dbus/processwatch.hpp \
 	src/dbus/proxy.hpp \
 	src/dbus/requiresqueue-proxy.hpp \
 	src/dbus/signals.hpp \

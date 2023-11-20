@@ -16,4 +16,3 @@
 #include "dbus/connection.hpp"
 #include "dbus/proxy.hpp"
 #include "dbus/signals.hpp"
-#include "dbus/processwatch.hpp"

@@ -1493,7 +1493,6 @@ class BackendClientDBus : public DBus
           start_pid(start_pid),
           session_token(sesstoken),
           logwr(logwr),
-          procsig(nullptr),
           be_obj(nullptr),
           disabled_socket_protect(false),
           signal(nullptr),
@@ -1508,7 +1507,6 @@ class BackendClientDBus : public DBus
                 logservice->Detach(OpenVPN3DBus_interf_backends);
                 logservice->Detach(OpenVPN3DBus_interf_sessions);
             }
-            procsig->ProcessChange(StatusMinor::PROC_STOPPED);
         }
         catch (const std::exception &excp)
         {
@@ -1624,12 +1622,6 @@ class BackendClientDBus : public DBus
                          + " daemonized as pid " + std::to_string(getpid()));
         signal->Debug("BackendClientDBus registered on '" + GetBusName()
                       + "': " + object_path);
-
-        procsig.reset(new ProcessSignalProducer(GetConnection(),
-                                                OpenVPN3DBus_interf_backends,
-                                                object_path,
-                                                "VPN-Client"));
-        procsig->ProcessChange(StatusMinor::PROC_STARTED);
     }
 
 
@@ -1667,7 +1659,6 @@ class BackendClientDBus : public DBus
     std::string session_token;
     std::string object_path;
     LogWriter *logwr;
-    ProcessSignalProducer::Ptr procsig;
     BackendClientObject::Ptr be_obj;
     bool disabled_socket_protect;
     BackendSignals::Ptr signal;

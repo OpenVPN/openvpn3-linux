@@ -2149,18 +2149,13 @@ class ConfigManagerDBus : public DBus
                OpenVPN3DBus_interf_configuration),
           logwr(logwr),
           signal_broadcast(signal_broadcast),
-          cfgmgr(nullptr),
-          procsig(nullptr)
+          cfgmgr(nullptr)
     {
-        procsig.reset(new ProcessSignalProducer(conn,
-                                                OpenVPN3DBus_interf_configuration,
-                                                "ConfigurationManager"));
     };
 
 
     ~ConfigManagerDBus()
     {
-        procsig->ProcessChange(StatusMinor::PROC_STOPPED);
     }
 
 
@@ -2267,5 +2262,4 @@ class ConfigManagerDBus : public DBus
     bool signal_broadcast = true;
     std::string state_dir = "";
     ConfigManagerObject::Ptr cfgmgr;
-    ProcessSignalProducer::Ptr procsig;
 };
