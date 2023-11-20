@@ -138,7 +138,6 @@ DBUS_SOURCES = \
 	src/dbus/connection.hpp \
 	src/dbus/constants.hpp \
 	src/dbus/exceptions.hpp \
-	src/dbus/idlecheck.hpp \
 	src/dbus/glibutils.hpp \
 	src/dbus/object.hpp \
 	src/dbus/object-property.hpp \

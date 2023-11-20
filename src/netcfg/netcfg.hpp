@@ -153,8 +153,6 @@ class NetCfgServiceObject : public DBusObject,
     {
         try
         {
-            IdleCheck_UpdateTimestamp();
-
             // Only the VPN backend clients are granted access
             validate_sender(sender);
 
@@ -232,7 +230,6 @@ class NetCfgServiceObject : public DBusObject,
                 msg << "New subscription: '" << sender << "' => "
                     << NetCfgChangeEvent::FilterMaskStr(filter_flags, true);
                 signal.LogVerb2(msg.str());
-                IdleCheck_RefInc();
             }
             else if ("NotificationUnsubscribe" == method_name)
             {
@@ -275,7 +272,6 @@ class NetCfgServiceObject : public DBusObject,
 
                 subscriptions->Unsubscribe(sub);
                 signal.LogVerb2("Unsubscribed subscription: '" + sub + "'");
-                IdleCheck_RefDec();
             }
             else if ("NotificationSubscriberList" == method_name)
             {
@@ -360,8 +356,6 @@ class NetCfgServiceObject : public DBusObject,
             signal.GetLogWriter(),
             options);
 
-        IdleCheck_RefInc();
-        device->IdleCheck_Register(IdleCheck_Get());
         device->RegisterObject(conn);
         devices[dev_path] = device;
 
@@ -399,7 +393,6 @@ class NetCfgServiceObject : public DBusObject,
     {
         try
         {
-            IdleCheck_UpdateTimestamp();
             if ("log_level" == property_name)
             {
                 return g_variant_new_uint32(signal.GetLogLevel());
@@ -468,7 +461,6 @@ class NetCfgServiceObject : public DBusObject,
     {
         try
         {
-            IdleCheck_UpdateTimestamp();
             validate_sender(sender);
 
             if ("log_level" == property_name)
@@ -749,11 +741,6 @@ class NetworkCfgService : public DBus
             // Do a ApplySettings() call now, which will only fetch the
             // current system settings and initialize the resolver backend
             resolver->ApplySettings(signal.get());
-        }
-
-        if (nullptr != idle_checker)
-        {
-            srv_obj->IdleCheck_Register(idle_checker);
         }
     }
 

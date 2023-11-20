@@ -90,12 +90,9 @@ static int session_manager(ParsedArgs::Ptr args)
     }
     sessmgr.SetManagerLogLevel(log_level);
 
-    IdleCheck::Ptr idle_exit;
     if (idle_wait_min > 0)
     {
-        idle_exit.reset(new IdleCheck(main_loop,
-                                      std::chrono::minutes(idle_wait_min)));
-        sessmgr.EnableIdleCheck(idle_exit);
+        // FIXME: sessmgr.EnableIdleCheck
     }
     else
     {

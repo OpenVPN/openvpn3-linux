@@ -316,7 +316,6 @@ class ConfigurationObject : public DBusObject,
     {
         remove_callback();
         Debug("Configuration removed");
-        IdleCheck_RefDec();
     };
 
 
@@ -421,7 +420,6 @@ class ConfigurationObject : public DBusObject,
                               GVariant *params,
                               GDBusMethodInvocation *invoc)
     {
-        IdleCheck_UpdateTimestamp();
         if ("Fetch" == method_name)
         {
             handler_fetch_config(sender, params, invoc, false);
@@ -596,8 +594,6 @@ class ConfigurationObject : public DBusObject,
                                     const std::string property_name,
                                     GError **error)
     {
-        IdleCheck_UpdateTimestamp();
-
         // Properties available for everyone
         if ("owner" == property_name)
         {
@@ -686,7 +682,6 @@ class ConfigurationObject : public DBusObject,
                                            GVariant *value,
                                            GError **error)
     {
-        IdleCheck_UpdateTimestamp();
         if (readonly)
         {
             throw DBusPropertyException(G_IO_ERROR,
@@ -1561,7 +1556,6 @@ class ConfigManagerObject : public DBusObject,
                               GVariant *params,
                               GDBusMethodInvocation *invoc)
     {
-        IdleCheck_UpdateTimestamp();
         if ("Import" == method_name)
         {
             // Import the configuration
@@ -1625,7 +1619,6 @@ class ConfigManagerObject : public DBusObject,
                                     const std::string property_name,
                                     GError **error)
     {
-        IdleCheck_UpdateTimestamp();
         GVariant *ret = nullptr;
 
         if ("version" == property_name)
@@ -1970,8 +1963,6 @@ class ConfigManagerObject : public DBusObject,
     void register_config_object(ConfigurationObject *cfgobj,
                                 const std::string &operation)
     {
-        IdleCheck_RefInc();
-        cfgobj->IdleCheck_Register(IdleCheck_Get());
         cfgobj->RegisterObject(dbuscon);
         config_objects[cfgobj->GetObjectPath()] = cfgobj;
 
@@ -2219,11 +2210,6 @@ class ConfigManagerDBus : public DBus
             }
         }
         procsig->ProcessChange(StatusMinor::PROC_STARTED);
-
-        if (nullptr != idle_checker)
-        {
-            cfgmgr->IdleCheck_Register(idle_checker);
-        }
     };
 
 

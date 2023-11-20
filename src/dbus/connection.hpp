@@ -19,7 +19,6 @@
 #include <gio/gio.h>
 
 #include "exceptions.hpp"
-#include "idlecheck.hpp"
 
 
 /**
@@ -118,20 +117,6 @@ class DBus
             THROW_DBUSEXCEPTION("DBus", errmsg);
         }
         connected = true;
-    }
-
-
-    /**
-     *  Enables signalling which will shutdown the connection and the
-     *  program if it has been idling too long.  It is the IdleCheck
-     *  object which decides what is idle.
-     *
-     * @param chk  Smart pointer to an IdleCheck object which tracks the
-     *             idle state
-     */
-    void EnableIdleCheck(IdleCheck::Ptr &chk) noexcept
-    {
-        idle_checker = chk.get();
     }
 
 
@@ -328,7 +313,6 @@ class DBus
 
   protected:
     bool keep_connection; /**< Do not disconnect when DBus connection object is removed */
-    IdleCheck *idle_checker;
 
 
     void close_and_cleanup() noexcept

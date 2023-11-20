@@ -189,8 +189,6 @@ void NetCfgDCO::callback_method_call(GDBusConnection *conn,
 {
     try
     {
-        IdleCheck_UpdateTimestamp();
-
         GVariant *retval = nullptr;
 
         if ("GetPipeFD" == method_name)

@@ -9,7 +9,6 @@
 #pragma once
 
 #include <gio/gio.h>
-#include "idlecheck.hpp"
 #include "exceptions.hpp"
 
 
@@ -44,8 +43,7 @@ class DBusObject
     DBusObject(std::string obj_path, std::string introspection_xml)
         : registered(false),
           object_path(obj_path),
-          object_id(0),
-          idle_checker(nullptr)
+          object_id(0)
     {
         ParseIntrospectionXML(introspection_xml);
     }
@@ -54,7 +52,6 @@ class DBusObject
         : registered(false),
           object_path(obj_path),
           object_id(0),
-          idle_checker(nullptr),
           introspection(nullptr)
     {
     }
@@ -111,17 +108,6 @@ class DBusObject
             THROW_DBUSEXCEPTION("DBusObject", err.str());
         }
         registered = true;
-    }
-
-
-    /**
-     *  Sets/registers an IdleChecker object for this DBusObject
-     *
-     *  @@param chk  A valid pointer to an IdleCheck object
-     */
-    void IdleCheck_Register(IdleCheck *chk)
-    {
-        idle_checker = chk;
     }
 
 
@@ -473,53 +459,10 @@ class DBusObject
     }
 
 
-    /**
-     *  Updates the IdleCheck timer's timestamp to indicate this object have been accessed.
-     *  If the IdleCheck object times out, the process is stopped.
-     */
-    void IdleCheck_UpdateTimestamp()
-    {
-        if (idle_checker)
-        {
-            idle_checker->UpdateTimestamp();
-        }
-    }
-
-
-    /**
-     *  Get the object pointer to the registered IdleCheck object
-     *
-     *  @returns Returns a pointer to an IdleCheck object or nullptr if not set/registered
-     */
-    IdleCheck *IdleCheck_Get()
-    {
-        return idle_checker;
-    }
-
-
-    void IdleCheck_RefInc()
-    {
-        if (idle_checker)
-        {
-            idle_checker->RefCountInc();
-        }
-    }
-
-
-    void IdleCheck_RefDec()
-    {
-        if (idle_checker)
-        {
-            idle_checker->RefCountDec();
-        }
-    }
-
-
   private:
     bool registered;
     std::string object_path;
     guint object_id;
-    IdleCheck *idle_checker;
     GDBusNodeInfo *introspection;
 
 

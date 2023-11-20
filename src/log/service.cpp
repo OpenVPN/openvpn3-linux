@@ -286,8 +286,6 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
 
     try
     {
-        IdleCheck_UpdateTimestamp();
-
         // Extract the interface to operate on.  All D-Bus method
         // calls expects this information.
         std::string interface;
@@ -348,7 +346,6 @@ void LogServiceManager::callback_method_call(GDBusConnection *conn,
 
             logwr->AddMetaCopy(meta);
             logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::VERB2, l.str()));
-            IdleCheck_RefInc();
 
             g_dbus_method_invocation_return_value(invoc, NULL);
         }
@@ -503,8 +500,6 @@ GVariant *LogServiceManager::callback_get_property(GDBusConnection *conn,
 {
     try
     {
-        IdleCheck_UpdateTimestamp();
-
         if ("version" == property_name)
         {
             return g_variant_new_string(package_version());
@@ -577,7 +572,6 @@ GVariantBuilder *LogServiceManager::callback_set_property(GDBusConnection *conn,
 
     try
     {
-        IdleCheck_UpdateTimestamp();
         GVariantBuilder *ret = nullptr;
 
         if ("log_level" == property_name)
@@ -858,7 +852,6 @@ std::string LogServiceManager::add_log_proxy(GVariant *params, const std::string
                                           OpenVPN3DBus_interf_backends,
                                           log_level);
 
-    IdleCheck_RefInc();
     logproxies[target] = logprx;
 
     // Enable log forwarding in main Logger object for client session
@@ -930,7 +923,6 @@ void LogServiceManager::remove_log_proxy(const std::string target)
     logwr->Write(LogEvent(LogGroup::LOGGER,
                           LogCategory::VERB1,
                           "Removed log proxy: " + target));
-    IdleCheck_RefDec();
 }
 
 
@@ -965,7 +957,6 @@ void LogServiceManager::remove_log_subscription(LogTag::Ptr tag, pid_t pid)
 
     // Unsubscribe from signals from a D-Bus service/client
     loggers.erase(tag_hash);
-    IdleCheck_RefDec();
 }
 
 
@@ -1041,11 +1032,6 @@ void LogService::callback_bus_acquired()
         logmgr->SetConfigFile(configuration);
     }
     logmgr->RegisterObject(GetConnection());
-
-    if (nullptr != idle_checker)
-    {
-        logmgr->IdleCheck_Register(idle_checker);
-    }
 }
 
 

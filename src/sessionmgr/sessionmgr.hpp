@@ -536,7 +536,6 @@ class SessionObject : public DBusObject,
         LogVerb1("Session is closing");
         StatusChange(StatusMajor::SESSION, StatusMinor::SESS_REMOVED);
         remove_callback();
-        IdleCheck_RefDec();
     }
 
 
@@ -1837,8 +1836,6 @@ class SessionManagerObject : public DBusObject,
         // std::cout << "SessionManagerObject::callback_method_call: " << method_name << std::endl;
         if ("NewTunnel" == method_name)
         {
-            IdleCheck_UpdateTimestamp();
-
             // Retrieve the configuration path for the tunnel
             // from the request
             gchar *config_path_s = nullptr;
@@ -1863,8 +1860,6 @@ class SessionManagerObject : public DBusObject,
                                                        GetLogLevel(),
                                                        logwr,
                                                        GetSignalBroadcast());
-            IdleCheck_RefInc();
-            session->IdleCheck_Register(IdleCheck_Get());
             session->RegisterObject(conn);
             session_objects[sesspath] = session;
             SessionManager::Event ev{sesspath,
@@ -2072,7 +2067,6 @@ class SessionManagerObject : public DBusObject,
                                     const std::string property_name,
                                     GError **error)
     {
-        IdleCheck_UpdateTimestamp();
         GVariant *ret = nullptr;
 
         if ("version" == property_name)
@@ -2209,11 +2203,6 @@ class SessionManagerDBus : public DBus
 
         // Register this object to on the D-Bus
         managobj->RegisterObject(GetConnection());
-
-        if (nullptr != idle_checker)
-        {
-            managobj->IdleCheck_Register(idle_checker);
-        }
     };
 
 

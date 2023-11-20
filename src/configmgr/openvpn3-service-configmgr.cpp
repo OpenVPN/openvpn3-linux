@@ -92,12 +92,9 @@ static int config_manager(ParsedArgs::Ptr args)
         umask(077);
     }
 
-    IdleCheck::Ptr idle_exit;
     if (idle_wait_min > 0)
     {
-        idle_exit.reset(new IdleCheck(main_loop,
-                                      std::chrono::minutes(idle_wait_min)));
-        cfgmgr.EnableIdleCheck(idle_exit);
+        // FIXME: cfgmgr.EnableIdleCheck;
     }
     else
     {

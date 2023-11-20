@@ -200,7 +200,6 @@ static int logger(ParsedArgs::Ptr args)
     // Enable automatic shutdown if the logger is
     // idling for 10 minute or more.  By idling, it means
     // no services are attached to this log service
-    IdleCheck::Ptr idle_exit;
     unsigned int idle_wait_min = 10;
     if (args->Present("idle-exit"))
     {
@@ -240,9 +239,7 @@ static int logger(ParsedArgs::Ptr args)
 
             if (idle_wait_min > 0)
             {
-                idle_exit.reset(new IdleCheck(main_loop,
-                                              std::chrono::minutes(idle_wait_min)));
-                logsrv->EnableIdleCheck(idle_exit);
+                // FIXME: logsrv->EnableIdleCheck
                 logwr->Write(LogEvent(LogGroup::LOGGER, LogCategory::INFO, "Idle exit set to " + std::to_string(idle_wait_min) + " minutes"));
             }
             else

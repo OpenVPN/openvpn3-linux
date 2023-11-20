@@ -245,12 +245,9 @@ int netcfg_main(ParsedArgs::Ptr args)
         GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
 
         // Setup idle-exit logic
-        IdleCheck::Ptr idle_exit;
         if (idle_wait_min > 0)
         {
-            idle_exit.reset(new IdleCheck(main_loop,
-                                          std::chrono::minutes(idle_wait_min)));
-            netcfgsrv.EnableIdleCheck(idle_exit);
+            // FIXME: netcfgsrv.EnableIdleCheck
         }
         else
         {

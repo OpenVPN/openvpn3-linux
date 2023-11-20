@@ -165,8 +165,6 @@ class BackendStarterObject : public DBusObject,
     {
         if ("StartClient" == method_name)
         {
-            IdleCheck_UpdateTimestamp();
-
             // Retrieve the configuration path for the tunnel
             // from the request
             gchar *token = nullptr;
@@ -210,7 +208,6 @@ class BackendStarterObject : public DBusObject,
                                     const std::string property_name,
                                     GError **error)
     {
-        IdleCheck_UpdateTimestamp();
         GVariant *ret = nullptr;
 
         if ("version" == property_name)
@@ -412,11 +409,6 @@ class BackendStarterDBus : public DBus
                                                log_level,
                                                signal_broadcast));
         mainobj->RegisterObject(GetConnection());
-
-        if (idle_checker)
-        {
-            mainobj->IdleCheck_Register(idle_checker);
-        }
     };
 
 
@@ -551,12 +543,9 @@ int backend_starter(ParsedArgs::Ptr args)
                                  log_level,
                                  signal_broadcast);
 
-    IdleCheck::Ptr idle_exit;
     if (idle_wait_sec > 0)
     {
-        idle_exit.reset(new IdleCheck(main_loop,
-                                      std::chrono::seconds(idle_wait_sec)));
-        backstart.EnableIdleCheck(idle_exit);
+        // FIXME: backstart.EnableIdleCheck
     }
 #ifdef OPENVPN_DEBUG
     if (idle_wait_sec > 0)

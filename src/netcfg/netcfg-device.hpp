@@ -250,7 +250,6 @@ class NetCfgDevice : public DBusObject,
     ~NetCfgDevice()
     {
         remove_callback();
-        IdleCheck_RefDec();
     }
 
 
@@ -362,8 +361,6 @@ class NetCfgDevice : public DBusObject,
     {
         try
         {
-            IdleCheck_UpdateTimestamp();
-
             // Only the VPN backend clients are granted access
             validate_sender(sender);
 
@@ -646,7 +643,6 @@ class NetCfgDevice : public DBusObject,
     {
         try
         {
-            IdleCheck_UpdateTimestamp();
             validate_sender(sender);
 
             if ("log_level" == property_name)
@@ -763,7 +759,6 @@ class NetCfgDevice : public DBusObject,
     {
         try
         {
-            IdleCheck_UpdateTimestamp();
             validate_sender(sender);
 
             if ("log_level" == property_name)
