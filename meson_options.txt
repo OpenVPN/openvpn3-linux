@@ -1,0 +1,81 @@
+#  OpenVPN 3 Linux - Next generation OpenVPN
+#
+#  SPDX-License-Identifier: AGPL-3.0-only
+#
+#  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+#  Copyright (C)  David Sommerseth <davids@openvpn.net>
+
+#
+#  Various debugging features
+#
+option('debug_disable_security_checks', type: 'boolean', value: false,
+       description: 'Disables some security checks restricting D-Bus service access')
+
+option('debug_exceptions', type: 'boolean', value: false,
+       description: 'Add additional debug information in C++ exceptions')
+
+option('debug_core_events', type: 'boolean', value: false,
+       description: 'Enable logging OpenVPN 3 Core library events')
+
+option('debug_netcfg_netlink', type: 'boolean', value: false,
+       description: 'Enabled logging low-level NETLINK debugging in openvpn3-service-netcfg')
+
+option('debug_options', type: 'boolean', value: false,
+       description: 'Add additional command line options used for debugging')
+
+#
+#  Build environment and related build time options
+#
+option('asio_path', type: 'string', value: './vendor/asio',
+       description: 'Path to the ASIO header files')
+
+option('openvpn3_core_path', type: 'string', value: './openvpn3-core',
+       description: 'Path to the OpenVPN 3 Core Library header files')
+
+option('doxygen', type: 'feature', value: 'disabled',
+       description: 'Build Doxygen documentation')
+
+option('selinux', type: 'feature', value: 'enabled',
+       description: 'Add SELinux support (openvpn3-admin init-config)')
+
+option('selinux_policy', type: 'feature', value: 'enabled',
+       description: 'Build the OpenVPN 3 Linux SELinux policies')
+
+#
+#  Various runtime defaults
+#
+option('openvpn_username', type: 'string', value: 'openvpn',
+       description: 'Default OpenVPN username owning processes and files')
+
+option('openvpn_group', type: 'string', value: 'openvpn',
+       description: 'Default OpenVPN group name owning processes and files')
+
+option('openvpn3_statedir', type: 'string', value: '',
+       description: 'Override OpenVPN 3 Linux state directory')
+
+#
+#  OpenVPN 3 Linux features
+#
+option('addon-aws', type: 'feature', value: 'disabled',
+       description: 'Enable the OpenVPN 3 AWS-VPC integration service')
+
+option('bash-completion', type: 'feature', value: 'disabled',
+       description: 'Build the bash-completion helper scripts')
+
+option('dco', type: 'feature', value: 'enabled',
+       description: 'Enable the Data Channel Offload support (DCO)')
+
+#  This is required on distributions using older polkit releases
+#  without JavaScript support
+option('use-legacy-polkit-pkla', type: 'feature', value: 'disabled',
+       description: 'Installs the legacy PKLA based polkit policy files')
+
+
+#
+#  Testing tools
+#
+option('unit_tests', type: 'feature', value: 'enabled',
+       description: 'Build the unit-test suite')
+
+option('test_programs', type: 'feature', value: 'enabled',
+       description: 'Build various test programs in src/tests')

@@ -1,0 +1,11 @@
+#!/bin/sh
+#  OpenVPN 3 Linux client -- Next generation OpenVPN client
+#
+#  SPDX-License-Identifier: AGPL-3.0-only
+#
+#  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+#  Copyright (C)  David Sommerseth <davids@openvpn.net>
+#
+
+set -eu
+cp -v ${MESON_BUILD_ROOT}/build-version.h ${MESON_DIST_ROOT}/src/common/
