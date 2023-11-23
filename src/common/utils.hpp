@@ -16,7 +16,15 @@
 
 #include <string>
 
-const char *package_version();
+#include "build-config.h"
+#include "build-version.h"
+
+#ifndef CONFIGURE_GIT_REVISION
+constexpr char package_version[] = PACKAGE_GUIVERSION;
+#else
+constexpr char package_version[] = "git:" CONFIGURE_GIT_REVISION CONFIGURE_GIT_FLAGS;
+#endif
+
 
 void drop_root();
 std::string get_version(std::string component);

@@ -2,10 +2,10 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018 - 2023  Lev Stipakov <lev@openvpn.net>
-//  Copyright (C) 2018 - 2023  John Eismeier <john.eismeier@gmail.com>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  Lev Stipakov <lev@openvpn.net>
+//  Copyright (C)  John Eismeier <john.eismeier@gmail.com>
 //
 
 /**
@@ -14,208 +14,259 @@
  * @brief  Simple unit test of the RequestQueue class.  This first runs
  *         functional tests on most of the methods provided in the class.
  *         If that passes, a D-Bus service is activated on the session
- *         bus, which can be tested by request-queue-client and
+ *         bus, which can be tested by request-queue-client1 and
  *         request-queue-client2.
  */
 
-#define DEBUG_REQUIRESQUEUE // Enables debug functions in requiresqueue.hpp
-
 #include <exception>
-
 #include <glib-unix.h>
+#include <gdbuspp/connection.hpp>
+#include <gdbuspp/object/base.hpp>
+#include <gdbuspp/service.hpp>
+#include <iostream>
+#include <memory>
+#include <mutex>
 
-#include "config.h"
-#include "dbus/core.hpp"
-#include "dbus/connection-creds.hpp"
+#include "build-config.h"
+
 #include "common/requiresqueue.hpp"
 #include "common/utils.hpp"
 
-using namespace openvpn;
 
-
-class ReqQueueMain : public DBusObject
+/**
+ *  An extended RequiresQueue class which adds a few debug features
+ *  to inspect the contents of the RequiresQueue data.
+ */
+class RequiresQueueDebug : public RequiresQueue
 {
   public:
-    ReqQueueMain(GDBusConnection *dbuscon,
-                 const std::string busname,
-                 const std::string interface,
-                 const std::string rootpath)
-        : DBusObject(rootpath),
-          dbuscon(dbuscon),
-          creds(dbuscon),
-          queue(std::unique_ptr<RequiresQueue>(new RequiresQueue()))
-    {
-        std::stringstream introspection_xml;
-        introspection_xml << "<node name='" << rootpath << "'>"
-                          << "  <interface name='" << interface << "'>"
-                          << RequiresQueue::IntrospectionMethods("t_QueueCheckTypeGroup",
-                                                                 "t_QueueFetch",
-                                                                 "t_QueueCheck",
-                                                                 "t_ProvideResponse")
-                          << "    <method name='ServerDumpResponse'/>"
-                          << "    <method name='Init'/>"
-                          << "  </interface>"
-                          << "</node>";
-        ParseIntrospectionXML(introspection_xml);
-    }
+    using Ptr = std::shared_ptr<RequiresQueueDebug>;
 
-    ~ReqQueueMain()
+    [[nodiscard]] static RequiresQueueDebug::Ptr Create()
     {
-        RemoveObject(dbuscon);
+        return RequiresQueueDebug::Ptr(new RequiresQueueDebug());
     }
 
 
-    void callback_method_call(GDBusConnection *conn,
-                              const std::string sender,
-                              const std::string object_path,
-                              const std::string interface,
-                              const std::string method_name,
-                              GVariant *params,
-                              GDBusMethodInvocation *invocation)
+    /**
+     *  Dumps the current active queue to stdout
+     */
+    void _DumpStdout()
     {
-        try
-        {
-            std::cout << "sender=" << sender
-                      << ", uid=" << std::to_string(creds.GetUID(sender))
-                      << ", pid=" << std::to_string(creds.GetPID(sender))
-                      << std::endl;
-        }
-        catch (DBusException &excp)
-        {
-            std::cout << "Failed to retrieve sender credentials: "
-                      << excp.GetRawError();
-        }
-
-        if ("t_QueueCheckTypeGroup" == method_name)
-        {
-            try
-            {
-                queue->QueueCheckTypeGroup(invocation);
-            }
-            catch (RequiresQueueException &excp)
-            {
-                excp.GenerateDBusError(invocation);
-            }
-            return;
-        }
-        else if ("t_QueueFetch" == method_name)
-        {
-            try
-            {
-                queue->QueueFetch(invocation, params);
-            }
-            catch (RequiresQueueException &excp)
-            {
-                excp.GenerateDBusError(invocation);
-            }
-            return;
-        }
-        if ("t_QueueCheck" == method_name)
-        {
-            queue->QueueCheck(invocation, params);
-            return;
-        }
-        else if ("t_ProvideResponse" == method_name)
-        {
-            try
-            {
-                queue->UpdateEntry(invocation, params);
-            }
-            catch (RequiresQueueException &excp)
-            {
-                excp.GenerateDBusError(invocation);
-            }
-            return;
-        }
-        else if ("ServerDumpResponse" == method_name)
-        {
-            queue->_DumpStdout();
-            g_dbus_method_invocation_return_value(invocation, NULL);
-            return;
-        }
-        else if ("Init" == method_name)
-        {
-            queue = std::unique_ptr<RequiresQueue>(new RequiresQueue());
-            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::PK_PASSPHRASE, "pk_passphrase", "Test private key passphrase", true);
-            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "username", "Test Auth User name", false);
-            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "password", "Test Auth Password", true);
-            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_DYNAMIC, "dynamic_challenge", "Test Dynamic Challenge", true);
-            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_STATIC, "static_challenge", "Test Static Challenge", true);
-            queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_AUTH_PENDING, "auth_pending", "Pending Auth Challenge", false);
-            g_dbus_method_invocation_return_value(invocation, NULL);
-            return;
-        }
-        GError *err = g_dbus_error_new_for_dbus_error("net.openvpn.v3.error.tests.requestqueue",
-                                                      "Invalid method call");
-        g_dbus_method_invocation_return_gerror(invocation, err);
-        g_error_free(err);
+        _DumpQueue(std::cout);
     }
 
 
-    GVariant *callback_get_property(GDBusConnection *conn,
-                                    const std::string sender,
-                                    const std::string obj_path,
-                                    const std::string intf_name,
-                                    const std::string property_name,
-                                    GError **error)
+    /**
+     *  Dumps all the RequiresSlot items of a current RequiresQueue to the
+     *  provided output stream
+     *
+     *  @param logdst   Output stream where to put the dump
+     */
+    void _DumpQueue(std::ostream &logdst)
     {
-        THROW_DBUSEXCEPTION("ReqQueueMain", "get property not implemented");
+        for (auto &e : slots)
+        {
+            logdst << "          Id: " << e.id << std::endl
+                   << "         Key: " << e.name << std::endl
+                   << "        Type: [" << std::to_string((int)e.type) << "] "
+                   << ClientAttentionType_str[(int)e.type] << std::endl
+                   << "       Group: [" << std::to_string((int)e.group) << "] "
+                   << ClientAttentionGroup_str[(int)e.group] << std::endl
+                   << "       Value: " << e.value << std::endl
+                   << " Description: " << e.user_description << std::endl
+                   << "Hidden input: " << (e.hidden_input ? "True" : "False")
+                   << std::endl
+                   << "    Provided: " << (e.provided ? "True" : "False")
+                   << std::endl
+                   << "-----------------------------------------------------"
+                   << std::endl;
+        }
     }
 
-    GVariantBuilder *callback_set_property(GDBusConnection *conn,
-                                           const std::string sender,
-                                           const std::string obj_path,
-                                           const std::string intf_name,
-                                           const std::string property_name,
-                                           GVariant *value,
-                                           GError **error)
+
+    /**
+     *  Get access to all the RequiresSlot items
+     *
+     * @return const std::vector<struct RequiresSlot>
+     */
+    const std::vector<struct RequiresSlot> DumpSlots() const
     {
-        THROW_DBUSEXCEPTION("ReqQueueMain", "set property not implemented");
+        return slots;
     }
 
   private:
-    GDBusConnection *dbuscon;
-    DBusConnectionCreds creds;
-    std::unique_ptr<RequiresQueue> queue;
+    RequiresQueueDebug()
+        : RequiresQueue()
+    {
+    }
+};
+
+
+class ReqQueueMain : public DBus::Object::Base
+{
+  public:
+    using Ptr = std::shared_ptr<ReqQueueMain>;
+
+    ReqQueueMain(DBus::Connection::Ptr conn,
+                 const std::string &path,
+                 const std::string &interface)
+        : DBus::Object::Base(path, interface),
+          dbuscon(conn)
+    {
+        queue = RequiresQueueDebug::Create();
+        queue->QueueSetup(this,
+                          "t_QueueCheckTypeGroup",
+                          "t_QueueFetch",
+                          "t_QueueCheck",
+                          "t_ProvideResponse");
+        init();
+
+        AddMethod("ServerDumpResponse",
+                  [this](DBus::Object::Method::Arguments::Ptr args)
+                  {
+                      std::lock_guard<std::mutex> lg(init_mtx);
+                      queue->_DumpStdout();
+                      args->SetMethodReturn(nullptr);
+                  });
+
+        AddMethod("Init",
+                  [this](DBus::Object::Method::Arguments::Ptr args)
+                  {
+                      this->init();
+                      args->SetMethodReturn(nullptr);
+                  });
+
+        auto validate = AddMethod("Validate",
+                                  [this](DBus::Object::Method::Arguments::Ptr args)
+                                  {
+                                      auto r = this->Validate(args->GetMethodParameters());
+                                      args->SetMethodReturn(r);
+                                  });
+        validate->AddInput("response_prefix", "s");
+        validate->AddInput("iteration", "u");
+        validate->AddOutput("result", "b");
+    }
+    ~ReqQueueMain() = default;
+
+
+    const bool Authorize(const DBus::Authz::Request::Ptr request) override
+    {
+        std::cout << "Authorize: " << request << std::endl;
+        return true;
+    }
+
+
+  private:
+    DBus::Connection::Ptr dbuscon{nullptr};
+    RequiresQueueDebug::Ptr queue{nullptr};
+    std::mutex init_mtx;
+
+    void init()
+    {
+        std::lock_guard<std::mutex> lg(init_mtx);
+
+        queue->ClearAll();
+        queue->RequireAdd(ClientAttentionType::CREDENTIALS,
+                          ClientAttentionGroup::PK_PASSPHRASE,
+                          "pk_passphrase",
+                          "Test private key passphrase",
+                          true);
+
+        queue->RequireAdd(ClientAttentionType::CREDENTIALS,
+                          ClientAttentionGroup::USER_PASSWORD,
+                          "username",
+                          "Test Auth User name",
+                          false);
+
+        queue->RequireAdd(ClientAttentionType::CREDENTIALS,
+                          ClientAttentionGroup::USER_PASSWORD,
+                          "password",
+                          "Test Auth Password",
+                          true);
+
+        queue->RequireAdd(ClientAttentionType::CREDENTIALS,
+                          ClientAttentionGroup::CHALLENGE_DYNAMIC,
+                          "dynamic_challenge",
+                          "Test Dynamic Challenge",
+                          true);
+
+        queue->RequireAdd(ClientAttentionType::CREDENTIALS,
+                          ClientAttentionGroup::CHALLENGE_STATIC,
+                          "static_challenge",
+                          "Test Static Challenge",
+                          true);
+
+        queue->RequireAdd(ClientAttentionType::CREDENTIALS,
+                          ClientAttentionGroup::CHALLENGE_AUTH_PENDING,
+                          "auth_pending",
+                          "Pending Auth Challenge",
+                          false);
+    }
+
+
+    GVariant *Validate(GVariant *param)
+    {
+        glib2::Utils::checkParams(__func__, param, "(su)", 2);
+        std::string resp_prefix{glib2::Value::Extract<std::string>(param, 0)};
+        uint32_t iteration{glib2::Value::Extract<uint32_t>(param, 1)};
+
+        bool result = true;
+        for (const auto &slot : queue->DumpSlots())
+        {
+            std::ostringstream match_val;
+            match_val << resp_prefix
+                      << slot.name << "_"
+                      << std::to_string(iteration + slot.id);
+            if ((slot.provided && match_val.str() != slot.value))
+            {
+                result = false;
+                std::cout << "FAILED: [" << std::to_string(slot.id) << "] "
+                          << "name=" << slot.name << ", "
+                          << "value='" << slot.value << "', "
+                          << "expected='" << match_val.str() << "'"
+                          << std::endl;
+            }
+            else if (!slot.provided)
+            {
+                result = false;
+                std::cout << "FAILED: [" << std::to_string(slot.id) << "] "
+                          << "name=" << slot.name << " -- not provided "
+                          << std::endl;
+            }
+            else
+            {
+                std::cout << "Passed: ["
+                          << std::to_string(slot.id) << "] "
+                          << "name=" << slot.name
+                          << "value='" << slot.value
+                          << std::endl;
+            }
+        }
+        return glib2::Value::CreateTupleWrapped(result);
+    }
 };
 
 
 
-class ReqQueueServiceDBus : public DBus
+class ReqQueueService : public DBus::Service
 {
   public:
-    ReqQueueServiceDBus()
-        : DBus(G_BUS_TYPE_SESSION,
-               "net.openvpn.v3.tests.requiresqueue",
-               "/net/openvpn/v3/tests/features/requiresqueue",
-               "net.openvpn.v3.tests.requiresqueue"),
-          mainobj(nullptr)
+    ReqQueueService(DBus::Connection::Ptr conn)
+        : DBus::Service(conn, "net.openvpn.v3.tests.requiresqueue")
     {
     }
 
-    ~ReqQueueServiceDBus()
+    void BusNameAcquired(GDBusConnection *conn, const std::string &busname) override
     {
-        delete mainobj;
+        std::cout << "Service registered: " << busname << std::endl;
     }
 
-    void callback_bus_acquired()
+    void BusNameLost(GDBusConnection *conn, const std::string &busname) override
     {
-        mainobj = new ReqQueueMain(GetConnection(), GetBusName(), GetDefaultInterface(), GetRootPath());
-        mainobj->RegisterObject(GetConnection());
+        std::cout << "Lost the bus name: " << busname << std::endl;
+        DBus::Service::Stop();
     }
-
-    void callback_name_acquired(GDBusConnection *conn, std::string busname)
-    {
-    }
-
-    void callback_name_lost(GDBusConnection *conn, std::string busname)
-    {
-        THROW_DBUSEXCEPTION("ReqQueueServiceDBus",
-                            "D-Bus name not registered: " + busname);
-    }
-
-  private:
-    ReqQueueMain *mainobj;
 };
 
 
@@ -225,19 +276,18 @@ void selftest()
     try
     {
 
-        RequiresQueue queue;
+        RequiresQueue::Ptr queue = RequiresQueue::Create();
 
-        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::PK_PASSPHRASE, "pk_passphrase", "Selftest Private key passphrase", true);
-        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "username", "Selftest Auth User name", false);
-        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "password", "Selftest Auth Password", true);
-        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_DYNAMIC, "dynamic_challenge", "Selftest Dynamic Challenge", true);
-        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_STATIC, "static_challenge", "Selftest static Challenge", true);
-        queue.RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_AUTH_PENDING, "auth_pending", "Selftest Pending Auth", false);
+        queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::PK_PASSPHRASE, "pk_passphrase", "Selftest Private key passphrase", true);
+        queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "username", "Selftest Auth User name", false);
+        queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "password", "Selftest Auth Password", true);
+        queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_DYNAMIC, "dynamic_challenge", "Selftest Dynamic Challenge", true);
+        queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_STATIC, "static_challenge", "Selftest static Challenge", true);
+        queue->RequireAdd(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_AUTH_PENDING, "auth_pending", "Selftest Pending Auth", false);
 
 
         // Test QueueCheckTypeGroup()
-        auto type_group = queue.QueueCheckTypeGroup();
-        for (auto &tygr : type_group)
+        for (const auto &tygr : queue->QueueCheckTypeGroup())
         {
             ClientAttentionType t;
             ClientAttentionGroup g;
@@ -249,17 +299,16 @@ void selftest()
                       << std::endl;
 
             // Test QueueCheck once we have the type and group values
-            auto reqids = queue.QueueCheck(t, g);
-            for (auto &id : reqids)
+            for (const auto &id : queue->QueueCheck(t, g))
             {
                 std::cout << "   id: " << std::to_string(id) << std::endl;
 
                 // ... provide some test data
                 std::string gen_value = "selftest_value" + std::to_string((ti * 100) + (gi * 10) + id);
-                queue.UpdateEntry(t, g, id, gen_value);
+                queue->UpdateEntry(t, g, id, gen_value);
 
                 // ... retrieve it and compare
-                std::string chk_value = queue.GetResponse(t, g, id);
+                std::string chk_value = queue->GetResponse(t, g, id);
                 if (chk_value != gen_value)
                 {
                     std::stringstream err;
@@ -279,19 +328,44 @@ void selftest()
         }
 
         // Check retrieving values via variable names
-        std::cout << "GetResponse('pk_passphrase') = " << queue.GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::PK_PASSPHRASE, "pk_passphrase") << std::endl;
-        std::cout << "GetResponse('username') = " << queue.GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "username") << std::endl;
-        std::cout << "GetResponse('password') = " << queue.GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "password") << std::endl;
-        std::cout << "GetResponse('dynamic_challenge') = " << queue.GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_DYNAMIC, "dynamic_challenge") << std::endl;
-        std::cout << "GetResponse('static_challenge') = " << queue.GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_STATIC, "static_challenge") << std::endl;
-        std::cout << "GetResponse('auth_pending') = " << queue.GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::CHALLENGE_AUTH_PENDING, "auth_pending") << std::endl;
+        std::cout << "GetResponse('pk_passphrase') = "
+                  << queue->GetResponse(ClientAttentionType::CREDENTIALS,
+                                        ClientAttentionGroup::PK_PASSPHRASE,
+                                        "pk_passphrase")
+                  << std::endl;
+        std::cout << "GetResponse('username') = "
+                  << queue->GetResponse(ClientAttentionType::CREDENTIALS,
+                                        ClientAttentionGroup::USER_PASSWORD,
+                                        "username")
+                  << std::endl;
+        std::cout << "GetResponse('password') = "
+                  << queue->GetResponse(ClientAttentionType::CREDENTIALS,
+                                        ClientAttentionGroup::USER_PASSWORD,
+                                        "password")
+                  << std::endl;
+        std::cout << "GetResponse('dynamic_challenge') = "
+                  << queue->GetResponse(ClientAttentionType::CREDENTIALS,
+                                        ClientAttentionGroup::CHALLENGE_DYNAMIC,
+                                        "dynamic_challenge")
+                  << std::endl;
+        std::cout << "GetResponse('static_challenge') = "
+                  << queue->GetResponse(ClientAttentionType::CREDENTIALS,
+                                        ClientAttentionGroup::CHALLENGE_STATIC,
+                                        "static_challenge")
+                  << std::endl;
+        std::cout << "GetResponse('auth_pending') = "
+                  << queue->GetResponse(ClientAttentionType::CREDENTIALS,
+                                        ClientAttentionGroup::CHALLENGE_AUTH_PENDING,
+                                        "auth_pending")
+                  << std::endl;
+
         // Checking some out-of-bounds variables
         try
         {
-            queue.GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, 99);
+            queue->GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, 99);
             throw std::runtime_error("Did not fail when calling GetResponse(CREDENTIALS, USER_PASSEORD, 99)");
         }
-        catch (RequiresQueueException &excp)
+        catch (const RequiresQueueException &excp)
         {
             std::cout << "Passed GetResponse(CREDENTIALS, USER_PASSWORD, 99) out-of-boundary check" << std::endl;
             std::cout << "     Exception caught: " << excp.what() << std::endl;
@@ -299,16 +373,16 @@ void selftest()
 
         try
         {
-            queue.GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "this_variable_name_does_not_exist");
+            queue->GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "this_variable_name_does_not_exist");
             throw std::runtime_error("Did not fail when calling GetResponse(CREDENTIALS, USER_PASSEORD, 'this_variable_name_does_not_exist')");
         }
-        catch (RequiresQueueException &excp)
+        catch (const RequiresQueueException &excp)
         {
             std::cout << "Passed GetResponse(CREDENTIALS, USER_PASSWORD, '...') unknown variable check" << std::endl;
             std::cout << "     Exception caught: " << excp.what() << std::endl;
         }
     }
-    catch (std::exception &excp)
+    catch (const std::exception &excp)
     {
         std::cout << "** EXCEPTION: " << excp.what() << std::endl;
         exit(2);
@@ -326,13 +400,11 @@ int main()
     // D-Bus tests
     std::cout << std::endl
               << "** Starting D-Bus server" << std::endl;
-    ReqQueueServiceDBus reqqueue;
-    reqqueue.Setup();
-
-    GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
-    g_unix_signal_add(SIGINT, stop_handler, main_loop);
-    g_unix_signal_add(SIGTERM, stop_handler, main_loop);
-    g_main_loop_run(main_loop);
-    g_main_loop_unref(main_loop);
+    auto conn = DBus::Connection::Create(DBus::BusType::SESSION);
+    auto service = DBus::Service::Create<ReqQueueService>(conn);
+    service->CreateServiceHandler<ReqQueueMain>(conn,
+                                                "/net/openvpn/v3/tests/features/requiresqueue",
+                                                "net.openvpn.v3.tests.requiresqueue");
+    service->Run();
     return 0;
 }

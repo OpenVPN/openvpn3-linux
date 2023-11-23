@@ -36,18 +36,11 @@ const char *PlatformInfoException::what() const noexcept
 //  PlatformInfo implementation
 //
 
-PlatformInfo::PlatformInfo(GDBusConnection *con)
-    : DBusProxy(con,
-                "org.freedesktop.hostname1",
-                "org.freedesktop.hostname1",
-                "/org/freedesktop/hostname1",
-                true)
+PlatformInfo::PlatformInfo(DBus::Connection::Ptr con)
 {
-    if (con)
-    {
-        property_proxy = SetupProxy(
-            bus_name, "org.freedesktop.DBus.Properties", GetProxyPath());
-    }
+    proxy = DBus::Proxy::Client::Create(con, "org.freedesktop.hostname1");
+    hostname1_tgt = DBus::Proxy::TargetPreset::Create("/org/freedesktop/hostname1",
+                                                      "org.freedesktop.hostname1");
 }
 
 
@@ -57,9 +50,10 @@ const std::string PlatformInfo::str() const
 
     try
     {
-        os_name = GetStringProperty("OperatingSystemCPEName");
+        os_name = proxy->GetProperty<std::string>(hostname1_tgt,
+                                                  "OperatingSystemCPEName");
     }
-    catch (const DBusException &)
+    catch (const DBus::Exception &)
     {
         // Ignore errors; os_name will be empty
     }
@@ -68,9 +62,10 @@ const std::string PlatformInfo::str() const
     {
         try
         {
-            os_name = GetStringProperty("OperatingSystemPrettyName");
+            os_name = proxy->GetProperty<std::string>(hostname1_tgt,
+                                                      "OperatingSystemPrettyName");
         }
-        catch (const DBusException &)
+        catch (const DBus::Exception &)
         {
             // Ignore errors, os_name should be empty
         }

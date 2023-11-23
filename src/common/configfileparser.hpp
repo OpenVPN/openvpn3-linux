@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "config.h"
+#include "build-config.h"
 #include <memory>
 #include <string>
 #include <vector>

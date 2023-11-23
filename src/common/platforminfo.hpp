@@ -14,10 +14,7 @@
 
 #include <sys/utsname.h>
 #include <exception>
-
-#include "dbus/core.hpp"
-#include "dbus/proxy.hpp"
-
+#include <gdbuspp/proxy.hpp>
 
 /**
  *  Exception class for PlatformInfo errors
@@ -44,16 +41,16 @@ class PlatformInfoException : public std::exception
  *  will extract some generic information from uname()
  *
  */
-class PlatformInfo : public DBusProxy
+class PlatformInfo
 {
   public:
     /**
      *  Construct a new PlatformInfo object
      *
-     *  @param con Pointer to a GDBusConnection, for D-Bus calls
-     *             to the org.freedesktop.hostname1 service.
+     *  @param con DBus::Connection used to access the
+     *             org.freedesktop.hostname1 service.
      */
-    PlatformInfo(GDBusConnection *con);
+    PlatformInfo(DBus::Connection::Ptr con);
 
 
     /**
@@ -80,4 +77,8 @@ class PlatformInfo : public DBusProxy
     {
         return os << pinf.str();
     }
+
+  private:
+    DBus::Proxy::Client::Ptr proxy{nullptr};
+    DBus::Proxy::TargetPreset::Ptr hostname1_tgt{nullptr};
 };

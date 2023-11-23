@@ -12,7 +12,6 @@
  * @brief  Generate a static unique machine ID
  */
 
-#include "config.h"
 
 #include <fstream>
 #include <iostream>
@@ -21,6 +20,8 @@
 #include <string>
 #include <vector>
 #include <uuid/uuid.h>
+
+#include "build-config.h"
 
 #ifdef HAVE_SYSTEMD
 #include <systemd/sd-id128.h>
@@ -59,7 +60,7 @@ MachineID::MachineID(const std::string &local_machineid, bool enforce_local)
 
     std::string rawid;
 
-#if HAVE_SYSTEMD
+#ifdef HAVE_SYSTEMD
     sd_id128_t sdmid;
     if (!enforce_local && (0 == sd_id128_get_machine(&sdmid)))
     {

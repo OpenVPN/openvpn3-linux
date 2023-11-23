@@ -12,6 +12,10 @@
  * @brief  Implementation of the OpenVPN 3 Linux D-Bus logging based interface
  */
 
+#include <gdbuspp/signals/group.hpp>
+#include <gdbuspp/signals/subscriptionmgr.hpp>
+#include <gdbuspp/signals/target.hpp>
+
 #include "dbus-log.hpp"
 
 
@@ -19,13 +23,13 @@
 //  LogFilter class implementation
 //
 
-LogFilter::LogFilter(unsigned int loglvl) noexcept
+LogFilter::LogFilter(const unsigned int loglvl) noexcept
     : log_level(loglvl)
 {
 }
 
 
-void LogFilter::SetLogLevel(unsigned int loglev)
+void LogFilter::SetLogLevel(const unsigned int loglev)
 {
     if (loglev > 6)
     {
@@ -85,42 +89,33 @@ bool LogFilter::AllowPath(const std::string &path) noexcept
 //  LogSender class implementation
 //
 
-LogSender::LogSender(GDBusConnection *dbuscon,
+LogSender::LogSender(DBus::Connection::Ptr dbuscon,
                      const LogGroup lgroup,
-                     std::string interf,
-                     std::string objpath,
+                     const std::string &objpath,
+                     const std::string &interf,
                      LogWriter *lgwr)
-    : DBusSignalProducer(dbuscon, "", interf, objpath),
+    : DBus::Signals::Group(dbuscon, objpath, interf),
       LogFilter(3),
       logwr(lgwr),
       log_group(lgroup)
 {
-}
+    // AddTarget("", objpath, interf);
 
+    RegisterSignal("Log",
+                   {{"group", "u"},
+                    {"level", "u"},
+                    {"message", "s"}});
 
-const std::string LogSender::GetLogIntrospection()
-{
-    return "        <signal name='Log'>"
-           "            <arg type='u' name='group' direction='out'/>"
-           "            <arg type='u' name='level' direction='out'/>"
-           "            <arg type='s' name='message' direction='out'/>"
-           "        </signal>";
-}
-
-
-const std::string LogSender::GetStatusChangeIntrospection()
-{
-    return "        <signal name='StatusChange'>"
-           "            <arg type='u' name='code_major' direction='out'/>"
-           "            <arg type='u' name='code_minor' direction='out'/>"
-           "            <arg type='s' name='message' direction='out'/>"
-           "        </signal>";
+    RegisterSignal("StatusChange",
+                   {{"code_major", "u"},
+                    {"code_minor", "u"},
+                    {"message", "s"}});
 }
 
 
 void LogSender::StatusChange(const StatusEvent &statusev)
 {
-    Send("StatusChange", statusev.GetGVariantTuple());
+    SendGVariant("StatusChange", statusev.GetGVariantTuple());
 }
 
 
@@ -136,7 +131,7 @@ void LogSender::ProxyLog(const LogEvent &logev, const std::string &path)
         {
             return;
         }
-        Send("Log", logev.GetGVariantTuple());
+        SendGVariant("Log", logev.GetGVariantTuple());
     }
 }
 
@@ -150,7 +145,7 @@ void LogSender::ProxyStatusChange(const StatusEvent &status, const std::string &
 }
 
 
-void LogSender::Log(const LogEvent &logev, bool duplicate_check, const std::string &target)
+void LogSender::Log(const LogEvent &logev, const bool duplicate_check, const std::string &target)
 {
     // Don't log an empty messages or if log level filtering allows it
     // The filtering is done against the LogCategory of the message
@@ -174,54 +169,54 @@ void LogSender::Log(const LogEvent &logev, bool duplicate_check, const std::stri
         logwr->Write(logev);
     }
 
-    SendTarget(target, "Log", logev.GetGVariantTuple());
+    SendGVariant("Log", logev.GetGVariantTuple());
 }
 
 
-void LogSender::Debug(std::string msg, bool duplicate_check)
+void LogSender::Debug(const std::string &msg, const bool duplicate_check)
 {
     Log(LogEvent(log_group, LogCategory::DEBUG, msg), duplicate_check);
 }
 
 
-void LogSender::LogVerb2(std::string msg, bool duplicate_check)
+void LogSender::LogVerb2(const std::string &msg, const bool duplicate_check)
 {
     Log(LogEvent(log_group, LogCategory::VERB2, msg), duplicate_check);
 }
 
 
-void LogSender::LogVerb1(std::string msg, bool duplicate_check)
+void LogSender::LogVerb1(const std::string &msg, const bool duplicate_check)
 {
     Log(LogEvent(log_group, LogCategory::VERB1, msg), duplicate_check);
 }
 
 
-void LogSender::LogInfo(std::string msg, bool duplicate_check)
+void LogSender::LogInfo(const std::string &msg, const bool duplicate_check)
 {
     Log(LogEvent(log_group, LogCategory::INFO, msg), duplicate_check);
 }
 
 
-void LogSender::LogWarn(std::string msg, bool duplicate_check)
+void LogSender::LogWarn(const std::string &msg, const bool duplicate_check)
 {
     Log(LogEvent(log_group, LogCategory::WARN, msg), duplicate_check);
 }
 
 
-void LogSender::LogError(std::string msg)
+void LogSender::LogError(const std::string &msg)
 {
     Log(LogEvent(log_group, LogCategory::ERROR, msg));
 }
 
 
-void LogSender::LogCritical(std::string msg)
+void LogSender::LogCritical(const std::string &msg)
 {
     // Critical log messages will always be sent
     Log(LogEvent(log_group, LogCategory::CRIT, msg));
 }
 
 
-void LogSender::LogFATAL(std::string msg)
+void LogSender::LogFATAL(const std::string &msg)
 {
     // Fatal log messages will always be sent
     Log(LogEvent(log_group, LogCategory::FATAL, msg));
@@ -245,33 +240,21 @@ LogWriter *LogSender::GetLogWriter()
 //
 //  LogConsumer class implementation
 //
-LogConsumer::LogConsumer(GDBusConnection *dbuscon,
-                         std::string interf,
-                         std::string objpath,
-                         std::string busn)
-    : DBusSignalSubscription(dbuscon, busn, interf, objpath, "Log"),
-      LogFilter(6) // By design, accept all kinds of log messages when receiving
+LogConsumer::LogConsumer(DBus::Connection::Ptr dbuscon,
+                         const std::string &interf,
+                         const std::string &objpath,
+                         const std::string &busn)
+    : LogFilter(6) // By design, accept all kinds of log messages when receiving
 {
+    subscriptions = DBus::Signals::SubscriptionManager::Create(dbuscon);
+    auto target = DBus::Signals::Target::Create(busn, objpath, interf);
+    subscriptions->Subscribe(target,
+                             "Log",
+                             [this](DBus::Signals::Event::Ptr &event)
+                             {
+                                 this->process_log_event(event);
+                             });
 }
-
-
-void LogConsumer::callback_signal_handler(GDBusConnection *connection,
-                                          const std::string sender_name,
-                                          const std::string obj_path,
-                                          const std::string interface_name,
-                                          const std::string signal_name,
-                                          GVariant *parameters)
-{
-    if ("Log" == signal_name)
-    {
-        process_log_event(sender_name, interface_name, obj_path, parameters);
-    }
-    else
-    {
-        ProcessSignal(sender_name, obj_path, interface_name, signal_name, parameters);
-    }
-}
-
 
 
 //
@@ -308,26 +291,26 @@ LogProxyExceptionType LogConsumerProxyException::GetExceptionType() const noexce
 //  LogConsumerProxy class implementation
 //
 
-LogConsumerProxy::LogConsumerProxy(GDBusConnection *dbuscon,
-                                   std::string src_interf,
-                                   std::string src_objpath,
-                                   std::string dst_interf,
-                                   std::string dst_objpath)
+LogConsumerProxy::LogConsumerProxy(DBus::Connection::Ptr dbuscon,
+                                   const std::string &src_interf,
+                                   const std::string &src_objpath,
+                                   const std::string &dst_interf,
+                                   const std::string &dst_objpath)
     : LogConsumer(dbuscon, src_interf, src_objpath),
       LogSender(dbuscon, LogGroup::UNDEFINED, dst_interf, dst_objpath)
 {
 }
 
 
-void LogConsumerProxy::process_log_event(const std::string sender,
-                                         const std::string interface,
-                                         const std::string object_path,
-                                         GVariant *params)
+void LogConsumerProxy::process_log_event(DBus::Signals::Event::Ptr event)
 {
     try
     {
-        LogEvent logev(params);
-        LogEvent ev = InterceptLogEvent(sender, interface, object_path, logev);
+        LogEvent logev(event->params);
+        LogEvent ev = InterceptLogEvent(event->sender,
+                                        event->object_interface,
+                                        event->object_path,
+                                        logev);
         ProxyLog(ev);
     }
     catch (const LogConsumerProxyException &excp)

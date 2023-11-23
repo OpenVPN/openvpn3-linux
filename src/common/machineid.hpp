@@ -16,8 +16,12 @@
 
 #include <iostream>
 #include <exception>
+#include <string_view>
 
-#define OPENVPN3_MACHINEID std::string(std::string(OPENVPN3_STATEDIR) + "/machine-id")
+#include "build-config.h"
+
+
+const std::string OPENVPN3_MACHINEID{OPENVPN3_STATEDIR "/machine-id"};
 
 
 class MachineIDException : public std::exception

@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -18,8 +18,15 @@
  */
 
 #pragma once
+#include <map>
+#include <vector>
+#include <glib.h>
+#include <gio/gio.h>
+#include <gdbuspp/exceptions.hpp>
+#include <gdbuspp/object/base.hpp>
+#include <mutex>
 
-#include "config.h"
+#include "build-config.h"
 #include "dbus/constants.hpp"
 
 
@@ -53,7 +60,7 @@ struct RequiresSlot
  *  of the requires queue and its slots.  Can be thrown both when
  *  all work has been completed, if an error occurred, etc.
  */
-class RequiresQueueException : public std::exception
+class RequiresQueueException : public DBus::Exception
 {
   public:
     /**
@@ -72,23 +79,6 @@ class RequiresQueueException : public std::exception
     RequiresQueueException(std::string errname, std::string errmsg);
 
     virtual ~RequiresQueueException() noexcept = default;
-
-    virtual const char *what() const noexcept;
-
-    /**
-     *  Sets the state/error in a D-Bus response which will be sent to
-     *  the front-end caller
-     *
-     * @param invocation  Pointer to an active GDBusMethodInvocation object
-     *                    belonging to an on-going D-Bus method call.
-     */
-    void GenerateDBusError(GDBusMethodInvocation *invocation);
-
-
-  private:
-    std::string error;
-    std::string errorname;
-    std::string what_;
 };
 
 
@@ -100,39 +90,51 @@ class RequiresQueueException : public std::exception
 class RequiresQueue
 {
   public:
+    using Ptr = std::shared_ptr<RequiresQueue>;
     typedef std::tuple<ClientAttentionType, ClientAttentionGroup> ClientAttTypeGroup;
 
-    RequiresQueue();
+    [[nodiscard]] static RequiresQueue::Ptr Create()
+    {
+        return RequiresQueue::Ptr(new RequiresQueue);
+    }
+
     ~RequiresQueue();
 
     /**
-     * Returns a string containing a D-Bus introspection section for the
-     * RequiresQueue methods available via D-Bus.  The method names provided
-     * are the ones needed to be be used on on the D-Bus.
+     * Sets up the RequiresQueue D-Bus methods required for processing
+     * requested end-user input.
      *
-     * @param meth_qchktypegr    A string with the method name for getting
-     *                           a list of unprocessed requirement type/groups
-     * @param meth_queuefetch    A string with the method name for fetching an
-     *                           unprocessed queued element.
-     * @param meth_queuechk      A string with the method name for getting
-     *                           the number of unprocessed queued elements.
-     * @param meth_provideresp   A string with the method name for providing
-     *                           user responses to the service.
+     * The meth_* strings below are the method names exposed in the D-Bus
+     * object, used by the proxy caller
      *
-     * @return  Returns a string with the various <method/> tags describing
-     *          the required input arguments and what these methods returns.
+     * @param object_ptr         Raw pointer to the DBus::Object::Base
+     *                           this RequiresQueue is integrated with.
+     *                           This CANNOT be nullptr.
+     * @param meth_qchktypegr    Method name for retrieving a list of
+     *                           unprocessed requirement type/groups
+     * @param meth_queuefetch    Method name for fetching an unprocessed
+     *                           queued item
+     * @param meth_queuechk      Method name for retrieving the number of
+     *                           unprocessed queued items
+     * @param meth_provideresp   Method name for providing the user's
+     *                           respose to a queued item.
      */
-    static std::string IntrospectionMethods(const std::string &meth_qchktypegr,
-                                            const std::string &meth_queuefetch,
-                                            const std::string &meth_queuechk,
-                                            const std::string &meth_provideresp);
-
+    void QueueSetup(DBus::Object::Base *object_ptr,
+                    const std::string &meth_qchktypegr,
+                    const std::string &meth_queuefetch,
+                    const std::string &meth_queuechk,
+                    const std::string &meth_provideresp);
 
     /**
-     * Adds a user request requirement to the queue.
+     *  Empties and clears all the required items in the RequiresQueue
+     */
+    void ClearAll() noexcept;
+
+    /**
+     * Adds a request requirement item to the queue.
      *
      * The type and group arguments allows a single RequiresQueue object to
-     * process multiple queues in parallel and also be available over D-Bus.
+     * process multiple queues in parallel.
      *
      * @param type   ClientAttentionType reference
      * @param group  ClientAttentionGroup reference
@@ -148,191 +150,182 @@ class RequiresQueue
                             std::string descr,
                             bool hidden_input);
 
-
     /**
-     *  Fetch a single element from the request queue.
+     *  Fetch a single item from the request queue, where the item
+     *  to be retrieved is provided via the GVariant argument.
      *
-     *  @params invocattion  Pointer to the current GDBusMethodInvocation object
-     *  @param  parameters   Pointer to the current GVariants object with the query parameters
+     *  This GVariant object must have the data type spec '(uuu)', where
+     *  they refer to the request type, group and ID.
      *
-     *  Throws RequiresQueueException() when the queue is empty.
+     *  @param  parameters   GVariant object with the item specification
+     *                       to retrieve
      *
+     *  @return GVariant object with a value container of '(uuussb)'
+     *          The container contains request type, group, id, variable name,
+     *          description and a "no-echo" flag.
+     *
+     *  @throws RequiresQueueException when the queue is empty.
      **/
-    void QueueFetch(GDBusMethodInvocation *invocation, GVariant *parameters);
-
+    GVariant *QueueFetchGVariant(GVariant *parameters) const;
 
     /**
-     *  Updates a RequiresSlot element via D-Bus.  This method is intended
-     *  to be called by D-Bus method callback function where both the
-     *  element ID and the value is provided in a GVariant D-Bus object.
+     *  Updates the value for a RequiresSlot item
      *
-     *  If the update fails, it will throw a RequiresQueueException error
-     *  with the proper details.  It will also add a valid D-Bus error message
-     *  to the invocation object whenever this event happens.
+     *  @param type      ClientAttentionType of the item to update
+     *  @param group     ClientAttentionGroup the item belongs to
+     *  @param id        Slot ID of the item to update
+     *  @param newvalue  The new value for this item
      *
-     *  On success it will just return silently.
-     *
-     *  @param type      ClientAttentionType of the record to update
-     *  @param group     ClientAttentionGroup the record belongs to
-     *  @param id        Slot ID of the record to update
-     *  @param newvalue  The new value for this record
-     *
+     *  @throws RequiresQueueException on errors
      */
     void UpdateEntry(ClientAttentionType type, ClientAttentionGroup group, unsigned int id, std::string newvalue);
 
-
     /**
-     *  This is a D-Bus variant of UpdateEntry().  This takes the
-     *  D-Bus method call invocation and parameters provided with the call
-     *  and parses them.  This information is then sent to the other
-     *  @UpdateEntry() method for the real update.
+     *  This is a variant UpdateEntry() extracting the item update information
+     *  from a GVariant container.  This GVariant object must carry the data
+     *  type '(uuus)' which refers to the request type, group, id and the string
+     *  element contains the new value for the item.
      *
-     *  If the update fails, it will throw a RequiresQueueException error
-     *  with the proper details.
+     *  @param indata     GVariant object containing the input data from
+     *                    the D-Bus proxy caller
      *
-     *  On success it will return an empty and successful D-Bus response.
-     *
-     *  @params invocation The GDBus invocation object, which will contain the
-     *                     response on success.
-     *  @params indata     A GVariant object containing the input data from
-     *                     the D-Bus call
-     *
+     *  @throws RequiresQueueException on update errors
      */
-    void UpdateEntry(GDBusMethodInvocation *invocation, GVariant *indata);
-
+    void UpdateEntry(GVariant *indata);
 
     /**
-     * Resets the value and the provided flag of an item already provided
-     * element
+     *  Resets the value and the "provided flag" of an item already provided
      *
      * @param type   ClientAttentionType which the value is categorised under
      * @param group  ClientAttentionGroup which the value is categorised under
      * @param id     The numeric ID of the value slot to reset
      *
-     * @return Nothing on success.  If the value could not be found, an
-     *         exception is thrown.
+     * @throws RequiresQueueException on errors
      */
     void ResetValue(ClientAttentionType type,
                     ClientAttentionGroup group,
                     unsigned int id);
 
-
     /**
-     * Retrieve the value provided by a user, using the RequiresSlot ID as
-     * the lookup approach.
+     *  Retrieve the value provided by a user, using request type, group and
+     *  id as the lookup key.
      *
-     * @param type   ClientAttentionType which the value is categorised under
-     * @param group  ClientAttentionGroup which the value is categorised under
-     * @param id     The numeric ID of the value
+     * @param type   ClientAttentionType of the request
+     * @param group  ClientAttentionGroup of the request type
+     * @param id     Request ID
+     *
      * @return Returns a string with the value if the value was found and
-     *         provided by the user, otherwise an exception is thrown.
+     *         provided by the user
+     *
+     * @throws RequiresQueueException if the user has not provided this
+     *         any value or the request slot was not found.
      */
-    std::string GetResponse(ClientAttentionType type,
-                            ClientAttentionGroup group,
-                            unsigned int id);
-
+    const std::string GetResponse(ClientAttentionType type,
+                                  ClientAttentionGroup group,
+                                  unsigned int id) const;
 
     /**
-     * Retrieve a front-end response, using a RequiresSlot name as the lookup
-     * approach.
+     *  Retrieve the value provided by a user, using the assigned variable
+     *  name to the request slot as lookup key
      *
-     * @param type   ClientAttentionType which the value is categorised under
-     * @param group  ClientAttentionGroup which the value is categorised under
-     * @param name   A string containing the variable name of the value
+     * @param type   ClientAttentionType of the request
+     * @param group  ClientAttentionGroup of the request type
+     * @param name   String with variable name of the value to retrieve
+     *
      * @return Returns a string with the value if the value was found and
-     *         provided by the user, otherwise an exception is thrown.
+     *         provided by the user
+     *
+     * @throws RequiresQueueException if the user has not provided this
+     *         any value or the request slot was not found.
      */
-    std::string GetResponse(ClientAttentionType type,
-                            ClientAttentionGroup group,
-                            std::string name);
-
+    const std::string GetResponse(ClientAttentionType type,
+                                  ClientAttentionGroup group,
+                                  std::string name) const;
 
     /**
-     * Get the number of requires slots which have been prepared for a
-     * specific client attention type and group.
+     *  Retrieve the number of requires slots which have been prepared for
+     *  a specific request type and group.
      *
-     * @param type   ClientAttentionType the value to count belongs to
-     * @param group  ClientAttentionGroup the value to count belongs to
-     * @return Returns the number of requires slots prepared
+     * @param type   ClientAttentionType of the requests
+     * @param group  ClientAttentionGroup of the request type
+     *
+     * @return Returns the number of require slots prepared
      */
     unsigned int QueueCount(ClientAttentionType type,
-                            ClientAttentionGroup group);
-
+                            ClientAttentionGroup group) const noexcept;
 
     /**
-     * Returns a list of ClientAttentionType/ClientAttentionGroup tuples
-     * of requirements which have not been provided yet.  This information
-     * can further be used with @QueueCheck() to get a list of requirement
-     * IDs not satisfied.  Then in the end @QueueFetch() is used to get
-     * details about a specific requirement
+     *  Retrieve an array of all the request types and groups (as tuples)
+     *  of all registered user requirements (require slots) which has not
+     *  been satisfied yet.  I.e, where the user need to provide input.
+     *
+     *  This information only provides grouped information of what needs
+     *  to be provided by the end-user.  The output of this method is to
+     *  be used further by the QueueCheck() method.
      *
      * @return Returns a std::vector<ClientAttTypeGroup>
-     *         of type/groups not yet satisfied.
+     *         of all type/groups not yet satisfied.
      */
-    std::vector<ClientAttTypeGroup> QueueCheckTypeGroup();
-
+    std::vector<ClientAttTypeGroup> QueueCheckTypeGroup() const noexcept;
 
     /**
-     * D-Bus wrapper around @QueueCheckTypeGroup().  Returns the result
-     * to an on-going D-Bus method call
+     *  A GVariant version of QueueCheckTypeGroup().
      *
-     * @param GDBusMethodInvocation Pointer to a D-Bus invocation, where the
-     *                              result will be returned on success
+     *  Retrieve an array of all the request types and groups (as tuples)
+     *  of all registered user requirements (require slots) which has not
+     *  been satisfied yet.  I.e, where the user need to provide input.
+     *
+     * @return GVariant container object with the 'a(uu)' data type.
+     *         This container carries an array of request type and group
+     *         tuples which has not yet been satisfied by the end-user.
      */
-    void QueueCheckTypeGroup(GDBusMethodInvocation *invocation);
-
+    GVariant *QueueCheckTypeGroupGVariant() const noexcept;
 
     /**
-     * Retrieve a list of ID references of require slots which have not
-     * received any user responses.
+     *  Retrieve an array of ID references of require slots which have not
+     *  received any user responses.
      *
      * @param type   ClientAttentionType of the queue to check
      * @param group  ClientAttentionGroup of the queue to check
-     * @return Returns an array of unsigned integers with IDs to variables
+     *
+     * @return Returns a std::vector<unsigned int> with IDs to variables
      *         still not been provided by the user
      */
     std::vector<unsigned int> QueueCheck(ClientAttentionType type,
-                                         ClientAttentionGroup group);
-
+                                         ClientAttentionGroup group) const noexcept;
 
     /**
-     * Retrieve a list of ID references of require slots which have not
-     * received any user responses.  This variant is a wrapper to be used
-     * by D-Bus methods.  The GVariant pointer needs to point at a tuple
-     * containing two unsigned integers - (uu); and need to valid references
-     * to a ClientAttentionType and ClientAttentionGroup.
+     *  Retrieve an array of ID references of require slots which have not
+     *  received any user responses.  This is a variant of QueueCheck() which
+     *  takes the request type and group information and provides the result
+     *  via GVariant container objects.
      *
+     *  The input GVariant container must use the data type '(uu)' which
+     *  contains the request type and group information.
      *
-     * @param GDBusMethodInvocation Pointer to a D-Bus invocation, where the
-     *                              result will be returned on success
-     * @param GVariant              Pointer to the D-Bus method call
-     *                              parameters.
-     *                              Must reference a valid ClientAttentionType
-     *                              and ClientAttentionGroup
+     *  The GVariant object returned uses the '(au)' data type, which is an
+     *  array of unsigned integers; the integers references the ID of the
+     *  request slot not yet satisfied by the end-user.
+     *
+     * @param parameters  GVariant value container object containing the
+     *                    request type and group information.
+     *
+     * @return GVariant container object of the '(au)' data type.
      */
-    void QueueCheck(GDBusMethodInvocation *invocation, GVariant *parameters);
-
+    GVariant *QueueCheckGVariant(GVariant *parameters) const noexcept;
 
     /**
-     * Counts all requires slots which have not received any user input
+     *  Checks if all registered requirement slots has been satisfied
+     *  with a response by the end-user.
      *
-     * @return Returns an unsigned integer of slots lacking user responses
+     * @return Returns true if all requires slots has been provided with
+     *         a value by the end-user, otherwise false.
      */
-    unsigned int QueueCheckAll();
-
+    bool QueueAllDone() const noexcept;
 
     /**
-     * Simple wrapper around @QueueCheckAll which only returns true or false
-     *
-     * @return Returns true if all requires slots has been satisfied
-     *         successfully
-     */
-    bool QueueAllDone();
-
-
-    /**
-     * Checks if a ClientAttentionType and ClientAttentionGroup is fully
-     * satisfied with all slots containing user provided values.
+     *  Checks if a ClientAttentionType and ClientAttentionGroup is fully
+     *  satisfied with all slots containing user provided values.
      *
      * @param type   ClientAttentionType to check
      * @param group  ClientAttentionGroup to check
@@ -342,63 +335,29 @@ class RequiresQueue
     bool QueueDone(ClientAttentionType type,
                    ClientAttentionGroup group);
 
-
     /**
-     * Checks if a ClientAttentionType and ClientAttentionGroup is fully
-     * satisfied with all slots containing user provided values.
-     * This is a D-Bus variant, which takes the same GVariant data type as the
-     * @UpdateEntry method, which needs to contain type, group, id and value.
-     * Only the type and group references are used by this function.
+     *  Checks if a ClientAttentionType and ClientAttentionGroup is fully
+     *  satisfied with all slots containing user provided values.  This i
+     *  a variant of QueueDone() which takes the request type and group
+     *  information via a GVariant container object.
      *
-     * @param parameters  GVariant pointer to the D-Bus method call arguments
-     * @return Returns true if all slots have received user input responses,
-     *         otherwise false.
+     *  The input GVariant container must use the data type '(uu)' which
+     *  contains the request type and group information.
+     *
+     * @param parameters  GVariant value container object containing the
+     *                    request type and group information.
+     *
+     * @return Returns true if all requires slots has been provided with
+     *         a value by the end-user, otherwise false.
      */
     bool QueueDone(GVariant *parameters);
 
-
-#ifdef DEBUG_REQUIRESQUEUE
-    /**
-     *  Dumps the current active queue to stdout
-     */
-    void _DumpStdout()
-    {
-        _DumpQueue(std::cout);
-    }
-
-    /**
-     *  Dumps all the RequiresSlot items of a current RequiresQueue to the
-     *  provided output stream
-     *
-     *  @param logdst   Output stream where to put the dump
-     */
-    void _DumpQueue(std::ostream &logdst)
-    {
-        for (auto &e : slots)
-        {
-            logdst << "          Id: " << e.id << std::endl
-                   << "         Key: " << e.name << std::endl
-                   << "        Type: [" << std::to_string((int)e.type) << "] "
-                   << ClientAttentionType_str[(int)e.type] << std::endl
-                   << "       Group: [" << std::to_string((int)e.group) << "] "
-                   << ClientAttentionGroup_str[(int)e.group] << std::endl
-                   << "       Value: " << e.value << std::endl
-                   << " Description: " << e.user_description << std::endl
-                   << "Hidden input: " << (e.hidden_input ? "True" : "False")
-                   << std::endl
-                   << "    Provided: " << (e.provided ? "True" : "False")
-                   << std::endl
-                   << "-----------------------------------------------------"
-                   << std::endl;
-        }
-    }
-#endif
-
-
-  private:
+protected:
+    ///< Index counter map for type:group pairs; see get_reqid_index() for details
     std::map<unsigned int, unsigned int> reqids;
-    std::vector<struct RequiresSlot> slots;
 
+    ///< All gathered requests needed to be satisfied
+    std::vector<struct RequiresSlot> slots;
 
     /**
      * Simple index hashing to be used by a single dimensional integer
@@ -414,4 +373,7 @@ class RequiresQueue
     {
         return ((unsigned int)type * 100) + (unsigned int)group;
     }
+
+
+    RequiresQueue();
 };

@@ -154,3 +154,42 @@ else
 endif
 meson.add_dist_script(find_program('scripts/prepare-build-version-h'))
 
+# Unless test_programs are not explicitly enabled,
+# only build them in debug builds
+debug = get_option('debug')
+build_test_programs = get_option('test_programs').enabled()
+if (get_option('test_programs').auto())
+    build_test_programs = get_option('debug')
+endif
+
+
+#
+#  Shared code among more components
+#  Build them as a static library and link against it
+#
+common_code = static_library(
+        'common',
+        [
+            'src/common/cmdargparser.cpp',
+            'src/common/configfileparser.cpp',
+            'src/common/lookup.cpp',
+            'src/common/machineid.cpp',
+            'src/common/open-uri.cpp',
+            'src/common/platforminfo.cpp',
+            'src/common/requiresqueue.cpp',
+            'src/common/timestamp.cpp',
+            'src/common/utils.cpp',
+            'src/log/dbus-log.cpp',
+        ],
+        dependencies: [
+            base_dependencies,
+        ],
+        include_directories: include_dirs,
+)
+
+
+#
+#  Test programs
+#
+subdir('src/tests')
+

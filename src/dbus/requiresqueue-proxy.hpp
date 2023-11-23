@@ -18,10 +18,10 @@
 
 #pragma once
 
-#include "dbus/core.hpp"
-#include "common/requiresqueue.hpp"
+#include <gdbuspp/connection.hpp>
+#include <gdbuspp/proxy.hpp>
 
-using namespace openvpn;
+#include "common/requiresqueue.hpp"
 
 
 /**
@@ -29,55 +29,14 @@ using namespace openvpn;
  *  access a RequiresQueue API on a D-Bus service also implementing the
  *  RequiresQueue.
  */
-class DBusRequiresQueueProxy : public DBusProxy
+class DBusRequiresQueueProxy
 {
   public:
     /**
      *  Initialize the D-Bus proxy for RequiresQueue.  This constructor
-     *  will setup its own connection object.
-     *
-     * @param bus_type                 Defines if the connection is against
-     *                                 the system or session bus.
-     * @param destination              String containing the service
-     *                                 destination to connect against
-     * @param interface                String containing the D-Bus object's
-     *                                 interface to use
-     * @param objpath                  String containing the D-Bus object
-     *                                 path to operate on
-     * @param method_quechktypegroup   String containing the name of the
-     *                                 QueueCheckTypeGroup method
-     * @param method_queuefetch        String containing the name of the
-     *                                 QueueFetch method
-     * @param method_queuecheck        String containing the name of the
-     *                                 QueueCheck method
-     * @param method_providereponse    String containing the name of the
-     *                                 QueueProvideResponse method
-     *
-     * The method names must match the defined introspection of the service
-     * side.
-     */
-    DBusRequiresQueueProxy(GBusType bus_type,
-                           std::string destination,
-                           std::string interface,
-                           std::string objpath,
-                           std::string method_quechktypegroup,
-                           std::string method_queuefetch,
-                           std::string method_queuecheck,
-                           std::string method_providereponse)
-        : DBusProxy(bus_type, destination, interface, objpath),
-          method_quechktypegroup(method_quechktypegroup),
-          method_queuefetch(method_queuefetch),
-          method_queuecheck(method_queuecheck),
-          method_provideresponse(method_providereponse)
-    {
-    }
-
-
-    /**
-     *  Initialize the D-Bus proxy for RequiresQueue.  This constructor
      *  will re-use an established connection in a DBus object.
      *
-     * @param dbuscon
+     * @param dbuscon                  DBus::Connection::Ptr to use
      * @param destination              String containing the service
      *                                 destination to connect against
      * @param interface                String containing the D-Bus object's
@@ -96,7 +55,7 @@ class DBusRequiresQueueProxy : public DBusProxy
      * The method names must match the defined introspection of the service
      * side.
      */
-    DBusRequiresQueueProxy(GDBusConnection *dbuscon,
+    DBusRequiresQueueProxy(DBus::Connection::Ptr dbuscon,
                            std::string destination,
                            std::string interface,
                            std::string objpath,
@@ -104,12 +63,13 @@ class DBusRequiresQueueProxy : public DBusProxy
                            std::string method_queuefetch,
                            std::string method_queuecheck,
                            std::string method_providereponse)
-        : DBusProxy(dbuscon, destination, interface, objpath),
-          method_quechktypegroup(method_quechktypegroup),
+        : method_quechktypegroup(method_quechktypegroup),
           method_queuefetch(method_queuefetch),
           method_queuecheck(method_queuecheck),
           method_provideresponse(method_providereponse)
     {
+        proxy = DBus::Proxy::Client::Create(dbuscon, destination);
+        target = DBus::Proxy::TargetPreset::Create(objpath, interface);
     }
 
 
@@ -127,12 +87,9 @@ class DBusRequiresQueueProxy : public DBusProxy
                                    ClientAttentionGroup group,
                                    unsigned int id)
     {
-        GVariant *slot = Call(method_queuefetch, g_variant_new("(uuu)", type, group, id));
-        if (NULL == slot)
-        {
-            THROW_DBUSEXCEPTION("DBusRequiresQueueProxy", "Failed during call to QueueFetch()");
-        }
-
+        GVariant *slot = proxy->Call(target,
+                                     method_queuefetch,
+                                     g_variant_new("(uuu)", type, group, id));
         struct RequiresSlot ret = deserialize(slot);
         g_variant_unref(slot);
         return ret;
@@ -169,24 +126,17 @@ class DBusRequiresQueueProxy : public DBusProxy
      */
     std::vector<RequiresQueue::ClientAttTypeGroup> QueueCheckTypeGroup()
     {
-        GVariant *res = Call(method_quechktypegroup);
-        if (NULL == res)
-        {
-            THROW_DBUSEXCEPTION("DBusRequiresQueueProxy",
-                                "Failed during call to QueueCheckTypeGroup()");
-        }
-
-        GVariantIter *ar_type_group = NULL;
+        GVariant *res = proxy->Call(target, method_quechktypegroup);
+        GVariantIter *ar_type_group = nullptr;
         g_variant_get(res, "(a(uu))", &ar_type_group);
 
         GVariant *e = NULL;
         std::vector<RequiresQueue::ClientAttTypeGroup> ret;
         while ((e = g_variant_iter_next_value(ar_type_group)))
         {
-            unsigned int t;
-            unsigned int g;
-            g_variant_get(e, "(uu)", &t, &g);
-            ret.push_back(std::make_tuple((ClientAttentionType)t, (ClientAttentionGroup)g));
+            ClientAttentionType t{static_cast<ClientAttentionType>(glib2::Value::Extract<uint32_t>(e, 0))};
+            ClientAttentionGroup g{static_cast<ClientAttentionGroup>(glib2::Value::Extract<uint32_t>(e, 1))};
+            ret.push_back(std::make_tuple(t, g));
             g_variant_unref(e);
         }
         g_variant_unref(res);
@@ -208,20 +158,17 @@ class DBusRequiresQueueProxy : public DBusProxy
     std::vector<unsigned int> QueueCheck(ClientAttentionType type,
                                          ClientAttentionGroup group)
     {
-        GVariant *res = Call(method_queuecheck, g_variant_new("(uu)", type, group));
-        if (NULL == res)
-        {
-            THROW_DBUSEXCEPTION("DBusRequiresQueueProxy", "Failed during call to QueueCheck()");
-        }
-
+        GVariant *res = proxy->Call(target,
+                                    method_queuecheck,
+                                    g_variant_new("(uu)", type, group));
         GVariantIter *slots = NULL;
         g_variant_get(res, "(au)", &slots);
 
         GVariant *e = NULL;
-        std::vector<unsigned int> ret;
+        std::vector<uint32_t> ret{};
         while ((e = g_variant_iter_next_value(slots)))
         {
-            ret.push_back(g_variant_get_uint32(e));
+            ret.push_back(glib2::Value::Get<uint32_t>(e));
             g_variant_unref(e);
         }
         g_variant_unref(res);
@@ -237,21 +184,20 @@ class DBusRequiresQueueProxy : public DBusProxy
      */
     void ProvideResponse(struct RequiresSlot &slot)
     {
-        GVariant *res = Call(method_provideresponse,
-                             g_variant_new("(uuus)",
-                                           slot.type,
-                                           slot.group,
-                                           slot.id,
-                                           slot.value.c_str()));
-        if (NULL == res)
-        {
-            THROW_DBUSEXCEPTION("DBusRequiresQueueProxy", "Failed during call to QueueCheck()");
-        }
+        GVariant *res = proxy->Call(target,
+                                    method_provideresponse,
+                                    g_variant_new("(uuus)",
+                                                  slot.type,
+                                                  slot.group,
+                                                  slot.id,
+                                                  slot.value.c_str()));
         g_variant_unref(res);
     }
 
 
   private:
+    DBus::Proxy::Client::Ptr proxy{nullptr};
+    DBus::Proxy::TargetPreset::Ptr target{nullptr};
     std::string method_quechktypegroup;
     std::string method_queuefetch;
     std::string method_queuecheck;
@@ -278,39 +224,17 @@ class DBusRequiresQueueProxy : public DBusProxy
         }
 
         std::string data_type = std::string(g_variant_get_type_string(indata));
-        if ("(uuussb)" == data_type)
+        if ("(uuussb)" != data_type)
         {
-            guint32 type = 0;
-            guint32 group;
-            guint32 id;
-            gchar *name = nullptr;
-            gchar *descr = nullptr;
-            gboolean hidden_input;
-            g_variant_get(indata,
-                          "(uuussb)",
-                          &type,
-                          &group,
-                          &id,
-                          &name,
-                          &descr,
-                          &hidden_input);
-
-            result.type = (ClientAttentionType)type;
-            result.group = (ClientAttentionGroup)group;
-            result.id = id;
-            if (name)
-            {
-                result.name = std::string(name);
-                g_free(name);
-            }
-            if (descr)
-            {
-                result.user_description = std::string(descr);
-                g_free(descr);
-            }
-            result.hidden_input = hidden_input;
-            return result;
+            throw RequiresQueueException("Failed parsing the requires queue result");
         }
-        throw RequiresQueueException("Failed parsing the requires queue result");
+
+        result.type = static_cast<ClientAttentionType>(glib2::Value::Extract<uint32_t>(indata, 0));
+        result.group = static_cast<ClientAttentionGroup>(glib2::Value::Extract<uint32_t>(indata, 1));
+        result.id = glib2::Value::Extract<uint32_t>(indata, 2);
+        result.name = glib2::Value::Extract<std::string>(indata, 3);
+        result.user_description = glib2::Value::Extract<std::string>(indata, 4);
+        result.hidden_input = glib2::Value::Extract<bool>(indata, 5);
+        return result;
     }
 };

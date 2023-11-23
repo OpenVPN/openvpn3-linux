@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -20,17 +20,19 @@
 #include <iostream>
 #include <sstream>
 #include <map>
+#include <mutex>
 #include <vector>
 #include <algorithm>
 #include <exception>
 #include <cassert>
 #include <stdint.h>
+#include <gdbuspp/glib2/utils.hpp>
+#include <gdbuspp/object/base.hpp>
 
-#include "config.h"
-#include "dbus/core.hpp"
+#include "build-config.h"
 #include "requiresqueue.hpp"
 
-
+using namespace DBus;
 
 /*
  *  RequiresSlot
@@ -50,34 +52,15 @@ RequiresSlot::RequiresSlot()
  *  RequiresQueueException
  */
 RequiresQueueException::RequiresQueueException(std::string err)
-    : error(err),
-      what_("[RequireQueryException] " + err)
+    : DBus::Exception("RequiresQueue", err)
 {
 }
 
 
 RequiresQueueException::RequiresQueueException(std::string errname, std::string errmsg)
-    : error(errmsg),
-      errorname(errname),
-      what_("[RequireQueryException] " + errmsg)
+    : DBus::Exception("RequiresQueue", errname + ": " + errmsg)
 {
 }
-
-
-const char *RequiresQueueException::what() const noexcept
-{
-    return what_.c_str();
-}
-
-
-void RequiresQueueException::GenerateDBusError(GDBusMethodInvocation *invocation)
-{
-    std::string errnam = (!errorname.empty() ? errorname : "net.openvpn.v3.error.undefined");
-    GError *dbuserr = g_dbus_error_new_for_dbus_error(errnam.c_str(), error.c_str());
-    g_dbus_method_invocation_return_gerror(invocation, dbuserr);
-    g_error_free(dbuserr);
-}
-
 
 
 /*
@@ -95,40 +78,81 @@ RequiresQueue::~RequiresQueue()
 }
 
 
-std::string RequiresQueue::IntrospectionMethods(const std::string &meth_qchktypegr,
-                                                const std::string &meth_queuefetch,
-                                                const std::string &meth_queuechk,
-                                                const std::string &meth_provideresp)
+void RequiresQueue::QueueSetup(DBus::Object::Base *object_ptr,
+                               const std::string &meth_qchktypegr,
+                               const std::string &meth_queuefetch,
+                               const std::string &meth_queuechk,
+                               const std::string &meth_provideresp)
 {
-    std::stringstream introspection;
-    introspection << "    <method name='" << meth_qchktypegr << "'>"
-                  << "      <arg type='a(uu)' name='type_group_list' direction='out'/>"
-                  << "    </method>"
-                  << "    <method name='" << meth_queuefetch << "'>"
-                  << "      <arg type='u' name='type' direction='in'/>"
-                  << "      <arg type='u' name='group' direction='in'/>"
-                  << "      <arg type='u' name='id' direction='in'/>"
-                  << "      <arg type='u' name='type' direction='out'/>"
-                  << "      <arg type='u' name='group' direction='out'/>"
-                  << "      <arg type='u' name='id' direction='out'/>"
-                  << "      <arg type='s' name='name' direction='out'/>"
-                  << "      <arg type='s' name='description' direction='out'/>"
-                  << "      <arg type='b' name='hidden_input' direction='out'/>"
-                  << "    </method>"
-                  << "    <method name='" << meth_queuechk << "'>"
-                  << "      <arg type='u' name='type' direction='in'/>"
-                  << "      <arg type='u' name='group' direction='in'/>"
-                  << "      <arg type='au' name='indexes' direction='out'/>"
-                  << "    </method>"
-                  << "    <method name='" << meth_provideresp << "'>"
-                  << "      <arg type='u' name='type' direction='in'/>"
-                  << "      <arg type='u' name='group' direction='in'/>"
-                  << "      <arg type='u' name='id' direction='in'/>"
-                  << "      <arg type='s' name='value' direction='in'/>"
-                  << "    </method>";
-    return introspection.str();
+    if (!object_ptr)
+    {
+        throw DBus::Exception("RequiresQueue", "DBus::Object::Base pointer is invalid");
+    }
+
+    auto chktype_gr = object_ptr->AddMethod(meth_qchktypegr,
+                                            [this](DBus::Object::Method::Arguments::Ptr args)
+                                            {
+                                                auto r = this->QueueCheckTypeGroupGVariant();
+                                                args->SetMethodReturn(r);
+                                            });
+    chktype_gr->AddOutput("type_group_list", "a(uu)");
+
+    auto queue_fetch = object_ptr->AddMethod(meth_queuefetch,
+                                             [this](DBus::Object::Method::Arguments::Ptr args)
+                                             {
+                                                 auto r = this->QueueFetchGVariant(args->GetMethodParameters());
+                                                 args->SetMethodReturn(r);
+                                             });
+    queue_fetch->AddInput("type", "u");
+    queue_fetch->AddInput("group", "u");
+    queue_fetch->AddInput("id", "u");
+    queue_fetch->AddOutput("type", "u");
+    queue_fetch->AddOutput("group", "u");
+    queue_fetch->AddOutput("id", "u");
+    queue_fetch->AddOutput("name", "s");
+    queue_fetch->AddOutput("descripiton", "s");
+    queue_fetch->AddOutput("hidden_input", "b");
+
+    auto queue_chk = object_ptr->AddMethod(meth_queuechk,
+                                           [this](DBus::Object::Method::Arguments::Ptr args)
+                                           {
+                                               auto r = this->QueueCheckGVariant(args->GetMethodParameters());
+                                               args->SetMethodReturn(r);
+                                           });
+    queue_chk->AddInput("type", "u");
+    queue_chk->AddInput("group", "u");
+    queue_chk->AddOutput("indexes", "au");
+
+
+    auto prov_resp = object_ptr->AddMethod(meth_provideresp,
+                                           [this](DBus::Object::Method::Arguments::Ptr args)
+                                           {
+                                               this->UpdateEntry(args->GetMethodParameters());
+                                               args->SetMethodReturn(nullptr);
+                                           });
+    prov_resp->AddInput("type", "u");
+    prov_resp->AddInput("group", "u");
+    prov_resp->AddInput("id", "u");
+    prov_resp->AddInput("value", "s");
 }
 
+
+void RequiresQueue::ClearAll() noexcept
+{
+    reqids.clear();
+    slots.clear();
+    try
+    {
+        slots.shrink_to_fit();
+    }
+    catch (...)
+    {
+        // We ignore errors in this case.
+        // If this fails, we use spend a bit
+        // more memory than strictly needed.
+        std::cerr << "RequiresQueue::ClearAll() failed. Ignored." << std::endl;
+    }
+}
 
 unsigned int RequiresQueue::RequireAdd(ClientAttentionType type,
                                        ClientAttentionGroup group,
@@ -150,13 +174,12 @@ unsigned int RequiresQueue::RequireAdd(ClientAttentionType type,
 }
 
 
-void RequiresQueue::QueueFetch(GDBusMethodInvocation *invocation,
-                               GVariant *parameters)
+GVariant *RequiresQueue::QueueFetchGVariant(GVariant *parameters) const
 {
-    GLibUtils::checkParams(__func__, parameters, "(uuu)", 3);
-    ClientAttentionType type = (ClientAttentionType)GLibUtils::ExtractValue<uint32_t>(parameters, 0);
-    ClientAttentionGroup group = (ClientAttentionGroup)GLibUtils::ExtractValue<uint32_t>(parameters, 1);
-    guint id = GLibUtils::ExtractValue<uint32_t>(parameters, 2);
+    glib2::Utils::checkParams(__func__, parameters, "(uuu)", 3);
+    ClientAttentionType type{static_cast<ClientAttentionType>(glib2::Value::Extract<uint32_t>(parameters, 0))};
+    ClientAttentionGroup group{static_cast<ClientAttentionGroup>(glib2::Value::Extract<uint32_t>(parameters, 1))};
+    guint id{glib2::Value::Extract<uint32_t>(parameters, 2)};
 
     // Fetch the requested slot id
     for (auto &e : slots)
@@ -179,8 +202,7 @@ void RequiresQueue::QueueFetch(GDBusMethodInvocation *invocation,
                                                e.name.c_str(),
                                                e.user_description.c_str(),
                                                e.hidden_input);
-                g_dbus_method_invocation_return_value(invocation, elmt);
-                return;
+                return elmt;
             }
         }
     }
@@ -219,18 +241,17 @@ void RequiresQueue::UpdateEntry(ClientAttentionType type,
 }
 
 
-void RequiresQueue::UpdateEntry(GDBusMethodInvocation *invocation,
-                                GVariant *indata)
+void RequiresQueue::UpdateEntry(GVariant *indata)
 {
     //
     // Typically used by the function parsing user provided data
     // usually a backend process who asked for user input
     //
-    GLibUtils::checkParams(__func__, indata, "(uuus)", 4);
-    ClientAttentionType type = (ClientAttentionType)GLibUtils::ExtractValue<uint32_t>(indata, 0);
-    ClientAttentionGroup group = (ClientAttentionGroup)GLibUtils::ExtractValue<uint32_t>(indata, 1);
-    guint id = GLibUtils::ExtractValue<uint32_t>(indata, 2);
-    std::string value = GLibUtils::ExtractValue<std::string>(indata, 3);
+    glib2::Utils::checkParams(__func__, indata, "(uuus)", 4);
+    ClientAttentionType type = static_cast<ClientAttentionType>(glib2::Value::Extract<uint32_t>(indata, 0));
+    ClientAttentionGroup group = static_cast<ClientAttentionGroup>(glib2::Value::Extract<uint32_t>(indata, 1));
+    guint id = glib2::Value::Extract<uint32_t>(indata, 2);
+    std::string value = glib2::Value::Extract<std::string>(indata, 3);
 
     if (value.empty())
     {
@@ -240,7 +261,6 @@ void RequiresQueue::UpdateEntry(GDBusMethodInvocation *invocation,
     }
 
     UpdateEntry(type, group, id, value);
-    g_dbus_method_invocation_return_value(invocation, NULL);
 }
 
 
@@ -261,9 +281,9 @@ void RequiresQueue::ResetValue(ClientAttentionType type,
 }
 
 
-std::string RequiresQueue::GetResponse(ClientAttentionType type,
-                                       ClientAttentionGroup group,
-                                       unsigned int id)
+const std::string RequiresQueue::GetResponse(ClientAttentionType type,
+                                             ClientAttentionGroup group,
+                                             unsigned int id) const
 {
     for (auto &e : slots)
     {
@@ -280,9 +300,9 @@ std::string RequiresQueue::GetResponse(ClientAttentionType type,
 }
 
 
-std::string RequiresQueue::GetResponse(ClientAttentionType type,
-                                       ClientAttentionGroup group,
-                                       std::string name)
+const std::string RequiresQueue::GetResponse(ClientAttentionType type,
+                                             ClientAttentionGroup group,
+                                             std::string name) const
 {
     for (auto &e : slots)
     {
@@ -300,7 +320,7 @@ std::string RequiresQueue::GetResponse(ClientAttentionType type,
 
 
 unsigned int RequiresQueue::QueueCount(ClientAttentionType type,
-                                       ClientAttentionGroup group)
+                                       ClientAttentionGroup group) const noexcept
 {
     unsigned int ret = 0;
     for (auto &e : slots)
@@ -314,7 +334,7 @@ unsigned int RequiresQueue::QueueCount(ClientAttentionType type,
 }
 
 
-std::vector<RequiresQueue::ClientAttTypeGroup> RequiresQueue::QueueCheckTypeGroup()
+std::vector<RequiresQueue::ClientAttTypeGroup> RequiresQueue::QueueCheckTypeGroup() const noexcept
 {
     std::vector<RequiresQueue::ClientAttTypeGroup> ret;
 
@@ -346,35 +366,29 @@ std::vector<RequiresQueue::ClientAttTypeGroup> RequiresQueue::QueueCheckTypeGrou
 }
 
 
-void RequiresQueue::QueueCheckTypeGroup(GDBusMethodInvocation *invocation)
+GVariant *RequiresQueue::QueueCheckTypeGroupGVariant() const noexcept
 {
     // Convert the std::vector to a GVariant based array GDBus can use
     // as the method call response
     std::vector<std::tuple<ClientAttentionType, ClientAttentionGroup>> qchk_res = QueueCheckTypeGroup();
 
-    GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("a(uu)"));
-    assert(NULL != bld);
+    GVariantBuilder *bld = glib2::Builder::Create("a(uu)");
     for (auto &e : qchk_res)
     {
-        ClientAttentionType t;
-        ClientAttentionGroup g;
-        std::tie(t, g) = e;
-        g_variant_builder_add(bld, "(uu)", (unsigned int)t, (unsigned int)g);
+        ClientAttentionType type;
+        ClientAttentionGroup group;
+        std::tie(type, group) = e;
+        glib2::Builder::Add(bld,
+                            g_variant_new("(uu)",
+                                          static_cast<unsigned int>(type),
+                                          static_cast<unsigned int>(group)));
     }
-
-    // Wrap the GVariant array into a tuple which GDBus expects
-    GVariantBuilder *ret = g_variant_builder_new(G_VARIANT_TYPE_TUPLE);
-    g_variant_builder_add_value(ret, g_variant_builder_end(bld));
-    g_dbus_method_invocation_return_value(invocation, g_variant_builder_end(ret));
-
-    // Clean-up GVariant builders
-    g_variant_builder_unref(bld);
-    g_variant_builder_unref(ret);
+    return glib2::Builder::FinishWrapped(bld);
 }
 
 
 std::vector<unsigned int> RequiresQueue::QueueCheck(ClientAttentionType type,
-                                                    ClientAttentionGroup group)
+                                                    ClientAttentionGroup group) const noexcept
 {
     std::vector<unsigned int> ret;
     for (auto &e : slots)
@@ -390,11 +404,11 @@ std::vector<unsigned int> RequiresQueue::QueueCheck(ClientAttentionType type,
 }
 
 
-void RequiresQueue::QueueCheck(GDBusMethodInvocation *invocation, GVariant *parameters)
+GVariant *RequiresQueue::QueueCheckGVariant(GVariant *parameters) const noexcept
 {
-    GLibUtils::checkParams(__func__, parameters, "(uu)", 2);
-    ClientAttentionType type = (ClientAttentionType)GLibUtils::ExtractValue<uint32_t>(parameters, 0);
-    ClientAttentionGroup group = (ClientAttentionGroup)GLibUtils::ExtractValue<uint32_t>(parameters, 1);
+    glib2::Utils::checkParams(__func__, parameters, "(uu)", 2);
+    ClientAttentionType type = static_cast<ClientAttentionType>(glib2::Value::Extract<uint32_t>(parameters, 0));
+    ClientAttentionGroup group = static_cast<ClientAttentionGroup>(glib2::Value::Extract<uint32_t>(parameters, 1));
 
     // Convert the std::vector to a GVariant based array GDBus can use
     // as the method call response
@@ -408,31 +422,27 @@ void RequiresQueue::QueueCheck(GDBusMethodInvocation *invocation, GVariant *para
     // Wrap the GVariant array into a tuple which GDBus expects
     GVariantBuilder *ret = g_variant_builder_new(G_VARIANT_TYPE_TUPLE);
     g_variant_builder_add_value(ret, g_variant_builder_end(bld));
-    g_dbus_method_invocation_return_value(invocation, g_variant_builder_end(ret));
+
+    GVariant *result = g_variant_builder_end(ret);
 
     // Clean-up GVariant builders
     g_variant_builder_unref(bld);
     g_variant_builder_unref(ret);
+
+    return result;
 }
 
 
-unsigned int RequiresQueue::QueueCheckAll()
+bool RequiresQueue::QueueAllDone() const noexcept
 {
-    unsigned int ret = 0;
     for (auto &e : slots)
     {
         if (!e.provided)
         {
-            ret++;
+            return false;
         }
     }
-    return ret;
-}
-
-
-bool RequiresQueue::QueueAllDone()
-{
-    return QueueCheckAll() == 0;
+    return true;
 }
 
 
@@ -445,9 +455,9 @@ bool RequiresQueue::QueueDone(ClientAttentionType type, ClientAttentionGroup gro
 bool RequiresQueue::QueueDone(GVariant *parameters)
 {
     // First, grab the slot ID ...
-    GLibUtils::checkParams(__func__, parameters, "(uuus)", 4);
-    ClientAttentionType type = (ClientAttentionType)GLibUtils::ExtractValue<uint32_t>(parameters, 0);
-    ClientAttentionGroup group = (ClientAttentionGroup)GLibUtils::ExtractValue<uint32_t>(parameters, 1);
+    glib2::Utils::checkParams(__func__, parameters, "(uuus)", 4);
+    ClientAttentionType type = static_cast<ClientAttentionType>(glib2::Value::Extract<uint32_t>(parameters, 0));
+    ClientAttentionGroup group = static_cast<ClientAttentionGroup>(glib2::Value::Extract<uint32_t>(parameters, 1));
 
     // Check if there are any elements needing attentions in that slot ID
     return QueueCheck(type, group).size() == 0;

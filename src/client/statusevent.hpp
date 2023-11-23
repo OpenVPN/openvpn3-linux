@@ -15,6 +15,11 @@
 
 #pragma once
 
+#include <cstdint>
+#include <sstream>
+#include <glib.h>
+#include <gdbuspp/exceptions.hpp>
+
 #include "dbus/constants.hpp"
 
 
@@ -74,7 +79,7 @@ struct StatusEvent
             }
             else
             {
-                THROW_DBUSEXCEPTION("StatusEvent", "Invalid status data");
+                throw DBus::Exception("StatusEvent", "Invalid status data");
             }
         }
     }
@@ -254,8 +259,8 @@ struct StatusEvent
         d = g_variant_lookup_value(status, "major", G_VARIANT_TYPE_UINT32);
         if (!d)
         {
-            THROW_DBUSEXCEPTION("StatusEvent", "Incorrect StatusEvent dict "
-                                               "(missing 'major')");
+            throw DBus::Exception("StatusEvent", "Incorrect StatusEvent dict "
+                                                 "(missing 'major')");
         }
         v = g_variant_get_uint32(d);
         major = (StatusMajor)v;
@@ -264,8 +269,8 @@ struct StatusEvent
         d = g_variant_lookup_value(status, "minor", G_VARIANT_TYPE_UINT32);
         if (!d)
         {
-            THROW_DBUSEXCEPTION("StatusEvent", "Incorrect StatusEvent dict "
-                                               "(missing 'minor')");
+            throw DBus::Exception("StatusEvent", "Incorrect StatusEvent dict "
+                                                 "(missing 'minor')");
         }
         v = g_variant_get_uint32(d);
         minor = (StatusMinor)v;
@@ -277,16 +282,16 @@ struct StatusEvent
                                    G_VARIANT_TYPE_STRING);
         if (!d)
         {
-            THROW_DBUSEXCEPTION("StatusEvent", "Incorrect StatusEvent dict "
-                                               "(missing 'status_message')");
+            throw DBus::Exception("StatusEvent", "Incorrect StatusEvent dict "
+                                                 "(missing 'status_message')");
         }
         message = std::string(g_variant_get_string(d, &len));
         g_variant_unref(d);
         if (len != message.size())
         {
-            THROW_DBUSEXCEPTION("StatusEvent",
-                                "Failed retrieving status message text "
-                                "(inconsistent length)");
+            throw DBus::Exception("StatusEvent",
+                                  "Failed retrieving status message text "
+                                  "(inconsistent length)");
         }
     }
 

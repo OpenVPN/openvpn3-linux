@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -13,11 +13,13 @@
  *         only to a single iteration.
  */
 
-#include "dbus/core.hpp"
+#include <iostream>
+#include <vector>
+#include <gdbuspp/connection.hpp>
+#include <gdbuspp/proxy.hpp>
+
 #include "common/requiresqueue.hpp"
 #include "dbus/requiresqueue-proxy.hpp"
-
-using namespace openvpn;
 
 
 void dump_requires_slot(ClientAttentionType type, ClientAttentionGroup group, struct RequiresSlot &reqdata)
@@ -39,7 +41,8 @@ void dump_requires_slot(ClientAttentionType type, ClientAttentionGroup group, st
 
 int main()
 {
-    DBusRequiresQueueProxy queue(G_BUS_TYPE_SESSION,
+    auto conn = DBus::Connection::Create(DBus::BusType::SESSION);
+    DBusRequiresQueueProxy queue(conn,
                                  "net.openvpn.v3.tests.requiresqueue",
                                  "net.openvpn.v3.tests.requiresqueue",
                                  "/net/openvpn/v3/tests/features/requiresqueue",
@@ -47,8 +50,12 @@ int main()
                                  "t_QueueFetch",
                                  "t_QueueCheck",
                                  "t_ProvideResponse");
+    auto proxy = DBus::Proxy::Client::Create(conn, "net.openvpn.v3.tests.requiresqueue");
+    auto prxtgt = DBus::Proxy::TargetPreset::Create("/net/openvpn/v3/tests/features/requiresqueue",
+                                                    "net.openvpn.v3.tests.requiresqueue");
 
-    queue.Call("ServerDumpResponse", true);
+    GVariant *r = proxy->Call(prxtgt, "ServerDumpResponse");
+    g_variant_unref(r);
 
     try
     {
@@ -67,7 +74,7 @@ int main()
             }
         }
     }
-    catch (DBusException &excp)
+    catch (const DBus::Exception &excp)
     {
         std::cerr << "-- ERROR -- |" << excp.GetRawError() << "|" << std::endl;
         return 1;

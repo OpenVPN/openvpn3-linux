@@ -12,6 +12,7 @@
 #include <cstring>
 #include <stdexcept>
 #include <algorithm>
+#include <string_view>
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -21,28 +22,13 @@
 
 #include <glib.h>
 
-#include "config.h"
-#ifdef HAVE_CONFIG_VERSION_H
-#include "config-version.h"
-#endif
-
+#include "build-config.h"
+#include "build-version.h"
 #include "utils.hpp"
 
 #include <openvpn/legal/copyright.hpp>
 #include <openvpn/common/platform_string.hpp>
 
-
-#ifndef CONFIGURE_GIT_REVISION
-constexpr char package_version_str[] = PACKAGE_GUIVERSION;
-#else
-constexpr char package_version_str[] = "git:" CONFIGURE_GIT_REVISION CONFIGURE_GIT_FLAGS;
-#endif
-
-
-const char *package_version()
-{
-    return package_version_str;
-}
 
 
 void drop_root()
@@ -117,7 +103,7 @@ std::string get_version(std::string component)
 {
     std::stringstream ver;
 
-    ver << PACKAGE_NAME << " " << package_version_str;
+    ver << PACKAGE_NAME << " " << package_version;
 
     //  Simplistic basename() approach, extracting just the filename
     //  of the binary from argv[0]

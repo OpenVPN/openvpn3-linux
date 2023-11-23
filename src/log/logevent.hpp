@@ -18,10 +18,11 @@
 #include <iomanip>
 #include <string>
 #include <gio/gio.h>
+#include <gdbuspp/glib2/utils.hpp>
 
-#include "dbus/glibutils.hpp"
 #include "log-helpers.hpp"
 
+using namespace DBus;
 
 /**
  *  Basic Log Event container
@@ -489,18 +490,18 @@ struct LogEvent
     {
         if (!with_session_token)
         {
-            GLibUtils::checkParams(__func__, logevent, "(uus)", 3);
-            group = (LogGroup)GLibUtils::ExtractValue<uint32_t>(logevent, 0);
-            category = (LogCategory)GLibUtils::ExtractValue<uint32_t>(logevent, 1);
-            message = std::string(GLibUtils::ExtractValue<std::string>(logevent, 2));
+            glib2::Utils::checkParams(__func__, logevent, "(uus)", 3);
+            group = (LogGroup)glib2::Value::Extract<uint32_t>(logevent, 0);
+            category = (LogCategory)glib2::Value::Extract<uint32_t>(logevent, 1);
+            message = std::string(glib2::Value::Extract<std::string>(logevent, 2));
         }
         else
         {
-            GLibUtils::checkParams(__func__, logevent, "(uuss)", 4);
-            group = (LogGroup)GLibUtils::ExtractValue<uint32_t>(logevent, 0);
-            category = (LogCategory)GLibUtils::ExtractValue<uint32_t>(logevent, 1);
-            session_token = GLibUtils::ExtractValue<std::string>(logevent, 2);
-            message = std::string(GLibUtils::ExtractValue<std::string>(logevent, 3));
+            glib2::Utils::checkParams(__func__, logevent, "(uuss)", 4);
+            group = (LogGroup)glib2::Value::Extract<uint32_t>(logevent, 0);
+            category = (LogCategory)glib2::Value::Extract<uint32_t>(logevent, 1);
+            session_token = glib2::Value::Extract<std::string>(logevent, 2);
+            message = std::string(glib2::Value::Extract<std::string>(logevent, 3));
         }
     }
 
