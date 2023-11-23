@@ -2,66 +2,37 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018 - 2023  Lev Stipakov <lev@openvpn.net>
-//  Copyright (C) 2021 - 2023  Heiko Hund <heiko@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  Lev Stipakov <lev@openvpn.net>
+//  Copyright (C)  Heiko Hund <heiko@openvpn.net>
 //
 
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <string>
-#include <array>
+#include <string_view>
 
 
 /*
  *  Various D-Bus bus names, root paths and interface names used
- *  for the IPC communication between the various componets
+ *  for the IPC communication between the various components
  *
  */
 
-/* Logger service */
-const std::string OpenVPN3DBus_name_log = "net.openvpn.v3.log";
-const std::string OpenVPN3DBus_rootp_log = "/net/openvpn/v3/log";
-const std::string OpenVPN3DBus_interf_log = "net.openvpn.v3.log";
+namespace Constants {
 
+namespace Base {
+constexpr std::string_view BUSNAME{"net.openvpn.v3."};
+constexpr std::string_view ROOT_PATH{"/net/openvpn/v3/"};
+constexpr std::string_view INTERFACE{"net.openvpn.v3."};
+} // namespace Base
 
-/* Configuration Manager */
-const std::string OpenVPN3DBus_name_configuration = "net.openvpn.v3.configuration";
-const std::string OpenVPN3DBus_rootp_configuration = "/net/openvpn/v3/configuration";
-const std::string OpenVPN3DBus_interf_configuration = "net.openvpn.v3.configuration";
+#include <gdbuspp/gen-constants.hpp>
 
-
-/* Session manager */
-const std::string OpenVPN3DBus_name_sessions = "net.openvpn.v3.sessions";
-const std::string OpenVPN3DBus_rootp_sessions = "/net/openvpn/v3/sessions";
-const std::string OpenVPN3DBus_interf_sessions = "net.openvpn.v3.sessions";
-
-
-/* Backend manager interface -> session manager's interface to start and
- * communicate with VPN client backends
- */
-const std::string OpenVPN3DBus_name_backends = "net.openvpn.v3.backends";
-const std::string OpenVPN3DBus_rootp_backends = "/net/openvpn/v3/backends";
-const std::string OpenVPN3DBus_interf_backends = "net.openvpn.v3.backends";
-const std::string OpenVPN3DBus_interf_backends_manager = OpenVPN3DBus_interf_backends + ".manager";
-
-
-/* Backend VPN client process (openvpn-service-client) - which is the real tunnel instance */
-const std::string OpenVPN3DBus_name_backends_be = "net.openvpn.v3.backends.be";
-const std::string OpenVPN3DBus_rootp_backends_session = OpenVPN3DBus_rootp_backends + "/session";
-const std::string OpenVPN3DBus_rootp_backends_manager = OpenVPN3DBus_rootp_backends + "/manager";
-
-
-/* Network Configuration Service
- * Creates/destroys tun devices, configures IP addresses, routing, DNS
- * and other network configuration related tasks
- */
-const std::string OpenVPN3DBus_name_netcfg = "net.openvpn.v3.netcfg";
-const std::string OpenVPN3DBus_rootp_netcfg = "/net/openvpn/v3/netcfg";
-const std::string OpenVPN3DBus_interf_netcfg = "net.openvpn.v3.netcfg";
-
+} // namespace Constants
 
 
 /**
