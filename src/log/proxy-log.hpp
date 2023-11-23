@@ -17,9 +17,13 @@
 #include <algorithm>
 #include <memory>
 
-#include "dbus/core.hpp"
-#include "dbus/proxy.hpp"
-#include "dbus/glibutils.hpp"
+#include <gdbuspp/connection.hpp>
+#include <gdbuspp/proxy.hpp>
+#include <gdbuspp/proxy/utils.hpp>
+
+#include "dbus/constants.hpp"
+
+using namespace DBus;
 
 
 /**
@@ -79,78 +83,89 @@ typedef std::vector<LogSubscriberEntry> LogSubscribers;
 
 
 
-class LogProxy : protected DBusProxy
+class LogProxy
 {
   public:
     using Ptr = std::shared_ptr<LogProxy>;
 
-    LogProxy(GDBusConnection *conn, const std::string &path)
-        : DBusProxy(conn,
-                    OpenVPN3DBus_name_log,
-                    OpenVPN3DBus_interf_log,
-                    path)
+    [[nodiscard]] static LogProxy::Ptr Create(DBus::Connection::Ptr connection,
+                                              const std::string &path)
     {
+        return LogProxy::Ptr(new LogProxy(connection, path));
     }
+
 
     ~LogProxy() = default;
 
 
-    const std::string GetPath() const
+    const std::string &GetPath() const
     {
-        return GetProxyPath();
+        return target->object_path;
     }
 
 
     const unsigned int GetLogLevel() const
     {
-        return GetUIntProperty("log_level");
+        return proxy->GetProperty<unsigned int>(target, "log_level");
     }
 
 
     void SetLogLevel(const unsigned int loglev)
     {
-        SetProperty("log_level", loglev);
+        proxy->SetProperty(target, "log_level", loglev);
     }
 
 
     const std::string GetSessionPath() const
     {
-        return GetStringProperty("session_path");
+        return proxy->GetProperty<std::string>(target, "session_path");
     }
 
 
     const std::string GetLogTarget() const
     {
-        return GetStringProperty("target");
+        return proxy->GetProperty<std::string>(target, "target");
     }
 
 
     void Remove()
     {
-        (void)Call("Remove", true);
+        proxy->Call(target, "Remove", nullptr, true);
+    }
+
+  private:
+    Proxy::Client::Ptr proxy{nullptr};
+    Proxy::TargetPreset::Ptr target{nullptr};
+
+
+    LogProxy(DBus::Connection::Ptr connection, const std::string &path)
+        : proxy(Proxy::Client::Create(connection, Constants::GenServiceName("log"))),
+          target(Proxy::TargetPreset::Create(path, Constants::GenInterface("log")))
+    {
     }
 };
-
 
 
 /**
  *  Client proxy implementation interacting with a
  *  the net.openvpn.v3.log service
  */
-class LogServiceProxy : public DBusProxy
+class LogServiceProxy
 {
   public:
     typedef std::shared_ptr<LogServiceProxy> Ptr;
 
 
-    enum class Changed
-    { // clang-format off
+    enum class Changed : uint16_t
+    {
+        // clang-format off
         INITALIZED    = 1 << 1,
         LOGLEVEL      = 1 << 2,
         TSTAMP        = 1 << 3,
         DBUS_DETAILS  = 1 << 4,
         LOGTAG_PREFIX = 1 << 5
-    }; // clang-format on
+        // clang-format on
+    };
 
 
     /**
@@ -158,24 +173,35 @@ class LogServiceProxy : public DBusProxy
      *
      * @param dbuscon  D-Bus connection to use for the proxy calls
      */
-    LogServiceProxy(GDBusConnection *dbuscon)
-        : DBusProxy(dbuscon,
-                    OpenVPN3DBus_name_log,
-                    OpenVPN3DBus_interf_log,
-                    OpenVPN3DBus_rootp_log)
+    LogServiceProxy(DBus::Connection::Ptr dbuscon)
+        : connection(dbuscon),
+          logservice(Proxy::Client::Create(connection, Constants::GenServiceName("log"))),
+          service_qry(Proxy::Utils::DBusServiceQuery::Create(connection)),
+          logtarget(Proxy::TargetPreset::Create(Constants::GenPath("log"),
+                                                Constants::GenInterface("log")))
     {
-        CheckServiceAvail();
+        if (!service_qry->CheckServiceAvail(logservice->GetDestination()))
+        {
+            throw DBus::Exception("LogServiceProxy", "Log service inaccessible");
+        }
         try
         {
-            (void)GetServiceVersion(OpenVPN3DBus_rootp_log);
+            auto proxy_qry = Proxy::Utils::Query::Create(logservice);
+            (void)proxy_qry->ServiceVersion(logtarget->object_path,
+                                            logtarget->interface);
             cache_initial_settings();
         }
-        catch (DBusProxyAccessDeniedException &)
+        catch (const DBus::Exception &)
         {
             // Let this pass - service is available
         }
     }
 
+
+    [[nodiscard]] static LogServiceProxy::Ptr Create(DBus::Connection::Ptr dbuscon)
+    {
+        return LogServiceProxy::Ptr(new LogServiceProxy(dbuscon));
+    }
 
     /**
      *  Helper function to connect to the Log service and attach this caller to
@@ -188,23 +214,18 @@ class LogServiceProxy : public DBusProxy
      *                    from the log service when this logging is no longer
      *                    needed.
      */
-    static LogServiceProxy::Ptr AttachInterface(GDBusConnection *conn,
+    static LogServiceProxy::Ptr AttachInterface(DBus::Connection::Ptr conn,
                                                 const std::string interface)
     {
-        LogServiceProxy::Ptr lgs = nullptr;
+        auto lgs = LogServiceProxy::Create(conn);
         try
         {
-            lgs.reset(new LogServiceProxy(conn));
             lgs->Attach(interface);
         }
-        catch (const DBusException &excp)
+        catch (const DBus::Exception &excp)
         {
-            if (lgs)
-            {
-                lgs.reset();
-            }
             throw LogServiceProxyException(
-                "Could not connect to " + OpenVPN3DBus_name_log + " service",
+                "Could not connect to Log service",
                 excp.what());
         }
         return lgs;
@@ -222,23 +243,28 @@ class LogServiceProxy : public DBusProxy
      */
     void Attach(const std::string interf)
     {
-        CheckServiceAvail();
+        if (!service_qry->CheckServiceAvail(Constants::GenServiceName("log")))
+        {
+            throw LogServiceProxyException("Could not connect to Log service");
+        };
 
         // We do this as a synchronous call, to ensure the backend really
         // responded.  Then we just throw away the empty response, to avoid
         // leaking memory.
-        GVariant *empty = Call("Attach", g_variant_new("(s)", interf.c_str()), false);
+        GVariant *empty = logservice->Call(logtarget,
+                                           "Attach",
+                                           glib2::Value::CreateTupleWrapped(interf));
         g_variant_unref(empty);
     }
 
 
     void AssignSession(const std::string &sesspath, const std::string &interf)
     {
-        GVariant *empty = Call("AssignSession",
-                               g_variant_new("(os)",
-                                             sesspath.c_str(),
-                                             interf.c_str()),
-                               false);
+
+        GVariant *empty = logservice->Call(logtarget,
+                                           "AssignSession",
+                                           g_variant_new("(os)", sesspath.c_str(), interf.c_str()),
+                                           false);
         g_variant_unref(empty);
     }
 
@@ -246,18 +272,18 @@ class LogServiceProxy : public DBusProxy
     LogProxy::Ptr ProxyLogEvents(const std::string &target,
                                  const std::string &session_path) const
     {
-        GVariant *res = Call("ProxyLogEvents",
-                             g_variant_new("(so)",
-                                           target.c_str(),
-                                           session_path.c_str()));
+        GVariant *res = logservice->Call(logtarget,
+                                         "ProxyLogEvents",
+                                         g_variant_new("(so)",
+                                                       target.c_str(),
+                                                       session_path.c_str()));
         if (nullptr == res)
         {
             throw LogServiceProxyException("ProxyLogEvents call failed");
         }
 
-        std::string p = GLibUtils::ExtractValue<std::string>(res, 0);
-        LogProxy::Ptr ret;
-        ret.reset(new LogProxy(GetConnection(), p));
+        std::string p = glib2::Value::Extract<std::string>(res, 0);
+        auto ret = LogProxy::Create(connection, p);
         g_variant_unref(res);
         return ret;
     }
@@ -272,7 +298,10 @@ class LogServiceProxy : public DBusProxy
      */
     void Detach(const std::string interf)
     {
-        Call("Detach", g_variant_new("(s)", interf.c_str()), true);
+        logservice->Call(logtarget,
+                         "Detach",
+                         glib2::Value::CreateTupleWrapped(interf),
+                         true);
     }
 
 
@@ -282,7 +311,7 @@ class LogServiceProxy : public DBusProxy
      */
     const std::string GetConfigFile() const
     {
-        return GetStringProperty("config_file");
+        return logservice->GetProperty<std::string>(logtarget, "config_file");
     }
 
 
@@ -291,7 +320,7 @@ class LogServiceProxy : public DBusProxy
      */
     const std::string GetLogMethod() const
     {
-        return GetStringProperty("log_method");
+        return logservice->GetProperty<std::string>(logtarget, "log_method");
     }
 
 
@@ -302,7 +331,7 @@ class LogServiceProxy : public DBusProxy
      */
     unsigned int GetNumAttached()
     {
-        return GetUIntProperty("num_attached");
+        return logservice->GetProperty<uint32_t>(logtarget, "num_attached");
     }
 
 
@@ -318,7 +347,7 @@ class LogServiceProxy : public DBusProxy
         {
             return old_loglev;
         }
-        return GetUIntProperty("log_level");
+        return logservice->GetProperty<uint32_t>(logtarget, "log_level");
     }
 
 
@@ -341,7 +370,7 @@ class LogServiceProxy : public DBusProxy
             return;
         }
 
-        SetProperty("log_level", loglvl);
+        logservice->SetProperty(logtarget, "log_level", loglvl);
         flag_change(Changed::LOGLEVEL);
     }
 
@@ -358,7 +387,7 @@ class LogServiceProxy : public DBusProxy
         {
             return old_tstamp;
         }
-        return GetBoolProperty("timestamp");
+        return logservice->GetProperty<bool>(logtarget, "timestamp");
     }
 
 
@@ -384,7 +413,7 @@ class LogServiceProxy : public DBusProxy
             return;
         }
 
-        SetProperty("timestamp", tstamp);
+        logservice->SetProperty(logtarget, "timestamp", tstamp);
         flag_change(Changed::TSTAMP);
     }
 
@@ -400,7 +429,7 @@ class LogServiceProxy : public DBusProxy
         {
             return old_dbusdet;
         }
-        return GetBoolProperty("log_dbus_details");
+        return logservice->GetProperty<bool>(logtarget, "log_dbus_details");
     }
 
 
@@ -424,7 +453,7 @@ class LogServiceProxy : public DBusProxy
             return;
         }
 
-        SetProperty("log_dbus_details", dbus_details);
+        logservice->SetProperty(logtarget, "log_dbus_details", dbus_details);
         flag_change(Changed::DBUS_DETAILS);
     }
 
@@ -439,7 +468,7 @@ class LogServiceProxy : public DBusProxy
         {
             return old_logtagp;
         }
-        return GetBoolProperty("log_prefix_logtag");
+        return logservice->GetProperty<bool>(logtarget, "log_prefix_logtag");
     }
 
 
@@ -465,7 +494,7 @@ class LogServiceProxy : public DBusProxy
             return;
         }
 
-        SetProperty("log_prefix_logtag", logprep);
+        logservice->SetProperty(logtarget, "log_prefix_logtag", logprep);
         flag_change(Changed::LOGTAG_PREFIX);
     }
 
@@ -485,13 +514,8 @@ class LogServiceProxy : public DBusProxy
 
     LogSubscribers GetSubscriberList()
     {
-        GVariant *l = Call("GetSubscriberList");
-        if (!l)
-        {
-            THROW_DBUSEXCEPTION("LogServiceProxy",
-                                "No subscriber list received");
-        }
-        GLibUtils::checkParams(__func__, l, "(a(ssss))", 1);
+        GVariant *l = logservice->Call(logtarget, "GetSubscriberList");
+        glib2::Utils::checkParams(__func__, l, "(a(ssss))", 1);
 
         LogSubscribers list;
         GVariantIter *iter = nullptr;
@@ -500,11 +524,11 @@ class LogServiceProxy : public DBusProxy
         GVariant *val = nullptr;
         while ((val = g_variant_iter_next_value(iter)))
         {
-            GLibUtils::checkParams(__func__, val, "(ssss)", 4);
-            LogSubscriberEntry e(GLibUtils::ExtractValue<std::string>(val, 0),
-                                 GLibUtils::ExtractValue<std::string>(val, 1),
-                                 GLibUtils::ExtractValue<std::string>(val, 2),
-                                 GLibUtils::ExtractValue<std::string>(val, 3));
+            glib2::Utils::checkParams(__func__, val, "(ssss)", 4);
+            LogSubscriberEntry e(glib2::Value::Extract<std::string>(val, 0),
+                                 glib2::Value::Extract<std::string>(val, 1),
+                                 glib2::Value::Extract<std::string>(val, 2),
+                                 glib2::Value::Extract<std::string>(val, 3));
             list.push_back(e);
             g_variant_unref(val);
         }
@@ -517,6 +541,11 @@ class LogServiceProxy : public DBusProxy
 
 
   private:
+    DBus::Connection::Ptr connection{nullptr};
+    DBus::Proxy::Client::Ptr logservice{nullptr};
+    DBus::Proxy::Utils::DBusServiceQuery::Ptr service_qry{};
+    DBus::Proxy::TargetPreset::Ptr logtarget{nullptr};
+
     uint8_t changes = 0;
     unsigned int old_loglev = 0;
     bool old_tstamp = false;
@@ -541,10 +570,10 @@ class LogServiceProxy : public DBusProxy
         {
             return;
         }
-        old_loglev = GetUIntProperty("log_level");
-        old_tstamp = GetBoolProperty("timestamp");
-        old_dbusdet = GetBoolProperty("log_dbus_details");
-        old_logtagp = GetBoolProperty("log_prefix_logtag");
+        old_loglev = logservice->GetProperty<uint32_t>(logtarget, "log_level");
+        old_tstamp = logservice->GetProperty<bool>(logtarget, "timestamp");
+        old_dbusdet = logservice->GetProperty<bool>(logtarget, "log_dbus_details");
+        old_logtagp = logservice->GetProperty<bool>(logtarget, "log_prefix_logtag");
         flag_change(Changed::INITALIZED);
     }
 };
