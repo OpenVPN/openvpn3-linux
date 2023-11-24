@@ -19,6 +19,10 @@ dep_selinux = dependency('libselinux', required: false)
 dep_systemd = dependency('libsystemd', version: '>218', required: false)
 dep_tinyxml2 = dependency('tinyxml2', required: false)
 
+# This is not a link dependency for this project, but we need it
+# to get the proper paths for policy and service config installation
+dep_dbus = dependency('dbus-1')
+
 base_dependencies = [
     dep_lz4,
     dep_selinux,
@@ -162,6 +166,19 @@ if (get_option('test_programs').auto())
     build_test_programs = get_option('debug')
 endif
 
+message('OpenVPN 3 Linux service binary directory: ' + get_option('prefix') / libexec_dir)
+
+#
+#  D-Bus configuration
+dbus_policy_dir = dep_dbus.get_variable('datadir') / 'dbus-1' / 'system.d'
+dbus_service_dir = dep_dbus.get_variable('system_bus_services_dir')
+dbus_config = {
+    'OPENVPN_USERNAME': get_option('openvpn_username'),
+    'LIBEXEC_PATH': get_option('prefix') / libexec_dir,
+}
+message('D-Bus system bus services dir: ' + dbus_service_dir)
+message('D-Bus system policy dir: ' + dbus_policy_dir)
+
 #
 #  Shared code among more components
 #  Build them as a static library and link against it
@@ -184,6 +201,20 @@ common_code = static_library(
             base_dependencies,
         ],
         include_directories: include_dirs,
+)
+
+
+#
+#  Base D-Bus policy
+#
+#  This policy is generic across all services; each service has
+#  their own policy on top of this one
+configure_file(
+    input: 'src/policy/net.openvpn.v3.conf.in',
+    output: 'net.openvpn.v3.conf',
+    configuration: configuration_data(dbus_config),
+    install: true,
+    install_dir: dbus_policy_dir,
 )
 
 
