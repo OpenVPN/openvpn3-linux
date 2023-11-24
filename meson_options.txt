@@ -35,6 +35,9 @@ option('openvpn3_core_path', type: 'string', value: './openvpn3-core',
 option('doxygen', type: 'feature', value: 'disabled',
        description: 'Build Doxygen documentation')
 
+option('generate-man', type: 'feature', value: 'auto',
+       description: 'Build man pages')
+
 option('selinux', type: 'feature', value: 'enabled',
        description: 'Add SELinux support (openvpn3-admin init-config)')
 

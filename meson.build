@@ -162,7 +162,6 @@ if (get_option('test_programs').auto())
     build_test_programs = get_option('debug')
 endif
 
-
 #
 #  Shared code among more components
 #  Build them as a static library and link against it
@@ -192,4 +191,3 @@ common_code = static_library(
 #  Test programs
 #
 subdir('src/tests')
-
