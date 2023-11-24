@@ -219,6 +219,11 @@ configure_file(
 
 
 #
+#  OpenVPN 3 Linux services
+#
+subdir('src/client')
+
+#
 #  Test programs
 #
 subdir('src/tests')

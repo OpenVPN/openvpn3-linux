@@ -21,3 +21,21 @@ endif
 man_config = configuration_data({
     'OPENVPN_USERNAME': get_option('openvpn_username'),
 })
+
+
+#
+#  man pages - src/client
+#
+man_backendstart = configure_file(
+    input: 'openvpn3-service-backendstart.8.rst.in',
+    output: 'openvpn3-service-backendstart.8.rst',
+    configuration: man_config,
+)
+custom_target(
+    'man-openvpn3-service-backendstart',
+    input: man_backendstart,
+    output: 'openvpn3-service-backendstart.8',
+    command: [prog_rst2man, '@INPUT@', '@OUTPUT@'],
+    install: true,
+    install_dir: mandir_8,
+)
