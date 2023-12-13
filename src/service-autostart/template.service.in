@@ -7,6 +7,6 @@
 #
 
 [D-BUS Service]
-Name=net.openvpn.v3.sessions
+Name=@BUSNAME@
 User=@OPENVPN_USERNAME@
-Exec=@LIBEXEC_PATH@/openvpn3-service-sessionmgr
+Exec=@LIBEXEC_PATH@/@SERVICE_BIN@ @SERVICE_ARGS@
