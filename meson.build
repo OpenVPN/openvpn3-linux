@@ -196,6 +196,10 @@ common_code = static_library(
             'src/common/timestamp.cpp',
             'src/common/utils.cpp',
             'src/log/dbus-log.cpp',
+            'src/log/logmetadata.cpp',
+            'src/log/logwriters/journald.cpp',
+            'src/log/logwriters/streamwriter.cpp',
+            'src/log/logwriters/syslog.cpp',
         ],
         dependencies: [
             base_dependencies,
