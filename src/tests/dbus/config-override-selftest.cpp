@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -15,11 +15,11 @@
 
 #include <iostream>
 #include <vector>
+#include <gdbuspp/connection.hpp>
 
-#include "dbus/core.hpp"
+#include "dbus/constants.hpp"
 #include "configmgr/proxy-configmgr.hpp"
 
-using namespace openvpn;
 
 
 bool check_override_value(const OverrideValue ov, OverrideType ovt, bool expect)
@@ -64,11 +64,10 @@ bool check_override_value(const OverrideValue ov, OverrideType ovt, std::string 
 
 int main(int argc, char **argv)
 {
-    DBus dbusobj(G_BUS_TYPE_SYSTEM);
-    dbusobj.Connect();
+    auto conn = DBus::Connection::Create(DBus::BusType::SYSTEM);
 
-    OpenVPN3ConfigurationProxy cfgmgr(dbusobj.GetConnection(),
-                                      OpenVPN3DBus_rootp_configuration);
+    OpenVPN3ConfigurationProxy cfgmgr(conn,
+                                      Constants::GenPath("configuration"));
     cfgmgr.Ping();
 
     std::stringstream profile;
@@ -80,7 +79,7 @@ int main(int argc, char **argv)
                                         false,
                                         false);
 
-    OpenVPN3ConfigurationProxy cfgobj(dbusobj.GetConnection(), cfgpath);
+    OpenVPN3ConfigurationProxy cfgobj(conn, cfgpath);
     unsigned int failed = 0;
 
     std::cout << ".. Testing unsetting an unset override ... ";
@@ -91,7 +90,7 @@ int main(int argc, char **argv)
         std::cout << "FAIL" << std::endl;
         ++failed;
     }
-    catch (DBusException &excp)
+    catch (const DBus::Exception &excp)
     {
         std::string e(excp.what());
         if (e.find("Override 'ipv6' has not been set") != std::string::npos)
@@ -113,7 +112,7 @@ int main(int argc, char **argv)
         std::cout << "FAIL" << std::endl;
         ++failed;
     }
-    catch (DBusException &excp)
+    catch (const DBus::Exception &excp)
     {
         std::string e(excp.what());
         if (e.find("Invalid override") != std::string::npos)
@@ -137,7 +136,7 @@ int main(int argc, char **argv)
         std::cout << "FAIL" << std::endl;
         ++failed;
     }
-    catch (DBusException &excp)
+    catch (const DBus::Exception &excp)
     {
         std::string e(excp.what());
         if (e.find("Override 'non-existing-override' has not been set") != std::string::npos)
@@ -159,7 +158,7 @@ int main(int argc, char **argv)
         std::cout << "FAIL" << std::endl;
         ++failed;
     }
-    catch (DBusException &excp)
+    catch (const DBus::Exception &excp)
     {
         std::string e(excp.what());
         if (e.find("Invalid override") != std::string::npos)
@@ -183,7 +182,7 @@ int main(int argc, char **argv)
         std::cout << "FAIL" << std::endl;
         ++failed;
     }
-    catch (DBusException &excp)
+    catch (const DBus::Exception &excp)
     {
         std::string e(excp.what());
         if (e.find("v3.configmgr.error: Invalid override key 'non-existing-override'") != std::string::npos)
@@ -205,10 +204,10 @@ int main(int argc, char **argv)
         std::cout << "FAIL" << std::endl;
         ++failed;
     }
-    catch (DBusException &excp)
+    catch (const DBus::Exception &excp)
     {
         std::string e(excp.what());
-        if (e.find("for string called for non-string override") != std::string::npos)
+        if (e.find("Invalid override data type for 'dns-sync-lookup'") != std::string::npos)
         {
             std::cout << "PASS" << std::endl;
         }
@@ -228,7 +227,7 @@ int main(int argc, char **argv)
         std::cout << "FAIL" << std::endl;
         ++failed;
     }
-    catch (DBusException &excp)
+    catch (const DBus::Exception &excp)
     {
         std::string e(excp.what());
         if (e.find("Invalid override data type for 'dns-sync-lookup':") != std::string::npos)
@@ -250,10 +249,10 @@ int main(int argc, char **argv)
         std::cout << "FAIL" << std::endl;
         ++failed;
     }
-    catch (DBusException &excp)
+    catch (const DBus::Exception &excp)
     {
         std::string e(excp.what());
-        if (e.find("bool called for non-bool override") != std::string::npos)
+        if (e.find("Invalid override data type for 'server-override'") != std::string::npos)
         {
             std::cout << "PASS" << std::endl;
         }
@@ -274,7 +273,7 @@ int main(int argc, char **argv)
         std::cout << "FAIL" << std::endl;
         ++failed;
     }
-    catch (DBusException &excp)
+    catch (const DBus::Exception &excp)
     {
         std::string e(excp.what());
         if (e.find("Invalid override data type for 'server-override'") != std::string::npos)

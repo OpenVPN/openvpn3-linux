@@ -14,16 +14,18 @@
  */
 
 #include <iostream>
+#include <gdbuspp/connection.hpp>
 
-#include "dbus/core.hpp"
+#include "dbus/constants.hpp"
 #include "configmgr/proxy-configmgr.hpp"
 
 
 
 int main(int argc, char **argv)
 {
-    OpenVPN3ConfigurationProxy cfgproxy(G_BUS_TYPE_SYSTEM,
-                                        OpenVPN3DBus_rootp_configuration);
+    auto conn = DBus::Connection::Create(DBus:: BusType::SYSTEM);
+    OpenVPN3ConfigurationProxy cfgproxy(conn,
+                                        Constants::GenPath("configuration"));
     for (auto &cfg : cfgproxy.FetchAvailableConfigs())
     {
         std::cout << cfg << std::endl;

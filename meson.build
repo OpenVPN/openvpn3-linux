@@ -207,6 +207,17 @@ common_code = static_library(
         include_directories: include_dirs,
 )
 
+configmgr_lib = static_library(
+        'configmgr',
+        [
+            'src/configmgr/overrides.cpp'
+        ],
+        dependencies: [
+            base_dependencies,
+        ],
+        include_directories: include_dirs,
+)
+
 
 #
 #  Base D-Bus policy

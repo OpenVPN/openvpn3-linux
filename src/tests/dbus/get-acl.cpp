@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -16,28 +16,26 @@
 #include <iostream>
 #include <exception>
 #include <memory>
+#include <gdbuspp/connection.hpp>
 
-#include "dbus/core.hpp"
 #include "common/lookup.hpp"
 #include "configmgr/proxy-configmgr.hpp"
-#include "sessionmgr/proxy-sessionmgr.hpp"
-
-using namespace openvpn;
-
+// #include "sessionmgr/proxy-sessionmgr.hpp"
 
 
 class ProxyWrangler
 {
   public:
-    ProxyWrangler(std::string objpath)
+    ProxyWrangler(const std::string &objpath)
     {
+        conn = DBus::Connection::Create(DBus::BusType::SYSTEM);
         if ("/net/openvpn/v3/configuration/" == objpath.substr(0, 30))
         {
-            cfgprx = new OpenVPN3ConfigurationProxy(G_BUS_TYPE_SYSTEM, objpath);
+            cfgprx = std::make_shared<OpenVPN3ConfigurationProxy>(conn, objpath);
         }
-        else if ("/net/openvpn/v3/sessions/" == objpath.substr(0, 25))
+        else if ("/net/openvpn/v3/sessions/NOT-MIGRATED-YET" == objpath.substr(0, 25))
         {
-            sessprx = new OpenVPN3SessionProxy(G_BUS_TYPE_SYSTEM, objpath);
+            //sessprx = new OpenVPN3SessionProxy(conn, objpath);
         }
         else
         {
@@ -45,17 +43,7 @@ class ProxyWrangler
         }
     }
 
-    ~ProxyWrangler()
-    {
-        if (nullptr != cfgprx)
-        {
-            delete cfgprx;
-        }
-        if (nullptr != sessprx)
-        {
-            delete sessprx;
-        }
-    }
+    ~ProxyWrangler() noexcept = default;
 
     uid_t GetOwner()
     {
@@ -65,7 +53,7 @@ class ProxyWrangler
         }
         if (nullptr != sessprx)
         {
-            return sessprx->GetOwner();
+            // return sessprx->GetOwner();
         }
         throw std::runtime_error("Unsupported operational mode");
     }
@@ -78,7 +66,7 @@ class ProxyWrangler
         }
         if (nullptr != sessprx)
         {
-            return sessprx->GetAccessList();
+            // return sessprx->GetAccessList();
         }
         throw std::runtime_error("Unsupported operational mode");
     }
@@ -92,7 +80,7 @@ class ProxyWrangler
         }
         if (nullptr != sessprx)
         {
-            return sessprx->AccessGrant(uid);
+            // return sessprx->AccessGrant(uid);
         }
         throw std::runtime_error("Unsupported operational mode");
     }
@@ -106,15 +94,17 @@ class ProxyWrangler
         }
         if (nullptr != sessprx)
         {
-            return sessprx->AccessRevoke(uid);
+            // return sessprx->AccessRevoke(uid);
         }
         throw std::runtime_error("Unsupported operational mode");
     }
 
 
   private:
-    OpenVPN3ConfigurationProxy *cfgprx = nullptr;
-    OpenVPN3SessionProxy *sessprx = nullptr;
+    DBus::Connection::Ptr conn = nullptr;
+    std::shared_ptr<OpenVPN3ConfigurationProxy> cfgprx = nullptr;
+    //OpenVPN3SessionProxy *sessprx = nullptr;
+    void *sessprx = nullptr;
 };
 
 

@@ -2,40 +2,31 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018 - 2023  Arne Schwabe <arne@openvpn.net>
-//  Copyright (C) 2020 - 2023  Lev Stipakov <lev@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C)  Lev Stipakov <lev@openvpn.net>
 //
 
 #pragma once
 
+#include <limits>
 #include <vector>
+#include <gdbuspp/glib2/utils.hpp>
+#include <gdbuspp/proxy.hpp>
+#include <gdbuspp/proxy/utils.hpp>
 
-#include "dbus/core.hpp"
-#include "dbus/exceptions.hpp"
+#include "dbus/constants.hpp"
 #include "configmgr/overrides.hpp"
 
-using namespace openvpn;
 
-
-class CfgMgrProxyException : std::exception
+class CfgMgrProxyException : public DBus::Exception
 {
   public:
     CfgMgrProxyException(const std::string &errmsg)
-        : errormsg(errmsg)
+        : DBus::Exception("Configuration Manager", errmsg)
     {
     }
-
-
-    const char *what() const noexcept
-    {
-        return errormsg.c_str();
-    }
-
-
-  private:
-    std::string errormsg = {};
 };
 
 
@@ -53,51 +44,37 @@ static inline bool operator&(const CfgMgrFeatures &a, const CfgMgrFeatures &b)
 }
 
 
-class OpenVPN3ConfigurationProxy : public DBusProxy
+class OpenVPN3ConfigurationProxy
 {
   public:
-    OpenVPN3ConfigurationProxy(GBusType bus_type, std::string object_path, bool force_feature_load = false)
-        : DBusProxy(bus_type,
-                    OpenVPN3DBus_name_configuration,
-                    OpenVPN3DBus_interf_configuration,
-                    "",
-                    true)
+    OpenVPN3ConfigurationProxy(DBus::Connection::Ptr con, std::string object_path, bool force_feature_load = false)
     {
-        proxy = SetupProxy(OpenVPN3DBus_name_configuration,
-                           OpenVPN3DBus_interf_configuration,
-                           object_path);
-        property_proxy = SetupProxy(OpenVPN3DBus_name_configuration,
-                                    "org.freedesktop.DBus.Properties",
-                                    object_path);
+        proxy = DBus::Proxy::Client::Create(con,
+                                            Constants::GenServiceName("configuration"));
+        proxy_tgt = DBus::Proxy::TargetPreset::Create(
+            object_path,
+            Constants::GenInterface("configuration"));
+        proxy_qry = DBus::Proxy::Utils::Query::Create(proxy);
+        Ping();
 
         // Only try to ensure the configuration manager service is available
         // when accessing the main management object
-        if ((OpenVPN3DBus_rootp_configuration == object_path) || force_feature_load)
+        if ((Constants::GenPath("configuration") == object_path) || force_feature_load)
         {
-            set_feature_flags(GetServiceVersion(OpenVPN3DBus_rootp_configuration));
+            set_feature_flags(proxy_qry->ServiceVersion(Constants::GenPath("configuration"),
+                                                        Constants::GenInterface("configuration")));
         }
     }
 
-
-    OpenVPN3ConfigurationProxy(GDBusConnection *con, std::string object_path, bool force_feature_load = false)
-        : DBusProxy(con,
-                    OpenVPN3DBus_name_configuration,
-                    OpenVPN3DBus_interf_configuration,
-                    "",
-                    true)
+    void Ping() const
     {
-        proxy = SetupProxy(OpenVPN3DBus_name_configuration,
-                           OpenVPN3DBus_interf_configuration,
-                           object_path);
-        property_proxy = SetupProxy(OpenVPN3DBus_name_configuration,
-                                    "org.freedesktop.DBus.Properties",
-                                    object_path);
-
-        // Only try to ensure the configuration manager service is available
-        // when accessing the main management object
-        if ((OpenVPN3DBus_rootp_configuration == object_path) || force_feature_load)
+        if(!proxy_qry->Ping())
         {
-            set_feature_flags(GetServiceVersion(OpenVPN3DBus_rootp_configuration));
+            throw DBus::Proxy::Exception(
+                Constants::GenServiceName("configuration"),
+                proxy_tgt->object_path,
+                proxy_tgt->interface,
+                "Could not reach service");
         }
     }
 
@@ -106,7 +83,9 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
     {
         if (features == CfgMgrFeatures::UNDEFINED)
         {
-            set_feature_flags(GetServiceVersion(OpenVPN3DBus_rootp_configuration));
+            auto service = DBus::Proxy::Utils::Query::Create(proxy);
+            set_feature_flags(service->ServiceVersion(Constants::GenPath("configuration"),
+                                                      Constants::GenInterface("configuration")));
         }
         return features & feat;
     }
@@ -114,23 +93,35 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
 
     std::string Import(std::string name, std::string config_blob, bool single_use, bool persistent)
     {
-        GVariant *res = Call("Import",
-                             g_variant_new("(ssbb)",
-                                           name.c_str(),
-                                           config_blob.c_str(),
-                                           single_use,
-                                           persistent));
+        GVariant *res = proxy->Call(proxy_tgt,
+                                    "Import",
+                                    g_variant_new("(ssbb)",
+                                                  name.c_str(),
+                                                  config_blob.c_str(),
+                                                  single_use,
+                                                  persistent));
         if (NULL == res)
         {
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "Failed to import configuration");
+            throw CfgMgrProxyException("Failed to import configuration");
         }
 
-        GLibUtils::checkParams(__func__, res, "(o)");
-        std::string ret = GLibUtils::ExtractValue<std::string>(res, 0);
+        glib2::Utils::checkParams(__func__, res, "(o)");
+        std::string ret = glib2::Value::Extract<std::string>(res, 0);
         g_variant_unref(res);
 
         return ret;
+    }
+
+
+    const bool GetPersistent() const
+    {
+        return proxy->GetProperty<bool>(proxy_tgt, "persistent");
+    }
+
+
+    const bool GetSingleUse() const
+    {
+        return proxy->GetProperty<bool>(proxy_tgt, "single_use");
     }
 
 
@@ -142,13 +133,12 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     std::vector<std::string> FetchAvailableConfigs()
     {
-        GVariant *res = Call("FetchAvailableConfigs");
+        GVariant *res = proxy->Call(proxy_tgt, "FetchAvailableConfigs");
         if (NULL == res)
         {
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "Failed to retrieve available configurations");
+            throw CfgMgrProxyException("Failed to retrieve available configurations");
         }
-        std::vector<std::string> ret = GLibUtils::ParseGVariantList<std::string>(res, "o");
+        std::vector<std::string> ret = glib2::Value::ExtractVector<std::string>(res, "o");
         return ret;
     }
 
@@ -165,14 +155,14 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     std::vector<std::string> LookupConfigName(std::string cfgname)
     {
-        GVariant *res = Call("LookupConfigName",
-                             g_variant_new("(s)", cfgname.c_str()));
+        GVariant *res = proxy->Call(proxy_tgt,
+                                    "LookupConfigName",
+                                    g_variant_new("(s)", cfgname.c_str()));
         if (nullptr == res)
         {
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "Failed to lookup configuration names");
+            throw CfgMgrProxyException("Failed to lookup configuration names");
         }
-        std::vector<std::string> ret = GLibUtils::ParseGVariantList<std::string>(res, "o");
+        std::vector<std::string> ret = glib2::Value::ExtractVector<std::string>(res, "o");
         return ret;
     }
 
@@ -192,15 +182,15 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
         {
             throw CfgMgrProxyException("Tags feature unavailable");
         }
-        GVariant *res = Call("SearchByTag",
-                             g_variant_new("(s)", tagname.c_str()));
+        GVariant *res = proxy->Call(proxy_tgt,
+                                    "SearchByTag",
+                                    g_variant_new("(s)", tagname.c_str()));
         if (nullptr == res)
         {
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "Failed to search for configuration tags");
+            throw CfgMgrProxyException("Failed to search for configuration tags");
         }
 
-        std::vector<std::string> ret = GLibUtils::ParseGVariantList<std::string>(res, "o");
+        std::vector<std::string> ret = glib2::Value::ExtractVector<std::string>(res, "o");
         return ret;
     }
 
@@ -216,30 +206,29 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     std::vector<std::string> SearchByOwner(const std::string &owner) const
     {
-        GVariant *res = Call("SearchByOwner",
-                             g_variant_new("(s)", owner.c_str()));
+        GVariant *res = proxy->Call(proxy_tgt,
+                                    "SearchByOwner",
+                                    g_variant_new("(s)", owner.c_str()));
         if (nullptr == res)
         {
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "Failed to search for configuration tags");
+            throw CfgMgrProxyException("Failed to search for configuration tags");
         }
 
-        std::vector<std::string> ret = GLibUtils::ParseGVariantList<std::string>(res, "o");
+        std::vector<std::string> ret = glib2::Value::ExtractVector<std::string>(res, "o");
         return ret;
     }
 
 
     std::string GetJSONConfig()
     {
-        GVariant *res = Call("FetchJSON");
+        GVariant *res = proxy->Call(proxy_tgt, "FetchJSON");
         if (NULL == res)
         {
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "Failed to retrieve configuration (JSON format)");
+            throw DBus::Proxy::Exception("Failed to retrieve configuration (JSON format)");
         }
 
-        GLibUtils::checkParams(__func__, res, "(s)");
-        std::string ret = GLibUtils::ExtractValue<std::string>(res, 0);
+        glib2::Utils::checkParams(__func__, res, "(s)");
+        std::string ret = glib2::Value::Extract<std::string>(res, 0);
         g_variant_unref(res);
 
         return ret;
@@ -248,14 +237,14 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
 
     std::string GetConfig()
     {
-        GVariant *res = Call("Fetch");
+        GVariant *res = proxy->Call(proxy_tgt, "Fetch");
         if (NULL == res)
         {
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy", "Failed to retrieve configuration");
+            throw DBus::Proxy::Exception("Failed to retrieve configuration");
         }
 
-        GLibUtils::checkParams(__func__, res, "(s)");
-        std::string ret = GLibUtils::ExtractValue<std::string>(res, 0);
+        glib2::Utils::checkParams(__func__, res, "(s)");
+        std::string ret = glib2::Value::Extract<std::string>(res, 0);
         g_variant_unref(res);
 
         return ret;
@@ -264,19 +253,23 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
 
     void Remove()
     {
-        GVariant *res = Call("Remove");
+        GVariant *res = proxy->Call(proxy_tgt, "Remove");
         if (NULL == res)
         {
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "Failed to delete the configuration");
+            throw DBus::Proxy::Exception("Failed to delete the configuration");
         }
         g_variant_unref(res);
     }
 
 
+    const std::string GetName() const
+    {
+        return proxy->GetProperty<std::string>(proxy_tgt, "name");
+    }
+
     void SetName(std::string name)
     {
-        SetProperty("name", name);
+        proxy->SetProperty(proxy_tgt, "name", name);
     }
 
 
@@ -292,7 +285,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     void SetLockedDown(bool lockdown)
     {
-        SetProperty("locked_down", lockdown);
+        proxy->SetProperty(proxy_tgt, "locked_down", lockdown);
     }
 
 
@@ -303,7 +296,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     bool GetLockedDown()
     {
-        return GetBoolProperty("locked_down");
+        return proxy->GetProperty<bool>(proxy_tgt, "locked_down");
     }
 
     /**
@@ -316,7 +309,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     void SetPublicAccess(bool public_access)
     {
-        SetProperty("public_access", public_access);
+        proxy->SetProperty(proxy_tgt, "public_access", public_access);
     }
 
 
@@ -327,7 +320,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     bool GetPublicAccess()
     {
-        return GetBoolProperty("public_access");
+        return proxy->GetProperty<bool>(proxy_tgt, "public_access");
     }
 
 
@@ -339,7 +332,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     void SetDCO(bool dco)
     {
-        SetProperty("dco", dco);
+        proxy->SetProperty(proxy_tgt, "dco", dco);
     }
 
 
@@ -351,19 +344,24 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     bool GetDCO()
     {
-        return GetBoolProperty("dco");
+        return proxy->GetProperty<bool>(proxy_tgt, "dco");
     }
 
 
     void Seal()
     {
-        GVariant *res = Call("Seal");
+        GVariant *res = proxy->Call(proxy_tgt, "Seal");
         if (NULL == res)
         {
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "Failed to seal the configuration");
+            throw DBus::Proxy::Exception("Failed to seal the configuration");
         }
         g_variant_unref(res);
+    }
+
+
+    const bool GetSealed() const
+    {
+        return proxy->GetProperty<bool>(proxy_tgt, "readonly");
     }
 
 
@@ -374,11 +372,12 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     void AccessGrant(uid_t uid)
     {
-        GVariant *res = Call("AccessGrant", g_variant_new("(u)", uid));
+        GVariant *res = proxy->Call(proxy_tgt,
+                                    "AccessGrant",
+                                    g_variant_new("(u)", uid));
         if (NULL == res)
         {
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "AccessGrant() call failed");
+            throw DBus::Proxy::Exception("AccessGrant() call failed");
         }
         g_variant_unref(res);
     }
@@ -391,11 +390,12 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     void AccessRevoke(uid_t uid)
     {
-        GVariant *res = Call("AccessRevoke", g_variant_new("(u)", uid));
+        GVariant *res = proxy->Call(proxy_tgt,
+                                    "AccessRevoke",
+                                    g_variant_new("(u)", uid));
         if (NULL == res)
         {
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "AccessRevoke() call failed");
+            throw DBus::Proxy::Exception("AccessRevoke() call failed");
         }
         g_variant_unref(res);
     }
@@ -408,7 +408,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     uid_t GetOwner()
     {
-        return GetUIntProperty("owner");
+        return proxy->GetProperty<uid_t>(proxy_tgt, "owner");
     }
 
 
@@ -423,7 +423,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     bool GetTransferOwnerSession()
     {
-        return GetBoolProperty("transfer_owner_session");
+        return proxy->GetProperty<bool>(proxy_tgt, "transfer_owner_session");
     }
 
 
@@ -435,7 +435,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     void SetTransferOwnerSession(const bool value)
     {
-        return SetProperty("transfer_owner_session", value);
+        return proxy->SetProperty(proxy_tgt, "transfer_owner_session", value);
     }
 
 
@@ -464,11 +464,10 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
             cached_overrides.clear();
         }
 
-        GVariant *res = GetProperty("overrides");
+        GVariant *res = proxy->GetPropertyGVariant(proxy_tgt, "overrides");
         if (NULL == res)
         {
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "GetProperty(\"overrides\") call failed");
+            throw DBus::Proxy::Exception("GetProperty(\"overrides\") call failed");
         }
         GVariantIter *override_iter = NULL;
         g_variant_get(res, "a{sv}", &override_iter);
@@ -485,17 +484,16 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
             const ValidOverride &vo = GetConfigOverride(key);
             if (!vo.valid())
             {
-                THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                    "Invalid override found");
+                throw DBus::Proxy::Exception("Invalid override found");
             }
             if (OverrideType::string == vo.type)
             {
-                std::string v(GLibUtils::GetVariantValue<std::string>(val));
+                std::string v(glib2::Value::Get<std::string>(val));
                 ret.push_back(OverrideValue(vo, v));
             }
             else if (OverrideType::boolean == vo.type)
             {
-                bool v = GLibUtils::GetVariantValue<bool>(val);
+                bool v = glib2::Value::Get<bool>(val);
                 ret.push_back(OverrideValue(vo, v));
             }
         }
@@ -513,16 +511,16 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
     {
         if (!override.valid())
         {
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "Invalid override");
+            DBus::Proxy::Exception("Invalid override");
         }
         if (OverrideType::boolean != override.type)
         {
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "SetOverride for bool called for non-bool override");
+            DBus::Proxy::Exception("SetOverride for bool called for non-bool override");
         }
-        GVariant *val = g_variant_new("b", value);
-        Call("SetOverride", g_variant_new("(sv)", override.key.c_str(), val));
+        GVariant *val = glib2::Value::Create(value);
+        proxy->Call(proxy_tgt,
+                    "SetOverride",
+                    g_variant_new("(sv)", override.key.c_str(), val));
     }
 
 
@@ -533,16 +531,16 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
     {
         if (!override.valid())
         {
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "Invalid override");
+            DBus::Proxy::Exception("Invalid override");
         }
         if (OverrideType::string != override.type)
         {
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "SetOverride for string called for non-string override");
+            DBus::Proxy::Exception("SetOverride for string called for non-string override");
         }
-        GVariant *val = g_variant_new("s", value.c_str());
-        Call("SetOverride", g_variant_new("(sv)", override.key.c_str(), val));
+        GVariant *val = glib2::Value::Create(value);
+        proxy->Call(proxy_tgt,
+                    "SetOverride",
+                    g_variant_new("(sv)", override.key.c_str(), val));
     }
 
 
@@ -564,9 +562,11 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
 
         try
         {
-            Call("AddTag", g_variant_new("(s)", tag.c_str()));
+            proxy->Call(proxy_tgt,
+                        "AddTag",
+                        glib2::Value::CreateTupleWrapped(tag));
         }
-        catch (const DBusException &excp)
+        catch (const DBus::Exception &excp)
         {
             std::stringstream e;
             e << excp.GetRawError() << ", tag value: " << tag;
@@ -594,9 +594,11 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
 
         try
         {
-            Call("RemoveTag", g_variant_new("(s)", tag.c_str()));
+            proxy->Call(proxy_tgt,
+                        "RemoveTag",
+                        glib2::Value::CreateTupleWrapped(tag));
         }
-        catch (const DBusException &excp)
+        catch (const DBus::Exception &excp)
         {
             std::stringstream e;
             e << excp.GetRawError() << ", tag value: " << tag;
@@ -618,15 +620,9 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
             throw CfgMgrProxyException("Tags feature unavailable");
         }
 
-        GVariant *res = GetProperty("tags");
-        if (nullptr == res)
-        {
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "GetTags() call failed");
-        }
-
+        auto tagslist = proxy->GetPropertyArray<std::string>(proxy_tgt, "tags");
         std::vector<std::string> ret;
-        for (const auto &tag : GLibUtils::ParseGVariantList<std::string>(res, "s", false))
+        for (const auto &tag : tagslist)
         {
             if ("system:" != tag.substr(0, 7))
             {
@@ -659,7 +655,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
                 return ov;
             }
         }
-        THROW_DBUSEXCEPTION("OpenVPNConfigurationProxy", "Override not found");
+        throw DBus::Proxy::Exception("Override not found");
     }
 
 
@@ -672,8 +668,7 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
                 return vo;
             }
         }
-        THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                            "Invalid override key:" + key);
+        throw DBus::Proxy::Exception("Invalid override key:" + key);
     }
 
 
@@ -684,10 +679,11 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
     {
         if (!override.valid())
         {
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "Invalid override");
+            throw DBus::Proxy::Exception("Invalid override");
         }
-        Call("UnsetOverride", g_variant_new("(s)", override.key.c_str()));
+        proxy->Call(proxy_tgt,
+                    "UnsetOverride",
+                    g_variant_new("(s)", override.key.c_str()));
     }
 
 
@@ -700,17 +696,16 @@ class OpenVPN3ConfigurationProxy : public DBusProxy
      */
     std::vector<uid_t> GetAccessList()
     {
-        GVariant *res = GetProperty("acl");
-        if (NULL == res)
-        {
-            THROW_DBUSEXCEPTION("OpenVPN3ConfigurationProxy",
-                                "GetAccessList() call failed");
-        }
-        std::vector<uid_t> ret = GLibUtils::ParseGVariantList<uid_t>(res, "u", false);
+        auto ret = proxy->GetPropertyArray<uid_t>(proxy_tgt, "acl");
         return ret;
     }
 
+
   private:
+    DBus::Proxy::Client::Ptr proxy{nullptr};
+    DBus::Proxy::TargetPreset::Ptr proxy_tgt{nullptr};
+    DBus::Proxy::Utils::Query::Ptr proxy_qry{nullptr};
+
     CfgMgrFeatures features = CfgMgrFeatures::UNDEFINED;
     std::vector<OverrideValue> cached_overrides = {};
 

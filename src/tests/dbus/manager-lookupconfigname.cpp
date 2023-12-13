@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -16,10 +16,11 @@
  */
 
 #include <iostream>
+#include <gdbuspp/connection.hpp>
 
-#include "dbus/core.hpp"
+#include "dbus/constants.hpp"
 #include "configmgr/proxy-configmgr.hpp"
-#include "sessionmgr/proxy-sessionmgr.hpp"
+// #include "sessionmgr/proxy-sessionmgr.hpp"
 
 
 
@@ -29,19 +30,20 @@ class ManagerProxy
     ManagerProxy(std::string manager)
         : manager(manager)
     {
+        conn = DBus::Connection::Create(DBus::BusType::SYSTEM);
         if ("configmgr" == manager)
         {
-            cfgmgr.reset(new OpenVPN3ConfigurationProxy(G_BUS_TYPE_SYSTEM,
-                                                        OpenVPN3DBus_rootp_configuration));
+            cfgmgr.reset(new OpenVPN3ConfigurationProxy(conn,
+                                                        Constants::GenPath("configuration")));
         }
-        else if ("sessionmgr" == manager)
+        else if ("sessionmgr-NOT-MIGRATED-YET" == manager)
         {
-            sessmgr.reset(new OpenVPN3SessionMgrProxy(G_BUS_TYPE_SYSTEM));
+            // sessmgr.reset(new OpenVPN3SessionMgrProxy(G_BUS_TYPE_SYSTEM));
         }
         else
         {
-            THROW_DBUSEXCEPTION("manager-lookupconfigname",
-                                "Invalid manager name:" + manager);
+            throw DBus::Exception("manager-lookupconfigname",
+                                  "Invalid manager name:" + manager);
         }
     }
 
@@ -55,16 +57,17 @@ class ManagerProxy
         }
         else if ("sessionmgr" == manager)
         {
-            return sessmgr->LookupConfigName(cfgname);
+            //return sessmgr->LookupConfigName(cfgname);
         }
-        THROW_DBUSEXCEPTION("manager-lookupconfigname",
-                            "Invalid manager name:" + manager);
+        throw DBus::Exception("manager-lookupconfigname",
+                              "Invalid manager name:" + manager);
     }
 
   private:
+    DBus::Connection::Ptr conn = nullptr;
     std::string manager = "";
     std::unique_ptr<OpenVPN3ConfigurationProxy> cfgmgr = nullptr;
-    std::unique_ptr<OpenVPN3SessionMgrProxy> sessmgr = nullptr;
+    // std::unique_ptr<OpenVPN3SessionMgrProxy> sessmgr = nullptr;
 };
 
 

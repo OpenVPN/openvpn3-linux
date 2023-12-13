@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -15,12 +15,9 @@
  */
 
 #include <iostream>
+#include <gdbuspp/connection.hpp>
 
-#include "dbus/core.hpp"
 #include "configmgr/proxy-configmgr.hpp"
-
-using namespace openvpn;
-
 
 
 int main(int argc, char **argv)
@@ -31,17 +28,14 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    //        OpenVPN3ConfigurationProxy config(G_BUS_TYPE_SYSTEM, argv[1]);
-    DBus dbusobj(G_BUS_TYPE_SYSTEM);
-    dbusobj.Connect();
-
-    OpenVPN3ConfigurationProxy config(dbusobj.GetConnection(), argv[1]);
+    auto conn = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    OpenVPN3ConfigurationProxy config(conn, argv[1]);
 
     std::cout << "Configuration: " << std::endl;
-    std::cout << "  - Name:       " << config.GetStringProperty("name") << std::endl;
-    std::cout << "  - Read only:  " << (config.GetBoolProperty("readonly") ? "Yes" : "No") << std::endl;
-    std::cout << "  - Persistent: " << (config.GetBoolProperty("persistent") ? "Yes" : "No") << std::endl;
-    std::cout << "  - Usage:      " << (config.GetBoolProperty("single_use") ? "Once" : "Multiple times") << std::endl;
+    std::cout << "  - Name:       " << config.GetName() << std::endl;
+    std::cout << "  - Read only:  " << (config.GetSealed() ? "Yes" : "No") << std::endl;
+    std::cout << "  - Persistent: " << (config.GetPersistent() ? "Yes" : "No") << std::endl;
+    std::cout << "  - Usage:      " << (config.GetSingleUse() ? "Once" : "Multiple times") << std::endl;
     std::cout << "--------------------------------------------------" << std::endl;
     std::cout << config.GetJSONConfig() << std::endl;
     std::cout << "--------------------------------------------------" << std::endl;

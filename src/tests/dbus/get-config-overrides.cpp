@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -15,12 +15,9 @@
 
 #include <iostream>
 #include <vector>
+#include <gdbuspp/connection.hpp>
 
-#include "dbus/core.hpp"
 #include "configmgr/proxy-configmgr.hpp"
-
-using namespace openvpn;
-
 
 
 int main(int argc, char **argv)
@@ -31,10 +28,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    DBus dbusobj(G_BUS_TYPE_SYSTEM);
-    dbusobj.Connect();
-
-    OpenVPN3ConfigurationProxy config(dbusobj.GetConnection(), argv[1]);
+    auto conn = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    OpenVPN3ConfigurationProxy config(conn, argv[1]);
 
     std::vector<OverrideValue> overrides = config.GetOverrides();
     for (const auto &ov : overrides)

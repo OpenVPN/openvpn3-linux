@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -14,6 +14,7 @@
  */
 
 #include <iostream>
+#include <gdbuspp/connection.hpp>
 
 #include "configmgr/proxy-configmgr.hpp"
 
@@ -28,8 +29,9 @@ int main(int argc, char **argv)
 
     try
     {
+        auto conn = DBus::Connection::Create(DBus::BusType::SYSTEM);
         std::string cfgpath(argv[1]);
-        OpenVPN3ConfigurationProxy cfgprx(G_BUS_TYPE_SYSTEM, cfgpath);
+        OpenVPN3ConfigurationProxy cfgprx(conn, cfgpath);
 
         std::cout << "Current lock-down setting: "
                   << (cfgprx.GetLockedDown() ? "true" : "false")
