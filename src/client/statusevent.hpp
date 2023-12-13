@@ -37,19 +37,12 @@ struct StatusEvent
     };
 
 
-    StatusEvent(const StatusMajor maj, const StatusMinor min, const std::string &msg)
+    StatusEvent(const StatusMajor maj, const StatusMinor min, const std::string &msg = "")
     {
         reset();
         major = maj;
         minor = min;
         message = msg;
-    }
-
-    StatusEvent(const StatusMajor &maj, const StatusMinor &min)
-    {
-        reset();
-        major = maj;
-        minor = min;
     }
 
     StatusEvent()
