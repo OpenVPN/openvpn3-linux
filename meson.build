@@ -237,6 +237,7 @@ configure_file(
 #  OpenVPN 3 Linux services
 #
 subdir('src/client')
+subdir('src/selinux')
 
 #
 #  Test programs

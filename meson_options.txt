@@ -44,6 +44,9 @@ option('selinux', type: 'feature', value: 'enabled',
 option('selinux_policy', type: 'feature', value: 'enabled',
        description: 'Build the OpenVPN 3 Linux SELinux policies')
 
+option('selinux_devel_path', type: 'string', value: '',
+       description: 'Override default SELinux path to the Makfile for policy building')
+
 #
 #  Various runtime defaults
 #

@@ -1,0 +1,26 @@
+#!/bin/sh
+#  OpenVPN 3 Linux client -- Next generation OpenVPN client
+#
+#  SPDX-License-Identifier: AGPL-3.0-only
+#
+#  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+#  Copyright (C)  David Sommerseth <davids@openvpn.net>
+#
+
+##
+# @file  build-selinux-policy
+#
+#  SELinux policy compiler helper.  This is not intended to be
+#  called directly, but via the Meson custom_target() setup in
+#  src/selinux/meson.build
+
+set -eu
+
+basename="$(basename ${4} | cut -d. -f1)"
+mkdir -p "$2"
+cp $1/${basename}.{fc,if,te} "$2"
+make -s -C "$2" -f "$3" "${basename}.pp"
+rm -f "$2/${basename}.pp.bz2"
+echo "Compressing ${basename}.pp policy package"
+bzip2 -9 "$2/${basename}.pp"
+cp "$2/${basename}.pp.bz2" "$4"
