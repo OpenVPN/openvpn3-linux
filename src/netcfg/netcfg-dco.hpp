@@ -2,11 +2,11 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2020 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2020 - 2023  Lev Stipakov <lev@openvpn.net>
-//  Copyright (C) 2020 - 2023  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2021 - 2023  Antonio Quartulli <antonio@openvpn.net>
-//  Copyright (C) 2021 - 2023  Heiko Hund <heiko@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  Lev Stipakov <lev@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  Antonio Quartulli <antonio@openvpn.net>
+//  Copyright (C)  Heiko Hund <heiko@openvpn.net>
 //
 
 #pragma once
@@ -19,7 +19,6 @@
 
 #include <openvpn/asio/asiowork.hpp>
 
-#include "dbus/core.hpp"
 #include "netcfg-signals.hpp"
 
 

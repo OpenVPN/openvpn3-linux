@@ -2,12 +2,12 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018 - 2023  Arne Schwabe <arne@openvpn.net>
-//  Copyright (C) 2019 - 2023  Lev Stipakov <lev@openvpn.net>
-//  Copyright (C) 2021 - 2023  Antonio Quartulli <antonio@openvpn.net>
-//  Copyright (C) 2021 - 2023  Heiko Hund <heiko@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C)  Lev Stipakov <lev@openvpn.net>
+//  Copyright (C)  Antonio Quartulli <antonio@openvpn.net>
+//  Copyright (C)  Heiko Hund <heiko@openvpn.net>
 //
 
 /**
@@ -19,15 +19,15 @@
 
 #include <string>
 #include <vector>
+#include <gdbuspp/connection.hpp>
+#include <gdbuspp/glib2/utils.hpp>
+#include <gdbuspp/proxy.hpp>
+#include <gdbuspp/proxy/utils.hpp>
 
-#include "dbus/core.hpp"
-#include "dbus/proxy.hpp"
-#include "dbus/glibutils.hpp"
+#include "dbus/constants.hpp"
 #include "proxy-netcfg-mgr.hpp"
 #include "netcfg-exception.hpp"
 #include "netcfg-subscriptions.hpp"
-
-using namespace openvpn;
 
 
 namespace NetCfgProxy {
@@ -36,18 +36,26 @@ namespace NetCfgProxy {
 //  class NetCfgProxy::Manager
 //
 
-Manager::Manager(GDBusConnection *dbuscon)
-    : DBusProxy(dbuscon,
-                OpenVPN3DBus_name_netcfg,
-                OpenVPN3DBus_interf_netcfg,
-                OpenVPN3DBus_rootp_netcfg)
+Manager::Manager(DBus::Connection::Ptr dbuscon_)
+    : dbuscon(dbuscon_)
 {
     try
     {
-        CheckServiceAvail();
-        (void)GetServiceVersion(OpenVPN3DBus_rootp_netcfg);
+        auto srvc = DBus::Proxy::Utils::DBusServiceQuery::Create(dbuscon);
+        if (!srvc->CheckServiceAvail(Constants::GenServiceName("netcfg")))
+        {
+            throw NetCfgProxyException("Init",
+                                       "Could not reach "
+                                           + Constants::GenServiceName("netcfg"));
+        }
+        proxy = DBus::Proxy::Client::Create(dbuscon, Constants::GenServiceName("netcfg"));
+        tgt_mgr = DBus::Proxy::TargetPreset::Create(Constants::GenPath("netcfg"),
+                                                    Constants::GenInterface("netcfg"));
+        proxy_helper = DBus::Proxy::Utils::Query::Create(proxy);
+        (void)proxy_helper->ServiceVersion(tgt_mgr->object_path,
+                                           tgt_mgr->interface);
     }
-    catch (const DBusException &)
+    catch (const DBus::Exception &)
     {
         throw NetCfgProxyException(
             "Init", "Could not connect to net.openvpn.v3.netcfg service");
@@ -57,41 +65,30 @@ Manager::Manager(GDBusConnection *dbuscon)
 
 const std::string Manager::GetConfigFile()
 {
-    if (!CheckObjectExists())
+    if (!proxy_helper->CheckObjectExists(tgt_mgr->object_path,
+                                         tgt_mgr->interface))
     {
         throw NetCfgProxyException("GetConfigFile",
                                    "net.openvpn.v3.netcfg service unavailable");
     }
-    return GetStringProperty("config_file");
+    return proxy->GetProperty<std::string>(tgt_mgr, "config_file");
 }
 
 
 const std::string Manager::CreateVirtualInterface(const std::string &device_name)
 {
-    Ping();
+    proxy_helper->Ping();
     try
     {
-        GVariant *res = Call("CreateVirtualInterface",
-                             g_variant_new("(s)",
-                                           device_name.c_str()));
-        if (!res)
-        {
-            throw NetCfgProxyException("CreateVirtualInterface",
-                                       "No results returned");
-        }
-
-        gchar *path = nullptr;
-        g_variant_get(res, "(o)", &path);
-        const std::string devpath(path);
-        g_free(path);
+        GVariant *res = proxy->Call(tgt_mgr,
+                                    "CreateVirtualInterface",
+                                    glib2::Value::CreateTupleWrapped(device_name));
+        glib2::Utils::checkParams(__func__, res, "(o)");
+        const std::string devpath = glib2::Value::Extract<std::string>(res, 0);
         g_variant_unref(res);
         return devpath;
     }
-    catch (NetCfgProxyException &)
-    {
-        throw;
-    }
-    catch (std::exception &excp)
+    catch (const DBus::Exception &excp)
     {
         throw NetCfgProxyException("CreateVirtualInterface",
                                    excp.what());
@@ -101,7 +98,8 @@ const std::string Manager::CreateVirtualInterface(const std::string &device_name
 
 bool Manager::ProtectSocket(int socket, const std::string &remote, bool ipv6, const std::string &devpath)
 {
-    if (!CheckObjectExists())
+    if (!proxy_helper->CheckObjectExists(tgt_mgr->object_path,
+                                         tgt_mgr->interface))
     {
         throw NetCfgProxyException("ProtectSocket",
                                    "net.openvpn.v3.netcfg service unavailable");
@@ -115,38 +113,37 @@ bool Manager::ProtectSocket(int socket, const std::string &remote, bool ipv6, co
         GVariant *res;
         if (socket < 0)
         {
-            res = Call("ProtectSocket",
-                       g_variant_new("(sbo)",
-                                     remote.c_str(),
-                                     ipv6,
-                                     devpath.c_str()));
+            res = proxy->Call(tgt_mgr,
+                              "ProtectSocket",
+                              g_variant_new("(sbo)", remote.c_str(), ipv6, devpath.c_str()));
         }
         else
         {
-            res = CallSendFD("ProtectSocket",
-                             g_variant_new("(sbo)",
-                                           remote.c_str(),
-                                           ipv6,
-                                           devpath.c_str()),
-                             socket);
+            res = proxy->SendFD(tgt_mgr,
+                                "ProtectSocket",
+                                g_variant_new("(sbo)",
+                                              remote.c_str(),
+                                              ipv6,
+                                              devpath.c_str()),
+                                socket);
         }
-        GLibUtils::checkParams(__func__, res, "(b)", 1);
-        ret = GLibUtils::GetVariantValue<bool>(g_variant_get_child_value(res, 0));
+        glib2::Utils::checkParams(__func__, res, "(b)", 1);
+        ret = glib2::Value::Extract<bool>(res, 0);
         g_variant_unref(res);
+        return ret;
     }
-    catch (NetCfgProxyException &)
+    catch (const DBus::Exception &)
     {
         throw;
     }
-    return ret;
 }
 
 
 bool Manager::DcoAvailable()
 {
-    GVariant *res = Call("DcoAvailable");
-    GLibUtils::checkParams(__func__, res, "(b)", 1);
-    bool ret = GLibUtils::GetVariantValue<bool>(g_variant_get_child_value(res, 0));
+    GVariant *res = proxy->Call(tgt_mgr, "DcoAvailable");
+    glib2::Utils::checkParams(__func__, res, "(b)", 1);
+    bool ret = glib2::Value::Extract<bool>(res, 0);
     g_variant_unref(res);
     return ret;
 }
@@ -154,20 +151,18 @@ bool Manager::DcoAvailable()
 
 void Manager::Cleanup()
 {
-    if (!CheckObjectExists())
+    if (!proxy_helper->CheckObjectExists(tgt_mgr->object_path,
+                                         tgt_mgr->interface))
     {
         throw NetCfgProxyException("Cleanup",
                                    "net.openvpn.v3.netcfg service unavailable");
     }
     try
     {
-        Call("Cleanup");
+        auto empty = proxy->Call(tgt_mgr, "Cleanup");
+        g_variant_unref(empty);
     }
-    catch (NetCfgProxyException &)
-    {
-        throw;
-    }
-    catch (std::exception &excp)
+    catch (const DBus::Exception &excp)
     {
         throw NetCfgProxyException("Cleanup",
                                    excp.what());
@@ -177,38 +172,20 @@ void Manager::Cleanup()
 
 std::vector<std::string> Manager::FetchInterfaceList()
 {
-    Ping();
+    if (!proxy_helper->Ping())
+    {
+        throw NetCfgProxyException("FetchInterfaceList",
+                                   "net.openvpn.v3.netcfg service unavailable");
+    }
     try
     {
-        GVariant *res = Call("FetchInterfaceList");
-        if (!res)
-        {
-            throw NetCfgProxyException("FetchInterfaceList",
-                                       "No results returned");
-        }
-
-        GVariantIter *pathlist = nullptr;
-        g_variant_get(res, "(ao)", &pathlist);
-
-        GVariant *path = nullptr;
-        std::vector<std::string> device_paths;
-        while ((path = g_variant_iter_next_value(pathlist)))
-        {
-            gsize len;
-            device_paths.push_back(std::string(g_variant_get_string(path, &len)));
-            g_variant_unref(path);
-        }
-        g_variant_iter_free(pathlist);
-        g_variant_unref(res);
+        GVariant *res = proxy->Call(tgt_mgr, "FetchInterfaceList");
+        auto device_paths = glib2::Value::ExtractVector<std::string>(res, "o");
         return device_paths;
     }
-    catch (NetCfgProxyException &)
+    catch (const DBus::Exception &excp)
     {
-        throw;
-    }
-    catch (std::exception &excp)
-    {
-        throw NetCfgProxyException("CreateVirtualInterface",
+        throw NetCfgProxyException("FetchInterfaceList",
                                    excp.what());
     }
 }
@@ -216,12 +193,19 @@ std::vector<std::string> Manager::FetchInterfaceList()
 
 void Manager::NotificationSubscribe(NetCfgChangeType filter_flags)
 {
-    Ping();
+    if (!proxy_helper->Ping())
+    {
+        throw NetCfgProxyException("NotificationSubscribe",
+                                   "net.openvpn.v3.netcfg service unavailable");
+    }
     try
     {
-        Call("NotificationSubscribe", g_variant_new("(u)", static_cast<std::uint16_t>(filter_flags), true));
+        proxy->Call(tgt_mgr,
+                    "NotificationSubscribe",
+                    glib2::Value::CreateTupleWrapped(static_cast<std::uint16_t>(filter_flags)),
+                    true);
     }
-    catch (std::exception &excp)
+    catch (const DBus::Exception &excp)
     {
         throw NetCfgProxyException("NotificationSubscribe",
                                    excp.what());
@@ -237,12 +221,19 @@ void Manager::NotificationUnsubscribe()
 
 void Manager::NotificationUnsubscribe(const std::string &subscriber)
 {
-    Ping();
+    if (!proxy_helper->Ping())
+    {
+        throw NetCfgProxyException("NotificationUnsubscribe",
+                                   "net.openvpn.v3.netcfg service unavailable");
+    }
     try
     {
-        Call("NotificationUnsubscribe", g_variant_new("(s)", subscriber.c_str()), true);
+        proxy->Call(tgt_mgr,
+                    "NotificationUnsubscribe",
+                    glib2::Value::CreateTupleWrapped(subscriber),
+                    true);
     }
-    catch (std::exception &excp)
+    catch (const DBus::Exception &excp)
     {
         throw NetCfgProxyException("NotificationUnsubscribe",
                                    excp.what());
@@ -252,15 +243,15 @@ void Manager::NotificationUnsubscribe(const std::string &subscriber)
 
 NetCfgSubscriptions::NetCfgNotifSubscriptions Manager::NotificationSubscriberList()
 {
-    Ping();
+    if (!proxy_helper->Ping())
+    {
+        throw NetCfgProxyException("NotificationSubscriberList",
+                                   "net.openvpn.v3.netcfg service unavailable");
+    }
     try
     {
-        GVariant *res = Call("NotificationSubscriberList");
-        if (!res)
-        {
-            throw NetCfgProxyException("NotificationSubscriberList",
-                                       "No results returned");
-        }
+        GVariant *res = proxy->Call(tgt_mgr, "NotificationSubscriberList");
+        glib2::Utils::checkParams(__func__, res, "(a(su)))");
 
         GVariantIter *iter = nullptr;
         g_variant_get(res, "(a(su))", &iter);
@@ -269,19 +260,17 @@ NetCfgSubscriptions::NetCfgNotifSubscriptions Manager::NotificationSubscriberLis
         NetCfgSubscriptions::NetCfgNotifSubscriptions subscriptions;
         while ((val = g_variant_iter_next_value(iter)))
         {
-            gchar *dbusname;
-            gint filter_bitmask;
-            g_variant_get(val, "(su)", &dbusname, &filter_bitmask);
+            std::string busname = glib2::Value::Extract<std::string>(val, 0);
+            uint16_t filter_mask = glib2::Value::Extract<uint16_t>(val, 1);
+
             subscriptions.insert(NetCfgSubscriptions::NetCfgNotifSubscriptions::
-                                     value_type(dbusname, filter_bitmask));
-            g_free(dbusname);
-            g_variant_unref(val);
+                                     value_type(busname, filter_mask));
         }
         g_variant_iter_free(iter);
         g_variant_unref(res);
         return subscriptions;
     }
-    catch (std::exception &excp)
+    catch (const DBus::Exception &excp)
     {
         throw NetCfgProxyException("NotificationSubscriberList",
                                    excp.what());

@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2019 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2019 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -13,19 +13,24 @@
  */
 
 #pragma once
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <vector>
 
-#include <openvpn/common/rc.hpp>
-
+#include "netcfg-changeevent.hpp"
 
 /**
  *  External utilities can subscribe to NetworkChange signals from the
  *  netcfg service.  These subscriptions are handled in this class.
  *
  */
-class NetCfgSubscriptions : public RC<thread_safe_refcount>
+class NetCfgSubscriptions
 {
   public:
-    typedef RCPtr<NetCfgSubscriptions> Ptr;
+    using Ptr = std::shared_ptr<NetCfgSubscriptions>;
 
     /**
      *  Contains a list of D-Bus subscribers' unique D-Bus name, mapped against

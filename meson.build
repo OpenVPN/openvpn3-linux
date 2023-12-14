@@ -218,6 +218,17 @@ configmgr_lib = static_library(
         include_directories: include_dirs,
 )
 
+netcfgmgr_lib = static_library(
+        'netcfgmgr',
+        [
+            'src/netcfg/proxy-netcfg-device.cpp',
+            'src/netcfg/proxy-netcfg-mgr.cpp',
+        ],
+        dependencies: [
+            base_dependencies,
+        ],
+        include_directories: include_dirs,
+)
 
 #
 #  Base D-Bus policy

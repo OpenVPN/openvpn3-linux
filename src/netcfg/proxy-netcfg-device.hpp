@@ -2,11 +2,11 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018 - 2023  Arne Schwabe <arne@openvpn.net>
-//  Copyright (C) 2019 - 2023  Lev Stipakov <lev@openvpn.net>
-//  Copyright (C) 2021 - 2023  Antonio Quartulli <antonio@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C)  Lev Stipakov <lev@openvpn.net>
+//  Copyright (C)  Antonio Quartulli <antonio@openvpn.net>
 //
 
 /**
@@ -21,14 +21,12 @@
 
 #include <string>
 #include <vector>
+#include <gdbuspp/connection.hpp>
+#include <gdbuspp/proxy.hpp>
 
-#include <openvpn/common/rc.hpp>
+#include "build-config.h"
+// #include "netcfg-device.hpp"
 
-#include "dbus/core.hpp"
-#include "dbus/proxy.hpp"
-#include "netcfg-device.hpp"
-
-using namespace openvpn;
 
 namespace NetCfgProxy {
 #ifdef ENABLE_OVPNDCO
@@ -53,16 +51,16 @@ class Network
     bool exclude;
 };
 
-
+// FIXME: Migration hack - netcfg-device.hpp need refactoring
+using NetCfgDeviceType = unsigned int;
 
 /**
  *   Class replicating a specific D-Bus network device object
  */
-class Device : public DBusProxy,
-               public RC<thread_unsafe_refcount>
+class Device
 {
   public:
-    typedef RCPtr<Device> Ptr;
+    using Ptr = std::shared_ptr<Device>;
 
     /**
      *  Initialize the Network Configuration proxy for
@@ -72,7 +70,7 @@ class Device : public DBusProxy,
      * @param devpath  D-Bus object path to the device to handle
      *
      */
-    Device(GDBusConnection *dbuscon, const std::string &devpath);
+    Device(DBus::Connection::Ptr dbuscon, const std::string &devpath);
 
 
     /**
@@ -107,6 +105,9 @@ class Device : public DBusProxy,
      * @param gateway
      */
     void AddNetworks(const std::vector<Network> &networks);
+
+    // FIXME: docs
+    void SetDNSscope(const std::string &scope) const;
 
 
     /**
@@ -227,9 +228,10 @@ class Device : public DBusProxy,
     std::vector<uid_t> GetACL();
 
 
-    NetCfgDeviceType GetDeviceType();
-    std::string GetDeviceName();
-    bool GetActive();
+    NetCfgDeviceType GetDeviceType() const;
+    const std::string GetDeviceName() const;
+    const std::string GetDevicePath() const;
+    bool GetActive() const;
 
     std::vector<std::string> GetIPv4Addresses();
     std::vector<std::string> GetIPv4Routes();
@@ -240,17 +242,23 @@ class Device : public DBusProxy,
     std::vector<std::string> GetDNSSearch();
 
     void SetRemoteAddress(const std::string &remote, bool ipv6);
+
+
+  private:
+    DBus::Connection::Ptr dbuscon = nullptr;
+    DBus::Proxy::Client::Ptr proxy = nullptr;
+    DBus::Proxy::TargetPreset::Ptr prxtgt = nullptr;
 };
 
 
 
 #ifdef ENABLE_OVPNDCO
-class DCO : public DBusProxy, public RC<thread_unsafe_refcount>
+class DCO
 {
   public:
-    typedef RCPtr<DCO> Ptr;
+    using Ptr = std::shared_ptr<DCO>;
 
-    DCO(GDBusConnection *dbuscon, const std::string &dcopath);
+    DCO(DBus::Proxy::Client::Ptr proxy_, const std::string &dcopath);
 
     /**
      * Returns file descriptor used by unprivileged process to
@@ -306,6 +314,10 @@ class DCO : public DBusProxy, public RC<thread_unsafe_refcount>
      * @param keepalive_timeout  keepalive timeout
      */
     void SetPeer(unsigned int peer_id, int keepalive_interval, int keepalive_timeout);
+
+  private:
+    DBus::Proxy::Client::Ptr proxy = nullptr;
+    DBus::Proxy::TargetPreset::Ptr dcotgt = nullptr;
 };
 #endif // ENABLE_OVPNDCO
 } // namespace NetCfgProxy
