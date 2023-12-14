@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
 #  SPDX-License-Identifier: AGPL-3.0-only
@@ -42,6 +42,16 @@ if [ -e "${PROJECT_ROOT}/.git" ]; then
 		# same result
 		PRODVERSION="$(echo ${VERSION} | cut -b2-)"
 	fi
+
+        # Changed files from the index which are not staged gets the '+' flag
+        GIT_FLAGS="$(git diff-files --name-status -r --ignore-submodules --quiet || echo 'm')"
+        # Changed files which are staged gets the '*' flag
+        GIT_FLAGS="${GIT_FLAGS}$(git diff-index --cached  --quiet --ignore-submodules HEAD || echo 's')"
+        if [ -n "${GIT_FLAGS}" ]; then
+            VERSION="${VERSION}__${GIT_FLAGS}"
+            PRODVERSION="${PRODVERSION}__${GIT_FLAGS}"
+        fi
+
 elif [ -f "${PROJECT_ROOT}/src/common/build-version.h" ]; then
 	VERSION="$(cat ${PROJECT_ROOT}/src/common/build-version.h | awk '/define PACKAGE_GUIVERSION/{gsub("\"", ""); print $3}')"
 	PRODVERSION="$(echo $VERSION | sed -e 's#/#_#g' -e 's#:#_#g')"
