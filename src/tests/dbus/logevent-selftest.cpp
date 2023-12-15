@@ -15,8 +15,9 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <gdbuspp/glib2/utils.hpp>
 
-#include "dbus/core.hpp"
+#include "client/statusevent.hpp"
 #include "log/logevent.hpp"
 
 
@@ -41,8 +42,8 @@ bool test_empty(const LogEvent &ev, const bool expect)
          && LogCategory::UNDEFINED == ev.category
          && ev.message.empty());
     std::cout << "      test_empty():  Element check:"
-              << " (" << std::to_string((unsigned)ev.group)
-              << ", " << std::to_string((unsigned)ev.category)
+              << " (" << std::to_string(static_cast<uint8_t>(ev.group))
+              << ", " << std::to_string(static_cast<uint8_t>(ev.category))
               << ", '" << ev.message << "') = " << r << " ... ";
     if (expect != r)
     {
@@ -110,8 +111,8 @@ int test2_without_session_token()
     {
         std::cout << "-- Testing parsing GVariantDict - incorrect data ... ";
         data = g_variant_new("(uuis)",
-                             (guint)StatusMajor::CONFIG,
-                             (guint)StatusMinor::CFG_OK,
+                             static_cast<uint32_t>(StatusMajor::CONFIG),
+                             static_cast<uint32_t>(StatusMinor::CFG_OK),
                              1234,
                              "Invalid data");
         LogEvent parsed(data);
@@ -139,12 +140,11 @@ int test2_without_session_token()
     try
     {
         std::cout << "-- Testing parsing GVariantDict - correct dict ... ";
-        GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
-        g_variant_builder_add(b, "{sv}", "log_group", g_variant_new_uint32((guint)LogGroup::LOGGER));
-        g_variant_builder_add(b, "{sv}", "log_category", g_variant_new_uint32((guint)LogCategory::DEBUG));
-        g_variant_builder_add(b, "{sv}", "log_message", g_variant_new_string("Test log message"));
-        GVariant *data = g_variant_builder_end(b);
-        g_variant_builder_unref(b);
+        GVariantBuilder *b = glib2::Builder::Create("a{sv}");
+        g_variant_builder_add(b, "{sv}", "log_group", glib2::Value::Create(LogGroup::LOGGER));
+        g_variant_builder_add(b, "{sv}", "log_category", glib2::Value::Create(LogCategory::DEBUG));
+        g_variant_builder_add(b, "{sv}", "log_message", glib2::Value::Create<std::string>("Test log message"));
+        GVariant *data = glib2::Builder::Finish(b);
         LogEvent parsed(data);
 
         if (LogGroup::LOGGER != parsed.group
@@ -171,8 +171,8 @@ int test2_without_session_token()
     {
         std::cout << "-- Testing parsing GVariant Tuple (uus) ... ";
         GVariant *data = g_variant_new("(uus)",
-                                       (guint)LogGroup::BACKENDPROC,
-                                       (guint)LogCategory::INFO,
+                                       static_cast<uint32_t>(LogGroup::BACKENDPROC),
+                                       static_cast<uint32_t>(LogCategory::INFO),
                                        "Parse testing again");
         LogEvent parsed(data);
         g_variant_unref(data);
@@ -207,20 +207,20 @@ int test2_without_session_token()
     std::cout << "-- Testing .GetGVariantTuple() ... ";
     LogEvent reverse(LogGroup::BACKENDSTART, LogCategory::WARN, "Yet another test");
     GVariant *revparse = reverse.GetGVariantTuple();
-    guint grp = 0;
-    guint ctg = 0;
-    gchar *msg = nullptr;
-    g_variant_get(revparse, "(uus)", &grp, &ctg, &msg);
 
-    if ((guint)reverse.group != grp
-        || (guint)reverse.category != ctg
-        || g_strcmp0(reverse.message.c_str(), msg) != 0)
+    LogGroup grp = glib2::Value::Extract<LogGroup>(revparse, 0);
+    LogCategory ctg = glib2::Value::Extract<LogCategory>(revparse, 1);
+    std::string msg = glib2::Value::Extract<std::string>(revparse, 2);
+
+    if (reverse.group != grp
+        || reverse.category != ctg
+        || reverse.message != msg)
     {
         std::cout << "FAILED" << std::endl;
         std::cout << "     Input: " << reverse << std::endl;
         std::cout << "    Output: "
-                  << "group=" << std::to_string(grp) << ", "
-                  << "category=" << std::to_string(ctg) << ", "
+                  << "group=" << std::to_string(static_cast<uint32_t>(grp)) << ", "
+                  << "category=" << std::to_string(static_cast<uint32_t>(ctg)) << ", "
                   << "message='" << msg << "'" << std::endl;
         ++ret;
     }
@@ -228,7 +228,6 @@ int test2_without_session_token()
     {
         std::cout << "PASSED" << std::endl;
     }
-    g_free(msg);
     g_variant_unref(revparse);
 
     try
@@ -272,13 +271,12 @@ int test2_with_session_token()
     try
     {
         std::cout << "-- Testing parsing GVariantDict - with session token ... ";
-        GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
-        g_variant_builder_add(b, "{sv}", "log_group", g_variant_new_uint32((guint)LogGroup::LOGGER));
-        g_variant_builder_add(b, "{sv}", "log_category", g_variant_new_uint32((guint)LogCategory::DEBUG));
-        g_variant_builder_add(b, "{sv}", "log_session_token", g_variant_new_string("session_token_value"));
-        g_variant_builder_add(b, "{sv}", "log_message", g_variant_new_string("Test log message"));
-        GVariant *data = g_variant_builder_end(b);
-        g_variant_builder_unref(b);
+        GVariantBuilder *b = glib2::Builder::Create("a{sv}");
+        g_variant_builder_add(b, "{sv}", "log_group", glib2::Value::Create(LogGroup::LOGGER));
+        g_variant_builder_add(b, "{sv}", "log_category", glib2::Value::Create(LogCategory::DEBUG));
+        g_variant_builder_add(b, "{sv}", "log_session_token", glib2::Value::Create<std::string>("session_token_value"));
+        g_variant_builder_add(b, "{sv}", "log_message", glib2::Value::Create<std::string>("Test log message"));
+        GVariant *data = glib2::Builder::Finish(b);
         LogEvent parsed(data);
 
         if (LogGroup::LOGGER != parsed.group
@@ -306,8 +304,8 @@ int test2_with_session_token()
     {
         std::cout << "-- Testing parsing GVariant Tuple with session token (uuss) ... ";
         GVariant *data = g_variant_new("(uuss)",
-                                       (guint)LogGroup::BACKENDPROC,
-                                       (guint)LogCategory::INFO,
+                                       static_cast<LogGroup>(LogGroup::BACKENDPROC),
+                                       static_cast<LogCategory>(LogCategory::INFO),
                                        "session_token_val",
                                        "Parse testing again");
         LogEvent parsed(data);
@@ -344,22 +342,22 @@ int test2_with_session_token()
     std::cout << "-- Testing .GetGVariantTuple() with session token ... ";
     LogEvent reverse(LogGroup::BACKENDSTART, LogCategory::WARN, "YetAnotherSessionToken", "Yet another test");
     GVariant *revparse = reverse.GetGVariantTuple();
-    guint grp = 0;
-    guint ctg = 0;
-    gchar *sesstok = nullptr;
-    gchar *msg = nullptr;
-    g_variant_get(revparse, "(uuss)", &grp, &ctg, &sesstok, &msg);
 
-    if ((guint)reverse.group != grp
-        || (guint)reverse.category != ctg
-        || g_strcmp0(reverse.session_token.c_str(), sesstok) != 0
-        || g_strcmp0(reverse.message.c_str(), msg) != 0)
+    LogGroup grp = glib2::Value::Extract<LogGroup>(revparse, 0);
+    LogCategory ctg = glib2::Value::Extract<LogCategory>(revparse, 1);
+    std::string sesstok = glib2::Value::Extract<std::string>(revparse, 2);
+    std::string msg = glib2::Value::Extract<std::string>(revparse, 3);
+
+    if (reverse.group != grp
+        || reverse.category != ctg
+        || reverse.session_token != sesstok
+        || reverse.message != msg)
     {
         std::cout << "FAILED" << std::endl;
         std::cout << "     Input: " << reverse << std::endl;
         std::cout << "    Output: "
-                  << "group=" << std::to_string(grp) << ", "
-                  << "category=" << std::to_string(ctg) << ", "
+                  << "group=" << std::to_string(static_cast<uint32_t>(grp)) << ", "
+                  << "category=" << std::to_string(static_cast<uint32_t>(ctg)) << ", "
                   << "message='" << msg << "'" << std::endl;
         ++ret;
     }
@@ -367,8 +365,6 @@ int test2_with_session_token()
     {
         std::cout << "PASSED" << std::endl;
     }
-    g_free(sesstok);
-    g_free(msg);
     g_variant_unref(revparse);
 
     try

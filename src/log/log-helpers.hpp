@@ -14,6 +14,7 @@
 #include <sstream>
 #include <string>
 #include <array>
+#include <gdbuspp/glib2/utils.hpp>
 
 
 class LogException : public std::exception
@@ -36,6 +37,7 @@ class LogException : public std::exception
     std::string errorstr;
     std::string details;
 };
+
 
 
 
@@ -69,6 +71,24 @@ const std::array<const std::string, LogGroupCount> LogGroup_str = {
      "Network Configuration",
      "External Service"}};
 
+template <>
+inline const char *glib2::DataType::DBus<LogGroup>() noexcept
+{
+    return "u";
+}
+
+template <>
+inline LogGroup glib2::Value::Get<LogGroup>(GVariant *v) noexcept
+{
+    return static_cast<LogGroup>(glib2::Value::Get<uint32_t>(v));
+}
+
+template <>
+inline LogGroup glib2::Value::Extract<LogGroup>(GVariant *v, int elm) noexcept
+{
+    return static_cast<LogGroup>(glib2::Value::Extract<uint32_t>(v, elm));
+}
+
 
 enum class LogCategory : uint8_t
 {
@@ -82,6 +102,26 @@ enum class LogCategory : uint8_t
     CRIT,      /**< Critical - These requires users attention */
     FATAL      /**< Fatal errors - The current operation is going to stop */
 };
+
+
+template <>
+inline const char *glib2::DataType::DBus<LogCategory>() noexcept
+{
+    return "u";
+}
+
+template <>
+inline LogCategory glib2::Value::Get<LogCategory>(GVariant *v) noexcept
+{
+    return static_cast<LogCategory>(glib2::Value::Get<uint32_t>(v));
+}
+
+template <>
+inline LogCategory glib2::Value::Extract<LogCategory>(GVariant *v, int elm) noexcept
+{
+    return static_cast<LogCategory>(glib2::Value::Extract<uint32_t>(v, elm));
+}
+
 
 const std::array<const std::string, 9> LogCategory_str = {
     {
