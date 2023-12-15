@@ -120,6 +120,31 @@ class ReqQueueMain : public DBus::Object::Base
                           "t_QueueFetch",
                           "t_QueueCheck",
                           "t_ProvideResponse");
+        queue->AddCallback(
+            RequiresQueue::CallbackType::CHECK_TYPE_GROUP,
+            [this]()
+            {
+                this->cb_counters[RequiresQueue::CallbackType::CHECK_TYPE_GROUP]++;
+            });
+        queue->AddCallback(
+            RequiresQueue::CallbackType::QUEUE_CHECK,
+            [this]()
+            {
+                this->cb_counters[RequiresQueue::CallbackType::QUEUE_CHECK]++;
+            });
+        queue->AddCallback(
+            RequiresQueue::CallbackType::QUEUE_FETCH,
+            [this]()
+            {
+                this->cb_counters[RequiresQueue::CallbackType::QUEUE_FETCH]++;
+            });
+        queue->AddCallback(
+            RequiresQueue::CallbackType::PROVIDE_RESPONSE,
+            [this]()
+            {
+                this->cb_counters[RequiresQueue::CallbackType::PROVIDE_RESPONSE]++;
+            });
+
         init();
 
         AddMethod("ServerDumpResponse",
@@ -147,7 +172,24 @@ class ReqQueueMain : public DBus::Object::Base
         validate->AddInput("iteration", "u");
         validate->AddOutput("result", "b");
     }
-    ~ReqQueueMain() = default;
+
+    ~ReqQueueMain() noexcept
+    {
+        std::cout << "------------------" << std::endl
+            << "Callback statistics:" << std::endl
+            << "t_QueueCheckTypeGroup called: "
+            << cb_counters[RequiresQueue::CallbackType::CHECK_TYPE_GROUP]
+            << std::endl
+            << "t_QueueFetch called:          "
+            << cb_counters[RequiresQueue::CallbackType::QUEUE_FETCH]
+            << std::endl
+            << "t_QueueCheck called:          "
+            << cb_counters[RequiresQueue::CallbackType::QUEUE_CHECK]
+            << std::endl
+            << "t_ProvideResponse called:     "
+            << cb_counters[RequiresQueue::CallbackType::PROVIDE_RESPONSE]
+            << std::endl;
+    }
 
 
     const bool Authorize(const DBus::Authz::Request::Ptr request) override
@@ -161,6 +203,7 @@ class ReqQueueMain : public DBus::Object::Base
     DBus::Connection::Ptr dbuscon{nullptr};
     RequiresQueueDebug::Ptr queue{nullptr};
     std::mutex init_mtx;
+    std::map<RequiresQueue::CallbackType, uint64_t> cb_counters{};
 
     void init()
     {

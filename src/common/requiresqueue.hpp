@@ -93,6 +93,31 @@ class RequiresQueue
     using Ptr = std::shared_ptr<RequiresQueue>;
     typedef std::tuple<ClientAttentionType, ClientAttentionGroup> ClientAttTypeGroup;
 
+    enum class CallbackType
+    {
+        CHECK_TYPE_GROUP,
+        QUEUE_FETCH,
+        QUEUE_CHECK,
+        PROVIDE_RESPONSE
+    };
+
+
+    class Callbacks
+    {
+      public:
+        using CBFunction = std::function<void()>;
+
+        Callbacks();
+        ~Callbacks() noexcept = default;
+
+        void AddCallback(const CallbackType type, CBFunction func);
+        void RunCallback(const CallbackType type) const;
+
+      private:
+        std::map<CallbackType, CBFunction> collection = {};
+    };
+
+
     [[nodiscard]] static RequiresQueue::Ptr Create()
     {
         return RequiresQueue::Ptr(new RequiresQueue);
@@ -124,6 +149,23 @@ class RequiresQueue
                     const std::string &meth_queuefetch,
                     const std::string &meth_queuechk,
                     const std::string &meth_provideresp);
+
+
+    /**
+     *  Attach a callback to be called when the RequiresQueue methods
+     *  are called via D-Bus.
+     *
+     *  This feature can be used by an implementation to trigger an
+     *  operation when, for example, some credentials has been provided.
+     *
+     *  The callback function (CBFunction) is a function which takes no
+     *  arguments and does not return any value.
+     *
+     * @param type CallbackType where to attach the callback function
+     * @param func Callbacks::CBFunction containing the callback logic
+     */
+    void AddCallback(const CallbackType type, Callbacks::CBFunction func);
+
 
     /**
      *  Empties and clears all the required items in the RequiresQueue
@@ -376,4 +418,7 @@ protected:
 
 
     RequiresQueue();
+
+  private:
+    Callbacks callbacks;
 };

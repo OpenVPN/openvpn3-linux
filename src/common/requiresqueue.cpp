@@ -64,6 +64,33 @@ RequiresQueueException::RequiresQueueException(std::string errname, std::string 
 
 
 /*
+ *  RequiresQueue::Callbacks
+ */
+RequiresQueue::Callbacks::Callbacks()
+{
+    collection[CallbackType::CHECK_TYPE_GROUP] = nullptr;
+    collection[CallbackType::QUEUE_CHECK] = nullptr;
+    collection[CallbackType::QUEUE_FETCH] = nullptr;
+    collection[CallbackType::PROVIDE_RESPONSE] = nullptr;
+}
+
+
+void RequiresQueue::Callbacks::AddCallback(const CallbackType type, CBFunction func)
+{
+    collection[type] = std::move(func);
+}
+
+
+void RequiresQueue::Callbacks::RunCallback(const CallbackType type) const
+{
+    if (collection.at(type))
+    {
+        std::invoke(collection.at(type));
+    }
+}
+
+
+/*
  *  RequiresQueue
  */
 
@@ -137,6 +164,12 @@ void RequiresQueue::QueueSetup(DBus::Object::Base *object_ptr,
 }
 
 
+void RequiresQueue::AddCallback(const CallbackType type, Callbacks::CBFunction func)
+{
+    callbacks.AddCallback(type, func);
+}
+
+
 void RequiresQueue::ClearAll() noexcept
 {
     reqids.clear();
@@ -202,6 +235,7 @@ GVariant *RequiresQueue::QueueFetchGVariant(GVariant *parameters) const
                                                e.name.c_str(),
                                                e.user_description.c_str(),
                                                e.hidden_input);
+                callbacks.RunCallback(CallbackType::QUEUE_FETCH);
                 return elmt;
             }
         }
@@ -216,6 +250,11 @@ void RequiresQueue::UpdateEntry(ClientAttentionType type,
                                 unsigned int id,
                                 std::string newvalue)
 {
+    if (QueueDone(type, group))
+    {
+        throw RequiresQueueException("User input not required");
+    }
+
     for (auto &e : slots)
     {
         if (e.type == type
@@ -226,6 +265,8 @@ void RequiresQueue::UpdateEntry(ClientAttentionType type,
             {
                 e.provided = true;
                 e.value = newvalue;
+
+                callbacks.RunCallback(CallbackType::PROVIDE_RESPONSE);
                 return;
             }
             else
@@ -362,6 +403,7 @@ std::vector<RequiresQueue::ClientAttTypeGroup> RequiresQueue::QueueCheckTypeGrou
             }
         }
     }
+    callbacks.RunCallback(CallbackType::CHECK_TYPE_GROUP);
     return ret;
 }
 
@@ -383,6 +425,7 @@ GVariant *RequiresQueue::QueueCheckTypeGroupGVariant() const noexcept
                                           static_cast<unsigned int>(type),
                                           static_cast<unsigned int>(group)));
     }
+    callbacks.RunCallback(CallbackType::CHECK_TYPE_GROUP);
     return glib2::Builder::FinishWrapped(bld);
 }
 
@@ -400,6 +443,7 @@ std::vector<unsigned int> RequiresQueue::QueueCheck(ClientAttentionType type,
             ret.push_back(e.id);
         }
     }
+    callbacks.RunCallback(CallbackType::QUEUE_CHECK);
     return ret;
 }
 
@@ -428,6 +472,7 @@ GVariant *RequiresQueue::QueueCheckGVariant(GVariant *parameters) const noexcept
     // Clean-up GVariant builders
     g_variant_builder_unref(bld);
     g_variant_builder_unref(ret);
+    callbacks.RunCallback(CallbackType::QUEUE_CHECK);
 
     return result;
 }
