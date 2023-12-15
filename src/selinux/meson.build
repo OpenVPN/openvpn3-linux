@@ -13,17 +13,20 @@ endif
 build_selinux = get_option('selinux_policy').enabled()
 cmd_make = find_program('make', required: build_selinux)
 cmd_bzip2 = find_program('bzip2', required: build_selinux)
+selinux_makefile = selinux_devel_path / 'Makefile'
 if (not cmd_make.found() or not cmd_bzip2.found())
     build_selinux = false
 else
-    if (not fs.exists(selinux_devel_path / 'Makefile'))
-        warning('SELinux policy compilation Makefile missing')
+    build_selinux = get_option('selinux_policy').enabled() or get_option('selinux_policy').auto()
+    if (not fs.exists(selinux_makefile))
+        warning('SELinux policy compilation Makefile missing: ' + selinux_makefile)
         build_selinux = false
-    else
-        build_selinux = get_option('selinux_policy').auto()
     endif
 endif
 message('SELinux policy compilation: ' + build_selinux.to_string())
+if (get_option('selinux_policy').enabled() and not build_selinux)
+    error('Cannot continue with SELinux policy building enforced')
+endif
 if (build_selinux)
     message('SELinux policy development dir:' + selinux_devel_path)
 endif
@@ -33,7 +36,7 @@ builder_args = [
         policy_builder,
         '@CURRENT_SOURCE_DIR@',
         '@PRIVATE_DIR@',
-        selinux_devel_path / 'Makefile',
+        selinux_makefile,
         '@OUTPUT@'
 ]
 
