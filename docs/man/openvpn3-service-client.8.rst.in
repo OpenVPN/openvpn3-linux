@@ -67,15 +67,6 @@ OPTIONS
                 or terminal.  Log events will be coloured based on the log
                 level of the event.
 
---signal-broadcast
-                Normally, the ``openvpn3-service-client`` will attach a
-                log stream to the ``openvpn3-service-logger`` service.  By
-                providing this option, it will instead broadcast all log events
-                to all listeners on the system.  This is more useful for
-                debugging when the standard logging does not provide any clues.
-                This is not recommended for production and may leak session
-                sensitive information.
-
 --disable-protect-socket
                 The VPN client can protect the socket being used for the UDP/TCP
                 connection to the VPN server from being routed over the VPN

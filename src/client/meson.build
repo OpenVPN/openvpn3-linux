@@ -6,12 +6,43 @@
 #  Copyright (C)  David Sommerseth <davids@openvpn.net>
 
 
+# openvpn3-service-client
+bin_backend_client = executable(
+    'openvpn3-service-client-dev',
+    [
+        'openvpn3-service-client.cpp',
+
+    ],
+    include_directories: [include_dirs, '../..'],
+    dependencies: [
+        base_dependencies,
+        dco_dependencies,
+    ],
+    link_with: [
+        common_code,
+        configmgr_lib,
+        netcfgmgr_lib,
+    ],
+    install: true,
+    install_dir: get_option('libexecdir') / meson.project_name()
+)
+# D-Bus policy
+configure_file(
+    input: '../policy/net.openvpn.v3.client.conf.in',
+    output: 'net.openvpn.v3.client.conf',
+    configuration: configuration_data(dbus_config),
+    install: true,
+    install_dir: dbus_policy_dir,
+)
+
+
 #  openvpn3-service-backendstart
 bin_backend_start = executable(
     'openvpn3-service-backendstart-dev',
     [
         'openvpn3-service-backendstart.cpp',
     ],
+    cpp_args: '-DBACKEND_CLIENT_BIN="' + bin_backend_client.name() + '"',
     include_directories: [include_dirs, '../..'],
     dependencies: [
         base_dependencies,

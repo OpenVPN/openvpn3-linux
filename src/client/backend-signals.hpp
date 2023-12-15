@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -15,60 +15,90 @@
 
 #pragma once
 
+#include <memory>
 #include <sstream>
-#include <openvpn/common/rc.hpp>
+#include <thread>
+#include <gdbuspp/signals/group.hpp>
+#include <gdbuspp/credentials/query.hpp>
 
+#include "dbus/constants.hpp"
 #include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"
 
-class BackendSignals : public LogSender,
-                       public DBusConnectionCreds,
-                       public RC<thread_unsafe_refcount>
+class BackendSignals : public LogSender
 {
   public:
-    typedef RCPtr<BackendSignals> Ptr;
-    BackendSignals(GDBusConnection *conn, LogGroup lgroup, std::string session_token, LogWriter *logwr)
-        : LogSender(conn, lgroup, OpenVPN3DBus_interf_backends, OpenVPN3DBus_rootp_backends_session, logwr),
-          DBusConnectionCreds(conn),
+    using Ptr = std::shared_ptr<BackendSignals>;
+
+    BackendSignals(DBus::Connection::Ptr conn,
+                   LogGroup lgroup,
+                   std::string session_token,
+                   LogWriter *logwr)
+        : LogSender(conn,
+                    lgroup,
+                    Constants::GenPath("backends/session"),
+                    Constants::GenInterface("backends"),
+                    true,
+                    logwr),
           session_token(session_token)
     {
         SetLogLevel(default_log_level);
-        configure_signal_targets();
+
+        RegisterSignal("AttentionRequired",
+                       {{"type", glib2::DataType::DBus<ClientAttentionType>()},
+                        {"group", glib2::DataType::DBus<ClientAttentionGroup>()},
+                        {"message", glib2::DataType::DBus<std::string>()}});
+
+        // Default targets for D-Bus signals are the
+        // Session Manager (net.openvpn.v3.sessions) and the
+        // Log service (net.openvpn.v3.log).
+        auto creds = DBus::Credentials::Query::Create(conn);
+        auto sessmgr_busn = creds->GetUniqueBusName(Constants::GenServiceName("sessions"));
+        AddTarget(sessmgr_busn);
+        AddTarget(creds->GetUniqueBusName(Constants::GenServiceName("log")));
+
+        // Prepare the RegistrationRequest signal; this is only to be sent
+        // to the Session Manager (net.openvpn.v3.sessions).  A dedicated signal
+        // group is created for this, with only the session manager as the
+        // recipient.  This Signal Group is used in RegistrationRequest()
+        GroupCreate("sessionmgr");
+        GroupAddTarget("sessionmgr", sessmgr_busn);
+        RegisterSignal("RegistrationRequest",
+                       {{"busname", glib2::DataType::DBus<std::string>()},
+                        {"token", glib2::DataType::DBus<std::string>()},
+                        {"pid", glib2::DataType::DBus<pid_t>()}});
     }
 
 
-    void EnableBroadcast(bool brdcst) noexcept
+    void RegistrationRequest(const std::string &busname,
+                             const std::string &token,
+                             const pid_t pid)
     {
-        broadcast = brdcst;
-        configure_signal_targets();
+        GVariant *param = g_variant_new("(ssi)",
+                                        busname.c_str(),
+                                        token.c_str(),
+                                        pid);
+        GroupSendGVariant("sessionmgr", "RegistrationRequest", param);
     }
 
 
-    const std::string GetSessionPath() const
+    void StatusChange(const StatusEvent &statusev) override
     {
-        return get_object_path();
+        status = statusev;
+        LogSender::StatusChange(statusev);
     }
 
 
-    void SetSessionPath(const std::string &session_path)
+    void StatusChange(const StatusMajor maj, const StatusMinor min, const std::string &msg = "")
     {
-        set_object_path(session_path);
+        status = StatusEvent(maj, min, msg);
+        LogSender::StatusChange(status);
     }
 
 
-    const std::string GetLogIntrospection() override
-    {
-        return LogEvent::GetIntrospection("Log", true);
-    }
-
-
-    /**
-     *  Reimplement LogSender::Log() to prefix all messages with
-     *  the session token.
-     *
-     * @param logev  LogEvent object containing the log message to log.
-     */
-    void Log(const LogEvent &logev, bool duplicate_check = false, const std::string &target = "") final
+    void Log(const LogEvent &logev,
+             bool duplicate_check = false,
+             const std::string &target = "") final
     {
         LogEvent l(logev, session_token);
         LogSender::Log(l, duplicate_check, logger_busname);
@@ -80,7 +110,7 @@ class BackendSignals : public LogSender,
      *
      * @param Log message to send to the log subscribers
      */
-    void LogFATAL(std::string msg) override
+    void LogFATAL(const std::string &msg) override
     {
         Log(LogEvent(log_group, LogCategory::FATAL, msg));
         // This is essentially a glib2 hack, to allow on going signals to
@@ -90,36 +120,6 @@ class BackendSignals : public LogSender,
             sleep(3);
             kill(getpid(), SIGHUP);
         }));
-    }
-
-
-    /**
-     * Sends a StatusChange signal
-     *
-     * @param major  StatusMajor type of the status change
-     * @param minor  StatusMinor type of the status change
-     * @param msg    String message with more optional details.  Can be "" if
-     *               no message is needed.
-     */
-    void StatusChange(const StatusMajor major, const StatusMinor minor, std::string msg)
-    {
-        status.major = major;
-        status.minor = minor;
-        status.message = msg;
-        SendTarget(sessionmgr_busname, "StatusChange", status.GetGVariantTuple());
-        SendTarget(logger_busname, "StatusChange", status.GetGVariantTuple());
-    }
-
-
-    /**
-     * Sends a StatusChange signal, without sending a string message
-     *
-     * @param major  StatusMajor type of the status change
-     * @param minor  StatusMinor type of the status change
-     */
-    void StatusChange(const StatusMajor major, const StatusMinor minor)
-    {
-        StatusChange(major, minor, "");
     }
 
 
@@ -135,47 +135,37 @@ class BackendSignals : public LogSender,
                       const ClientAttentionGroup att_group,
                       std::string msg)
     {
-        GVariant *params = g_variant_new("(uus)", (guint)att_type, (guint)att_group, msg.c_str());
-        SendTarget(sessionmgr_busname, "AttentionRequired", params);
+        GVariant *params = g_variant_new("(uus)",
+                                         static_cast<uint32_t>(att_type),
+                                         static_cast<uint32_t>(att_group),
+                                         msg.c_str());
+        SendGVariant("AttentionRequired", params);
     }
 
 
     /**
      *  Retrieve the last status message processed
      *
-     * @return  Returns a GVariant Glib2 object containing a key/value
+     * @return  Returns a GVariant object containing a key/value
      *          dictionary of the last signal sent
      */
     GVariant *GetLastStatusChange()
     {
         if (status.empty())
         {
-            return NULL; // Nothing have been logged, nothing to report
+            // Nothing have been logged, nothing to report
+            StatusEvent empty;
+            return empty.GetGVariantTuple();
         }
         return status.GetGVariantTuple();
     }
 
 
   private:
-    const unsigned int default_log_level = 6; // LogCategory::DEBUG
-    bool broadcast = false;
-    std::string session_token;
+    const uint32_t default_log_level = 6; // LogCategory::DEBUG
+    std::string session_token = {};
     std::string sessionmgr_busname = {};
     std::string logger_busname = {};
-    StatusEvent status;
+    StatusEvent status{};
     std::unique_ptr<std::thread> delayed_shutdown;
-
-    void configure_signal_targets()
-    {
-        if (!broadcast)
-        {
-            sessionmgr_busname = GetUniqueBusID(OpenVPN3DBus_name_sessions);
-            logger_busname = GetUniqueBusID(OpenVPN3DBus_name_log);
-        }
-        else
-        {
-            sessionmgr_busname = {};
-            logger_busname = {};
-        }
-    }
 };

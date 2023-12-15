@@ -2,10 +2,10 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018 - 2023  Arne Schwabe <arne@openvpn.net>
-//  Copyright (C) 2021 - 2023  Heiko Hund <heiko@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C)  Heiko Hund <heiko@openvpn.net>
 //
 
 /**
@@ -23,6 +23,8 @@
 #include <string>
 #include <thread>
 #include <mutex>
+
+#include "build-config.h"
 
 #include <openvpn/common/platform.hpp>
 
@@ -103,7 +105,9 @@ class ParseCR_TEXT
 class DummyTunBuilder : public ClientAPI::OpenVPNClient
 {
   public:
-    DummyTunBuilder(GDBusConnection *dbusconn, BackendSignals *signal, const std::string &session_token)
+    DummyTunBuilder(DBus::Connection::Ptr dbusconn,
+                    BackendSignals::Ptr signal,
+                    const std::string &session_token)
     {
     }
 
@@ -145,11 +149,10 @@ class DummyTunBuilder : public ClientAPI::OpenVPNClient
 /**
  *  Core VPN Client implementation of ClientAPI::OpenVPNClient
  */
-class CoreVPNClient : public CLIENTBASECLASS,
-                      public RC<thread_safe_refcount>
+class CoreVPNClient : public CLIENTBASECLASS
 {
   public:
-    typedef RCPtr<CoreVPNClient> Ptr;
+    using Ptr = std::shared_ptr<CoreVPNClient>;
 
     /**
      *  Constructs the CoreVPNClient object
@@ -162,14 +165,13 @@ class CoreVPNClient : public CLIENTBASECLASS,
      *                    will be used to process dynamic challenge
      *                    interactions and more.
      */
-    CoreVPNClient(GDBusConnection *dbusconn,
-                  BackendSignals *signal,
-                  RequiresQueue *userinputq,
-                  const std::string session_token)
-        : CLIENTBASECLASS(dbusconn, signal, session_token),
+    CoreVPNClient(DBus::Connection::Ptr dbusconn,
+                  BackendSignals::Ptr signal_,
+                  RequiresQueue::Ptr userinputq_,
+                  const std::string &session_tok)
+        : CLIENTBASECLASS(dbusconn, signal_, session_tok),
           disabled_socket_protect_fd(false),
-          signal(signal),
-          userinputq(userinputq),
+          userinputq(userinputq_),
           failed_signal_sent(false),
           run_status(StatusMinor::CONN_INIT)
     {
@@ -266,13 +268,12 @@ class CoreVPNClient : public CLIENTBASECLASS,
     std::string dc_cookie;
     unsigned long evntcount = 0;
     bool disabled_socket_protect_fd;
-    BackendSignals *signal;
-    RequiresQueue *userinputq;
+    RequiresQueue::Ptr userinputq;
     std::mutex event_mutex;
     bool failed_signal_sent;
     StatusMinor run_status;
     bool initial_connection = true;
-    unsigned int auth_pending_timeout = 0;
+    uint32_t auth_pending_timeout = 0;
 
 
     bool socket_protect(int socket, std::string remote, bool ipv6) override
@@ -322,7 +323,7 @@ class CoreVPNClient : public CLIENTBASECLASS,
                 // Save the dynamic challenge cookie in the userinputq object.
                 // This is due to this object will be wiped after the
                 // disconnect, so we can't save any states in this object.
-                unsigned int dcrid = userinputq->RequireAdd(
+                uint32_t dcrid = userinputq->RequireAdd(
                     ClientAttentionType::CREDENTIALS,
                     ClientAttentionGroup::CHALLENGE_DYNAMIC,
                     "dynamic_challenge_cookie",

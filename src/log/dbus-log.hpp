@@ -33,9 +33,9 @@ class LogFilter
     /**
      *  Prepares the log filter
      *
-     * @param log_level unsigned int of the default log level
+     * @param log_level uint32_t of the default log level
      */
-    LogFilter(const unsigned int log_level_val) noexcept;
+    LogFilter(const uint32_t log_level_val) noexcept;
     virtual ~LogFilter() = default;
 
 
@@ -51,18 +51,18 @@ class LogFilter
      *  Log level 5 - includes log level 4 + Verb 2 messages
      *  Log level 6 - includes log level 5 + Debug messages (everything)
      *
-     * @param loglev  unsigned int with the log level to use
+     * @param loglev  uint32_t with the log level to use
      */
-    void SetLogLevel(const unsigned int loglev);
+    void SetLogLevel(const uint32_t loglev);
 
 
     /**
      * Retrieves the log level in use
      *
-     * @return unsigned int, with values between 0-6
+     * @return uint32_t with values between 0-6
      *
      */
-    unsigned int GetLogLevel() noexcept;
+    uint32_t GetLogLevel() noexcept;
 
 
     /**
@@ -99,7 +99,7 @@ class LogFilter
 
 
   private:
-    unsigned int log_level;
+    uint32_t log_level;
     std::vector<std::string> filter_paths;
 };
 
@@ -117,7 +117,7 @@ class LogSender : public DBus::Signals::Group,
               LogWriter *lgwr = nullptr);
     virtual ~LogSender() = default;
 
-    void StatusChange(const StatusEvent &statusev);
+    virtual void StatusChange(const StatusEvent &statusev);
 
     void ProxyLog(const LogEvent &logev, const std::string &path = "");
     void ProxyStatusChange(const StatusEvent &status, const std::string &path);

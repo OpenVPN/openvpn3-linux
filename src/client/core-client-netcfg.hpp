@@ -2,12 +2,12 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018 - 2023  Arne Schwabe <arne@openvpn.net>
-//  Copyright (C) 2019 - 2023  Lev Stipakov <lev@openvpn.net>
-//  Copyright (C) 2021 - 2023  Antonio Quartulli <antonio@openvpn.net>
-//  Copyright (C) 2021 - 2023  Heiko Hund <heiko@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C)  Lev Stipakov <lev@openvpn.net>
+//  Copyright (C)  Antonio Quartulli <antonio@openvpn.net>
+//  Copyright (C)  Heiko Hund <heiko@openvpn.net>
 //
 
 /**
@@ -32,22 +32,22 @@ template <class T>
 class NetCfgTunBuilder : public T
 {
   public:
-    typedef RCPtr<NetCfgTunBuilder> Ptr;
+    using Ptr = std::shared_ptr<NetCfgTunBuilder>;
 
-    NetCfgTunBuilder(GDBusConnection *dbuscon,
-                     BackendSignals *signal,
-                     const std::string &session_token)
+    NetCfgTunBuilder(DBus::Connection::Ptr dbuscon,
+                     BackendSignals::Ptr signal,
+                     const std::string &session_token_)
         : disabled_dns_config(false),
-          netcfgmgr(dbuscon),
           signal(signal),
-          session_token(session_token),
+          netcfgmgr(dbuscon),
+          session_token(session_token_),
           session_name("")
     {
     }
 
 
 #ifdef OPENVPN3_CORE_CLI_TEST
-    NetCfgTunBuilder(GDBusConnection *dbuscon)
+    NetCfgTunBuilder(DBus::Connection::Ptr dbuscon)
         : disabled_dns_config(false),
           netcfgmgr(dbuscon)
     {
@@ -268,22 +268,9 @@ class NetCfgTunBuilder : public T
         {
             ret = device->Establish();
         }
-        catch (const DBusProxyAccessDeniedException &excp)
+        catch (const DBus::Exception &excp)
         {
-            signal->StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_FAILED);
-            try
-            {
-                tun_builder_teardown(true);
-            }
-            catch (...)
-            {
-            }
-            signal->LogFATAL("Access denied calling NetCfgDevice::Establish(): "
-                             + std::string(excp.what()));
-        }
-        catch (const DBusException &excp)
-        {
-            signal->StatusChange(StatusMajor::CONNECTION, StatusMinor::CONN_FAILED);
+            signal->StatusChange(StatusEvent(StatusMajor::CONNECTION, StatusMinor::CONN_FAILED));
             try
             {
                 tun_builder_teardown(true);
@@ -322,12 +309,12 @@ class NetCfgTunBuilder : public T
             {
                 device->Destroy();
             }
-            catch (const DBusException &excp)
+            catch (const DBus::Exception &excp)
             {
                 signal->LogCritical("tun_builder_teardown: "
                                     + std::string(excp.GetRawError()));
             }
-            device.reset(nullptr);
+            device.reset();
         }
         else
         {
@@ -335,7 +322,7 @@ class NetCfgTunBuilder : public T
             {
                 device->Disable();
             }
-            catch (const DBusException &excp)
+            catch (const DBus::Exception &excp)
             {
                 signal->LogCritical(excp.GetRawError());
             }
@@ -355,7 +342,7 @@ class NetCfgTunBuilder : public T
         std::string devpath = "/"; // Object paths cannot be empty
         if (device)
         {
-            devpath = device->GetProxyPath();
+            devpath = device->GetDevicePath();
         }
         return netcfgmgr.ProtectSocket(socket, remote, ipv6, devpath);
     }
@@ -377,7 +364,7 @@ class NetCfgTunBuilder : public T
 
     std::string netcfg_get_device_path()
     {
-        return (device ? device->GetProxyPath() : "");
+        return (device ? device->GetDevicePath() : "");
     }
 
 
@@ -491,7 +478,7 @@ class NetCfgTunBuilder : public T
   protected:
     bool disabled_dns_config;
     std::string dns_scope = "global";
-
+    BackendSignals::Ptr signal;
 
   private:
     bool create_device()
@@ -505,9 +492,9 @@ class NetCfgTunBuilder : public T
             device.reset(netcfgmgr.getVirtualInterface(devpath));
             try
             {
-                device->SetProperty("dns_scope", dns_scope);
+                device->SetDNSscope(dns_scope);
             }
-            catch (const DBusException &excp)
+            catch (const DBus::Exception &excp)
             {
                 signal->LogCritical("Failed changing DNS Scope: "
                                     + std::string(excp.GetRawError()));
@@ -527,7 +514,6 @@ class NetCfgTunBuilder : public T
     NetCfgProxy::DCO::Ptr dco;
 #endif
     NetCfgProxy::Manager netcfgmgr;
-    BackendSignals *signal;
     std::string session_token;
     std::string session_name;
 };

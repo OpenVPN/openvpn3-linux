@@ -25,13 +25,13 @@
 //  LogFilter class implementation
 //
 
-LogFilter::LogFilter(const unsigned int loglvl) noexcept
+LogFilter::LogFilter(const uint32_t loglvl) noexcept
     : log_level(loglvl)
 {
 }
 
 
-void LogFilter::SetLogLevel(const unsigned int loglev)
+void LogFilter::SetLogLevel(const uint32_t loglev)
 {
     if (loglev > 6)
     {
@@ -41,7 +41,7 @@ void LogFilter::SetLogLevel(const unsigned int loglev)
 }
 
 
-unsigned int LogFilter::GetLogLevel() noexcept
+uint32_t LogFilter::GetLogLevel() noexcept
 {
     return log_level;
 }
