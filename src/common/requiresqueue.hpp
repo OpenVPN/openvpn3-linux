@@ -38,7 +38,7 @@ struct RequiresSlot
 {
     RequiresSlot();
 
-    unsigned int id;              ///< Unique ID per type/group
+    uint32_t id;                  ///< Unique ID per type/group
     ClientAttentionType type;     ///< Type categorization of the requirement
     ClientAttentionGroup group;   ///< Group categorization of the
                                   ///< requirement
@@ -186,7 +186,7 @@ class RequiresQueue
      *
      * @return Returns the assigned ID for this requirement
      */
-    unsigned int RequireAdd(ClientAttentionType type,
+    uint32_t RequireAdd(ClientAttentionType type,
                             ClientAttentionGroup group,
                             std::string name,
                             std::string descr,
@@ -220,7 +220,10 @@ class RequiresQueue
      *
      *  @throws RequiresQueueException on errors
      */
-    void UpdateEntry(ClientAttentionType type, ClientAttentionGroup group, unsigned int id, std::string newvalue);
+    void UpdateEntry(ClientAttentionType type,
+                     ClientAttentionGroup group,
+                     uint32_t id,
+                     std::string newvalue);
 
     /**
      *  This is a variant UpdateEntry() extracting the item update information
@@ -246,7 +249,7 @@ class RequiresQueue
      */
     void ResetValue(ClientAttentionType type,
                     ClientAttentionGroup group,
-                    unsigned int id);
+                    uint32_t id);
 
     /**
      *  Retrieve the value provided by a user, using request type, group and
@@ -264,7 +267,7 @@ class RequiresQueue
      */
     const std::string GetResponse(ClientAttentionType type,
                                   ClientAttentionGroup group,
-                                  unsigned int id) const;
+                                  uint32_t id) const;
 
     /**
      *  Retrieve the value provided by a user, using the assigned variable
@@ -282,7 +285,7 @@ class RequiresQueue
      */
     const std::string GetResponse(ClientAttentionType type,
                                   ClientAttentionGroup group,
-                                  std::string name) const;
+                                  const std::string &name) const;
 
     /**
      *  Retrieve the number of requires slots which have been prepared for
@@ -293,7 +296,7 @@ class RequiresQueue
      *
      * @return Returns the number of require slots prepared
      */
-    unsigned int QueueCount(ClientAttentionType type,
+    uint32_t QueueCount(ClientAttentionType type,
                             ClientAttentionGroup group) const noexcept;
 
     /**
@@ -330,10 +333,10 @@ class RequiresQueue
      * @param type   ClientAttentionType of the queue to check
      * @param group  ClientAttentionGroup of the queue to check
      *
-     * @return Returns a std::vector<unsigned int> with IDs to variables
+     * @return Returns a std::vector<uint32_t> with IDs to variables
      *         still not been provided by the user
      */
-    std::vector<unsigned int> QueueCheck(ClientAttentionType type,
+    std::vector<uint32_t> QueueCheck(ClientAttentionType type,
                                          ClientAttentionGroup group) const noexcept;
 
     /**
@@ -396,7 +399,7 @@ class RequiresQueue
 
 protected:
     ///< Index counter map for type:group pairs; see get_reqid_index() for details
-    std::map<unsigned int, unsigned int> reqids;
+    std::map<uint32_t, uint32_t> reqids;
 
     ///< All gathered requests needed to be satisfied
     std::vector<struct RequiresSlot> slots;
@@ -411,9 +414,10 @@ protected:
      *
      * @return  Returns a unique index based on the two input arguments
      */
-    unsigned int get_reqid_index(ClientAttentionType type, ClientAttentionGroup group)
+    uint32_t get_reqid_index(ClientAttentionType type,
+                                 ClientAttentionGroup group)
     {
-        return ((unsigned int)type * 100) + (unsigned int)group;
+        return ((uint32_t)type * 100) + (uint32_t)group;
     }
 
 

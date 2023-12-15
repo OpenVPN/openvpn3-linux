@@ -130,15 +130,15 @@ void RequiresQueue::QueueSetup(DBus::Object::Base *object_ptr,
                                                  auto r = this->QueueFetchGVariant(args->GetMethodParameters());
                                                  args->SetMethodReturn(r);
                                              });
-    queue_fetch->AddInput("type", "u");
-    queue_fetch->AddInput("group", "u");
-    queue_fetch->AddInput("id", "u");
-    queue_fetch->AddOutput("type", "u");
-    queue_fetch->AddOutput("group", "u");
-    queue_fetch->AddOutput("id", "u");
-    queue_fetch->AddOutput("name", "s");
-    queue_fetch->AddOutput("descripiton", "s");
-    queue_fetch->AddOutput("hidden_input", "b");
+    queue_fetch->AddInput("type", glib2::DataType::DBus<ClientAttentionType>());
+    queue_fetch->AddInput("group", glib2::DataType::DBus<ClientAttentionGroup>());
+    queue_fetch->AddInput("id", glib2::DataType::DBus<uint32_t>());
+    queue_fetch->AddOutput("type", glib2::DataType::DBus<uint32_t>());
+    queue_fetch->AddOutput("group", glib2::DataType::DBus<uint32_t>());
+    queue_fetch->AddOutput("id", glib2::DataType::DBus<uint32_t>());
+    queue_fetch->AddOutput("name", glib2::DataType::DBus<std::string>());
+    queue_fetch->AddOutput("descripiton", glib2::DataType::DBus<std::string>());
+    queue_fetch->AddOutput("hidden_input", glib2::DataType::DBus<bool>());
 
     auto queue_chk = object_ptr->AddMethod(meth_queuechk,
                                            [this](DBus::Object::Method::Arguments::Ptr args)
@@ -146,8 +146,8 @@ void RequiresQueue::QueueSetup(DBus::Object::Base *object_ptr,
                                                auto r = this->QueueCheckGVariant(args->GetMethodParameters());
                                                args->SetMethodReturn(r);
                                            });
-    queue_chk->AddInput("type", "u");
-    queue_chk->AddInput("group", "u");
+    queue_chk->AddInput("type", glib2::DataType::DBus<ClientAttentionType>());
+    queue_chk->AddInput("group",  glib2::DataType::DBus<ClientAttentionGroup>());
     queue_chk->AddOutput("indexes", "au");
 
 
@@ -157,10 +157,10 @@ void RequiresQueue::QueueSetup(DBus::Object::Base *object_ptr,
                                                this->UpdateEntry(args->GetMethodParameters());
                                                args->SetMethodReturn(nullptr);
                                            });
-    prov_resp->AddInput("type", "u");
-    prov_resp->AddInput("group", "u");
-    prov_resp->AddInput("id", "u");
-    prov_resp->AddInput("value", "s");
+    prov_resp->AddInput("type", glib2::DataType::DBus<ClientAttentionType>());
+    prov_resp->AddInput("group", glib2::DataType::DBus<ClientAttentionGroup>());
+    prov_resp->AddInput("id", glib2::DataType::DBus<uint32_t>());
+    prov_resp->AddInput("value", glib2::DataType::DBus<std::string>());
 }
 
 
@@ -187,7 +187,7 @@ void RequiresQueue::ClearAll() noexcept
     }
 }
 
-unsigned int RequiresQueue::RequireAdd(ClientAttentionType type,
+uint32_t RequiresQueue::RequireAdd(ClientAttentionType type,
                                        ClientAttentionGroup group,
                                        std::string name,
                                        std::string descr,
@@ -210,9 +210,9 @@ unsigned int RequiresQueue::RequireAdd(ClientAttentionType type,
 GVariant *RequiresQueue::QueueFetchGVariant(GVariant *parameters) const
 {
     glib2::Utils::checkParams(__func__, parameters, "(uuu)", 3);
-    ClientAttentionType type{static_cast<ClientAttentionType>(glib2::Value::Extract<uint32_t>(parameters, 0))};
-    ClientAttentionGroup group{static_cast<ClientAttentionGroup>(glib2::Value::Extract<uint32_t>(parameters, 1))};
-    guint id{glib2::Value::Extract<uint32_t>(parameters, 2)};
+    ClientAttentionType type = glib2::Value::Extract<ClientAttentionType>(parameters, 0);
+    ClientAttentionGroup group = glib2::Value::Extract<ClientAttentionGroup>(parameters, 1);
+    uint32_t id = glib2::Value::Extract<uint32_t>(parameters, 2);
 
     // Fetch the requested slot id
     for (auto &e : slots)
@@ -247,7 +247,7 @@ GVariant *RequiresQueue::QueueFetchGVariant(GVariant *parameters) const
 
 void RequiresQueue::UpdateEntry(ClientAttentionType type,
                                 ClientAttentionGroup group,
-                                unsigned int id,
+                                uint32_t id,
                                 std::string newvalue)
 {
     if (QueueDone(type, group))
@@ -258,7 +258,7 @@ void RequiresQueue::UpdateEntry(ClientAttentionType type,
     for (auto &e : slots)
     {
         if (e.type == type
-            && e.group == (ClientAttentionGroup)group
+            && e.group == group
             && e.id == id)
         {
             if (!e.provided)
@@ -289,9 +289,9 @@ void RequiresQueue::UpdateEntry(GVariant *indata)
     // usually a backend process who asked for user input
     //
     glib2::Utils::checkParams(__func__, indata, "(uuus)", 4);
-    ClientAttentionType type = static_cast<ClientAttentionType>(glib2::Value::Extract<uint32_t>(indata, 0));
-    ClientAttentionGroup group = static_cast<ClientAttentionGroup>(glib2::Value::Extract<uint32_t>(indata, 1));
-    guint id = glib2::Value::Extract<uint32_t>(indata, 2);
+    ClientAttentionType type = glib2::Value::Extract<ClientAttentionType>(indata, 0);
+    ClientAttentionGroup group = glib2::Value::Extract<ClientAttentionGroup>(indata, 1);
+    uint32_t id = glib2::Value::Extract<uint32_t>(indata, 2);
     std::string value = glib2::Value::Extract<std::string>(indata, 3);
 
     if (value.empty())
@@ -307,7 +307,7 @@ void RequiresQueue::UpdateEntry(GVariant *indata)
 
 void RequiresQueue::ResetValue(ClientAttentionType type,
                                ClientAttentionGroup group,
-                               unsigned int id)
+                               uint32_t id)
 {
     for (auto &e : slots)
     {
@@ -324,7 +324,7 @@ void RequiresQueue::ResetValue(ClientAttentionType type,
 
 const std::string RequiresQueue::GetResponse(ClientAttentionType type,
                                              ClientAttentionGroup group,
-                                             unsigned int id) const
+                                             uint32_t id) const
 {
     for (auto &e : slots)
     {
@@ -343,7 +343,7 @@ const std::string RequiresQueue::GetResponse(ClientAttentionType type,
 
 const std::string RequiresQueue::GetResponse(ClientAttentionType type,
                                              ClientAttentionGroup group,
-                                             std::string name) const
+                                             const std::string &name) const
 {
     for (auto &e : slots)
     {
@@ -360,10 +360,10 @@ const std::string RequiresQueue::GetResponse(ClientAttentionType type,
 }
 
 
-unsigned int RequiresQueue::QueueCount(ClientAttentionType type,
+uint32_t RequiresQueue::QueueCount(ClientAttentionType type,
                                        ClientAttentionGroup group) const noexcept
 {
-    unsigned int ret = 0;
+    uint32_t ret = 0;
     for (auto &e : slots)
     {
         if (type == e.type && group == e.group)
@@ -422,18 +422,18 @@ GVariant *RequiresQueue::QueueCheckTypeGroupGVariant() const noexcept
         std::tie(type, group) = e;
         glib2::Builder::Add(bld,
                             g_variant_new("(uu)",
-                                          static_cast<unsigned int>(type),
-                                          static_cast<unsigned int>(group)));
+                                          static_cast<uint32_t>(type),
+                                          static_cast<uint32_t>(group)));
     }
     callbacks.RunCallback(CallbackType::CHECK_TYPE_GROUP);
     return glib2::Builder::FinishWrapped(bld);
 }
 
 
-std::vector<unsigned int> RequiresQueue::QueueCheck(ClientAttentionType type,
+std::vector<uint32_t> RequiresQueue::QueueCheck(ClientAttentionType type,
                                                     ClientAttentionGroup group) const noexcept
 {
-    std::vector<unsigned int> ret;
+    std::vector<uint32_t> ret;
     for (auto &e : slots)
     {
         if (type == e.type
@@ -451,30 +451,14 @@ std::vector<unsigned int> RequiresQueue::QueueCheck(ClientAttentionType type,
 GVariant *RequiresQueue::QueueCheckGVariant(GVariant *parameters) const noexcept
 {
     glib2::Utils::checkParams(__func__, parameters, "(uu)", 2);
-    ClientAttentionType type = static_cast<ClientAttentionType>(glib2::Value::Extract<uint32_t>(parameters, 0));
-    ClientAttentionGroup group = static_cast<ClientAttentionGroup>(glib2::Value::Extract<uint32_t>(parameters, 1));
+    ClientAttentionType type = glib2::Value::Extract<ClientAttentionType>(parameters, 0);
+    ClientAttentionGroup group = glib2::Value::Extract<ClientAttentionGroup>(parameters, 1);
 
     // Convert the std::vector to a GVariant based array GDBus can use
     // as the method call response
-    std::vector<unsigned int> qchk_result = QueueCheck(type, group);
-    GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("au"));
-    for (auto &e : qchk_result)
-    {
-        g_variant_builder_add(bld, "u", e);
-    }
-
-    // Wrap the GVariant array into a tuple which GDBus expects
-    GVariantBuilder *ret = g_variant_builder_new(G_VARIANT_TYPE_TUPLE);
-    g_variant_builder_add_value(ret, g_variant_builder_end(bld));
-
-    GVariant *result = g_variant_builder_end(ret);
-
-    // Clean-up GVariant builders
-    g_variant_builder_unref(bld);
-    g_variant_builder_unref(ret);
+    GVariant *ret = glib2::Value::CreateTupleWrapped<uint32_t>(QueueCheck(type, group));
     callbacks.RunCallback(CallbackType::QUEUE_CHECK);
-
-    return result;
+    return ret;
 }
 
 
@@ -501,8 +485,8 @@ bool RequiresQueue::QueueDone(GVariant *parameters)
 {
     // First, grab the slot ID ...
     glib2::Utils::checkParams(__func__, parameters, "(uuus)", 4);
-    ClientAttentionType type = static_cast<ClientAttentionType>(glib2::Value::Extract<uint32_t>(parameters, 0));
-    ClientAttentionGroup group = static_cast<ClientAttentionGroup>(glib2::Value::Extract<uint32_t>(parameters, 1));
+    ClientAttentionType type = glib2::Value::Extract<ClientAttentionType>(parameters, 0);
+    ClientAttentionGroup group = glib2::Value::Extract<ClientAttentionGroup>(parameters, 1);
 
     // Check if there are any elements needing attentions in that slot ID
     return QueueCheck(type, group).size() == 0;
