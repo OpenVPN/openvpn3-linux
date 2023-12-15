@@ -151,7 +151,7 @@ struct LogEvent
             }
             else
             {
-                THROW_LOGEXCEPTION("LogEvent: Invalid LogEvent data type");
+                throw LogException("LogEvent: Invalid LogEvent data type");
             }
             remove_trailing_nl();
         }
@@ -468,7 +468,7 @@ struct LogEvent
 
         if (len != message.size())
         {
-            THROW_LOGEXCEPTION("Failed retrieving log event message text"
+            throw LogException("Failed retrieving log event message text"
                                " (inconsistent length)");
         }
     }

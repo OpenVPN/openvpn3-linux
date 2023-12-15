@@ -2,10 +2,10 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018 - 2023  Arne Schwabe <arne@openvpn.net>
-//  Copyright (C) 2019 - 2023  Lev Stipakov <lev@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C)  Lev Stipakov <lev@openvpn.net>
 //
 
 #pragma once
@@ -19,32 +19,10 @@
 class LogException : public std::exception
 {
   public:
-    LogException(const std::string &err, const char *filen, const unsigned int linenum, const char *fn) noexcept
+    LogException(const std::string &err) noexcept
         : errorstr(err)
     {
-#ifdef DEBUG_EXCEPTIONS
-        details = std::string("[LogException: ")
-                  + std::string(filen)
-                  + std::string(":") + std::to_string(linenum)
-                  + std::string(", ") + std::string(fn)
-                  + std::string("()] ") + errorstr;
-#else
         details = errorstr;
-#endif
-    }
-
-    LogException(std::string &&err, const char *filen, const unsigned int linenum, const char *fn) noexcept
-        : errorstr(std::move(err))
-    {
-#ifdef DEBUG_EXCEPTIONS
-        details = std::string("[LogException: ")
-                  + std::string(filen)
-                  + std::string(":") + std::to_string(linenum)
-                  + std::string(", ") + std::string(fn)
-                  + std::string("()] ") + errorstr;
-#else
-        details = errorstr;
-#endif
     }
 
     virtual ~LogException() noexcept = default;
@@ -58,8 +36,6 @@ class LogException : public std::exception
     std::string errorstr;
     std::string details;
 };
-
-#define THROW_LOGEXCEPTION(fault_data) throw LogException(fault_data, __FILE__, __LINE__, __FUNCTION__)
 
 
 

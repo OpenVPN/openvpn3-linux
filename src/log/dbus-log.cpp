@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -33,7 +33,7 @@ void LogFilter::SetLogLevel(const unsigned int loglev)
 {
     if (loglev > 6)
     {
-        THROW_LOGEXCEPTION("LogSender: Invalid log level");
+        throw LogException("LogSender: Invalid log level");
     }
     log_level = loglev;
 }
@@ -324,11 +324,11 @@ void LogConsumerProxy::process_log_event(DBus::Signals::Event::Ptr event)
 
         case LogProxyExceptionType::INVALID:
             // Re-throw the exception if the log event is invalid
-            THROW_LOGEXCEPTION("LogConsumerProxy: "
+            throw LogException("LogConsumerProxy: "
                                + std::string(excp.what()));
 
         default:
-            THROW_LOGEXCEPTION("LogConsmerProxy:  Unknown error");
+            throw LogException("LogConsmerProxy:  Unknown error");
         }
     }
     catch (...)
