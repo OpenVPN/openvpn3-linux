@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -19,6 +19,8 @@
 #include <sstream>
 #include <glib.h>
 #include <gdbuspp/exceptions.hpp>
+#include <gdbuspp/glib2/utils.hpp>
+#include <gdbuspp/signals/group.hpp>
 
 #include "dbus/constants.hpp"
 
@@ -36,6 +38,12 @@ struct StatusEvent
         ALL = 3
     };
 
+    static DBus::Signals::SignalArgList SignalDeclaration() noexcept
+    {
+        return {{"code_major", glib2::DataType::DBus<StatusMajor>()},
+                {"code_minor", glib2::DataType::DBus<StatusMinor>()},
+                {"message", glib2::DataType::DBus<std::string>()}};
+    }
 
     StatusEvent(const StatusMajor maj, const StatusMinor min, const std::string &msg = "")
     {
@@ -86,7 +94,7 @@ struct StatusEvent
         major = StatusMajor::UNSET;
         minor = StatusMinor::UNSET;
         message.clear();
-        print_mode = (uint8_t)PrintMode::ALL;
+        print_mode = static_cast<uint8_t>(PrintMode::ALL);
 #ifdef DEBUG_CORE_EVENTS
         show_numeric_status = true;
 #else
@@ -142,7 +150,10 @@ struct StatusEvent
      */
     GVariant *GetGVariantTuple() const
     {
-        return g_variant_new("(uus)", (guint32)major, (guint32)minor, message.c_str());
+        return g_variant_new("(uus)",
+                             static_cast<guint32>(major),
+                             static_cast<guint32>(minor),
+                             message.c_str());
     }
 
 
@@ -155,13 +166,11 @@ struct StatusEvent
      */
     GVariant *GetGVariantDict() const
     {
-        GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
-        g_variant_builder_add(b, "{sv}", "major", g_variant_new_uint32((guint)major));
-        g_variant_builder_add(b, "{sv}", "minor", g_variant_new_uint32((guint)minor));
-        g_variant_builder_add(b, "{sv}", "status_message", g_variant_new_string(message.c_str()));
-        GVariant *data = g_variant_builder_end(b);
-        g_variant_builder_unref(b);
-        return data;
+        GVariantBuilder *b = glib2::Builder::Create("a{sv}");
+        g_variant_builder_add(b, "{sv}", "major", glib2::Value::Create(major));
+        g_variant_builder_add(b, "{sv}", "minor", glib2::Value::Create(minor));
+        g_variant_builder_add(b, "{sv}", "status_message", glib2::Value::Create(message));
+        return glib2::Builder::Finish(b);
     }
 
 
@@ -192,8 +201,8 @@ struct StatusEvent
             status_num << "[";
             if (s.print_mode & (uint8_t)StatusEvent::PrintMode::MAJOR)
             {
-                status_num << std::to_string((unsigned)s.major);
-                status_str << StatusMajor_str[(unsigned)s.major];
+                status_num << std::to_string(static_cast<unsigned>(s.major));
+                status_str << StatusMajor_str[static_cast<unsigned>(s.major)];
             }
             if (s.print_mode == (uint8_t)StatusEvent::PrintMode::ALL)
             {
@@ -202,8 +211,8 @@ struct StatusEvent
             }
             if (s.print_mode & (uint8_t)StatusEvent::PrintMode::MINOR)
             {
-                status_num << std::to_string((unsigned)s.minor);
-                status_str << StatusMinor_str[(unsigned)s.minor];
+                status_num << std::to_string(static_cast<unsigned>(s.minor));
+                status_str << StatusMinor_str[static_cast<unsigned>(s.minor)];
             }
             status_num << "] ";
 
@@ -243,49 +252,10 @@ struct StatusEvent
      */
     void parse_dict(GVariant *status)
     {
-        GVariant *d = nullptr;
-        unsigned int v = 0;
-
-        // FIXME: Should type-check better that the input GVariant
-        //        contains the proper fields for a status object
         reset();
-        d = g_variant_lookup_value(status, "major", G_VARIANT_TYPE_UINT32);
-        if (!d)
-        {
-            throw DBus::Exception("StatusEvent", "Incorrect StatusEvent dict "
-                                                 "(missing 'major')");
-        }
-        v = g_variant_get_uint32(d);
-        major = (StatusMajor)v;
-        g_variant_unref(d);
-
-        d = g_variant_lookup_value(status, "minor", G_VARIANT_TYPE_UINT32);
-        if (!d)
-        {
-            throw DBus::Exception("StatusEvent", "Incorrect StatusEvent dict "
-                                                 "(missing 'minor')");
-        }
-        v = g_variant_get_uint32(d);
-        minor = (StatusMinor)v;
-        g_variant_unref(d);
-
-        gsize len;
-        d = g_variant_lookup_value(status,
-                                   "status_message",
-                                   G_VARIANT_TYPE_STRING);
-        if (!d)
-        {
-            throw DBus::Exception("StatusEvent", "Incorrect StatusEvent dict "
-                                                 "(missing 'status_message')");
-        }
-        message = std::string(g_variant_get_string(d, &len));
-        g_variant_unref(d);
-        if (len != message.size())
-        {
-            throw DBus::Exception("StatusEvent",
-                                  "Failed retrieving status message text "
-                                  "(inconsistent length)");
-        }
+        major = glib2::Value::Dict::Lookup<StatusMajor>(status, "major");
+        minor = glib2::Value::Dict::Lookup<StatusMinor>(status, "minor");
+        message = glib2::Value::Dict::Lookup<std::string>(status, "status_message");
     }
 
 
@@ -294,18 +264,9 @@ struct StatusEvent
      */
     void parse_tuple(GVariant *status)
     {
-        guint maj = 0;
-        guint min = 0;
-        gchar *msg = nullptr;
-        g_variant_get(status, "(uus)", &maj, &min, &msg);
-
         reset();
-        major = (StatusMajor)maj;
-        minor = (StatusMinor)min;
-        if (msg)
-        {
-            message = std::string(msg);
-            g_free(msg);
-        }
+        major = glib2::Value::Extract<StatusMajor>(status, 0);
+        minor = glib2::Value::Extract<StatusMinor>(status, 1);
+        message = glib2::Value::Extract<std::string>(status, 2);
     }
 };

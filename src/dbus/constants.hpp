@@ -14,7 +14,7 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
-
+#include <gdbuspp/glib2/utils.hpp>
 
 /*
  *  Various D-Bus bus names, root paths and interface names used
@@ -52,12 +52,34 @@ enum class StatusMajor : std::uint8_t
     PROCESS     /**< Status is related to process management */
 };
 
-const std::array<const std::string, StatusMajorCount> StatusMajor_str = {{"(unset)",
-                                                                          "Configuration",
-                                                                          "Connection",
-                                                                          "Session",
-                                                                          "PKCS#11",
-                                                                          "Process"}};
+const std::array<const std::string, StatusMajorCount> StatusMajor_str = {
+    {"(unset)",
+     "Configuration",
+     "Connection",
+     "Session",
+     "PKCS#11",
+     "Process"}};
+
+
+template <>
+inline const char *glib2::DataType::DBus<StatusMajor>() noexcept
+{
+    return "u";
+}
+
+template <>
+inline StatusMajor glib2::Value::Get<StatusMajor>(GVariant *v) noexcept
+{
+    return static_cast<StatusMajor>(glib2::Value::Get<uint32_t>(v));
+}
+
+template <>
+inline StatusMajor glib2::Value::Extract<StatusMajor>(GVariant *v, int elm) noexcept
+{
+    return static_cast<StatusMajor>(glib2::Value::Extract<uint32_t>(v, elm));
+}
+
+
 
 
 const uint8_t StatusMinorCount = 30;
@@ -139,6 +161,24 @@ const std::array<const std::string, StatusMinorCount> StatusMinor_str = {
      "Process killed"}};
 
 
+template <>
+inline const char *glib2::DataType::DBus<StatusMinor>() noexcept
+{
+    return "u";
+}
+
+template <>
+inline StatusMinor glib2::Value::Get<StatusMinor>(GVariant *v) noexcept
+{
+    return static_cast<StatusMinor>(glib2::Value::Get<uint32_t>(v));
+}
+
+template <>
+inline StatusMinor glib2::Value::Extract<StatusMinor>(GVariant *v, int elm) noexcept
+{
+    return static_cast<StatusMinor>(glib2::Value::Extract<uint32_t>(v, elm));
+}
+
 
 const uint8_t ClientAttentionTypeCount = 4;
 enum class ClientAttentionType : std::uint8_t
@@ -155,6 +195,24 @@ const std::array<const std::string, ClientAttentionTypeCount> ClientAttentionTyp
      "User Credentials",
      "PKCS#11 operation",
      "Requesting access permission"}};
+
+template <>
+inline const char *glib2::DataType::DBus<ClientAttentionType>() noexcept
+{
+    return "u";
+}
+
+template <>
+inline ClientAttentionType glib2::Value::Get<ClientAttentionType>(GVariant *v) noexcept
+{
+    return static_cast<ClientAttentionType>(glib2::Value::Get<uint32_t>(v));
+}
+
+template <>
+inline ClientAttentionType glib2::Value::Extract<ClientAttentionType>(GVariant *v, int elm) noexcept
+{
+    return static_cast<ClientAttentionType>(glib2::Value::Extract<uint32_t>(v, elm));
+}
 
 
 const uint8_t ClientAttentionGroupCount = 10;
@@ -184,3 +242,22 @@ const std::array<const std::string, ClientAttentionGroupCount> ClientAttentionGr
      "PKCS#11 sign operation",
      "PKCS#11 decrypt operation",
      "Web authentication"}};
+
+
+template <>
+inline const char *glib2::DataType::DBus<ClientAttentionGroup>() noexcept
+{
+    return "u";
+}
+
+template <>
+inline ClientAttentionGroup glib2::Value::Get<ClientAttentionGroup>(GVariant *v) noexcept
+{
+    return static_cast<ClientAttentionGroup>(glib2::Value::Get<uint32_t>(v));
+}
+
+template <>
+inline ClientAttentionGroup glib2::Value::Extract<ClientAttentionGroup>(GVariant *v, int elm) noexcept
+{
+    return static_cast<ClientAttentionGroup>(glib2::Value::Extract<uint32_t>(v, elm));
+}
