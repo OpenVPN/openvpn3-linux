@@ -17,6 +17,8 @@
 #include <gdbuspp/signals/target.hpp>
 
 #include "dbus-log.hpp"
+#include "logevent.hpp"
+#include "client/statusevent.hpp"
 
 
 //
@@ -93,23 +95,17 @@ LogSender::LogSender(DBus::Connection::Ptr dbuscon,
                      const LogGroup lgroup,
                      const std::string &objpath,
                      const std::string &interf,
+                     const bool session_token,
                      LogWriter *lgwr)
     : DBus::Signals::Group(dbuscon, objpath, interf),
       LogFilter(3),
       logwr(lgwr),
       log_group(lgroup)
 {
-    // AddTarget("", objpath, interf);
-
     RegisterSignal("Log",
-                   {{"group", "u"},
-                    {"level", "u"},
-                    {"message", "s"}});
-
+                    LogEvent::SignalDeclaration(session_token));
     RegisterSignal("StatusChange",
-                   {{"code_major", "u"},
-                    {"code_minor", "u"},
-                    {"message", "s"}});
+                   StatusEvent::SignalDeclaration());
 }
 
 

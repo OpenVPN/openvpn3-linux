@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 #pragma once
@@ -113,6 +113,7 @@ class LogSender : public DBus::Signals::Group,
               const LogGroup lgroup,
               const std::string &objpath,
               const std::string &interf,
+              const bool session_token = false,
               LogWriter *lgwr = nullptr);
     virtual ~LogSender() = default;
 
