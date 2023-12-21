@@ -40,14 +40,6 @@ base_dependencies = [
     dependency('uuid'),
 ]
 
-dco_dependencies = []
-if get_option('dco').enabled()
-    dco_dependencies = [
-        dependency('libnl-genl-3.0', version: '>= 3.2.29'),
-        dependency('protobuf', version: '>= 2.4.0'),
-    ]
-endif
-
 
 # Check Python version
 pymod = import('python')
@@ -179,6 +171,8 @@ dbus_config = {
 }
 message('D-Bus system bus services dir: ' + dbus_service_dir)
 message('D-Bus system policy dir: ' + dbus_policy_dir)
+
+subdir('src/dco')
 
 #
 #  Shared code among more components
