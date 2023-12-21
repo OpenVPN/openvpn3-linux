@@ -65,6 +65,7 @@ endif
 compiler = meson.get_compiler('cpp')
 
 # Check for the sd_id128_to_string() method in libsystemd
+sd_id128 = false
 if (dep_systemd.found())
     sd_id128 = compiler.has_function('sd_id128_to_string',
                                      prefix: '#include <systemd/sd-id128.h>',
