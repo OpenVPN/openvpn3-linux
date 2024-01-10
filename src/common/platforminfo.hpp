@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2022 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2022 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -52,6 +52,13 @@ class PlatformInfo
      */
     PlatformInfo(DBus::Connection::Ptr con);
 
+    /**
+     *  Simple test to check if the D-Bus backends are available or not.
+     *
+     * @return Returns true if the backend D-Bus service providing host
+     *         information is available, otherwise false.
+     */
+    const bool DBusAvailable() const;
 
     /**
      *  Return a string containing OS/distribution details.  It

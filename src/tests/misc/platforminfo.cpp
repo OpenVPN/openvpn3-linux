@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2022 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2022 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -14,17 +14,18 @@
 
 #include <iostream>
 #include <ostream>
-#include "dbus/core.hpp"
+#include <gdbuspp/connection.hpp>
+#include <gdbuspp/proxy.hpp>
+
 #include "common/platforminfo.hpp"
 
 
 int main()
 {
     {
-        DBus dbc(G_BUS_TYPE_SYSTEM);
-        dbc.Connect();
+        auto dbc = DBus::Connection::Create(DBus::BusType::SYSTEM);
 
-        PlatformInfo plinfo(dbc.GetConnection());
+        PlatformInfo plinfo(dbc);
         std::cout << "D-Bus approach: " << plinfo << std::endl;
     }
 

@@ -184,3 +184,17 @@ executable('manager-lookupconfigname',
     ],
     include_directories: [include_dirs, '../..'],
 )
+
+executable('platforminfo',
+    [
+        'misc/platforminfo.cpp'
+    ],
+    build_by_default: build_test_programs,
+    link_with: [
+        common_code,
+    ],
+    dependencies: [
+        base_dependencies,
+    ],
+    include_directories: [include_dirs, '../..'],
+)

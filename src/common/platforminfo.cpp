@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2022 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2022 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -11,6 +11,8 @@
  *
  * @brief  Provides an API for retrieving OS/platform details
  */
+
+#include <gdbuspp/proxy/utils.hpp>
 
 #include "platforminfo.hpp"
 
@@ -38,9 +40,20 @@ const char *PlatformInfoException::what() const noexcept
 
 PlatformInfo::PlatformInfo(DBus::Connection::Ptr con)
 {
+    if (!con)
+    {
+        return;
+    }
     proxy = DBus::Proxy::Client::Create(con, "org.freedesktop.hostname1");
     hostname1_tgt = DBus::Proxy::TargetPreset::Create("/org/freedesktop/hostname1",
                                                       "org.freedesktop.hostname1");
+}
+
+
+const bool PlatformInfo::DBusAvailable() const
+{
+    auto qry = DBus::Proxy::Utils::Query::Create(proxy);
+    return qry->Ping();
 }
 
 
@@ -48,26 +61,29 @@ const std::string PlatformInfo::str() const
 {
     std::string os_name{};
 
-    try
-    {
-        os_name = proxy->GetProperty<std::string>(hostname1_tgt,
-                                                  "OperatingSystemCPEName");
-    }
-    catch (const DBus::Exception &)
-    {
-        // Ignore errors; os_name will be empty
-    }
-
-    if (os_name.empty())
+    if (proxy)
     {
         try
         {
             os_name = proxy->GetProperty<std::string>(hostname1_tgt,
-                                                      "OperatingSystemPrettyName");
+                                                      "OperatingSystemCPEName");
         }
         catch (const DBus::Exception &)
         {
-            // Ignore errors, os_name should be empty
+            // Ignore errors; os_name will be empty
+        }
+
+        if (os_name.empty())
+        {
+            try
+            {
+                os_name = proxy->GetProperty<std::string>(hostname1_tgt,
+                                                          "OperatingSystemPrettyName");
+            }
+            catch (const DBus::Exception &)
+            {
+                // Ignore errors, os_name will be empty in this case
+            }
         }
     }
 
