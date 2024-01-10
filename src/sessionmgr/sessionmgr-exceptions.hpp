@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2020 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2020 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -16,21 +16,16 @@
 
 #include <string>
 #include <exception>
-
-#include "dbus/exceptions.hpp"
+#include <gdbuspp/exceptions.hpp>
 
 namespace SessionManager {
 
-
-#define THROW_SESSIONMGR(m) throw SessionManager::Exception(m, __FILE__, __LINE__, __FUNCTION__)
-class Exception : public DBusException
+class Exception : public DBus::Exception
 {
   public:
     Exception(const std::string msg,
-              const char *file,
-              const int line,
-              const char *method)
-        : DBusException("SessionManager", msg, file, line, method)
+              GError *gliberr = nullptr)
+        : DBus::Exception("SessionManager", msg, gliberr)
     {
     }
 };

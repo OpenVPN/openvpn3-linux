@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2020 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2020 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -16,11 +16,11 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <sstream>
+#include <gdbuspp/glib2/utils.hpp>
 
-#include "dbus/core.hpp"
-#include "dbus/exceptions.hpp"
 #include "sessionmgr-exceptions.hpp"
 
 
@@ -146,4 +146,23 @@ class Event
     uid_t owner = 65535;
 };
 
+
 } // namespace SessionManager
+
+template <>
+inline const char *glib2::DataType::DBus<SessionManager::EventType>() noexcept
+{
+    return glib2::DataType::DBus<std::uint16_t>();
+}
+
+template <>
+inline SessionManager::EventType glib2::Value::Get<SessionManager::EventType>(GVariant *v) noexcept
+{
+    return static_cast<SessionManager::EventType>(glib2::Value::Get<uint16_t>(v));
+}
+
+template <>
+inline SessionManager::EventType glib2::Value::Extract<SessionManager::EventType>(GVariant *v, int elm) noexcept
+{
+    return static_cast<SessionManager::EventType>(glib2::Value::Extract<uint16_t>(v, elm));
+}

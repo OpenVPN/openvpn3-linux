@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2020 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2020 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -13,10 +13,9 @@
  */
 
 #include <gio/gio.h>
+#include <gdbuspp/glib2/utils.hpp>
 
 #include "sessionmgr-events.hpp"
-#include "dbus/glibutils.hpp"
-
 
 SessionManager::Event::Event(const std::string &path,
                              EventType type,
@@ -29,17 +28,17 @@ SessionManager::Event::Event(GVariant *params)
     std::string g_type(g_variant_get_type_string(params));
     if ("(oqu)" != g_type)
     {
-        THROW_SESSIONMGR("Invalid data type for SessionManager::Event()");
+        throw SessionManager::Exception("Invalid data type for SessionManager::Event()");
     }
 
-    path = GLibUtils::ExtractValue<std::string>(params, 0);
-    type = (SessionManager::EventType)GLibUtils::ExtractValue<uint16_t>(params, 1);
-    owner = GLibUtils::ExtractValue<uid_t>(params, 2);
+    path = glib2::Value::Extract<std::string>(params, 0);
+    type = glib2::Value::Extract<SessionManager::EventType>(params, 1);
+    owner = glib2::Value::Extract<uid_t>(params, 2);
 
     if (type > SessionManager::EventType::SESS_DESTROYED
         || type < SessionManager::EventType::SESS_CREATED)
     {
-        THROW_SESSIONMGR("Invalid SessionManager::EventType value");
+        throw SessionManager::Exception("Invalid SessionManager::EventType value");
     }
 }
 
@@ -54,15 +53,11 @@ bool SessionManager::Event::empty() const noexcept
 
 GVariant *SessionManager::Event::GetGVariant() const noexcept
 {
-    GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("(oqu)"));
-    g_variant_builder_add(b, "o", path.c_str());
-    g_variant_builder_add(b, "q", (guint16)type);
-    g_variant_builder_add(b, "u", owner);
-
-    GVariant *ret = g_variant_builder_end(b);
-    g_variant_builder_clear(b);
-    g_variant_builder_unref(b);
-    return ret;
+    GVariantBuilder *b = glib2::Builder::Create("(oqu)");
+    glib2::Builder::Add(b, path, "o");
+    glib2::Builder::Add(b, type);
+    glib2::Builder::Add(b, owner);
+    return glib2::Builder::Finish(b);
 }
 
 
