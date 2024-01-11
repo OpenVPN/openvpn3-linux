@@ -2,9 +2,9 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2019 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2019 - 2023  Lev Stipakov <lev@openvpn.net>
-//  Copyright (C) 2019 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  Lev Stipakov <lev@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <string>
 #include <map>
+#include <gdbuspp/glib2/utils.hpp>
 
 
 enum class NetCfgChangeType : std::uint16_t
@@ -38,6 +39,25 @@ enum class NetCfgChangeType : std::uint16_t
     DNS_SEARCH_REMOVED = 1 << 10,   //   1024
     // clang-format on
 };
+
+template <>
+inline const char *glib2::DataType::DBus<NetCfgChangeType>() noexcept
+{
+    return glib2::DataType::DBus<std::uint32_t>();
+}
+
+template <>
+inline NetCfgChangeType glib2::Value::Get<NetCfgChangeType>(GVariant *v) noexcept
+{
+    return static_cast<NetCfgChangeType>(glib2::Value::Get<uint32_t>(v));
+}
+
+template <>
+inline NetCfgChangeType glib2::Value::Extract<NetCfgChangeType>(GVariant *v, int elm) noexcept
+{
+    return static_cast<NetCfgChangeType>(glib2::Value::Extract<uint32_t>(v, elm));
+}
+
 
 typedef std::map<std::string, std::string> NetCfgChangeDetails;
 
