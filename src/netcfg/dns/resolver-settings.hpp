@@ -35,16 +35,23 @@ class ResolverSettings
   public:
     typedef std::shared_ptr<ResolverSettings> Ptr;
 
-    ResolverSettings(ssize_t idx);
+    /**
+     *  Construct a new ResolverSettings object for a specific
+     *  network interface.  The index is used to link which
+     *  VPN session this ResolverSettings object is related to
+     *
+     * @param index   Numeric VPN session index link
+     *
+     * @return Initialized ResolverSettings::Ptr object
+     */
+    [[nodiscard]] static Ptr Create(const ssize_t if_index=0)
+    {
+        return Ptr(new ResolverSettings(if_index));
+    }
+
     ~ResolverSettings();
 
-    ResolverSettings(const ResolverSettings::Ptr &orig)
-    {
-        index = orig->index;
-        enabled = orig->enabled;
-        name_servers = orig->name_servers;
-        search_domains = orig->search_domains;
-    }
+    ResolverSettings(const ResolverSettings::Ptr &orig);
 
 
     /**
@@ -54,7 +61,7 @@ class ResolverSettings
      *
      * @return  Returns an ssize_t value of the current index
      */
-    ssize_t GetIndex() const noexcept;
+    const ssize_t GetIndex() const noexcept;
 
 
     /**
@@ -231,30 +238,30 @@ class ResolverSettings
      *          decoded ResolverSertings information
      */
     friend std::ostream &operator<<(std::ostream &os,
-                                    const ResolverSettings &rs)
+                                    const ResolverSettings::Ptr &rs)
     {
-        if ((rs.name_servers.empty() && rs.search_domains.empty())
-            || rs.prepare_removal)
+        if ((rs->name_servers.empty() && rs->search_domains.empty())
+            || rs->prepare_removal)
         {
             return os << "(No DNS resolver settings)";
         }
 
-        if (!rs.enabled)
+        if (!rs->enabled)
         {
             return os << "(Settings not enabled)";
         }
         std::stringstream s;
-        if (rs.name_servers.size() > 0)
+        if (rs->name_servers.size() > 0)
         {
             s << "DNS resolvers: ";
             bool first = true;
-            for (const auto &r : rs.name_servers)
+            for (const auto &r : rs->name_servers)
             {
                 s << (!first ? ", " : "") << r;
                 first = false;
             }
         }
-        if (rs.search_domains.size() > 0)
+        if (rs->search_domains.size() > 0)
         {
             if (s.str().size() > 0)
             {
@@ -262,7 +269,7 @@ class ResolverSettings
             }
             s << "Search domains: ";
             bool first = true;
-            for (const auto &sd : rs.search_domains)
+            for (const auto &sd : rs->search_domains)
             {
                 s << (!first ? ", " : "") << sd;
                 first = false;
@@ -308,13 +315,15 @@ class ResolverSettings
 
 
   private:
-    ssize_t index = -1;
+    const ssize_t index = -1;
     bool enabled = false;
     bool prepare_removal = false;
     std::string device_name;
     Scope scope = DNS::Scope::GLOBAL;
     std::vector<std::string> name_servers;
     std::vector<std::string> search_domains;
+
+    ResolverSettings(const ssize_t idx);
 };
 } // namespace DNS
 } // namespace NetCfg

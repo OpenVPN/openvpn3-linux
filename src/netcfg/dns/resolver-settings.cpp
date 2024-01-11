@@ -31,8 +31,15 @@ namespace DNS {
 // NetCfg::DNS::ResolverSettings
 //
 
-ResolverSettings::ResolverSettings(ssize_t idx)
+ResolverSettings::ResolverSettings(const ssize_t idx)
     : index(idx)
+{
+}
+
+
+ResolverSettings::ResolverSettings(const ResolverSettings::Ptr &orig)
+    : index(orig->index), enabled(orig->enabled),
+      name_servers(orig->name_servers), search_domains(orig->name_servers)
 {
 }
 
@@ -41,7 +48,7 @@ ResolverSettings::~ResolverSettings() = default;
 
 
 
-ssize_t ResolverSettings::GetIndex() const noexcept
+const ssize_t ResolverSettings::GetIndex() const noexcept
 {
     return index;
 }
