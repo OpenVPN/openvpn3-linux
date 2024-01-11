@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2019 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2019 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -17,10 +17,10 @@
 #include <algorithm>
 #include <string>
 #include <vector>
-
 #include <glib.h>
+#include <gio/gio.h>
+#include <gdbuspp/glib2/utils.hpp>
 
-#include "dbus/core.hpp"
 #include "netcfg/dns/resolver-settings.hpp"
 #include "netcfg/netcfg-exception.hpp"
 
@@ -170,13 +170,13 @@ std::vector<std::string> ResolverSettings::GetSearchDomains(bool removable) cons
 
 const std::string ResolverSettings::SetDNSScope(GVariant *params)
 {
-    std::string params_type(g_variant_get_type_string(params));
+    std::string params_type = glib2::DataType::Extract(params);
     if ("s" != params_type)
     {
         throw NetCfgException("[SetDNSScope] Invalid D-Bus data type: " + params_type);
     }
 
-    std::string recv_scope(g_variant_get_string(params, nullptr));
+    std::string recv_scope = glib2::Value::Get<std::string>(params);
     if ("global" == recv_scope)
     {
         scope = DNS::Scope::GLOBAL;
@@ -193,77 +193,46 @@ const std::string ResolverSettings::SetDNSScope(GVariant *params)
 
 const std::string ResolverSettings::AddNameServers(GVariant *params)
 {
-    std::string params_type(g_variant_get_type_string(params));
+    std::string params_type = glib2::DataType::Extract(params);
     if ("(as)" != params_type)
     {
         throw NetCfgException("[AddNameServers] Invalid D-Bus data type");
     }
 
-    GVariantIter *srvlist = nullptr;
-    g_variant_get(params, "(as)", &srvlist);
-    if (nullptr == srvlist)
+    std::string ret{};
+    for (const auto &srv : glib2::Value::ExtractVector<std::string>(params))
     {
-        throw NetCfgException("[AddNameServers] Failed to extract parameters");
-    }
-
-    GVariant *srv = nullptr;
-    std::string ret;
-    while ((srv = g_variant_iter_next_value(srvlist)))
-    {
-        gsize len;
-        std::string v(g_variant_get_string(srv, &len));
-
-        // Avoid adding duplicated entries
         auto needle = std::find(name_servers.begin(),
                                 name_servers.end(),
-                                v);
-        if (std::end(name_servers) == needle)
+                                srv);
+        if (name_servers.end() == needle)
         {
-            name_servers.push_back(v);
+            name_servers.push_back(srv);
         }
-        ret += (!ret.empty() ? ", " : "") + v;
-
-        g_variant_unref(srv);
+        ret += (!ret.empty() ? ", " : "") + srv;
     }
-    g_variant_iter_free(srvlist);
-
     return ret;
 }
 
 
 void ResolverSettings::AddSearchDomains(GVariant *params)
 {
-    std::string params_type(g_variant_get_type_string(params));
+    std::string params_type = glib2::DataType::Extract(params);
     if ("(as)" != params_type)
     {
         throw NetCfgException("[AddSearchDomain] Invalid D-Bus data type");
     }
 
-    GVariantIter *srchlist = nullptr;
-    g_variant_get(params, "(as)", &srchlist);
-    if (nullptr == srchlist)
+    for (const auto &dom : glib2::Value::ExtractVector<std::string>(params))
     {
-        throw NetCfgException("[AddSearchDomain] Failed to extract parameters");
-    }
-
-    GVariant *srchdom = nullptr;
-    while ((srchdom = g_variant_iter_next_value(srchlist)))
-    {
-        gsize len;
-        std::string v(g_variant_get_string(srchdom, &len));
-
-        // Avoid adding duplicated entries
         auto needle = std::find(search_domains.begin(),
                                 search_domains.end(),
-                                v);
-        if (std::end(search_domains) == needle)
+                                dom);
+        if (search_domains.end() == needle)
         {
-            search_domains.push_back(v);
+            search_domains.push_back(dom);
         }
-
-        g_variant_unref(srchdom);
     }
-    g_variant_iter_free(srchlist);
 }
 } // namespace DNS
 } // namespace NetCfg

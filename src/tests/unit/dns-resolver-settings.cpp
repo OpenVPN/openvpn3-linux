@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2020 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2020 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -15,10 +15,11 @@
 
 #include <iostream>
 #include <sstream>
+#include <gdbuspp/glib2/utils.hpp>
+#include <glib.h>
+
 #include <gtest/gtest.h>
 
-#include <openvpn/common/rc.hpp>
-#include "dbus/core.hpp"
 #include "netcfg/dns/resolver-settings.hpp"
 
 using namespace NetCfg::DNS;
@@ -265,10 +266,9 @@ TEST(DNSResolverSettings, GVariantTests_SingleNameServer)
 
     // Insert a single name server and search domain
     std::vector<std::string> ns = {{"9.9.9.9"}};
-    GVariant *d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(ns));
+    GVariant *d = glib2::Value::CreateTupleWrapped(ns);
     std::string res = r1->AddNameServers(d);
     ASSERT_STREQ(res.c_str(), "9.9.9.9");
-    g_variant_unref(d);
 
     std::vector<std::string> chk = r1->GetNameServers();
     ASSERT_EQ(chk.size(), 1);
@@ -288,9 +288,8 @@ TEST(DNSResolverSettings, GVariantTests_SingleSearchDomain)
 
     // Insert a single name server and search domain
     std::vector<std::string> sd = {{"sub0.example.net"}};
-    GVariant *d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(sd));
+    GVariant *d = glib2::Value::CreateTupleWrapped(sd);
     r1.AddSearchDomains(d);
-    g_variant_unref(d);
 
     std::vector<std::string> chk = r1.GetSearchDomains();
     ASSERT_EQ(chk.size(), 1);
@@ -311,15 +310,13 @@ TEST(DNSResolverSettings, GVariantTests_MultipleEntries)
 
     // Insert a single name server and search domain
     std::vector<std::string> ns = {{"10.0.0.1", "10.0.2.2", "10.0.3.3"}};
-    GVariant *d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(ns));
+    GVariant *d = glib2::Value::CreateTupleWrapped(ns);
     std::string res = r1->AddNameServers(d);
     ASSERT_STREQ(res.c_str(), "10.0.0.1, 10.0.2.2, 10.0.3.3");
-    g_variant_unref(d);
 
     std::vector<std::string> sd = {{"sub1.example.net", "sub2.example.com", "sub3.example.org", "sub4.test.example"}};
-    d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(sd));
+    d = glib2::Value::CreateTupleWrapped(sd);
     r1->AddSearchDomains(d);
-    g_variant_unref(d);
 
     std::vector<std::string> chk_ns = r1->GetNameServers();
     ASSERT_EQ(chk_ns.size(), 3);
@@ -344,15 +341,13 @@ TEST(DNSResolverSettings, GVariantTests_DuplicatedEntries)
 
     // Insert a single name server and search domain
     std::vector<std::string> ns = {{"10.0.0.1", "10.0.0.2", "10.0.0.2"}};
-    GVariant *d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(ns));
+    GVariant *d = glib2::Value::CreateTupleWrapped(ns);
     r1->AddNameServers(d);
-    g_variant_unref(d);
     ASSERT_EQ(r1->GetNameServers().size(), 2);
 
     std::vector<std::string> sd = {
         {"sub1.example.net", "sub2.example.com", "sub1.example.net", "sub2.example.com"}};
-    d = GLibUtils::wrapInTuple(GLibUtils::GVariantBuilderFromVector(sd));
+    d = glib2::Value::CreateTupleWrapped(sd);
     r1->AddSearchDomains(d);
-    g_variant_unref(d);
     ASSERT_EQ(r1->GetSearchDomains().size(), 2);
 }
