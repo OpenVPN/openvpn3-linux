@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2020 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2020 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -12,10 +12,12 @@
  * @brief  Unit test for common/core-extensions.hpp
  */
 
+#include "build-config.h"
+
 #include <string>
 #include <sstream>
 
-#include "openvpn/log/logsimple.hpp"
+#include <openvpn/log/logsimple.hpp>
 
 #include <gtest/gtest.h>
 #include "common/core-extensions.hpp"
@@ -229,8 +231,8 @@ TEST_F(AccessServerMetaOpts, string_export)
                                      must_have.end(),
                                      [o](const struct _option_tests &tc)
                                      {
-            return tc.key == o;
-        });
+                                         return tc.key == o;
+                                     });
         EXPECT_NE(mh, must_have.end())
             << "Option '" << o << "' was found unexpectedly in string_export() data";
 

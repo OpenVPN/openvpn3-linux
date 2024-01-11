@@ -129,6 +129,8 @@ src/python/openvpn3/constants.py
 src/python/openvpn3/gen-python-constants
 src/python/openvpn3/*.pyc
 src/service-autostart/net.openvpn*.service
+subprojects/googletest-*
+subprojects/packagecache/
 test-driver
 test-suite.log
 __pycache__/

@@ -9,6 +9,8 @@
 #  Test programs
 #
 
+subdir('unit')
+
 executable('request-queue-service',
     [
         'dbus/request-queue-service.cpp'

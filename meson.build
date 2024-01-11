@@ -159,6 +159,11 @@ if (get_option('test_programs').auto())
     build_test_programs = get_option('debug')
 endif
 
+build_unit_tests = get_option('unit_tests').enabled()
+if (get_option('unit_tests').auto())
+    build_unit_tests = not get_option('test_programs').disabled()
+endif
+
 message('OpenVPN 3 Linux service binary directory: ' + get_option('prefix') / libexec_dir)
 
 #
@@ -191,6 +196,7 @@ common_code = static_library(
             'src/common/timestamp.cpp',
             'src/common/utils.cpp',
             'src/log/dbus-log.cpp',
+            'src/log/logtag.cpp',
             'src/log/logmetadata.cpp',
             'src/log/logwriters/journald.cpp',
             'src/log/logwriters/streamwriter.cpp',
@@ -218,12 +224,29 @@ netcfgmgr_lib = static_library(
         [
             'src/netcfg/proxy-netcfg-device.cpp',
             'src/netcfg/proxy-netcfg-mgr.cpp',
+            'src/netcfg/netcfg-changeevent.cpp',
+            'src/netcfg/dns/resolver-settings.cpp',
+            #'src/netcfg/dns/settings-manager.cpp',
+            dco_keyconfig_h,
+        ],
+        dependencies: [
+            base_dependencies,
+            dco_dependencies,
+        ],
+        include_directories: include_dirs,
+)
+
+sessionmgr_lib = static_library(
+        'sessionmgr',
+        [
+            'src/sessionmgr/sessionmgr-events.cpp'
         ],
         dependencies: [
             base_dependencies,
         ],
         include_directories: include_dirs,
 )
+
 
 #
 #  Base D-Bus policy

@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2019 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2019 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -15,10 +15,10 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <gdbuspp/glib2/utils.hpp>
 
 #include <gtest/gtest.h>
 
-#include "dbus/core.hpp"
 #include "netcfg/netcfg-changeevent.hpp"
 
 namespace unittest {
@@ -156,32 +156,30 @@ TEST(NetCfgChangeEvent, parse_gvariant_valid_data)
     //
     // All values below here must match the values as provided in event
     //
-    GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("(usa{ss})"));
-    g_variant_builder_add(b, "u", (guint32)NetCfgChangeType::ROUTE_ADDED);
-    g_variant_builder_add(b, "s", "tun33");
+    GVariantBuilder *b = glib2::Builder::Create("(usa{ss})");
+    glib2::Builder::Add(b, NetCfgChangeType::ROUTE_ADDED);
+    glib2::Builder::Add(b, std::string("tun33"));
 
     // Add the details - key/value dictionary
-    g_variant_builder_open(b, G_VARIANT_TYPE("a{ss}"));
+    glib2::Builder::OpenChild(b, "a{ss}");
 
     // Add IP address
-    g_variant_builder_open(b, G_VARIANT_TYPE("{ss}"));
-    g_variant_builder_add(b, "s", "ip_address");
-    g_variant_builder_add(b, "s", "2001:db8:a050::1");
-    g_variant_builder_close(b);
+    glib2::Builder::OpenChild(b, "{ss}");
+    glib2::Builder::Add(b, std::string("ip_address"));
+    glib2::Builder::Add(b, std::string("2001:db8:a050::1"));
+    glib2::Builder::CloseChild(b);
 
     // Add prefix
-    g_variant_builder_open(b, G_VARIANT_TYPE("{ss}"));
-    g_variant_builder_add(b, "s", "prefix");
-    g_variant_builder_add(b, "s", "64");
-    g_variant_builder_close(b);
+    glib2::Builder::OpenChild(b, "{ss}");
+    glib2::Builder::Add(b, std::string("prefix"));
+    glib2::Builder::Add(b, std::string("64"));
+    glib2::Builder::CloseChild(b);
 
     // Details ready
-    g_variant_builder_close(b);
+    glib2::Builder::CloseChild(b);
 
     // Retrieve the proper GVariant object
-    GVariant *chk = g_variant_builder_end(b);
-    g_variant_builder_clear(b);
-    g_variant_builder_unref(b);
+    GVariant *chk = glib2::Builder::Finish(b);
 
     NetCfgChangeEvent parsed(chk);
     g_variant_unref(chk);

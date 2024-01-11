@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2019 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2019 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -18,7 +18,6 @@
 
 #include <gtest/gtest.h>
 
-#include "dbus/core.hpp"
 #include "client/statusevent.hpp"
 
 
@@ -102,7 +101,7 @@ TEST(StatusEvent, parse_gvariant_invalid_data)
                          "Invalid data");
 
     ASSERT_THROW(StatusEvent parsed(data),
-                 DBusException);
+                 DBus::Exception);
     if (nullptr != data)
     {
         g_variant_unref(data);
