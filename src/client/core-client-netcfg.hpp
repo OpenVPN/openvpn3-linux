@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "log/core-dbus-logger.hpp"
 #include <openvpn/tun/builder/base.hpp>
 
 #include "netcfg/proxy-netcfg-device.hpp"

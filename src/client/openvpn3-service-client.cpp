@@ -34,6 +34,11 @@
 
 #include "build-config.h"
 
+// This needs to be included before any of the OpenVPN 3 Core
+// header files.  This is needed to enable the D-Bus logging
+// infrastructure for the Core library
+#include "log/core-dbus-logger.hpp"
+
 #include <openvpn/common/base64.hpp>
 
 #include "common/machineid.hpp"
@@ -50,7 +55,6 @@
 #include "log/proxy-log.hpp"
 #include "backend-signals.hpp"
 
-#define USE_TUN_BUILDER
 #include "core-client.hpp"
 
 using namespace openvpn;
@@ -112,7 +116,9 @@ class BackendClientObject : public DBus::Object::Base
                                                               session_token,
                                                               logwr),
         RegisterSignals(signal);
+        CoreLog::Connect(signal);
         signal->SetLogLevel(default_log_level);
+
         userinputq = RequiresQueue::Create();
 
         auto regconf = AddMethod("RegistrationConfirmation",

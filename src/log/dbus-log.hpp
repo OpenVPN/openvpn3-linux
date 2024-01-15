@@ -8,9 +8,10 @@
 
 #pragma once
 
-#include <fstream>
 #include <ctime>
 #include <exception>
+#include <fstream>
+#include <memory>
 #include <string>
 
 #include <gdbuspp/connection.hpp>
@@ -109,6 +110,8 @@ class LogSender : public DBus::Signals::Group,
                   public LogFilter
 {
   public:
+    using Ptr = std::shared_ptr<LogSender>;
+
     LogSender(DBus::Connection::Ptr dbuscon,
               const LogGroup lgroup,
               const std::string &objpath,
@@ -116,6 +119,8 @@ class LogSender : public DBus::Signals::Group,
               const bool session_token = false,
               LogWriter *lgwr = nullptr);
     virtual ~LogSender() = default;
+
+    const LogGroup GetLogGroup() const;
 
     virtual void StatusChange(const StatusEvent &statusev);
 

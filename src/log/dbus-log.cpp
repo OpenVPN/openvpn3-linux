@@ -109,6 +109,12 @@ LogSender::LogSender(DBus::Connection::Ptr dbuscon,
 }
 
 
+const LogGroup LogSender::GetLogGroup() const
+{
+    return log_group;
+}
+
+
 void LogSender::StatusChange(const StatusEvent &statusev)
 {
     SendGVariant("StatusChange", statusev.GetGVariantTuple());

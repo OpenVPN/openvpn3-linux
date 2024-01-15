@@ -195,6 +195,7 @@ common_code = static_library(
             'src/common/requiresqueue.cpp',
             'src/common/timestamp.cpp',
             'src/common/utils.cpp',
+            'src/log/core-dbus-logger.cpp',
             'src/log/dbus-log.cpp',
             'src/log/logtag.cpp',
             'src/log/logmetadata.cpp',

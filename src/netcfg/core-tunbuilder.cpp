@@ -2,10 +2,10 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  Arne Schwabe <arne@openvpn.net>
-//  Copyright (C) 2019 - 2023  Lev Stipakov <lev@openvpn.net>
-//  Copyright (C) 2019 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C)  Lev Stipakov <lev@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 // Enable output of sitnl messages
@@ -17,7 +17,7 @@
 // the CoreDBusLogBase must be declared before other
 // Core Library includes to enable the D-Bus logging
 #define OPENVPN_EXTERN extern
-#include "log/core-dbus-logbase.hpp"
+#include "log/core-dbus-logger.hpp"
 #include <openvpn/common/platform.hpp>
 
 // FIXME: This need to be included first because

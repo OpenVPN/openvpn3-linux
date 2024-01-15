@@ -30,6 +30,10 @@
 
 // don't export core symbols
 #define OPENVPN_CORE_API_VISIBILITY_HIDDEN
+#ifdef ENABLE_OVPNDCO
+#include <openvpn/tun/tunmtu.hpp>
+#include <openvpn/tun/linux/client/tunnetlink.hpp>
+#endif
 #include <client/ovpncli.cpp>
 #include <openvpn/common/exception.hpp>
 #include <openvpn/common/string.hpp>
