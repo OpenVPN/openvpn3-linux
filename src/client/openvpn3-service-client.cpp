@@ -609,7 +609,6 @@ class BackendClientObject : public DBus::Object::Base
             uint32_t i = 0;
             do
             {
-                signal->Debug("GetRunStatus(): " + StatusMinor_str[static_cast<uint16_t>(vpnclient->GetRunStatus())]);
                 switch (vpnclient->GetRunStatus())
                 {
                 case StatusMinor::CFG_OK:
