@@ -9,7 +9,7 @@ project(
         'openvpn3-linux','cpp',
         default_options : [ 'cpp_std=c++17', 'cpp_args=-Werror' ],
         license: 'AGPL-3.0-only',
-        version: run_command(['scripts/get-version','--gui-version'], check: true).stdout().strip(),
+        version: run_command(['scripts/get-version','--prod-version'], check: true).stdout().strip(),
         meson_version: '>= 0.58'
 )
 
@@ -138,7 +138,8 @@ if fs.exists(meson.project_source_root() / '.git')
     version_header.set_quoted('OPENVPN_VERSION',
                               run_command(openvpn3_core_inc / 'scripts/version', check: true).stdout().strip(),
                               description: 'OpenVPN 3 Core Library version')
-    version_header.set_quoted('PACKAGE_GUIVERSION', meson.project_version(),
+    version_header.set_quoted('PACKAGE_GUIVERSION',
+                              run_command(['scripts/get-version','--gui-version'], check: true).stdout().strip(),
                               description: 'OpenVPN 3 Linux version identifier')
     version_header.set_quoted('PACKAGE_NAME', meson.project_name(),
                               description: 'Name of this project')
