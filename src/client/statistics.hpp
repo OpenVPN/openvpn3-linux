@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -13,6 +13,9 @@
  */
 
 #pragma once
+
+#include <string>
+#include <vector>
 
 /**
  *  Used to deliver connection statistics for the tunnel to the
@@ -26,7 +29,7 @@ struct ConnectionStatDetails
     {
     }
 
-    ConnectionStatDetails(const std::string key, const long long value)
+    ConnectionStatDetails(const std::string &key, const long long value)
         : key(key), value(value)
     {
     }
@@ -38,4 +41,4 @@ struct ConnectionStatDetails
 /**
  *  This data type will contain a full set of connection statistics
  */
-typedef std::vector<ConnectionStatDetails> ConnectionStats;
+using ConnectionStats = std::vector<ConnectionStatDetails>;
