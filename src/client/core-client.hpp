@@ -43,6 +43,7 @@
 #include <openvpn/time/timestr.hpp>
 #include <openvpn/ssl/peerinfo.hpp>
 
+#include "client/statistics.hpp"
 #include "common/core-extensions.hpp"
 #include "common/requiresqueue.hpp"
 #include "backend-signals.hpp"
@@ -297,7 +298,7 @@ class CoreVPNClient : public CLIENTBASECLASS
      *
      * @param ev  A ClientAPI::Event object with the current event.
      */
-    virtual void event(const ClientAPI::Event &ev) override
+    void event(const ClientAPI::Event &ev) override
     {
         evntcount++;
 
@@ -611,14 +612,14 @@ class CoreVPNClient : public CLIENTBASECLASS
      *
      * @param log  The ClientAPI::LogInfo object to act upon
      */
-    virtual void log(const ClientAPI::LogInfo &log) override
+    void log(const ClientAPI::LogInfo &log) override
     {
         // Log events going via log() are to be considered debug information
         signal->Debug(log.text);
     }
 
 
-    virtual void external_pki_cert_request(ClientAPI::ExternalPKICertRequest &certreq) override
+    void external_pki_cert_request(ClientAPI::ExternalPKICertRequest &certreq) override
     {
         std::cout << "*** external_pki_cert_request" << std::endl;
         certreq.error = true;
@@ -627,7 +628,7 @@ class CoreVPNClient : public CLIENTBASECLASS
     }
 
 
-    virtual void external_pki_sign_request(ClientAPI::ExternalPKISignRequest &signreq) override
+    void external_pki_sign_request(ClientAPI::ExternalPKISignRequest &signreq) override
     {
         std::cout << "*** external_pki_sign_request" << std::endl;
         signreq.error = true;
@@ -636,7 +637,7 @@ class CoreVPNClient : public CLIENTBASECLASS
     }
 
 
-    virtual bool pause_on_connection_timeout() override
+    bool pause_on_connection_timeout() override
     {
         return false;
     }
