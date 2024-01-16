@@ -36,38 +36,13 @@ class NetCfgSubscriptions
      *  Contains a list of D-Bus subscribers' unique D-Bus name, mapped against
      *  a filter bit mask built up of bitwise OR of NetCfgChangeType values
      */
-    typedef std::map<std::string, std::uint16_t> NetCfgNotifSubscriptions;
+    typedef std::map<std::string, uint16_t> NetCfgNotifSubscriptions;
 
-    NetCfgSubscriptions() = default;
-    ~NetCfgSubscriptions() = default;
-
-
-    /**
-     *  Generate a D-Bus introspection XML fragment to be included in a
-     *  bigger service introspection response.
-     *
-     * @param name_subscribe    std::string, sets the subscribe method name
-     * @param name_unsubscribe  std::string, sets the unsubscribe method name
-     * @param name_list         std::string, sets the list method name
-     *
-     * @return Returns a std::string with the introspection XML fragment.
-     */
-    static std::string GenIntrospection(const std::string &name_subscribe,
-                                        const std::string &name_unsubscribe,
-                                        const std::string &name_list)
+    [[nodiscard]] static NetCfgSubscriptions::Ptr Create()
     {
-        std::stringstream introsp;
-        introsp << "        <method name='" << name_subscribe << "'>"
-                << "          <arg type='u' direction='in' name='filter' />"
-                << "        </method>"
-                << "        <method name='" << name_unsubscribe << "'>"
-                << "          <arg type='s' direction='in' name='optional_subscriber'/>"
-                << "        </method>"
-                << "        <method name='" << name_list << "'>"
-                << "          <arg type='a(su)' direction='out' name='subscriptions'/>"
-                << "        </method>";
-        return std::string(introsp.str());
+        return NetCfgSubscriptions::Ptr(new NetCfgSubscriptions);
     }
+    ~NetCfgSubscriptions() = default;
 
 
     /**
@@ -116,22 +91,11 @@ class NetCfgSubscriptions
      * @return  Returns a std::vector<std::string> of all subscribers who
      *          have subscribed to this change type
      */
-    std::vector<std::string> GetSubscribersList(const NetCfgChangeEvent &ev) const
-    {
-        // Loop through all subscribers and identify who wants this
-        // notification.
-        std::vector<std::string> targets;
-        for (const auto &s : subscriptions)
-        {
-            if ((uint16_t)ev.type & s.second)
-            {
-                targets.push_back(s.first);
-            }
-        }
-        return targets;
-    }
+    std::vector<std::string> GetSubscribersList(const NetCfgChangeEvent &ev) const;
 
 
   private:
     NetCfgNotifSubscriptions subscriptions;
+
+    NetCfgSubscriptions() = default;
 };

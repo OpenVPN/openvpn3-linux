@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2019 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2019 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -12,14 +12,13 @@
  * @brief  Manages NetCfgChangeEvent/NetworkChange signal subscriptions
  */
 
+#include <cstdint>
 #include <sstream>
+#include <gdbuspp/glib2/utils.hpp>
 
-#include <openvpn/common/rc.hpp>
-
-#include "dbus/core.hpp"
 #include "netcfg-exception.hpp"
-#include "netcfg-signals.hpp"
 #include "netcfg-subscriptions.hpp"
+#include "netcfg-signals.hpp"
 
 
 void NetCfgSubscriptions::Subscribe(const std::string &sender, uint32_t filter_flags)
@@ -50,7 +49,7 @@ void NetCfgSubscriptions::Unsubscribe(const std::string &subscriber)
 GVariant *NetCfgSubscriptions::List()
 {
     // Build up the array of subscriber and subscription flags
-    GVariantBuilder *bld = g_variant_builder_new(G_VARIANT_TYPE("a(su)"));
+    GVariantBuilder *bld = glib2::Builder::Create("a(su)");
     if (nullptr == bld)
     {
         throw NetCfgException("System error preparing response "
@@ -61,5 +60,21 @@ GVariant *NetCfgSubscriptions::List()
     {
         g_variant_builder_add(bld, "(su)", sub.first.c_str(), sub.second);
     }
-    return GLibUtils::wrapInTuple(bld);
+    return glib2::Builder::FinishWrapped(bld);
+}
+
+
+std::vector<std::string> NetCfgSubscriptions::GetSubscribersList(const NetCfgChangeEvent &ev) const
+{
+    // Loop through all subscribers and identify who wants this
+    // notification.
+    std::vector<std::string> targets;
+    for (const auto &s : subscriptions)
+    {
+        if ((uint16_t)ev.type & s.second)
+        {
+            targets.push_back(s.first);
+        }
+    }
+    return targets;
 }
