@@ -240,15 +240,21 @@ class BackendClientObject : public DBus::Object::Base
         };
         auto prop_dco_set = [this](const DBus::Object::Property::BySpec &prop, GVariant *value)
         {
-            glib2::Utils::checkParams(__func__, value, "(b)", 1);
-            this->vpnconfig.dco = glib2::Value::Extract<bool>(value, 0);
-            this->signal->LogVerb1(std::string("Session Manager change: DCO ")
-                                   + (vpnconfig.dco ? "enabled" : "disabled"));
+            try
+            {
+                this->vpnconfig.dco = glib2::Value::Get<bool>(value);
+                this->signal->LogVerb1(std::string("Session Manager change: DCO ")
+                                    + (vpnconfig.dco ? "enabled" : "disabled"));
+            }
+            catch (const std::exception &ex)
+            {
+                this->signal->LogError(ex.what());
+            }
             auto upd = prop.PrepareUpdate();
             upd->AddValue(vpnconfig.dco);
             return upd;
         };
-        AddPropertyBySpec("dco", "b", prop_dco_get, prop_dco_set);
+        AddPropertyBySpec("dco", glib2::DataType::DBus<bool>(), prop_dco_get, prop_dco_set);
 
         auto prop_device_path = [self = this](const DBus::Object::Property::BySpec &prop)
         {
@@ -274,15 +280,25 @@ class BackendClientObject : public DBus::Object::Base
         {
             return glib2::Value::Create(this->signal->GetLogLevel());
         };
-        auto prop_log_level_set = [this](const DBus::Object::Property::BySpec &prop, GVariant *value)
+        auto prop_log_level_set = [this](const DBus::Object::Property::BySpec &prop, GVariant *value) -> DBus::Object::Property::Update::Ptr
         {
-            glib2::Utils::checkParams(__func__, value, "(u)", 1);
-            this->signal->SetLogLevel(glib2::Value::Extract<uint32_t>(value, 0));
-            auto upd = prop.PrepareUpdate();
-            upd->AddValue(this->signal->GetLogLevel());
-            return upd;
+            try
+            {
+                this->signal->SetLogLevel(glib2::Value::Get<uint32_t>(value));
+                auto upd = prop.PrepareUpdate();
+                upd->AddValue(this->signal->GetLogLevel());
+                return upd;
+            }
+            catch (const DBus::Exception &ex)
+            {
+                this->signal->LogError(ex.what());
+            }
+            return nullptr;
         };
-        AddPropertyBySpec("log_level", "u", prop_log_level_get, prop_log_level_set);
+        AddPropertyBySpec("log_level",
+                          glib2::DataType::DBus<uint32_t>(),
+                          prop_log_level_get,
+                          prop_log_level_set);
 
         auto prop_session_name = [this](const DBus::Object::Property::BySpec &prop)
         {
@@ -360,6 +376,12 @@ class BackendClientObject : public DBus::Object::Base
         {
         case DBus::Object::Operation::PROPERTY_GET:
             {
+                // The properties listed in restricted_acl_prop_get
+                // are restricted to selected callers - determined by
+                // the validate_sender() method.
+                //
+                // All other properties are readable by anyone
+                //
                 if (std::find(restricted_acl_prop_get.begin(),
                               restricted_acl_prop_get.end(),
                               authzreq->target)
@@ -376,6 +398,12 @@ class BackendClientObject : public DBus::Object::Base
 
         case DBus::Object::Operation::PROPERTY_SET:
             {
+                // The properties listed in restricted_acl_prop_set
+                // can only be modified by selected callers - determined by
+                // the validate_sender() method.
+                //
+                // Default is that no properties can be modified by anyone
+                //
                 if (std::find(restricted_acl_prop_set.begin(),
                               restricted_acl_prop_set.end(),
                               authzreq->target)
@@ -462,8 +490,15 @@ class BackendClientObject : public DBus::Object::Base
     RequiresQueue::Ptr userinputq{nullptr};
     std::mutex connect_guard{};
     std::string session_path{};
-    const std::vector<std::string> restricted_acl_prop_get{"statistics", "stats", "device_name", "session_name", "last_log_line"};
-    const std::vector<std::string> restricted_acl_prop_set{"log_level", "dco"};
+    const std::vector<std::string> restricted_acl_prop_get{
+        "net.openvpn.v3.backends.statistics",
+        "net.openvpn.v3.backends.stats",
+        "net.openvpn.v3.backends.device_name",
+        "net.openvpn.v3.backends.session_name",
+        "net.openvpn.v3.backends.last_log_line"};
+    const std::vector<std::string> restricted_acl_prop_set{
+        "net.openvpn.v3.backends.log_level",
+        "net.openvpn.v3.backends.dco"};
 
 
     /**
