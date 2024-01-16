@@ -516,10 +516,12 @@ class BackendClientObject : public DBus::Object::Base
 #endif
         // Only the session manager is supposed to talk to the
         // the backend VPN client service
-        if (dbus_creds->GetUniqueBusName(Constants::GenServiceName("sessions")) == sender)
+        std::string id = dbus_creds->GetUniqueBusName(Constants::GenServiceName("sessions"));
+        if (id == sender)
         {
             return true;
         }
+        signal->Debug("validate_sender() failed: unique id:" + id + ", sender=" + sender);
         return false;
     }
 
