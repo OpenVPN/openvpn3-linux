@@ -16,6 +16,8 @@
  *         of the net.openvpn.v3.netcfg service
  */
 
+#include "build-config.h"
+
 #include <string>
 #include <vector>
 #include <gdbuspp/glib2/utils.hpp>
@@ -32,7 +34,8 @@
 // #include "netcfg-device.hpp"
 #include "netcfg-exception.hpp"
 #ifdef ENABLE_OVPNDCO
-#include "dco-keyconfig.pb.h"
+#include "dco/dco-keyconfig.pb.h"
+
 #endif
 
 using namespace openvpn;
@@ -169,7 +172,7 @@ DCO *Device::EnableDCO(const std::string &dev_name)
                                 glib2::Value::CreateTupleWrapped(dev_name));
     std::string dcopath = glib2::Value::Extract<std::string>(res, 0);
     g_variant_unref(res);
-    return new DCO(dbuscon, dcopath);
+    return new DCO(proxy, dcopath);
 }
 
 

@@ -11,7 +11,8 @@ bin_backend_client = executable(
     'openvpn3-service-client-dev',
     [
         'openvpn3-service-client.cpp',
-
+        dco_keyconfig_cc,
+        dco_keyconfig_h,
     ],
     include_directories: [include_dirs, '../..'],
     dependencies: [

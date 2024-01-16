@@ -24,15 +24,20 @@
 #include <gdbuspp/connection.hpp>
 #include <gdbuspp/proxy.hpp>
 
-#include "build-config.h"
-// #include "netcfg-device.hpp"
+#ifdef ENABLE_OVPNDCO
+#include <sys/types.h>
+#include <sys/socket.h>
 
+#include <openvpn/io/io.hpp>
+#include <openvpn/addr/ip.hpp>
+#include <openvpn/dco/key.hpp>
 
 namespace NetCfgProxy {
-#ifdef ENABLE_OVPNDCO
 class DCO;
+}
 #endif
 
+namespace NetCfgProxy {
 
 /**
  * Class representing a IPv4 or IPv6 network
@@ -280,10 +285,10 @@ class DCO
      */
     void NewPeer(unsigned int peer_id,
                  int transport_fd,
-                 const sockaddr *sa,
+                 const struct sockaddr *sa,
                  unsigned int salen,
-                 const IPv4::Addr &vpn4,
-                 const IPv6::Addr &vpn6);
+                 const openvpn::IPv4::Addr &vpn4,
+                 const openvpn::IPv6::Addr &vpn6);
 
 
     /**
@@ -295,7 +300,7 @@ class DCO
      *                  cipher algorithm, cipher key size, nonces (for gcm),
      *                  hmac algorithm, hmacs and hmac key size (for cbc)
      */
-    void NewKey(unsigned int key_slot, const KoRekey::KeyConfig *kc);
+    void NewKey(unsigned int key_slot, const openvpn::KoRekey::KeyConfig *kc);
 
 
     /**
