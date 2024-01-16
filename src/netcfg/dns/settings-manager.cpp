@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2019 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2019 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -13,7 +13,6 @@
  * @brief  Main manager object for all DNS resolver settings (implementation)
  */
 
-#include "dbus/core.hpp"
 #include "netcfg/netcfg-exception.hpp"
 #include "netcfg/netcfg-signals.hpp"
 #include "netcfg/dns/resolver-backend-interface.hpp"
@@ -49,8 +48,7 @@ const ApplySettingsMode SettingsManager::GetApplyMode() const
 
 ResolverSettings::Ptr SettingsManager::NewResolverSettings()
 {
-    ResolverSettings::Ptr settings;
-    settings.reset(new ResolverSettings(++resolver_idx));
+    auto settings = ResolverSettings::Create(++resolver_idx);
     resolvers[resolver_idx] = settings;
     return settings;
 }

@@ -19,7 +19,7 @@ unit_tests = executable(
                 'configfileparser.cpp',
                 'core-extensions.cpp',
                 'dns-resolver-settings.cpp',
-                #'dns-settings-manager-test.cpp',
+                'dns-settings-manager-test.cpp',
                 'logevent.cpp',
                 'logmetadata.cpp',
                 'lookup.cpp',

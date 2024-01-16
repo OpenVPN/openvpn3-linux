@@ -2,12 +2,12 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2019 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2019 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
- * @file   dns-resolver-manager.hpp
+ * @file   settings-manager.hpp
  *
  * @brief  Main manager object for all DNS resolver settings (declaration)
  */
@@ -15,9 +15,8 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <vector>
-
-#include <openvpn/common/rc.hpp>
 
 #include "netcfg/netcfg-signals.hpp"
 #include "netcfg/dns/resolver-settings.hpp"
@@ -35,12 +34,15 @@ namespace DNS {
  *  This depends on a backend handler object (ResolverBackendInterface)
  *  which will perform the changes on the system.
  */
-class SettingsManager : public virtual RC<thread_unsafe_refcount>
+class SettingsManager
 {
   public:
-    typedef RCPtr<SettingsManager> Ptr;
+    using Ptr = std::shared_ptr<SettingsManager>;
 
-    SettingsManager(ResolverBackendInterface::Ptr be);
+    [[nodiscard]] static SettingsManager::Ptr Create(ResolverBackendInterface::Ptr be)
+    {
+      return SettingsManager::Ptr(new SettingsManager(be));
+    }
     ~SettingsManager();
 
     /**
@@ -101,6 +103,8 @@ class SettingsManager : public virtual RC<thread_unsafe_refcount>
     ResolverBackendInterface::Ptr backend;
     ssize_t resolver_idx = -1;
     std::map<size_t, ResolverSettings::Ptr> resolvers{};
+
+    SettingsManager(ResolverBackendInterface::Ptr be);
 };
 
 } // namespace DNS

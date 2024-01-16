@@ -109,7 +109,7 @@ class DNSSettingsManager_SingleSetup : public ::testing::Test
     void SetUp() override
     {
         test_backend = new TestBackend();
-        dnsmgr = new SettingsManager(test_backend);
+        dnsmgr = SettingsManager::Create(test_backend);
     }
 
   public:
@@ -206,7 +206,7 @@ class DNSSettingsManager_MultipleSessions : public ::testing::Test
     void SetUp() override
     {
         test_backend = new TestBackend();
-        dnsmgr = new SettingsManager(test_backend);
+        dnsmgr = SettingsManager::Create(test_backend);
     }
 
     void TearDown() override
