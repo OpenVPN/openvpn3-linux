@@ -7,7 +7,7 @@
 
 project(
         'openvpn3-linux','cpp',
-        default_options : [ 'cpp_std=c++17', 'cpp_args=-Werror' ],
+        default_options : [ 'cpp_std=c++17', 'werror=true' ],
         license: 'AGPL-3.0-only',
         version: run_command(['scripts/get-version','--prod-version'], check: true).stdout().strip(),
         meson_version: '>= 0.58'
