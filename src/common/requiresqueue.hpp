@@ -26,7 +26,6 @@
 #include <gdbuspp/object/base.hpp>
 #include <mutex>
 
-#include "build-config.h"
 #include "dbus/constants.hpp"
 
 

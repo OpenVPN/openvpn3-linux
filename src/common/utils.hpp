@@ -16,7 +16,6 @@
 
 #include <string>
 
-#include "build-config.h"
 #include "build-version.h"
 
 #ifndef CONFIGURE_GIT_REVISION

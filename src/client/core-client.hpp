@@ -24,8 +24,6 @@
 #include <thread>
 #include <mutex>
 
-#include "build-config.h"
-
 #include <openvpn/common/platform.hpp>
 
 // don't export core symbols

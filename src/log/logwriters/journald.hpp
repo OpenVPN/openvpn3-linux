@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include "build-config.h"
 #include "log/logwriter.hpp"
 
 
