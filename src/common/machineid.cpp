@@ -33,8 +33,10 @@
 #include <openvpn/openssl/compat.hpp>
 #endif
 
+
 #include "machineid.hpp"
 
+const std::string OPENVPN3_MACHINEID{OPENVPN3_STATEDIR "/machine-id"};
 
 
 MachineIDException::MachineIDException(const std::string &msg) noexcept
@@ -55,10 +57,16 @@ const char *MachineIDException::what() const noexcept
 }
 
 
-MachineID::MachineID(const std::string &local_machineid, bool enforce_local)
+MachineID::MachineID(const std::string &local_machineid_, bool enforce_local)
 {
 
     std::string rawid;
+
+    std::string local_machineid = local_machineid_;
+    if (local_machineid.empty())
+    {
+        local_machineid = OPENVPN3_MACHINEID;
+    }
 
 #ifdef HAVE_SYSTEMD
     sd_id128_t sdmid;

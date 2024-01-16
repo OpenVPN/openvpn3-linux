@@ -18,11 +18,6 @@
 #include <exception>
 #include <string_view>
 
-#include "build-config.h"
-
-
-const std::string OPENVPN3_MACHINEID{OPENVPN3_STATEDIR "/machine-id"};
-
 
 class MachineIDException : public std::exception
 {
@@ -61,7 +56,7 @@ class MachineID
         RANDOM       ///< Storing generated machine-id failed, unreliable random value used
     };
 
-    MachineID(const std::string &local_machineid = OPENVPN3_MACHINEID,
+    MachineID(const std::string &local_machineid = "",
               bool enforce_local = false);
     virtual ~MachineID() = default;
 
