@@ -226,6 +226,7 @@ netcfgmgr_lib = static_library(
             'src/netcfg/proxy-netcfg-device.cpp',
             'src/netcfg/proxy-netcfg-mgr.cpp',
             'src/netcfg/netcfg-changeevent.cpp',
+            'src/netcfg/netcfg-signals.cpp',
             'src/netcfg/netcfg-subscriptions.cpp',
             'src/netcfg/dns/resolver-settings.cpp',
             'src/netcfg/dns/settings-manager.cpp',

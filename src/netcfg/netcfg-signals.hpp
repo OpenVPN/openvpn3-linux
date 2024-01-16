@@ -2,95 +2,67 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C)  David Sommerseth <davids@openvpn.net>
 //
 
 /**
  * @file   netcfg-signals.hpp
  *
- * @brief  D-Bus signals the net.openvpn.v3.netcfg can send
+ * @brief  D-Bus signals the net.openvpn.v3.netcfg service can send
  */
 
 #pragma once
 
-#include "dbus/core.hpp"
+#include <memory>
+#include <gdbuspp/connection.hpp>
+
 #include "log/dbus-log.hpp"
 #include "netcfg-changeevent.hpp"
 #include "netcfg-subscriptions.hpp"
 
 
-class NetCfgSignals : public LogSender,
-                      public RC<thread_unsafe_refcount>
+class NetCfgSignals : public LogSender
 {
   public:
-    typedef RCPtr<NetCfgSignals> Ptr;
+    using Ptr = std::shared_ptr<NetCfgSignals>;
 
-    NetCfgSignals(GDBusConnection *conn,
-                  LogGroup lgroup,
-                  std::string object_path,
-                  LogWriter *logwr)
-        : LogSender(conn, lgroup, OpenVPN3DBus_interf_netcfg, object_path, logwr)
+    [[nodiscard]] static NetCfgSignals::Ptr Create(DBus::Connection::Ptr conn,
+                                                   LogGroup lgroup,
+                                                   std::string object_path,
+                                                   LogWriter *logwr)
     {
-        SetLogLevel(default_log_level);
+        return NetCfgSignals::Ptr(new NetCfgSignals(conn,
+                                                    lgroup,
+                                                    object_path,
+                                                    logwr));
     }
-
 
     /**
      * Sends a FATAL log messages and kills itself
      *
      * @param Log message to send to the log subscribers
      */
-    void LogFATAL(std::string msg) override
-    {
-        Log(LogEvent(log_group, LogCategory::FATAL, msg));
-        kill(getpid(), SIGTERM);
-    }
+    void LogFATAL(const std::string &msg) override;
 
+    void Debug(const std::string &msg, bool duplicate_check = false) override;
 
-    void Debug(std::string msg, bool duplicate_check = false) override
-    {
-        Log(LogEvent(log_group, LogCategory::DEBUG, msg));
-    }
+    void DebugDevice(const std::string &dev, const std::string &msg);
 
+    void AddSubscriptionList(NetCfgSubscriptions::Ptr subs);
 
-    void Debug(std::string dev, std::string msg)
-    {
-        std::stringstream m;
-        m << "[" << dev << "] " << msg;
-        Debug(m.str());
-    }
-
-
-    void AddSubscriptionList(NetCfgSubscriptions::Ptr subs)
-    {
-        subscriptions = subs;
-    }
-
-
-    void NetworkChange(const NetCfgChangeEvent &ev) const
-    {
-        GVariant *e = ev.GetGVariant();
-        if (subscriptions)
-        {
-            Send(subscriptions->GetSubscribersList(ev),
-                 get_interface(),
-                 get_object_path(),
-                 "NetworkChange",
-                 e);
-        }
-        else
-        {
-            // If no subscription manager is configured, we switch
-            // to broadcasting NetworkChange signals.  This is typically
-            // not configured if --signal-broadcast is given to the
-            // main program.
-            Send("NetworkChange", e);
-        }
-    }
+    void NetworkChange(const NetCfgChangeEvent &ev);
 
 
   private:
     const unsigned int default_log_level = 6; // LogCategory::DEBUG
     NetCfgSubscriptions::Ptr subscriptions;
+    const std::string object_path;
+    const std::string object_interface;
+
+
+    NetCfgSignals(DBus::Connection::Ptr conn,
+                  LogGroup lgroup,
+                  std::string object_path_,
+                  LogWriter *logwr);
 };
