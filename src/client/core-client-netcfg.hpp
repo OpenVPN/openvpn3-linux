@@ -36,10 +36,10 @@ class NetCfgTunBuilder : public T
     using Ptr = std::shared_ptr<NetCfgTunBuilder>;
 
     NetCfgTunBuilder(DBus::Connection::Ptr dbuscon,
-                     BackendSignals::Ptr signal,
+                     BackendSignals::Ptr signals_,
                      const std::string &session_token_)
         : disabled_dns_config(false),
-          signal(signal),
+          signals(signals_),
           netcfgmgr(dbuscon),
           session_token(session_token_),
           session_name("")
@@ -52,12 +52,12 @@ class NetCfgTunBuilder : public T
         : disabled_dns_config(false),
           netcfgmgr(dbuscon)
     {
-        signal = new BackendSignals(dbuscon,
+        signals = new BackendSignals(dbuscon,
                                     LogGroup::CLIENT,
                                     "(netcfg-cli-test)",
                                     nullptr);
-        signal->SetLogLevel(6);
-        signal->EnableBroadcast(true);
+        signals->SetLogLevel(6);
+        signals->EnableBroadcast(true);
     }
 #endif
 
@@ -74,7 +74,7 @@ class NetCfgTunBuilder : public T
         }
         catch (const NetCfgProxyException &excp)
         {
-            signal->LogCritical("Removing device failed: " + excp.GetError());
+            signals->LogCritical("Removing device failed: " + excp.GetError());
         }
 
         try
@@ -83,7 +83,7 @@ class NetCfgTunBuilder : public T
         }
         catch (const NetCfgProxyException &excp)
         {
-            signal->LogCritical("Cleaning up NetCfgMgr error: " + excp.GetError());
+            signals->LogCritical("Cleaning up NetCfgMgr error: " + excp.GetError());
         }
 #ifdef OPENVPN3_CORE_CLI_TEST
         delete signal;
@@ -135,7 +135,7 @@ class NetCfgTunBuilder : public T
                 << "/" << std::to_string(prefix_length)
                 << " to " << (device ? device->GetDeviceName() : "[unknown]")
                 << ": " << std::string(e.what());
-            signal->LogError(err.str());
+            signals->LogError(err.str());
             return false;
         }
     }
@@ -271,7 +271,7 @@ class NetCfgTunBuilder : public T
         }
         catch (const DBus::Exception &excp)
         {
-            signal->StatusChange(StatusEvent(StatusMajor::CONNECTION, StatusMinor::CONN_FAILED));
+            signals->StatusChange(StatusEvent(StatusMajor::CONNECTION, StatusMinor::CONN_FAILED));
             try
             {
                 tun_builder_teardown(true);
@@ -279,7 +279,7 @@ class NetCfgTunBuilder : public T
             catch (...)
             {
             }
-            signal->LogFATAL("Error calling NetCfgDevice::Establish(): "
+            signals->LogFATAL("Error calling NetCfgDevice::Establish(): "
                              + std::string(excp.what()));
         }
         return ret;
@@ -312,7 +312,7 @@ class NetCfgTunBuilder : public T
             }
             catch (const DBus::Exception &excp)
             {
-                signal->LogCritical("tun_builder_teardown: "
+                signals->LogCritical("tun_builder_teardown: "
                                     + std::string(excp.GetRawError()));
             }
             device.reset();
@@ -325,7 +325,7 @@ class NetCfgTunBuilder : public T
             }
             catch (const DBus::Exception &excp)
             {
-                signal->LogCritical(excp.GetRawError());
+                signals->LogCritical(excp.GetRawError());
             }
         }
     }
@@ -351,7 +351,7 @@ class NetCfgTunBuilder : public T
 
     bool tun_builder_set_session_name(const std::string &name) override
     {
-        signal->LogVerb2("Session name: '" + name + "'");
+        signals->LogVerb2("Session name: '" + name + "'");
         session_name = std::string(name);
         return true;
     }
@@ -400,7 +400,7 @@ class NetCfgTunBuilder : public T
         }
         catch (const std::exception &e)
         {
-            signal->LogError(e.what());
+            signals->LogError(e.what());
             return -1;
         }
     }
@@ -479,7 +479,7 @@ class NetCfgTunBuilder : public T
   protected:
     bool disabled_dns_config;
     std::string dns_scope = "global";
-    BackendSignals::Ptr signal;
+    BackendSignals::Ptr signals;
 
   private:
     bool create_device()
@@ -497,14 +497,14 @@ class NetCfgTunBuilder : public T
             }
             catch (const DBus::Exception &excp)
             {
-                signal->LogCritical("Failed changing DNS Scope: "
+                signals->LogCritical("Failed changing DNS Scope: "
                                     + std::string(excp.GetRawError()));
             }
             return true;
         }
         catch (NetCfgProxyException &e)
         {
-            signal->LogError(std::string("Error creating virtual network device: ") + e.what());
+            signals->LogError(std::string("Error creating virtual network device: ") + e.what());
             return false;
         }
     }
