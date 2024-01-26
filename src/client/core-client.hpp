@@ -19,15 +19,19 @@
 
 #pragma once
 
+#include "build-config.h"
+
 #include <iostream>
 #include <string>
 #include <thread>
 #include <mutex>
 
-#include <openvpn/common/platform.hpp>
 
 // don't export core symbols
 #define OPENVPN_CORE_API_VISIBILITY_HIDDEN
+
+#include <openvpn/io/io.hpp>
+#include <openvpn/common/platform.hpp>
 #ifdef ENABLE_OVPNDCO
 #include <openvpn/tun/tunmtu.hpp>
 #include <openvpn/tun/linux/client/tunnetlink.hpp>

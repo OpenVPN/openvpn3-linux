@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include <openvpn/io/io.hpp>
 #include "log/core-dbus-logger.hpp"
 #include <openvpn/tun/builder/base.hpp>
 
