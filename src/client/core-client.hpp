@@ -26,6 +26,10 @@
 #include <thread>
 #include <mutex>
 
+// For some odd reason; this file cannot be included after
+// openvpn/tun/linux/client/tunnetlink.hpp ... that seems to
+// undefine the ConnectionStats type
+#include "statistics.hpp"
 
 // don't export core symbols
 #define OPENVPN_CORE_API_VISIBILITY_HIDDEN
@@ -51,7 +55,6 @@
 #include "common/core-extensions.hpp"
 #include "common/requiresqueue.hpp"
 #include "backend-signals.hpp"
-#include "statistics.hpp"
 
 #include "core-client-netcfg.hpp"
 
