@@ -33,6 +33,7 @@ base_dependencies = [
     dependency('gio-2.0'),
     dependency('gio-unix-2.0'),
     dependency('libcap-ng'),
+    dependency('libnl-3.0'),
     dependency('jsoncpp'),
     dependency('openssl', version: '>= 1.0.2'),
     dependency('threads'),
