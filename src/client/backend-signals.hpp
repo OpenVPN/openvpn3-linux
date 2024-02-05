@@ -69,6 +69,16 @@ class BackendSignals : public LogSender
                         {"pid", glib2::DataType::DBus<pid_t>()}});
     }
 
+    [[nodiscard]] static BackendSignals::Ptr Create(DBus::Connection::Ptr conn,
+                                                    LogGroup lgroup,
+                                                    std::string session_token,
+                                                    LogWriter *logwr)
+    {
+        return BackendSignals::Ptr(new BackendSignals(conn,
+                                                      lgroup,
+                                                      session_token,
+                                                      logwr));
+    }
 
     void RegistrationRequest(const std::string &busname,
                              const std::string &token,
