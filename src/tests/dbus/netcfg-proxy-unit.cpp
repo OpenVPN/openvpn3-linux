@@ -17,21 +17,20 @@
 
 #include <iostream>
 #include <vector>
+#include <gdbuspp/connection.hpp>
 
 #include <openvpn/common/base64.hpp>
 #include <openvpn/log/logsimple.hpp>
 
-#include "dbus/core.hpp"
 #include "netcfg/proxy-netcfg-mgr.hpp"
 #include "netcfg/proxy-netcfg-device.hpp"
 
 
 int main(int argc, char **argv)
 {
-    DBus conn(G_BUS_TYPE_SYSTEM);
-    conn.Connect();
+    auto conn = DBus::Connection::Create(DBus::BusType::SYSTEM);
 
-    NetCfgProxy::Manager netcfgmgr(conn.GetConnection());
+    NetCfgProxy::Manager netcfgmgr(conn);
     int failures = 0;
     size_t not_our_devs = 0;
 
@@ -52,8 +51,8 @@ int main(int argc, char **argv)
         std::cout << std::endl;
 
         std::cout << "Fetching device paths ... " << std::endl;
-        std::vector<std::string> devpaths = netcfgmgr.FetchInterfaceList();
-        std::vector<std::string> our_devs{};
+        DBus::Object::Path::List devpaths = netcfgmgr.FetchInterfaceList();
+        DBus::Object::Path::List our_devs{};
         size_t match_count = 0;
         for (const auto &p : devpaths)
         {
@@ -104,7 +103,7 @@ int main(int argc, char **argv)
         for (const auto &p : our_devs)
         {
             std::cout << "    Removing: " << p << std::endl;
-            NetCfgProxy::Device dev(conn.GetConnection(), p);
+            NetCfgProxy::Device dev(conn, p);
             dev.Destroy();
         }
         std::cout << std::endl;
