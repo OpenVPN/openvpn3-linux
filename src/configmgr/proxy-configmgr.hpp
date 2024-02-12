@@ -13,6 +13,7 @@
 #include <limits>
 #include <vector>
 #include <gdbuspp/glib2/utils.hpp>
+#include <gdbuspp/object/path.hpp>
 #include <gdbuspp/proxy.hpp>
 #include <gdbuspp/proxy/utils.hpp>
 
@@ -47,7 +48,9 @@ static inline bool operator&(const CfgMgrFeatures &a, const CfgMgrFeatures &b)
 class OpenVPN3ConfigurationProxy
 {
   public:
-    OpenVPN3ConfigurationProxy(DBus::Connection::Ptr con, std::string object_path, bool force_feature_load = false)
+    OpenVPN3ConfigurationProxy(DBus::Connection::Ptr con,
+                               DBus::Object::Path object_path,
+                               bool force_feature_load = false)
     {
         proxy = DBus::Proxy::Client::Create(con,
                                             Constants::GenServiceName("configuration"));
@@ -91,7 +94,7 @@ class OpenVPN3ConfigurationProxy
     }
 
 
-    std::string Import(std::string name, std::string config_blob, bool single_use, bool persistent)
+    DBus::Object::Path Import(std::string name, std::string config_blob, bool single_use, bool persistent)
     {
         GVariant *res = proxy->Call(proxy_tgt,
                                     "Import",
@@ -106,7 +109,7 @@ class OpenVPN3ConfigurationProxy
         }
 
         glib2::Utils::checkParams(__func__, res, "(o)");
-        std::string ret = glib2::Value::Extract<std::string>(res, 0);
+        auto ret = glib2::Value::Extract<DBus::Object::Path>(res, 0);
         g_variant_unref(res);
 
         return ret;
@@ -129,16 +132,16 @@ class OpenVPN3ConfigurationProxy
      * Retrieves a string array of configuration paths which are available
      * to the calling user
      *
-     * @return A std::vector<std::string> of configuration paths
+     * @return A std::vector<DBus::Object::Path> of configuration paths
      */
-    std::vector<std::string> FetchAvailableConfigs()
+    DBus::Object::Path::List FetchAvailableConfigs()
     {
         GVariant *res = proxy->Call(proxy_tgt, "FetchAvailableConfigs");
         if (NULL == res)
         {
             throw CfgMgrProxyException("Failed to retrieve available configurations");
         }
-        std::vector<std::string> ret = glib2::Value::ExtractVector<std::string>(res, "o");
+        auto ret = glib2::Value::ExtractVector<DBus::Object::Path>(res);
         return ret;
     }
 
@@ -149,11 +152,11 @@ class OpenVPN3ConfigurationProxy
      * @param cfgname  std::string containing the configuration name to
      *                 look up
      *
-     * @return Returns a std::vector<std::string> with all configuration
+     * @return Returns a std::vector<DBus::Object::Path> with all configuration
      *         paths with the given configuration name.  If no match is found,
      *         the std::vector will be empty.
      */
-    std::vector<std::string> LookupConfigName(std::string cfgname)
+    DBus::Object::Path::List LookupConfigName(const std::string &cfgname)
     {
         GVariant *res = proxy->Call(proxy_tgt,
                                     "LookupConfigName",
@@ -162,7 +165,7 @@ class OpenVPN3ConfigurationProxy
         {
             throw CfgMgrProxyException("Failed to lookup configuration names");
         }
-        std::vector<std::string> ret = glib2::Value::ExtractVector<std::string>(res, "o");
+        auto ret = glib2::Value::ExtractVector<DBus::Object::Path>(res);
         return ret;
     }
 
@@ -171,12 +174,12 @@ class OpenVPN3ConfigurationProxy
      *  Search for all available configuration profile with a specific
      *  tag name.
      *
-     * @param tagname                   std::string containing the tag value to
-     *                                  look for
-     * @return std::vector<std::string> Array of the D-Bus object path
-     *                                  to all found configuration objects
+     * @param tagname   std::string containing the tag value to look for
+     *
+     * @return std::vector<DBus::Object::Path> with the D-Bus object paths
+     *         to all found configuration objects
      */
-    std::vector<std::string> SearchByTag(const std::string &tagname) const
+    DBus::Object::Path::List SearchByTag(const std::string &tagname) const
     {
         if (!(features & CfgMgrFeatures::TAGS))
         {
@@ -190,7 +193,7 @@ class OpenVPN3ConfigurationProxy
             throw CfgMgrProxyException("Failed to search for configuration tags");
         }
 
-        std::vector<std::string> ret = glib2::Value::ExtractVector<std::string>(res, "o");
+        auto ret = glib2::Value::ExtractVector<DBus::Object::Path>(res);
         return ret;
     }
 
@@ -199,12 +202,12 @@ class OpenVPN3ConfigurationProxy
      *  Search for all available configuration profile owned by a specific owner.
      *  Both username and UID are valid.
      *
-     * @param owner                      std::string containing the user to
-     *                                  look for
-     * @return std::vector<std::string> Array of the D-Bus object path
-     *                                  to all found configuration objects
+     * @param owner   std::string containing the user to look for
+     *
+     * @return std::vector<DBus::Object::Path> with the D-Bus object paths
+     *         to all found configuration objects
      */
-    std::vector<std::string> SearchByOwner(const std::string &owner) const
+    DBus::Object::Path::List SearchByOwner(const std::string &owner) const
     {
         GVariant *res = proxy->Call(proxy_tgt,
                                     "SearchByOwner",
@@ -214,7 +217,7 @@ class OpenVPN3ConfigurationProxy
             throw CfgMgrProxyException("Failed to search for configuration tags");
         }
 
-        std::vector<std::string> ret = glib2::Value::ExtractVector<std::string>(res, "o");
+        auto ret = glib2::Value::ExtractVector<DBus::Object::Path>(res);
         return ret;
     }
 

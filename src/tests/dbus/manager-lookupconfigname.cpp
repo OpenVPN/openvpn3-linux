@@ -49,7 +49,7 @@ class ManagerProxy
 
     ~ManagerProxy() = default;
 
-    std::vector<std::string> LookupConfigName(const std::string cfgname)
+    DBus::Object::Path::List LookupConfigName(const std::string cfgname)
     {
         if ("configmgr" == manager)
         {

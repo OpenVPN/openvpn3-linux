@@ -17,6 +17,7 @@
 #include <exception>
 #include <memory>
 #include <gdbuspp/connection.hpp>
+#include <gdbuspp/object/path.hpp>
 
 #include "common/lookup.hpp"
 #include "configmgr/proxy-configmgr.hpp"
@@ -26,7 +27,7 @@
 class ProxyWrangler
 {
   public:
-    ProxyWrangler(const std::string &objpath)
+    ProxyWrangler(const DBus::Object::Path &objpath)
     {
         conn = DBus::Connection::Create(DBus::BusType::SYSTEM);
         if ("/net/openvpn/v3/configuration/" == objpath.substr(0, 30))

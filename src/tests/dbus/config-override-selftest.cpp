@@ -16,6 +16,7 @@
 #include <iostream>
 #include <vector>
 #include <gdbuspp/connection.hpp>
+#include <gdbuspp/object/path.hpp>
 
 #include "dbus/constants.hpp"
 #include "configmgr/proxy-configmgr.hpp"
@@ -74,10 +75,10 @@ int main(int argc, char **argv)
     profile << "dev tun" << std::endl
             << "remote localhost" << std::endl
             << "client" << std::endl;
-    std::string cfgpath = cfgmgr.Import("selftest:overrides",
-                                        profile.str(),
-                                        false,
-                                        false);
+    DBus::Object::Path cfgpath = cfgmgr.Import("selftest:overrides",
+                                               profile.str(),
+                                               false,
+                                               false);
 
     OpenVPN3ConfigurationProxy cfgobj(conn, cfgpath);
     unsigned int failed = 0;

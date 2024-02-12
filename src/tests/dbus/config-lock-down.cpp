@@ -15,6 +15,7 @@
 
 #include <iostream>
 #include <gdbuspp/connection.hpp>
+#include <gdbuspp/object/path.hpp>
 
 #include "configmgr/proxy-configmgr.hpp"
 
@@ -30,7 +31,7 @@ int main(int argc, char **argv)
     try
     {
         auto conn = DBus::Connection::Create(DBus::BusType::SYSTEM);
-        std::string cfgpath(argv[1]);
+        DBus::Object::Path cfgpath(argv[1]);
         OpenVPN3ConfigurationProxy cfgprx(conn, cfgpath);
 
         std::cout << "Current lock-down setting: "

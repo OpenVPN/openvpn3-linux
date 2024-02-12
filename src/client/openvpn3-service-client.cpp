@@ -30,6 +30,7 @@
 #include <gdbuspp/connection.hpp>
 #include <gdbuspp/exceptions.hpp>
 #include <gdbuspp/object/base.hpp>
+#include <gdbuspp/object/path.hpp>
 #include <gdbuspp/service.hpp>
 
 #include "build-config.h"
@@ -100,7 +101,7 @@ class BackendClientObject : public DBus::Object::Base
      */
     BackendClientObject(DBus::Connection::Ptr conn,
                         std::string bus_name,
-                        std::string objpath,
+                        DBus::Object::Path objpath,
                         std::string session_token_,
                         uint32_t default_log_level,
                         LogWriter *logwr,
@@ -260,11 +261,13 @@ class BackendClientObject : public DBus::Object::Base
         {
             if (!self->vpnclient)
             {
-                return glib2::Value::Create(std::string(""));
+                return glib2::Value::Create(DBus::Object::Path());
             }
             return glib2::Value::Create(self->vpnclient->netcfg_get_device_path());
         };
-        AddPropertyBySpec("device_path", "o", prop_device_path);
+        AddPropertyBySpec("device_path",
+                          glib2::DataType::DBus<DBus::Object::Path>(),
+                          prop_device_path);
 
         auto prop_device_name = [this](const DBus::Object::Property::BySpec &prop)
         {
@@ -478,7 +481,7 @@ class BackendClientObject : public DBus::Object::Base
     bool profile_log_level_override = false; ///< Cfg profile has a log-level override
     bool registered = false;
     bool paused = false;
-    std::string configpath{};
+    DBus::Object::Path configpath;
     CoreVPNClient::Ptr vpnclient{nullptr};
     bool disabled_socket_protect;
     std::string dns_scope = "global";
@@ -489,7 +492,7 @@ class BackendClientObject : public DBus::Object::Base
     ClientAPI::ProvideCreds creds{};
     RequiresQueue::Ptr userinputq{nullptr};
     std::mutex connect_guard{};
-    std::string session_path{};
+    DBus::Object::Path session_path;
     const std::vector<std::string> restricted_acl_prop_get{
         "net.openvpn.v3.backends.statistics",
         "net.openvpn.v3.backends.stats",
@@ -549,9 +552,9 @@ class BackendClientObject : public DBus::Object::Base
         }
 
         glib2::Utils::checkParams(__func__, params, "(soo)", 3);
-        std::string verify_token = glib2::Value::Extract<std::string>(params, 0);
-        std::string sessionpath = glib2::Value::Extract<std::string>(params, 1);
-        configpath = glib2::Value::Extract<std::string>(params, 2);
+        auto verify_token = glib2::Value::Extract<std::string>(params, 0);
+        auto sessionpath = glib2::Value::Extract<DBus::Object::Path>(params, 1);
+        configpath = glib2::Value::Extract<DBus::Object::Path>(params, 2);
 
         registered = (session_token == verify_token);
         signal->ModifyPath(sessionpath);
@@ -1464,7 +1467,7 @@ class ClientService : public DBus::Service
             logservice->Attach(Constants::GenInterface("backends"));
             logservice->Attach(Constants::GenInterface("sessions"));
 
-            std::string object_path = Constants::GenPath("backends/session");
+            DBus::Object::Path object_path = Constants::GenPath("backends/session");
             CreateServiceHandler<BackendClientObject>(dbuscon,
                                                       busname,
                                                       object_path,
