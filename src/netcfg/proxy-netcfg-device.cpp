@@ -58,7 +58,7 @@ Network::Network(std::string networkAddress, unsigned int prefix, bool ipv6, boo
 //  class NetCfgProxy::Device
 //
 
-Device::Device(DBus::Connection::Ptr dbuscon_, const std::string &devpath)
+Device::Device(DBus::Connection::Ptr dbuscon_, const DBus::Object::Path &devpath)
     : dbuscon(dbuscon_),
       proxy(DBus::Proxy::Client::Create(dbuscon, Constants::GenServiceName("netcfg"))),
       prxtgt(DBus::Proxy::TargetPreset::Create(devpath, Constants::GenInterface("netcfg")))
@@ -170,7 +170,7 @@ DCO *Device::EnableDCO(const std::string &dev_name)
     GVariant *res = proxy->Call(prxtgt,
                                 "EnableDCO",
                                 glib2::Value::CreateTupleWrapped(dev_name));
-    std::string dcopath = glib2::Value::Extract<std::string>(res, 0);
+    auto dcopath = glib2::Value::Extract<DBus::Object::Path>(res, 0);
     g_variant_unref(res);
     return new DCO(proxy, dcopath);
 }
@@ -269,7 +269,7 @@ const std::string Device::GetDeviceName() const
     return proxy->GetProperty<std::string>(prxtgt, "device_name");
 }
 
-const std::string Device::GetDevicePath() const
+const DBus::Object::Path Device::GetDevicePath() const
 {
     return prxtgt->object_path;
 }

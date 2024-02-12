@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 #include <gdbuspp/connection.hpp>
+#include <gdbuspp/object/path.hpp>
 #include <gdbuspp/proxy.hpp>
 #include <gdbuspp/proxy/utils.hpp>
 
@@ -47,16 +48,16 @@ class Manager
 
     const std::string GetConfigFile();
 
-    const std::string CreateVirtualInterface(const std::string &device_name);
+    const DBus::Object::Path CreateVirtualInterface(const std::string &device_name);
 
 #ifdef OPENVPN3_NETCFGPRX_DEVICE
-    Device *getVirtualInterface(const std::string &path)
+    Device *getVirtualInterface(const DBus::Object::Path &path)
     {
         return new Device(dbuscon, path);
     }
 #endif
 
-    std::vector<std::string> FetchInterfaceList();
+    DBus::Object::Path::List FetchInterfaceList();
     bool ProtectSocket(int socket, const std::string &remote, bool ipv6, const std::string &devpath);
     bool DcoAvailable();
     void Cleanup();

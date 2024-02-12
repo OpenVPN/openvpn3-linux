@@ -19,9 +19,12 @@
 #pragma once
 #define OPENVPN3_NETCFGPRX_DEVICE
 
+#include "build-config.h"
+
 #include <string>
 #include <vector>
 #include <gdbuspp/connection.hpp>
+#include <gdbuspp/object/path.hpp>
 #include <gdbuspp/proxy.hpp>
 
 #ifdef ENABLE_OVPNDCO
@@ -75,7 +78,7 @@ class Device
      * @param devpath  D-Bus object path to the device to handle
      *
      */
-    Device(DBus::Connection::Ptr dbuscon, const std::string &devpath);
+    Device(DBus::Connection::Ptr dbuscon, const DBus::Object::Path &devpath);
 
 
     /**
@@ -235,7 +238,7 @@ class Device
 
     NetCfgDeviceType GetDeviceType() const;
     const std::string GetDeviceName() const;
-    const std::string GetDevicePath() const;
+    const DBus::Object::Path GetDevicePath() const;
     bool GetActive() const;
 
     std::vector<std::string> GetIPv4Addresses();
@@ -263,7 +266,7 @@ class DCO
   public:
     using Ptr = std::shared_ptr<DCO>;
 
-    DCO(DBus::Proxy::Client::Ptr proxy_, const std::string &dcopath);
+    DCO(DBus::Proxy::Client::Ptr proxy_, const DBus::Object::Path &dcopath);
 
     /**
      * Returns file descriptor used by unprivileged process to

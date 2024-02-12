@@ -75,7 +75,7 @@ const std::string Manager::GetConfigFile()
 }
 
 
-const std::string Manager::CreateVirtualInterface(const std::string &device_name)
+const DBus::Object::Path Manager::CreateVirtualInterface(const std::string &device_name)
 {
     proxy_helper->Ping();
     try
@@ -84,7 +84,7 @@ const std::string Manager::CreateVirtualInterface(const std::string &device_name
                                     "CreateVirtualInterface",
                                     glib2::Value::CreateTupleWrapped(device_name));
         glib2::Utils::checkParams(__func__, res, "(o)");
-        const std::string devpath = glib2::Value::Extract<std::string>(res, 0);
+        const auto devpath = glib2::Value::Extract<DBus::Object::Path>(res, 0);
         g_variant_unref(res);
         return devpath;
     }
@@ -170,7 +170,7 @@ void Manager::Cleanup()
 }
 
 
-std::vector<std::string> Manager::FetchInterfaceList()
+DBus::Object::Path::List Manager::FetchInterfaceList()
 {
     if (!proxy_helper->Ping())
     {
@@ -180,7 +180,7 @@ std::vector<std::string> Manager::FetchInterfaceList()
     try
     {
         GVariant *res = proxy->Call(tgt_mgr, "FetchInterfaceList");
-        auto device_paths = glib2::Value::ExtractVector<std::string>(res, "o");
+        auto device_paths = glib2::Value::ExtractVector<DBus::Object::Path>(res);
         return device_paths;
     }
     catch (const DBus::Exception &excp)
