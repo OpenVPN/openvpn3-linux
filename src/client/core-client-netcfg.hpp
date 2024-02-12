@@ -24,7 +24,6 @@
 #include "netcfg/proxy-netcfg-mgr.hpp"
 #include "backend-signals.hpp"
 
-using namespace openvpn;
 
 template <class T>
 class NetCfgTunBuilder : public T
@@ -49,12 +48,11 @@ class NetCfgTunBuilder : public T
         : disabled_dns_config(false),
           netcfgmgr(dbuscon)
     {
-        signals = new BackendSignals(dbuscon,
-                                    LogGroup::CLIENT,
-                                    "(netcfg-cli-test)",
-                                    nullptr);
+        signals = BackendSignals::Create(dbuscon,
+                                         LogGroup::CLIENT,
+                                         "(netcfg-cli-test)",
+                                         nullptr);
         signals->SetLogLevel(6);
-        signals->EnableBroadcast(true);
     }
 #endif
 
@@ -82,9 +80,6 @@ class NetCfgTunBuilder : public T
         {
             signals->LogCritical("Cleaning up NetCfgMgr error: " + excp.GetError());
         }
-#ifdef OPENVPN3_CORE_CLI_TEST
-        delete signal;
-#endif
     }
 
 
