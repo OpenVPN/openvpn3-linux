@@ -360,7 +360,7 @@ class NetCfgTunBuilder : public T
     }
 
 
-    std::string netcfg_get_device_path()
+    DBus::Object::Path netcfg_get_device_path()
     {
         return (device ? device->GetDevicePath() : "");
     }
