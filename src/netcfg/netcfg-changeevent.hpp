@@ -19,6 +19,8 @@
 #include <vector>
 #include <sstream>
 #include <glib.h>
+#include <gdbuspp/glib2/utils.hpp>
+#include <gdbuspp/signals/group.hpp>
 
 #include "netcfg-exception.hpp"
 #include "netcfg-changetype.hpp"
@@ -36,13 +38,11 @@ struct NetCfgChangeEvent
     bool empty() const noexcept;
 
 
-    static const std::string IntrospectionXML() noexcept
+    static const DBus::Signals::SignalArgList SignalDeclaration() noexcept
     {
-        return "            <signal name='NetWorkChange'>"
-               "                <arg type='u' name='type'/>"
-               "                <arg type='s' name='device'/>"
-               "                <arg type='a{ss}' name='details'/>"
-               "            </signal>";
+        return {{"type", glib2::DataType::DBus<NetCfgChangeType>()},
+                {"device", glib2::DataType::DBus<std::string>()},
+                {"details", "a{ss}"}};
     }
 
 
