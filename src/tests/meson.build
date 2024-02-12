@@ -200,3 +200,17 @@ executable('platforminfo',
     ],
     include_directories: [include_dirs, '../..'],
 )
+executable('netcfg-changeevent-selftest',
+    [
+        'dbus/netcfg-changeevent-selftest.cpp',
+    ],
+    build_by_default: build_test_programs,
+    link_with: [
+        common_code,
+        netcfgmgr_lib,
+    ],
+    dependencies: [
+        base_dependencies,
+    ],
+    include_directories: [include_dirs, '../..'],
+)

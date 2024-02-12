@@ -12,11 +12,12 @@
  * @brief  Unit test for struct NetCfgChangeEvent
  */
 
+#include "build-config.h"
+
 #include <iostream>
 #include <string>
 #include <sstream>
 
-#include "dbus/core.hpp"
 #include "netcfg/netcfg-changeevent.hpp"
 
 
