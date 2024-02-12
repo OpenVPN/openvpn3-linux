@@ -74,6 +74,7 @@ class NetCfgTunBuilder : public T
 
         try
         {
+            signals->Debug("Network configuration cleanup requested");
             netcfgmgr.Cleanup();
         }
         catch (const NetCfgProxyException &excp)
