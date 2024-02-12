@@ -67,7 +67,7 @@ struct LogSubscriberEntry
     LogSubscriberEntry(std::string tag,
                        std::string busname,
                        std::string interface,
-                       std::string object_path)
+                       DBus::Object::Path object_path)
         : tag(tag), busname(busname), interface(interface),
           object_path(object_path)
     {
@@ -76,7 +76,7 @@ struct LogSubscriberEntry
     std::string tag;
     std::string busname;
     std::string interface;
-    std::string object_path;
+    DBus::Object::Path object_path;
 };
 
 typedef std::vector<LogSubscriberEntry> LogSubscribers;
@@ -89,7 +89,7 @@ class LogProxy
     using Ptr = std::shared_ptr<LogProxy>;
 
     [[nodiscard]] static LogProxy::Ptr Create(DBus::Connection::Ptr connection,
-                                              const std::string &path)
+                                              const DBus::Object::Path &path)
     {
         return LogProxy::Ptr(new LogProxy(connection, path));
     }
@@ -98,7 +98,7 @@ class LogProxy
     ~LogProxy() = default;
 
 
-    const std::string &GetPath() const
+    const DBus::Object::Path &GetPath() const
     {
         return target->object_path;
     }
@@ -116,9 +116,9 @@ class LogProxy
     }
 
 
-    const std::string GetSessionPath() const
+    const DBus::Object::Path GetSessionPath() const
     {
-        return proxy->GetProperty<std::string>(target, "session_path");
+        return proxy->GetProperty<DBus::Object::Path>(target, "session_path");
     }
 
 
@@ -138,7 +138,7 @@ class LogProxy
     Proxy::TargetPreset::Ptr target{nullptr};
 
 
-    LogProxy(DBus::Connection::Ptr connection, const std::string &path)
+    LogProxy(DBus::Connection::Ptr connection, const DBus::Object::Path &path)
         : proxy(Proxy::Client::Create(connection, Constants::GenServiceName("log"))),
           target(Proxy::TargetPreset::Create(path, Constants::GenInterface("log")))
     {
@@ -258,19 +258,21 @@ class LogServiceProxy
     }
 
 
-    void AssignSession(const std::string &sesspath, const std::string &interf)
+    void AssignSession(const DBus::Object::Path &sesspath, const std::string &interf)
     {
 
         GVariant *empty = logservice->Call(logtarget,
                                            "AssignSession",
-                                           g_variant_new("(os)", sesspath.c_str(), interf.c_str()),
+                                           g_variant_new("(os)",
+                                                         sesspath.c_str(),
+                                                         interf.c_str()),
                                            false);
         g_variant_unref(empty);
     }
 
 
     LogProxy::Ptr ProxyLogEvents(const std::string &target,
-                                 const std::string &session_path) const
+                                 const DBus::Object::Path &session_path) const
     {
         GVariant *res = logservice->Call(logtarget,
                                          "ProxyLogEvents",
@@ -528,7 +530,7 @@ class LogServiceProxy
             LogSubscriberEntry e(glib2::Value::Extract<std::string>(val, 0),
                                  glib2::Value::Extract<std::string>(val, 1),
                                  glib2::Value::Extract<std::string>(val, 2),
-                                 glib2::Value::Extract<std::string>(val, 3));
+                                 glib2::Value::Extract<DBus::Object::Path>(val, 3));
             list.push_back(e);
             g_variant_unref(val);
         }
