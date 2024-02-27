@@ -247,3 +247,18 @@ executable('netcfg-changeevent-selftest',
     ],
     include_directories: [include_dirs, '../..'],
 )
+
+executable('netcfg-dns-direct-file-selftest',
+    [
+        'misc/netcfg-dns-direct-file-selftest.cpp',
+    ],
+    build_by_default: build_test_programs and get_option('debug_internal'),
+    link_with: [
+        common_code,
+        netcfgmgr_lib,
+    ],
+    dependencies: [
+        base_dependencies,
+    ],
+    include_directories: [include_dirs, '../..'],
+)

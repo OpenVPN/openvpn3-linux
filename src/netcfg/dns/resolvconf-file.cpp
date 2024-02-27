@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2018-  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -15,6 +15,8 @@
  *         resolver service which picks these files some elsewhere.
  */
 
+#include "build-config.h"
+
 #include <algorithm>
 #include <cstdio>
 #include <fstream>
@@ -23,8 +25,6 @@
 #include <string>
 #include <vector>
 #include <sys/stat.h>
-
-#include <openvpn/common/rc.hpp>
 
 #include "common/timestamp.hpp"
 #include "netcfg/dns/resolver-settings.hpp"
@@ -295,7 +295,7 @@ void ResolvConfFile::Apply(const ResolverSettings::Ptr settings)
 }
 
 
-void ResolvConfFile::Commit(NetCfgSignals *signal)
+void ResolvConfFile::Commit(NetCfgSignals::Ptr signals)
 {
     // Add a lock guard here, to avoid potentially multiple calls colliding
     std::lock_guard<std::mutex> guard(change_guard);
@@ -328,16 +328,16 @@ void ResolvConfFile::Commit(NetCfgSignals *signal)
     }
 
     // Send all NetworkChange events in the notification queue
-    if (signal)
+    if (signals)
     {
         if (dns_scope_non_global)
         {
-            signal->LogWarn("DNS Scope change ignored. Only global scope supported");
+            signals->LogWarn("DNS Scope change ignored. Only global scope supported");
         }
 
         for (const auto &ev : notification_queue)
         {
-            signal->NetworkChange(ev);
+            signals->NetworkChange(ev);
         }
     }
     notification_queue.clear();

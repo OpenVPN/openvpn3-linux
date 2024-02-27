@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2018-  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -12,12 +12,13 @@
  * @brief  Simple self-test of the NetCfg::DNS::ResolvConfFile() class
  */
 
-#include "config.h"
+#include "build-config.h"
 
 #include <iostream>
 #include <cstdio>
 #include <sys/stat.h>
 
+#define ENABLE_DEBUG
 #include "netcfg/dns/settings-manager.hpp"
 #include "netcfg/dns/resolvconf-file.hpp"
 
@@ -33,7 +34,7 @@ bool file_exists(const std::string &fname) noexcept
 
 int main()
 {
-    ResolvConfFile::Ptr sysresolvconf = new ResolvConfFile("/etc/resolv.conf");
+    auto sysresolvconf = ResolvConfFile::Create("/etc/resolv.conf");
 
     sysresolvconf->Debug_Fetch();
     std::cout << "DUMP OF sysresolvconf" << std::endl
@@ -43,8 +44,7 @@ int main()
     sysresolvconf->SetFilename("test-system.conf");
     sysresolvconf->Debug_Write();
 
-    ResolverSettings::Ptr settings;
-    settings.reset(new ResolverSettings(1));
+    ResolverSettings::Ptr settings = ResolverSettings::Create(1);
 
     settings->AddSearchDomain("example.org");
     settings->AddSearchDomain("example.com");
@@ -59,9 +59,8 @@ int main()
     sysresolvconf->SetFilename("modified-system.conf");
     sysresolvconf->Debug_Write();
 
-    ResolvConfFile fresh1("fresh1.conf");
-    ResolverSettings::Ptr settings2;
-    settings2.reset(new ResolverSettings(2));
+    auto fresh1 = ResolvConfFile::Create("fresh1.conf");
+    ResolverSettings::Ptr settings2 = ResolverSettings::Create(2);
 
     settings2->ClearSearchDomains();
     settings2->ClearNameServers();
@@ -70,15 +69,15 @@ int main()
     settings2->AddNameServer("8.8.4.4");
     settings2->Enable();
     std::cout << "settings2: " << settings2 << std::endl;
-    fresh1.Apply(settings2);
-    fresh1.Debug_Write();
+    fresh1->Apply(settings2);
+    fresh1->Debug_Write();
 
     std::cout << "DUMP OF fresh1/fresh2" << std::endl
-              << fresh1.Dump();
+              << fresh1->Dump();
     std::cout << "Writing fresh to fresh2.conf" << std::endl
               << std::endl;
-    fresh1.SetFilename("fresh2.conf");
-    fresh1.Debug_Write();
+    fresh1->SetFilename("fresh2.conf");
+    fresh1->Debug_Write();
 
 
     std::cout << std::endl
@@ -86,7 +85,7 @@ int main()
               << "== Backup tests == " << std::endl;
 
     // Create a new file and populate it
-    ResolvConfFile::Ptr backuptest_new = new ResolvConfFile("backuptest-start.conf");
+    auto backuptest_new = ResolvConfFile::Create("backuptest-start.conf");
     backuptest_new->Apply(settings);
     auto backup_new_servers = backuptest_new->Debug_Get_dns_servers();
     auto backup_new_search = backuptest_new->Debug_Get_search_domains();
@@ -114,7 +113,8 @@ int main()
 
 
     // Reopen the backup test file and modify it
-    ResolvConfFile::Ptr backuptest_start = new ResolvConfFile("backuptest-start.conf", "backuptest-backup.conf");
+    auto backuptest_start = ResolvConfFile::Create("backuptest-start.conf",
+                                                   "backuptest-backup.conf");
     backuptest_start->Debug_Fetch();
     std::cout << "DUMP OF backuptest_start [1] " << std::endl
               << backuptest_start->Dump();
@@ -127,7 +127,7 @@ int main()
               << (file_exists("backuptest-backup.conf") ? "yes" : "NO!!!")
               << std::endl;
 
-    ResolvConfFile::Ptr backup_chk = new ResolvConfFile("backuptest-backup.conf");
+    auto backup_chk = ResolvConfFile::Create("backuptest-backup.conf");
     backup_chk->Debug_Fetch();
 
     auto backup_chk_servers = backup_chk->Debug_Get_dns_servers();

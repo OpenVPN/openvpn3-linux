@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2018-  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -17,13 +17,10 @@
 
 #pragma once
 
+#include <memory>
 #include <mutex>
 #include <string>
 #include <vector>
-
-#include <openvpn/common/rc.hpp>
-
-using namespace openvpn;
 
 #include "netcfg/netcfg-signals.hpp"
 #include "netcfg/dns/resolver-settings.hpp"
@@ -142,7 +139,7 @@ class ResolvConfFile : public FileGenerator,
                        public ResolverBackendInterface
 {
   public:
-    typedef RCPtr<ResolvConfFile> Ptr;
+    using Ptr = std::shared_ptr<ResolvConfFile>;
 
     /**
      *  Instantiate a resolv.conf parser
@@ -152,8 +149,11 @@ class ResolvConfFile : public FileGenerator,
      * @param backup    bool, if a backup should be made automatically
      *                  on overwrites (default: false)
      */
-    ResolvConfFile(const std::string &filename,
-                   const std::string &backup_filename = "");
+    [[nodiscard]] static Ptr Create(const std::string &filename,
+                                    const std::string &backup_filename = "")
+    {
+        return ResolvConfFile::Ptr(new ResolvConfFile(filename, backup_filename));
+    }
 
     ~ResolvConfFile();
 
@@ -195,7 +195,7 @@ class ResolvConfFile : public FileGenerator,
      *  @param signal  Pointer to a NetCfgSignals object where
      *                 "NetworkChange" signals will be issued
      */
-    void Commit(NetCfgSignals *signal) override;
+    void Commit(NetCfgSignals::Ptr signals) override;
 
     /**
      *  Restore the backup resolv.conf file if present
@@ -235,6 +235,9 @@ class ResolvConfFile : public FileGenerator,
     std::vector<NetCfgChangeEvent> notification_queue;
     bool dns_scope_non_global = false;
     unsigned int modified_count = 0;
+
+    ResolvConfFile(const std::string &filename,
+                   const std::string &backup_filename = "");
 
     /**
      *  Extremely simplistic resolv.conf parser.  It extracts the

@@ -232,6 +232,7 @@ netcfgmgr_lib = static_library(
             'src/netcfg/netcfg-signals.cpp',
             'src/netcfg/netcfg-subscriptions.cpp',
             'src/netcfg/dns/proxy-systemd-resolved.cpp',
+            'src/netcfg/dns/resolvconf-file.cpp',
             'src/netcfg/dns/resolver-settings.cpp',
             'src/netcfg/dns/settings-manager.cpp',
             dco_keyconfig_h,
