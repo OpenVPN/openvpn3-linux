@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2020 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2020 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2020-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2020-  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -18,12 +18,6 @@
 #include <string>
 #include <vector>
 
-#include <openvpn/common/rc.hpp>
-
-using namespace openvpn;
-
-#include "dbus/core.hpp"
-
 #include "netcfg/netcfg-signals.hpp"
 #include "netcfg/dns/resolver-settings.hpp"
 #include "netcfg/dns/resolver-backend-interface.hpp"
@@ -31,14 +25,18 @@ using namespace openvpn;
 
 using namespace NetCfg::DNS;
 
+
 namespace NetCfg {
 namespace DNS {
 
-class SystemdResolved : public ResolverBackendInterface,
-                        public resolved::Manager
+
+/**
+ *  Integration for configuring DNS resolver settings using systemd-resolved
+ */
+class SystemdResolved : public ResolverBackendInterface
 {
   public:
-    typedef RCPtr<SystemdResolved> Ptr;
+    using Ptr = std::shared_ptr<SystemdResolved>;
 
     /**
      *  Internal structure used to queue DNS configuration updates.
@@ -48,12 +46,27 @@ class SystemdResolved : public ResolverBackendInterface,
      */
     struct updateQueueEntry
     {
-        bool enable;                             ///< enabled by config profile
-        bool disabled = false;                   ///< disabled internally by errors
-        bool default_routing = false;            ///< set the default routing dns flag
-        resolved::Link::Ptr link;                ///< Pointer to the resolved::Link interface object
-        resolved::ResolverRecord::List resolver; ///< List of DNS resolver IP addresses for this link
-        resolved::SearchDomain::List search;     ///< List of DNS search domains to add for this link
+      public:
+        using Ptr = std::shared_ptr<updateQueueEntry>;
+
+        [[nodiscard]] static Ptr Create(resolved::Link::Ptr link,
+                                        const bool enabled)
+        {
+            return Ptr(new updateQueueEntry(link, enabled));
+        }
+
+        bool enable = false;                       ///< enabled by config profile
+        bool disabled = false;                     ///< disabled internally by errors
+        bool default_routing = false;              ///< set the default routing dns flag
+        resolved::Link::Ptr link = nullptr;        ///< Pointer to the resolved::Link interface object
+        resolved::ResolverRecord::List resolver{}; ///< List of DNS resolver IP addresses for this link
+        resolved::SearchDomain::List search{};     ///< List of DNS search domains to add for this link
+
+
+      private:
+        updateQueueEntry(resolved::Link::Ptr l, const bool enabl)
+            : enable(enabl), link(l)
+            {}
     };
 
 
@@ -63,11 +76,17 @@ class SystemdResolved : public ResolverBackendInterface,
      *  it to be consumed by the systemd-resolved process.
      *  (org.freedesktop.resolve1 D-Bus service).
      *
-     * @param dbc   GDBusConnection pointer to a valid D-Bus connection to
-     *              use.
+     * @param conn   DBus::Connection::Ptr to the bus used to communicate with
+     *               org.freedesktop.resolve1 (aka systemd-resolved)
+     *
+     * @return SystemdResolved::Ptr to the main object providing the
+     *         systemd-resolved communication channel
      */
-    SystemdResolved(GDBusConnection *dbc);
-    ~SystemdResolved();
+    [[nodiscard]] static Ptr Create(DBus::Connection::Ptr conn)
+    {
+        return Ptr(new SystemdResolved(conn));
+    }
+    ~SystemdResolved() noexcept = default;
 
 
     /**
@@ -111,11 +130,14 @@ class SystemdResolved : public ResolverBackendInterface,
      *  @param signal  Pointer to a NetCfgSignals object where
      *                 "NetworkChange" signals will be issued
      */
-    void Commit(NetCfgSignals *signal) override;
+    void Commit(NetCfgSignals::Ptr signal) override;
 
 
   private:
-    std::vector<updateQueueEntry> update_queue;
+    std::vector<updateQueueEntry::Ptr> update_queue = {};
+    resolved::Manager::Ptr sdresolver = nullptr;
+
+    SystemdResolved(DBus::Connection::Ptr dbc);
 };
 } // namespace DNS
 } // namespace NetCfg

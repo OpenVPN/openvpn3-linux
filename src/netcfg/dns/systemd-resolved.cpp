@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2020 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2020 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2020-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2020-  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -22,7 +22,7 @@
 #include <vector>
 #include <sys/stat.h>
 
-#include <openvpn/common/rc.hpp>
+#include "build-config.h"
 #include <openvpn/addr/ip.hpp>
 
 #include "common/timestamp.hpp"
@@ -32,16 +32,16 @@
 #include "netcfg/dns/systemd-resolved.hpp"
 #include "netcfg/netcfg-exception.hpp"
 
+
 using namespace NetCfg::DNS;
 using namespace NetCfg::DNS::resolved;
 
-SystemdResolved::SystemdResolved(GDBusConnection *dbc)
-    : resolved::Manager(dbc)
+
+SystemdResolved::SystemdResolved(DBus::Connection::Ptr dbc)
 {
+    sdresolver = resolved::Manager::Create(dbc);
 }
 
-
-SystemdResolved::~SystemdResolved() = default;
 
 const std::string SystemdResolved::GetBackendInfo() const noexcept
 {
@@ -57,22 +57,37 @@ const ApplySettingsMode SystemdResolved::GetApplyMode() const noexcept
 
 void SystemdResolved::Apply(const ResolverSettings::Ptr settings)
 {
-    SystemdResolved::updateQueueEntry upd;
-    upd.link = RetrieveLink(settings->GetDeviceName());
-    upd.enable = settings->GetEnabled();
+    Link::Ptr link = nullptr;
+    try
+    {
+        link = sdresolver->RetrieveLink(settings->GetDeviceName());
+        if (!link)
+        {
+            return;
+        }
+    }
+    catch (const resolved::Exception &excp)
+    {
+        std::ostringstream err;
+        err << "No link device available in systemd-resolved for "
+            << settings->GetDeviceName() << ": " << excp.what();
+        throw NetCfgException(err.str());
+    }
 
-    if (upd.enable)
+    auto upd = SystemdResolved::updateQueueEntry::Create(link,
+                                                         settings->GetEnabled());
+    if (upd->enable)
     {
 
         for (const auto &r : settings->GetNameServers())
         {
-            if (!IP::Addr::is_valid(r))
+            if (!openvpn::IP::Addr::is_valid(r))
             {
                 // Should log invalid IP addresses
                 continue;
             }
-            IP::Addr addr(r);
-            upd.resolver.push_back(ResolverRecord((addr.is_ipv6() ? AF_INET6 : AF_INET),
+            openvpn::IP::Addr addr(r);
+            upd->resolver.push_back(ResolverRecord((addr.is_ipv6() ? AF_INET6 : AF_INET),
                                                   addr.to_string()));
         }
 
@@ -82,63 +97,66 @@ void SystemdResolved::Apply(const ResolverSettings::Ptr settings)
             // https://systemd.io/RESOLVED-VPNS/ - if in split-dns mode (tunnel scope)
             // TODO: Look into getting routing domains setup for reverse DNS lookups
             //        based on pushed routes
-            upd.search.push_back(SearchDomain(sd, false));
+            upd->search.push_back(SearchDomain(sd, false));
         }
 
         if (settings->GetDNSScope() == DNS::Scope::GLOBAL)
         {
-            upd.search.push_back(SearchDomain(".", true));
-            upd.default_routing = true;
+            upd->search.push_back(SearchDomain(".", true));
+            upd->default_routing = true;
         }
         else
         {
-            upd.default_routing = false;
+            upd->default_routing = false;
         }
     }
-    update_queue.push_back(upd);
+    update_queue.insert(update_queue.begin(), upd);
 }
 
 
-void SystemdResolved::Commit(NetCfgSignals *signal)
+void SystemdResolved::Commit(NetCfgSignals::Ptr signal)
 {
-    for (auto &upd : update_queue)
+
+    for (uint32_t i = 0; i < update_queue.size(); ++i)
     {
-        if (upd.disabled)
+        SystemdResolved::updateQueueEntry::Ptr upd = update_queue.back();
+        update_queue.pop_back();
+        if (!upd->link)
+        {
+            continue;
+        }
+        if (upd->disabled)
         {
             continue;
         }
         try
         {
-            if (upd.enable)
+            if (upd->enable)
             {
-                signal->LogVerb2("systemd-resolved: [" + upd.link->GetPath()
+                signal->LogVerb2("systemd-resolved: [" + upd->link->GetPath()
                                  + "] Committing DNS servers");
-                upd.link->SetDNSServers(upd.resolver);
-                signal->LogVerb2("systemd-resolved: [" + upd.link->GetPath()
+                upd->link->SetDNSServers(upd->resolver);
+                signal->LogVerb2("systemd-resolved: [" + upd->link->GetPath()
                                  + "] Committing DNS search domains");
-                upd.link->SetDomains(upd.search);
-                upd.link->SetDefaultRoute(upd.default_routing);
+                upd->link->SetDomains(upd->search);
+                upd->link->SetDefaultRoute(upd->default_routing);
             }
             else
             {
-                upd.link->Revert();
+                upd->link->Revert();
             }
         }
-        catch (const DBusProxyAccessDeniedException &excp)
+        catch (const DBus::Exception &excp)
         {
             signal->LogCritical("systemd-resolved: " + std::string(excp.what()));
-            upd.disabled = true;
-        }
-        catch (const DBusException &excp)
-        {
-            signal->LogCritical("systemd-resolved: " + std::string(excp.what()));
-            upd.disabled = true;
+            upd->disabled = true;
         }
         catch (const std::exception &excp)
         {
             signal->LogError("systemd-resolved: " + std::string(excp.what()));
-            upd.disabled = true;
+            upd->disabled = true;
         }
+        upd.reset();
     }
     update_queue.clear();
 }
