@@ -238,7 +238,7 @@ class ResolverSettings
      *          decoded ResolverSertings information
      */
     friend std::ostream &operator<<(std::ostream &os,
-                                    const ResolverSettings::Ptr &rs)
+                                    const ResolverSettings::Ptr rs)
     {
         if ((rs->name_servers.empty() && rs->search_domains.empty())
             || rs->prepare_removal)
