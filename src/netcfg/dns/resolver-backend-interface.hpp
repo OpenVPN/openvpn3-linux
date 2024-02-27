@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2019 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2019 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2019-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2019-  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -15,12 +15,10 @@
  */
 #pragma once
 
-#include <openvpn/common/rc.hpp>
+#include <memory>
 
 #include "netcfg/netcfg-signals.hpp"
 #include "netcfg/dns/resolver-settings.hpp"
-
-using namespace openvpn;
 
 
 namespace NetCfg {
@@ -46,13 +44,10 @@ enum class ApplySettingsMode
  *  running VPN session.
  *
  */
-class ResolverBackendInterface : public virtual RC<thread_unsafe_refcount>
+class ResolverBackendInterface
 {
   public:
-    typedef RCPtr<ResolverBackendInterface> Ptr;
-
-    ResolverBackendInterface() = default;
-    virtual ~ResolverBackendInterface() = default;
+    using Ptr = std::shared_ptr<ResolverBackendInterface>;
 
     /**
      *  Provide some information for logging about the configured
@@ -87,7 +82,7 @@ class ResolverBackendInterface : public virtual RC<thread_unsafe_refcount>
      *                   send "NetworkChange" notifications for DNS
      *                   resolver changes
      */
-    virtual void Commit(NetCfgSignals *signals) = 0;
+    virtual void Commit(NetCfgSignals::Ptr signals) = 0;
 };
 } // namespace DNS
 } // namespace NetCfg

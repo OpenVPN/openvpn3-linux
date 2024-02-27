@@ -191,22 +191,31 @@ TEST(DNSResolverSettings, ClearEntries)
     EXPECT_EQ(r1->GetSearchDomains().size(), 0);
 }
 
-TEST(DNSResolverSettings, string)
+
+TEST(DNSResolverSettings, no_settings_str)
 {
     auto r1 = ResolverSettings::Create(7);
 
+    std::stringstream chk1;
+    chk1 << r1;
+    EXPECT_STREQ(chk1.str().c_str(), "(No DNS resolver settings)");
+
+    r1->Enable();
+    std::stringstream chk2;
+    chk2 << r1;
+    EXPECT_STREQ(chk2.str().c_str(), "(No DNS resolver settings)");
+}
+
+
+TEST(DNSResolverSettings, only_search_str)
+{
+    auto r1 = ResolverSettings::Create(7);
     for (int i = 0; i < 5; ++i)
     {
-        std::stringstream ns;
-        ns << std::to_string(30 + i) << "." << std::to_string(31 + i) << "."
-           << std::to_string(32 + i) << "." << std::to_string(33 + i);
-        r1->AddNameServer(ns.str());
-
         std::stringstream sd;
-        sd << "test" << std::to_string(i + 1) << ".example.community";
+        sd << "test" << std::to_string(i + 1) << ".example.com";
         r1->AddSearchDomain(sd.str());
     }
-
     std::stringstream chk1;
     chk1 << r1;
     EXPECT_STREQ(chk1.str().c_str(), "(Settings not enabled)");
@@ -215,12 +224,10 @@ TEST(DNSResolverSettings, string)
     std::stringstream chk2;
     chk2 << r1;
     EXPECT_STREQ(chk2.str().c_str(),
-                 "DNS resolvers: 30.31.32.33, 31.32.33.34, 32.33.34.35, "
-                 "33.34.35.36, 34.35.36.37 "
-                 "- Search domains: test1.example.community, "
-                 "test2.example.community, test3.example.community, "
-                 "test4.example.community, test5.example.community");
+                 "Search domains: test1.example.com, test2.example.com, "
+                 "test3.example.com, test4.example.com, test5.example.com");
 }
+
 
 TEST(DNSResolverSettings, string_Ptr)
 {
@@ -252,6 +259,7 @@ TEST(DNSResolverSettings, string_Ptr)
                  "test11.example.community, test12.example.community, "
                  "test13.example.community, test14.example.community");
 }
+
 
 TEST(DNSResolverSettings, GVariantTests_SingleNameServer)
 {

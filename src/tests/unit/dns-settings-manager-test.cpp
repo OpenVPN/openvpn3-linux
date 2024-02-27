@@ -17,7 +17,6 @@
 #include <vector>
 #include <gtest/gtest.h>
 
-#include <openvpn/common/rc.hpp>
 #include "netcfg/dns/resolver-backend-interface.hpp"
 #include "netcfg/dns/settings-manager.hpp"
 
@@ -26,7 +25,7 @@ using namespace NetCfg::DNS;
 class TestBackend : public ResolverBackendInterface
 {
   public:
-    typedef RCPtr<TestBackend> Ptr;
+    using Ptr = std::shared_ptr<TestBackend>;
 
     TestBackend() = default;
     ~TestBackend() = default;
@@ -71,7 +70,7 @@ class TestBackend : public ResolverBackendInterface
         domains.insert(domains.end(), dmns.begin(), dmns.end());
     }
 
-    void Commit(NetCfgSignals *not_used) override
+    void Commit(NetCfgSignals::Ptr not_used) override
     {
         std::stringstream srv;
 
@@ -108,7 +107,7 @@ class DNSSettingsManager_SingleSetup : public ::testing::Test
   protected:
     void SetUp() override
     {
-        test_backend = new TestBackend();
+        test_backend = std::make_shared<TestBackend>();
         dnsmgr = SettingsManager::Create(test_backend);
     }
 
@@ -205,7 +204,7 @@ class DNSSettingsManager_MultipleSessions : public ::testing::Test
   protected:
     void SetUp() override
     {
-        test_backend = new TestBackend();
+        test_backend = std::make_shared<TestBackend>();
         dnsmgr = SettingsManager::Create(test_backend);
     }
 

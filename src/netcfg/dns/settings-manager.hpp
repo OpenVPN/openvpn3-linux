@@ -22,7 +22,6 @@
 #include "netcfg/dns/resolver-settings.hpp"
 #include "netcfg/dns/resolver-backend-interface.hpp"
 
-using namespace openvpn;
 using namespace NetCfg::DNS;
 
 namespace NetCfg {
@@ -74,7 +73,7 @@ class SettingsManager
     /**
      *   Apply all configured DNS settings
      */
-    void ApplySettings(NetCfgSignals *signal);
+    void ApplySettings(NetCfgSignals::Ptr signals);
 
 
     /**

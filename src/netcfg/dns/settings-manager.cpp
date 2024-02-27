@@ -54,18 +54,25 @@ ResolverSettings::Ptr SettingsManager::NewResolverSettings()
 }
 
 
-void SettingsManager::ApplySettings(NetCfgSignals *signal)
+void SettingsManager::ApplySettings(NetCfgSignals::Ptr signals)
 {
     // The list of ResolverSettings need to be applied in the reverse order.
     // This ensures the last connected VPN server has precedence.
-    for (auto rslv = resolvers.rbegin(); rslv != resolvers.rend(); rslv++)
+    try
     {
-        if (rslv->second->ChangesAvailable() && !rslv->second->GetRemovable())
+        for (auto rslv = resolvers.rbegin(); rslv != resolvers.rend(); rslv++)
         {
-            backend->Apply(rslv->second);
+            if (rslv->second->ChangesAvailable() && !rslv->second->GetRemovable())
+            {
+                backend->Apply(rslv->second);
+            }
         }
+        backend->Commit(signals);
     }
-    backend->Commit(signal);
+    catch (const NetCfgException &err)
+    {
+        signals->LogCritical(err.what());
+    }
 
     std::vector<NetCfgChangeEvent> notif; // NetworkChange notification queue
     std::vector<ssize_t> remove_list;
@@ -82,7 +89,7 @@ void SettingsManager::ApplySettings(NetCfgSignals *signal)
         {
             // If we have a NetCfgSignal object available, use that to
             // send NetworkChange events with the removed DNS resolver settings
-            if (signal)
+            if (signals)
             {
                 std::vector<std::string> name_servers = settings->GetNameServers(true);
                 if (name_servers.size() > 0)
@@ -109,7 +116,7 @@ void SettingsManager::ApplySettings(NetCfgSignals *signal)
                 // Send all NetworkChange events in the notification queue
                 for (const auto &ev : notif)
                 {
-                    signal->NetworkChange(ev);
+                    signals->NetworkChange(ev);
                 }
             }
             remove_list.push_back(idx);
