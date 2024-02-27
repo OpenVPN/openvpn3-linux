@@ -16,9 +16,10 @@
 
 #include <iostream>
 #include <sys/socket.h>
+#include <gdbuspp/connection.hpp>
 
+#include "build-config.h"
 #include "common/cmdargparser.hpp"
-#include "dbus/core.hpp"
 #include "netcfg/dns/proxy-systemd-resolved.hpp"
 
 using namespace NetCfg::DNS;
@@ -35,7 +36,7 @@ void print_details(resolved::Link::Ptr link)
     {
         curr_dns_srv = link->GetCurrentDNSServer();
     }
-    catch (const DBusException &excp)
+    catch (const DBus::Exception &excp)
     {
         std::cout << "** ERROR **  " << excp.what() << std::endl;
     }
@@ -54,7 +55,7 @@ void print_details(resolved::Link::Ptr link)
     {
         dns_srvs = link->GetDNSServers();
     }
-    catch (const DBusException &excp)
+    catch (const DBus::Exception &excp)
     {
         std::cout << "** ERROR **  " << excp.what() << std::endl;
     }
@@ -63,7 +64,7 @@ void print_details(resolved::Link::Ptr link)
     {
         srch = link->GetDomains();
     }
-    catch (const DBusException &excp)
+    catch (const DBus::Exception &excp)
     {
         std::cout << "** ERROR **  " << excp.what() << std::endl;
     }
@@ -96,12 +97,10 @@ int program(ParsedArgs::Ptr args)
         throw CommandException("", "Only one device name can be used");
     }
 
-    DBus conn(G_BUS_TYPE_SYSTEM);
-    conn.Connect();
+    auto conn = DBus::Connection::Create(DBus::BusType::SYSTEM);
 
-    resolved::Manager srmgr(conn.GetConnection());
-    resolved::Link::Ptr link = srmgr.RetrieveLink(exargs[0]);
-
+    auto srmgr = resolved::Manager::Create(conn);
+    resolved::Link::Ptr link = srmgr->RetrieveLink(exargs[0]);
 
     std::cout << "systemd-resolved path: " << link->GetPath() << std::endl;
     bool mods = args->Present("add-resolver") || args->Present("reset-resolver")

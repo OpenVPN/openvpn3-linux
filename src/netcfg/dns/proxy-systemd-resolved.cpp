@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2020 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2020 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2020-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2020-  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -15,14 +15,17 @@
 #include <errno.h>
 #include <net/if.h>
 #include <sys/socket.h>
+#include <gdbuspp/connection.hpp>
+#include <gdbuspp/glib2/utils.hpp>
+#include <gdbuspp/object/path.hpp>
+#include <gdbuspp/proxy.hpp>
+#include <gdbuspp/proxy/utils.hpp>
 
 #include <openvpn/common/split.hpp>
 
-#include "dbus/core.hpp"
-#include "dbus/glibutils.hpp"
 #include "netcfg/dns/proxy-systemd-resolved.hpp"
 
-using namespace openvpn;
+
 using namespace NetCfg::DNS::resolved;
 
 
@@ -33,7 +36,7 @@ namespace resolved {
 //
 //  NetCfg::DNS::resolved::ResolverRecord
 //
-ResolverRecord::ResolverRecord(unsigned short f, std::string s)
+ResolverRecord::ResolverRecord(const unsigned short f, const std::string &s)
     : family(f), server(s)
 {
 }
@@ -41,9 +44,9 @@ ResolverRecord::ResolverRecord(unsigned short f, std::string s)
 
 ResolverRecord::ResolverRecord(GVariant *entry)
 {
-    GLibUtils::checkParams(__func__, entry, "(iay)", 2);
+    glib2::Utils::checkParams(__func__, entry, "(iay)", 2);
 
-    family = GLibUtils::ExtractValue<int>(entry, 0);
+    family = glib2::Value::Extract<int>(entry, 0);
     if (AF_INET != family && AF_INET6 != family)
     {
         throw Exception("Unsupported address family");
@@ -72,26 +75,25 @@ ResolverRecord::ResolverRecord(GVariant *entry)
 
 GVariant *ResolverRecord::GetGVariant() const
 {
-    const GVariantType *t = G_VARIANT_TYPE("(iay)");
-    GVariantBuilder *b = g_variant_builder_new(t);
+    GVariantBuilder *b = glib2::Builder::Create("(iay)");
+    glib2::Builder::Add(b, family, "i");
 
-    g_variant_builder_add(b, "i", family);
-
+    // FIXME:  Lacking IPv6 support
     std::vector<std::string> ip;
-    ip = Split::by_char<std::vector<std::string>, NullLex, Split::NullLimit>(
-        server, '.');
-    GVariantBuilder *ip_b = g_variant_builder_new(G_VARIANT_TYPE("ay"));
+    ip = openvpn::Split::by_char<std::vector<std::string>,
+                                 openvpn::NullLex,
+                                 openvpn::Split::NullLimit>(server, '.');
+    GVariantBuilder *ip_b = glib2::Builder::Create("ay");
     for (const auto &e : ip)
     {
+        // TODO: For some reason, glib2::Builder::Add() does not
+        // work, even though the glib2 call is essentially identical
+        // to the call below.
         g_variant_builder_add(ip_b, "y", std::stoi(e));
     }
-    g_variant_builder_add_value(b, g_variant_builder_end(ip_b));
+    glib2::Builder::Add(b, glib2::Builder::Finish(ip_b));
 
-    GVariant *ret = g_variant_builder_end(b);
-    g_variant_builder_unref(ip_b);
-    g_variant_builder_unref(b);
-
-    return ret;
+    return glib2::Builder::Finish(b);
 }
 
 
@@ -99,30 +101,34 @@ GVariant *ResolverRecord::GetGVariant() const
 //
 //  NetCfg::DNS::resolved::SearchDomain
 //
-SearchDomain::SearchDomain(std::string srch, bool rout)
-    : search(srch), routing(rout)
+SearchDomain::SearchDomain(const std::string &srch, const bool rout)
+    : search(std::move(srch)), routing(rout)
 {
 }
 
 
 SearchDomain::SearchDomain(GVariant *entry)
 {
-    GLibUtils::checkParams(__func__, entry, "(sb)", 2);
+    glib2::Utils::checkParams(__func__, entry, "(sb)", 2);
 
-    search = GLibUtils::ExtractValue<std::string>(entry, 0);
-    routing = GLibUtils::ExtractValue<bool>(entry, 1);
+    search = glib2::Value::Extract<std::string>(entry, 0);
+    routing = glib2::Value::Extract<bool>(entry, 1);
 }
 
 
 GVariant *SearchDomain::GetGVariant() const
 {
-    GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("(sb)"));
+    if (search.empty())
+    {
+        return nullptr;
+    }
+    GVariantBuilder *b = glib2::Builder::Create("(sb)");
+    // TODO: For some reason, glib2::Builder::Add() does not
+    // work, even though the glib2 call is essentially identical
+    // to the call below.
     g_variant_builder_add(b, "s", search.c_str());
     g_variant_builder_add(b, "b", routing);
-
-    GVariant *ret = g_variant_builder_end(b);
-    g_variant_builder_unref(b);
-    return ret;
+    return glib2::Builder::Finish(b);
 }
 
 
@@ -131,25 +137,33 @@ GVariant *SearchDomain::GetGVariant() const
 //  NetCfg::DNS::resolved::Link
 //
 
-Link::Link(GDBusConnection *dbuscon, const std::string path)
-    : DBusProxy(dbuscon,
-                "org.freedesktop.resolve1",
-                "org.freedesktop.resolve1.Link",
-                path)
+Link::Ptr Link::Create(DBus::Proxy::Client::Ptr prx,
+                       const DBus::Object::Path &path)
 {
+    return Link::Ptr(new Link(prx, path));
 }
 
 
-const std::string Link::GetPath() const
+Link::Link(DBus::Proxy::Client::Ptr prx, const DBus::Object::Path &path)
+    : proxy(prx)
 {
-    return GetProxyPath();
+    tgt_link = DBus::Proxy::TargetPreset::Create(path,
+                                                 "org.freedesktop.resolve1.Link");
+}
+
+
+const DBus::Object::Path Link::GetPath() const
+{
+    return (tgt_link ? tgt_link->object_path : "");
 }
 
 
 const std::vector<std::string> Link::GetDNSServers() const
 {
-    GVariant *r = GetProperty("DNS");
-    GLibUtils::checkParams(__func__, r, "a(iay)", 0);
+    GVariant *r = proxy->GetPropertyGVariant(tgt_link, "DNS");
+    glib2::Utils::checkParams(__func__, r, "a(iay)");
+
+
     GVariantIter *it = g_variant_iter_new(r);
 
     GVariant *rec = nullptr;
@@ -169,13 +183,15 @@ const std::vector<std::string> Link::GetDNSServers() const
 
 void Link::SetDNSServers(const ResolverRecord::List &servers) const
 {
-    GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a(iay)"));
+    GVariantBuilder *b = glib2::Builder::Create("a(iay)");
     for (const auto &srv : servers)
     {
-        g_variant_builder_add_value(b, srv.GetGVariant());
+        glib2::Builder::Add(b, srv.GetGVariant());
     }
 
-    GVariant *r = Call("SetDNS", GLibUtils::wrapInTuple(b));
+    GVariant *r = proxy->Call(tgt_link,
+                              "SetDNS",
+                              glib2::Builder::FinishWrapped(b));
     g_variant_unref(r);
 }
 
@@ -185,7 +201,7 @@ const std::string Link::GetCurrentDNSServer() const
     GVariant *r = nullptr;
     try
     {
-        r = GetProperty("CurrentDNSServer");
+        r = proxy->GetPropertyGVariant(tgt_link, "CurrentDNSServer");
         struct ResolverRecord d(r);
         g_variant_unref(r);
         return d.server;
@@ -197,7 +213,7 @@ const std::string Link::GetCurrentDNSServer() const
         g_variant_unref(r);
         return "";
     }
-    catch (const DBusException &)
+    catch (const DBus::Exception &)
     {
         return "";
     }
@@ -206,8 +222,8 @@ const std::string Link::GetCurrentDNSServer() const
 
 const SearchDomain::List Link::GetDomains() const
 {
-    GVariant *r = GetProperty("Domains");
-    GLibUtils::checkParams(__func__, r, "a(sb)", 0);
+    GVariant *r = proxy->GetPropertyGVariant(tgt_link, "Domains");
+    glib2::Utils::checkParams(__func__, r, "a(sb)");
 
     GVariantIter *it = g_variant_iter_new(r);
     SearchDomain::List ret{};
@@ -227,13 +243,19 @@ const SearchDomain::List Link::GetDomains() const
 
 void Link::SetDomains(const SearchDomain::List &doms) const
 {
-    GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("a(sb)"));
+    GVariantBuilder *b = glib2::Builder::Create("a(sb)");
     for (const auto &dom : doms)
     {
-        g_variant_builder_add_value(b, dom.GetGVariant());
+        GVariant *r = dom.GetGVariant();
+        if (r)
+        {
+            g_variant_builder_add_value(b, r);
+        }
     }
 
-    GVariant *r = Call("SetDomains", GLibUtils::wrapInTuple(b));
+    GVariant *r = proxy->Call(tgt_link,
+                              "SetDomains",
+                              glib2::Builder::FinishWrapped(b));
     g_variant_unref(r);
 }
 
@@ -242,13 +264,9 @@ bool Link::GetDefaultRoute() const
 {
     try
     {
-        GVariant *r = GetProperty("DefaultRoute");
-        GLibUtils::checkParams(__func__, r, "b", 0);
-        bool ret = g_variant_get_boolean(r);
-        g_variant_unref(r);
-        return ret;
+        return proxy->GetProperty<bool>(tgt_link, "DefaultRoute");
     }
-    catch (const DBusException &excp)
+    catch (const DBus::Exception &excp)
     {
         throw Exception("Could not extract DefaultRoute");
     }
@@ -257,17 +275,13 @@ bool Link::GetDefaultRoute() const
 
 void Link::SetDefaultRoute(const bool route) const
 {
-    GVariantBuilder *b = g_variant_builder_new(G_VARIANT_TYPE("(b)"));
-    g_variant_builder_add_value(b, g_variant_new_boolean(route));
-    GVariant *r = Call("SetDefaultRoute", g_variant_builder_end(b));
-    g_variant_builder_unref(b);
-    g_variant_unref(r);
+    proxy->SetProperty(tgt_link, "SetDefaultRoute", route);
 }
 
 
 void Link::Revert() const
 {
-    GVariant *r = Call("Revert");
+    GVariant *r = proxy->Call(tgt_link, "Revert");
     g_variant_unref(r);
 }
 
@@ -277,13 +291,18 @@ void Link::Revert() const
 //  NetCfg::DNS::resolved::Manager
 //
 
-Manager::Manager(GDBusConnection *dbuscon)
-    : DBusProxy(dbuscon,
-                "org.freedesktop.resolve1",
-                "org.freedesktop.resolve1.Manager",
-                "/org/freedesktop/resolve1",
-                true)
+Manager::Ptr Manager::Create(DBus::Connection::Ptr conn)
 {
+    return Manager::Ptr(new Manager(conn));
+}
+
+
+Manager::Manager(DBus::Connection::Ptr conn)
+{
+    proxy = DBus::Proxy::Client::Create(conn, "org.freedesktop.resolve1");
+    tgt_resolved = DBus::Proxy::TargetPreset::Create(
+        "/org/freedesktop/resolve1", "org.freedesktop.resolve1.Manager");
+
     // Check if org.freedesktop.resolve1 (systemd-resolved) is available.
     // We test this by connecting to the service.
     //
@@ -292,10 +311,10 @@ Manager::Manager(GDBusConnection *dbuscon)
     // run without DNS configured.
     try
     {
-        ProxyConnect();
-        Ping();
+        auto prxqry = DBus::Proxy::Utils::Query::Create(proxy);
+        prxqry->Ping();
     }
-    catch (const DBusException &excp)
+    catch (const DBus::Exception &excp)
     {
         throw Exception(std::string("Could not reach ")
                         + "org.freedesktop.resolve1 (systemd-resolved). "
@@ -308,10 +327,19 @@ Manager::Manager(GDBusConnection *dbuscon)
     // run as
     try
     {
-        (void)StartServiceByName("org.freedesktop.PolicyKit1");
-        (void)GetNameOwner("org.freedesktop.PolicyKit1");
+        auto prxsrv = DBus::Proxy::Utils::DBusServiceQuery::Create(conn);
+        if (prxsrv->StartServiceByName("org.freedesktop.PolicyKit1") < 1)
+        {
+            throw DBus::Exception(__func__, "");
+        }
+
+        std::string n = prxsrv->GetNameOwner("org.freedesktop.PolicyKit1");
+        if (n.empty())
+        {
+            throw DBus::Exception(__func__, "");
+        }
     }
-    catch (const DBusException &excp)
+    catch (const DBus::Exception &excp)
     {
         throw Exception(std::string("Could not access ")
                         + "org.freedesktop.PolicyKit1 (polkitd) service. "
@@ -320,7 +348,7 @@ Manager::Manager(GDBusConnection *dbuscon)
 }
 
 
-Link::Ptr Manager::RetrieveLink(const std::string dev_name)
+Link::Ptr Manager::RetrieveLink(const std::string dev_name) const
 {
     unsigned int if_idx = ::if_nametoindex(dev_name.c_str());
     if (0 == if_idx)
@@ -330,20 +358,35 @@ Link::Ptr Manager::RetrieveLink(const std::string dev_name)
             << std::string(::strerror(errno));
         throw Exception(err.str());
     }
-
-    Link::Ptr ret;
-    ret.reset(new Link(GetConnection(), GetLink(if_idx)));
-    return ret;
+    auto link_path = GetLink(if_idx);
+    if (link_path.empty())
+    {
+        return nullptr;
+    }
+    return Link::Create(proxy, link_path);
 }
 
 
-std::string Manager::GetLink(unsigned int if_idx)
+DBus::Object::Path Manager::GetLink(unsigned int if_idx) const
 {
-    GVariant *res = Call("GetLink", g_variant_new("(i)", if_idx));
-    GLibUtils::checkParams("GetLink", res, "(o)", 1);
-    std::string link_path = GLibUtils::ExtractValue<std::string>(res, 0);
-    g_variant_unref(res);
-    return link_path;
+    GVariant *res = proxy->Call(tgt_resolved,
+                                "GetLink",
+                                glib2::Value::CreateTupleWrapped(if_idx, "i"));
+    glib2::Utils::checkParams("GetLink", res, "(o)", 1);
+    try
+    {
+        auto link_path = glib2::Value::Extract<DBus::Object::Path>(res, 0);
+        g_variant_unref(res);
+        return link_path;
+    }
+    catch (const DBus::Exception &excp)
+    {
+        std::ostringstream err;
+        err << "Could not retrieve systemd-resolved path for "
+            << "if_index " + std::to_string(if_idx) + ": "
+            << excp.what();
+        throw Exception(err.str());
+    }
 }
 
 } // namespace resolved
