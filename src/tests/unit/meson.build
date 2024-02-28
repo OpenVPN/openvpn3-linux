@@ -30,6 +30,8 @@ unit_tests = executable(
                 'statusevent.cpp',
                 'syslog-facility-mapping.cpp',
                 'timestamp.cpp',
+                '../../netcfg/dns/resolver-settings.cpp',
+                '../../netcfg/dns/settings-manager.cpp',
            ],
            include_directories: [include_dirs, gtest_inc, '../../..'],
            link_with: [

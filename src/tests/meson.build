@@ -251,6 +251,8 @@ executable('netcfg-changeevent-selftest',
 executable('netcfg-dns-direct-file-selftest',
     [
         'misc/netcfg-dns-direct-file-selftest.cpp',
+        '../netcfg/dns/resolver-settings.cpp',
+        '../netcfg/dns/resolvconf-file.cpp',
     ],
     build_by_default: build_test_programs and get_option('debug_internal'),
     link_with: [
