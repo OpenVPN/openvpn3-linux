@@ -492,7 +492,7 @@ class BackendClientObject : public DBus::Object::Base
     ClientAPI::ProvideCreds creds{};
     RequiresQueue::Ptr userinputq{nullptr};
     std::mutex connect_guard{};
-    DBus::Object::Path session_path;
+    DBus::Object::Path session_path = "/__unknown";
     const std::vector<std::string> restricted_acl_prop_get{
         "net.openvpn.v3.backends.statistics",
         "net.openvpn.v3.backends.stats",
@@ -553,11 +553,11 @@ class BackendClientObject : public DBus::Object::Base
 
         glib2::Utils::checkParams(__func__, params, "(soo)", 3);
         auto verify_token = glib2::Value::Extract<std::string>(params, 0);
-        auto sessionpath = glib2::Value::Extract<DBus::Object::Path>(params, 1);
+        session_path = glib2::Value::Extract<DBus::Object::Path>(params, 1);
         configpath = glib2::Value::Extract<DBus::Object::Path>(params, 2);
 
         registered = (session_token == verify_token);
-        signal->ModifyPath(sessionpath);
+        signal->ModifyPath(session_path);
 
         signal->Debug("Registration confirmation: "
                       + verify_token + " == "
@@ -567,7 +567,7 @@ class BackendClientObject : public DBus::Object::Base
         if (registered)
         {
             LogServiceProxy::Ptr lgs = LogServiceProxy::Create(dbusconn);
-            lgs->AssignSession(sessionpath, Constants::GenInterface("backends"));
+            lgs->AssignSession(session_path, Constants::GenInterface("backends"));
 
             // Fetch the configuration from the config-manager.
             // Since the configuration may be set up for single-use
@@ -579,6 +579,7 @@ class BackendClientObject : public DBus::Object::Base
             // report back back if more data is required to be
             // sent by the front-end interface.
             initialize_client();
+            signal->LogVerb2("Assigned session path: " + session_path);
             return ret;
         }
         else
