@@ -95,6 +95,7 @@ files_var_lib_filetrans(openvpn3_netcfg_t, openvpn3_netcfg_var_lib_t, { dir file
 files_read_etc_files(openvpn3_netcfg_t)
 auth_use_nsswitch(openvpn3_netcfg_t)
 miscfiles_read_localization(openvpn3_netcfg_t)
+logging_send_syslog_msg(openvpn3_netcfg_t)
 
 # Silence noise from not needed privileges
 # openvpn3-service-netcfg calls access("/proc/net/unix", R_OK), but does not
