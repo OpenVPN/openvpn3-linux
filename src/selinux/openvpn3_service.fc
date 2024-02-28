@@ -10,3 +10,4 @@
 /usr/libexec/openvpn3-linux/openvpn3-service-client            -- gen_context(system_u:object_r:openvpn3_client_exec_t,s0)
 /usr/libexec/openvpn3-linux/openvpn3-service-backendstart-dev  -- gen_context(system_u:object_r:openvpn3_client_exec_t,s0)
 /usr/libexec/openvpn3-linux/openvpn3-service-client-dev        -- gen_context(system_u:object_r:openvpn3_client_exec_t,s0)
+/usr/libexec/openvpn3-linux/openvpn3-service-netcfg-dev        -- gen_context(system_u:object_r:openvpn3_netcfg_exec_t,s0)

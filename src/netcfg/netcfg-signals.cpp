@@ -13,12 +13,10 @@
  */
 
 #include <signal.h>
-#include <memory>
 #include <sstream>
 #include <gdbuspp/connection.hpp>
 #include <gdbuspp/signals/group.hpp>
 
-#include "dbus/constants.hpp"
 #include "log/dbus-log.hpp"
 #include "netcfg-changeevent.hpp"
 #include "netcfg-signals.hpp"
@@ -34,10 +32,16 @@ NetCfgSignals::NetCfgSignals(DBus::Connection::Ptr conn,
                 lgroup,
                 object_path_,
                 Constants::GenInterface("netcfg"),
+                false,
                 logwr),
       object_path(object_path_),
       object_interface(Constants::GenInterface("netcfg"))
 {
+    auto creds = DBus::Credentials::Query::Create(conn);
+    AddTarget(creds->GetUniqueBusName(Constants::GenServiceName("log")));
+
+    RegisterSignal("NetworkChange", NetCfgChangeEvent::SignalDeclaration());
+
     SetLogLevel(default_log_level);
     GroupCreate(object_path);
 }

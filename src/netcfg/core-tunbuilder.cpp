@@ -2,14 +2,23 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C)  Arne Schwabe <arne@openvpn.net>
-//  Copyright (C)  Lev Stipakov <lev@openvpn.net>
-//  Copyright (C)  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2018-  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2019-  Lev Stipakov <lev@openvpn.net>
+//  Copyright (C) 2019-  David Sommerseth <davids@openvpn.net>
 //
+
+/**
+ * @file   core-tunbuilder.cpp
+ *
+ * @brief Implementation of the OpenVPN 3 Core library TunBuilder for
+ *        the openvpn3-service-netcfg service
+ */
 
 // Enable output of sitnl messages
 #define DEBUG_SITNL 1
+
+#include "build-config.h"
 
 // Enable D-Bus logging of Core library
 //
@@ -20,13 +29,12 @@
 #include "log/core-dbus-logger.hpp"
 #include <openvpn/common/platform.hpp>
 
-// FIXME: This need to be included first because
-//        it breaks if included after tuncli.hpp
-#include "common/utils.hpp"
-
 #include "core-tunbuilder.hpp"
 #include <openvpn/tun/tunmtu.hpp>
+#include <openvpn/tun/linux/client/sitnl.hpp>
 #include <openvpn/tun/linux/client/tuncli.hpp>
+
+#include "common/utils.hpp"
 #include "netcfg-device.hpp"
 #include "netcfg-signals.hpp"
 
@@ -77,6 +85,8 @@ class CoreTunbuilderImpl : public CoreTunbuilder
      */
     TunBuilderCapture::Ptr createTunbuilderCapture(const NetCfgDevice &netCfgDevice)
     {
+        CoreLog::Connect(netCfgDevice.signals);
+
         TunBuilderCapture::Ptr tbc;
         tbc.reset(new TunBuilderCapture);
         tbc->tun_builder_new();
@@ -185,7 +195,7 @@ class CoreTunbuilderImpl : public CoreTunbuilder
         NetCfgChangeEvent dev_ev(NetCfgChangeType::DEVICE_ADDED,
                                  config.iface_name,
                                  {});
-        netCfgDevice.signal.NetworkChange(dev_ev);
+        netCfgDevice.signals->NetworkChange(dev_ev);
 
         for (const auto &ipaddr : netCfgDevice.vpnips)
         {
@@ -194,7 +204,7 @@ class CoreTunbuilderImpl : public CoreTunbuilder
                                      {{"ip_address", ipaddr.address},
                                       {"prefix", std::to_string(ipaddr.prefix)},
                                       {"ip_version", (ipaddr.ipv6 ? "6" : "4")}});
-            netCfgDevice.signal.NetworkChange(chg_ev);
+            netCfgDevice.signals->NetworkChange(chg_ev);
         }
 
         // WARNING:  This is NOT optimal
@@ -231,22 +241,22 @@ class CoreTunbuilderImpl : public CoreTunbuilder
                                       {"subnet", net.address},
                                       {"prefix", std::to_string(net.prefix)},
                                       {"gateway", (net.ipv6 ? local6.gateway : local4.gateway)}});
-            netCfgDevice.signal.NetworkChange(chg_ev);
+            netCfgDevice.signals->NetworkChange(chg_ev);
         }
     }
 
 
     void teardown(const NetCfgDevice &ncdev, bool disconnect) override
     {
+        if (remove_cmds)
+        {
+            remove_cmds->execute_log();
+        }
+
         if (tun)
         {
             // the os parameter is not used
             tun->destroy(std::cerr);
-        }
-
-        if (remove_cmds)
-        {
-            remove_cmds->execute_log();
         }
 
         // Announce the removed routes
@@ -261,7 +271,7 @@ class CoreTunbuilderImpl : public CoreTunbuilder
                                      {{"ip_version", (net.ipv6 ? "6" : "4")},
                                       {"subnet", net.address},
                                       {"prefix", std::to_string(net.prefix)}});
-            ncdev.signal.NetworkChange(chg_ev);
+            ncdev.signals->NetworkChange(chg_ev);
         }
 
         // Announce the removed interface
@@ -272,12 +282,12 @@ class CoreTunbuilderImpl : public CoreTunbuilder
                                      {{"ip_address", ipaddr.address},
                                       {"prefix", std::to_string(ipaddr.prefix)},
                                       {"ip_version", (ipaddr.ipv6 ? "6" : "4")}});
-            ncdev.signal.NetworkChange(chg_ev);
+            ncdev.signals->NetworkChange(chg_ev);
         }
         NetCfgChangeEvent chg_ev(NetCfgChangeType::DEVICE_REMOVED,
                                  ncdev.get_device_name(),
                                  {});
-        ncdev.signal.NetworkChange(chg_ev);
+        ncdev.signals->NetworkChange(chg_ev);
     }
 };
 
@@ -302,12 +312,14 @@ void protect_socket_somark(int fd, const std::string &remote, int somark)
 // breaks if it is done from core-tunbuilder.hpp, so we keep the management of this list here
 std::map<pid_t, ActionList> protected_sockets;
 
-void cleanup_protected_sockets(pid_t pid)
+void cleanup_protected_sockets(pid_t pid, NetCfgSignals::Ptr signals)
 {
     // Execute remove commands for protected sockets
     auto psocket = protected_sockets.find(pid);
     if (psocket != protected_sockets.end())
     {
+        signals->Debug("Cleaning up protected sockets from pid "
+                       + std::to_string(pid));
         psocket->second.execute_log();
         protected_sockets.erase(psocket);
     }
@@ -341,7 +353,7 @@ void protect_socket_binddev(int fd, const std::string &remote, bool ipv6)
     {
         IPv6::Addr bestgw;
         IP::Route6 hostroute(IPv6::Addr::from_string(remote), 128);
-        if (TunNetlink::SITNL::net_route_best_gw(hostroute, bestgw, bestdev) != 0)
+        if (openvpn::TunNetlink::SITNL::net_route_best_gw(hostroute, bestgw, bestdev) != 0)
         {
             throw NetCfgException("Failed retrieving IPv6 gateway for "
                                   + remote + " failed");

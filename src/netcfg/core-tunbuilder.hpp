@@ -2,24 +2,24 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C)  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2018-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2018-  Arne Schwabe <arne@openvpn.net>
 //
 
 /**
  * @file   core-tunbuilder.hpp
  *
- * @brief This class will reuse the OpenVPN3 tun builder to create
- *        and manage a tun device
- *
- *
+ * @brief This class will reuse the OpenVPN 3 Core library TunBuilder
+ *        to create and manage a tun/dco devices
  */
 
 #pragma once
 
-#include <openvpn/common/rc.hpp>
 #include <string>
 
+#include <openvpn/common/rc.hpp>
+
+#include "netcfg-signals.hpp"
 
 class NetCfgDevice;
 
@@ -74,7 +74,7 @@ void protect_socket_hostroute(const std::string &tun_intf,
  * Remove all protected sockets that belong to a certain pid
  * @param pid the pid for which the socket protection to remove for
  */
-void cleanup_protected_sockets(pid_t pid);
+void cleanup_protected_sockets(pid_t pid, NetCfgSignals::Ptr signals);
 
 
 // Workaround to avoid circular dependencies

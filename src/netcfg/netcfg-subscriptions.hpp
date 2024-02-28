@@ -19,8 +19,14 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <gdbuspp/credentials/query.hpp>
+#include <gdbuspp/object/base.hpp>
+#include <gdbuspp/signals/group.hpp>
 
 #include "netcfg-changeevent.hpp"
+
+
+class NetCfgSignals;
 
 /**
  *  External utilities can subscribe to NetworkChange signals from the
@@ -38,12 +44,28 @@ class NetCfgSubscriptions
      */
     typedef std::map<std::string, uint16_t> NetCfgNotifSubscriptions;
 
-    [[nodiscard]] static NetCfgSubscriptions::Ptr Create()
+    [[nodiscard]] static NetCfgSubscriptions::Ptr Create(std::shared_ptr<NetCfgSignals> sigs,
+                                                         DBus::Credentials::Query::Ptr creds)
     {
-        return NetCfgSubscriptions::Ptr(new NetCfgSubscriptions);
+        return NetCfgSubscriptions::Ptr(new NetCfgSubscriptions(sigs, creds));
     }
     ~NetCfgSubscriptions() = default;
 
+
+    /**
+     *  Adds the needed methods to handle NetworkChange signal subscriptions
+     *  to the main DBus::Object::Base object
+     *
+     * @param object_ptr        Raw DBus::Object::Base pointer where to add
+     *                          subscription management
+     * @param name_subscribe    std::string, sets the subscribe method name
+     * @param name_unsubscribe  std::string, sets the unsubscribe method name
+     * @param name_list         std::string, sets the list method name
+     */
+    void SubscriptionSetup(DBus::Object::Base *object_ptr,
+                           const std::string &name_subscribe,
+                           const std::string &name_unsubscribe,
+                           const std::string &name_list);
 
     /**
      *  Add a new subscription, with a given filter mask of which events the
@@ -95,7 +117,15 @@ class NetCfgSubscriptions
 
 
   private:
-    NetCfgNotifSubscriptions subscriptions;
+    std::shared_ptr<NetCfgSignals> signals = nullptr;
+    ;
+    DBus::Credentials::Query::Ptr creds_query = nullptr;
+    NetCfgNotifSubscriptions subscriptions{};
 
-    NetCfgSubscriptions() = default;
+    NetCfgSubscriptions(std::shared_ptr<NetCfgSignals> signals_,
+                        DBus::Credentials::Query::Ptr creds_qry_);
+
+    void method_name_subscribe(DBus::Object::Method::Arguments::Ptr args);
+    void method_name_unsubscribe(DBus::Object::Method::Arguments::Ptr args);
+    void method_name_list(DBus::Object::Method::Arguments::Ptr args);
 };

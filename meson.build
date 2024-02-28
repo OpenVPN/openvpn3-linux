@@ -117,6 +117,7 @@ build_config = configuration_data({
     'USE_ASIO': true,
     'USE_OPENSSL': true,
     'USE_TUN_BUILDER': true,
+    'OPENVPN_USE_SITNL': true,
 })
 
 build_config.set_quoted('LIBEXEC_PATH',
@@ -271,6 +272,7 @@ configure_file(
 #  OpenVPN 3 Linux services
 #
 subdir('src/client')
+subdir('src/netcfg')
 subdir('src/selinux')
 
 #

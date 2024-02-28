@@ -2,10 +2,10 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2019 - 2023  Lev Stipakov <lev@openvpn.net>
-//  Copyright (C) 2021 - 2023  Heiko Hund <heiko@openvpn.net>
+//  Copyright (C) 2018-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2018-  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2019-  Lev Stipakov <lev@openvpn.net>
+//  Copyright (C) 2021-  Heiko Hund <heiko@openvpn.net>
 //
 
 /**
@@ -16,23 +16,23 @@
 
 #include <string>
 #include <cap-ng.h>
-#include <cassert>
 
 #include <openvpn/common/base64.hpp>
 
+#include "build-config.h"
 #include "common/utils.hpp"
 #include "common/lookup.hpp"
 #include "common/cmdargparser.hpp"
-#include "dbus/core.hpp"
-#include "log/dbus-log.hpp"
+
 #include "log/logwriter.hpp"
 #include "log/logwriters/implementations.hpp"
 #include "log/ansicolours.hpp"
 #include "log/proxy-log.hpp"
-#include "log/core-dbus-logbase.hpp"
+#include "log/core-dbus-logger.hpp"
 
-#include "netcfg.hpp"
 #include "netcfg-options.hpp"
+#include "netcfg-service.hpp"
+#include "netcfg-service-handler.hpp"
 #include "netcfg/dns/settings-manager.hpp"
 #include "netcfg/dns/resolvconf-file.hpp"
 #include "netcfg/dns/systemd-resolved.hpp"
@@ -179,23 +179,15 @@ int netcfg_main(ParsedArgs::Ptr args)
     int exit_code = 0;
     try
     {
-        DBus dbus(G_BUS_TYPE_SYSTEM);
-        dbus.Connect();
+        auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
 
         // If we do unicast (!broadcast), attach to the log service
         if (!netcfgopts.signal_broadcast)
         {
-            logservice = LogServiceProxy::AttachInterface(dbus.GetConnection(),
-                                                          OpenVPN3DBus_interf_netcfg);
-            logservice->Attach(OpenVPN3DBus_interf_netcfg + ".core");
+            logservice = LogServiceProxy::AttachInterface(dbuscon,
+                                                          Constants::GenInterface("netcfg"));
+            logservice->Attach(Constants::GenInterface("netcfg.core"));
         }
-
-        // Initialize logging in the OpenVPN 3 Core library
-        openvpn::CoreDBusLogBase corelog(dbus.GetConnection(),
-                                         OpenVPN3DBus_interf_netcfg + ".core",
-                                         LogGroup::NETCFG,
-                                         logwr.get());
-        corelog.SetLogLevel(log_level);
 
         std::cout << get_version(args->GetArgv0()) << std::endl;
 
@@ -212,7 +204,7 @@ int netcfg_main(ParsedArgs::Ptr args)
             // We need to preserve a ResolvConfFile pointer to be able
             // to access the DNS::ResolvConfFile::Restore() method
             // when shutting down.
-            resolvconf = new DNS::ResolvConfFile(rsc, rsc + ".ovpn3bak");
+            resolvconf = ResolvConfFile::Create(rsc, rsc + ".ovpn3bak");
             resolver_be = resolvconf;
         }
 
@@ -220,7 +212,7 @@ int netcfg_main(ParsedArgs::Ptr args)
         {
             try
             {
-                resolver_be = new DNS::SystemdResolved(dbus.GetConnection());
+                resolver_be = DNS::SystemdResolved::Create(dbuscon);
             }
             catch (const DNS::resolved::Exception &excp)
             {
@@ -235,49 +227,22 @@ int netcfg_main(ParsedArgs::Ptr args)
         DNS::SettingsManager::Ptr resolvmgr = nullptr;
         if (resolver_be)
         {
-            resolvmgr = new DNS::SettingsManager(resolver_be);
+            resolvmgr = DNS::SettingsManager::Create(resolver_be);
         }
 
-        NetworkCfgService netcfgsrv(dbus.GetConnection(), resolvmgr, logwr.get(), netcfgopts);
-        netcfgsrv.SetDefaultLogLevel(log_level);
+        auto netcfgsrv = DBus::Service::Create<NetCfgService>(dbuscon,
+                                                              resolvmgr,
+                                                              logwr.get(),
+                                                              netcfgopts);
+        netcfgsrv->SetDefaultLogLevel(log_level);
+        netcfgsrv->PrepareIdleDetector(std::chrono::minutes(idle_wait_min));
 
-        // Prepare GLib Main loop
-        GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
-
-        // Setup idle-exit logic
-        if (idle_wait_min > 0)
-        {
-            // FIXME: netcfgsrv.EnableIdleCheck
-        }
-        else
-        {
-            // If we don't use the IdleChecker, handle these signals
-            // in via the stop_handler instead
-            g_unix_signal_add(SIGINT, stop_handler, main_loop);
-            g_unix_signal_add(SIGTERM, stop_handler, main_loop);
-        }
-        netcfgsrv.Setup();
-
-        if (idle_wait_min > 0)
-        {
-            idle_exit->Enable();
-        }
-
-        // Start the main loop
-        g_main_loop_run(main_loop);
-        usleep(500);
-        g_main_loop_unref(main_loop);
+        netcfgsrv->Run();
 
         if (logservice)
         {
-            logservice->Detach(OpenVPN3DBus_interf_netcfg);
-            logservice->Detach(OpenVPN3DBus_interf_netcfg + ".core");
-        }
-
-        if (idle_wait_min > 0)
-        {
-            idle_exit->Disable();
-            idle_exit->Join();
+            logservice->Detach(Constants::GenInterface("netcfg"));
+            logservice->Detach(Constants::GenInterface("netcfg.core"));
         }
 
         // Explicitly restore the resolv.conf file, if configured
@@ -361,7 +326,7 @@ int main(int argc, char **argv)
                         "DIRECTORY",
                         true,
                         "Directory where to save the runtime configuration settings");
-#if OPENVPN_DEBUG
+#ifdef OPENVPN_DEBUG
     argparser.AddOption("disable-capabilities",
                         0,
                         "Do not restrcit any process capabilties (INSECURE)");
