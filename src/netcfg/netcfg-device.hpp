@@ -174,6 +174,7 @@ class NetCfgDevice : public DBus::Object::Base
     pid_t creator_pid{-1};
     DNS::SettingsManager::Ptr resolver;
     bool modified = false;
+    LogWriter *logwr = nullptr;
     NetCfgOptions options;
     unsigned int device_type{NetCfgDeviceType::UNSET};
     std::vector<VPNAddress> vpnips{};

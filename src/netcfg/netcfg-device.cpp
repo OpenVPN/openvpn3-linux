@@ -37,13 +37,14 @@ NetCfgDevice::NetCfgDevice(DBus::Connection::Ptr dbuscon_,
                            DNS::SettingsManager::Ptr resolver,
                            NetCfgSubscriptions::Ptr subscriptions,
                            const unsigned int log_level,
-                           LogWriter *logwr,
+                           LogWriter *logwr_,
                            const NetCfgOptions &options)
     : DBus::Object::Base(objpath, Constants::GenInterface("netcfg")),
       dbuscon(dbuscon_),
       object_manager(obj_mgr),
       device_name(devname), creator_pid(creator_pid_),
       resolver(resolver),
+      logwr(logwr_),
       options(std::move(options))
 {
     signals = NetCfgSignals::Create(dbuscon_,
