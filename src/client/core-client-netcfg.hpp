@@ -403,8 +403,8 @@ class NetCfgTunBuilder : public T
                                           uint32_t transport_fd,
                                           struct sockaddr *sa,
                                           socklen_t salen,
-                                          IPv4::Addr &vpn4,
-                                          IPv6::Addr &vpn6) override
+                                          openvpn::IPv4::Addr &vpn4,
+                                          openvpn::IPv6::Addr &vpn6) override
     {
         if (!dco)
         {
@@ -416,7 +416,7 @@ class NetCfgTunBuilder : public T
 
 
     void tun_builder_dco_new_key(unsigned int key_slot,
-                                 const KoRekey::KeyConfig *kc) override
+                                 const openvpn::KoRekey::KeyConfig *kc) override
     {
         if (!dco)
         {
