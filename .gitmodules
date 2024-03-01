@@ -4,7 +4,3 @@
 [submodule "asio"]
 	path = vendor/asio
 	url = https://github.com/chriskohlhoff/asio
-[submodule "googletest"]
-	path = vendor/googletest
-	url = https://github.com/google/googletest.git
-	ignore = untracked
