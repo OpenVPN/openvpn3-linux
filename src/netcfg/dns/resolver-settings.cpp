@@ -207,6 +207,7 @@ const std::string ResolverSettings::AddNameServers(GVariant *params)
     }
 
     std::string ret{};
+    g_variant_ref_sink(params);
     for (const auto &srv : glib2::Value::ExtractVector<std::string>(params))
     {
         auto needle = std::find(name_servers.begin(),
@@ -230,6 +231,7 @@ void ResolverSettings::AddSearchDomains(GVariant *params)
         throw NetCfgException("[AddSearchDomain] Invalid D-Bus data type");
     }
 
+    g_variant_ref_sink(params);
     for (const auto &dom : glib2::Value::ExtractVector<std::string>(params))
     {
         auto needle = std::find(search_domains.begin(),
