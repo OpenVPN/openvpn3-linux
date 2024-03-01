@@ -35,7 +35,6 @@
 #include "netcfg-exception.hpp"
 #ifdef ENABLE_OVPNDCO
 #include "dco/dco-keyconfig.pb.h"
-
 #endif
 
 using namespace openvpn;
@@ -331,7 +330,7 @@ std::vector<std::string> Device::GetDNSSearch()
 
 
 #ifdef ENABLE_OVPNDCO
-DCO::DCO(DBus::Proxy::Client::Ptr proxy_, const std::string &dcopath)
+DCO::DCO(DBus::Proxy::Client::Ptr proxy_, const DBus::Object::Path &dcopath)
     : proxy(proxy_),
       dcotgt(DBus::Proxy::TargetPreset::Create(dcopath, Constants::GenInterface("netcfg")))
 {

@@ -122,7 +122,6 @@ NetCfgDevice::NetCfgDevice(DBus::Connection::Ptr dbuscon_,
         [this](DBus::Object::Method::Arguments::Ptr args)
         {
             this->method_enable_dco(args);
-            args->SetMethodReturn(nullptr);
         });
     args_enable_dco->AddInput("dev_name", "s");
     args_enable_dco->AddOutput("dco_device_path", "o");
@@ -169,6 +168,7 @@ NetCfgDevice::~NetCfgDevice() noexcept
 #ifdef ENABLE_OVPNDCO
     if (dco_device)
     {
+        object_manager->RemoveObject(dco_device->GetPath());
     }
 #endif
 }
@@ -298,12 +298,19 @@ void NetCfgDevice::method_enable_dco(DBus::Object::Method::Arguments::Ptr args)
     std::string dev_name = glib2::Value::Extract<std::string>(params, 0);
     set_device_name(dev_name);
 
-    dco_device = object_manager->CreateObject<NetCfgDCO>(
-        dbuscon,
-        GetPath(),
-        dev_name,
-        creator_pid,
-        signals);
+    try
+    {
+        dco_device = object_manager->CreateObject<NetCfgDCO>(
+            dbuscon,
+            GetPath(),
+            dev_name,
+            creator_pid,
+            logwr);
+    }
+    catch (const NetCfgException &excp)
+    {
+        throw DBus::Object::Method::Exception(excp.what());
+    }
 
     args->SetMethodReturn(glib2::Value::CreateTupleWrapped(dco_device->GetPath()));
 }

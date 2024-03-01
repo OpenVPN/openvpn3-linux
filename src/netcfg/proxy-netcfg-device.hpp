@@ -34,13 +34,80 @@
 #include <openvpn/io/io.hpp>
 #include <openvpn/addr/ip.hpp>
 #include <openvpn/dco/key.hpp>
-
-namespace NetCfgProxy {
-class DCO;
-}
 #endif
 
+
 namespace NetCfgProxy {
+
+#ifdef ENABLE_OVPNDCO
+class DCO
+{
+  public:
+    using Ptr = std::shared_ptr<DCO>;
+
+    DCO(DBus::Proxy::Client::Ptr proxy_, const DBus::Object::Path &dcopath);
+
+    /**
+     * Returns file descriptor used by unprivileged process to
+     * communicate to kernel module.
+     *
+     * @return int file descriptor, -1 for failure
+     */
+    int GetPipeFD();
+
+    /**
+     * @brief Creates a new peer in ovpn-dco kernel module.
+     *
+     * @param peer_id      ID of the peer to create
+     * @param transport_fd fd of transport socket, provided by client
+     * @param sa           sockaddr object indentifying the remote endpoint
+     * @param salen        the length of the 'sa' object
+     * @param vpn4         IPv4 of this peer in the tunnel
+     * @param vpn6         IPV6 of this peer in the tunnel
+     */
+    void NewPeer(unsigned int peer_id,
+                 int transport_fd,
+                 const struct sockaddr *sa,
+                 unsigned int salen,
+                 const openvpn::IPv4::Addr &vpn4,
+                 const openvpn::IPv6::Addr &vpn6);
+
+
+    /**
+     * Pass crypto configuration into kernel module.
+     *
+     * @param key_slot  key slot (OVPN_KEY_SLOT_PRIMARY or
+     *                  OVPN_KEY_SLOT_SECONDARY)
+     * @param kc        KeyConfig struct, which contains enc/dec keys,
+     *                  cipher algorithm, cipher key size, nonces (for gcm),
+     *                  hmac algorithm, hmacs and hmac key size (for cbc)
+     */
+    void NewKey(unsigned int key_slot, const openvpn::KoRekey::KeyConfig *kc);
+
+
+    /**
+     * Swaps primary key with secondary key
+     *
+     * @param peer_id ID of the peer to swap keys for
+     */
+    void SwapKeys(unsigned int peer_id);
+
+
+    /**
+     * @brief Sets properties of peer
+     *
+     * @param peer_id            ID of the peer to modify
+     * @param keepalive_interval keepalive interval
+     * @param keepalive_timeout  keepalive timeout
+     */
+    void SetPeer(unsigned int peer_id, int keepalive_interval, int keepalive_timeout);
+
+  private:
+    DBus::Proxy::Client::Ptr proxy = nullptr;
+    DBus::Proxy::TargetPreset::Ptr dcotgt = nullptr;
+};
+#endif // ENABLE_OVPNDCO
+
 
 /**
  * Class representing a IPv4 or IPv6 network
@@ -258,74 +325,4 @@ class Device
     DBus::Proxy::TargetPreset::Ptr prxtgt = nullptr;
 };
 
-
-
-#ifdef ENABLE_OVPNDCO
-class DCO
-{
-  public:
-    using Ptr = std::shared_ptr<DCO>;
-
-    DCO(DBus::Proxy::Client::Ptr proxy_, const DBus::Object::Path &dcopath);
-
-    /**
-     * Returns file descriptor used by unprivileged process to
-     * communicate to kernel module.
-     *
-     * @return int file descriptor, -1 for failure
-     */
-    int GetPipeFD();
-
-    /**
-     * @brief Creates a new peer in ovpn-dco kernel module.
-     *
-     * @param peer_id      ID of the peer to create
-     * @param transport_fd fd of transport socket, provided by client
-     * @param sa           sockaddr object indentifying the remote endpoint
-     * @param salen        the length of the 'sa' object
-     * @param vpn4         IPv4 of this peer in the tunnel
-     * @param vpn6         IPV6 of this peer in the tunnel
-     */
-    void NewPeer(unsigned int peer_id,
-                 int transport_fd,
-                 const struct sockaddr *sa,
-                 unsigned int salen,
-                 const openvpn::IPv4::Addr &vpn4,
-                 const openvpn::IPv6::Addr &vpn6);
-
-
-    /**
-     * Pass crypto configuration into kernel module.
-     *
-     * @param key_slot  key slot (OVPN_KEY_SLOT_PRIMARY or
-     *                  OVPN_KEY_SLOT_SECONDARY)
-     * @param kc        KeyConfig struct, which contains enc/dec keys,
-     *                  cipher algorithm, cipher key size, nonces (for gcm),
-     *                  hmac algorithm, hmacs and hmac key size (for cbc)
-     */
-    void NewKey(unsigned int key_slot, const openvpn::KoRekey::KeyConfig *kc);
-
-
-    /**
-     * Swaps primary key with secondary key
-     *
-     * @param peer_id ID of the peer to swap keys for
-     */
-    void SwapKeys(unsigned int peer_id);
-
-
-    /**
-     * @brief Sets properties of peer
-     *
-     * @param peer_id            ID of the peer to modify
-     * @param keepalive_interval keepalive interval
-     * @param keepalive_timeout  keepalive timeout
-     */
-    void SetPeer(unsigned int peer_id, int keepalive_interval, int keepalive_timeout);
-
-  private:
-    DBus::Proxy::Client::Ptr proxy = nullptr;
-    DBus::Proxy::TargetPreset::Ptr dcotgt = nullptr;
-};
-#endif // ENABLE_OVPNDCO
 } // namespace NetCfgProxy
