@@ -140,9 +140,9 @@ NetCfgServiceHandler::NetCfgServiceHandler(DBus::Connection::Ptr conn_,
         [](DBus::Object::Method::Arguments::Ptr args)
         {
 #ifdef ENABLE_OVPNDCO
-            args->SetMethodReturn(glib2::Value::Create(NetCfgDCO::available()));
+            args->SetMethodReturn(glib2::Value::CreateTupleWrapped(NetCfgDCO::available()));
 #else
-            args->SetMethodReturn(glib2::Value::Create(false));
+            args->SetMethodReturn(glib2::Value::CreateTupleWrapped(false));
 #endif
         });
     args_dco_avail->AddOutput("available", glib2::DataType::DBus<bool>());
