@@ -77,18 +77,44 @@ static void apply_capabilities(ParsedArgs::Ptr args,
 #endif
     {
         // Need this capability to configure network and routing.
-        capng_update(CAPNG_ADD, (capng_type_t)(CAPNG_EFFECTIVE | CAPNG_PERMITTED), CAP_NET_ADMIN);
+        int r = capng_update(CAPNG_ADD,
+                             (capng_type_t)(CAPNG_EFFECTIVE | CAPNG_PERMITTED),
+                             CAP_NET_ADMIN);
+        if (0 != r)
+        {
+            std::cerr << "** ERROR **  Failed to preserve CAP_NET_ADMIN "
+                      << "capabilities" << std::endl;
+            exit(3);
+        }
 
         // CAP_DAC_OVERRIDE is needed to be allowed to overwrite /etc/resolv.conf
         if (args->Present("resolv-conf"))
         {
-            capng_update(CAPNG_ADD, (capng_type_t)(CAPNG_EFFECTIVE | CAPNG_PERMITTED), CAP_DAC_OVERRIDE);
+            r = capng_update(CAPNG_ADD,
+                             (capng_type_t)(CAPNG_EFFECTIVE | CAPNG_PERMITTED),
+                             CAP_DAC_OVERRIDE);
+            if (0 != r)
+            {
+                std::cerr << "** ERROR **  Failed to preserve CAP_DAC_OVERRIDE "
+                          << "capabilities (needed due to --resolv-conf)"
+                          << std::endl;
+                exit(3);
+            }
         }
 
         if (RedirectMethod::BINDTODEV == opts.redirect_method)
         {
             // We need this to be able to call setsockopt with SO_BINDTODEVICE
-            capng_update(CAPNG_ADD, (capng_type_t)(CAPNG_EFFECTIVE | CAPNG_PERMITTED), CAP_NET_RAW);
+            r = capng_update(CAPNG_ADD,
+                             (capng_type_t)(CAPNG_EFFECTIVE | CAPNG_PERMITTED),
+                             CAP_NET_RAW);
+            if (0 != r)
+            {
+                std::cerr << "** ERROR **  Failed to preserve CAP_NET_RAW "
+                          << "capabilities (needed due to --redirect-method "
+                          << "bind-device)" << std::endl;
+                exit(3);
+            }
         }
     }
 #ifdef OPENVPN_DEBUG
@@ -98,7 +124,13 @@ static void apply_capabilities(ParsedArgs::Ptr args,
         // With the capapbility set, no root account access is needed
         drop_root_ng();
     }
-    capng_apply(CAPNG_SELECT_CAPS);
+
+    if (0 != capng_apply(CAPNG_SELECT_CAPS))
+    {
+        std::cerr << "** ERROR **  Failed to apply new capabilities. Aborting."
+                  << std::endl;
+        exit(3);
+    }
 }
 
 int netcfg_main(ParsedArgs::Ptr args)
