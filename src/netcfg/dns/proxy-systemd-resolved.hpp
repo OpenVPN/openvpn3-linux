@@ -232,8 +232,10 @@ class Link
      *
      * @param route   bool value to enable/disable the DNS default route flag.
      *                See @GetDefaultRoute() return values for more details
+     * @return False if this method is not available in the currently used
+     *         org.freedesktop.resolve1 (systemd-resolved) service.
      */
-    void SetDefaultRoute(const bool route) const;
+    bool SetDefaultRoute(const bool route);
 
 
     /**
@@ -245,6 +247,7 @@ class Link
   private:
     DBus::Proxy::Client::Ptr proxy = nullptr;
     DBus::Proxy::TargetPreset::Ptr tgt_link = nullptr;
+    bool feature_set_default_route = true;
 
     Link(DBus::Proxy::Client::Ptr dbuscon, const DBus::Object::Path &path);
 };

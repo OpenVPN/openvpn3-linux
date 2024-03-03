@@ -136,6 +136,7 @@ class SystemdResolved : public ResolverBackendInterface
   private:
     std::vector<updateQueueEntry::Ptr> update_queue = {};
     resolved::Manager::Ptr sdresolver = nullptr;
+    bool feat_dns_default_route = true;
 
     SystemdResolved(DBus::Connection::Ptr dbc);
 };

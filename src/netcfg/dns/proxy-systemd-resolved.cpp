@@ -273,12 +273,31 @@ bool Link::GetDefaultRoute() const
 }
 
 
-void Link::SetDefaultRoute(const bool route) const
+bool Link::SetDefaultRoute(const bool route)
 {
-    GVariant *r = proxy->Call(tgt_link,
-                              "SetDefaultRoute",
-                              glib2::Value::CreateTupleWrapped(route));
-    g_variant_unref(r);
+    if (!feature_set_default_route)
+    {
+        return false;
+    }
+    try
+    {
+        GVariant *r = proxy->Call(tgt_link,
+                                  "SetDefaultRoute",
+                                  glib2::Value::CreateTupleWrapped(route));
+        g_variant_unref(r);
+        return true;
+    }
+    catch (const DBus::Proxy::Exception &excp)
+    {
+        std::string err(excp.what());
+        if (err.find("GDBus.Error:org.freedesktop.DBus.Error.UnknownMethod") > 0)
+        {
+            feature_set_default_route = false;
+            return false;
+        }
+        throw excp;
+    }
+
 }
 
 

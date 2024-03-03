@@ -147,7 +147,11 @@ int program(ParsedArgs::Ptr args)
 
     if (args->Present("set-default-route"))
     {
-        link->SetDefaultRoute(args->GetBoolValue("set-default-route", 0));
+        if (!link->SetDefaultRoute(args->GetBoolValue("set-default-route", 0)))
+        {
+            std::cout << "** ERROR **  Failed modifying DefaultRoute flag; "
+                      << "not supported in systemd-resolved" << std::endl;
+        };
     }
 
     if (args->Present("revert"))

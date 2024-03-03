@@ -139,7 +139,14 @@ void SystemdResolved::Commit(NetCfgSignals::Ptr signal)
                 signal->LogVerb2("systemd-resolved: [" + upd->link->GetPath()
                                  + "] Committing DNS search domains");
                 upd->link->SetDomains(upd->search);
-                upd->link->SetDefaultRoute(upd->default_routing);
+                if (feat_dns_default_route
+                    && !upd->link->SetDefaultRoute(upd->default_routing))
+                {
+                    signal->LogWarn("systemd-resolved: Service does not "
+                                    "support setting default route for DNS "
+                                    "requests. Disabling calling this feature.");
+                    feat_dns_default_route = false;
+                };
             }
             else
             {
