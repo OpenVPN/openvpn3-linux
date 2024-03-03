@@ -275,7 +275,10 @@ bool Link::GetDefaultRoute() const
 
 void Link::SetDefaultRoute(const bool route) const
 {
-    proxy->SetProperty(tgt_link, "SetDefaultRoute", route);
+    GVariant *r = proxy->Call(tgt_link,
+                              "SetDefaultRoute",
+                              glib2::Value::CreateTupleWrapped(route));
+    g_variant_unref(r);
 }
 
 
