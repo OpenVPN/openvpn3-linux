@@ -20,6 +20,7 @@
 #include <string>
 #include <sstream>
 #include <gdbuspp/glib2/utils.hpp>
+#include <gdbuspp/signals/group.hpp>
 
 #include "sessionmgr-exceptions.hpp"
 
@@ -116,18 +117,9 @@ class Event
     /**
      *  Get the proper D-Bus signal introspection data
      *
-     * @return  std::string containing the <signal/>  introspection
-     *          section for the D-Bus SessionManagerEvent signal
+     * @return  DBus::Signals::SignalArgList describing the signal type
      */
-    static const std::string GetIntrospection() noexcept
-    {
-        return "         <signal name='SessionManagerEvent'>"
-               "           <arg type='o' name='path'/>"
-               "           <arg type='q' name='type'/>"
-               "           <arg type='u' name='owner'/>"
-               "         </signal>";
-    }
-
+    static const DBus::Signals::SignalArgList SignalDeclaration(bool with_session_token = false) noexcept;
 
     bool operator==(const Event &compare) const;
     bool operator!=(const Event &compare) const;

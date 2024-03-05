@@ -61,6 +61,14 @@ GVariant *SessionManager::Event::GetGVariant() const noexcept
 }
 
 
+const DBus::Signals::SignalArgList SessionManager::Event::SignalDeclaration(bool with_session_token) noexcept
+{
+    return {{"path", glib2::DataType::DBus<DBus::Object::Path>()},
+            {"type", glib2::DataType::DBus<SessionManager::EventType>()},
+            {"owner", glib2::DataType::DBus<uint32_t>()}};
+}
+
+
 bool SessionManager::Event::operator==(const SessionManager::Event &compare) const
 {
     return ((compare.type == (const SessionManager::EventType)type)
