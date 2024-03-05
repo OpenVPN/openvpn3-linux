@@ -33,7 +33,7 @@
 class LogWriter
 {
   public:
-    typedef std::unique_ptr<LogWriter> Ptr;
+    using Ptr = std::shared_ptr<LogWriter>;
 
     LogWriter() = default;
     virtual ~LogWriter() = default;
