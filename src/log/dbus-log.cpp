@@ -96,16 +96,21 @@ LogSender::LogSender(DBus::Connection::Ptr dbuscon,
                      const std::string &objpath,
                      const std::string &interf,
                      const bool session_token,
-                     LogWriter *lgwr)
+                     LogWriter *lgwr,
+                     const bool disable_stathschg)
     : DBus::Signals::Group(dbuscon, objpath, interf),
       LogFilter(3),
       logwr(lgwr),
       log_group(lgroup)
 {
     RegisterSignal("Log",
-                    LogEvent::SignalDeclaration(session_token));
-    RegisterSignal("StatusChange",
-                   StatusEvent::SignalDeclaration());
+                   LogEvent::SignalDeclaration(session_token));
+
+    if (!disable_stathschg)
+    {
+        RegisterSignal("StatusChange",
+                       StatusEvent::SignalDeclaration());
+    }
 }
 
 

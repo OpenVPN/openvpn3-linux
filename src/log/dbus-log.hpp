@@ -117,7 +117,8 @@ class LogSender : public DBus::Signals::Group,
               const std::string &objpath,
               const std::string &interf,
               const bool session_token = false,
-              LogWriter *lgwr = nullptr);
+              LogWriter *lgwr = nullptr,
+              const bool disable_stathschg = false);
     virtual ~LogSender() = default;
 
     const LogGroup GetLogGroup() const;
