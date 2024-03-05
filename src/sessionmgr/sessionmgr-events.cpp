@@ -17,13 +17,18 @@
 
 #include "sessionmgr-events.hpp"
 
-SessionManager::Event::Event(const std::string &path,
-                             EventType type,
-                             uid_t owner)
-    : path(path), type(type), owner(owner){};
+
+namespace SessionManager {
+
+Event::Event(const std::string &path,
+             EventType type,
+             uid_t owner)
+    : path(path), type(type), owner(owner)
+{
+}
 
 
-SessionManager::Event::Event(GVariant *params)
+Event::Event(GVariant *params)
 {
     std::string g_type(g_variant_get_type_string(params));
     if ("(oqu)" != g_type)
@@ -35,23 +40,23 @@ SessionManager::Event::Event(GVariant *params)
     type = glib2::Value::Extract<SessionManager::EventType>(params, 1);
     owner = glib2::Value::Extract<uid_t>(params, 2);
 
-    if (type > SessionManager::EventType::SESS_DESTROYED
-        || type < SessionManager::EventType::SESS_CREATED)
+    if (type > EventType::SESS_DESTROYED
+        || type < EventType::SESS_CREATED)
     {
         throw SessionManager::Exception("Invalid SessionManager::EventType value");
     }
 }
 
 
-bool SessionManager::Event::empty() const noexcept
+bool Event::empty() const noexcept
 {
     return path.empty()
-           && (SessionManager::EventType::UNSET == type)
+           && (EventType::UNSET == type)
            && 65535 == owner;
 }
 
 
-GVariant *SessionManager::Event::GetGVariant() const noexcept
+GVariant *Event::GetGVariant() const noexcept
 {
     GVariantBuilder *b = glib2::Builder::Create("(oqu)");
     glib2::Builder::Add(b, path, "o");
@@ -61,7 +66,25 @@ GVariant *SessionManager::Event::GetGVariant() const noexcept
 }
 
 
-const DBus::Signals::SignalArgList SessionManager::Event::SignalDeclaration(bool with_session_token) noexcept
+const std::string Event::TypeStr(const EventType type,
+                                 bool tech_form) noexcept
+{
+    switch (type)
+    {
+    case EventType::UNSET:
+        return "[UNSET]";
+
+    case EventType::SESS_CREATED:
+        return (tech_form ? "SESS_CREATED" : "Session created");
+
+    case EventType::SESS_DESTROYED:
+        return (tech_form ? "SESS_DESTROYED" : "Session destroyed");
+    }
+    return "[UNKNOWN]";
+}
+
+
+const DBus::Signals::SignalArgList Event::SignalDeclaration(bool with_session_token) noexcept
 {
     return {{"path", glib2::DataType::DBus<DBus::Object::Path>()},
             {"type", glib2::DataType::DBus<SessionManager::EventType>()},
@@ -69,7 +92,7 @@ const DBus::Signals::SignalArgList SessionManager::Event::SignalDeclaration(bool
 }
 
 
-bool SessionManager::Event::operator==(const SessionManager::Event &compare) const
+bool Event::operator==(const Event &compare) const
 {
     return ((compare.type == (const SessionManager::EventType)type)
             && (compare.owner == owner)
@@ -77,7 +100,9 @@ bool SessionManager::Event::operator==(const SessionManager::Event &compare) con
 }
 
 
-bool SessionManager::Event::operator!=(const SessionManager::Event &compare) const
+bool Event::operator!=(const Event &compare) const
 {
     return !(this->operator==(compare));
 }
+
+} // namespace SessionManager

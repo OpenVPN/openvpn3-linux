@@ -97,22 +97,7 @@ class Event
      * @return  Returns a std::string of the representation of EventType
      */
     static const std::string TypeStr(const EventType type,
-                                     bool tech_form = false) noexcept
-    {
-        switch (type)
-        {
-        case EventType::UNSET:
-            return "[UNSET]";
-
-        case EventType::SESS_CREATED:
-            return (tech_form ? "SESS_CREATED" : "Session created");
-
-        case EventType::SESS_DESTROYED:
-            return (tech_form ? "SESS_DESTROYED" : "Session destroyed");
-        }
-        return "[UNKNOWN]";
-    }
-
+                                     bool tech_form = false) noexcept;
 
     /**
      *  Get the proper D-Bus signal introspection data
