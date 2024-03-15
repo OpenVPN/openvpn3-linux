@@ -213,7 +213,7 @@ void NetCfgServiceHandler::method_create_virtual_interface(DBus::Object::Method:
 
 void NetCfgServiceHandler::method_fetch_interface_list(DBus::Object::Method::Arguments::Ptr args)
 {
-    std::vector<std::string> dev_paths{};
+    std::vector<DBus::Object::Path> dev_paths{};
     bool root_path_found = false;
     for (const auto &[path, dev_obj] : object_manager->GetAllObjects())
     {
@@ -230,7 +230,7 @@ void NetCfgServiceHandler::method_fetch_interface_list(DBus::Object::Method::Arg
             dev_paths.push_back(path);
         }
     }
-    args->SetMethodReturn(glib2::Value::CreateTupleWrapped(dev_paths, "o"));
+    args->SetMethodReturn(glib2::Value::CreateTupleWrapped(dev_paths));
 }
 
 
