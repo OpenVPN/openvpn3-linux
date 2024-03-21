@@ -16,6 +16,7 @@ gtest_inc = googletest.get_variable('gtest_incdir')
 unit_tests = executable(
            'unit-tests',
            [
+                'attention-req.cpp',
                 'configfileparser.cpp',
                 'core-extensions.cpp',
                 'dns-resolver-settings.cpp',
