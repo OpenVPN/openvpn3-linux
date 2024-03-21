@@ -264,3 +264,19 @@ executable('netcfg-dns-direct-file-selftest',
     ],
     include_directories: [include_dirs, '../..'],
 )
+
+executable('signal-listener',
+    [
+        'dbus/signal-listener.cpp',
+    ],
+    build_by_default: build_test_programs and get_option('debug_internal'),
+    link_with: [
+        common_code,
+        netcfgmgr_lib,
+        sessionmgr_lib,
+    ],
+    dependencies: [
+        base_dependencies,
+    ],
+    include_directories: [include_dirs, '../..'],
+)

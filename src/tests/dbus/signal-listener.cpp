@@ -17,49 +17,66 @@
  *         or AttentionRequired, it will decode that information as well.
  */
 
+#include "build-config.h"
+
 #include <iostream>
 #include <string.h>
+#include <gdbuspp/connection.hpp>
+#include <gdbuspp/mainloop.hpp>
+#include <gdbuspp/signals/subscriptionmgr.hpp>
+#include <gdbuspp/signals/target.hpp>
 
-#include <glib-unix.h>
-
-#include "dbus/core.hpp"
+#include "client/attention-req.hpp"
+#include "client/statusevent.hpp"
 #include "common/utils.hpp"
 #include "log/log-helpers.hpp"
+#include "log/logevent.hpp"
 #include "netcfg/netcfg-changeevent.hpp"
 #include "sessionmgr/sessionmgr-events.hpp"
 
-using namespace openvpn;
 
 
-class SigSubscription : public DBusSignalSubscription
+class SigSubscription
 {
   public:
-    SigSubscription(DBus &dbusobj,
+    SigSubscription(DBus::Connection::Ptr dbuscon,
                     const std::string &bus_name,
                     const std::string &interface,
                     const std::string &object_path,
                     const std::string &signal_name)
-        : DBusSignalSubscription(dbusobj, bus_name, interface, object_path, signal_name)
     {
+        sig_subscrptions = DBus::Signals::SubscriptionManager::Create(dbuscon);
+        tgt_subscription = DBus::Signals::Target::Create(bus_name, object_path, interface);
+        sig_subscrptions->Subscribe(tgt_subscription,
+                                    signal_name,
+                                    [=](DBus::Signals::Event::Ptr event)
+                                    {
+                                        try
+                                        {
+                                            process_signal(event);
+                                        }
+                                        catch (const std::exception &excp)
+                                        {
+                                            std::cout << "EXCEPTION: "
+                                                      << excp.what()
+                                                      << std::endl;
+                                        }
+                                    });
     }
 
 
-    void callback_signal_handler(GDBusConnection *connection,
-                                 const std::string sender_name,
-                                 const std::string object_path,
-                                 const std::string interface_name,
-                                 const std::string signal_name,
-                                 GVariant *parameters)
+    void process_signal(DBus::Signals::Event::Ptr event)
     {
         // Filter out NetworkManager related signals - they happen often
         // and can be a bit too disturbing
-        if (object_path.find("/org/freedesktop/NetworkManager/") != std::string::npos)
+        if (event->object_path.find("/org/freedesktop/NetworkManager") != std::string::npos)
         {
             // std::cout << "NM signal ignored" << std::endl;
             return;
         }
 
         // Filter out certain non-OpenVPN 3 related signal interfaces
+        const std::string interface_name = event->object_interface;
         if (interface_name.find("org.freedesktop.systemd1") != std::string::npos
             || interface_name.find("org.freedesktop.DBus.ObjectManager") != std::string::npos
             || interface_name.find("org.freedesktop.login1.Manager") != std::string::npos
@@ -68,128 +85,78 @@ class SigSubscription : public DBusSignalSubscription
             return;
         }
 
-        if ((signal_name == "NameOwnerChanged")
-            || (signal_name == "PropertiesChanged"))
+        if (("NameOwnerChanged" == event->signal_name)
+            || ("PropertiesChanged" == event->signal_name))
         {
-            // Ignore these signals.  We don't need them and they're noise for us
+            return;
         }
-        else if (signal_name == "StatusChange")
+
+        if ("StatusChange" == event->signal_name)
         {
-            guint major, minor;
-            gchar *msg = nullptr;
-            g_variant_get(parameters, "(uus)", &major, &minor, &msg);
+            StatusEvent status(event->params);
 
             std::cout << "-- Status Change: interface=" << interface_name
-                      << ", path=" << object_path
-                      << ": [" << std::to_string(major)
-                      << ", " << std::to_string(minor) << "] "
-                      << StatusMajor_str[major]
-                      << " - " << StatusMinor_str[minor];
-            if (msg && strlen(msg) > 0)
-            {
-                std::cout << ", " << msg;
-            }
-            std::cout << std::endl;
+                      << ", path=" << event->object_path
+                      << " | " << status << std::endl;
+            return;
         }
-        else if (signal_name == "ProcessChange")
+        else if ("AttentionRequired" == event->signal_name)
         {
-            guint minor;
-            gchar *procname = nullptr;
-            guint pid;
-            g_variant_get(parameters, "(usu)", &minor, &procname, &pid);
-
-            std::cout << "-- Process Change: interface=" << interface_name
-                      << ", path=" << object_path
-                      << ": [" << std::to_string(minor) << "] "
-                      << StatusMinor_str[minor]
-                      << " -- Process name=" << std::string(procname)
-                      << " (pid: " << std::to_string(pid) << ")"
-                      << std::endl;
-        }
-        else if (signal_name == "AttentionRequired")
-        {
-            guint type;
-            guint group;
-            gchar *message = nullptr;
-            g_variant_get(parameters, "(uus)", &type, &group, &message);
-
+            AttentionReq ev(event->params);
             std::cout << "-- User Attention Required: "
-                      << "sender=" << sender_name
+                      << "sender=" << event->sender
                       << ", interface=" << interface_name
-                      << ", path=" << object_path
-                      << ": [" << std::to_string(type) << ", "
-                      << std::to_string(group) << "] "
-                      << "-- type=" << ClientAttentionType_str[type] << ", "
-                      << "group=" << ClientAttentionGroup_str[group] << ", "
-                      << " message='" << std::string(message) << "'"
+                      << ", path=" << event->object_path
+                      << " | " << ev
                       << std::endl;
+            return;
         }
-        else if (signal_name == "Log")
+        else if ("Log" == event->signal_name)
         {
-            guint group = 0;
-            guint catg = 0;
-            gchar *message = nullptr;
-            gchar *sesstok = nullptr;
-
-            std::string typestr{g_variant_get_type_string(parameters)};
-            if ("(uus)" == typestr)
-            {
-                g_variant_get(parameters, "(uus)", &group, &catg, &message);
-            }
-            else if ("(uuss)" == typestr)
-            {
-                g_variant_get(parameters, "(uuss)", &group, &catg, &sesstok, &message);
-            }
-            else
-            {
-                std::cout << "-- Log: { UNKOWN FORMAT: " << typestr << "}" << std::endl;
-                return;
-            }
+            LogEvent log(event->params);
             std::cout << "-- Log: "
-                      << "sender=" << sender_name
+                      << "sender=" << event->sender
                       << ", interface=" << interface_name
-                      << ", path=" << object_path
-                      << (sesstok ? ", session_token=" + std::string(sesstok) : "")
-                      << ": [" << std::to_string(group) << ", "
-                      << std::to_string(catg) << "] "
-                      << "-- type=" << LogGroup_str[group] << ", "
-                      << "group=" << LogCategory_str[catg] << ", "
-                      << " message='" << std::string(message) << "'"
+                      << ", path=" << event->object_path
+                      << " | " << log
                       << std::endl;
+            return;
         }
-        else if (signal_name == "NetworkChange")
+        else if ("NetworkChange" == event->signal_name)
         {
-            NetCfgChangeEvent ev(parameters);
+            NetCfgChangeEvent ev(event->params);
 
             std::cout << "-- NetworkChange: "
-                      << "sender=" << sender_name
+                      << "sender=" << event->sender
                       << ", interface=" << interface_name
-                      << ", path=" << object_path
+                      << ", path=" << event->object_path
                       << ": [" << std::to_string((std::uint8_t)ev.type)
                       << "] " << ev
                       << std::endl;
+            return;
         }
-        else if (signal_name == "SessionManagerEvent")
+        else if ("SessionManagerEvent" == event->signal_name)
         {
-            SessionManager::Event ev(parameters);
+            SessionManager::Event ev(event->params);
 
             std::cout << "-- SessionManagerEvent: "
-                      << "[sender=" << sender_name
+                      << "[sender=" << event->sender
                       << ", interface=" << interface_name
-                      << ", path=" << object_path
+                      << ", path=" << event->object_path
                       << "] " << ev
                       << std::endl;
+            return;
         }
         else
         {
-            std::cout << "** Signal received: "
-                      << ": sender=" << sender_name
-                      << ", path=" << object_path
-                      << ", interface=" << interface_name
-                      << ", signal=" << signal_name
-                      << std::endl;
+            std::cout << "** Signal received: " << event << std::endl;
+            return;
         }
     }
+
+  private:
+    DBus::Signals::SubscriptionManager::Ptr sig_subscrptions = nullptr;
+    DBus::Signals::Target::Ptr tgt_subscription = nullptr;
 };
 
 
@@ -203,24 +170,21 @@ int main(int argc, char **argv)
 
     try
     {
-        DBus dbus(G_BUS_TYPE_SYSTEM);
-        dbus.Connect();
+        auto dbus = DBus::Connection::Create(DBus::BusType::SYSTEM);
         std::cout << "Connected to D-Bus" << std::endl;
 
         SigSubscription subscription(dbus, bus_name, interf, obj_path, sig_name);
 
         std::cout << "Subscribed" << std::endl
-                  << "Bus name:    " << (bus_name.empty() ? bus_name : "(not set)") << std::endl
-                  << "Interface:   " << (interf.empty() ? interf : "(not set)") << std::endl
-                  << "Object path: " << (obj_path.empty() ? obj_path : "(not set)") << std::endl
-                  << "Signal name: " << (sig_name.empty() ? sig_name : "(not set)") << std::endl;
+                  << "Bus name:    " << (!bus_name.empty() ? bus_name : "(not set)") << std::endl
+                  << "Interface:   " << (!interf.empty() ? interf : "(not set)") << std::endl
+                  << "Object path: " << (!obj_path.empty() ? obj_path : "(not set)") << std::endl
+                  << "Signal name: " << (!sig_name.empty() ? sig_name : "(not set)") << std::endl;
 
-        GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
-        g_unix_signal_add(SIGINT, stop_handler, main_loop);
-        g_unix_signal_add(SIGTERM, stop_handler, main_loop);
-        g_main_loop_run(main_loop);
+        auto mainloop = DBus::MainLoop::Create();
+        mainloop->Run();
     }
-    catch (const DBusException &excp)
+    catch (const DBus::Exception &excp)
     {
         std::cerr << "EXCEPTION: " << excp.what() << std::endl;
         return 2;
