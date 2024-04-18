@@ -67,6 +67,23 @@ class OpenVPN3ConfigurationProxy
             set_feature_flags(proxy_qry->ServiceVersion(Constants::GenPath("configuration"),
                                                         Constants::GenInterface("configuration")));
         }
+
+        // If not a configuration manager service path, check that the object
+        // exists.  This will also allow the configuration manager to start and
+        // settle first if it is not already running.
+        if (Constants::GenPath("configuration") != object_path)
+        {
+            bool chk = proxy_qry->CheckObjectExists(object_path,
+                                                    Constants::GenInterface("configuration"));
+            if (!chk)
+            {
+                throw DBus::Proxy::Exception(
+                    Constants::GenServiceName("configuration"),
+                    proxy_tgt->object_path,
+                    proxy_tgt->interface,
+                    "Configuration profile object not found");
+            }
+        }
     }
 
     void Ping() const
