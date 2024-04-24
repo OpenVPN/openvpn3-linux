@@ -143,3 +143,8 @@ inline SessionManager::EventType glib2::Value::Extract<SessionManager::EventType
 {
     return static_cast<SessionManager::EventType>(glib2::Value::Extract<uint16_t>(v, elm));
 }
+
+inline std::ostream &operator<<(std::ostream &os, const SessionManager::EventType &obj)
+{
+    return os << static_cast<uint16_t>(obj);
+}

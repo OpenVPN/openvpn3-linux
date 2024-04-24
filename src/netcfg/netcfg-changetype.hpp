@@ -58,6 +58,11 @@ inline NetCfgChangeType glib2::Value::Extract<NetCfgChangeType>(GVariant *v, int
     return static_cast<NetCfgChangeType>(glib2::Value::Extract<uint32_t>(v, elm));
 }
 
+inline std::ostream &operator<<(std::ostream &os, const NetCfgChangeType &obj)
+{
+    return os << static_cast<uint32_t>(obj);
+}
+
 
 typedef std::map<std::string, std::string> NetCfgChangeDetails;
 

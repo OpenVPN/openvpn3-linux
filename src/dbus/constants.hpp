@@ -79,6 +79,10 @@ inline StatusMajor glib2::Value::Extract<StatusMajor>(GVariant *v, int elm) noex
     return static_cast<StatusMajor>(glib2::Value::Extract<uint32_t>(v, elm));
 }
 
+inline std::ostream &operator<<(std::ostream &os, const StatusMajor &obj)
+{
+    return os << static_cast<uint32_t>(obj);
+}
 
 
 
@@ -179,6 +183,11 @@ inline StatusMinor glib2::Value::Extract<StatusMinor>(GVariant *v, int elm) noex
     return static_cast<StatusMinor>(glib2::Value::Extract<uint32_t>(v, elm));
 }
 
+inline std::ostream &operator<<(std::ostream &os, const StatusMinor &obj)
+{
+    return os << static_cast<uint32_t>(obj);
+}
+
 
 const uint8_t ClientAttentionTypeCount = 4;
 enum class ClientAttentionType : std::uint8_t
@@ -212,6 +221,11 @@ template <>
 inline ClientAttentionType glib2::Value::Extract<ClientAttentionType>(GVariant *v, int elm) noexcept
 {
     return static_cast<ClientAttentionType>(glib2::Value::Extract<uint32_t>(v, elm));
+}
+
+inline std::ostream &operator<<(std::ostream &os, const ClientAttentionType &obj)
+{
+    return os << static_cast<uint32_t>(obj);
 }
 
 
@@ -260,4 +274,9 @@ template <>
 inline ClientAttentionGroup glib2::Value::Extract<ClientAttentionGroup>(GVariant *v, int elm) noexcept
 {
     return static_cast<ClientAttentionGroup>(glib2::Value::Extract<uint32_t>(v, elm));
+}
+
+inline std::ostream &operator<<(std::ostream &os, const ClientAttentionGroup &obj)
+{
+    return os << static_cast<uint32_t>(obj);
 }
