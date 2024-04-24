@@ -18,10 +18,13 @@
 #include <cstdint>
 #include <iostream>
 #include <sstream>
+#include <string>
 #include <tuple>
 #include <vector>
+#include <gdbuspp/glib2/utils.hpp>
 
-#include "config.h"
+#include "build-config.h"
+#include "build-version.h"
 #include "dbus/constants.hpp"
 #include "netcfg/netcfg-changetype.hpp"
 #include "sessionmgr/sessionmgr-events.hpp"
@@ -37,12 +40,50 @@ template <class T>
 struct ConstantMapping
 {
     ConstantMapping(const std::string name, T value)
-        : name(name), value(value)
+        : name(name), value(value), dbus_type(glib2::DataType::DBus<T>())
     {
+    }
+
+    const std::string GetPyValue() const
+    {
+        std::ostringstream res;
+        switch(dbus_type[0])
+        {
+        case 'u':
+            res << "dbus.UInt32(" << value << ")";
+            break;
+
+        case 'i':
+            res << "dbus.Int32(" << value << ")";
+            break;
+
+        case 'q':
+            res << "dbus.UInt16(" << value << ")";
+            break;
+
+        case 'n':
+            res << "dbus.Int16(" << value << ")";
+            break;
+
+        case 'o':
+            res << "dbus.ObjectPath('" << value << "')";
+            break;
+
+        case 's':
+            res << "dbus.String('" << value << "')";
+            break;
+
+        default:
+            throw glib2::Utils::Exception(__func__,
+                                          "Missing type handling for "
+                                          "'" + dbus_type + "'");
+        }
+        return res.str();
     }
 
     const std::string name;
     T value;
+    const std::string dbus_type;
 };
 
 #define MAP(t, m, n, v) m.push_back(ConstantMapping<t>(n, t::v))
@@ -63,7 +104,7 @@ void Generator(std::string name, std::vector<ConstantMapping<T>> mapping, FlagTy
     }
     for (auto &m : mapping)
     {
-        c << "    " << m.name << " = " << (unsigned int)m.value << std::endl;
+        c << "    " << m.name << " = " << m.GetPyValue() << std::endl;
     }
 
     std::cout << c.str() << std::endl;
@@ -90,7 +131,8 @@ int main(int argc, char **argv)
 
     // This requires Python 3.6 or newer
     // Older Python releases are no longer supported
-    std::cout << "from enum import Enum, IntFlag" << std::endl
+    std::cout << "import dbus" << std::endl
+              << "from enum import Enum, IntFlag" << std::endl
               << std::endl;
 
     std::cout << "VERSION = '" << PACKAGE_GUIVERSION << "'"
