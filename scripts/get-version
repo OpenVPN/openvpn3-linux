@@ -52,8 +52,8 @@ if [ -e "${PROJECT_ROOT}/.git" ]; then
             PRODVERSION="${PRODVERSION}__${GIT_FLAGS}"
         fi
 
-elif [ -f "${PROJECT_ROOT}/src/common/build-version.h" ]; then
-	VERSION="$(cat ${PROJECT_ROOT}/src/common/build-version.h | awk '/define PACKAGE_GUIVERSION/{gsub("\"", ""); print $3}')"
+elif [ -f "${PROJECT_ROOT}/src/build-version.h" ]; then
+	VERSION="$(cat ${PROJECT_ROOT}/src/build-version.h | awk '/define PACKAGE_GUIVERSION/{gsub("\"", ""); print $3}')"
 	PRODVERSION="$(echo $VERSION | sed -e 's#/#_#g' -e 's#:#_#g')"
 fi
 
