@@ -15,9 +15,8 @@
 #define USE_NETCFG
 #define OPENVPN3_CORE_CLI_TEST
 
-#ifdef HAVE_CONFIG_VERSION_H
-#include "config-version.h"
-#endif
-#include "config.h"
+#include "build-version.h"
+#include "build-config.h"
 #include <openvpn/log/logsimple.hpp>
+#include "../client/backend-signals.hpp"
 #include <test/ovpncli/cli.cpp>
