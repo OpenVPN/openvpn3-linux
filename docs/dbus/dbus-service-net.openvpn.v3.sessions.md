@@ -23,8 +23,6 @@ node /net/openvpn/v3/sessions {
                        out ao session_paths);
       LookupInterface(in  s device_name,
                       out o session_path);
-      TransferOwnership(in  o path,
-                        in  u new_owner_uid);
     signals:
       Log(u group,
           u level,
@@ -87,7 +85,7 @@ started.
 #### Arguments
 | Direction | Name         | Type         | Description                                                           |
 |-----------|--------------|--------------|-----------------------------------------------------------------------|
-| In        | config_name  | string       | String containing the configuration profile name to lookup            | 
+| In        | config_name  | string       | String containing the configuration profile name to lookup            |
 | Out       | config_paths | object paths | An array of object paths to accessible sessions objects               |
 
 
@@ -102,24 +100,6 @@ paths to interfaces not managed by the user.
 |-----------|--------------|--------------|---------------------------------------------------------------|
 | In        | device_name  | string       | String containing the interface name to lookup                |
 | Out       | session_path | object path  | An object path to the session managed by the session manager  |
-
-
-### Method: `net.openvpn3.v3.sessions.TransferOwnership`
-
-This method transfers the ownership of a session to the given UID value.  This
-feature is by design restricted to the root account only and is only expected
-to be used by `openvpn3-autoload` and similar tools.
-
-This method is also placed in the main session manager object and not the
-session object itself by design, to emphasize this being a special case feature.
-This also makes it easier to control this feature in the D-Bus policy in
-addition to the hard-coded restriction in the session manager code.
-
-#### Arguments
-| Direction | Name          | Type         | Description                                            |
-|-----------|---------------|--------------|--------------------------------------------------------|
-| In        | path          | object path  | Session object path where to modify the owner property |
-| In        | new_owner_uid | unsigned int | UID value of the new session owner                     |
 
 
 ### Signal: `net.openvpn.v3.sessions.Log`
@@ -438,4 +418,3 @@ See the properties section in [`net.openvpn.v3.backends`
 client](dbus-service-net.openvpn.v3.client.md) documentation for
 details.  The session manager just proxies the contents of the
 `statistics` property from the backend process.
-
