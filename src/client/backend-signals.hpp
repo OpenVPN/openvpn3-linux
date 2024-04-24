@@ -125,11 +125,12 @@ class BackendSignals : public LogSender
         Log(LogEvent(log_group, LogCategory::FATAL, msg));
         // This is essentially a glib2 hack, to allow on going signals to
         // be properly sent before we shut down.
-        delayed_shutdown.reset(new std::thread([]()
-                                               {
-            sleep(3);
-            kill(getpid(), SIGHUP);
-        }));
+        delayed_shutdown.reset(
+            new std::thread([]()
+                            {
+                                sleep(3);
+                                kill(getpid(), SIGHUP);
+                            }));
     }
 
 

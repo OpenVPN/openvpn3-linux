@@ -117,7 +117,7 @@ int main(int argc, char **argv)
             std::cout << "    FAIL: Devices we created are still available - "
                       << devpaths.size() << std::endl;
 
-            for (const auto & p : devpaths)
+            for (const auto &p : devpaths)
             {
                 std::cout << "    Still available: " << p << std::endl;
             }

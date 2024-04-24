@@ -344,11 +344,11 @@ class CoreVPNClient : public CLIENTBASECLASS
                                         dcrid,
                                         dc_cookie);
                 signals->AttentionReq(ClientAttentionType::CREDENTIALS,
-                                     ClientAttentionGroup::CHALLENGE_DYNAMIC,
-                                     dc.challenge);
+                                      ClientAttentionGroup::CHALLENGE_DYNAMIC,
+                                      dc.challenge);
                 signals->StatusChange(StatusMajor::CONNECTION,
-                                     StatusMinor::CFG_REQUIRE_USER,
-                                     "Dynamic Challenge");
+                                      StatusMinor::CFG_REQUIRE_USER,
+                                      "Dynamic Challenge");
                 run_status = StatusMinor::CFG_REQUIRE_USER;
             }
         }
@@ -371,7 +371,7 @@ class CoreVPNClient : public CLIENTBASECLASS
                 }
             }
             signals->Debug("Auth pending request received, timeout: "
-                          + std::string(std::to_string(auth_pending_timeout)));
+                           + std::string(std::to_string(auth_pending_timeout)));
         }
         else if ("PROXY_NEED_CREDS" == ev.name)
         {
@@ -388,11 +388,11 @@ class CoreVPNClient : public CLIENTBASECLASS
                                    "HTTP proxy password",
                                    true);
             signals->AttentionReq(ClientAttentionType::CREDENTIALS,
-                                 ClientAttentionGroup::HTTP_PROXY_CREDS,
-                                 "");
+                                  ClientAttentionGroup::HTTP_PROXY_CREDS,
+                                  "");
             signals->StatusChange(StatusMajor::CONNECTION,
-                                 StatusMinor::CFG_REQUIRE_USER,
-                                 "HTTP proxy credentials");
+                                  StatusMinor::CFG_REQUIRE_USER,
+                                  "HTTP proxy credentials");
             run_status = StatusMinor::CFG_REQUIRE_USER;
         }
         else if ("WARN" == ev.name)
@@ -434,11 +434,11 @@ class CoreVPNClient : public CLIENTBASECLASS
                             crtext.echo);
 
                         signals->AttentionReq(ClientAttentionType::CREDENTIALS,
-                                             ClientAttentionGroup::CHALLENGE_AUTH_PENDING,
-                                             crtext.challenge);
+                                              ClientAttentionGroup::CHALLENGE_AUTH_PENDING,
+                                              crtext.challenge);
                         signals->StatusChange(StatusMajor::CONNECTION,
-                                             StatusMinor::CFG_REQUIRE_USER, // FIXME: -> CHALLENGE
-                                             crtext.challenge);
+                                              StatusMinor::CFG_REQUIRE_USER, // FIXME: -> CHALLENGE
+                                              crtext.challenge);
                         run_status = StatusMinor::SESS_AUTH_CHALLENGE;
                     }
                     else
@@ -452,8 +452,8 @@ class CoreVPNClient : public CLIENTBASECLASS
                     signals->LogError("Failed to decode AUTH_PENDING request");
                     signals->Debug("AUTH_PENDING ERROR: name='" + ev.name + "', info='" + ev.info + "'");
                     signals->StatusChange(StatusMajor::CONNECTION,
-                                         run_status,
-                                         "Failed to decode authentication request from server");
+                                          run_status,
+                                          "Failed to decode authentication request from server");
                     failed_signal_sent = true;
                 }
             }
@@ -523,8 +523,8 @@ class CoreVPNClient : public CLIENTBASECLASS
         {
             signals->LogVerb1("Authentication failed");
             signals->StatusChange(StatusMajor::CONNECTION,
-                                 StatusMinor::CONN_AUTH_FAILED,
-                                 "Authentication failed");
+                                  StatusMinor::CONN_AUTH_FAILED,
+                                  "Authentication failed");
             run_status = StatusMinor::CONN_AUTH_FAILED;
             failed_signal_sent = true;
         }
@@ -532,8 +532,8 @@ class CoreVPNClient : public CLIENTBASECLASS
         {
             signals->LogCritical("Certificate verification failed:" + ev.info);
             signals->StatusChange(StatusMajor::CONNECTION,
-                                 StatusMinor::CONN_FAILED,
-                                 "Certificate verification failed");
+                                  StatusMinor::CONN_FAILED,
+                                  "Certificate verification failed");
             run_status = StatusMinor::CONN_FAILED;
             failed_signal_sent = true;
         }
@@ -541,8 +541,8 @@ class CoreVPNClient : public CLIENTBASECLASS
         {
             signals->LogCritical("TLS version is requested by server is too low:" + ev.info);
             signals->StatusChange(StatusMajor::CONNECTION,
-                                 StatusMinor::CONN_FAILED,
-                                 "TLS version too low");
+                                  StatusMinor::CONN_FAILED,
+                                  "TLS version too low");
             run_status = StatusMinor::CONN_FAILED;
             failed_signal_sent = true;
         }
@@ -550,24 +550,24 @@ class CoreVPNClient : public CLIENTBASECLASS
         {
             signals->LogInfo("Connection timeout");
             signals->StatusChange(StatusMajor::CONNECTION,
-                                 StatusMinor::CONN_DISCONNECTING,
-                                 "Connection timeout");
+                                  StatusMinor::CONN_DISCONNECTING,
+                                  "Connection timeout");
             run_status = StatusMinor::CONN_DISCONNECTING;
         }
         else if ("INACTIVE_TIMEOUT" == ev.name)
         {
             signals->LogInfo("Connection closing due to inactivity");
             signals->StatusChange(StatusMajor::CONNECTION,
-                                 StatusMinor::CONN_DISCONNECTING,
-                                 "Connection inactivity");
+                                  StatusMinor::CONN_DISCONNECTING,
+                                  "Connection inactivity");
             run_status = StatusMinor::CONN_DISCONNECTING;
         }
         else if ("PROXY_ERROR" == ev.name)
         {
             signals->LogCritical("Proxy connection error:" + ev.info);
             signals->StatusChange(StatusMajor::CONNECTION,
-                                 StatusMinor::CONN_FAILED,
-                                 "Proxy connection error");
+                                  StatusMinor::CONN_FAILED,
+                                  "Proxy connection error");
             run_status = StatusMinor::CONN_FAILED;
             failed_signal_sent = true;
         }
@@ -575,8 +575,8 @@ class CoreVPNClient : public CLIENTBASECLASS
         {
             signals->LogCritical("Client Halt: " + ev.info);
             signals->StatusChange(StatusMajor::CONNECTION,
-                                 StatusMinor::CONN_FAILED,
-                                 "Client disconnected by server");
+                                  StatusMinor::CONN_FAILED,
+                                  "Client disconnected by server");
             run_status = StatusMinor::CONN_FAILED;
         }
         else if (!failed_signal_sent && "DISCONNECTED" == ev.name)
@@ -585,7 +585,7 @@ class CoreVPNClient : public CLIENTBASECLASS
                 && StatusMinor::CFG_REQUIRE_USER != run_status)
             {
                 signals->StatusChange(StatusMajor::CONNECTION,
-                                     StatusMinor::CONN_DISCONNECTED);
+                                      StatusMinor::CONN_DISCONNECTED);
                 run_status = StatusMinor::CONN_DISCONNECTED;
                 signals->LogInfo("Disconnected");
             }
@@ -603,11 +603,11 @@ class CoreVPNClient : public CLIENTBASECLASS
         // We currently ignore the flags since we do not have an
         // internal webview or proxy implementation
         signals->AttentionReq(ClientAttentionType::CREDENTIALS,
-                             ClientAttentionGroup::OPEN_URL,
-                             url);
+                              ClientAttentionGroup::OPEN_URL,
+                              url);
         signals->StatusChange(StatusMajor::SESSION,
-                             StatusMinor::SESS_AUTH_URL,
-                             url);
+                              StatusMinor::SESS_AUTH_URL,
+                              url);
         run_status = StatusMinor::CFG_REQUIRE_USER;
     }
 

@@ -176,19 +176,19 @@ class ReqQueueMain : public DBus::Object::Base
     ~ReqQueueMain() noexcept
     {
         std::cout << "------------------" << std::endl
-            << "Callback statistics:" << std::endl
-            << "t_QueueCheckTypeGroup called: "
-            << cb_counters[RequiresQueue::CallbackType::CHECK_TYPE_GROUP]
-            << std::endl
-            << "t_QueueFetch called:          "
-            << cb_counters[RequiresQueue::CallbackType::QUEUE_FETCH]
-            << std::endl
-            << "t_QueueCheck called:          "
-            << cb_counters[RequiresQueue::CallbackType::QUEUE_CHECK]
-            << std::endl
-            << "t_ProvideResponse called:     "
-            << cb_counters[RequiresQueue::CallbackType::PROVIDE_RESPONSE]
-            << std::endl;
+                  << "Callback statistics:" << std::endl
+                  << "t_QueueCheckTypeGroup called: "
+                  << cb_counters[RequiresQueue::CallbackType::CHECK_TYPE_GROUP]
+                  << std::endl
+                  << "t_QueueFetch called:          "
+                  << cb_counters[RequiresQueue::CallbackType::QUEUE_FETCH]
+                  << std::endl
+                  << "t_QueueCheck called:          "
+                  << cb_counters[RequiresQueue::CallbackType::QUEUE_CHECK]
+                  << std::endl
+                  << "t_ProvideResponse called:     "
+                  << cb_counters[RequiresQueue::CallbackType::PROVIDE_RESPONSE]
+                  << std::endl;
     }
 
 

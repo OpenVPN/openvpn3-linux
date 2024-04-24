@@ -79,10 +79,12 @@ void File::Parse(Json::Value &config)
     // configured OptionMap (map) for JSON fields being recognised
     for (const auto &elm : config.getMemberNames())
     {
-        auto it = std::find_if(map.begin(), map.end(), [elm](OptionMapEntry &e)
+        auto it = std::find_if(map.begin(),
+                               map.end(),
+                               [elm](OptionMapEntry &e)
                                {
-            return elm == e.field_label;
-        });
+                                   return elm == e.field_label;
+                               });
         if (map.end() == it)
         {
             // Field not found, skip it
@@ -180,8 +182,8 @@ bool File::IsPresent(const std::string &key)
                            map.end(),
                            [key](OptionMapEntry &e)
                            {
-        return key == e.option;
-    });
+                               return key == e.option;
+                           });
     if (it == map.end())
     {
         throw OptionNotFound(key);
@@ -199,8 +201,8 @@ const std::string File::GetValue(const std::string &key)
                            map.end(),
                            [key](OptionMapEntry &e)
                            {
-        return key == e.option;
-    });
+                               return key == e.option;
+                           });
     if (it == map.end())
     {
         throw OptionNotFound(key);
@@ -234,10 +236,12 @@ void File::SetValue(const std::string &key, const std::string &value)
 {
     configure_mapping();
 
-    auto it = std::find_if(map.begin(), map.end(), [key](OptionMapEntry &e)
+    auto it = std::find_if(map.begin(),
+                           map.end(),
+                           [key](OptionMapEntry &e)
                            {
-        return key == e.option;
-    });
+                               return key == e.option;
+                           });
     if (it == map.end())
     {
         throw OptionNotFound(key);
@@ -271,10 +275,12 @@ void File::SetValue(const std::string &key, const bool value)
 
 void File::UnsetOption(const std::string &key)
 {
-    auto it = std::find_if(map.begin(), map.end(), [key](OptionMapEntry &e)
+    auto it = std::find_if(map.begin(),
+                           map.end(),
+                           [key](OptionMapEntry &e)
                            {
-        return key == e.option;
-    });
+                               return key == e.option;
+                           });
     if (it == map.end())
     {
         throw OptionNotFound(key);
@@ -334,10 +340,12 @@ std::vector<std::string> File::GetRelatedExclusiveOptions(const std::string opti
     std::vector<std::string> ret{};
 
     // Find the option in the mapping
-    auto s = std::find_if(map.begin(), map.end(), [option](OptionMapEntry &e)
+    auto s = std::find_if(map.begin(),
+                          map.end(),
+                          [option](OptionMapEntry &e)
                           {
-        return option == e.option;
-    });
+                              return option == e.option;
+                          });
 
     if (map.end() == s || s->exclusive_group.empty())
     {

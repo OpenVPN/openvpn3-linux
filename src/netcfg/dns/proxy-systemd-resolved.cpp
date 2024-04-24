@@ -297,7 +297,6 @@ bool Link::SetDefaultRoute(const bool route)
         }
         throw excp;
     }
-
 }
 
 

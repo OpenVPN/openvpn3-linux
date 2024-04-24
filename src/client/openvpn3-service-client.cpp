@@ -222,8 +222,8 @@ class BackendClientObject : public DBus::Object::Base
                                                 ClientAttentionGroup::CHALLENGE_AUTH_PENDING))
             {
                 std::string cr_resp = this->userinputq->GetResponse(ClientAttentionType::CREDENTIALS,
-                                                              ClientAttentionGroup::CHALLENGE_AUTH_PENDING,
-                                                              "auth_pending");
+                                                                    ClientAttentionGroup::CHALLENGE_AUTH_PENDING,
+                                                                    "auth_pending");
                 this->vpnclient->SendAuthPendingResponse(cr_resp);
                 // No further processing is needed, as auth pending replies are sent
                 // instantly to the server as a Control Channel message
@@ -245,7 +245,7 @@ class BackendClientObject : public DBus::Object::Base
             {
                 this->vpnconfig.dco = glib2::Value::Get<bool>(value);
                 this->signal->LogVerb1(std::string("Session Manager change: DCO ")
-                                    + (vpnconfig.dco ? "enabled" : "disabled"));
+                                       + (vpnconfig.dco ? "enabled" : "disabled"));
             }
             catch (const std::exception &ex)
             {
@@ -658,8 +658,7 @@ class BackendClientObject : public DBus::Object::Base
                     // running and no re-connect is needed.
                     return;
                 }
-            }
-            while (!can_continue);
+            } while (!can_continue);
         }
 
         // Don't run more connect calls in parallel
@@ -773,7 +772,7 @@ class BackendClientObject : public DBus::Object::Base
         // Disconnect from the server.  This will also shutdown this
         // process.
 
-        if (!registered )
+        if (!registered)
         {
             throw ClientException("Disconnect",
                                   "Backend service is not initialized");
@@ -921,9 +920,9 @@ class BackendClientObject : public DBus::Object::Base
                     try
                     {
                         signal->Debug(std::string("[Connect] DCO flag: ")
-                                    + (vpnconfig.dco ? "enabled" : "disabled"));
+                                      + (vpnconfig.dco ? "enabled" : "disabled"));
                         signal->StatusChange(StatusEvent(StatusMajor::CONNECTION,
-                                                        StatusMinor::CONN_CONNECTING));
+                                                         StatusMinor::CONN_CONNECTING));
                         ClientAPI::Status status = vpnclient->connect();
                         if (status.error)
                         {
@@ -936,8 +935,8 @@ class BackendClientObject : public DBus::Object::Base
                             signal->LogError("Connection failed: " + status.message);
                             signal->Debug("Connection failed: " + msg.str());
                             signal->StatusChange(StatusEvent(StatusMajor::CONNECTION,
-                                                            StatusMinor::CONN_FAILED,
-                                                            msg.str()));
+                                                             StatusMinor::CONN_FAILED,
+                                                             msg.str()));
                         }
                     }
                     catch (openvpn::Exception &excp)

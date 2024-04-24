@@ -23,7 +23,7 @@
 
 int main(int argc, char **argv)
 {
-    auto conn = DBus::Connection::Create(DBus:: BusType::SYSTEM);
+    auto conn = DBus::Connection::Create(DBus::BusType::SYSTEM);
     OpenVPN3ConfigurationProxy cfgproxy(conn,
                                         Constants::GenPath("configuration"));
     for (auto &cfg : cfgproxy.FetchAvailableConfigs())

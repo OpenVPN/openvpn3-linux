@@ -147,7 +147,7 @@ void RequiresQueue::QueueSetup(DBus::Object::Base *object_ptr,
                                                args->SetMethodReturn(r);
                                            });
     queue_chk->AddInput("type", glib2::DataType::DBus<ClientAttentionType>());
-    queue_chk->AddInput("group",  glib2::DataType::DBus<ClientAttentionGroup>());
+    queue_chk->AddInput("group", glib2::DataType::DBus<ClientAttentionGroup>());
     queue_chk->AddOutput("indexes", "au");
 
 
@@ -188,10 +188,10 @@ void RequiresQueue::ClearAll() noexcept
 }
 
 uint32_t RequiresQueue::RequireAdd(ClientAttentionType type,
-                                       ClientAttentionGroup group,
-                                       std::string name,
-                                       std::string descr,
-                                       bool hidden_input)
+                                   ClientAttentionGroup group,
+                                   std::string name,
+                                   std::string descr,
+                                   bool hidden_input)
 {
     struct RequiresSlot elmt;
     elmt.id = reqids[get_reqid_index(type, group)]++;
@@ -361,7 +361,7 @@ const std::string RequiresQueue::GetResponse(ClientAttentionType type,
 
 
 uint32_t RequiresQueue::QueueCount(ClientAttentionType type,
-                                       ClientAttentionGroup group) const noexcept
+                                   ClientAttentionGroup group) const noexcept
 {
     uint32_t ret = 0;
     for (auto &e : slots)
@@ -431,7 +431,7 @@ GVariant *RequiresQueue::QueueCheckTypeGroupGVariant() const noexcept
 
 
 std::vector<uint32_t> RequiresQueue::QueueCheck(ClientAttentionType type,
-                                                    ClientAttentionGroup group) const noexcept
+                                                ClientAttentionGroup group) const noexcept
 {
     std::vector<uint32_t> ret;
     for (auto &e : slots)

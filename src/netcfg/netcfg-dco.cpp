@@ -39,10 +39,10 @@
 
 
 NetCfgDCO::NetCfgDCO(DBus::Connection::Ptr dbuscon,
-              const DBus::Object::Path &objpath,
-              const std::string &dev_name,
-              pid_t backend_pid,
-              LogWriter *logwr)
+                     const DBus::Object::Path &objpath,
+                     const std::string &dev_name,
+                     pid_t backend_pid,
+                     LogWriter *logwr)
     : DBus::Object::Base(objpath + "/dco", Constants::GenInterface("netcfg")),
       fds{},
       dev_name(dev_name)

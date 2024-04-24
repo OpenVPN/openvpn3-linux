@@ -66,7 +66,8 @@ class SystemdResolved : public ResolverBackendInterface
       private:
         updateQueueEntry(resolved::Link::Ptr l, const bool enabl)
             : enable(enabl), link(l)
-            {}
+        {
+        }
     };
 
 

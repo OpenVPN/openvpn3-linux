@@ -273,7 +273,7 @@ class NetCfgTunBuilder : public T
             {
             }
             signals->LogFATAL("Error calling NetCfgDevice::Establish(): "
-                             + std::string(excp.what()));
+                              + std::string(excp.what()));
         }
         return ret;
     }
@@ -306,7 +306,7 @@ class NetCfgTunBuilder : public T
             catch (const DBus::Exception &excp)
             {
                 signals->LogCritical("tun_builder_teardown: "
-                                    + std::string(excp.GetRawError()));
+                                     + std::string(excp.GetRawError()));
             }
             device.reset();
         }
@@ -491,7 +491,7 @@ class NetCfgTunBuilder : public T
             catch (const DBus::Exception &excp)
             {
                 signals->LogCritical("Failed changing DNS Scope: "
-                                    + std::string(excp.GetRawError()));
+                                     + std::string(excp.GetRawError()));
             }
             return true;
         }

@@ -44,7 +44,7 @@ class ResolverSettings
      *
      * @return Initialized ResolverSettings::Ptr object
      */
-    [[nodiscard]] static Ptr Create(const ssize_t if_index=0)
+    [[nodiscard]] static Ptr Create(const ssize_t if_index = 0)
     {
         return Ptr(new ResolverSettings(if_index));
     }

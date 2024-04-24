@@ -40,7 +40,7 @@ class SettingsManager
 
     [[nodiscard]] static SettingsManager::Ptr Create(ResolverBackendInterface::Ptr be)
     {
-      return SettingsManager::Ptr(new SettingsManager(be));
+        return SettingsManager::Ptr(new SettingsManager(be));
     }
     ~SettingsManager();
 

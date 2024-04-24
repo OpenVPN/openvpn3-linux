@@ -186,10 +186,10 @@ class RequiresQueue
      * @return Returns the assigned ID for this requirement
      */
     uint32_t RequireAdd(ClientAttentionType type,
-                            ClientAttentionGroup group,
-                            std::string name,
-                            std::string descr,
-                            bool hidden_input);
+                        ClientAttentionGroup group,
+                        std::string name,
+                        std::string descr,
+                        bool hidden_input);
 
     /**
      *  Fetch a single item from the request queue, where the item
@@ -296,7 +296,7 @@ class RequiresQueue
      * @return Returns the number of require slots prepared
      */
     uint32_t QueueCount(ClientAttentionType type,
-                            ClientAttentionGroup group) const noexcept;
+                        ClientAttentionGroup group) const noexcept;
 
     /**
      *  Retrieve an array of all the request types and groups (as tuples)
@@ -336,7 +336,7 @@ class RequiresQueue
      *         still not been provided by the user
      */
     std::vector<uint32_t> QueueCheck(ClientAttentionType type,
-                                         ClientAttentionGroup group) const noexcept;
+                                     ClientAttentionGroup group) const noexcept;
 
     /**
      *  Retrieve an array of ID references of require slots which have not
@@ -396,7 +396,7 @@ class RequiresQueue
      */
     bool QueueDone(GVariant *parameters);
 
-protected:
+  protected:
     ///< Index counter map for type:group pairs; see get_reqid_index() for details
     std::map<uint32_t, uint32_t> reqids;
 
@@ -414,7 +414,7 @@ protected:
      * @return  Returns a unique index based on the two input arguments
      */
     uint32_t get_reqid_index(ClientAttentionType type,
-                                 ClientAttentionGroup group)
+                             ClientAttentionGroup group)
     {
         return ((uint32_t)type * 100) + (uint32_t)group;
     }

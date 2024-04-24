@@ -57,7 +57,7 @@ class ManagerProxy
         }
         else if ("sessionmgr" == manager)
         {
-            //return sessmgr->LookupConfigName(cfgname);
+            // return sessmgr->LookupConfigName(cfgname);
         }
         throw DBus::Exception("manager-lookupconfigname",
                               "Invalid manager name:" + manager);

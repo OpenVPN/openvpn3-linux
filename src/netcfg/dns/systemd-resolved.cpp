@@ -88,7 +88,7 @@ void SystemdResolved::Apply(const ResolverSettings::Ptr settings)
             }
             openvpn::IP::Addr addr(r);
             upd->resolver.push_back(ResolverRecord((addr.is_ipv6() ? AF_INET6 : AF_INET),
-                                                  addr.to_string()));
+                                                   addr.to_string()));
         }
 
         for (const auto &sd : settings->GetSearchDomains())

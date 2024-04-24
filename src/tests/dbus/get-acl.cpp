@@ -36,7 +36,7 @@ class ProxyWrangler
         }
         else if ("/net/openvpn/v3/sessions/NOT-MIGRATED-YET" == objpath.substr(0, 25))
         {
-            //sessprx = new OpenVPN3SessionProxy(conn, objpath);
+            // sessprx = new OpenVPN3SessionProxy(conn, objpath);
         }
         else
         {
@@ -104,7 +104,7 @@ class ProxyWrangler
   private:
     DBus::Connection::Ptr conn = nullptr;
     std::shared_ptr<OpenVPN3ConfigurationProxy> cfgprx = nullptr;
-    //OpenVPN3SessionProxy *sessprx = nullptr;
+    // OpenVPN3SessionProxy *sessprx = nullptr;
     void *sessprx = nullptr;
 };
 
