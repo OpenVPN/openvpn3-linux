@@ -277,6 +277,7 @@ configure_file(
 subdir('src/client')
 subdir('src/netcfg')
 subdir('src/python')
+subdir('src/sessionmgr')
 
 subdir('src/selinux')
 
