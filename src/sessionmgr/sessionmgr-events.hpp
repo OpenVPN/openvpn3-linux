@@ -104,7 +104,7 @@ class Event
      *
      * @return  DBus::Signals::SignalArgList describing the signal type
      */
-    static const DBus::Signals::SignalArgList SignalDeclaration(bool with_session_token = false) noexcept;
+    static const DBus::Signals::SignalArgList SignalDeclaration() noexcept;
 
     bool operator==(const Event &compare) const;
     bool operator!=(const Event &compare) const;

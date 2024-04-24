@@ -84,7 +84,7 @@ const std::string Event::TypeStr(const EventType type,
 }
 
 
-const DBus::Signals::SignalArgList Event::SignalDeclaration(bool with_session_token) noexcept
+const DBus::Signals::SignalArgList Event::SignalDeclaration() noexcept
 {
     return {{"path", glib2::DataType::DBus<DBus::Object::Path>()},
             {"type", glib2::DataType::DBus<SessionManager::EventType>()},
