@@ -201,6 +201,7 @@ common_code = static_library(
             'src/common/timestamp.cpp',
             'src/common/utils.cpp',
             'src/dbus/object-ownership.cpp',
+            'src/dbus/path.cpp',
             'src/log/core-dbus-logger.cpp',
             'src/log/dbus-log.cpp',
             'src/log/logtag.cpp',
