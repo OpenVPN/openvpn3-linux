@@ -151,7 +151,7 @@ if fs.exists(meson.project_source_root() / '.git')
         output: 'build-version.h'
     )
 else
-    build_version_h = 'src/common/build-version.h'
+    build_version_h = 'src/build-version.h'
 endif
 meson.add_dist_script(find_program('scripts/prepare-build-version-h'))
 

@@ -8,4 +8,4 @@
 #
 
 set -eu
-cp -v ${MESON_BUILD_ROOT}/build-version.h ${MESON_DIST_ROOT}/src/common/
+cp -v ${MESON_BUILD_ROOT}/build-version.h ${MESON_DIST_ROOT}/src
