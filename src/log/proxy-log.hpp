@@ -284,7 +284,7 @@ class LogServiceProxy
             throw LogServiceProxyException("ProxyLogEvents call failed");
         }
 
-        std::string p = glib2::Value::Extract<std::string>(res, 0);
+        auto p = glib2::Value::Extract<DBus::Object::Path>(res, 0);
         auto ret = LogProxy::Create(connection, p);
         g_variant_unref(res);
         return ret;
