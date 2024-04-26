@@ -49,6 +49,8 @@ class ResolverBackendInterface
   public:
     using Ptr = std::shared_ptr<ResolverBackendInterface>;
 
+    virtual ~ResolverBackendInterface() noexcept = default;
+
     /**
      *  Provide some information for logging about the configured
      *  resolver backend.

@@ -87,7 +87,6 @@ class SystemdResolved : public ResolverBackendInterface
     {
         return Ptr(new SystemdResolved(conn));
     }
-    ~SystemdResolved() noexcept = default;
 
 
     /**

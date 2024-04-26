@@ -28,7 +28,6 @@ class TestBackend : public ResolverBackendInterface
     using Ptr = std::shared_ptr<TestBackend>;
 
     TestBackend() = default;
-    ~TestBackend() = default;
 
     const std::string GetBackendInfo() const noexcept override
     {
