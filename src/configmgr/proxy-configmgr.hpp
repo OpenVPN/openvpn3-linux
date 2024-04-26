@@ -501,7 +501,7 @@ class OpenVPN3ConfigurationProxy
             GVariant *val = nullptr;
             g_variant_get(override, "{sv}", &key, &val);
 
-            const ValidOverride &vo = GetConfigOverride(key);
+            const ValidOverride vo = GetConfigOverride(key);
             if (!vo.valid())
             {
                 throw DBus::Proxy::Exception("Invalid override found");

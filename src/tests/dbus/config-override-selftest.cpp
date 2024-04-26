@@ -86,7 +86,7 @@ int main(int argc, char **argv)
     std::cout << ".. Testing unsetting an unset override ... ";
     try
     {
-        const ValidOverride &ov = GetConfigOverride("ipv6");
+        const ValidOverride ov = GetConfigOverride("ipv6");
         cfgobj.UnsetOverride(ov);
         std::cout << "FAIL" << std::endl;
         ++failed;
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
     std::cout << ".. Testing unsetting an invalid override (1)... ";
     try
     {
-        const ValidOverride &ov = GetConfigOverride("non-existent-fake-override");
+        const ValidOverride ov = GetConfigOverride("non-existent-fake-override");
         cfgobj.UnsetOverride(ov);
         std::cout << "FAIL" << std::endl;
         ++failed;
@@ -154,7 +154,7 @@ int main(int argc, char **argv)
     std::cout << ".. Testing setting an invalid override (1)... ";
     try
     {
-        const ValidOverride &ov = GetConfigOverride("non-existent-fake-override");
+        const ValidOverride ov = GetConfigOverride("non-existent-fake-override");
         cfgobj.SetOverride(ov, "string-value");
         std::cout << "FAIL" << std::endl;
         ++failed;
@@ -200,7 +200,7 @@ int main(int argc, char **argv)
     std::cout << ".. Testing setting an override with invalid type [bool:string] (1) ... ";
     try
     {
-        const ValidOverride &ov = GetConfigOverride("dns-sync-lookup");
+        const ValidOverride ov = GetConfigOverride("dns-sync-lookup");
         cfgobj.SetOverride(ov, std::string("string-value"));
         std::cout << "FAIL" << std::endl;
         ++failed;
@@ -245,7 +245,7 @@ int main(int argc, char **argv)
     std::cout << ".. Testing setting an override with invalid type [string:bool] (1) ... ";
     try
     {
-        const ValidOverride &ov = GetConfigOverride("server-override");
+        const ValidOverride ov = GetConfigOverride("server-override");
         cfgobj.SetOverride(ov, true);
         std::cout << "FAIL" << std::endl;
         ++failed;
