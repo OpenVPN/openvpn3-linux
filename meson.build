@@ -279,6 +279,7 @@ subdir('src/netcfg')
 subdir('src/python')
 subdir('src/sessionmgr')
 
+subdir('src/dbus')
 subdir('src/selinux')
 
 #
