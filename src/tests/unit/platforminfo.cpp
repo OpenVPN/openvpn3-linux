@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C)  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2019-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2019-  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -22,16 +22,23 @@
 
 TEST(PlatformInfo, DBus)
 {
-    auto dbc = DBus::Connection::Create(DBus::BusType::SYSTEM);
-    PlatformInfo plinfo(dbc);
+    try
+    {
+        auto dbc = DBus::Connection::Create(DBus::BusType::SYSTEM);
+        PlatformInfo plinfo(dbc);
 
-    if (!plinfo.DBusAvailable())
+        if (!plinfo.DBusAvailable())
+        {
+            GTEST_SKIP() << "A required D-Bus service isn't available";
+        }
+        std::string s{plinfo.str()};
+        ASSERT_TRUE(s.find("generic:") == std::string::npos)
+            << "PlatformInfo D-Bus call failed";
+    }
+    catch (const DBus::Connection::Exception &)
     {
         GTEST_SKIP() << "A required D-Bus service isn't available";
     }
-    std::string s{plinfo.str()};
-    ASSERT_TRUE(s.find("generic:") == std::string::npos)
-        << "PlatformInfo D-Bus call failed";
 }
 
 
