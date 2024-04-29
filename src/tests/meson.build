@@ -9,9 +9,13 @@
 #  Test programs
 #
 
+mkdir = find_program('mkdir')
+test_workdir = meson.project_build_root() / 'test-workdir'
+run_command([mkdir, test_workdir] )
+
 subdir('unit')
 
-executable('request-queue-service',
+requeue_srv = executable('request-queue-service',
     [
         'dbus/request-queue-service.cpp'
     ],
@@ -51,6 +55,27 @@ executable('request-queue-client2',
         base_dependencies,
     ],
     include_directories: [include_dirs, '../..'],
+)
+
+requeue_test = executable('request-queue-test',
+    [
+        'dbus/request-queue-test.cpp'
+    ],
+    build_by_default: build_test_programs,
+    link_with: [
+        common_code,
+    ],
+    dependencies: [
+        base_dependencies,
+    ],
+    include_directories: [include_dirs, '../..'],
+)
+test('request-queue-test',
+    requeue_test,
+    args: [ requeue_srv, '100' ],
+    timeout: 10,
+    suite: 'dbus',
+    workdir: test_workdir,
 )
 
 executable('fetch-avail-config-path',
