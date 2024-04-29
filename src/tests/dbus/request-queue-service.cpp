@@ -300,12 +300,12 @@ class ReqQueueService : public DBus::Service
     {
     }
 
-    void BusNameAcquired(GDBusConnection *conn, const std::string &busname) override
+    void BusNameAcquired(const std::string &busname) override
     {
         std::cout << "Service registered: " << busname << std::endl;
     }
 
-    void BusNameLost(GDBusConnection *conn, const std::string &busname) override
+    void BusNameLost(const std::string &busname) override
     {
         std::cout << "Lost the bus name: " << busname << std::endl;
         DBus::Service::Stop();

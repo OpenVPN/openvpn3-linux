@@ -221,8 +221,8 @@ class Service : public DBus::Service
 
     ~Service() noexcept;
 
-    void BusNameAcquired(GDBusConnection *conn, const std::string &busname) override;
-    void BusNameLost(GDBusConnection *conn, const std::string &busname) override;
+    void BusNameAcquired(const std::string &busname) override;
+    void BusNameLost(const std::string &busname) override;
 
     void SetLogLevel(const uint8_t loglvl);
 

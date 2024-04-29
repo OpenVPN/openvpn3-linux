@@ -1460,7 +1460,7 @@ class ClientService : public DBus::Service
     }
 
 
-    void BusNameAcquired(GDBusConnection *conn, const std::string &busname) override
+    void BusNameAcquired(const std::string &busname) override
     {
         try
         {
@@ -1496,7 +1496,7 @@ class ClientService : public DBus::Service
         }
     }
 
-    void BusNameLost(GDBusConnection *conn, const std::string &busname) override
+    void BusNameLost(const std::string &busname) override
     {
         throw DBus::Service::Exception(
             "openvpn3-service-client lost the '"

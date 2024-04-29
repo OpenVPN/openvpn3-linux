@@ -301,7 +301,7 @@ class BackendStarterSrv : public DBus::Service
     }
 
 
-    void BusNameAcquired(GDBusConnection *conn, const std::string &busname) override
+    void BusNameAcquired(const std::string &busname) override
     {
         CreateServiceHandler<BackendStarterHandler>(GetConnection(),
                                                     client_args,
@@ -310,7 +310,7 @@ class BackendStarterSrv : public DBus::Service
     };
 
 
-    void BusNameLost(GDBusConnection *conn, const std::string &busname) override
+    void BusNameLost(const std::string &busname) override
     {
         throw DBus::Service::Exception(
             "openvpn3-service-backendstart lost the '"

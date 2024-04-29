@@ -293,7 +293,7 @@ Service::~Service() noexcept
 }
 
 
-void Service::BusNameAcquired(GDBusConnection *conn, const std::string &busname)
+void Service::BusNameAcquired(const std::string &busname)
 {
     auto srvh = CreateServiceHandler<SrvHandler>(GetConnection(),
                                                  GetObjectManager(),
@@ -302,7 +302,7 @@ void Service::BusNameAcquired(GDBusConnection *conn, const std::string &busname)
 }
 
 
-void Service::BusNameLost(GDBusConnection *conn, const std::string &busname)
+void Service::BusNameLost(const std::string &busname)
 {
     throw DBus::Service::Exception("openvpn3-service-sessions lost the '"
                                    + busname + "' registration on the D-Bus");

@@ -59,9 +59,9 @@ class NetCfgService : public DBus::Service
      */
     void SetDefaultLogLevel(unsigned int lvl);
 
-    void BusNameAcquired(GDBusConnection *conn, const std::string &busname) override;
+    void BusNameAcquired(const std::string &busname) override;
 
-    void BusNameLost(GDBusConnection *conn, const std::string &busname) override;
+    void BusNameLost(const std::string &busname) override;
 
   private:
     DNS::SettingsManager::Ptr resolver = nullptr;

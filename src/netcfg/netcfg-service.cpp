@@ -45,7 +45,7 @@ void NetCfgService::SetDefaultLogLevel(unsigned int lvl)
 }
 
 
-void NetCfgService::BusNameAcquired(GDBusConnection *conn, const std::string &busname)
+void NetCfgService::BusNameAcquired(const std::string &busname)
 {
     // Setup a signal object of the backend
     signals = NetCfgSignals::Create(GetConnection(),
@@ -77,7 +77,7 @@ void NetCfgService::BusNameAcquired(GDBusConnection *conn, const std::string &bu
     }
 };
 
-void NetCfgService::BusNameLost(GDBusConnection *conn, const std::string &busname)
+void NetCfgService::BusNameLost(const std::string &busname)
 {
     throw DBus::Service::Exception(
         "openvpn3-service-netcfg lost the '"
