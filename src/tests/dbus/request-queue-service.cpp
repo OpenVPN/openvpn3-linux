@@ -19,6 +19,7 @@
  */
 
 #include <exception>
+#include <fstream>
 #include <glib-unix.h>
 #include <gdbuspp/connection.hpp>
 #include <gdbuspp/object/base.hpp>
@@ -110,9 +111,10 @@ class ReqQueueMain : public DBus::Object::Base
 
     ReqQueueMain(DBus::Connection::Ptr conn,
                  const std::string &path,
-                 const std::string &interface)
+                 const std::string &interface,
+                 std::shared_ptr<std::ostream> log_)
         : DBus::Object::Base(path, interface),
-          dbuscon(conn)
+          dbuscon(conn), log(*log_)
     {
         queue = RequiresQueueDebug::Create();
         queue->QueueSetup(this,
@@ -151,7 +153,7 @@ class ReqQueueMain : public DBus::Object::Base
                   [this](DBus::Object::Method::Arguments::Ptr args)
                   {
                       std::lock_guard<std::mutex> lg(init_mtx);
-                      queue->_DumpStdout();
+                      queue->_DumpQueue(log);
                       args->SetMethodReturn(nullptr);
                   });
 
@@ -175,32 +177,33 @@ class ReqQueueMain : public DBus::Object::Base
 
     ~ReqQueueMain() noexcept
     {
-        std::cout << "------------------" << std::endl
-                  << "Callback statistics:" << std::endl
-                  << "t_QueueCheckTypeGroup called: "
-                  << cb_counters[RequiresQueue::CallbackType::CHECK_TYPE_GROUP]
-                  << std::endl
-                  << "t_QueueFetch called:          "
-                  << cb_counters[RequiresQueue::CallbackType::QUEUE_FETCH]
-                  << std::endl
-                  << "t_QueueCheck called:          "
-                  << cb_counters[RequiresQueue::CallbackType::QUEUE_CHECK]
-                  << std::endl
-                  << "t_ProvideResponse called:     "
-                  << cb_counters[RequiresQueue::CallbackType::PROVIDE_RESPONSE]
-                  << std::endl;
+        log << "------------------" << std::endl
+            << "Callback statistics:" << std::endl
+            << "t_QueueCheckTypeGroup called: "
+            << cb_counters[RequiresQueue::CallbackType::CHECK_TYPE_GROUP]
+            << std::endl
+            << "t_QueueFetch called:          "
+            << cb_counters[RequiresQueue::CallbackType::QUEUE_FETCH]
+            << std::endl
+            << "t_QueueCheck called:          "
+            << cb_counters[RequiresQueue::CallbackType::QUEUE_CHECK]
+            << std::endl
+            << "t_ProvideResponse called:     "
+            << cb_counters[RequiresQueue::CallbackType::PROVIDE_RESPONSE]
+            << std::endl;
     }
 
 
     const bool Authorize(const DBus::Authz::Request::Ptr request) override
     {
-        std::cout << "Authorize: " << request << std::endl;
+        log << "Authorize: " << request << std::endl;
         return true;
     }
 
 
   private:
     DBus::Connection::Ptr dbuscon{nullptr};
+    std::ostream &log;
     RequiresQueueDebug::Ptr queue{nullptr};
     std::mutex init_mtx;
     std::map<RequiresQueue::CallbackType, uint64_t> cb_counters{};
@@ -264,7 +267,12 @@ class ReqQueueMain : public DBus::Object::Base
             if ((slot.provided && match_val.str() != slot.value))
             {
                 result = false;
-                std::cout << "FAILED: [" << std::to_string(slot.id) << "] "
+                log << "FAILED: [" << std::to_string(slot.id) << "] "
+                    << "name=" << slot.name << ", "
+                    << "value='" << slot.value << "', "
+                    << "expected='" << match_val.str() << "'"
+                    << std::endl;
+                std::cerr << "FAILED: [" << std::to_string(slot.id) << "] "
                           << "name=" << slot.name << ", "
                           << "value='" << slot.value << "', "
                           << "expected='" << match_val.str() << "'"
@@ -273,17 +281,20 @@ class ReqQueueMain : public DBus::Object::Base
             else if (!slot.provided)
             {
                 result = false;
-                std::cout << "FAILED: [" << std::to_string(slot.id) << "] "
+                log << "FAILED: [" << std::to_string(slot.id) << "] "
+                    << "name=" << slot.name << " -- not provided "
+                    << std::endl;
+                std::cerr << "FAILED: [" << std::to_string(slot.id) << "] "
                           << "name=" << slot.name << " -- not provided "
                           << std::endl;
             }
             else
             {
-                std::cout << "Passed: ["
-                          << std::to_string(slot.id) << "] "
-                          << "name=" << slot.name
-                          << "value='" << slot.value
-                          << std::endl;
+                log << "Passed: ["
+                    << std::to_string(slot.id) << "] "
+                    << "name=" << slot.name
+                    << "value='" << slot.value
+                    << std::endl;
             }
         }
         return glib2::Value::CreateTupleWrapped(result);
@@ -302,19 +313,18 @@ class ReqQueueService : public DBus::Service
 
     void BusNameAcquired(const std::string &busname) override
     {
-        std::cout << "Service registered: " << busname << std::endl;
     }
 
     void BusNameLost(const std::string &busname) override
     {
-        std::cout << "Lost the bus name: " << busname << std::endl;
+        std::cerr << "Lost the bus name: " << busname << std::endl;
         DBus::Service::Stop();
     }
 };
 
 
 
-void selftest()
+void selftest(std::ostream &log)
 {
     try
     {
@@ -337,14 +347,14 @@ void selftest()
             std::tie(t, g) = tygr;
             unsigned int ti = (unsigned int)t;
             unsigned int gi = (unsigned int)g;
-            std::cout << "-- Request - type [" << std::to_string(ti) << "] " << ClientAttentionType_str[ti]
-                      << ", group [" << std::to_string(gi) << "] " << ClientAttentionGroup_str[gi]
-                      << std::endl;
+            log << "-- Request - type [" << std::to_string(ti) << "] " << ClientAttentionType_str[ti]
+                << ", group [" << std::to_string(gi) << "] " << ClientAttentionGroup_str[gi]
+                << std::endl;
 
             // Test QueueCheck once we have the type and group values
             for (const auto &id : queue->QueueCheck(t, g))
             {
-                std::cout << "   id: " << std::to_string(id) << std::endl;
+                log << "   id: " << std::to_string(id) << std::endl;
 
                 // ... provide some test data
                 std::string gen_value = "selftest_value" + std::to_string((ti * 100) + (gi * 10) + id);
@@ -361,42 +371,42 @@ void selftest()
                 }
                 else
                 {
-                    std::cout << "Passed GetResponse(" << std::to_string(ti)
-                              << ", " << std::to_string(gi)
-                              << ", " << std::to_string(id)
-                              << " check.  Value: '" << chk_value << "'"
-                              << std::endl;
+                    log << "Passed GetResponse(" << std::to_string(ti)
+                        << ", " << std::to_string(gi)
+                        << ", " << std::to_string(id)
+                        << " check.  Value: '" << chk_value << "'"
+                        << std::endl;
                 }
             }
         }
 
         // Check retrieving values via variable names
-        std::cout << "GetResponse('pk_passphrase') = "
+        log << "GetResponse('pk_passphrase') = "
                   << queue->GetResponse(ClientAttentionType::CREDENTIALS,
                                         ClientAttentionGroup::PK_PASSPHRASE,
                                         "pk_passphrase")
                   << std::endl;
-        std::cout << "GetResponse('username') = "
+        log << "GetResponse('username') = "
                   << queue->GetResponse(ClientAttentionType::CREDENTIALS,
                                         ClientAttentionGroup::USER_PASSWORD,
                                         "username")
                   << std::endl;
-        std::cout << "GetResponse('password') = "
+        log << "GetResponse('password') = "
                   << queue->GetResponse(ClientAttentionType::CREDENTIALS,
                                         ClientAttentionGroup::USER_PASSWORD,
                                         "password")
                   << std::endl;
-        std::cout << "GetResponse('dynamic_challenge') = "
+        log << "GetResponse('dynamic_challenge') = "
                   << queue->GetResponse(ClientAttentionType::CREDENTIALS,
                                         ClientAttentionGroup::CHALLENGE_DYNAMIC,
                                         "dynamic_challenge")
                   << std::endl;
-        std::cout << "GetResponse('static_challenge') = "
+        log << "GetResponse('static_challenge') = "
                   << queue->GetResponse(ClientAttentionType::CREDENTIALS,
                                         ClientAttentionGroup::CHALLENGE_STATIC,
                                         "static_challenge")
                   << std::endl;
-        std::cout << "GetResponse('auth_pending') = "
+        log << "GetResponse('auth_pending') = "
                   << queue->GetResponse(ClientAttentionType::CREDENTIALS,
                                         ClientAttentionGroup::CHALLENGE_AUTH_PENDING,
                                         "auth_pending")
@@ -410,8 +420,8 @@ void selftest()
         }
         catch (const RequiresQueueException &excp)
         {
-            std::cout << "Passed GetResponse(CREDENTIALS, USER_PASSWORD, 99) out-of-boundary check" << std::endl;
-            std::cout << "     Exception caught: " << excp.what() << std::endl;
+            log << "Passed GetResponse(CREDENTIALS, USER_PASSWORD, 99) out-of-boundary check" << std::endl;
+            log << "     Exception caught: " << excp.what() << std::endl;
         }
 
         try
@@ -421,12 +431,13 @@ void selftest()
         }
         catch (const RequiresQueueException &excp)
         {
-            std::cout << "Passed GetResponse(CREDENTIALS, USER_PASSWORD, '...') unknown variable check" << std::endl;
-            std::cout << "     Exception caught: " << excp.what() << std::endl;
+            log << "Passed GetResponse(CREDENTIALS, USER_PASSWORD, '...') unknown variable check" << std::endl;
+            log << "     Exception caught: " << excp.what() << std::endl;
         }
     }
     catch (const std::exception &excp)
     {
+        log << "** EXCEPTION: " << excp.what() << std::endl;
         std::cout << "** EXCEPTION: " << excp.what() << std::endl;
         exit(2);
     }
@@ -434,20 +445,34 @@ void selftest()
 
 
 
-int main()
+int main(int argc, char **argv)
 {
+    std::streambuf *logstream;
+    std::ofstream logfs;
+    if (argc == 2)
+    {
+        logfs.open(argv[1], std::ios_base::app);
+        logstream = logfs.rdbuf();
+    }
+    else
+    {
+        logstream = std::cout.rdbuf();
+    }
+    std::shared_ptr<std::ostream> log(new std::ostream(logstream));
+
     // Simple local method tests, before we enable the D-Bus tests
-    std::cout << "** Internal API tests" << std::endl;
-    selftest();
+    *log << "** Internal API tests" << std::endl;
+    selftest(*log);
 
     // D-Bus tests
-    std::cout << std::endl
-              << "** Starting D-Bus server" << std::endl;
+    *log << std::endl
+        << "** Starting D-Bus server" << std::endl;
     auto conn = DBus::Connection::Create(DBus::BusType::SESSION);
     auto service = DBus::Service::Create<ReqQueueService>(conn);
     service->CreateServiceHandler<ReqQueueMain>(conn,
                                                 "/net/openvpn/v3/tests/features/requiresqueue",
-                                                "net.openvpn.v3.tests.requiresqueue");
+                                                "net.openvpn.v3.tests.requiresqueue",
+                                                log);
     service->Run();
     return 0;
 }
