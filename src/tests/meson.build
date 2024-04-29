@@ -106,7 +106,7 @@ executable('config-lock-down',
     include_directories: [include_dirs, '../..'],
 )
 
-executable('config-override-selftest',
+cfg_override_sft = executable('config-override-selftest',
     [
         'dbus/config-override-selftest.cpp'
     ],
@@ -120,6 +120,9 @@ executable('config-override-selftest',
     ],
     include_directories: [include_dirs, '../..'],
 )
+test('config-override-selftest',
+    cfg_override_sft,
+    suite: 'dbus')
 
 executable('config-fetch',
     [
@@ -212,7 +215,7 @@ executable('manager-lookupconfigname',
     include_directories: [include_dirs, '../..'],
 )
 
-executable('platforminfo',
+platinfo_test = executable('platforminfo',
     [
         'misc/platforminfo.cpp'
     ],
@@ -225,6 +228,9 @@ executable('platforminfo',
     ],
     include_directories: [include_dirs, '../..'],
 )
+test('platforminfo',
+    platinfo_test,
+    suite: 'dbus')
 
 executable('netcfg-systemd-resolved-basic',
     [
@@ -258,7 +264,7 @@ executable('netcfg-proxy-unit',
     include_directories: [include_dirs, '../..'],
 )
 
-executable('netcfg-changeevent-selftest',
+netcfg_chev_sft = executable('netcfg-changeevent-selftest',
     [
         'dbus/netcfg-changeevent-selftest.cpp',
     ],
@@ -272,8 +278,11 @@ executable('netcfg-changeevent-selftest',
     ],
     include_directories: [include_dirs, '../..'],
 )
+test('netcfg-changeevent-selftest',
+    netcfg_chev_sft,
+    suite: 'standalone')
 
-executable('netcfg-dns-direct-file-selftest',
+netcfg_dns_dir_sft = executable('netcfg-dns-direct-file-selftest',
     [
         'misc/netcfg-dns-direct-file-selftest.cpp',
         '../netcfg/dns/resolver-settings.cpp',
@@ -288,6 +297,11 @@ executable('netcfg-dns-direct-file-selftest',
         base_dependencies,
     ],
     include_directories: [include_dirs, '../..'],
+)
+test('netcfg-dns-direct-file-selftest',
+    netcfg_dns_dir_sft,
+    suite: 'standalone',
+    workdir: test_workdir
 )
 
 executable('signal-listener',
