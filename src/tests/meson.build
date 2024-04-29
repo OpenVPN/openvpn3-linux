@@ -197,7 +197,8 @@ logevent_selftest = executable('logevent-selftest',
     include_directories: [include_dirs, '../..'],
 )
 test('logevent-selftest',
-    logevent_selftest)
+    logevent_selftest,
+    suite: 'standalone')
 
 
 executable('manager-lookupconfigname',

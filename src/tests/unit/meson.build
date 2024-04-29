@@ -49,5 +49,6 @@ unit_tests = executable(
 )
 test('unit-tests',
         unit_tests,
-        protocol: 'gtest'
+        protocol: 'gtest',
+        suite: 'unit'
 )
