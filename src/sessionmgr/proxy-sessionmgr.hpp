@@ -318,10 +318,10 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      * @return Returns a populated struct LogEvent with the the complete log
      *         event.
      */
-    LogEvent GetLastLogEvent()
+    Log GetLastLogEvent()
     {
         GVariant *logev = GetProperty("last_log");
-        LogEvent ret(logev);
+        Log ret(logev);
         g_variant_unref(logev);
         return ret;
     }

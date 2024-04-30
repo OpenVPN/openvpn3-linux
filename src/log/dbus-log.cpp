@@ -17,7 +17,6 @@
 #include <gdbuspp/signals/target.hpp>
 
 #include "dbus-log.hpp"
-#include "logevent.hpp"
 
 
 //
@@ -53,7 +52,7 @@ void LogFilter::AddPathFilter(const std::string &path)
 }
 
 
-bool LogFilter::LogFilterAllow(const LogEvent &logev) noexcept
+bool LogFilter::LogFilterAllow(const Events::Log &logev) noexcept
 {
     switch (logev.category)
     {
@@ -103,7 +102,7 @@ LogSender::LogSender(DBus::Connection::Ptr dbuscon,
       log_group(lgroup)
 {
     RegisterSignal("Log",
-                   LogEvent::SignalDeclaration(session_token));
+                   Events::Log::SignalDeclaration(session_token));
 
     if (!disable_stathschg)
     {
@@ -125,7 +124,7 @@ void LogSender::StatusChange(const Events::Status &statusev)
 }
 
 
-void LogSender::ProxyLog(const LogEvent &logev, const std::string &path)
+void LogSender::ProxyLog(const Events::Log &logev, const std::string &path)
 {
     // Don't proxy an empty log message and if the log level filtering
     // allows it.  The filtering is done against the LogCategory of
@@ -151,9 +150,9 @@ void LogSender::ProxyStatusChange(const Events::Status &status, const std::strin
 }
 
 
-void LogSender::Log(const LogEvent &logev, const bool duplicate_check, const std::string &target)
+void LogSender::Log(const Events::Log &logev, const bool duplicate_check, const std::string &target)
 {
-    // Don't log an empty messages or if log level filtering allows it
+    // Don't log an empty tmessages or if log level filtering allows it
     // The filtering is done against the LogCategory of the message
     if (logev.empty() || !LogFilterAllow(logev))
     {
@@ -181,58 +180,58 @@ void LogSender::Log(const LogEvent &logev, const bool duplicate_check, const std
 
 void LogSender::Debug(const std::string &msg, const bool duplicate_check)
 {
-    Log(LogEvent(log_group, LogCategory::DEBUG, msg), duplicate_check);
+    Log(Events::Log(log_group, LogCategory::DEBUG, msg), duplicate_check);
 }
 
 
 void LogSender::LogVerb2(const std::string &msg, const bool duplicate_check)
 {
-    Log(LogEvent(log_group, LogCategory::VERB2, msg), duplicate_check);
+    Log(Events::Log(log_group, LogCategory::VERB2, msg), duplicate_check);
 }
 
 
 void LogSender::LogVerb1(const std::string &msg, const bool duplicate_check)
 {
-    Log(LogEvent(log_group, LogCategory::VERB1, msg), duplicate_check);
+    Log(Events::Log(log_group, LogCategory::VERB1, msg), duplicate_check);
 }
 
 
 void LogSender::LogInfo(const std::string &msg, const bool duplicate_check)
 {
-    Log(LogEvent(log_group, LogCategory::INFO, msg), duplicate_check);
+    Log(Events::Log(log_group, LogCategory::INFO, msg), duplicate_check);
 }
 
 
 void LogSender::LogWarn(const std::string &msg, const bool duplicate_check)
 {
-    Log(LogEvent(log_group, LogCategory::WARN, msg), duplicate_check);
+    Log(Events::Log(log_group, LogCategory::WARN, msg), duplicate_check);
 }
 
 
 void LogSender::LogError(const std::string &msg)
 {
-    Log(LogEvent(log_group, LogCategory::ERROR, msg));
+    Log(Events::Log(log_group, LogCategory::ERROR, msg));
 }
 
 
 void LogSender::LogCritical(const std::string &msg)
 {
     // Critical log messages will always be sent
-    Log(LogEvent(log_group, LogCategory::CRIT, msg));
+    Log(Events::Log(log_group, LogCategory::CRIT, msg));
 }
 
 
 void LogSender::LogFATAL(const std::string &msg)
 {
     // Fatal log messages will always be sent
-    Log(LogEvent(log_group, LogCategory::FATAL, msg));
+    Log(Events::Log(log_group, LogCategory::FATAL, msg));
     // FIXME: throw something here, to start shutdown procedures
 }
 
 
-LogEvent LogSender::GetLastLogEvent() const
+Events::Log LogSender::GetLastLogEvent() const
 {
-    return LogEvent(last_logevent);
+    return Events::Log(last_logevent);
 }
 
 
@@ -312,11 +311,11 @@ void LogConsumerProxy::process_log_event(DBus::Signals::Event::Ptr event)
 {
     try
     {
-        LogEvent logev(event->params);
-        LogEvent ev = InterceptLogEvent(event->sender,
-                                        event->object_interface,
-                                        event->object_path,
-                                        logev);
+        Events::Log logev(event->params);
+        Events::Log ev = InterceptLogEvent(event->sender,
+                                           event->object_interface,
+                                           event->object_path,
+                                           logev);
         ProxyLog(ev);
     }
     catch (const LogConsumerProxyException &excp)

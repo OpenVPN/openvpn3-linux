@@ -51,6 +51,6 @@ class JournaldWriter : public LogWriter
                const std::string &colour_init,
                const std::string &colour_reset) override;
 
-    void Write(const LogEvent &event) override;
+    void Write(const Events::Log &event) override;
 };
 #endif // HAVE_SYSTEMD

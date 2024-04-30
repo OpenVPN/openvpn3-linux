@@ -105,11 +105,11 @@ class BackendSignals : public LogSender
     }
 
 
-    void Log(const LogEvent &logev,
+    void Log(const Events::Log &logev,
              bool duplicate_check = false,
              const std::string &target = "") final
     {
-        LogEvent l(logev, session_token);
+        Events::Log l(logev, session_token);
         LogSender::Log(l, duplicate_check, logger_busname);
     }
 
@@ -121,7 +121,7 @@ class BackendSignals : public LogSender
      */
     void LogFATAL(const std::string &msg) override
     {
-        Log(LogEvent(log_group, LogCategory::FATAL, msg));
+        Log(Events::Log(log_group, LogCategory::FATAL, msg));
         // This is essentially a glib2 hack, to allow on going signals to
         // be properly sent before we shut down.
         delayed_shutdown.reset(

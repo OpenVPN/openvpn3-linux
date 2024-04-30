@@ -87,16 +87,16 @@ class DBusLogger
 
             if (session_token.empty())
             {
-                logger->Log(LogEvent(log_group,
-                                     LogCategory::DEBUG,
-                                     "[Core] " + l));
+                logger->Log(Events::Log(log_group,
+                                        LogCategory::DEBUG,
+                                        "[Core] " + l));
             }
             else
             {
-                logger->Log(LogEvent(log_group,
-                                     LogCategory::DEBUG,
-                                     session_token,
-                                     "[Core] " + l));
+                logger->Log(Events::Log(log_group,
+                                        LogCategory::DEBUG,
+                                        session_token,
+                                        "[Core] " + l));
             }
         }
         catch (const DBus::Signals::Exception &)

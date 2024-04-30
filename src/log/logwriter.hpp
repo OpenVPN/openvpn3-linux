@@ -21,7 +21,8 @@
 #include <string>
 #include <vector>
 
-#include "logevent.hpp"
+#include "build-config.h"
+#include "events/log.hpp"
 #include "logtag.hpp"
 #include "logmetadata.hpp"
 
@@ -162,7 +163,7 @@ class LogWriter
      * @param logev  Populated LogEvent() object to log
      *
      */
-    virtual void Write(const LogEvent &logev)
+    virtual void Write(const Events::Log &logev)
     {
         Write(logev.group, logev.category, logev.message);
     }

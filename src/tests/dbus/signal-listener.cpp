@@ -27,10 +27,10 @@
 #include <gdbuspp/signals/target.hpp>
 
 #include "events/attention-req.hpp"
+#include "events/log.hpp"
 #include "events/status.hpp"
 #include "common/utils.hpp"
 #include "log/log-helpers.hpp"
-#include "log/logevent.hpp"
 #include "netcfg/netcfg-changeevent.hpp"
 #include "sessionmgr/sessionmgr-events.hpp"
 
@@ -113,7 +113,7 @@ class SigSubscription
         }
         else if ("Log" == event->signal_name)
         {
-            LogEvent log(event->params);
+            Events::Log log(event->params);
             std::cout << "-- Log: "
                       << "sender=" << event->sender
                       << ", interface=" << interface_name

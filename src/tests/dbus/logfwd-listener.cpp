@@ -43,7 +43,7 @@ class LogFwdSubscription : public LogForwardBase<LogFwdSubscription>
     void ConsumeLogEvent(const std::string sender_name,
                          const std::string interface_name,
                          const std::string obj_path,
-                         const LogEvent &logev) final
+                         const Log &logev) final
     {
         std::cout << " LogEvent{sender=" << sender_name
                   << ", interface=" << interface_name

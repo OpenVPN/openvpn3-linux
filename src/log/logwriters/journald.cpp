@@ -51,9 +51,9 @@ void JournaldWriter::Write(const std::string &data,
                            const std::string &colour_init,
                            const std::string &colour_reset)
 {
-    JournaldWriter::Write(LogEvent(LogGroup::UNDEFINED,
-                                   LogCategory::INFO,
-                                   data));
+    JournaldWriter::Write(Events::Log(LogGroup::UNDEFINED,
+                                      LogCategory::INFO,
+                                      data));
 }
 
 
@@ -63,11 +63,11 @@ void JournaldWriter::Write(const LogGroup grp,
                            const std::string &colour_init,
                            const std::string &colour_reset)
 {
-    JournaldWriter::Write(LogEvent(grp, ctg, data));
+    JournaldWriter::Write(Events::Log(grp, ctg, data));
 }
 
 
-void JournaldWriter::Write(const LogEvent &event)
+void JournaldWriter::Write(const Events::Log &event)
 {
     // We need extra elements for O3_SESSION_TOKEN,
     // O3_LOG_GROUP, O3_LOG_CATEGORY, MESSAGE and

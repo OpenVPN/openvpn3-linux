@@ -339,7 +339,7 @@ class BackendClientObject : public DBus::Object::Base
 
         auto prop_last_log = [this](const DBus::Object::Property::BySpec &prop)
         {
-            LogEvent l = this->signal->GetLastLogEvent();
+            Events::Log l = this->signal->GetLastLogEvent();
             if (!l.empty())
             {
                 l.RemoveToken();

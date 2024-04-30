@@ -20,12 +20,12 @@
 
 #include "build-config.h"
 #include "events/status.hpp"
-#include "log/logevent.hpp"
-#include "log/log-helpers.hpp"
+#include "events/log.hpp"
+
 
 namespace unittest {
 
-std::string test_empty(const LogEvent &ev, const bool expect)
+std::string test_empty(const Events::Log &ev, const bool expect)
 {
     bool r = ev.empty();
     if (expect != r)
@@ -54,48 +54,48 @@ std::string test_empty(const LogEvent &ev, const bool expect)
 
 TEST(LogEvent, init_empty)
 {
-    LogEvent empty;
+    Events::Log empty;
     std::string res = test_empty(empty, true);
     ASSERT_TRUE(res.empty()) << res;
-    ASSERT_EQ(empty.format, LogEvent::Format::AUTO);
+    ASSERT_EQ(empty.format, Events::Log::Format::AUTO);
 }
 
 
 TEST(LogEvent, init_with_value_1)
 {
-    LogEvent ev(LogGroup::LOGGER, LogCategory::DEBUG, "Test LogEvent");
+    Events::Log ev(LogGroup::LOGGER, LogCategory::DEBUG, "Test LogEvent");
     std::string res = test_empty(ev, false);
     ASSERT_TRUE(res.empty()) << res;
-    ASSERT_EQ(ev.format, LogEvent::Format::NORMAL);
+    ASSERT_EQ(ev.format, Events::Log::Format::NORMAL);
 }
 
 
 TEST(LogEvent, reset)
 {
-    LogEvent ev(LogGroup::LOGGER, LogCategory::DEBUG, "Test LogEvent");
+    Events::Log ev(LogGroup::LOGGER, LogCategory::DEBUG, "Test LogEvent");
     ev.reset();
     std::string res = test_empty(ev, true);
     ASSERT_TRUE(res.empty()) << res;
-    ASSERT_EQ(ev.format, LogEvent::Format::AUTO);
+    ASSERT_EQ(ev.format, Events::Log::Format::AUTO);
 }
 
 
 TEST(LogEvent, init_with_session_token)
 {
-    LogEvent ev(LogGroup::LOGGER, LogCategory::INFO, "session_token_value", "Log message");
+    Events::Log ev(LogGroup::LOGGER, LogCategory::INFO, "session_token_value", "Log message");
     std::string res = test_empty(ev, false);
     ASSERT_TRUE(res.empty()) << res;
-    ASSERT_EQ(ev.format, LogEvent::Format::SESSION_TOKEN);
+    ASSERT_EQ(ev.format, Events::Log::Format::SESSION_TOKEN);
 }
 
 
 TEST(LogEvent, reset_with_session_token)
 {
-    LogEvent ev(LogGroup::LOGGER, LogCategory::INFO, "session_token_value", "Log message");
+    Events::Log ev(LogGroup::LOGGER, LogCategory::INFO, "session_token_value", "Log message");
     ev.reset();
     std::string res = test_empty(ev, true);
     ASSERT_TRUE(res.empty()) << res;
-    ASSERT_EQ(ev.format, LogEvent::Format::AUTO);
+    ASSERT_EQ(ev.format, Events::Log::Format::AUTO);
 }
 
 
@@ -103,7 +103,7 @@ TEST(LogEvent, log_group_str)
 {
     for (uint8_t g = 0; g <= LogGroupCount; g++)
     {
-        LogEvent ev((LogGroup)g, LogCategory::UNDEFINED, "irrelevant message");
+        Events::Log ev((LogGroup)g, LogCategory::UNDEFINED, "irrelevant message");
         std::string expstr((g < LogGroupCount ? LogGroup_str[g] : "[group:10]"));
         EXPECT_STREQ(ev.GetLogGroupStr().c_str(), expstr.c_str());
     }
@@ -114,7 +114,7 @@ TEST(LogEvent, log_category_str)
 {
     for (uint8_t c = 0; c < 10; c++)
     {
-        LogEvent ev(LogGroup::UNDEFINED, (LogCategory)c, "irrelevant message");
+        Events::Log ev(LogGroup::UNDEFINED, (LogCategory)c, "irrelevant message");
         std::string expstr((c < 9 ? LogCategory_str[c] : "[category:9]"));
         EXPECT_STREQ(ev.GetLogCategoryStr().c_str(), expstr.c_str());
     }
@@ -127,7 +127,7 @@ TEST(LogEvent, parse_gvariant_tuple_invalid)
                                    (guint)StatusMinor::CFG_OK,
                                    1234,
                                    "Invalid data");
-    ASSERT_THROW(LogEvent parsed(data), LogException);
+    ASSERT_THROW(Events::Log parsed(data), LogException);
     if (nullptr != data)
     {
         g_variant_unref(data);
@@ -144,13 +144,13 @@ TEST(LogEvent, parse_gvariant_dict)
     GVariant *data = g_variant_builder_end(b);
     g_variant_builder_unref(b);
 
-    LogEvent parsed(data);
+    Events::Log parsed(data);
     g_variant_unref(data);
 
     ASSERT_EQ(parsed.group, LogGroup::LOGGER);
     ASSERT_EQ(parsed.category, LogCategory::DEBUG);
     ASSERT_EQ(parsed.message, "Test log message");
-    ASSERT_EQ(parsed.format, LogEvent::Format::NORMAL);
+    ASSERT_EQ(parsed.format, Events::Log::Format::NORMAL);
 }
 
 
@@ -160,19 +160,19 @@ TEST(LogEvent, parse_gvariant_tuple)
                                    (guint)LogGroup::BACKENDPROC,
                                    (guint)LogCategory::INFO,
                                    "Parse testing again");
-    LogEvent parsed(data);
+    Events::Log parsed(data);
     g_variant_unref(data);
 
     ASSERT_EQ(parsed.group, LogGroup::BACKENDPROC);
     ASSERT_EQ(parsed.category, LogCategory::INFO);
     ASSERT_EQ(parsed.message, "Parse testing again");
-    ASSERT_EQ(parsed.format, LogEvent::Format::NORMAL);
+    ASSERT_EQ(parsed.format, Events::Log::Format::NORMAL);
 }
 
 
 TEST(LogEvent, GetVariantTuple)
 {
-    LogEvent reverse(LogGroup::BACKENDSTART, LogCategory::WARN, "Yet another test");
+    Events::Log reverse(LogGroup::BACKENDSTART, LogCategory::WARN, "Yet another test");
     GVariant *revparse = reverse.GetGVariantTuple();
 
     guint grp = 0;
@@ -191,12 +191,12 @@ TEST(LogEvent, GetVariantTuple)
 
 TEST(LogEvent, GetVariantDict)
 {
-    LogEvent dicttest(LogGroup::CLIENT, LogCategory::ERROR, "Moar testing is needed");
+    Events::Log dicttest(LogGroup::CLIENT, LogCategory::ERROR, "Moar testing is needed");
     GVariant *revparse = dicttest.GetGVariantDict();
 
     // Reuse the parser in LogEvent.  As that has already passed the
     // test, expect this to work too.
-    LogEvent cmp(revparse);
+    Events::Log cmp(revparse);
     g_variant_unref(revparse);
 
     ASSERT_EQ(cmp.group, dicttest.group);
@@ -214,14 +214,14 @@ TEST(LogEvent, parse_gvariant_dict_session_token)
     g_variant_builder_add(b, "{sv}", "log_message", g_variant_new_string("Test log message"));
     GVariant *data = g_variant_builder_end(b);
     g_variant_builder_unref(b);
-    LogEvent parsed(data);
+    Events::Log parsed(data);
     g_variant_unref(data);
 
     ASSERT_EQ(parsed.group, LogGroup::LOGGER);
     ASSERT_EQ(parsed.category, LogCategory::DEBUG);
     ASSERT_EQ(parsed.session_token, "session_token_value");
     ASSERT_EQ(parsed.message, "Test log message");
-    ASSERT_EQ(parsed.format, LogEvent::Format::SESSION_TOKEN);
+    ASSERT_EQ(parsed.format, Events::Log::Format::SESSION_TOKEN);
 }
 
 
@@ -232,20 +232,20 @@ TEST(LogEvent, parse_gvariant_tuple_session_token)
                                    (guint)LogCategory::INFO,
                                    "session_token_val",
                                    "Parse testing again");
-    LogEvent parsed(data);
+    Events::Log parsed(data);
     g_variant_unref(data);
 
     ASSERT_EQ(parsed.group, LogGroup::BACKENDPROC);
     ASSERT_EQ(parsed.category, LogCategory::INFO);
     ASSERT_EQ(parsed.session_token, "session_token_val");
     ASSERT_EQ(parsed.message, "Parse testing again");
-    ASSERT_EQ(parsed.format, LogEvent::Format::SESSION_TOKEN);
+    ASSERT_EQ(parsed.format, Events::Log::Format::SESSION_TOKEN);
 }
 
 
 TEST(LogEvent, GetVariantTuple_session_token)
 {
-    LogEvent reverse(LogGroup::BACKENDSTART, LogCategory::WARN, "YetAnotherSessionToken", "Yet another test");
+    Events::Log reverse(LogGroup::BACKENDSTART, LogCategory::WARN, "YetAnotherSessionToken", "Yet another test");
     GVariant *revparse = reverse.GetGVariantTuple();
 
     guint grp = 0;
@@ -270,12 +270,12 @@ TEST(LogEvent, GetVariantTuple_session_token)
 
 TEST(LogEvent, GetVariantDict_session_token)
 {
-    LogEvent dicttest(LogGroup::CLIENT, LogCategory::ERROR, "MoarSessionTokens", "Moar testing is needed");
+    Events::Log dicttest(LogGroup::CLIENT, LogCategory::ERROR, "MoarSessionTokens", "Moar testing is needed");
     GVariant *revparse = dicttest.GetGVariantDict();
 
     // Reuse the parser in LogEvent.  As that has already passed the
     // test, expect this to work too.
-    LogEvent cmp(revparse);
+    Events::Log cmp(revparse);
     g_variant_unref(revparse);
 
     ASSERT_EQ(cmp.group, dicttest.group);
@@ -286,7 +286,7 @@ TEST(LogEvent, GetVariantDict_session_token)
 }
 
 
-std::string test_compare(const LogEvent &lhs, const LogEvent &rhs, const bool expect)
+std::string test_compare(const Events::Log &lhs, const Events::Log &rhs, const bool expect)
 {
     bool r = (lhs.group == rhs.group
               && lhs.category == rhs.category
@@ -323,8 +323,8 @@ std::string test_compare(const LogEvent &lhs, const LogEvent &rhs, const bool ex
 
 TEST(LogEvent, compare_eq)
 {
-    LogEvent ev(LogGroup::SESSIONMGR, LogCategory::FATAL, "var1");
-    LogEvent cmp(LogGroup::SESSIONMGR, LogCategory::FATAL, "var1");
+    Events::Log ev(LogGroup::SESSIONMGR, LogCategory::FATAL, "var1");
+    Events::Log cmp(LogGroup::SESSIONMGR, LogCategory::FATAL, "var1");
     std::string res = test_compare(ev, cmp, true);
     ASSERT_TRUE(res.empty()) << res;
 }
@@ -332,16 +332,16 @@ TEST(LogEvent, compare_eq)
 
 TEST(LogEvent, operator_eq)
 {
-    LogEvent ev(LogGroup::SESSIONMGR, LogCategory::FATAL, "var1");
-    LogEvent cmp(LogGroup::SESSIONMGR, LogCategory::FATAL, "var1");
+    Events::Log ev(LogGroup::SESSIONMGR, LogCategory::FATAL, "var1");
+    Events::Log cmp(LogGroup::SESSIONMGR, LogCategory::FATAL, "var1");
     ASSERT_TRUE(ev == cmp);
 }
 
 
 TEST(LogEvent, compare_neq_group)
 {
-    LogEvent ev(LogGroup::BACKENDSTART, LogCategory::DEBUG, "var1");
-    LogEvent cmp(LogGroup::BACKENDPROC, LogCategory::DEBUG, "var1");
+    Events::Log ev(LogGroup::BACKENDSTART, LogCategory::DEBUG, "var1");
+    Events::Log cmp(LogGroup::BACKENDPROC, LogCategory::DEBUG, "var1");
     std::string res = test_compare(ev, cmp, false);
     ASSERT_TRUE(res.empty()) << res;
 }
@@ -349,16 +349,16 @@ TEST(LogEvent, compare_neq_group)
 
 TEST(LogEvent, operator_neq_group)
 {
-    LogEvent ev(LogGroup::BACKENDSTART, LogCategory::DEBUG, "var1");
-    LogEvent cmp(LogGroup::BACKENDPROC, LogCategory::DEBUG, "var1");
+    Events::Log ev(LogGroup::BACKENDSTART, LogCategory::DEBUG, "var1");
+    Events::Log cmp(LogGroup::BACKENDPROC, LogCategory::DEBUG, "var1");
     ASSERT_TRUE(ev != cmp);
 }
 
 
 TEST(LogEvent, compare_neq_category)
 {
-    LogEvent ev(LogGroup::CONFIGMGR, LogCategory::ERROR, "var4");
-    LogEvent cmp(LogGroup::CONFIGMGR, LogCategory::WARN, "var4");
+    Events::Log ev(LogGroup::CONFIGMGR, LogCategory::ERROR, "var4");
+    Events::Log cmp(LogGroup::CONFIGMGR, LogCategory::WARN, "var4");
     std::string res = test_compare(ev, cmp, false);
     ASSERT_TRUE(res.empty()) << res;
 }
@@ -366,16 +366,16 @@ TEST(LogEvent, compare_neq_category)
 
 TEST(LogEvent, operator_neq_category)
 {
-    LogEvent ev(LogGroup::CONFIGMGR, LogCategory::ERROR, "var4");
-    LogEvent cmp(LogGroup::CONFIGMGR, LogCategory::WARN, "var4");
+    Events::Log ev(LogGroup::CONFIGMGR, LogCategory::ERROR, "var4");
+    Events::Log cmp(LogGroup::CONFIGMGR, LogCategory::WARN, "var4");
     ASSERT_TRUE(ev != cmp);
 }
 
 
 TEST(LogEvent, compare_neq_message)
 {
-    LogEvent ev(LogGroup::CONFIGMGR, LogCategory::ERROR, "var4");
-    LogEvent cmp(LogGroup::CONFIGMGR, LogCategory::ERROR, "different");
+    Events::Log ev(LogGroup::CONFIGMGR, LogCategory::ERROR, "var4");
+    Events::Log cmp(LogGroup::CONFIGMGR, LogCategory::ERROR, "different");
     std::string res = test_compare(ev, cmp, false);
     ASSERT_TRUE(res.empty()) << res;
 }
@@ -383,8 +383,8 @@ TEST(LogEvent, compare_neq_message)
 
 TEST(LogEvent, operator_neq_message)
 {
-    LogEvent ev(LogGroup::CONFIGMGR, LogCategory::ERROR, "var4");
-    LogEvent cmp(LogGroup::CONFIGMGR, LogCategory::ERROR, "different");
+    Events::Log ev(LogGroup::CONFIGMGR, LogCategory::ERROR, "var4");
+    Events::Log cmp(LogGroup::CONFIGMGR, LogCategory::ERROR, "different");
     ASSERT_TRUE(ev != cmp);
 }
 
@@ -396,15 +396,15 @@ TEST(LogEvent, group_category_string_parser)
         for (uint8_t c = 0; c < 9; c++)
         {
             std::string msg1 = "Message without session token";
-            LogEvent ev1(LogGroup_str[g], LogCategory_str[c], msg1);
-            LogEvent chk_ev1((LogGroup)g, (LogCategory)c, msg1);
+            Events::Log ev1(LogGroup_str[g], LogCategory_str[c], msg1);
+            Events::Log chk_ev1((LogGroup)g, (LogCategory)c, msg1);
             std::string res1 = test_compare(ev1, chk_ev1, true);
             EXPECT_TRUE(res1.empty()) << res1;
 
             std::string msg2 = "Message with session token";
             std::string sesstok = "SESSION_TOKEN";
-            LogEvent ev2(LogGroup_str[g], LogCategory_str[c], sesstok, msg2);
-            LogEvent chk_ev2((LogGroup)g, (LogCategory)c, sesstok, msg2);
+            Events::Log ev2(LogGroup_str[g], LogCategory_str[c], sesstok, msg2);
+            Events::Log chk_ev2((LogGroup)g, (LogCategory)c, sesstok, msg2);
             std::string res2 = test_compare(ev2, chk_ev2, true);
             EXPECT_TRUE(res2.empty()) << res2;
         }
@@ -414,7 +414,7 @@ TEST(LogEvent, group_category_string_parser)
 
 TEST(LogEvent, stringstream)
 {
-    LogEvent logev(LogGroup::LOGGER, LogCategory::DEBUG, "Debug message");
+    Events::Log logev(LogGroup::LOGGER, LogCategory::DEBUG, "Debug message");
     std::stringstream chk;
     chk << logev;
     std::string expect("Logger DEBUG: Debug message");
@@ -429,7 +429,7 @@ TEST(LogEvent, stringstream_multiline)
     msg1 << "Log line 1" << std::endl
          << "Log line 2" << std::endl
          << "Log Line 3";
-    LogEvent ev1(LogGroup::LOGGER, LogCategory::DEBUG, msg1.str());
+    Events::Log ev1(LogGroup::LOGGER, LogCategory::DEBUG, msg1.str());
     EXPECT_EQ(ev1.str(0, false), msg1.str());
 
     // Check formatting with LogPrefix and no indenting of NL
@@ -468,7 +468,7 @@ TEST(LogEvent, stringstream_grp_ctg_limits)
     {
         for (uint8_t c = 0; c < 10; c++)
         {
-            LogEvent ev((LogGroup)g, (LogCategory)c, "some message string");
+            Events::Log ev((LogGroup)g, (LogCategory)c, "some message string");
             std::stringstream msg;
             msg << ev;
 

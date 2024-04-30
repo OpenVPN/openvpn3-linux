@@ -18,10 +18,10 @@
 #include <gdbuspp/glib2/utils.hpp>
 
 #include "events/status.hpp"
-#include "log/logevent.hpp"
+#include "events/log.hpp"
 
 
-bool test_empty(const LogEvent &ev, const bool expect)
+bool test_empty(const Events::Log &ev, const bool expect)
 {
     bool ret = false;
 
@@ -64,7 +64,7 @@ int test1()
     int ret = 0;
 
     std::cout << "-- Testing just initialized object - empty" << std::endl;
-    LogEvent empty;
+    Events::Log empty;
 
     if (test_empty(empty, true))
     {
@@ -72,7 +72,7 @@ int test1()
     }
 
     std::cout << "-- Testing just initialized object - init with values (1)" << std::endl;
-    LogEvent populated1(LogGroup::LOGGER, LogCategory::DEBUG, "Test LogEvent");
+    Events::Log populated1(LogGroup::LOGGER, LogCategory::DEBUG, "Test LogEvent");
     if (test_empty(populated1, false)) // This should fail
     {
         ++ret;
@@ -86,7 +86,7 @@ int test1()
     }
 
     std::cout << "-- Testing initialization with session token" << std::endl;
-    LogEvent logev(LogGroup::LOGGER, LogCategory::INFO, "session_token_value", "Log message");
+    Events::Log logev(LogGroup::LOGGER, LogCategory::INFO, "session_token_value", "Log message");
     if (test_empty(logev, false))
     {
         ++ret;
@@ -115,7 +115,7 @@ int test2_without_session_token()
                              static_cast<uint32_t>(StatusMinor::CFG_OK),
                              1234,
                              "Invalid data");
-        LogEvent parsed(data);
+        Events::Log parsed(data);
         std::cout << "FAILED - should not be parsed successfully." << std::endl;
         ++ret;
     }
@@ -145,7 +145,7 @@ int test2_without_session_token()
         g_variant_builder_add(b, "{sv}", "log_category", glib2::Value::Create(LogCategory::DEBUG));
         g_variant_builder_add(b, "{sv}", "log_message", glib2::Value::Create<std::string>("Test log message"));
         GVariant *data = glib2::Builder::Finish(b);
-        LogEvent parsed(data);
+        Events::Log parsed(data);
 
         if (LogGroup::LOGGER != parsed.group
             || LogCategory::DEBUG != parsed.category
@@ -174,7 +174,7 @@ int test2_without_session_token()
                                        static_cast<uint32_t>(LogGroup::BACKENDPROC),
                                        static_cast<uint32_t>(LogCategory::INFO),
                                        "Parse testing again");
-        LogEvent parsed(data);
+        Events::Log parsed(data);
         g_variant_unref(data);
 
         if (LogGroup::BACKENDPROC != parsed.group
@@ -205,7 +205,7 @@ int test2_without_session_token()
 
 
     std::cout << "-- Testing .GetGVariantTuple() ... ";
-    LogEvent reverse(LogGroup::BACKENDSTART, LogCategory::WARN, "Yet another test");
+    Events::Log reverse(LogGroup::BACKENDSTART, LogCategory::WARN, "Yet another test");
     GVariant *revparse = reverse.GetGVariantTuple();
 
     LogGroup grp = glib2::Value::Extract<LogGroup>(revparse, 0);
@@ -233,12 +233,12 @@ int test2_without_session_token()
     try
     {
         std::cout << "-- Testing .GetGVariantDict() ... ";
-        LogEvent dicttest(LogGroup::CLIENT, LogCategory::ERROR, "Moar testing is needed");
+        Events::Log dicttest(LogGroup::CLIENT, LogCategory::ERROR, "Moar testing is needed");
         GVariant *revparse = dicttest.GetGVariantDict();
 
         // Reuse the parser in LogEvent.  As that has already passed the
         // test, expect this to work too.
-        LogEvent cmp(revparse);
+        Events::Log cmp(revparse);
 
         if (dicttest.group != cmp.group
             || dicttest.category != cmp.category
@@ -277,7 +277,7 @@ int test2_with_session_token()
         g_variant_builder_add(b, "{sv}", "log_session_token", glib2::Value::Create<std::string>("session_token_value"));
         g_variant_builder_add(b, "{sv}", "log_message", glib2::Value::Create<std::string>("Test log message"));
         GVariant *data = glib2::Builder::Finish(b);
-        LogEvent parsed(data);
+        Events::Log parsed(data);
 
         if (LogGroup::LOGGER != parsed.group
             || LogCategory::DEBUG != parsed.category
@@ -308,7 +308,7 @@ int test2_with_session_token()
                                        static_cast<LogCategory>(LogCategory::INFO),
                                        "session_token_val",
                                        "Parse testing again");
-        LogEvent parsed(data);
+        Events::Log parsed(data);
         g_variant_unref(data);
 
         if (LogGroup::BACKENDPROC != parsed.group
@@ -340,7 +340,7 @@ int test2_with_session_token()
 
 
     std::cout << "-- Testing .GetGVariantTuple() with session token ... ";
-    LogEvent reverse(LogGroup::BACKENDSTART, LogCategory::WARN, "YetAnotherSessionToken", "Yet another test");
+    Events::Log reverse(LogGroup::BACKENDSTART, LogCategory::WARN, "YetAnotherSessionToken", "Yet another test");
     GVariant *revparse = reverse.GetGVariantTuple();
 
     LogGroup grp = glib2::Value::Extract<LogGroup>(revparse, 0);
@@ -370,12 +370,12 @@ int test2_with_session_token()
     try
     {
         std::cout << "-- Testing .GetGVariantDict() with session_token ... ";
-        LogEvent dicttest(LogGroup::CLIENT, LogCategory::ERROR, "MoarSessionTokens", "Moar testing is needed");
+        Events::Log dicttest(LogGroup::CLIENT, LogCategory::ERROR, "MoarSessionTokens", "Moar testing is needed");
         GVariant *revparse = dicttest.GetGVariantDict();
 
         // Reuse the parser in LogEvent.  As that has already passed the
         // test, expect this to work too.
-        LogEvent cmp(revparse);
+        Events::Log cmp(revparse);
 
         if (dicttest.group != cmp.group
             || dicttest.category != cmp.category
@@ -403,7 +403,7 @@ int test2_with_session_token()
 }
 
 
-bool test_compare(const LogEvent &lhs, const LogEvent &rhs, const bool expect)
+bool test_compare(const Events::Log &lhs, const Events::Log &rhs, const bool expect)
 {
     bool ret = false;
     std::cout << "-- Compare check: {" << lhs << "} == {" << rhs << "} returns "
@@ -439,29 +439,29 @@ int test3()
 {
     int ret = 0;
 
-    LogEvent ev1(LogGroup::SESSIONMGR, LogCategory::FATAL, "var1");
-    LogEvent cmp1(LogGroup::SESSIONMGR, LogCategory::FATAL, "var1");
+    Events::Log ev1(LogGroup::SESSIONMGR, LogCategory::FATAL, "var1");
+    Events::Log cmp1(LogGroup::SESSIONMGR, LogCategory::FATAL, "var1");
     if (!test_compare(ev1, cmp1, true))
     {
         ++ret;
     }
 
-    LogEvent ev2(LogGroup::BACKENDSTART, LogCategory::DEBUG, "var1");
-    LogEvent cmp2(LogGroup::BACKENDPROC, LogCategory::DEBUG, "var1");
+    Events::Log ev2(LogGroup::BACKENDSTART, LogCategory::DEBUG, "var1");
+    Events::Log cmp2(LogGroup::BACKENDPROC, LogCategory::DEBUG, "var1");
     if (!test_compare(ev2, cmp2, false))
     {
         ++ret;
     }
 
-    LogEvent ev3(LogGroup::CONFIGMGR, LogCategory::ERROR, "var4");
-    LogEvent cmp3(LogGroup::CONFIGMGR, LogCategory::WARN, "var4");
+    Events::Log ev3(LogGroup::CONFIGMGR, LogCategory::ERROR, "var4");
+    Events::Log cmp3(LogGroup::CONFIGMGR, LogCategory::WARN, "var4");
     if (!test_compare(ev3, cmp3, false))
     {
         ++ret;
     }
 
-    LogEvent ev4(LogGroup::CONFIGMGR, LogCategory::ERROR, "var4");
-    LogEvent cmp4(LogGroup::CONFIGMGR, LogCategory::ERROR, "different");
+    Events::Log ev4(LogGroup::CONFIGMGR, LogCategory::ERROR, "var4");
+    Events::Log cmp4(LogGroup::CONFIGMGR, LogCategory::ERROR, "different");
     if (!test_compare(ev4, cmp4, false))
     {
         ++ret;
@@ -477,7 +477,7 @@ int test4()
 
     std::cout << "-- Testing string stream: LogEvent(LogGroup::LOGGER, "
               << "LogCategory::DEBUG, \"Debug message\") ... ";
-    LogEvent logev(LogGroup::LOGGER, LogCategory::DEBUG, "Debug message");
+    Events::Log logev(LogGroup::LOGGER, LogCategory::DEBUG, "Debug message");
     std::stringstream chk;
     chk << logev;
     std::string expect("Logger DEBUG: Debug message");

@@ -54,14 +54,14 @@ NetCfgSignals::NetCfgSignals(DBus::Connection::Ptr conn,
  */
 void NetCfgSignals::LogFATAL(const std::string &msg)
 {
-    Log(LogEvent(log_group, LogCategory::FATAL, msg));
+    Log(Events::Log(log_group, LogCategory::FATAL, msg));
     kill(getpid(), SIGTERM);
 }
 
 
 void NetCfgSignals::Debug(const std::string &msg, bool duplicate_check)
 {
-    Log(LogEvent(log_group, LogCategory::DEBUG, msg));
+    Log(Events::Log(log_group, LogCategory::DEBUG, msg));
 }
 
 

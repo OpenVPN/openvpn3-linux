@@ -42,7 +42,7 @@ Log::Ptr Log::Create(DBus::Connection::Ptr conn,
 
 void Log::LogFATAL(const std::string &msg)
 {
-    LogSender::Log(LogEvent(log_group, LogCategory::FATAL, msg));
+    LogSender::Log(Events::Log(log_group, LogCategory::FATAL, msg));
     StatusChange(Events::Status(StatusMajor::SESSION, StatusMinor::PROC_KILLED, msg));
     abort();
 }

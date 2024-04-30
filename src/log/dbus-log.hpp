@@ -19,8 +19,6 @@
 #include <gdbuspp/signals/subscriptionmgr.hpp>
 
 #include "events/status.hpp"
-#include "log-helpers.hpp"
-#include "logevent.hpp"
 #include "logwriter.hpp"
 
 
@@ -86,7 +84,7 @@ class LogFilter
      * @return  Returns true if this LogEvent should be logged, based
      *          on the log category in the LogEvent object
      */
-    bool LogFilterAllow(const LogEvent &logev) noexcept;
+    bool LogFilterAllow(const Events::Log &logev) noexcept;
 
 
     /**
@@ -125,10 +123,10 @@ class LogSender : public DBus::Signals::Group,
 
     virtual void StatusChange(const Events::Status &statusev);
 
-    void ProxyLog(const LogEvent &logev, const std::string &path = "");
+    void ProxyLog(const Events::Log &logev, const std::string &path = "");
     void ProxyStatusChange(const Events::Status &status, const std::string &path);
 
-    virtual void Log(const LogEvent &logev, const bool duplicate_check = false, const std::string &target = "");
+    virtual void Log(const Events::Log &logev, const bool duplicate_check = false, const std::string &target = "");
     virtual void Debug(const std::string &msg, const bool duplicate_check = false);
     virtual void LogVerb2(const std::string &msg, const bool duplicate_check = false);
     virtual void LogVerb1(const std::string &msg, const bool duplicate_check = false);
@@ -137,7 +135,7 @@ class LogSender : public DBus::Signals::Group,
     virtual void LogError(const std::string &msg);
     virtual void LogCritical(const std::string &msg);
     virtual void LogFATAL(const std::string &msg);
-    LogEvent GetLastLogEvent() const;
+    Events::Log GetLastLogEvent() const;
 
     LogWriter *GetLogWriter();
 
@@ -148,7 +146,7 @@ class LogSender : public DBus::Signals::Group,
 
 
   private:
-    LogEvent last_logevent;
+    Events::Log last_logevent;
 };
 
 
@@ -168,7 +166,7 @@ class LogConsumer : public LogFilter
     virtual void ConsumeLogEvent(const std::string &sender,
                                  const std::string &interface_name,
                                  const std::string &obj_path,
-                                 const LogEvent &logev) = 0;
+                                 const Events::Log &logev) = 0;
     // clang-format on
 
   protected:
@@ -184,7 +182,7 @@ class LogConsumer : public LogFilter
     virtual void process_log_event(DBus::Signals::Event::Ptr event)
     {
         // Pass the signal parameters to be parsed by LogEvent directly
-        LogEvent logev(event->params);
+        Events::Log logev(event->params);
 
         if (!LogFilterAllow(logev))
         {
@@ -243,7 +241,7 @@ class LogConsumerProxy : public LogConsumer, public LogSender
     void ConsumeLogEvent(const std::string &sender,
                          const std::string &interface,
                          const std::string &object_path,
-                         const LogEvent &logev)
+                         const Events::Log &logev)
     {
         // This is a dummy method and is not used by LogConsumerProxy.
         // The InterceptLogEvent() method is used instead, which allows
@@ -253,10 +251,10 @@ class LogConsumerProxy : public LogConsumer, public LogSender
 
     // clang-format off
     // bug in clang-format causes "= 0" to be wrapped
-    virtual LogEvent InterceptLogEvent(const std::string &sender,
+    virtual Events::Log InterceptLogEvent(const std::string &sender,
                                        const std::string &interface,
                                        const std::string &object_path,
-                                       const LogEvent &logev) = 0;
+                                       const Events::Log &logev) = 0;
     // clang-format on
 
 
