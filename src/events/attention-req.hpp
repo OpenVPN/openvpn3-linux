@@ -16,9 +16,12 @@
 
 #include <string>
 #include <gdbuspp/glib2/utils.hpp>
+#include <gdbuspp/signals/group.hpp>
 
 #include "dbus/constants.hpp"
 
+
+namespace Events {
 
 struct AttentionReq
 {
@@ -32,6 +35,8 @@ struct AttentionReq
                  const std::string &msg);
     AttentionReq(GVariant *params);
     ~AttentionReq() = default;
+
+    static DBus::Signals::SignalArgList SignalDeclaration() noexcept;
 
     void reset();
     const bool empty() const;
@@ -48,3 +53,5 @@ struct AttentionReq
                   << ev.Type() << ", " << ev.Group() << "): " << ev.message;
     }
 };
+
+} // namespace Events

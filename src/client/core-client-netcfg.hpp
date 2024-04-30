@@ -264,7 +264,7 @@ class NetCfgTunBuilder : public T
         }
         catch (const DBus::Exception &excp)
         {
-            signals->StatusChange(StatusEvent(StatusMajor::CONNECTION, StatusMinor::CONN_FAILED));
+            signals->StatusChange(Events::Status(StatusMajor::CONNECTION, StatusMinor::CONN_FAILED));
             try
             {
                 tun_builder_teardown(true);

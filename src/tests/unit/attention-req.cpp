@@ -18,12 +18,12 @@
 
 #include <gtest/gtest.h>
 
-#include "client/attention-req.hpp"
+#include "events/attention-req.hpp"
 
 
 namespace unittest {
 
-std::string test_empty(const AttentionReq &ev, const bool expect)
+std::string test_empty(const Events::AttentionReq &ev, const bool expect)
 {
     bool r = ev.empty();
     if (expect != r)
@@ -51,7 +51,7 @@ std::string test_empty(const AttentionReq &ev, const bool expect)
 
 TEST(AttentionReq, init_empty)
 {
-    AttentionReq empty;
+    Events::AttentionReq empty;
     std::string res = test_empty(empty, true);
     EXPECT_TRUE(res.empty()) << res;
     EXPECT_TRUE(empty.empty()) << res;
@@ -60,9 +60,9 @@ TEST(AttentionReq, init_empty)
 
 TEST(AttentionReq, init_with_values)
 {
-    AttentionReq populated1(ClientAttentionType::CREDENTIALS,
-                            ClientAttentionGroup::CHALLENGE_AUTH_PENDING,
-                            "Test attention 1");
+    Events::AttentionReq populated1(ClientAttentionType::CREDENTIALS,
+                                    ClientAttentionGroup::CHALLENGE_AUTH_PENDING,
+                                    "Test attention 1");
     std::string res = test_empty(populated1, false);
     EXPECT_TRUE(res.empty()) << res;
     EXPECT_FALSE(populated1.empty()) << res;
@@ -71,9 +71,9 @@ TEST(AttentionReq, init_with_values)
 
 TEST(AttentionReq, reset)
 {
-    AttentionReq populated1(ClientAttentionType::CREDENTIALS,
-                            ClientAttentionGroup::OPEN_URL,
-                            "Test attention 2");
+    Events::AttentionReq populated1(ClientAttentionType::CREDENTIALS,
+                                    ClientAttentionGroup::OPEN_URL,
+                                    "Test attention 2");
     populated1.reset();
     std::string res = test_empty(populated1, true);
     EXPECT_TRUE(res.empty()) << res;
@@ -86,7 +86,7 @@ TEST(AttentionReq, parse_gvariant_invalid_data)
     GVariant *data = nullptr;
     data = g_variant_new("(uu)", 1, 2);
 
-    EXPECT_THROW(AttentionReq parsed(data),
+    EXPECT_THROW(Events::AttentionReq parsed(data),
                  DBus::Exception);
     if (nullptr != data)
     {
@@ -101,7 +101,7 @@ TEST(AttentionReq, parse_gvariant_valid_tuple)
                                    static_cast<uint32_t>(ClientAttentionType::CREDENTIALS),
                                    static_cast<uint32_t>(ClientAttentionGroup::USER_PASSWORD),
                                    "Parse testing again");
-    AttentionReq parsed(data);
+    Events::AttentionReq parsed(data);
     EXPECT_EQ(parsed.type, ClientAttentionType::CREDENTIALS);
     EXPECT_EQ(parsed.group, ClientAttentionGroup::USER_PASSWORD);
     EXPECT_EQ(parsed.message, "Parse testing again");
@@ -112,9 +112,9 @@ TEST(AttentionReq, parse_gvariant_valid_tuple)
 
 TEST(AttentionReq, GetGVariantTuple)
 {
-    AttentionReq reverse(ClientAttentionType::CREDENTIALS,
-                         ClientAttentionGroup::CHALLENGE_STATIC,
-                         "Yet another test");
+    Events::AttentionReq reverse(ClientAttentionType::CREDENTIALS,
+                                 ClientAttentionGroup::CHALLENGE_STATIC,
+                                 "Yet another test");
     GVariant *revparse = reverse.GetGVariant();
     glib2::Utils::checkParams(__func__, revparse, "(uus)", 3);
 
@@ -132,9 +132,9 @@ TEST(AttentionReq, GetGVariantTuple)
 
 TEST(AttentionReq, stringstream)
 {
-    AttentionReq status(ClientAttentionType::CREDENTIALS,
-                        ClientAttentionGroup::PK_PASSPHRASE,
-                        "Private Key passphrase");
+    Events::AttentionReq status(ClientAttentionType::CREDENTIALS,
+                                ClientAttentionGroup::PK_PASSPHRASE,
+                                "Private Key passphrase");
 
     std::stringstream chk;
     chk << status;

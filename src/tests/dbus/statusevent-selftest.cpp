@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2018-  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -16,11 +16,11 @@
 #include <string>
 #include <sstream>
 
-#include "dbus/core.hpp"
-#include "client/statusevent.hpp"
+
+#include "events/status.hpp"
 
 
-bool test_empty(const StatusEvent &ev, const bool expect)
+bool test_empty(const Events::Status &ev, const bool expect)
 {
     bool ret = false;
 
@@ -65,7 +65,7 @@ int test1()
     int ret = 0;
 
     std::cout << "-- Testing just initialized object - empty" << std::endl;
-    StatusEvent empty;
+    Events::Status empty;
 
     if (test_empty(empty, true))
     {
@@ -73,7 +73,7 @@ int test1()
     }
 
     std::cout << "-- Testing just initialized object - init with values (1)" << std::endl;
-    StatusEvent populated1(StatusMajor::PROCESS, StatusMinor::PROC_STARTED);
+    Events::Status populated1(StatusMajor::PROCESS, StatusMinor::PROC_STARTED);
     if (test_empty(populated1, false)) // This should fail
     {
         ++ret;
@@ -87,7 +87,7 @@ int test1()
     }
 
     std::cout << "-- Testing just initialized object - init with values (2)" << std::endl;
-    StatusEvent populated2(StatusMajor::PROCESS, StatusMinor::PROC_STOPPED, "Just testing");
+    Events::Status populated2(StatusMajor::PROCESS, StatusMinor::PROC_STOPPED, "Just testing");
     if (test_empty(populated2, false)) // This should fail
     {
         ++ret;
@@ -116,11 +116,11 @@ int test2()
                              (guint)StatusMinor::CFG_OK,
                              "Test status",
                              "Invalid data");
-        StatusEvent parsed(data);
+        Events::Status parsed(data);
         std::cout << "FAILED - should not be parsed successfully." << std::endl;
         ++ret;
     }
-    catch (DBusException &excp)
+    catch (DBus::Exception &excp)
     {
         std::string err(excp.what());
         if (err.find(" Invalid status data") == std::string::npos)
@@ -147,7 +147,7 @@ int test2()
         g_variant_builder_add(b, "{sv}", "status_message", g_variant_new_string("Test status"));
         GVariant *data = g_variant_builder_end(b);
         g_variant_builder_unref(b);
-        StatusEvent parsed(data);
+        Events::Status parsed(data);
 
         if (StatusMajor::CONFIG != parsed.major
             || StatusMinor::CFG_OK != parsed.minor
@@ -163,7 +163,7 @@ int test2()
         }
         g_variant_unref(data);
     }
-    catch (DBusException &excp)
+    catch (DBus::Exception &excp)
     {
         std::cout << "FAILED: Exception thrown: " << excp.what() << std::endl;
         ++ret;
@@ -176,7 +176,7 @@ int test2()
                                        (guint)StatusMajor::CONFIG,
                                        (guint)StatusMinor::CFG_REQUIRE_USER,
                                        "Parse testing again");
-        StatusEvent parsed(data);
+        Events::Status parsed(data);
         g_variant_unref(data);
 
         if (StatusMajor::CONFIG != parsed.major
@@ -191,7 +191,7 @@ int test2()
             std::cout << "PASSED" << std::endl;
         }
     }
-    catch (DBusException &excp)
+    catch (DBus::Exception &excp)
     {
         std::string err(excp.what());
         if (err.find(" Incorrect StatusEvent dict ") == std::string::npos)
@@ -207,7 +207,7 @@ int test2()
 
 
     std::cout << "-- Testing .GetGVariantTuple() ... ";
-    StatusEvent reverse(StatusMajor::CONNECTION, StatusMinor::CONN_INIT, "Yet another test");
+    Events::Status reverse(StatusMajor::CONNECTION, StatusMinor::CONN_INIT, "Yet another test");
     GVariant *revparse = reverse.GetGVariantTuple();
     guint maj = 0;
     guint min = 0;
@@ -236,12 +236,12 @@ int test2()
     try
     {
         std::cout << "-- Testing .GetGVariantDict() ... ";
-        StatusEvent dicttest(StatusMajor::SESSION, StatusMinor::SESS_NEW, "Moar testing is needed");
+        Events::Status dicttest(StatusMajor::SESSION, StatusMinor::SESS_NEW, "Moar testing is needed");
         GVariant *revparse = dicttest.GetGVariantDict();
 
         // Reuse the parser in StatusEvent.  As that has already passed the
         // test, expect this to work too.
-        StatusEvent cmp(revparse);
+        Events::Status cmp(revparse);
 
         if (dicttest.major != cmp.major
             || dicttest.minor != cmp.minor
@@ -258,7 +258,7 @@ int test2()
         }
         g_variant_unref(revparse);
     }
-    catch (DBusException &excp)
+    catch (DBus::Exception &excp)
     {
         std::cout << "FAILED: Exception thrown: " << excp.what() << std::endl;
         ++ret;
@@ -268,7 +268,7 @@ int test2()
 }
 
 
-bool test_compare(const StatusEvent &lhs, const StatusEvent &rhs, const bool expect)
+bool test_compare(const Events::Status &lhs, const StatuEvents::StatussEvent &rhs, const bool expect)
 {
     bool ret = false;
     std::cout << "-- Compare check: {" << lhs << "} == {" << rhs << "} returns "
@@ -303,31 +303,31 @@ bool test_compare(const StatusEvent &lhs, const StatusEvent &rhs, const bool exp
 int test3()
 {
     int ret = 0;
-    StatusEvent ev1(StatusMajor::PROCESS, StatusMinor::PKCS11_ENCRYPT, "var1");
-    StatusEvent chk(StatusMajor::PROCESS, StatusMinor::PKCS11_ENCRYPT, "var1");
+    Events::Status ev1(StatusMajor::PROCESS, StatusMinor::PKCS11_ENCRYPT, "var1");
+    Events::Status chk(StatusMajor::PROCESS, StatusMinor::PKCS11_ENCRYPT, "var1");
 
     if (!test_compare(ev1, chk, true))
     {
         ++ret;
     }
 
-    StatusEvent ev2(StatusMajor::SESSION, StatusMinor::PKCS11_DECRYPT, "var1");
-    StatusEvent ev3(StatusMajor::SESSION, StatusMinor::SESS_BACKEND_COMPLETED, "var1");
+    Events::Status ev2(StatusMajor::SESSION, StatusMinor::PKCS11_DECRYPT, "var1");
+    Events::Status ev3(StatusMajor::SESSION, StatusMinor::SESS_BACKEND_COMPLETED, "var1");
     if (!test_compare(ev2, ev3, false))
     {
         ++ret;
     }
 
-    StatusEvent ev4(StatusMajor::SESSION, StatusMinor::SESS_AUTH_CHALLENGE);
-    StatusEvent cmp2(StatusMajor::SESSION, StatusMinor::SESS_AUTH_CHALLENGE);
+    Events::Status ev4(StatusMajor::SESSION, StatusMinor::SESS_AUTH_CHALLENGE);
+    Events::Status cmp2(StatusMajor::SESSION, StatusMinor::SESS_AUTH_CHALLENGE);
 
     if (!test_compare(ev4, cmp2, true))
     {
         ++ret;
     }
 
-    StatusEvent ev5(StatusMajor::SESSION, StatusMinor::CFG_REQUIRE_USER);
-    StatusEvent ev6(StatusMajor::PROCESS, StatusMinor::PKCS11_ENCRYPT);
+    Events::Status ev5(StatusMajor::SESSION, StatusMinor::CFG_REQUIRE_USER);
+    Events::Status ev6(StatusMajor::PROCESS, StatusMinor::PKCS11_ENCRYPT);
     if (!test_compare(ev5, ev6, false))
     {
         ++ret;
@@ -356,7 +356,7 @@ int test4()
 
     std::cout << "-- Testing string stream: StatusEvent(StatusMajor::CONFIG, "
               << "StatusMinor::CONN_CONNECTING, \"In progress\") ... ";
-    StatusEvent status(StatusMajor::CONFIG, StatusMinor::CONN_CONNECTING, "In progress");
+    Events::Status status(StatusMajor::CONFIG, StatusMinor::CONN_CONNECTING, "In progress");
     std::stringstream chk;
     chk << status;
     std::string expect("Configuration, Client connecting: In progress");
@@ -390,8 +390,8 @@ int test4()
 
     std::cout << "-- Testing string stream: StatusEvent(StatusMajor::SESSION, "
               << "StatusMinor::SESS_BACKEND_COMPLETED) ... ";
-    StatusEvent status2(StatusMajor::SESSION,
-                        StatusMinor::SESS_BACKEND_COMPLETED);
+    Events::Status status2(StatusMajor::SESSION,
+                           StatusMinor::SESS_BACKEND_COMPLETED);
     std::stringstream chk2;
     status2.show_numeric_status = true;
     chk2 << status2;

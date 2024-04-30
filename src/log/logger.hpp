@@ -15,6 +15,7 @@
  */
 
 #include <memory>
+#include <gdbuspp/connection.hpp>
 
 #include "dbus-log.hpp"
 #include "logtag.hpp"
@@ -26,7 +27,7 @@ class Logger : public LogConsumer
   public:
     typedef std::shared_ptr<Logger> Ptr;
 
-    Logger(GDBusConnection *dbuscon,
+    Logger(DBus::Connection::Ptr dbuscon,
            LogWriter *logwr,
            const LogTag::Ptr tag,
            const std::string &busname,
@@ -37,7 +38,13 @@ class Logger : public LogConsumer
           log_tag(tag)
     {
         SetLogLevel(log_level);
-        Subscribe("StatusChange");
+        subscriptions->Subscribe(
+            subscription_target,
+            "StatusChange",
+            [=](DBus::Signals::Event::Ptr event)
+            {
+                process_status_change_event(event);
+            });
     }
 
 
@@ -63,8 +70,10 @@ class Logger : public LogConsumer
     {
         if (logid.empty())
         {
-            THROW_DBUSEXCEPTION("Logger", "No LogID set in LogSender object");
+            // FIXME: Better exception/error handling
+            DBus::Object::Exception("No LogID set in LogSender object");
         }
+
         log_forwards[logid] = prx;
         logwr->Write(LogGroup::LOGGER,
                      LogCategory::DEBUG,
@@ -90,7 +99,7 @@ class Logger : public LogConsumer
     void ConsumeLogEvent(const std::string sender,
                          const std::string interface,
                          const std::string object_path,
-                         const LogEvent &logev) override
+                         const LogEvent &logev)
     {
         for (const auto &e : exclude_loggroup)
         {
@@ -135,7 +144,7 @@ class Logger : public LogConsumer
                        const std::string obj_path,
                        const std::string interface_name,
                        const std::string signal_name,
-                       GVariant *parameters) override
+                       GVariant *parameters)
     {
         if ("StatusChange" != signal_name)
         {
@@ -144,7 +153,7 @@ class Logger : public LogConsumer
         }
         for (const auto &lfwd : log_forwards)
         {
-            StatusEvent status(parameters);
+            Status status(parameters);
             lfwd.second->ProxyStatusChange(status, obj_path);
         }
     }
@@ -159,4 +168,9 @@ class Logger : public LogConsumer
     LogTag::Ptr log_tag;
     std::vector<LogGroup> exclude_loggroup;
     std::map<std::string, LogSender *> log_forwards = {};
+
+
+    void process_status_change_event(DBus::Signals::Event::Ptr event)
+    {
+    }
 };

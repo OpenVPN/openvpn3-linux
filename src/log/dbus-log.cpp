@@ -18,7 +18,6 @@
 
 #include "dbus-log.hpp"
 #include "logevent.hpp"
-#include "client/statusevent.hpp"
 
 
 //
@@ -109,7 +108,7 @@ LogSender::LogSender(DBus::Connection::Ptr dbuscon,
     if (!disable_stathschg)
     {
         RegisterSignal("StatusChange",
-                       StatusEvent::SignalDeclaration());
+                       Events::Status::SignalDeclaration());
     }
 }
 
@@ -120,7 +119,7 @@ const LogGroup LogSender::GetLogGroup() const
 }
 
 
-void LogSender::StatusChange(const StatusEvent &statusev)
+void LogSender::StatusChange(const Events::Status &statusev)
 {
     SendGVariant("StatusChange", statusev.GetGVariantTuple());
 }
@@ -143,7 +142,7 @@ void LogSender::ProxyLog(const LogEvent &logev, const std::string &path)
 }
 
 
-void LogSender::ProxyStatusChange(const StatusEvent &status, const std::string &path)
+void LogSender::ProxyStatusChange(const Events::Status &status, const std::string &path)
 {
     if (!status.empty() && AllowPath(path))
     {
@@ -254,10 +253,10 @@ LogConsumer::LogConsumer(DBus::Connection::Ptr dbuscon,
     : LogFilter(6) // By design, accept all kinds of log messages when receiving
 {
     subscriptions = DBus::Signals::SubscriptionManager::Create(dbuscon);
-    auto target = DBus::Signals::Target::Create(busn, objpath, interf);
-    subscriptions->Subscribe(target,
+    subscription_target = DBus::Signals::Target::Create(busn, objpath, interf);
+    subscriptions->Subscribe(subscription_target,
                              "Log",
-                             [this](DBus::Signals::Event::Ptr &event)
+                             [this](DBus::Signals::Event::Ptr event)
                              {
                                  this->process_log_event(event);
                              });

@@ -19,7 +19,7 @@
 #include <gtest/gtest.h>
 
 #include "build-config.h"
-#include "client/statusevent.hpp"
+#include "events/status.hpp"
 #include "log/logevent.hpp"
 #include "log/log-helpers.hpp"
 

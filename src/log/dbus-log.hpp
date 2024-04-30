@@ -18,7 +18,7 @@
 #include <gdbuspp/signals/group.hpp>
 #include <gdbuspp/signals/subscriptionmgr.hpp>
 
-#include "client/statusevent.hpp"
+#include "events/status.hpp"
 #include "log-helpers.hpp"
 #include "logevent.hpp"
 #include "logwriter.hpp"
@@ -123,10 +123,10 @@ class LogSender : public DBus::Signals::Group,
 
     const LogGroup GetLogGroup() const;
 
-    virtual void StatusChange(const StatusEvent &statusev);
+    virtual void StatusChange(const Events::Status &statusev);
 
     void ProxyLog(const LogEvent &logev, const std::string &path = "");
-    void ProxyStatusChange(const StatusEvent &status, const std::string &path);
+    void ProxyStatusChange(const Events::Status &status, const std::string &path);
 
     virtual void Log(const LogEvent &logev, const bool duplicate_check = false, const std::string &target = "");
     virtual void Debug(const std::string &msg, const bool duplicate_check = false);
@@ -196,8 +196,9 @@ class LogConsumer : public LogFilter
                         logev);
     }
 
-  private:
+  protected:
     DBus::Signals::SubscriptionManager::Ptr subscriptions = nullptr;
+    DBus::Signals::Target::Ptr subscription_target = nullptr;
 };
 
 

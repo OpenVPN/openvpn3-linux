@@ -807,15 +807,15 @@ void Session::close_session(const bool forced)
 
     if (!forced)
     {
-        sig_session->StatusChange(StatusEvent(StatusMajor::SESSION,
-                                              StatusMinor::PROC_STOPPED,
-                                              "Session closed"));
+        sig_session->StatusChange(Events::Status(StatusMajor::SESSION,
+                                                 StatusMinor::PROC_STOPPED,
+                                                 "Session closed"));
     }
     else
     {
-        sig_session->StatusChange(StatusEvent(StatusMajor::SESSION,
-                                              StatusMinor::PROC_KILLED,
-                                              "Session closed, killed backend client"));
+        sig_session->StatusChange(Events::Status(StatusMajor::SESSION,
+                                                 StatusMinor::PROC_KILLED,
+                                                 "Session closed, killed backend client"));
     }
     sig_session->LogVerb1("Session closing - " + GetPath());
     object_mgr->RemoveObject(GetPath());

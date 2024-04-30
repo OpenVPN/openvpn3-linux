@@ -24,6 +24,7 @@
 #include "dbus/constants.hpp"
 #include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"
+#include "events/attention-req.hpp"
 
 class BackendSignals : public LogSender
 {
@@ -45,9 +46,7 @@ class BackendSignals : public LogSender
         SetLogLevel(default_log_level);
 
         RegisterSignal("AttentionRequired",
-                       {{"type", glib2::DataType::DBus<ClientAttentionType>()},
-                        {"group", glib2::DataType::DBus<ClientAttentionGroup>()},
-                        {"message", glib2::DataType::DBus<std::string>()}});
+                       Events::AttentionReq::SignalDeclaration());
 
         // Default targets for D-Bus signals are the
         // Session Manager (net.openvpn.v3.sessions) and the
@@ -92,7 +91,7 @@ class BackendSignals : public LogSender
     }
 
 
-    void StatusChange(const StatusEvent &statusev) override
+    void StatusChange(const Events::Status &statusev) override
     {
         status = statusev;
         LogSender::StatusChange(statusev);
@@ -101,7 +100,7 @@ class BackendSignals : public LogSender
 
     void StatusChange(const StatusMajor maj, const StatusMinor min, const std::string &msg = "")
     {
-        status = StatusEvent(maj, min, msg);
+        status = Events::Status(maj, min, msg);
         LogSender::StatusChange(status);
     }
 
@@ -165,7 +164,7 @@ class BackendSignals : public LogSender
         if (status.empty())
         {
             // Nothing have been logged, nothing to report
-            StatusEvent empty;
+            Events::Status empty;
             return empty.GetGVariantTuple();
         }
         return status.GetGVariantTuple();
@@ -177,6 +176,6 @@ class BackendSignals : public LogSender
     std::string session_token = {};
     std::string sessionmgr_busname = {};
     std::string logger_busname = {};
-    StatusEvent status{};
+    Events::Status status{};
     std::unique_ptr<std::thread> delayed_shutdown;
 };

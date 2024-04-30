@@ -77,9 +77,9 @@ class BackendStarterSignals : public LogSender
     void LogFATAL(const std::string &msg)
     {
         Log(LogEvent(log_group, LogCategory::FATAL, msg));
-        StatusChange(StatusEvent(StatusMajor::SESSION,
-                                 StatusMinor::PROC_KILLED,
-                                 msg));
+        StatusChange(Events::Status(StatusMajor::SESSION,
+                                    StatusMinor::PROC_KILLED,
+                                    msg));
         abort();
     }
 };

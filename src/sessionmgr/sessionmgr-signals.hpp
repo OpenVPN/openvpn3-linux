@@ -21,8 +21,8 @@
 #include <gdbuspp/signals/signal.hpp>
 #include <gdbuspp/signals/subscriptionmgr.hpp>
 
-#include "client/attention-req.hpp"
-#include "client/statusevent.hpp"
+#include "events/attention-req.hpp"
+#include "events/status.hpp"
 #include "log/dbus-log.hpp"
 #include "sessionmgr-events.hpp"
 
@@ -87,7 +87,7 @@ class AttentionRequired : public DBus::Signals::Signal
                       DBus::Signals::SubscriptionManager::Ptr subscr,
                       DBus::Signals::Target::Ptr subscr_tgt);
 
-    bool Send(AttentionReq &event) const noexcept;
+    bool Send(Events::AttentionReq &event) const noexcept;
     bool Send(const ClientAttentionType &type,
               const ClientAttentionGroup &group,
               const std::string &msg) const;
@@ -114,11 +114,11 @@ class StatusChange : public DBus::Signals::Signal
 
     const std::string GetSignature() const;
 
-    bool Send(const StatusEvent &stch) noexcept;
+    bool Send(const Events::Status &stch) noexcept;
     GVariant *LastStatusChange() const;
 
   private:
-    StatusEvent last_ev{};
+    Events::Status last_ev{};
     DBus::Signals::Target::Ptr target{};
 };
 

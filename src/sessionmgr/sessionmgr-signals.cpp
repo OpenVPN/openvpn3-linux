@@ -23,9 +23,6 @@
 #include <gdbuspp/signals/signal.hpp>
 #include <gdbuspp/signals/subscriptionmgr.hpp>
 
-#include "client/attention-req.hpp"
-#include "client/statusevent.hpp"
-#include "log/dbus-log.hpp"
 #include "sessionmgr-signals.hpp"
 
 
@@ -46,7 +43,7 @@ Log::Ptr Log::Create(DBus::Connection::Ptr conn,
 void Log::LogFATAL(const std::string &msg)
 {
     LogSender::Log(LogEvent(log_group, LogCategory::FATAL, msg));
-    StatusChange(StatusEvent(StatusMajor::SESSION, StatusMinor::PROC_KILLED, msg));
+    StatusChange(Events::Status(StatusMajor::SESSION, StatusMinor::PROC_KILLED, msg));
     abort();
 }
 
@@ -80,11 +77,7 @@ AttentionRequired::AttentionRequired(DBus::Signals::Emit::Ptr emitter,
                                      DBus::Signals::Target::Ptr subscr_tgt)
     : DBus::Signals::Signal(emitter, "AttentionRequired")
 {
-    SetArguments({
-        {"type", glib2::DataType::DBus<ClientAttentionType>()},
-        {"group", glib2::DataType::DBus<ClientAttentionGroup>()},
-        {"message", glib2::DataType::DBus<std::string>()},
-    });
+    SetArguments(Events::AttentionReq::SignalDeclaration());
 
     // Prepare proxying incoming AttentionRequired signals
     subscr->Subscribe(subscr_tgt,
@@ -93,7 +86,7 @@ AttentionRequired::AttentionRequired(DBus::Signals::Emit::Ptr emitter,
                       {
                           try
                           {
-                              AttentionReq ev(event->params);
+                              Events::AttentionReq ev(event->params);
                               (void)Send(ev);
                           }
                           catch (const DBus::Exception &ex)
@@ -105,7 +98,7 @@ AttentionRequired::AttentionRequired(DBus::Signals::Emit::Ptr emitter,
 }
 
 
-bool AttentionRequired::Send(AttentionReq &event) const noexcept
+bool AttentionRequired::Send(Events::AttentionReq &event) const noexcept
 {
     try
     {
@@ -138,7 +131,7 @@ StatusChange::StatusChange(DBus::Signals::Emit::Ptr emitter,
     : DBus::Signals::Signal(emitter, "StatusChange"),
       target(subscr_tgt)
 {
-    SetArguments(StatusEvent::SignalDeclaration());
+    SetArguments(Events::Status::SignalDeclaration());
 
     // Prepare proxying incoming StatusChange signals
     subscr->Subscribe(target,
@@ -147,7 +140,7 @@ StatusChange::StatusChange(DBus::Signals::Emit::Ptr emitter,
                       {
                           try
                           {
-                              StatusEvent ev(event->params);
+                              Events::Status ev(event->params);
                               (void)Send(ev);
                           }
                           catch (const DBus::Exception &ex)
@@ -161,11 +154,11 @@ StatusChange::StatusChange(DBus::Signals::Emit::Ptr emitter,
 
 const std::string StatusChange::GetSignature() const
 {
-    return DBus::Signals::SignalArgSignature(StatusEvent::SignalDeclaration());
+    return DBus::Signals::SignalArgSignature(Events::Status::SignalDeclaration());
 }
 
 
-bool StatusChange::Send(const StatusEvent &stch) noexcept
+bool StatusChange::Send(const Events::Status &stch) noexcept
 {
     last_ev = stch;
     try

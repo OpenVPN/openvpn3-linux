@@ -26,8 +26,8 @@
 #include <gdbuspp/signals/subscriptionmgr.hpp>
 #include <gdbuspp/signals/target.hpp>
 
-#include "client/attention-req.hpp"
-#include "client/statusevent.hpp"
+#include "events/attention-req.hpp"
+#include "events/status.hpp"
 #include "common/utils.hpp"
 #include "log/log-helpers.hpp"
 #include "log/logevent.hpp"
@@ -93,7 +93,7 @@ class SigSubscription
 
         if ("StatusChange" == event->signal_name)
         {
-            StatusEvent status(event->params);
+            Events::Status status(event->params);
 
             std::cout << "-- Status Change: interface=" << interface_name
                       << ", path=" << event->object_path
@@ -102,7 +102,7 @@ class SigSubscription
         }
         else if ("AttentionRequired" == event->signal_name)
         {
-            AttentionReq ev(event->params);
+            Events::AttentionReq ev(event->params);
             std::cout << "-- User Attention Required: "
                       << "sender=" << event->sender
                       << ", interface=" << interface_name

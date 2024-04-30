@@ -17,6 +17,8 @@
 #include "attention-req.hpp"
 
 
+namespace Events {
+
 AttentionReq::AttentionReq(const ClientAttentionType att_type,
                            const ClientAttentionGroup att_group,
                            const std::string &msg)
@@ -31,6 +33,14 @@ AttentionReq::AttentionReq(GVariant *params)
     type = glib2::Value::Extract<ClientAttentionType>(params, 0);
     group = glib2::Value::Extract<ClientAttentionGroup>(params, 1);
     message = glib2::Value::Extract<std::string>(params, 2);
+}
+
+
+DBus::Signals::SignalArgList AttentionReq::SignalDeclaration() noexcept
+{
+    return {{"code_major", glib2::DataType::DBus<StatusMajor>()},
+            {"code_minor", glib2::DataType::DBus<StatusMinor>()},
+            {"message", glib2::DataType::DBus<std::string>()}};
 }
 
 
@@ -76,3 +86,5 @@ GVariant *AttentionReq::GetGVariant() const
     glib2::Builder::Add(b, message);
     return glib2::Builder::Finish(b);
 }
+
+} // namespace Events

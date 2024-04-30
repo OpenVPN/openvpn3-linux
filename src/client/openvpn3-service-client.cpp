@@ -201,8 +201,8 @@ class BackendClientObject : public DBus::Object::Base
                       this->signal->LogInfo("Forcing shutdown of backend process for "
                                             "token "
                                             + this->session_token);
-                      this->signal->StatusChange(StatusEvent(StatusMajor::CONNECTION,
-                                                             StatusMinor::CONN_DONE));
+                      this->signal->StatusChange(Events::Status(StatusMajor::CONNECTION,
+                                                                StatusMinor::CONN_DONE));
                       if (mainloop)
                       {
                           mainloop->Stop();
@@ -670,9 +670,9 @@ class BackendClientObject : public DBus::Object::Base
         }
         catch (ClientException &excp)
         {
-            signal->StatusChange(StatusEvent(StatusMajor::CONNECTION,
-                                             StatusMinor::PROC_KILLED,
-                                             excp.GetRawError()));
+            signal->StatusChange(Events::Status(StatusMajor::CONNECTION,
+                                                StatusMinor::PROC_KILLED,
+                                                excp.GetRawError()));
             signal->LogFATAL("Failed to initialize client: "
                              + std::string(excp.GetRawError()));
             throw ClientException("Connect", excp.GetRawError());
@@ -710,13 +710,13 @@ class BackendClientObject : public DBus::Object::Base
         std::string reason = glib2::Value::Extract<std::string>(params, 0);
 
         signal->LogInfo("Pausing connection");
-        signal->StatusChange(StatusEvent(StatusMajor::CONNECTION,
-                                         StatusMinor::CONN_PAUSING,
-                                         "Reason: " + reason));
+        signal->StatusChange(Events::Status(StatusMajor::CONNECTION,
+                                            StatusMinor::CONN_PAUSING,
+                                            "Reason: " + reason));
         vpnclient->pause(reason);
         paused = true;
-        signal->StatusChange(StatusEvent(StatusMajor::CONNECTION,
-                                         StatusMinor::CONN_PAUSED));
+        signal->StatusChange(Events::Status(StatusMajor::CONNECTION,
+                                            StatusMinor::CONN_PAUSED));
     }
 
 
@@ -737,8 +737,8 @@ class BackendClientObject : public DBus::Object::Base
         }
 
         signal->LogInfo("Resuming connection");
-        signal->StatusChange(StatusEvent(StatusMajor::CONNECTION,
-                                         StatusMinor::CONN_RESUMING));
+        signal->StatusChange(Events::Status(StatusMajor::CONNECTION,
+                                            StatusMinor::CONN_RESUMING));
         vpnclient->resume();
         paused = false;
     }
@@ -760,8 +760,8 @@ class BackendClientObject : public DBus::Object::Base
                                   "Backend service is not initialized");
         }
         signal->LogInfo("Restarting connection");
-        signal->StatusChange(StatusEvent(StatusMajor::CONNECTION,
-                                         StatusMinor::CONN_RECONNECTING));
+        signal->StatusChange(Events::Status(StatusMajor::CONNECTION,
+                                            StatusMinor::CONN_RECONNECTING));
         paused = false;
         vpncli_ptr->reconnect(0);
     }
@@ -779,15 +779,15 @@ class BackendClientObject : public DBus::Object::Base
         }
 
         signal->LogInfo("Stopping connection");
-        signal->StatusChange(StatusEvent(StatusMajor::CONNECTION,
-                                         StatusMinor::CONN_DISCONNECTING));
+        signal->StatusChange(Events::Status(StatusMajor::CONNECTION,
+                                            StatusMinor::CONN_DISCONNECTING));
         vpncli_ptr->stop();
         if (client_thread)
         {
             client_thread->join();
         }
-        signal->StatusChange(StatusEvent(StatusMajor::CONNECTION,
-                                         StatusMinor::CONN_DONE));
+        signal->StatusChange(Events::Status(StatusMajor::CONNECTION,
+                                            StatusMinor::CONN_DONE));
 
         if (mainloop)
         {
@@ -921,8 +921,8 @@ class BackendClientObject : public DBus::Object::Base
                     {
                         signal->Debug(std::string("[Connect] DCO flag: ")
                                       + (vpnconfig.dco ? "enabled" : "disabled"));
-                        signal->StatusChange(StatusEvent(StatusMajor::CONNECTION,
-                                                         StatusMinor::CONN_CONNECTING));
+                        signal->StatusChange(Events::Status(StatusMajor::CONNECTION,
+                                                            StatusMinor::CONN_CONNECTING));
                         ClientAPI::Status status = vpnclient->connect();
                         if (status.error)
                         {
@@ -934,9 +934,9 @@ class BackendClientObject : public DBus::Object::Base
                             }
                             signal->LogError("Connection failed: " + status.message);
                             signal->Debug("Connection failed: " + msg.str());
-                            signal->StatusChange(StatusEvent(StatusMajor::CONNECTION,
-                                                             StatusMinor::CONN_FAILED,
-                                                             msg.str()));
+                            signal->StatusChange(Events::Status(StatusMajor::CONNECTION,
+                                                                StatusMinor::CONN_FAILED,
+                                                                msg.str()));
                         }
                     }
                     catch (openvpn::Exception &excp)
@@ -947,9 +947,9 @@ class BackendClientObject : public DBus::Object::Base
         }
         catch (const DBus::Exception &err)
         {
-            signal->StatusChange(StatusEvent(StatusMajor::CONNECTION,
-                                             StatusMinor::PROC_KILLED,
-                                             err.what()));
+            signal->StatusChange(Events::Status(StatusMajor::CONNECTION,
+                                                StatusMinor::PROC_KILLED,
+                                                err.what()));
             signal->LogFATAL("Client thread exception: " + std::string(err.what()));
             throw ClientException("connect()", err.what());
         }
@@ -1082,9 +1082,9 @@ class BackendClientObject : public DBus::Object::Base
                       << "eval_message='" << cfgeval.message << "'";
             signal->LogError("Failed to parse configuration: " + cfgeval.message);
             signal->StatusChange(
-                StatusEvent(StatusMajor::CONNECTION,
-                            StatusMinor::CFG_ERROR,
-                            statusmsg.str()));
+                Events::Status(StatusMajor::CONNECTION,
+                               StatusMinor::CFG_ERROR,
+                               statusmsg.str()));
             signal->Debug(statusmsg.str());
             vpnclient = nullptr;
             throw ClientException(__func__,
@@ -1100,9 +1100,9 @@ class BackendClientObject : public DBus::Object::Base
         }
 
         signal->StatusChange(
-            StatusEvent(StatusMajor::CONNECTION,
-                        StatusMinor::CFG_OK,
-                        "config_path=" + configpath));
+            Events::Status(StatusMajor::CONNECTION,
+                           StatusMinor::CFG_OK,
+                           "config_path=" + configpath));
 
         // Do we need username/password?  Or does this configuration allow the
         // client to log in automatically?
@@ -1137,9 +1137,9 @@ class BackendClientObject : public DBus::Object::Base
                                  "Username/password credentials needed");
 
             signal->StatusChange(
-                StatusEvent(StatusMajor::CONNECTION,
-                            StatusMinor::CFG_REQUIRE_USER,
-                            "Username/password credentials needed"));
+                Events::Status(StatusMajor::CONNECTION,
+                               StatusMinor::CFG_REQUIRE_USER,
+                               "Username/password credentials needed"));
         }
 
         if (cfgeval.privateKeyPasswordRequired && vpnconfig.privateKeyPassword.length() == 0)

@@ -17,7 +17,7 @@
 #include <sstream>
 #include <gdbuspp/glib2/utils.hpp>
 
-#include "client/statusevent.hpp"
+#include "events/status.hpp"
 #include "log/logevent.hpp"
 
 

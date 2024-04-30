@@ -190,7 +190,6 @@ subdir('src/dco')
 common_code = static_library(
         'common',
         [
-            'src/client/attention-req.cpp',
             'src/common/cmdargparser.cpp',
             'src/common/configfileparser.cpp',
             'src/common/lookup.cpp',
@@ -202,6 +201,8 @@ common_code = static_library(
             'src/common/utils.cpp',
             'src/dbus/object-ownership.cpp',
             'src/dbus/path.cpp',
+            'src/events/attention-req.cpp',
+            'src/events/status.cpp',
             'src/log/core-dbus-logger.cpp',
             'src/log/dbus-log.cpp',
             'src/log/logtag.cpp',
