@@ -27,7 +27,7 @@ using ACLList = std::vector<uid_t>;
 
 class ACLException : public DBus::Object::Exception
 {
-    public:
+  public:
     ACLException(const std::string &msg);
 };
 
@@ -128,8 +128,8 @@ class ACL
      * @return true if the caller should be granted access, otherwise false
      */
     [[nodiscard]] const bool CheckACL(const std::string &caller,
-                  const ACLList &extra_acl = {},
-                  const bool ignore_public_access = false) const;
+                                      const ACLList &extra_acl = {},
+                                      const bool ignore_public_access = false) const;
 
     /**
      *  Checks if the D-Bus caller is the owner of this object or not
@@ -154,4 +154,4 @@ class ACL
 };
 
 
-} // namespace GDBusExt::Object
+} // namespace GDBusPP::Object::Extension

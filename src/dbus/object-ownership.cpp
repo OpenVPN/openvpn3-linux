@@ -95,7 +95,7 @@ const bool ACL::CheckACL(const std::string &caller,
 
     ACLList acl_check = acl_list;
     acl_check.insert(acl_check.end(), extra_acl.begin(), extra_acl.end());
-    for (const auto& acl_uid : acl_check)
+    for (const auto &acl_uid : acl_check)
     {
         if (acl_uid == caller_uid)
         {
@@ -118,4 +118,4 @@ ACL::ACL(DBus::Connection::Ptr conn, const uid_t owner_)
     creds_qry = DBus::Credentials::Query::Create(conn);
 }
 
-} // namespace GDBusExt::Object
+} // namespace GDBusPP::Object::Extension
