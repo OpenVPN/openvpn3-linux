@@ -16,6 +16,7 @@
 #include <gdbuspp/glib2/utils.hpp>
 
 #include "sessionmgr-events.hpp"
+#include "sessionmgr-exceptions.hpp"
 
 
 namespace SessionManager {

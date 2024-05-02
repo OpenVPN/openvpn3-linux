@@ -20,6 +20,8 @@
 #include <gtest/gtest.h>
 
 #include "sessionmgr/sessionmgr-events.hpp"
+#include "sessionmgr/sessionmgr-exceptions.hpp"
+
 
 using namespace SessionManager;
 

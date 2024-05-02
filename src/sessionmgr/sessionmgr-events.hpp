@@ -22,8 +22,6 @@
 #include <gdbuspp/glib2/utils.hpp>
 #include <gdbuspp/signals/group.hpp>
 
-#include "sessionmgr-exceptions.hpp"
-
 
 namespace SessionManager {
 
