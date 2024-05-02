@@ -51,7 +51,7 @@ SrvHandler::SrvHandler(DBus::Connection::Ptr con,
     // Prepare the SessionManagerEvent signal
     sig_sessmgr->GroupCreate("broadcast");
     sig_sessmgr->GroupAddTarget("broadcast", "");
-    sig_sessmgr_event = sig_sessmgr->GroupCreateSignal<Signals::SessionManagerEvent>("broadcast");
+    sig_sessmgr_event = sig_sessmgr->GroupCreateSignal<::Signals::SessionManagerEvent>("broadcast");
 
     creds_qry = DBus::Credentials::Query::Create(dbuscon);
     tunnel_queue = NewTunnelQueue::Create(dbuscon,

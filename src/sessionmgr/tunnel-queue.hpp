@@ -86,7 +86,7 @@ class NewTunnelQueue
                                                     DBus::Object::Manager::Ptr objmgr,
                                                     LogWriter::Ptr logwr,
                                                     SessionManager::Log::Ptr sig_log,
-                                                    SessionManager::Signals::SessionManagerEvent::Ptr sesmgrev);
+                                                    ::Signals::SessionManagerEvent::Ptr sesmgrev);
 
     /**
      *  Enqueues a new tunnel request to the queue
@@ -111,7 +111,7 @@ class NewTunnelQueue
     DBus::Object::Manager::Ptr object_mgr = nullptr;
     LogWriter::Ptr logwr = nullptr;
     SessionManager::Log::Ptr log = nullptr;
-    SessionManager::Signals::SessionManagerEvent::Ptr sesmgr_event = nullptr;
+    ::Signals::SessionManagerEvent::Ptr sesmgr_event = nullptr;
     DBus::Proxy::Utils::DBusServiceQuery::Ptr be_prxqry = nullptr;
     DBus::Signals::SubscriptionManager::Ptr signal_subscr = nullptr;
     DBus::Signals::Target::Ptr subscr_target = nullptr;
@@ -139,7 +139,7 @@ class NewTunnelQueue
                    DBus::Object::Manager::Ptr objmgr,
                    LogWriter::Ptr logwr,
                    SessionManager::Log::Ptr sig_log,
-                   SessionManager::Signals::SessionManagerEvent::Ptr sesmgrev);
+                   ::Signals::SessionManagerEvent::Ptr sesmgrev);
 };
 
 } // namespace SessionManager

@@ -68,118 +68,9 @@ Log::Log(DBus::Connection::Ptr conn,
     SetLogLevel(default_log_level);
 }
 
-
+} // namespace SessionManager
 
 namespace Signals {
-
-AttentionRequired::AttentionRequired(DBus::Signals::Emit::Ptr emitter,
-                                     DBus::Signals::SubscriptionManager::Ptr subscr,
-                                     DBus::Signals::Target::Ptr subscr_tgt)
-    : DBus::Signals::Signal(emitter, "AttentionRequired")
-{
-    SetArguments(Events::AttentionReq::SignalDeclaration());
-
-    // Prepare proxying incoming AttentionRequired signals
-    subscr->Subscribe(subscr_tgt,
-                      "AttentionRequired",
-                      [=](DBus::Signals::Event::Ptr event)
-                      {
-                          try
-                          {
-                              Events::AttentionReq ev(event->params);
-                              (void)Send(ev);
-                          }
-                          catch (const DBus::Exception &ex)
-                          {
-                              std::cerr << "AttentionReq EXCEPTION:"
-                                        << ex.what() << std::endl;
-                          }
-                      });
-}
-
-
-bool AttentionRequired::Send(Events::AttentionReq &event) const noexcept
-{
-    try
-    {
-        return EmitSignal(event.GetGVariant());
-    }
-    catch (const DBus::Signals::Exception &ex)
-    {
-        std::cerr << "AttentionReq::Send() EXCEPTION:"
-                  << ex.what() << std::endl;
-    }
-    return false;
-}
-
-
-bool AttentionRequired::Send(const ClientAttentionType &type,
-                             const ClientAttentionGroup &group,
-                             const std::string &msg) const
-{
-    return EmitSignal(g_variant_new(GetDBusType(),
-                                    static_cast<uint32_t>(type),
-                                    static_cast<uint32_t>(group),
-                                    msg.c_str()));
-}
-
-
-
-StatusChange::StatusChange(DBus::Signals::Emit::Ptr emitter,
-                           DBus::Signals::SubscriptionManager::Ptr subscr,
-                           DBus::Signals::Target::Ptr subscr_tgt)
-    : DBus::Signals::Signal(emitter, "StatusChange"),
-      target(subscr_tgt)
-{
-    SetArguments(Events::Status::SignalDeclaration());
-
-    // Prepare proxying incoming StatusChange signals
-    subscr->Subscribe(target,
-                      "StatusChange",
-                      [=](DBus::Signals::Event::Ptr event)
-                      {
-                          try
-                          {
-                              Events::Status ev(event->params);
-                              (void)Send(ev);
-                          }
-                          catch (const DBus::Exception &ex)
-                          {
-                              std::cerr << "StatusChange EXCEPTION:"
-                                        << ex.what() << std::endl;
-                          }
-                      });
-}
-
-
-const std::string StatusChange::GetSignature() const
-{
-    return DBus::Signals::SignalArgSignature(Events::Status::SignalDeclaration());
-}
-
-
-bool StatusChange::Send(const Events::Status &stch) noexcept
-{
-    last_ev = stch;
-    try
-    {
-        return EmitSignal(stch.GetGVariantTuple());
-    }
-    catch (const DBus::Signals::Exception &ex)
-    {
-        std::cerr << "StatusChange::Send() EXCEPTION:"
-                  << ex.what() << std::endl;
-    }
-    return false;
-}
-
-
-GVariant *StatusChange::LastStatusChange() const
-{
-    return last_ev.GetGVariantTuple();
-}
-
-
 
 SessionManagerEvent::SessionManagerEvent(DBus::Signals::Emit::Ptr emitter)
     : DBus::Signals::Signal(emitter, "SessionManagerEvent")
@@ -189,7 +80,7 @@ SessionManagerEvent::SessionManagerEvent(DBus::Signals::Emit::Ptr emitter)
 
 
 bool SessionManagerEvent::Send(const std::string &path,
-                               EventType type,
+                               SessionManager::EventType type,
                                uid_t owner) const noexcept
 {
     try
@@ -208,5 +99,3 @@ bool SessionManagerEvent::Send(const std::string &path,
 
 
 } // namespace Signals
-
-} // namespace SessionManager

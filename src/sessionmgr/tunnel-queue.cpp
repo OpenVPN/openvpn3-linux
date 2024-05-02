@@ -36,7 +36,7 @@ NewTunnelQueue::Ptr NewTunnelQueue::Create(DBus::Connection::Ptr dbuscon,
                                            DBus::Object::Manager::Ptr objmgr,
                                            LogWriter::Ptr logwr,
                                            SessionManager::Log::Ptr sig_log,
-                                           SessionManager::Signals::SessionManagerEvent::Ptr sesmgrev)
+                                           ::Signals::SessionManagerEvent::Ptr sesmgrev)
 {
     return NewTunnelQueue::Ptr(new NewTunnelQueue(dbuscon,
                                                   creds_qry,
@@ -52,7 +52,7 @@ NewTunnelQueue::NewTunnelQueue(DBus::Connection::Ptr dbuscon_,
                                DBus::Object::Manager::Ptr objmgr,
                                LogWriter::Ptr logwr_,
                                SessionManager::Log::Ptr sig_log,
-                               SessionManager::Signals::SessionManagerEvent::Ptr sesmgrev)
+                               ::Signals::SessionManagerEvent::Ptr sesmgrev)
     : dbuscon(dbuscon_), creds_qry(creds_qry_), object_mgr(objmgr), logwr(logwr_),
       log(sig_log), sesmgr_event(sesmgrev)
 {

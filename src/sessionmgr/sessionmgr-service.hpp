@@ -80,7 +80,7 @@ class SrvHandler : public Object::Base
     std::string version{package_version};
     SessionManager::Log::Ptr sig_sessmgr = nullptr;
     DBus::Signals::Emit::Ptr broadcast_emitter = nullptr;
-    Signals::SessionManagerEvent::Ptr sig_sessmgr_event = nullptr;
+    ::Signals::SessionManagerEvent::Ptr sig_sessmgr_event = nullptr;
     std::shared_ptr<NewTunnelQueue> tunnel_queue = nullptr;
 
 

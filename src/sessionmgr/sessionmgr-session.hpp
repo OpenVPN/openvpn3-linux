@@ -26,6 +26,8 @@
 #include "log/proxy-log.hpp"
 #include "log/logwriter.hpp"
 #include "common/requiresqueue.hpp"
+#include "dbus/signals/attention-required.hpp"
+#include "dbus/signals/statuschange.hpp"
 #include "sessionmgr-signals.hpp"
 
 
@@ -52,7 +54,7 @@ class Session : public DBus::Object::Base
     Session(DBus::Connection::Ptr dbuscon,
             DBus::Object::Manager::Ptr objmgr,
             DBus::Credentials::Query::Ptr creds_qry,
-            Signals::SessionManagerEvent::Ptr sig_sessionmgr,
+            ::Signals::SessionManagerEvent::Ptr sig_sessionmgr,
             const DBus::Object::Path &sespath,
             const uid_t owner,
             const std::string &be_busname,
@@ -86,7 +88,7 @@ class Session : public DBus::Object::Base
     DBus::Connection::Ptr dbus_conn = nullptr;
     DBus::Object::Manager::Ptr object_mgr = nullptr;
     DBus::Credentials::Query::Ptr creds_qry = nullptr;
-    Signals::SessionManagerEvent::Ptr sig_sessmgr = nullptr;
+    ::Signals::SessionManagerEvent::Ptr sig_sessmgr = nullptr;
     pid_t backend_pid = -1;
     DBus::Object::Path config_path = {};
     std::string config_name{};
@@ -94,8 +96,8 @@ class Session : public DBus::Object::Base
     Log::Ptr sig_session = nullptr;
     DBus::Signals::SubscriptionManager::Ptr sigsubscr = nullptr;
     DBus::Signals::Emit::Ptr broadcast_emitter = nullptr;
-    Signals::AttentionRequired::Ptr sig_attreq = nullptr;
-    Signals::StatusChange::Ptr sig_statuschg = nullptr;
+    ::Signals::AttentionRequired::Ptr sig_attreq = nullptr;
+    ::Signals::StatusChange::Ptr sig_statuschg = nullptr;
     GDBusPP::Object::Extension::ACL::Ptr object_acl;
     bool restrict_log_access = true;
     LogProxyList log_forwarders = {};

@@ -70,7 +70,7 @@ class ReadyException : public DBus::Object::Method::Exception
 Session::Session(DBus::Connection::Ptr dbuscon,
                  DBus::Object::Manager::Ptr objmgr,
                  DBus::Credentials::Query::Ptr creds_qry_,
-                 Signals::SessionManagerEvent::Ptr sig_sessionmgr,
+                 ::Signals::SessionManagerEvent::Ptr sig_sessionmgr,
                  const DBus::Object::Path &sespath,
                  const uid_t owner,
                  const std::string &be_busname,
@@ -98,13 +98,13 @@ Session::Session(DBus::Connection::Ptr dbuscon,
 
     // Prepare signals the session object will send
     sig_session = Log::Create(dbus_conn, LogGroup::SESSIONMGR, GetPath(), logwr);
-    sig_statuschg = sig_session->CreateSignal<Signals::StatusChange>(sigsubscr, subscr_tgt);
+    sig_statuschg = sig_session->CreateSignal<::Signals::StatusChange>(sigsubscr, subscr_tgt);
 
     // Prepare a signal group which will do broadcasts, this will be used
     // for when proxying the AttentionRequired signals
     sig_session->GroupCreate("broadcast");
     sig_session->GroupAddTarget("broadcast", "");
-    sig_attreq = sig_session->GroupCreateSignal<Signals::AttentionRequired>("broadcast",
+    sig_attreq = sig_session->GroupCreateSignal<::Signals::AttentionRequired>("broadcast",
                                                                             sigsubscr,
                                                                             subscr_tgt);
     // Prepare the object handling access control lists

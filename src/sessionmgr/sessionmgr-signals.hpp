@@ -66,62 +66,10 @@ class Log : public LogSender
         LogWriter::Ptr logwr);
 };
 
+} // namespace SessionManager
+
 
 namespace Signals {
-
-/**
- *  Provides an implementation to send the
- *  net.openvpn.v3.sessions.AttentionRequired signal.
- *
- *  This class implements a signal proxy, subscribing to the same
- *  signal from the net.openvpn.v3.backends.be* client backend service
- *  and forwarding it to the user front-ends needing to respond to
- *  such events.
- */
-class AttentionRequired : public DBus::Signals::Signal
-{
-  public:
-    using Ptr = std::shared_ptr<AttentionRequired>;
-
-    AttentionRequired(DBus::Signals::Emit::Ptr emitter,
-                      DBus::Signals::SubscriptionManager::Ptr subscr,
-                      DBus::Signals::Target::Ptr subscr_tgt);
-
-    bool Send(Events::AttentionReq &event) const noexcept;
-    bool Send(const ClientAttentionType &type,
-              const ClientAttentionGroup &group,
-              const std::string &msg) const;
-};
-
-
-/**
- *  Provides an implementation to send the
- *  net.openvpn.v3.sessions.StatusChange signal.
- *
- *  This class implements a signal proxy, subscribing to the same
- *  signal from the net.openvpn.v3.backends.be* client backend service
- *  and forwarding it to the user front-ends needing to respond to
- *  such events.
- */
-class StatusChange : public DBus::Signals::Signal
-{
-  public:
-    using Ptr = std::shared_ptr<StatusChange>;
-
-    StatusChange(DBus::Signals::Emit::Ptr emitter,
-                 DBus::Signals::SubscriptionManager::Ptr subscr,
-                 DBus::Signals::Target::Ptr subscr_tgt);
-
-    const std::string GetSignature() const;
-
-    bool Send(const Events::Status &stch) noexcept;
-    GVariant *LastStatusChange() const;
-
-  private:
-    Events::Status last_ev{};
-    DBus::Signals::Target::Ptr target{};
-};
-
 
 /**
  *  Provides an implementation to send the
@@ -138,9 +86,9 @@ class SessionManagerEvent : public DBus::Signals::Signal
 
     SessionManagerEvent(DBus::Signals::Emit::Ptr emitter);
 
-    bool Send(const std::string &path, EventType type, uid_t owner) const noexcept;
+    bool Send(const std::string &path,
+              SessionManager::EventType type,
+              uid_t owner) const noexcept;
 };
 
 } // namespace Signals
-
-} // namespace SessionManager
