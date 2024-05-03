@@ -9,6 +9,7 @@ signals_code = static_library(
         'signals',
         [
             'attention-required.cpp',
+            'log.cpp',
             'statuschange.cpp',
         ],
         dependencies: [
