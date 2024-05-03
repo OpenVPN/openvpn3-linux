@@ -56,13 +56,13 @@ class DBusRequiresQueueProxy
      * side.
      */
     DBusRequiresQueueProxy(DBus::Connection::Ptr dbuscon,
-                           std::string destination,
-                           std::string interface,
-                           std::string objpath,
-                           std::string method_quechktypegroup,
-                           std::string method_queuefetch,
-                           std::string method_queuecheck,
-                           std::string method_providereponse)
+                           const std::string &destination,
+                           const std::string &interface,
+                           const DBus::Object::Path &objpath,
+                           const std::string &method_quechktypegroup,
+                           const std::string &method_queuefetch,
+                           const std::string &method_queuecheck,
+                           const std::string &method_providereponse)
         : method_quechktypegroup(method_quechktypegroup),
           method_queuefetch(method_queuefetch),
           method_queuecheck(method_queuecheck),
@@ -85,7 +85,7 @@ class DBusRequiresQueueProxy
      */
     struct RequiresSlot QueueFetch(ClientAttentionType type,
                                    ClientAttentionGroup group,
-                                   unsigned int id)
+                                   uint32_t id)
     {
         GVariant *slot = proxy->Call(target,
                                      method_queuefetch,
@@ -109,7 +109,7 @@ class DBusRequiresQueueProxy
                        ClientAttentionType type,
                        ClientAttentionGroup group)
     {
-        std::vector<unsigned int> reqids = QueueCheck(type, group);
+        std::vector<uint32_t> reqids = QueueCheck(type, group);
         for (auto &id : reqids)
         {
             slots.push_back(QueueFetch(type, group, id));
@@ -134,8 +134,8 @@ class DBusRequiresQueueProxy
         std::vector<RequiresQueue::ClientAttTypeGroup> ret;
         while ((e = g_variant_iter_next_value(ar_type_group)))
         {
-            ClientAttentionType t{static_cast<ClientAttentionType>(glib2::Value::Extract<uint32_t>(e, 0))};
-            ClientAttentionGroup g{static_cast<ClientAttentionGroup>(glib2::Value::Extract<uint32_t>(e, 1))};
+            auto t{glib2::Value::Extract<ClientAttentionType>(e, 0)};
+            auto g{glib2::Value::Extract<ClientAttentionGroup>(e, 1)};
             ret.push_back(std::make_tuple(t, g));
             g_variant_unref(e);
         }
@@ -155,24 +155,14 @@ class DBusRequiresQueueProxy
      * @return  Returns a std::vector<unsigned int> with slot ID references
      *          to unresolved RequiresSlot items.
      */
-    std::vector<unsigned int> QueueCheck(ClientAttentionType type,
-                                         ClientAttentionGroup group)
+    std::vector<uint32_t> QueueCheck(ClientAttentionType type,
+                                     ClientAttentionGroup group)
     {
         GVariant *res = proxy->Call(target,
                                     method_queuecheck,
                                     g_variant_new("(uu)", type, group));
-        GVariantIter *slots = NULL;
-        g_variant_get(res, "(au)", &slots);
 
-        GVariant *e = NULL;
-        std::vector<uint32_t> ret{};
-        while ((e = g_variant_iter_next_value(slots)))
-        {
-            ret.push_back(glib2::Value::Get<uint32_t>(e));
-            g_variant_unref(e);
-        }
-        g_variant_unref(res);
-        g_variant_iter_free(slots);
+        std::vector<uint32_t> ret = glib2::Value::ExtractVector<uint32_t>(res);
         return ret;
     }
 
@@ -196,8 +186,8 @@ class DBusRequiresQueueProxy
 
 
   private:
-    DBus::Proxy::Client::Ptr proxy{nullptr};
-    DBus::Proxy::TargetPreset::Ptr target{nullptr};
+    DBus::Proxy::Client::Ptr proxy = nullptr;
+    DBus::Proxy::TargetPreset::Ptr target = nullptr;
     std::string method_quechktypegroup;
     std::string method_queuefetch;
     std::string method_queuecheck;
@@ -229,8 +219,8 @@ class DBusRequiresQueueProxy
             throw RequiresQueueException("Failed parsing the requires queue result");
         }
 
-        result.type = static_cast<ClientAttentionType>(glib2::Value::Extract<uint32_t>(indata, 0));
-        result.group = static_cast<ClientAttentionGroup>(glib2::Value::Extract<uint32_t>(indata, 1));
+        result.type = glib2::Value::Extract<ClientAttentionType>(indata, 0);
+        result.group = glib2::Value::Extract<ClientAttentionGroup>(indata, 1);
         result.id = glib2::Value::Extract<uint32_t>(indata, 2);
         result.name = glib2::Value::Extract<std::string>(indata, 3);
         result.user_description = glib2::Value::Extract<std::string>(indata, 4);
