@@ -20,72 +20,6 @@
 
 
 //
-//  LogFilter class implementation
-//
-
-LogFilter::LogFilter(const uint32_t loglvl) noexcept
-    : log_level(loglvl)
-{
-}
-
-
-void LogFilter::SetLogLevel(const uint32_t loglev)
-{
-    if (loglev > 6)
-    {
-        throw LogException("LogSender: Invalid log level");
-    }
-    log_level = loglev;
-}
-
-
-uint32_t LogFilter::GetLogLevel() noexcept
-{
-    return log_level;
-}
-
-
-void LogFilter::AddPathFilter(const std::string &path)
-{
-    filter_paths.push_back(path);
-    std::sort(filter_paths.begin(), filter_paths.end());
-}
-
-
-bool LogFilter::LogFilterAllow(const Events::Log &logev) noexcept
-{
-    switch (logev.category)
-    {
-    case LogCategory::DEBUG:
-        return log_level >= 6;
-    case LogCategory::VERB2:
-        return log_level >= 5;
-    case LogCategory::VERB1:
-        return log_level >= 4;
-    case LogCategory::INFO:
-        return log_level >= 3;
-    case LogCategory::WARN:
-        return log_level >= 2;
-    case LogCategory::ERROR:
-        return log_level >= 1;
-    default:
-        return true;
-    }
-}
-
-
-bool LogFilter::AllowPath(const std::string &path) noexcept
-{
-    if (filter_paths.size() < 1)
-    {
-        return true;
-    }
-    auto r = std::lower_bound(filter_paths.begin(), filter_paths.end(), path);
-    return r != filter_paths.end();
-}
-
-
-//
 //  LogSender class implementation
 //
 
@@ -97,7 +31,7 @@ LogSender::LogSender(DBus::Connection::Ptr dbuscon,
                      LogWriter *lgwr,
                      const bool disable_stathschg)
     : DBus::Signals::Group(dbuscon, objpath, interf),
-      LogFilter(3),
+      Log::EventFilter(3),
       logwr(lgwr),
       log_group(lgroup)
 {
@@ -129,7 +63,7 @@ void LogSender::ProxyLog(const Events::Log &logev, const std::string &path)
     // Don't proxy an empty log message and if the log level filtering
     // allows it.  The filtering is done against the LogCategory of
     // the message, so we need to extract the LogCategory first
-    if (!logev.empty() && LogFilterAllow(logev))
+    if (!logev.empty() && EventFilter::Allow(logev))
     {
         // If a path check is added, only proxy log event if path is allowed
         if (path.length() > 0 && !AllowPath(path))
@@ -154,7 +88,7 @@ void LogSender::Log(const Events::Log &logev, const bool duplicate_check, const 
 {
     // Don't log an empty tmessages or if log level filtering allows it
     // The filtering is done against the LogCategory of the message
-    if (logev.empty() || !LogFilterAllow(logev))
+    if (logev.empty() || !EventFilter::Allow(logev))
     {
         return;
     }
@@ -249,7 +183,7 @@ LogConsumer::LogConsumer(DBus::Connection::Ptr dbuscon,
                          const std::string &interf,
                          const std::string &objpath,
                          const std::string &busn)
-    : LogFilter(6) // By design, accept all kinds of log messages when receiving
+    : Log::EventFilter(6) // By design, accept all kinds of log messages when receiving
 {
     subscriptions = DBus::Signals::SubscriptionManager::Create(dbuscon);
     subscription_target = DBus::Signals::Target::Create(busn, objpath, interf);
