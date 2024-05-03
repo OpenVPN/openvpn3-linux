@@ -74,6 +74,58 @@ class DBusRequiresQueueProxy
 
 
     /**
+     *  This constructor will re-use an existing D-Bus proxy client for the
+     *  communication towards the D-Bus service to query
+     *
+     * @param method_quechktypegroup   String containing the name of the
+     *                                 QueueCheckTypeGroup method
+     * @param method_queuefetch        String containing the name of the
+     *                                 QueueFetch method
+     * @param method_queuecheck        String containing the name of the
+     *                                 QueueCheck method
+     * @param method_providereponse    String containing the name of the
+     *                                 QueueProvideResponse method
+     *
+     * The method names must match the defined introspection of the service
+     * side.
+     */
+    DBusRequiresQueueProxy(const std::string &method_quechktypegroup,
+                           const std::string &method_queuefetch,
+                           const std::string &method_queuecheck,
+                           const std::string &method_providereponse)
+        : method_quechktypegroup(method_quechktypegroup),
+          method_queuefetch(method_queuefetch),
+          method_queuecheck(method_queuecheck),
+          method_provideresponse(method_providereponse)
+    {
+    }
+
+
+    /**
+     *  If the DBusRequiresQueueProxy object was setup without a proxy,
+     *  this method can be used to assign the proxy connection.
+     *
+     * @param prx                      DBus::Proxy::Client object to use for
+     *                                 the D-Bus calls
+     * @param tgt                      DBus::Proxy::TargetPreset object with the
+     *                                 D-Bus object target specification
+     * @return true if the operation was successful, otherwise false which
+     *         means this object was already assigned to a proxy
+     */
+    const bool AssignProxy(DBus::Proxy::Client::Ptr prx,
+                           DBus::Proxy::TargetPreset::Ptr tgt)
+    {
+        if (!prx && !target)
+        {
+            return false;
+        }
+        proxy = prx;
+        target = tgt;
+        return true;
+    }
+
+
+    /**
      *  C++ method to use to fetch a specific RequiresQueue slot.
      *
      * @param destslot   The return buffer where the retrieved information
