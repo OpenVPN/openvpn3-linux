@@ -168,6 +168,20 @@ executable('config-get-overrides',
     include_directories: [include_dirs, '../..'],
 )
 
+executable('fetch-avail-session-paths',
+    [
+        'dbus/fetch-avail-session-paths.cpp',
+    ],
+    build_by_default: build_test_programs,
+    link_with: [
+        common_code,
+    ],
+    dependencies: [
+        base_dependencies,
+    ],
+    include_directories: [include_dirs, '../..'],
+)
+
 executable('get-acl',
     [
         'dbus/get-acl.cpp'
@@ -176,6 +190,48 @@ executable('get-acl',
     link_with: [
         common_code,
         configmgr_lib,
+    ],
+    dependencies: [
+        base_dependencies,
+    ],
+    include_directories: [include_dirs, '../..'],
+)
+
+executable('getconnectionstats',
+    [
+        'dbus/getconnectionstats.cpp',
+    ],
+    build_by_default: build_test_programs,
+    link_with: [
+        common_code,
+    ],
+    dependencies: [
+        base_dependencies,
+    ],
+    include_directories: [include_dirs, '../..'],
+)
+
+executable('getlastlogevent',
+    [
+        'dbus/getlastlogevent.cpp',
+    ],
+    build_by_default: build_test_programs,
+    link_with: [
+        common_code,
+    ],
+    dependencies: [
+        base_dependencies,
+    ],
+    include_directories: [include_dirs, '../..'],
+)
+
+executable('getlaststatus',
+    [
+        'dbus/getlaststatus.cpp',
+    ],
+    build_by_default: build_test_programs,
+    link_with: [
+        common_code,
     ],
     dependencies: [
         base_dependencies,

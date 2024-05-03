@@ -13,6 +13,7 @@
  */
 
 #include <iostream>
+#include <gdbuspp/connection.hpp>
 
 #include "sessionmgr/proxy-sessionmgr.hpp"
 
@@ -27,15 +28,16 @@ int main(int argc, char **argv)
 
     try
     {
-        std::string session_path(argv[1]);
-        OpenVPN3SessionProxy session(G_BUS_TYPE_SYSTEM, session_path);
-        StatusEvent status = session.GetLastStatus();
+        auto conn = DBus::Connection::Create(DBus::BusType::SYSTEM);
+        auto sessmgr = SessionManager::Proxy::Manager::Create(conn);
+        auto session = sessmgr->Retrieve(argv[1]);
+        Events::Status status = session->GetLastStatus();
 
         std::cout << "        Status: " << status << std::endl;
         std::cout << "----------------------------------------" << std::endl;
-        std::cout << "  Status major: [" << std::to_string((unsigned int)status.major)
+        std::cout << "  Status major: [" << status.major
                   << "] " << std::endl;
-        std::cout << "  Status minor: [" << std::to_string((unsigned int)status.minor)
+        std::cout << "  Status minor: [" << status.minor
                   << "] " << std::endl;
         std::cout << "Status message: "
                   << "[len: " << status.message.size()

@@ -20,7 +20,7 @@
 
 #include "dbus/constants.hpp"
 #include "configmgr/proxy-configmgr.hpp"
-// #include "sessionmgr/proxy-sessionmgr.hpp"
+#include "sessionmgr/proxy-sessionmgr.hpp"
 
 
 
@@ -36,9 +36,9 @@ class ManagerProxy
             cfgmgr.reset(new OpenVPN3ConfigurationProxy(conn,
                                                         Constants::GenPath("configuration")));
         }
-        else if ("sessionmgr-NOT-MIGRATED-YET" == manager)
+        else if ("sessionmgr" == manager)
         {
-            // sessmgr.reset(new OpenVPN3SessionMgrProxy(G_BUS_TYPE_SYSTEM));
+            sessmgr = SessionManager::Proxy::Manager::Create(conn);
         }
         else
         {
@@ -57,7 +57,7 @@ class ManagerProxy
         }
         else if ("sessionmgr" == manager)
         {
-            // return sessmgr->LookupConfigName(cfgname);
+            return sessmgr->LookupConfigName(cfgname);
         }
         throw DBus::Exception("manager-lookupconfigname",
                               "Invalid manager name:" + manager);
@@ -67,7 +67,7 @@ class ManagerProxy
     DBus::Connection::Ptr conn = nullptr;
     std::string manager = "";
     std::unique_ptr<OpenVPN3ConfigurationProxy> cfgmgr = nullptr;
-    // std::unique_ptr<OpenVPN3SessionMgrProxy> sessmgr = nullptr;
+    SessionManager::Proxy::Manager::Ptr sessmgr = nullptr;
 };
 
 

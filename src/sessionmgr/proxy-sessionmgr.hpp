@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2017-  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -18,19 +18,41 @@
 
 #include <iostream>
 #include <memory>
+#include <gdbuspp/proxy.hpp>
+#include <gdbuspp/proxy/utils.hpp>
 
-#include "dbus/core.hpp"
+#include "build-config.h"
+
 #include "dbus/requiresqueue-proxy.hpp"
 #include "client/statistics.hpp"
-#include "client/statusevent.hpp"
+#include "events/status.hpp"
 #include "log/log-helpers.hpp"
 #include "log/dbus-log.hpp"
 
-using namespace openvpn;
 
+namespace SessionManager::Proxy {
+
+
+class Exception : public std::exception
+{
+  public:
+    Exception(const std::string &err) noexcept
+        : error(err)
+    {
+    }
+    ~Exception() noexcept = default;
+
+    const char *what() const noexcept
+    {
+        return error.c_str();
+    }
+
+  private:
+    const std::string error;
+};
 
 /**
- * This exception is thrown when the OpenVPN3SessionProxy::Ready() call
+ * This exception is thrown when the Session::Ready() call
  * indicates the VPN backend client needs more information from the
  * frontend process.
  */
@@ -42,9 +64,9 @@ class ReadyException : public std::exception
     {
     }
 
-    virtual ~ReadyException() = default;
+    ~ReadyException() = default;
 
-    virtual const char *what() const noexcept
+    const char *what() const noexcept
     {
         return errorstr.c_str();
     }
@@ -54,14 +76,26 @@ class ReadyException : public std::exception
 };
 
 
-
-class TunInterfaceException : public DBusException
+/**
+ *  This is thrown when there are issues looking up a virtual interface name
+ */
+class TunInterfaceException : public std::exception
 {
   public:
-    TunInterfaceException(const std::string classname, const std::string msg)
-        : DBusException(classname, msg, __FILE__, __LINE__, __FUNCTION__)
+    TunInterfaceException(const std::string &err)
+        : errorstr(err)
     {
     }
+
+    ~TunInterfaceException() = default;
+
+    const char *what() const noexcept
+    {
+        return errorstr.c_str();
+    }
+
+  private:
+    const std::string errorstr;
 };
 
 
@@ -70,69 +104,21 @@ class TunInterfaceException : public DBusException
  *  Client proxy implementation interacting with a
  *  SessionObject in the session manager over D-Bus
  */
-class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
+class Session : public DBusRequiresQueueProxy
 {
   public:
-    typedef std::shared_ptr<OpenVPN3SessionProxy> Ptr;
+    using Ptr = std::shared_ptr<Session>;
 
-    /**
-     * Initilizes a proxy connection to the OpenVPN 3 Session Manager.
-     * This constructor will establish the D-Bus connection by itself.
-     *
-     * @param bus_type   Defines if the connection is on the system or session
-     *                   bus.
-     * @param objpath    D-Bus object path to the SessionObjectes
-     */
-    OpenVPN3SessionProxy(GBusType bus_type, std::string objpath)
-        : DBusRequiresQueueProxy(bus_type,
-                                 OpenVPN3DBus_name_sessions,
-                                 OpenVPN3DBus_interf_sessions,
-                                 objpath,
-                                 "UserInputQueueGetTypeGroup",
-                                 "UserInputQueueFetch",
-                                 "UserInputQueueCheck",
-                                 "UserInputProvide")
+    [[nodiscard]] static Ptr Create(DBus::Proxy::Client::Ptr prx,
+                                    const DBus::Object::Path &objpath)
     {
-        // Only try to ensure the session manager service is available
-        // when accessing the main management object
-        if (OpenVPN3DBus_rootp_sessions == objpath)
-        {
-            (void)GetServiceVersion(OpenVPN3DBus_rootp_sessions);
-        }
-    }
+        return Ptr(new Session(prx, objpath));
+    };
 
-    /**
-     * Initilizes a proxy connection to the OpenVPN 3 Session Manager.
-     * This constructor will use an existing D-Bus connection for the
-     * D-Bus calls
-     *
-     * @param dbusobj    DBus connection object
-     * @param objpath    D-Bus object path to the SessionObject
-     */
-    OpenVPN3SessionProxy(GDBusConnection *dbusobj, const std::string objpath)
-        : DBusRequiresQueueProxy(dbusobj,
-                                 OpenVPN3DBus_name_sessions,
-                                 OpenVPN3DBus_interf_sessions,
-                                 objpath,
-                                 "UserInputQueueGetTypeGroup",
-                                 "UserInputQueueFetch",
-                                 "UserInputQueueCheck",
-                                 "UserInputProvide")
+    const DBus::Object::Path GetPath() const
     {
-        // Only try to ensure the session manager service is available
-        // when accessing the main management object
-        if (OpenVPN3DBus_rootp_sessions == objpath)
-        {
-            (void)GetServiceVersion(OpenVPN3DBus_rootp_sessions);
-        }
+        return target->object_path;
     }
-
-
-    const std::string GetPath() const
-    {
-        return GetProxyPath();
-    }
-
 
     /**
      *  Makes the VPN backend client process start the connecting to the
@@ -173,16 +159,19 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      * @param reason  A string provided to the VPN backend process why the
      *                tunnel was suspended.  Primarily used for logging.
      */
-    void Pause(std::string reason)
+    void Pause(const std::string &reason)
     {
-        GVariant *res = Call("Pause",
-                             g_variant_new("(s)", reason.c_str()));
-        if (NULL == res)
+        try
         {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                "Failed to pause tunnel");
+            GVariant *res = proxy->Call(target,
+                                        "Pause",
+                                        glib2::Value::CreateTupleWrapped(reason));
+            g_variant_unref(res);
         }
-        g_variant_unref(res);
+        catch (const DBus::Proxy::Exception &)
+        {
+            throw SessionManager::Proxy::Exception("Failed to pause the session");
+        }
     }
 
 
@@ -206,7 +195,7 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
         {
             simple_call("Ready", "Connection not ready to connect yet");
         }
-        catch (DBusException &excp)
+        catch (DBus::Proxy::Exception &excp)
         {
             // Throw D-Bus errors related to "Ready" errors as ReadyExceptions
             std::string e(excp.GetRawError());
@@ -215,7 +204,7 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
                 throw ReadyException(e);
             }
             // Otherwise, just rethrow the DBusException
-            throw;
+            throw SessionManager::Proxy::Exception(e);
         }
     }
 
@@ -225,10 +214,10 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      *
      * @return  Returns a populated struct StatusEvent with the full status.
      */
-    StatusEvent GetLastStatus()
+    const Events::Status GetLastStatus()
     {
-        GVariant *status = GetProperty("status");
-        StatusEvent ret(status);
+        GVariant *status = proxy->GetPropertyGVariant(target, "status");
+        Events::Status ret(status);
         g_variant_unref(status);
         return ret;
     }
@@ -243,9 +232,9 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      *          session owner has access to the session log via the sesison
      *          manager.
      */
-    bool GetRestrictLogAccess()
+    const bool GetRestrictLogAccess()
     {
-        return GetBoolProperty("restrict_log_access");
+        return proxy->GetProperty<bool>(target, "restrict_log_access");
     }
 
 
@@ -259,7 +248,7 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      */
     void SetRestrictLogAccess(bool enable)
     {
-        SetProperty("restrict_log_access", enable);
+        proxy->SetProperty(target, "restrict_log_access", enable);
     }
 
 
@@ -270,9 +259,9 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      * @return  Returns true if session manager will proxy log events from
      *          the VPN client backend
      */
-    bool GetReceiveLogEvents()
+    const bool GetReceiveLogEvents()
     {
-        return GetBoolProperty("receive_log_events");
+        return proxy->GetProperty<bool>(target, "receive_log_events");
     }
 
 
@@ -283,7 +272,7 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      */
     void SetReceiveLogEvents(bool enable)
     {
-        SetProperty("receive_log_events", enable);
+        proxy->SetProperty(target, "receive_log_events", enable);
     }
 
 
@@ -294,9 +283,9 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      *          where 6 is the most verbose.  With 0 only fatal and critical
      *          errors will be provided
      */
-    unsigned int GetLogVerbosity()
+    const uint32_t GetLogVerbosity()
     {
-        return GetUIntProperty("log_verbosity");
+        return proxy->GetProperty<uint32_t>(target, "log_verbosity");
     }
 
 
@@ -306,9 +295,9 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      * @param loglevel  An integer between 0 and 6, where 6 is the most
      *                  verbose and 0 the least.
      */
-    void SetLogVerbosity(unsigned int loglevel)
+    void SetLogVerbosity(uint32_t loglevel)
     {
-        SetProperty("log_verbosity", loglevel);
+        proxy->SetProperty(target, "log_verbosity", loglevel);
     }
 
 
@@ -318,10 +307,10 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      * @return Returns a populated struct LogEvent with the the complete log
      *         event.
      */
-    Log GetLastLogEvent()
+    const Events::Log GetLastLogEvent()
     {
-        GVariant *logev = GetProperty("last_log");
-        Log ret(logev);
+        GVariant *logev = proxy->GetPropertyGVariant(target, "last_log");
+        Events::Log ret(logev);
         g_variant_unref(logev);
         return ret;
     }
@@ -334,9 +323,9 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      * @return Returns a ConnectionStats (std::vector<ConnectionStatDetails>)
      *         array of all gathered statistics.
      */
-    ConnectionStats GetConnectionStats()
+    const ConnectionStats GetConnectionStats()
     {
-        GVariant *statsprops = GetProperty("statistics");
+        GVariant *statsprops = proxy->GetPropertyGVariant(target, "statistics");
         GVariantIter *stats_ar = nullptr;
         g_variant_get(statsprops, "a{sx}", &stats_ar);
 
@@ -368,7 +357,7 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      */
     void SetPublicAccess(bool public_access)
     {
-        SetProperty("public_access", public_access);
+        proxy->SetProperty(target, "public_access", public_access);
     }
 
 
@@ -377,9 +366,9 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      *
      * @return Returns true if public-access is granted
      */
-    bool GetPublicAccess()
+    const bool GetPublicAccess()
     {
-        return GetBoolProperty("public_access");
+        return proxy->GetProperty<bool>(target, "public_access");
     }
 
 
@@ -390,13 +379,17 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      */
     void AccessGrant(uid_t uid)
     {
-        GVariant *res = Call("AccessGrant", g_variant_new("(u)", uid));
-        if (NULL == res)
+        try
         {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                "AccessGrant() call failed");
+            GVariant *res = proxy->Call(target,
+                                        "AccessGrant",
+                                        glib2::Value::CreateTupleWrapped(uid));
+            g_variant_unref(res);
         }
-        g_variant_unref(res);
+        catch (const DBus::Proxy::Exception &)
+        {
+            throw SessionManager::Proxy::Exception("AccessGrant() call failed");
+        }
     }
 
 
@@ -407,13 +400,17 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      */
     void AccessRevoke(uid_t uid)
     {
-        GVariant *res = Call("AccessRevoke", g_variant_new("(u)", uid));
-        if (NULL == res)
+        try
         {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                "AccessRevoke() call failed");
+            GVariant *res = proxy->Call(target,
+                                        "AccessRevoke",
+                                        glib2::Value::CreateTupleWrapped(uid));
+            g_variant_unref(res);
         }
-        g_variant_unref(res);
+        catch (const DBus::Proxy::Exception &)
+        {
+            throw SessionManager::Proxy::Exception("AccessRevoke() call failed");
+        }
     }
 
 
@@ -424,13 +421,17 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      */
     void LogForward(bool enable)
     {
-        GVariant *res = Call("LogForward", g_variant_new("(b)", enable), false);
-        if (nullptr == res)
+        try
         {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                "LogForward() call failed");
+            GVariant *res = proxy->Call(target,
+                                        "LogForward",
+                                        glib2::Value::CreateTupleWrapped(enable));
+            g_variant_unref(res);
         }
-        g_variant_unref(res);
+        catch (const DBus::Proxy::Exception &)
+        {
+            throw SessionManager::Proxy::Exception("LogForward() call failed");
+        }
     }
 
 
@@ -439,9 +440,9 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      *
      * @return Returns uid_t of the session object owner
      */
-    uid_t GetOwner()
+    const uid_t GetOwner()
     {
-        return GetUIntProperty("owner");
+        return proxy->GetProperty<uid_t>(target, "owner");
     }
 
 
@@ -452,26 +453,9 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      * @return Returns an array if uid_t references for each user granted
      *         access.
      */
-    std::vector<uid_t> GetAccessList()
+    const std::vector<uid_t> GetAccessList()
     {
-        GVariant *res = GetProperty("acl");
-        if (NULL == res)
-        {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                "GetAccessList() call failed");
-        }
-        GVariantIter *acl = NULL;
-        g_variant_get(res, "au", &acl);
-
-        GVariant *uid = NULL;
-        std::vector<uid_t> ret;
-        while ((uid = g_variant_iter_next_value(acl)))
-        {
-            ret.push_back(g_variant_get_uint32(uid));
-            g_variant_unref(uid);
-        }
-        g_variant_unref(res);
-        g_variant_iter_free(acl);
+        auto ret = proxy->GetPropertyArray<uid_t>(target, "acl");
         return ret;
     }
 
@@ -481,9 +465,9 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      *
      * @return  Returns a std::string with the device name
      */
-    std::string GetDeviceName() const
+    const std::string GetDeviceName() const
     {
-        return GetStringProperty("device_name");
+        return proxy->GetProperty<std::string>(target, "device_name");
     }
 
 
@@ -493,9 +477,9 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      *
      * @return  Returns true if DCO is enabled
      */
-    bool GetDCO() const
+    const bool GetDCO() const
     {
-        return GetBoolProperty("dco");
+        return proxy->GetProperty<bool>(target, "dco");
     }
 
 
@@ -509,194 +493,133 @@ class OpenVPN3SessionProxy : public DBusRequiresQueueProxy
      */
     void SetDCO(bool dco) const
     {
-        SetProperty("dco", dco);
+        proxy->SetProperty(target, "dco", dco);
     }
 
 
   private:
-    /**
-     * Simple wrapper for simple D-Bus method calls not requiring much
-     * input.  Will also throw a DBusException in case of errors.
-     *
-     * @param method  D-Bus method to call
-     * @param errstr  Error string to provide to the user in case of failures
-     */
-    void simple_call(std::string method, std::string errstr)
+    DBus::Proxy::Client::Ptr proxy = nullptr;
+    DBus::Proxy::TargetPreset::Ptr target = nullptr;
+
+    Session(DBus::Proxy::Client::Ptr prx, const DBus::Object::Path &objpath)
+        : DBusRequiresQueueProxy("UserInputQueueGetTypeGroup",
+                                 "UserInputQueueFetch",
+                                 "UserInputQueueCheck",
+                                 "UserInputProvide"),
+          proxy(prx)
     {
-        if (!CheckObjectExists(10, 300))
+        target = DBus::Proxy::TargetPreset::Create(objpath,
+                                                   Constants::GenInterface("sessions"));
+
+        AssignProxy(proxy, target);
+    }
+
+
+    void simple_call(const std::string &method, const std::string &errmsg)
+    {
+        try
         {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                errstr + " (object does not exist)");
+            GVariant *r = proxy->Call(target, method, nullptr);
+            g_variant_unref(r);
         }
-        GVariant *res = Call(method);
-        if (NULL == res)
+        catch (const DBus::Proxy::Exception &excp)
         {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                errstr);
+            throw SessionManager::Proxy::Exception(excp.what());
         }
-        g_variant_unref(res);
     }
 };
 
 
 
-class OpenVPN3SessionMgrProxy : public DBusProxy
+class Manager
 {
   public:
-    /**
-     *  Initilizes a proxy connection to the OpenVPN 3 Session Manager.
-     *  This constructor will establish the D-Bus connection by itself.
-     *
-     * @param bus_type   Defines if the connection is on the system or session
-     *                   bus.
-     * @param objpath    D-Bus object path to the SessionObjectes
-     */
-    OpenVPN3SessionMgrProxy(GBusType bus_type)
-        : DBusProxy(bus_type,
-                    OpenVPN3DBus_name_sessions,
-                    OpenVPN3DBus_interf_sessions,
-                    OpenVPN3DBus_rootp_sessions)
+    using Ptr = std::shared_ptr<Manager>;
+
+    [[nodiscard]] static Ptr Create(DBus::Connection::Ptr conn)
     {
-        (void)GetServiceVersion(OpenVPN3DBus_rootp_sessions);
-    }
+        return Ptr(new Manager(conn));
+    };
 
 
     /**
-     *  Initilizes a proxy connection to the OpenVPN 3 Session Manager.
-     *  This constructor will reuse an existing D-Bus connection for all
-     *  D-Bus calls.
-     *
-     * @param con        GDBusConnection * to an established connection
-     * @param objpath    D-Bus object path to the SessionObjectes
-     */
-    OpenVPN3SessionMgrProxy(GDBusConnection *con)
-        : DBusProxy(con,
-                    OpenVPN3DBus_name_sessions,
-                    OpenVPN3DBus_interf_sessions,
-                    OpenVPN3DBus_rootp_sessions)
-    {
-        (void)GetServiceVersion(OpenVPN3DBus_rootp_sessions);
-    }
-
-
-    /**
-     *  Only valid if the session object path points at the main session
-     *  manager object.  This starts a new VPN backend client process, running
-     *  with the needed privileges.
      *
      * @param cfgpath  VPN profile configuration D-Bus path to use for the
      *                 backend client
      * @return Returns an OpenVPN3SessionProxy::Ptr to the new session
      *         D-Bus object
      */
-    OpenVPN3SessionProxy::Ptr NewTunnel(std::string cfgpath)
+    Session::Ptr NewTunnel(const DBus::Object::Path &cfgpath) const
     {
-        if (!g_variant_is_object_path(cfgpath.c_str()))
+        try
         {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionMgrProxy",
-                                "Invalid D-Bus path to configuration profile");
+            GVariant *r = proxy->Call(target,
+                                      "NewTunnel",
+                                      glib2::Value::CreateTupleWrapped(cfgpath));
+            auto session_path = glib2::Value::Extract<DBus::Object::Path>(r, 0);
+            // TODO: Listen for SessionManagerEvent::SESS_CREATED signal before
+            // returning
+            sleep(1);
+            return Session::Create(proxy, session_path);
         }
-
-        CheckServiceAvail();
-        if (!CheckObjectExists(10, 300))
+        catch (const DBus::Proxy::Exception &)
         {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionMgrProxy",
-                                "Failed to connect to session manager");
+            throw SessionManager::Proxy::Exception("Failed to start new tunnel");
         }
-
-        GVariant *res = Call("NewTunnel",
-                             g_variant_new("(o)", cfgpath.c_str()));
-        if (NULL == res)
-        {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                "Failed to start a new tunnel");
-        }
-
-        gchar *buf = nullptr;
-        g_variant_get(res, "(o)", &buf);
-        std::string path(buf);
-        g_variant_unref(res);
-        g_free(buf);
-
-        OpenVPN3SessionProxy::Ptr session;
-        session.reset(new OpenVPN3SessionProxy(G_BUS_TYPE_SYSTEM, path));
-        sleep(1); // Allow session to be established (FIXME: Signals?)
-        return session;
     }
 
 
-    /**
-     * Retrieves an array of strings with session paths which are available
-     * to the calling user
-     *
-     * @return A std::vector<std::string> of session paths
-     */
-    std::vector<std::string> FetchAvailableSessionPaths()
+    const std::vector<DBus::Object::Path> FetchAvailableSessionPaths() const
     {
-        GVariant *res = Call("FetchAvailableSessions");
-        if (NULL == res)
+        try
         {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                "Failed to retrieve available sessions");
+            GVariant *r = proxy->Call(target,
+                                      "FetchAvailableSessions");
+            auto sessions_list = glib2::Value::ExtractVector<DBus::Object::Path>(r, 0);
+            return sessions_list;
         }
-        GVariantIter *sesspaths = NULL;
-        g_variant_get(res, "(ao)", &sesspaths);
-
-        GVariant *path = NULL;
-        std::vector<std::string> ret;
-        while ((path = g_variant_iter_next_value(sesspaths)))
+        catch (const DBus::Proxy::Exception &)
         {
-            gsize len;
-            ret.push_back(std::string(g_variant_get_string(path, &len)));
-            g_variant_unref(path);
+            throw SessionManager::Proxy::Exception("Failed to retrieve sessions paths");
         }
-        g_variant_unref(res);
-        g_variant_iter_free(sesspaths);
-        return ret;
     }
 
-
     /**
-     *  Retrieve an array of OpenVPN3SessionProxy objects for all available
+     *  Retrieve an array of Session objects for all available
      *  sessions
      *
-     * @return  std::vector<OpenVPN3SessionProxy::Ptr> of session objects
+     * @return  std::vector<SessionManager::Proxy::Session::Ptr>
      */
-    std::vector<OpenVPN3SessionProxy::Ptr> FetchAvailableSessions()
+    const std::vector<Session::Ptr> FetchAvailableSessions() const
     {
-        std::vector<OpenVPN3SessionProxy::Ptr> ret;
-        for (const auto &path : FetchAvailableSessionPaths())
+        std::vector<Session::Ptr> ret{};
+        for (const auto &session_path : FetchAvailableSessionPaths())
         {
-            OpenVPN3SessionProxy::Ptr s;
-            s.reset(new OpenVPN3SessionProxy(G_BUS_TYPE_SYSTEM, path));
-            ret.push_back(s);
+            ret.push_back(Session::Create(proxy, session_path));
         }
         return ret;
     }
 
 
-    std::vector<std::string> FetchManagedInterfaces()
+    Session::Ptr Retrieve(const DBus::Object::Path &session_path) const
     {
-        GVariant *res = Call("FetchManagedInterfaces");
-        if (nullptr == res)
-        {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                "Failed to retrieve managed interfaces");
-        }
+        return Session::Create(proxy, session_path);
+    }
 
-        GVariantIter *device_list = nullptr;
-        g_variant_get(res, "(as)", &device_list);
 
-        GVariant *device = nullptr;
-        std::vector<std::string> ret;
-        while ((device = g_variant_iter_next_value(device_list)))
+    const std::vector<std::string> FetchManagedInterfaces() const
+    {
+        try
         {
-            ret.push_back(std::string(g_variant_get_string(device, nullptr)));
-            g_variant_unref(device);
+            GVariant *r = proxy->Call(target,
+                                      "FetchManagedInterfaces");
+            auto intf_list = glib2::Value::ExtractVector<std::string>(r, 0);
+            return intf_list;
         }
-        g_variant_unref(res);
-        g_variant_iter_free(device_list);
-        return ret;
+        catch (const DBus::Proxy::Exception &)
+        {
+            throw SessionManager::Proxy::Exception("Failed to retrieve managed interfaces");
+        }
     }
 
 
@@ -711,76 +634,68 @@ class OpenVPN3SessionMgrProxy : public DBusProxy
      *         paths which were started with the given configuration name.
      *         If no match is found, the std::vector will be empty.
      */
-    std::vector<std::string> LookupConfigName(std::string cfgname)
+    const std::vector<DBus::Object::Path> LookupConfigName(const std::string &cfgname) const
     {
-        GVariant *res = Call("LookupConfigName",
-                             g_variant_new("(s)", cfgname.c_str()));
-        if (nullptr == res)
+        try
         {
-            THROW_DBUSEXCEPTION("OpenVPN3SessionProxy",
-                                "Failed to lookup configuration names");
+            GVariant *r = proxy->Call(target,
+                                      "LookupConfigName",
+                                      glib2::Value::CreateTupleWrapped(cfgname));
+            auto sessions_list = glib2::Value::ExtractVector<DBus::Object::Path>(r, 0);
+            return sessions_list;
         }
-        GVariantIter *session_paths = nullptr;
-        g_variant_get(res, "(ao)", &session_paths);
-
-        GVariant *path = nullptr;
-        std::vector<std::string> ret;
-        while ((path = g_variant_iter_next_value(session_paths)))
+        catch (const DBus::Proxy::Exception &)
         {
-            ret.push_back(GLibUtils::GetVariantValue<std::string>(path));
-            g_variant_unref(path);
+            throw SessionManager::Proxy::Exception("Failed to lookup configuration names");
         }
-        g_variant_unref(res);
-        g_variant_iter_free(session_paths);
-        return ret;
     }
-
 
     /**
      *  Lookup the session path for a specific interface name.
      *
      * @param interface  std::string containing the interface name
      *
-     * @return  Returns a std::string containing the D-Bus path to the session
-     *          this interface is related to.  If not found, and exception
-     *          is thrown.
+     * @return  Returns a DBus::Object::Path containing the D-Bus path to
+     *          the session this interface is attached to.  If not found,
+     *          and exception is thrown.
      */
-    std::string LookupInterface(std::string interface)
+    const DBus::Object::Path LookupInterface(const std::string &interface) const
     {
         try
         {
-            GVariant *res = Call("LookupInterface",
-                                 g_variant_new("(s)", interface.c_str()));
-            if (nullptr == res)
+            GVariant *r = proxy->Call(target,
+                                      "LookupInterface",
+                                      glib2::Value::CreateTupleWrapped(interface));
+            auto session_path = glib2::Value::Extract<DBus::Object::Path>(r, 0);
+            if (session_path.empty())
             {
-                throw TunInterfaceException("LookupInterface",
-                                            "Failed to lookup interface");
+                throw TunInterfaceException("Failed to lookup interface '"
+                                            + interface + "'");
             }
 
-            std::string ret(GLibUtils::ExtractValue<std::string>(res, 0));
-            g_variant_unref(res);
-
-            if (ret.empty())
-            {
-                throw TunInterfaceException("LookupInterface",
-                                            "No managed interface found");
-            }
-            return ret;
+            return session_path;
         }
-        catch (const TunInterfaceException &)
+        catch (const DBus::Proxy::Exception &)
         {
-            throw;
-        }
-        catch (const DBusException &rawerr)
-        {
-            std::string err(rawerr.what());
-            size_t p = err.find("GDBus.Error:net.openvpn.v3.error.iface:");
-            if (p != std::string::npos)
-            {
-                throw TunInterfaceException("LookupInterface",
-                                            err.substr(err.rfind(":") + 2));
-            }
-            throw;
+            throw TunInterfaceException("Failed to lookup interface '"
+                                        + interface + "'");
         }
     }
+
+  private:
+    DBus::Proxy::Client::Ptr proxy = nullptr;
+    DBus::Proxy::TargetPreset::Ptr target = nullptr;
+
+    Manager(DBus::Connection::Ptr conn)
+        : proxy(DBus::Proxy::Client::Create(conn,
+                                            Constants::GenServiceName("sessions"))),
+          target(DBus::Proxy::TargetPreset::Create(Constants::GenPath("sessions"),
+                                                   Constants::GenInterface("sessions")))
+    {
+        auto prxqry = DBus::Proxy::Utils::DBusServiceQuery::Create(conn);
+        prxqry->StartServiceByName(Constants::GenServiceName("sessions"));
+        prxqry->CheckServiceAvail(Constants::GenServiceName("sessions"));
+    }
 };
+
+} // namespace SessionManager::Proxy

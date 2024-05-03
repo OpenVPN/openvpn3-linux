@@ -15,11 +15,9 @@
 
 #include <iostream>
 #include <iomanip>
+#include <gdbuspp/connection.hpp>
 
 #include "sessionmgr/proxy-sessionmgr.hpp"
-
-using namespace openvpn;
-
 
 
 int main(int argc, char **argv)
@@ -30,8 +28,11 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    auto session = OpenVPN3SessionProxy(G_BUS_TYPE_SYSTEM, std::string(argv[1]));
-    for (auto &sd : session.GetConnectionStats())
+    auto conn = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    auto sessmgr = SessionManager::Proxy::Manager::Create(conn);
+    auto session = sessmgr->Retrieve(argv[1]);
+
+    for (const auto &sd : session->GetConnectionStats())
     {
         std::cout << "  "
                   << sd.key

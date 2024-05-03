@@ -14,17 +14,18 @@
  */
 
 #include <iostream>
+#include <gdbuspp/connection.hpp>
 
-#include "dbus/core.hpp"
 #include "sessionmgr/proxy-sessionmgr.hpp"
 
 
 
 int main(int argc, char **argv)
 {
-    OpenVPN3SessionMgrProxy sessproxy(G_BUS_TYPE_SYSTEM);
+    auto conn = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    auto sesmgr = SessionManager::Proxy::Manager::Create(conn);
 
-    for (auto &path : sessproxy.FetchAvailableSessionPaths())
+    for (auto &path : sesmgr->FetchAvailableSessionPaths())
     {
         std::cout << path << std::endl;
     }

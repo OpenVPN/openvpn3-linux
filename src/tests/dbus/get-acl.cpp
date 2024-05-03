@@ -21,7 +21,7 @@
 
 #include "common/lookup.hpp"
 #include "configmgr/proxy-configmgr.hpp"
-// #include "sessionmgr/proxy-sessionmgr.hpp"
+#include "sessionmgr/proxy-sessionmgr.hpp"
 
 
 class ProxyWrangler
@@ -34,9 +34,10 @@ class ProxyWrangler
         {
             cfgprx = std::make_shared<OpenVPN3ConfigurationProxy>(conn, objpath);
         }
-        else if ("/net/openvpn/v3/sessions/NOT-MIGRATED-YET" == objpath.substr(0, 25))
+        else if ("/net/openvpn/v3/sessions/" == objpath.substr(0, 25))
         {
-            // sessprx = new OpenVPN3SessionProxy(conn, objpath);
+            auto sessmgr = SessionManager::Proxy::Manager::Create(conn);
+            sessprx = sessmgr->Retrieve(objpath);
         }
         else
         {
@@ -54,7 +55,7 @@ class ProxyWrangler
         }
         if (nullptr != sessprx)
         {
-            // return sessprx->GetOwner();
+            return sessprx->GetOwner();
         }
         throw std::runtime_error("Unsupported operational mode");
     }
@@ -67,7 +68,7 @@ class ProxyWrangler
         }
         if (nullptr != sessprx)
         {
-            // return sessprx->GetAccessList();
+            return sessprx->GetAccessList();
         }
         throw std::runtime_error("Unsupported operational mode");
     }
@@ -81,7 +82,7 @@ class ProxyWrangler
         }
         if (nullptr != sessprx)
         {
-            // return sessprx->AccessGrant(uid);
+            return sessprx->AccessGrant(uid);
         }
         throw std::runtime_error("Unsupported operational mode");
     }
@@ -95,7 +96,7 @@ class ProxyWrangler
         }
         if (nullptr != sessprx)
         {
-            // return sessprx->AccessRevoke(uid);
+            return sessprx->AccessRevoke(uid);
         }
         throw std::runtime_error("Unsupported operational mode");
     }
@@ -104,8 +105,7 @@ class ProxyWrangler
   private:
     DBus::Connection::Ptr conn = nullptr;
     std::shared_ptr<OpenVPN3ConfigurationProxy> cfgprx = nullptr;
-    // OpenVPN3SessionProxy *sessprx = nullptr;
-    void *sessprx = nullptr;
+    SessionManager::Proxy::Session::Ptr sessprx = nullptr;
 };
 
 
