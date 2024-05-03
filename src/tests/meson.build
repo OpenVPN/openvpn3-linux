@@ -257,6 +257,22 @@ test('logevent-selftest',
     suite: 'standalone')
 
 
+executable('log-listener',
+    [
+        'dbus/log-listener.cpp',
+    ],
+    build_by_default: build_test_programs,
+    link_with: [
+        common_code,
+        signals_code,
+    ],
+    dependencies: [
+        base_dependencies,
+    ],
+    include_directories: [include_dirs, '../..'],
+)
+
+
 executable('manager-lookupconfigname',
     [
         'dbus/manager-lookupconfigname.cpp'

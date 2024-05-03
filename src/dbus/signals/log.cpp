@@ -12,6 +12,7 @@
  * @brief Provides helper classes handling Log D-Bus signals
  */
 
+#include <gdbuspp/signals/event.hpp>
 
 #include "log.hpp"
 
@@ -73,6 +74,45 @@ bool Log::Send(const Events::Log &logev) noexcept
 GVariant *Log::LastLogEvent() const
 {
     return last_ev.GetGVariantTuple();
+}
+
+
+ReceiveLog::Ptr ReceiveLog::Create(DBus::Signals::SubscriptionManager::Ptr subscr,
+                       DBus::Signals::Target::Ptr subscr_tgt,
+                       LogCallback callback)
+{
+    return ReceiveLog::Ptr(new ReceiveLog(subscr,
+                                          subscr_tgt,
+                                          std::move(callback)));
+}
+
+
+ReceiveLog::ReceiveLog(DBus::Signals::SubscriptionManager::Ptr subscr,
+                       DBus::Signals::Target::Ptr subscr_tgt,
+                       LogCallback callback)
+    : subscriptionmgr(subscr), target(subscr_tgt),
+      log_callback(callback)
+{
+    if (!subscriptionmgr || !target)
+    {
+        throw DBus::Signals::Exception("Undefined subscription manager or target");
+    }
+
+    subscriptionmgr->Subscribe(
+        target,
+        "Log",
+        [&](DBus::Signals::Event::Ptr event)
+        {
+            GVariant *params = event->params;
+            auto logev = Events::Log(params);
+            log_callback(std::move(logev));
+        });
+}
+
+
+ReceiveLog::~ReceiveLog() noexcept
+{
+    subscriptionmgr->Unsubscribe(target, "Log");
 }
 
 } // namespace Signals

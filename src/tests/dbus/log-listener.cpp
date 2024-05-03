@@ -16,66 +16,70 @@
 
 #include <iostream>
 #include <string.h>
+#include <gdbuspp/connection.hpp>
+#include <gdbuspp/mainloop.hpp>
+#include <gdbuspp/signals/subscriptionmgr.hpp>
 
-#include <glib-unix.h>
+#include "build-config.h"
+#include "dbus/constants.hpp"
+#include "dbus/signals/log.hpp"
+#include "sessionmgr/proxy-sessionmgr.hpp"
 
-#include "dbus/core.hpp"
-#include "common/utils.hpp"
 
-using namespace openvpn;
-
-class LogSubscription : public DBusSignalSubscription
+class LogHandler
 {
   public:
-    LogSubscription(DBus &dbusobj, std::string logtag, std::string interface)
-        : DBusSignalSubscription(dbusobj,
-                                 "",
-                                 interface,
-                                 "",
-                                 "Log"),
-          log_tag(logtag)
+    LogHandler(DBus::Connection::Ptr conn,
+               const std::string &ltag,
+               const DBus::Object::Path &object_path,
+               const std::string &interface)
+        : tag(ltag)
     {
-    }
-
-
-    void callback_signal_handler(GDBusConnection *connection,
-                                 const std::string sender_name,
-                                 const std::string object_path,
-                                 const std::string interface_name,
-                                 const std::string signal_name,
-                                 GVariant *parameters)
-    {
-        guint group;
-        guint logflags;
-        gchar *msg = nullptr;
-        g_variant_get(parameters, "(uus)", &group, &logflags, &msg);
-
-        std::cout << log_tag << " Log entry (" << sender_name << ") interface=" << interface_name
-                  << ", path=" << object_path << " : "
-                  << "[" << group << ", " << logflags << "] "
-                  << msg << std::endl;
+        subscr_target = DBus::Signals::Target::Create("",
+                                                      object_path,
+                                                      interface);
+        subscrmgr = DBus::Signals::SubscriptionManager::Create(conn);
+        logrecv = Signals::ReceiveLog::Create(
+            subscrmgr,
+            subscr_target,
+            [=](Events::Log logevent)
+            {
+              std::cout << "[" << tag << "] " << logevent << std::endl;
+            });
     }
 
   private:
-    std::string log_tag;
+    const std::string tag;
+    Signals::ReceiveLog::Ptr logrecv = nullptr;
+    DBus::Signals::SubscriptionManager::Ptr subscrmgr = nullptr;
+    DBus::Signals::Target::Ptr subscr_target = nullptr;
 };
 
 
 int main(int argc, char **argv)
 {
-    DBus dbus(G_BUS_TYPE_SYSTEM);
-    dbus.Connect();
-    std::cout << "Connected to D-Bus" << std::endl;
+    if (argc != 2)
+    {
+        std::cerr << "Usage: " << argv[0] << " <session path>" << std::endl;
+        return 1;
+    }
 
-    LogSubscription be_subscription(dbus, "Backend", OpenVPN3DBus_interf_backends);
-    LogSubscription session_subscr(dbus, "Session", OpenVPN3DBus_interf_sessions);
+    auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    auto sessmgr = SessionManager::Proxy::Manager::Create(dbuscon);
+    auto session = sessmgr->Retrieve(argv[1]);
+
+    LogHandler lh_sess(dbuscon, "Session", "", Constants::GenInterface("sessions"));
+    LogHandler lh_be(dbuscon, "Backend", "", Constants::GenInterface("backends"));
+    session->LogForward(true);
 
     std::cout << "Subscribed" << std::endl;
 
-    GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
-    g_unix_signal_add(SIGINT, stop_handler, main_loop);
-    g_unix_signal_add(SIGTERM, stop_handler, main_loop);
-    g_main_loop_run(main_loop);
+    auto mainloop = DBus::MainLoop::Create();
+    mainloop->Run();
+
+    std::cout << "Unsubscribed" << std::endl;
+
+    session->LogForward(false);
 
     return 0;
 }

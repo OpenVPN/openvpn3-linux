@@ -47,7 +47,54 @@ class Log : public DBus::Signals::Signal
 
   private:
     Events::Log last_ev{};
-    DBus::Signals::Target::Ptr target{};
+    DBus::Signals::Target::Ptr target = nullptr;
+};
+
+
+/**
+ *  Provides a simpler interface to setup and process incoming
+ *  Log D-Bus signals
+ *
+ *  This will call a lambda function providing each Log signal as a
+ *  Events::Log() object accessible directly.
+ */
+class ReceiveLog
+{
+  public:
+    using Ptr = std::shared_ptr<ReceiveLog>;
+    using LogCallback = std::function<void(Events::Log)>;
+
+    /**
+     *  Prepares the Log event handler
+     *
+     *  This requires a SubscriptionManager and a Signals::Target object
+     *  for the signal subscription.
+     *
+     * @param subscr       DBus::Signals::SubscriptionManager managing the
+     *                     D-Bus signal subscriptions
+     * @param subscr_tgt   DBus::Signals::Target containing the subscription
+     *                     details.  May be empty strings, if a more broader
+     *                     subscription
+     * @param callback     Lambda function being called each time a Log
+     *                     signal is received
+     * @return ReceiveLog::Ptr handling this particular subscription.  When
+     *         deleted, this object will unsubscribe from the Log signal
+     */
+    [[nodiscard]] static Ptr Create(DBus::Signals::SubscriptionManager::Ptr subscr,
+                                    DBus::Signals::Target::Ptr subscr_tgt,
+                                    LogCallback callback);
+    ~ReceiveLog() noexcept;
+
+
+  protected:
+    ReceiveLog(DBus::Signals::SubscriptionManager::Ptr subscr,
+               DBus::Signals::Target::Ptr subscr_tgt,
+               LogCallback callback);
+
+  private:
+    DBus::Signals::SubscriptionManager::Ptr subscriptionmgr = nullptr;
+    DBus::Signals::Target::Ptr target = nullptr;
+    LogCallback log_callback{};
 };
 
 } // namespace Signals
