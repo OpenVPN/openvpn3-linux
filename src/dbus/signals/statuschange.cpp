@@ -72,6 +72,13 @@ bool StatusChange::Send(const Events::Status &stch) noexcept
 
 GVariant *StatusChange::LastStatusChange() const
 {
+    if (last_ev.empty())
+    {
+        // Nothing have been logged, nothing to report
+        Events::Status empty;
+        return empty.GetGVariantTuple();
+    }
+
     return last_ev.GetGVariantTuple();
 }
 
