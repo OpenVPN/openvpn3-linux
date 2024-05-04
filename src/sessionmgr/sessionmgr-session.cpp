@@ -105,8 +105,8 @@ Session::Session(DBus::Connection::Ptr dbuscon,
     sig_session->GroupCreate("broadcast");
     sig_session->GroupAddTarget("broadcast", "");
     sig_attreq = sig_session->GroupCreateSignal<::Signals::AttentionRequired>("broadcast",
-                                                                            sigsubscr,
-                                                                            subscr_tgt);
+                                                                              sigsubscr,
+                                                                              subscr_tgt);
     // Prepare the object handling access control lists
     object_acl = GDBusPP::Object::Extension::ACL::Create(dbus_conn, owner);
 

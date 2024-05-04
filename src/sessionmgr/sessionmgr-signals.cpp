@@ -83,7 +83,6 @@ bool SessionManagerEvent::Send(const std::string &path,
 {
     try
     {
-
         SessionManager::Event ev(path, type, owner);
         return EmitSignal(ev.GetGVariant());
     }
