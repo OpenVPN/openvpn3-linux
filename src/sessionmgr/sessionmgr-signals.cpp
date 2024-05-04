@@ -43,7 +43,6 @@ Log::Ptr Log::Create(DBus::Connection::Ptr conn,
 void Log::LogFATAL(const std::string &msg)
 {
     LogSender::Log(Events::Log(log_group, LogCategory::FATAL, msg));
-    StatusChange(Events::Status(StatusMajor::SESSION, StatusMinor::PROC_KILLED, msg));
     abort();
 }
 
@@ -57,8 +56,7 @@ Log::Log(DBus::Connection::Ptr conn,
                 object_path_,
                 Constants::GenInterface("sessions"),
                 false,
-                logwr.get(),
-                true),
+                logwr.get()),
       object_path(object_path_),
       object_interface(Constants::GenInterface("sessions"))
 {
