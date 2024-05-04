@@ -19,6 +19,7 @@
 #include <sstream>
 #include <thread>
 #include <gdbuspp/signals/group.hpp>
+#include <gdbuspp/signals/signal.hpp>
 #include <gdbuspp/credentials/query.hpp>
 
 #include "dbus/constants.hpp"
@@ -28,6 +29,49 @@
 #include "log/logwriter.hpp"
 #include "events/attention-req.hpp"
 #include "events/status.hpp"
+
+
+namespace Backend::Signals {
+
+/**
+ *  Helper class to send the RegistrationRequest signal to
+ *  the session manager
+ */
+class RegistrationRequest : public DBus::Signals::Signal
+{
+  public:
+    using Ptr = std::shared_ptr<RegistrationRequest>;
+
+    RegistrationRequest(DBus::Signals::Emit::Ptr emitter)
+        : DBus::Signals::Signal(emitter, "RegistrationRequest")
+    {
+        SetArguments({{"busname", glib2::DataType::DBus<std::string>()},
+                      {"token", glib2::DataType::DBus<std::string>()},
+                      {"pid", glib2::DataType::DBus<pid_t>()}});
+    }
+
+    bool Send(const std::string &busname,
+              const std::string &token,
+              const pid_t pid)
+    {
+        GVariantBuilder *b = glib2::Builder::Create("(ssi)");
+        glib2::Builder::Add(b, busname);
+        glib2::Builder::Add(b, token);
+        glib2::Builder::Add(b, pid);
+
+        try
+        {
+            return EmitSignal(glib2::Builder::Finish(b));
+        }
+        catch (const DBus::Signals::Exception &ex)
+        {
+            std::cerr << "RegistrationRequest::Send() EXCEPTION:"
+                      << ex.what() << std::endl;
+        }
+        return false;
+    }
+};
+} // namespace Client::Signals
 
 
 class BackendSignals : public LogSender
@@ -69,10 +113,7 @@ class BackendSignals : public LogSender
         // recipient.  This Signal Group is used in RegistrationRequest()
         GroupCreate("sessionmgr");
         GroupAddTarget("sessionmgr", sessmgr_busn);
-        RegisterSignal("RegistrationRequest",
-                       {{"busname", glib2::DataType::DBus<std::string>()},
-                        {"token", glib2::DataType::DBus<std::string>()},
-                        {"pid", glib2::DataType::DBus<pid_t>()}});
+        sig_regreq = GroupCreateSignal<Backend::Signals::RegistrationRequest>("sessionmgr");
     }
 
     [[nodiscard]] static BackendSignals::Ptr Create(DBus::Connection::Ptr conn,
@@ -90,11 +131,7 @@ class BackendSignals : public LogSender
                              const std::string &token,
                              const pid_t pid)
     {
-        GVariant *param = g_variant_new("(ssi)",
-                                        busname.c_str(),
-                                        token.c_str(),
-                                        pid);
-        GroupSendGVariant("sessionmgr", "RegistrationRequest", param);
+        sig_regreq->Send(busname, token, pid);
     }
 
 
@@ -173,5 +210,6 @@ class BackendSignals : public LogSender
     std::string logger_busname = {};
     ::Signals::AttentionRequired::Ptr sig_attreq = nullptr;
     ::Signals::StatusChange::Ptr sig_statuschg = nullptr;
+    Backend::Signals::RegistrationRequest::Ptr sig_regreq = nullptr;
     std::unique_ptr<std::thread> delayed_shutdown;
 };
