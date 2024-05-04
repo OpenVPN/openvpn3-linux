@@ -28,8 +28,7 @@ LogSender::LogSender(DBus::Connection::Ptr dbuscon,
                      const std::string &objpath,
                      const std::string &interf,
                      const bool session_token,
-                     LogWriter *lgwr,
-                     const bool disable_stathschg)
+                     LogWriter *lgwr)
     : DBus::Signals::Group(dbuscon, objpath, interf),
       Log::EventFilter(3),
       logwr(lgwr),
@@ -37,12 +36,6 @@ LogSender::LogSender(DBus::Connection::Ptr dbuscon,
 {
     RegisterSignal("Log",
                    Events::Log::SignalDeclaration(session_token));
-
-    if (!disable_stathschg)
-    {
-        RegisterSignal("StatusChange",
-                       Events::Status::SignalDeclaration());
-    }
 }
 
 
@@ -52,41 +45,9 @@ const LogGroup LogSender::GetLogGroup() const
 }
 
 
-void LogSender::StatusChange(const Events::Status &statusev)
-{
-    SendGVariant("StatusChange", statusev.GetGVariantTuple());
-}
-
-
-void LogSender::ProxyLog(const Events::Log &logev, const std::string &path)
-{
-    // Don't proxy an empty log message and if the log level filtering
-    // allows it.  The filtering is done against the LogCategory of
-    // the message, so we need to extract the LogCategory first
-    if (!logev.empty() && EventFilter::Allow(logev))
-    {
-        // If a path check is added, only proxy log event if path is allowed
-        if (path.length() > 0 && !AllowPath(path))
-        {
-            return;
-        }
-        SendGVariant("Log", logev.GetGVariantTuple());
-    }
-}
-
-
-void LogSender::ProxyStatusChange(const Events::Status &status, const std::string &path)
-{
-    if (!status.empty() && AllowPath(path))
-    {
-        StatusChange(status);
-    }
-}
-
-
 void LogSender::Log(const Events::Log &logev, const bool duplicate_check, const std::string &target)
 {
-    // Don't log an empty tmessages or if log level filtering allows it
+    // Don't log an empty messages or if log level filtering allows it
     // The filtering is done against the LogCategory of the message
     if (logev.empty() || !EventFilter::Allow(logev))
     {
@@ -250,7 +211,6 @@ void LogConsumerProxy::process_log_event(DBus::Signals::Event::Ptr event)
                                            event->object_interface,
                                            event->object_path,
                                            logev);
-        ProxyLog(ev);
     }
     catch (const LogConsumerProxyException &excp)
     {

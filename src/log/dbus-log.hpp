@@ -34,16 +34,10 @@ class LogSender : public DBus::Signals::Group,
               const std::string &objpath,
               const std::string &interf,
               const bool session_token = false,
-              LogWriter *lgwr = nullptr,
-              const bool disable_stathschg = false);
+              LogWriter *lgwr = nullptr);
     virtual ~LogSender() = default;
 
     const LogGroup GetLogGroup() const;
-
-    virtual void StatusChange(const Events::Status &statusev);
-
-    void ProxyLog(const Events::Log &logev, const std::string &path = "");
-    void ProxyStatusChange(const Events::Status &status, const std::string &path);
 
     virtual void Log(const Events::Log &logev, const bool duplicate_check = false, const std::string &target = "");
     virtual void Debug(const std::string &msg, const bool duplicate_check = false);
