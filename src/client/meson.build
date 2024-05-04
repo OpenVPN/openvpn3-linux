@@ -21,6 +21,7 @@ bin_backend_client = executable(
     ],
     link_with: [
         common_code,
+        signals_code,
         configmgr_lib,
         netcfgmgr_lib,
     ],

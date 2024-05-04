@@ -22,9 +22,13 @@
 #include <gdbuspp/credentials/query.hpp>
 
 #include "dbus/constants.hpp"
+#include "dbus/signals/attention-required.hpp"
+#include "dbus/signals/statuschange.hpp"
 #include "log/dbus-log.hpp"
 #include "log/logwriter.hpp"
 #include "events/attention-req.hpp"
+#include "events/status.hpp"
+
 
 class BackendSignals : public LogSender
 {
@@ -45,8 +49,11 @@ class BackendSignals : public LogSender
     {
         SetLogLevel(default_log_level);
 
-        RegisterSignal("AttentionRequired",
-                       Events::AttentionReq::SignalDeclaration());
+        // Register the AttentionRequired and StatusChange signals
+        // The LogSender extends DBus::Signals::Group, so we reuse the
+        // access to the CreateSignal() method this way.
+        sig_attreq = CreateSignal<::Signals::AttentionRequired>();
+        sig_statuschg = CreateSignal<::Signals::StatusChange>();
 
         // Default targets for D-Bus signals are the
         // Session Manager (net.openvpn.v3.sessions) and the
@@ -91,17 +98,15 @@ class BackendSignals : public LogSender
     }
 
 
-    void StatusChange(const Events::Status &statusev) override
+    void StatusChange(const Events::Status &statusev)
     {
-        status = statusev;
-        LogSender::StatusChange(statusev);
+        sig_statuschg->Send(statusev);
     }
 
 
     void StatusChange(const StatusMajor maj, const StatusMinor min, const std::string &msg = "")
     {
-        status = Events::Status(maj, min, msg);
-        LogSender::StatusChange(status);
+        sig_statuschg->Send(Events::Status(maj, min, msg));
     }
 
 
@@ -145,11 +150,7 @@ class BackendSignals : public LogSender
                       const ClientAttentionGroup att_group,
                       std::string msg)
     {
-        GVariant *params = g_variant_new("(uus)",
-                                         static_cast<uint32_t>(att_type),
-                                         static_cast<uint32_t>(att_group),
-                                         msg.c_str());
-        SendGVariant("AttentionRequired", params);
+        sig_attreq->Send(att_type, att_group, msg);
     }
 
 
@@ -159,15 +160,9 @@ class BackendSignals : public LogSender
      * @return  Returns a GVariant object containing a key/value
      *          dictionary of the last signal sent
      */
-    GVariant *GetLastStatusChange()
+    GVariant *GetLastStatusChange() const
     {
-        if (status.empty())
-        {
-            // Nothing have been logged, nothing to report
-            Events::Status empty;
-            return empty.GetGVariantTuple();
-        }
-        return status.GetGVariantTuple();
+        return sig_statuschg->LastStatusChange();
     }
 
 
@@ -176,6 +171,7 @@ class BackendSignals : public LogSender
     std::string session_token = {};
     std::string sessionmgr_busname = {};
     std::string logger_busname = {};
-    Events::Status status{};
+    ::Signals::AttentionRequired::Ptr sig_attreq = nullptr;
+    ::Signals::StatusChange::Ptr sig_statuschg = nullptr;
     std::unique_ptr<std::thread> delayed_shutdown;
 };

@@ -403,6 +403,7 @@ executable('ovpncli-netcfg',
     link_with: [
         common_code,
         netcfgmgr_lib,
+        signals_code,
 
     ],
     dependencies: [
