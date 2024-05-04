@@ -121,12 +121,12 @@ class DBusLogger
                LogWriter *logwr)
         : log_group(lgrp), session_token(session_token_)
     {
-        logger = LogSender::Create<LogSender>(dbuscon,
-                                              lgrp,
-                                              path,
-                                              interface,
-                                              !session_token_.empty(),
-                                              logwr);
+        logger = DBus::Signals::Group::Create<LogSender>(dbuscon,
+                                                         lgrp,
+                                                         path,
+                                                         interface,
+                                                         !session_token_.empty(),
+                                                         logwr);
 
         auto qry = DBus::Proxy::Utils::DBusServiceQuery::Create(dbuscon);
         logger->AddTarget(qry->GetNameOwner(Constants::GenServiceName("log")));
