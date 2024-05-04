@@ -49,7 +49,8 @@ bin_backend_start = executable(
         base_dependencies,
     ],
     link_with: [
-        common_code
+        common_code,
+        signals_code,
     ],
     install: true,
     install_dir: libexec_dir

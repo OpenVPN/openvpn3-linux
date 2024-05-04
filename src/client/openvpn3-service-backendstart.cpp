@@ -29,7 +29,7 @@
 #include "build-config.h"
 #include "common/cmdargparser.hpp"
 #include "dbus/constants.hpp"
-
+#include "dbus/signals/statuschange.hpp"
 #include "log/dbus-log.hpp"
 #include "log/proxy-log.hpp"
 #include "common/utils.hpp"
@@ -68,6 +68,18 @@ class BackendStarterSignals : public LogSender
 
 
     /**
+     *  Provides access to the ::Signals::StatusChange object, used to
+     *  send the StatusChange D-Bus signals
+     *
+     * @param sig   ::Signals::StatusChange::Ptr to use
+     */
+    void ProvideStatusChangeSender(::Signals::StatusChange::Ptr sig)
+    {
+        sig_statuschg = sig;
+    }
+
+
+    /**
      *  Whenever a FATAL error happens, the process is expected to stop.
      *  The abort() call gets caught by the main loop, which then starts the
      *  proper shutdown process.
@@ -82,6 +94,28 @@ class BackendStarterSignals : public LogSender
                                     msg));
         abort();
     }
+
+
+    /**
+     *  Sends a StatusChange signal, based on the content in an
+     *  Event::Status object
+     *
+     * @param event  Event::Status object containing the signal details
+     */
+    void StatusChange(Events::Status event)
+    {
+        if (!sig_statuschg)
+        {
+            return;
+        }
+
+        sig_statuschg->Send(event);
+    }
+
+
+private:
+    ::Signals::StatusChange::Ptr sig_statuschg = nullptr;
+
 };
 
 
@@ -118,10 +152,14 @@ class BackendStarterHandler : public DBus::Object::Base
     {
         DisableIdleDetector(true);
 
-        signals = DBus::Signals::Group::Create<BackendStarterSignals>(dbuscon, log_level);
+        be_signals = DBus::Signals::Group::Create<BackendStarterSignals>(dbuscon, log_level);
+        sig_statuschg = be_signals->CreateSignal<::Signals::StatusChange>();
+        be_signals->ProvideStatusChangeSender(sig_statuschg);
 
         // Target all signals only towards the net.openvpn.v3.log service
-        signals->AddTarget(creds->GetUniqueBusName(Constants::GenServiceName("log")));
+        be_signals->AddTarget(creds->GetUniqueBusName(Constants::GenServiceName("log")));
+
+        RegisterSignals(be_signals);
 
         AddProperty("version", version, false);
 
@@ -136,13 +174,13 @@ class BackendStarterHandler : public DBus::Object::Base
         args->AddInput("token", glib2::DataType::DBus<std::string>());
         args->AddOutput("pid", glib2::DataType::DBus<uint32_t>());
 
-        signals->Debug("BackendStarterObject registered");
+        be_signals->Debug("BackendStarterObject registered");
     }
 
 
     ~BackendStarterHandler()
     {
-        signals->LogInfo("openvpn3-service-backendstart: Shutting down");
+        be_signals->LogInfo("openvpn3-service-backendstart: Shutting down");
     }
 
 
@@ -158,7 +196,7 @@ class BackendStarterHandler : public DBus::Object::Base
         // the same UID as this process is running from; which is defined
         // in the service autostart configuration.
         uid_t caller = creds->GetUID(authzreq->caller);
-        signals->Debug("Authorize: caller UID:" + std::to_string(caller)
+        be_signals->Debug("Authorize: caller UID:" + std::to_string(caller)
                        + " process UID: " + std::to_string(process_uid));
         return (caller == process_uid);
     }
@@ -170,7 +208,8 @@ class BackendStarterHandler : public DBus::Object::Base
     const std::vector<std::string> client_args;
     const std::vector<std::string> client_envvars;
     const uid_t process_uid;
-    BackendStarterSignals::Ptr signals{nullptr};
+    BackendStarterSignals::Ptr be_signals{nullptr};
+    ::Signals::StatusChange::Ptr sig_statuschg{nullptr};
     std::string version{package_version};
 
 
@@ -246,7 +285,7 @@ class BackendStarterHandler : public DBus::Object::Base
                 cmdline << c << " ";
             }
             cmdline << token;
-            signals->LogVerb2(cmdline.str());
+            be_signals->LogVerb2(cmdline.str());
 
             // Wait for the child process to exit, as the client process will fork again
             int rc = -1;
@@ -258,7 +297,7 @@ class BackendStarterHandler : public DBus::Object::Base
                     << ") - pid " << backend_pid
                     << " failed to start as expected (exit code: "
                     << std::to_string(rc) << ")";
-                signals->LogError(msg.str());
+                be_signals->LogError(msg.str());
                 return -1;
             }
             return backend_pid;
