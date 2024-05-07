@@ -272,6 +272,20 @@ executable('log-listener',
     include_directories: [include_dirs, '../..'],
 )
 
+executable('logservice1',
+    [
+        'dbus/logservice1.cpp',
+    ],
+    build_by_default: build_test_programs,
+    link_with: [
+        common_code,
+        signals_code,
+    ],
+    dependencies: [
+        base_dependencies,
+    ],
+    include_directories: [include_dirs, '../..'],
+)
 
 executable('manager-lookupconfigname',
     [

@@ -13,19 +13,28 @@
  */
 
 #include <iostream>
+#include <gdbuspp/connection.hpp>
+#include <gdbuspp/proxy/utils.hpp>
 
+#include "build-config.h"
 #include "common/cmdargparser.hpp"
-#include "dbus/core.hpp"
-#include "dbus/signals.hpp"
 #include "log/dbus-log.hpp"
 #include "log/proxy-log.hpp"
 
 
+DBus::Connection::Ptr connect_to_dbus(const bool session_bus)
+{
+    auto bustype = (session_bus
+                        ? DBus::BusType::SESSION
+                        : DBus::BusType::SYSTEM);
+    return DBus::Connection::Create(bustype);
+}
+
+
 int cmd_props(ParsedArgs::Ptr args)
 {
-    DBus dbus(G_BUS_TYPE_SYSTEM);
-    dbus.Connect();
-    LogServiceProxy logsrvprx(dbus.GetConnection());
+    auto dbuscon = connect_to_dbus(args->Present("use-session-bus"));
+    LogServiceProxy logsrvprx(dbuscon);
 
     if (args->Present("log-level"))
     {
@@ -53,20 +62,19 @@ int cmd_props(ParsedArgs::Ptr args)
 
 int cmd_send(ParsedArgs::Ptr args)
 {
-    DBus dbus(G_BUS_TYPE_SYSTEM);
-    dbus.Connect();
+    auto dbuscon = connect_to_dbus(args->Present("use-session-bus"));
 
     if (!args->Present("group"))
     {
         throw CommandException("send", "Missing required --group");
     }
-    unsigned int lgrp = std::atoi(args->GetValue("group", 0).c_str());
+    LogGroup lgrp = static_cast<LogGroup>(std::atoi(args->GetValue("group", 0).c_str()));
 
     if (!args->Present("category"))
     {
         throw CommandException("send", "Missing required --category");
     }
-    unsigned int lctg = std::atoi(args->GetValue("category", 0).c_str());
+    LogCategory lctg = static_cast<LogCategory>(std::atoi(args->GetValue("category", 0).c_str()));
 
     std::string path = (args->Present("object-path") ? args->GetValue("object-path", 0) : "/net/openvpn/v3/logtest");
     std::string intf = (args->Present("interface") ? args->GetValue("interface", 0) : "net.openvpn.v3.logtest");
@@ -81,12 +89,14 @@ int cmd_send(ParsedArgs::Ptr args)
             msg += t + " ";
         }
     }
+
+    Events::Log ev(lgrp, lctg, msg);
     std::cout << "     Path: " << path << std::endl;
     std::cout << "Interface: " << intf << std::endl;
-    std::cout << "Log event: " << msg << std::endl;
+    std::cout << "Log event: " << ev << std::endl;
     try
     {
-        LogServiceProxy logsrvprx(dbus.GetConnection());
+        LogServiceProxy logsrvprx(dbuscon);
         if (args->Present("attach"))
         {
             std::cout << "Attatching log" << std::endl;
@@ -94,8 +104,11 @@ int cmd_send(ParsedArgs::Ptr args)
             sleep(1); // Wait for the logger to settle this new attachment
         }
 
-        LogSender sig(dbus.GetConnection(), (LogGroup)lgrp, intf, path);
-        sig.Send("Log", g_variant_new("(uus)", lgrp, lctg, msg.c_str()));
+        LogSender sig(dbuscon, (LogGroup)lgrp, path, intf);
+        auto prxqry = DBus::Proxy::Utils::DBusServiceQuery::Create(dbuscon);
+        sig.AddTarget(prxqry->GetNameOwner(Constants::GenServiceName("log")));
+        sig.SetLogLevel(6);
+        sig.Log(ev);
         std::cout << "Log signal sent" << std::endl;
 
         if (args->Present("attach"))
@@ -122,6 +135,7 @@ int main(int argc, char **argv)
 
     SingleCommand::Ptr props;
     props.reset(new SingleCommand("props", "Gets and sets properties", cmd_props));
+    props->AddOption("use-session-bus", 'S', "Use session bus instead of system bus");
     props->AddOption("log-level", 'l', "LEVEL", true, "Sets the log verbosity");
     props->AddOption("timestamp", 't', "BOOLEAN", true, "Sets the timestamp flag for log events. Valid values: true, false");
     props->AddOption("dbus-details", 'D', "BOOLEAN", true, "Sets the D-Bus details logging flag for log events");
@@ -129,6 +143,7 @@ int main(int argc, char **argv)
 
     SingleCommand::Ptr send;
     send.reset(new SingleCommand("send", "Sends log events", cmd_send));
+    send->AddOption("use-session-bus", 'S', "Use session bus instead of system bus");
     send->AddOption("attach", 'a', "Do an Attach() method call before sending log event");
     send->AddOption("object-path", 'o', "PATH", true, "D-Bus path to use as the signal origin (default: /net/openvpn/v3/logtest)");
     send->AddOption("interface", 'i', "STRING", true, "Interface string to use when sending log events (default: net.openvpn.v3.logtest");
