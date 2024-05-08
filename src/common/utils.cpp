@@ -115,6 +115,9 @@ std::string get_version(std::string component)
 #else
     ver << openvpn::platform_string();
 #if defined(OPENVPN_DEBUG)
+#if defined(ENABLE_OVPNDCO)
+    ver << " [DCO]";
+#endif
     ver << " built on " __DATE__ " " __TIME__;
 #endif // OPENVPN_DEBUG
 #endif // OPENVPN_TUN_BUILDER_BASE_H
