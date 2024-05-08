@@ -44,13 +44,13 @@ void StreamLogWriter::Write(const std::string &data,
                             const std::string &colour_init,
                             const std::string &colour_reset)
 {
-    if (log_meta && !metadata.empty())
+    if (log_meta && !metadata->empty())
     {
         dest << (timestamp ? GetTimestamp() : "") << " "
              << colour_init;
         if (prepend_meta)
         {
-            dest << metadata.GetMetaValue(prepend_label);
+            dest << metadata->GetMetaValue(prepend_label);
         }
         dest << metadata << colour_reset
              << std::endl;
@@ -60,11 +60,11 @@ void StreamLogWriter::Write(const std::string &data,
          << colour_init;
     if (!prepend_label.empty())
     {
-        dest << metadata.GetMetaValue(prepend_label);
+        dest << metadata->GetMetaValue(prepend_label);
     }
     dest << data << colour_reset << std::endl;
     prepend_label.clear();
-    metadata.clear();
+    metadata->clear();
 }
 
 

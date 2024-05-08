@@ -184,7 +184,7 @@ class LogWriter
     {
         if (log_meta)
         {
-            metadata.AddMeta(label, data, skip);
+            metadata->AddMeta(label, data, skip);
         }
     }
 
@@ -199,14 +199,14 @@ class LogWriter
      */
     virtual void AddLogTag(const std::string &label, const LogTag::Ptr tag)
     {
-        metadata.AddMeta(label, tag, true);
+        metadata->AddMeta(label, tag, true);
         PrependMeta("logtag", true);
     }
 
 
-    void AddMetaCopy(const LogMetaData &mdc)
+    void AddMetaCopy(LogMetaData::Ptr mdc)
     {
-        metadata = LogMetaData(mdc);
+        metadata = mdc->Duplicate();
     }
 
 
@@ -231,7 +231,7 @@ class LogWriter
   protected:
     bool timestamp = true;
     bool log_meta = true;
-    LogMetaData metadata;
+    LogMetaData::Ptr metadata = nullptr;
     bool prepend_prefix = true;
     std::string prepend_label;
     bool prepend_meta = false;

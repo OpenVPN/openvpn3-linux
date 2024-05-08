@@ -73,9 +73,9 @@ void JournaldWriter::Write(const Events::Log &event)
     // O3_LOG_GROUP, O3_LOG_CATEGORY, MESSAGE and
     // the NULL termination
     struct iovec *l = (struct iovec *)calloc(sizeof(struct iovec) + 2,
-                                             metadata.size() + 6);
+                                             metadata->size() + 6);
     size_t i = 0;
-    for (const auto &mdr : metadata.GetMetaDataRecords(true, false))
+    for (const auto &mdr : metadata->GetMetaDataRecords(true, false))
     {
         std::string md = std::string("O3_") + mdr;
         l[i++] = {(char *)strdup(md.c_str()), md.length()};
@@ -97,7 +97,7 @@ void JournaldWriter::Write(const Events::Log &event)
     std::string m("MESSAGE=");
     if (prepend_prefix && prepend_meta)
     {
-        m += metadata.GetMetaValue(prepend_label, true);
+        m += metadata->GetMetaValue(prepend_label, true);
     }
 
     m += event.message;
@@ -120,6 +120,6 @@ void JournaldWriter::Write(const Events::Log &event)
     free(l);
 
     prepend_label.clear();
-    metadata.clear();
+    metadata->clear();
 }
 #endif // HAVE_SYSTEMD

@@ -60,9 +60,9 @@ void SyslogWriter::Write(const std::string &data,
     // colours, as that can mess up the log files.
 
     std::ostringstream p;
-    p << (prepend_meta ? metadata.GetMetaValue(prepend_label) : "");
+    p << (prepend_meta ? metadata->GetMetaValue(prepend_label) : "");
 
-    if (log_meta && !metadata.empty())
+    if (log_meta && !metadata->empty())
     {
         std::ostringstream m;
         m << metadata;
@@ -73,7 +73,7 @@ void SyslogWriter::Write(const std::string &data,
 
     syslog(LOG_INFO, "%s%s", p.str().c_str(), data.c_str());
     prepend_label.clear();
-    metadata.clear();
+    metadata->clear();
 }
 
 
@@ -87,9 +87,9 @@ void SyslogWriter::Write(const LogGroup grp,
     // we have access to LogGroup and LogCategory, so we
     // include that information.
     std::ostringstream p;
-    p << (prepend_meta ? metadata.GetMetaValue(prepend_label) : "");
+    p << (prepend_meta ? metadata->GetMetaValue(prepend_label) : "");
 
-    if (log_meta && !metadata.empty())
+    if (log_meta && !metadata->empty())
     {
         std::ostringstream m;
         m << metadata;
@@ -107,5 +107,5 @@ void SyslogWriter::Write(const LogGroup grp,
            LogPrefix(grp, ctg).c_str(),
            data.c_str());
     prepend_label.clear();
-    metadata.clear();
+    metadata->clear();
 }

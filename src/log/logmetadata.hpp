@@ -24,7 +24,7 @@
 /**
  *  The LogMetaDataValue is a container for a single labelled meta data value.
  *
- *  The value can be either a std::string or a LogTag object
+ *  The value can be int32_t, uint32_t, std::string or a LogTag object
  */
 struct LogMetaDataValue
 {
@@ -34,13 +34,13 @@ struct LogMetaDataValue
         LOGMETA_LOGTAG
     };
 
+    const Type type;
+    const std::string label;
+    const std::string str_value;
+    const LogTag::Ptr logtag;
+    const bool skip;
+
     using Ptr = std::shared_ptr<LogMetaDataValue>;
-
-    LogMetaDataValue(const std::string &l, const std::string &v, bool s = false);
-    LogMetaDataValue(const std::string &l, const unsigned int &v, bool s = false);
-    LogMetaDataValue(const std::string &l, const int &v, bool s = false);
-    LogMetaDataValue(const std::string &l, const LogTag::Ptr v, bool s = false);
-
 
     /**
      *  This is a static helper method to create a LogMetaDataValue::Ptr object
@@ -56,15 +56,14 @@ struct LogMetaDataValue
      *         object created.
      */
     template <typename T>
-    static LogMetaDataValue::Ptr create(const std::string &l,
-                                        const T &v,
-                                        bool s = false)
+    [[nodiscard]] static LogMetaDataValue::Ptr Create(const std::string &l,
+                                                      const T &v,
+                                                      bool s = false)
     {
-        LogMetaDataValue::Ptr ret;
-        ret.reset(new LogMetaDataValue(l, v, s));
-        return ret;
+        return LogMetaDataValue::Ptr(new LogMetaDataValue(l, v, s));
     }
 
+    ~LogMetaDataValue() noexcept = default;
 
     /**
      *  Retrieve the value of this meta data as a std::string, regardless of
@@ -78,24 +77,22 @@ struct LogMetaDataValue
      */
     const std::string GetValue(const bool logtag_encaps = true) const;
 
-
-
-    friend std::ostream &operator<<(std::ostream &os, const LogMetaDataValue mdv)
+    friend std::ostream &operator<<(std::ostream &os, const LogMetaDataValue::Ptr mdv)
     {
-        if (mdv.skip)
+        if (mdv->skip)
         {
             return os;
         }
-        bool encaps = (mdv.logtag ? mdv.logtag->encaps : true);
-        return os << mdv.label << "=" << mdv.GetValue(encaps);
+        bool encaps = (mdv->logtag ? mdv->logtag->encaps : true);
+        return os << mdv->label << "=" << mdv->GetValue(encaps);
     }
 
 
-    Type type;
-    std::string label;
-    const std::string str_value;
-    const LogTag::Ptr logtag;
-    bool skip;
+  private:
+    LogMetaDataValue(const std::string &l, const std::string &v, bool s);
+    LogMetaDataValue(const std::string &l, const uint32_t v, bool s);
+    LogMetaDataValue(const std::string &l, const int32_t v, bool s);
+    LogMetaDataValue(const std::string &l, LogTag::Ptr v, bool s);
 };
 
 
@@ -109,22 +106,36 @@ class LogMetaData
     using Ptr = std::shared_ptr<LogMetaData>;
     using Records = std::vector<std::string>;
 
-    LogMetaData(){};
-    ~LogMetaData() = default;
-
-
     /**
      *  Create a new LogMetaData container for LogMetaDataValue objects
      *
      * @return Returns a LogMetaData::Ptr (std::shared_ptr) to the new container
      */
-    static LogMetaData::Ptr create()
+    [[nodiscard]] static LogMetaData::Ptr Create()
     {
-        LogMetaData::Ptr ret;
-        ret.reset(new LogMetaData);
-        return ret;
+        return LogMetaData::Ptr(new LogMetaData);
     }
 
+    /**
+     *  Create a duplicate (copy) of this LogMetaData container
+     *
+     *  NOTE: This will not duplicate the LogMetaDataValue records
+     *        stored in this LogMetaData container, they will be
+     *        shared between the source and the copy.
+     *
+     *        However, any modifications (adding new values, clearing
+     *        all values) to either source or copy
+     *        will be local to the modified object
+     *
+     * @return LogMetaData::Ptr to the new LogMetaData container with the
+     *         same LogMetaDataValue elements as this container has.
+     */
+    LogMetaData::Ptr Duplicate()
+    {
+        return LogMetaData::Ptr(new LogMetaData(*this));
+    }
+
+    ~LogMetaData() noexcept = default;
 
     /**
      *  Adds a new key/value based meta data to the LogMetaData container
@@ -138,7 +149,7 @@ class LogMetaData
     template <typename T>
     void AddMeta(const std::string &l, const T &v, bool skip = false)
     {
-        auto mdv = LogMetaDataValue::create(l, v, skip);
+        auto mdv = LogMetaDataValue::Create(l, v, skip);
         metadata.push_back(mdv);
     }
 
@@ -189,16 +200,16 @@ class LogMetaData
     void clear();
 
 
-    friend std::ostream &operator<<(std::ostream &os, const LogMetaData &mdc)
+    friend std::ostream &operator<<(std::ostream &os, const LogMetaData::Ptr mdc)
     {
         bool first = true;
-        for (const auto &mdv : mdc.metadata)
+        for (const auto &mdv : mdc->metadata)
         {
             if (mdv->skip)
             {
                 continue;
             }
-            os << (!first ? ", " : "") << (*mdv);
+            os << (!first ? ", " : "") << mdv;
             if (first)
             {
                 first = false;
@@ -209,5 +220,22 @@ class LogMetaData
 
 
   private:
-    std::vector<LogMetaDataValue::Ptr> metadata;
+    std::vector<LogMetaDataValue::Ptr> metadata = {};
+
+    LogMetaData() = default;
+
+    /**
+     *  Private copy constructor
+     *
+     *  NOTE: This will not duplicate the LogMetaDataValue records
+     *        stored in this LogMetaData container, they will be
+     *        shared between the source and the copy.
+     *
+     *        However, any modifications (adding new values, clearing
+     *        all values) to either source or copy
+     *        will be local to the modified object
+     *
+     * @param src  Source LogMetaData object to copy elements from
+     */
+    LogMetaData(const LogMetaData &src);
 };

@@ -29,34 +29,38 @@
 LogMetaDataValue::LogMetaDataValue(const std::string &l,
                                    const std::string &v,
                                    bool s)
-    : label(l), str_value(v), logtag(nullptr), skip(s)
+    : type(Type::LOGMETA_STRING), label(l),
+      str_value(v), logtag(nullptr), skip(s)
 {
-    type = Type::LOGMETA_STRING;
 }
 
-LogMetaDataValue::LogMetaDataValue(const std::string &l,
-                                   const unsigned int &v,
-                                   bool s)
-    : label(l), str_value(std::to_string(v)), logtag(nullptr), skip(s)
-{
-    type = Type::LOGMETA_STRING;
-}
 
 LogMetaDataValue::LogMetaDataValue(const std::string &l,
-                                   const int &v,
+                                   const uint32_t v,
                                    bool s)
-    : label(l), str_value(std::to_string(v)), logtag(nullptr), skip(s)
+    : type(Type::LOGMETA_STRING), label(l),
+      str_value(std::to_string(v)), logtag(nullptr), skip(s)
 {
-    type = Type::LOGMETA_STRING;
 }
 
+
 LogMetaDataValue::LogMetaDataValue(const std::string &l,
-                                   const LogTag::Ptr v,
+                                   const int32_t v,
                                    bool s)
-    : label(l), str_value(""), logtag(v), skip(s)
+    : type(Type::LOGMETA_STRING), label(l),
+      str_value(std::to_string(v)), logtag(nullptr), skip(s)
 {
-    type = Type::LOGMETA_LOGTAG;
 }
+
+
+LogMetaDataValue::LogMetaDataValue(const std::string &l,
+                                   LogTag::Ptr v,
+                                   bool s)
+    : type(Type::LOGMETA_LOGTAG), label(l),
+      str_value(""), logtag(v), skip(s)
+{
+}
+
 
 const std::string LogMetaDataValue::GetValue(const bool logtag_encaps) const
 {
@@ -85,8 +89,8 @@ std::string LogMetaData::GetMetaValue(const std::string l,
                            metadata.end(),
                            [l](LogMetaDataValue::Ptr e)
                            {
-        return l == e->label;
-    });
+                               return l == e->label;
+                           });
     if (metadata.end() == it)
     {
         return "";
@@ -109,8 +113,8 @@ LogMetaData::Records LogMetaData::GetMetaDataRecords(const bool upcase_label,
                            label.begin(),
                            [](unsigned char c)
                            {
-                return std::toupper(c);
-            });
+                               return std::toupper(c);
+                           });
         }
         if (LogMetaDataValue::Type::LOGMETA_LOGTAG == mdc->type)
         {
@@ -140,4 +144,13 @@ bool LogMetaData::empty() const
 void LogMetaData::clear()
 {
     metadata.clear();
+}
+
+
+LogMetaData::LogMetaData(const LogMetaData &src)
+{
+    for (const auto &e : src.metadata)
+    {
+        metadata.push_back(e);
+    }
 }
