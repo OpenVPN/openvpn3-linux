@@ -83,10 +83,6 @@ include_dirs = include_directories([
 add_project_arguments('-Wno-non-virtual-dtor',
                       language: 'cpp')
 
-if get_option('dco').enabled()
-    add_project_arguments('-DENABLE_OVPNDCO', language: 'cpp')
-endif
-
 #
 # Various other settings
 #
@@ -100,12 +96,15 @@ endif
 #
 libexec_dir = get_option('libexecdir') / meson.project_name()
 
+dco_enabled = get_option('dco').auto() or get_option('dco').enabled()
+
 build_config = configuration_data({
     'OPENVPN_DEBUG': get_option('debug_options') or get_option('debug'),
     'DEBUG_EXCEPTIONS': get_option('debug_exceptions') or get_option('debug'),
     'DEBUG_CORE_EVENTS': get_option('debug_core_events'),
     'DEBUG_RTNL': get_option('debug_netcfg_netlink'),
     'DEBUG_DISABLE_SECURITY_CHECKS': get_option('debug_disable_security_checks'),
+    'ENABLE_OVPNDCO': dco_enabled,
     'HAVE_LZ4': dep_lz4.found(),
     'HAVE_SELINUX': dep_selinux.found(),
     'HAVE_SYSTEMD': sd_id128,

@@ -9,7 +9,7 @@ dco_dependencies = []
 dco_keyconfig_h = []
 dco_keyconfig_cc = []
 
-if (get_option('dco').enabled())
+if (dco_enabled)
     dco_dependencies = [
         dependency('libnl-genl-3.0', version: '>= 3.2.29'),
         dependency('protobuf', version: '>= 2.4.0'),
