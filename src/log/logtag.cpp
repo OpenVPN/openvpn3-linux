@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C)  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2019-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2019-  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -20,6 +20,14 @@
 //  LogTag class implementation
 //
 
+LogTag::Ptr LogTag::Create(const std::string &sender,
+                              const std::string &interface,
+                              const bool default_encaps)
+{
+    return LogTag::Ptr(new LogTag(sender, interface, default_encaps));
+}
+
+
 LogTag::LogTag(std::string sender, std::string interface, const bool default_encaps)
     : encaps(default_encaps)
 {
@@ -31,25 +39,11 @@ LogTag::LogTag(std::string sender, std::string interface, const bool default_enc
 }
 
 
-LogTag::LogTag()
-    : tag(), hash(0), encaps(true)
-{
-}
-
-
 LogTag::LogTag(const LogTag &cp)
 {
     tag = cp.tag;
     hash = cp.hash;
     encaps = cp.encaps;
-}
-
-
-LogTag::~LogTag()
-{
-    tag = "";
-    hash = 0;
-    encaps = true;
 }
 
 
@@ -59,9 +53,9 @@ const std::string LogTag::str() const
 }
 
 
-const std::string LogTag::str(const bool override) const
+const std::string LogTag::str(const bool encaps_override) const
 {
-    if (override)
+    if (encaps_override)
     {
         return std::string("{tag:") + std::string(std::to_string(hash))
                + std::string("}");

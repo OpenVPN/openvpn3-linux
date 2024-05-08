@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C)  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2019-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2019-  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -33,33 +33,15 @@ struct LogTag
      *
      * @param sender     std::string of the D-Bus unique bus name (1:xxxx)
      * @param interface  std::string of the D-Bus interface sending events
+     * @param default_encaps bool flag adding the {tag:xxxxxx} encapsulation
      *
      */
-    LogTag(std::string sender, std::string interface, const bool default_encaps = true);
-
-    LogTag();
-    LogTag(const LogTag &cp);
-
-    virtual ~LogTag();
-
-
-    static LogTag::Ptr create()
-    {
-        LogTag::Ptr r;
-        r.reset(new LogTag());
-        return r;
-    }
-
-
-    static LogTag::Ptr create(const std::string &sender,
+    [[nodiscard]] static LogTag::Ptr Create(const std::string &sender,
                               const std::string &interface,
-                              const bool default_encaps = true)
-    {
-        LogTag::Ptr r;
-        r.reset(new LogTag(sender, interface, default_encaps));
-        return r;
-    }
+                              const bool default_encaps = true);
 
+    LogTag(const LogTag &cp);
+    ~LogTag() = default;
 
     /**
      *  Return a std::string containing the tag to be used with log lines
@@ -70,13 +52,13 @@ struct LogTag
      *  Without the 'encaps' enabled, it will just return the positive number
      *  as a string.
      *
-     * @param override   Bool flag to override the default encapsulating of the
-     *                   tag hash.
+     * @param encaps_override  Bool flag to override the default encapsulating
+     *                         of the tag hash.
      *
      * @return  Returns a std::string containing the tag this sender and
      *          interface will use
      */
-    virtual const std::string str(const bool override) const;
+    const std::string str(const bool encaps_override) const;
 
 
     /**
@@ -106,4 +88,8 @@ struct LogTag
     std::string tag{};  /**<  Contains the string used for the hash generation */
     size_t hash{};      /**<  Contains the hash value for this LogTag */
     bool encaps = true; /**<  Encapsulate the hash value in "{tag:...}" */
+
+  private:
+    LogTag(std::string sender, std::string interface, const bool default_encaps = true);
+
 };

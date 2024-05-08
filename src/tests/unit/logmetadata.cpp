@@ -46,7 +46,7 @@ TEST(LogMetaDataValue, constructor)
     EXPECT_TRUE(mdi2.skip);
 
 
-    LogTag::Ptr tag = LogTag::create("dummysender", "dummyinterface");
+    LogTag::Ptr tag = LogTag::Create("dummysender", "dummyinterface");
     LogMetaDataValue mdv3("tag", tag);
     EXPECT_STREQ(mdv3.label.c_str(), "tag");
     EXPECT_STREQ(mdv3.GetValue().c_str(), tag->str().c_str());
@@ -81,7 +81,7 @@ TEST(LogMetaDataValue, create)
     EXPECT_STREQ(mdi2->GetValue().c_str(), "67890");
     EXPECT_TRUE(mdi2->skip);
 
-    LogTag::Ptr tag = LogTag::create("dummysender", "dummyinterface");
+    LogTag::Ptr tag = LogTag::Create("dummysender", "dummyinterface");
     LogMetaDataValue::Ptr mdv3 = LogMetaDataValue::create("tag", tag);
     EXPECT_STREQ(mdv3->label.c_str(), "tag");
     EXPECT_STREQ(mdv3->GetValue().c_str(), tag->str().c_str());
@@ -103,7 +103,7 @@ TEST(LogMetaDataValue, op_stream_write)
     s2 << *mdv2;
     EXPECT_STREQ(s2.str().c_str(), "");
 
-    LogTag::Ptr tag = LogTag::create("dummysender", "dummyinterface");
+    LogTag::Ptr tag = LogTag::Create("dummysender", "dummyinterface");
     std::string chk = "tag=" + tag->str();
     LogMetaDataValue::Ptr mdv3 = LogMetaDataValue::create("tag", tag);
     std::stringstream s3;
@@ -139,7 +139,7 @@ TEST(LogMetaData, static_add_get_meta)
     EXPECT_STREQ(lmd.GetMetaValue("label2").c_str(), "value 2 ");
     EXPECT_STREQ(lmd.GetMetaValue("label2", false, "___").c_str(), "value 2___");
 
-    LogTag::Ptr tag = LogTag::create("dummysender", "dummyinterface");
+    LogTag::Ptr tag = LogTag::Create("dummysender", "dummyinterface");
     std::string chk_noencap = tag->str(false) + " ";
     std::string chk_encap = tag->str(true) + " ";
     lmd.AddMeta("tag", tag);
@@ -157,7 +157,7 @@ TEST(LogMetaData, static_op_stream_write)
     lmd.AddMeta("label_2", "SomeOtherValue");
     lmd.AddMeta("skipped_label", "Skipped Value", true);
 
-    LogTag::Ptr tag = LogTag::create("dummysender", "dummyinterface");
+    LogTag::Ptr tag = LogTag::Create("dummysender", "dummyinterface");
     lmd.AddMeta("logtag", tag);
     std::string chk = "label_1=Value: 1, label_2=SomeOtherValue, logtag=" + tag->str();
     std::stringstream s;
@@ -219,7 +219,7 @@ TEST(LogMetaData, op_copy)
     orig.AddMeta("label_skip", "Value skip", true);
     orig.AddMeta("label_B", "Value B");
 
-    LogTag::Ptr tag = LogTag::create("dummysender", "dummyinterface");
+    LogTag::Ptr tag = LogTag::Create("dummysender", "dummyinterface");
     orig.AddMeta("logtag", tag);
 
     LogMetaData copy = LogMetaData(orig);
@@ -275,7 +275,7 @@ TEST(LogMetaData, GetMetaDataRecords)
     lmd.AddMeta("label_skip", "Value skip", true);
     lmd.AddMeta("label_B", "Value B");
 
-    LogTag::Ptr tag = LogTag::create("dummysender", "dummyinterface");
+    LogTag::Ptr tag = LogTag::Create("dummysender", "dummyinterface");
     lmd.AddMeta("logtag", tag);
 
     compare_logmetadata_records(lmd.GetMetaDataRecords(),
