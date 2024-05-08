@@ -375,7 +375,7 @@ netcfg_dns_dir_sft = executable('netcfg-dns-direct-file-selftest',
         '../netcfg/dns/resolver-settings.cpp',
         '../netcfg/dns/resolvconf-file.cpp',
     ],
-    build_by_default: build_test_programs and get_option('debug_internal'),
+    build_by_default: build_test_programs,
     link_with: [
         common_code,
         netcfgmgr_lib,
@@ -395,7 +395,7 @@ executable('signal-listener',
     [
         'dbus/signal-listener.cpp',
     ],
-    build_by_default: build_test_programs and get_option('debug_internal'),
+    build_by_default: build_test_programs,
     link_with: [
         common_code,
         netcfgmgr_lib,

@@ -106,7 +106,6 @@ build_config = configuration_data({
     'DEBUG_CORE_EVENTS': get_option('debug_core_events'),
     'DEBUG_RTNL': get_option('debug_netcfg_netlink'),
     'DEBUG_DISABLE_SECURITY_CHECKS': get_option('debug_disable_security_checks'),
-    'ENABLE_DEBUG': get_option('debug_internal'),
     'HAVE_LZ4': dep_lz4.found(),
     'HAVE_SELINUX': dep_selinux.found(),
     'HAVE_SYSTEMD': sd_id128,

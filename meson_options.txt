@@ -23,9 +23,6 @@ option('debug_netcfg_netlink', type: 'boolean', value: false,
 option('debug_options', type: 'boolean', value: false,
        description: 'Add additional command line options used for debugging')
 
-option('debug_internal', type: 'boolean', value: false,
-       description: 'Enable internal debug sections - #define ENABLE_DEBUG')
-
 #
 #  Build environment and related build time options
 #
