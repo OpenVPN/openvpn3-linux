@@ -209,21 +209,7 @@ class ResolvConfFile : public FileGenerator,
      */
     const std::vector<std::string> GetNameServers(bool only_sys = false);
 
-
-#ifdef ENABLE_DEBUG
-    /**
-     *  Misc debug methods used by test programs
-     */
-    void Debug_Fetch();
-    void Debug_Write();
-
-    std::vector<std::string> Debug_Get_dns_servers();
-    std::vector<std::string> Debug_Get_search_domains();
-    virtual std::string Dump();
-#endif
-
-
-  private:
+  protected:
     std::mutex change_guard;
     std::vector<std::string> unprocessed_lines;
     std::vector<std::string> vpn_name_servers;
@@ -235,9 +221,6 @@ class ResolvConfFile : public FileGenerator,
     std::vector<NetCfgChangeEvent> notification_queue;
     bool dns_scope_non_global = false;
     unsigned int modified_count = 0;
-
-    ResolvConfFile(const std::string &filename,
-                   const std::string &backup_filename = "");
 
     /**
      *  Extremely simplistic resolv.conf parser.  It extracts the
@@ -253,6 +236,9 @@ class ResolvConfFile : public FileGenerator,
      *  The data to be written to disk will be in the resolv.conf format
      */
     void generate();
+
+    ResolvConfFile(const std::string &filename,
+                   const std::string &backup_filename = "");
 };
 } // namespace DNS
 } // namespace NetCfg
