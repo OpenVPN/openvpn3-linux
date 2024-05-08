@@ -13,6 +13,12 @@
 
 namespace Log {
 
+EventFilter::Ptr EventFilter::Create(const uint32_t loglvl)
+{
+    return Ptr(new EventFilter(loglvl));
+}
+
+
 EventFilter::EventFilter(const uint32_t loglvl) noexcept
     : log_level(loglvl)
 {

@@ -25,6 +25,17 @@ namespace Log {
 class EventFilter
 {
   public:
+    using Ptr = std::shared_ptr<EventFilter>;
+
+    /**
+     *  Create a new standalone LogFilter object
+     *
+     *  This is used in situations where using inheritance is not ideal
+     *
+     * @param loglev   uint32_t containing the default starting log level
+     * @return EventFilter::Ptr (aka std::shared_ptr<EventFilter>)
+     */
+    [[nodiscard]] static EventFilter::Ptr Create(const uint32_t loglev);
     virtual ~EventFilter() = default;
 
     /**
