@@ -75,10 +75,13 @@ void JournaldWriter::Write(const Events::Log &event)
     struct iovec *l = (struct iovec *)calloc(sizeof(struct iovec) + 2,
                                              metadata->size() + 6);
     size_t i = 0;
-    for (const auto &mdr : metadata->GetMetaDataRecords(true, false))
+    if (metadata)
     {
-        std::string md = std::string("O3_") + mdr;
-        l[i++] = {(char *)strdup(md.c_str()), md.length()};
+        for (const auto &mdr : metadata->GetMetaDataRecords(true, false))
+        {
+            std::string md = std::string("O3_") + mdr;
+            l[i++] = {(char *)strdup(md.c_str()), md.length()};
+        }
     }
 
     std::string st("O3_SESSION_TOKEN=");
@@ -95,7 +98,7 @@ void JournaldWriter::Write(const Events::Log &event)
     l[i++] = {(char *)strdup(lc.c_str()), lc.length()};
 
     std::string m("MESSAGE=");
-    if (prepend_prefix && prepend_meta)
+    if (prepend_prefix && prepend_meta && metadata)
     {
         m += metadata->GetMetaValue(prepend_label, true);
     }
@@ -120,6 +123,9 @@ void JournaldWriter::Write(const Events::Log &event)
     free(l);
 
     prepend_label.clear();
-    metadata->clear();
+    if (metadata)
+    {
+        metadata->clear();
+    }
 }
 #endif // HAVE_SYSTEMD
