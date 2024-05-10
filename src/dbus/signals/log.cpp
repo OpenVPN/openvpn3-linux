@@ -78,8 +78,8 @@ GVariant *Log::LastLogEvent() const
 
 
 ReceiveLog::Ptr ReceiveLog::Create(DBus::Signals::SubscriptionManager::Ptr subscr,
-                       DBus::Signals::Target::Ptr subscr_tgt,
-                       LogCallback callback)
+                                   DBus::Signals::Target::Ptr subscr_tgt,
+                                   LogCallback callback)
 {
     return ReceiveLog::Ptr(new ReceiveLog(subscr,
                                           subscr_tgt,
@@ -104,7 +104,10 @@ ReceiveLog::ReceiveLog(DBus::Signals::SubscriptionManager::Ptr subscr,
         [&](DBus::Signals::Event::Ptr event)
         {
             GVariant *params = event->params;
-            auto logev = Events::Log(params);
+            auto sender = DBus::Signals::Target::Create(event->sender,
+                                                        event->object_path,
+                                                        event->object_interface);
+            auto logev = Events::Log(params, std::move(sender));
             log_callback(std::move(logev));
         });
 }
