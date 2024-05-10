@@ -89,9 +89,25 @@ class ColourStreamWriter : public StreamLogWriter
      */
     using StreamLogWriter::Write;
 
+    /**
+     *  Writes log data to the destination buffer, but will prefix
+     *  log lines with information about the log group and log category
+     *
+     *  NOTE: The colour_init and colour_reset arguments are here for
+     *        the override only; these values will be implicitly set
+     *        by this Write() method using the ColourEngine.
+     *
+     * @param grp          LogGroup the log message belongs to
+     * @param ctg          LogCategory the log message is categorized as
+     * @param data         std::string containing the log data
+     * @param colour_init  (ignored; this is set by ColourEngine)
+     * @param colour_reset (ignored; this is set by ColourEngine)
+     */
     void Write(const LogGroup grp,
                const LogCategory ctg,
-               const std::string &data) override;
+               const std::string &data,
+               const std::string &colour_init = "",
+               const std::string &colour_reset = "") override;
 
   private:
     ColourEngine *colours = nullptr;

@@ -124,36 +124,18 @@ class LogWriter
      * @param grp          LogGroup the log message belongs to
      * @param ctg          LogCategory the log message is categorized as
      * @param data         std::string containing the log data
-     * @param colour_init  std::string to be printed before log data, to
-     *                     set the proper colours.  Emtpy by default.
-     * @param colour_reset std::string to be printed after the log data
-     *                     to reset colour selection.  Emtpy by default.
-     *
+     * @param colour_init  (optional) std::string to be printed before log
+     *                     data, to set the proper colours.  Emtpy by default.
+     * @param colour_reset (optional) std::string to be printed after the log
+     *                     data to reset colour selection.  Emtpy by default.
      */
     virtual void Write(const LogGroup grp,
                        const LogCategory ctg,
                        const std::string &data,
-                       const std::string &colour_init,
-                       const std::string &colour_reset)
+                       const std::string &colour_init = "",
+                       const std::string &colour_reset = "")
     {
         Write(LogPrefix(grp, ctg) + data, colour_init, colour_reset);
-    }
-
-
-    /**
-     *  Writes log data to the destination buffer, but will prefix
-     *  log lines with information about the log group and log category.
-     *  This is a variant without pre/post string data
-     *
-     * @param grp      LogGroup the log message belongs to
-     * @param ctg      LogCategory the log message is categorized as
-     * @param data     std::string containing the log data
-     */
-    virtual void Write(const LogGroup grp,
-                       const LogCategory ctg,
-                       const std::string &data)
-    {
-        Write(grp, ctg, data, "", "");
     }
 
 

@@ -86,7 +86,9 @@ const std::string ColourStreamWriter::GetLogWriterInfo() const
 
 void ColourStreamWriter::Write(const LogGroup grp,
                                const LogCategory ctg,
-                               const std::string &data)
+                               const std::string &data,
+                               const std::string &colour_init,
+                               const std::string &colour_reset)
 {
     switch (colours->GetColourMode())
     {
