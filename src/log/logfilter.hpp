@@ -70,18 +70,9 @@ class EventFilter
      */
     void AddPathFilter(const DBus::Object::Path &path) noexcept;
 
-
-  protected:
     /**
-     *  Prepares the log filter
-     *
-     * @param log_level uint32_t of the default log level
-     */
-    EventFilter(const uint32_t log_level_val) noexcept;
-
-    /**
-     * Checks if the LogCategory matches a log level where
-     * logging should happen
+     *  Checks if the LogCategory of the Events::Log object matches
+     *  the log level where logging should happen
      *
      * @param logev  LogEvent where to extract the log category from
      *               for the filter
@@ -92,6 +83,18 @@ class EventFilter
     bool Allow(const Events::Log &logev) const noexcept;
 
     /**
+     *  Checks if the LogCategory matches the log level where logging
+     *  should happen
+     *
+     * @param logev  LogEvent where to extract the log category from
+     *               for the filter
+     *
+     * @return  Returns true if this LogEvent should be logged, based
+     *          on the log category in the LogEvent object
+     */
+    bool Allow(const LogCategory catg) const noexcept;
+
+    /**
      *  Checks if the path is on the path list configured via @AddPathFilter.
      *
      * @param path  DBus::Object::Path of path to check
@@ -99,6 +102,15 @@ class EventFilter
      *         it will always return true.
      */
     bool AllowPath(const DBus::Object::Path &path) const noexcept;
+
+
+  protected:
+    /**
+     *  Prepares the log filter
+     *
+     * @param log_level uint32_t of the default log level
+     */
+    EventFilter(const uint32_t log_level_val) noexcept;
 
 
   private:

@@ -50,7 +50,13 @@ void EventFilter::AddPathFilter(const DBus::Object::Path &path) noexcept
 
 bool EventFilter::Allow(const Events::Log &logev) const noexcept
 {
-    switch (logev.category)
+    return Allow(logev.category);
+}
+
+
+bool EventFilter::Allow(const LogCategory catg) const noexcept
+{
+    switch (catg)
     {
     case LogCategory::DEBUG:
         return log_level >= 6;
