@@ -300,10 +300,10 @@ class LogServiceProxy
      */
     void Detach(const std::string interf)
     {
-        logservice->Call(logtarget,
-                         "Detach",
-                         glib2::Value::CreateTupleWrapped(interf),
-                         true);
+        GVariant *r = logservice->Call(logtarget,
+                                       "Detach",
+                                       glib2::Value::CreateTupleWrapped(interf));
+        g_variant_unref(r);
     }
 
 
