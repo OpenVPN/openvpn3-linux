@@ -110,7 +110,7 @@ Log::Log(const std::string &grp_s,
 }
 
 
-Log::Log(GVariant *logev)
+Log::Log(GVariant *logev, DBus::Signals::Target::Ptr sndr)
 {
     reset();
     if (nullptr != logev)
@@ -135,6 +135,7 @@ Log::Log(GVariant *logev)
             throw LogException("LogEvent: Invalid LogEvent data type");
         }
         remove_trailing_nl();
+        sender = sndr;
     }
 }
 

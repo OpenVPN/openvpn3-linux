@@ -84,9 +84,11 @@ struct Log
      *  information.
      *
      * @param logev  Pointer to a GVariant object containing the the Log event
+     * @param sender (optional) DBus::Signals::Target object with details about
+     *               the signal sender
      * @throws LogException on invalid input data
      */
-    Log(GVariant *logev);
+    Log(GVariant *logev, DBus::Signals::Target::Ptr sender = nullptr);
 
 
     /**
@@ -191,6 +193,7 @@ struct Log
     LogCategory category = LogCategory::UNDEFINED;
     std::string session_token = {};
     std::string message = {};
+    DBus::Signals::Target::Ptr sender = nullptr;
     Format format = Format::AUTO;
     unsigned short indent_nl = 0;
 
