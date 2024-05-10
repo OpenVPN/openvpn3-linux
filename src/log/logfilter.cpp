@@ -29,7 +29,7 @@ void EventFilter::SetLogLevel(const uint32_t loglev)
 {
     if (loglev > 6)
     {
-        throw LogException("LogSender: Invalid log level");
+        throw LogException("Invalid log level");
     }
     log_level = loglev;
 }
