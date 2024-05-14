@@ -40,7 +40,7 @@ OPTIONS
 
 --idle-exit SECONDS
     Defines how long this service should be running without any tasks to do.
-    Default for openvpn3-service-backendstart is 3 seconds.  If set to 0,
+    Default for openvpn3-service-backendstart is 30 seconds.  If set to 0,
     the idle detection is disabled.
 
 --log-level LEVEL

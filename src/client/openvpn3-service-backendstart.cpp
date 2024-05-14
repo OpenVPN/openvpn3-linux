@@ -434,7 +434,7 @@ int backend_starter(ParsedArgs::Ptr args)
     auto backstart = DBus::Service::Create<BackendStarterSrv>(dbus,
                                                               client_args,
                                                               log_level);
-    unsigned int idle_wait_sec = 3;
+    unsigned int idle_wait_sec = 30;
     if (args->Present("idle-exit"))
     {
         idle_wait_sec = std::atoi(args->GetValue("idle-exit", 0).c_str());
@@ -487,7 +487,7 @@ int main(int argc, char **argv)
                   "SECONDS",
                   true,
                   "How long to wait before exiting if being idle. "
-                  "0 disables it (Default: 10 seconds)");
+                  "0 disables it (Default: 30 seconds)");
 #ifdef OPENVPN_DEBUG
     cmd.AddOption("run-via",
                   0,
