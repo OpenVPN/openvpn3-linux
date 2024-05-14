@@ -557,7 +557,6 @@ class BackendClientObject : public DBus::Object::Base
         configpath = glib2::Value::Extract<DBus::Object::Path>(params, 2);
 
         registered = (session_token == verify_token);
-        signal->ModifyPath(session_path);
 
         signal->Debug("Registration confirmation: "
                       + verify_token + " == "
