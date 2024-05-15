@@ -102,3 +102,20 @@ custom_target(
     install: true,
     install_dir: mandir_8,
 )
+
+#
+#  man pages - src/configmgr
+#
+man_configmgr = configure_file(
+    input: 'openvpn3-service-configmgr.8.rst.in',
+    output: 'openvpn3-service-configmgr.8.rst',
+    configuration: man_config,
+)
+custom_target(
+    'man-openvpn3-service-configmgr',
+    input: man_configmgr,
+    output: 'openvpn3-service-configmgr.8',
+    command: [prog_rst2man, '@INPUT@', '@OUTPUT@'],
+    install: true,
+    install_dir: mandir_8,
+)

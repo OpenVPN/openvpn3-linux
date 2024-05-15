@@ -442,6 +442,7 @@ executable('signal-listener',
         common_code,
         netcfgmgr_lib,
         sessionmgr_lib,
+        configmgr_lib,
     ],
     dependencies: [
         base_dependencies,

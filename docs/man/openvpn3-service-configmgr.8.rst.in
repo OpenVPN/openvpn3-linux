@@ -67,14 +67,6 @@ OPTIONS
                 or terminal.  Log events will be coloured based on the log
                 level of the event.
 
---signal-broadcast
-                Normally, the ``openvpn3-service-configmgr`` will attach a
-                log stream to the ``openvpn3-service-logger`` service.  By
-                providing this option, it will instead broadcast all log events
-                to all listeners on the system.  This is more useful for
-                debugging when the standard logging does not provide any clues.
-                This is not recommended for production.
-
 --idle-exit MINUTES
                 The ``openvpn3-service-configmgr`` service will exit
                 automatically if it is being idle for *MINUTES* minutes.  By

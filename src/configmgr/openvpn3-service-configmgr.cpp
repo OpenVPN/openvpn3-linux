@@ -2,21 +2,26 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2019 - 2023  Lev Stipakov <lev@openvpn.net>
+//  Copyright (C) 2017-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2017-  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2019-  Lev Stipakov <lev@openvpn.net>
+//  Copyright (C) 2024-  Răzvan Cojocaru <razvan.cojocaru@openvpn.com>
 //
 
-#define SHUTDOWN_NOTIF_PROCESS_NAME "openvpn3-service-configmgr"
-#include "dbus/core.hpp"
-#include "dbus/path.hpp"
-#include "configmgr.hpp"
-#include "log/logwriter.hpp"
-#include "log/logwriters/implementations.hpp"
-#include "log/dbus-log.hpp"
-#include "log/proxy-log.hpp"
-#include "common/cmdargparser.hpp"
-#include "common/utils.hpp"
+#include "build-config.h"
+#include <gdbuspp/connection.hpp>
+#include <gdbuspp/service.hpp>
+#include <log/ansicolours.hpp>
+#include <log/logwriter.hpp>
+#include <log/logwriters/implementations.hpp>
+#include <log/dbus-log.hpp>
+#include <log/proxy-log.hpp>
+#include <common/cmdargparser.hpp>
+#include <common/utils.hpp>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include "configmgr-service.hpp"
+
 
 using namespace openvpn;
 
@@ -24,8 +29,6 @@ using namespace openvpn;
 static int config_manager(ParsedArgs::Ptr args)
 {
     std::cout << get_version(args->GetArgv0()) << std::endl;
-
-    GMainLoop *main_loop = g_main_loop_new(NULL, FALSE);
 
     // Enable automatic shutdown if the config manager is
     // idling for 1 minute or more.  By idling, it means
@@ -67,66 +70,29 @@ static int config_manager(ParsedArgs::Ptr args)
             logwr.reset(new StreamLogWriter(*logfile));
         }
     }
-    bool signal_broadcast = args->Present("signal-broadcast");
-    DBus dbus(G_BUS_TYPE_SYSTEM);
-    dbus.Connect();
 
-    ConfigManagerDBus cfgmgr(dbus.GetConnection(), logwr.get(), signal_broadcast);
+    auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    auto configmgr_srv = DBus::Service::Create<ConfigManager::Service>(dbuscon, logwr);
+    configmgr_srv->PrepareIdleDetector(std::chrono::minutes(idle_wait_min));
 
-    LogServiceProxy::Ptr logsrvprx = nullptr;
-    if (!signal_broadcast)
-    {
-        logsrvprx = LogServiceProxy::AttachInterface(dbus.GetConnection(),
-                                                     OpenVPN3DBus_interf_configuration);
-    }
     unsigned int log_level = 3;
     if (args->Present("log-level"))
     {
         log_level = std::atoi(args->GetValue("log-level", 0).c_str());
     }
-    cfgmgr.SetLogLevel(log_level);
 
     if (args->Present("state-dir"))
     {
-        cfgmgr.SetStateDirectory(args->GetValue("state-dir", 0));
+        configmgr_srv->SetStateDirectory(args->GetValue("state-dir", 0));
         umask(077);
     }
 
-    if (idle_wait_min > 0)
-    {
-        // FIXME: cfgmgr.EnableIdleCheck;
-    }
-    else
-    {
-        // If we don't use the IdleChecker, handle these signals
-        // in via the stop_handler instead
-        g_unix_signal_add(SIGINT, stop_handler, main_loop);
-        g_unix_signal_add(SIGTERM, stop_handler, main_loop);
-    }
-    cfgmgr.Setup();
+    configmgr_srv->SetLogLevel(log_level);
 
-    if (idle_wait_min > 0)
-    {
-        idle_exit->Enable();
-    }
-    g_main_loop_run(main_loop);
-    g_main_loop_unref(main_loop);
-
-    if (logsrvprx)
-    {
-        logsrvprx->Detach(OpenVPN3DBus_interf_configuration);
-    }
-
-    if (idle_wait_min > 0)
-    {
-        idle_exit->Disable();
-        idle_exit->Join();
-    }
+    configmgr_srv->Run();
 
     return 0;
 }
-
-
 
 int main(int argc, char **argv)
 {
@@ -143,9 +109,6 @@ int main(int argc, char **argv)
     argparser.AddOption("colour",
                         0,
                         "Make the log lines colourful");
-    argparser.AddOption("signal-broadcast",
-                        0,
-                        "Broadcast all D-Bus signals instead of targeted unicast");
     argparser.AddOption("idle-exit",
                         "MINUTES",
                         true,
@@ -167,13 +130,18 @@ int main(int argc, char **argv)
     }
     catch (const LogServiceProxyException &excp)
     {
-        std::cout << "** ERROR ** " << excp.what() << std::endl;
-        std::cout << "            " << excp.debug_details() << std::endl;
+        std::cerr << "** ERROR ** " << excp.what();
+        std::cerr << "\n            " << excp.debug_details() << "\n";
         return 2;
     }
     catch (const CommandArgBaseException &excp)
     {
-        std::cout << excp.what() << std::endl;
+        std::cerr << excp.what() << "\n";
+        return 2;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << "\n";
         return 2;
     }
 }

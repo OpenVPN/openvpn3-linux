@@ -33,6 +33,7 @@
 #include "log/log-helpers.hpp"
 #include "netcfg/netcfg-changeevent.hpp"
 #include "sessionmgr/sessionmgr-events.hpp"
+#include "configmgr/configmgr-events.hpp"
 
 
 
@@ -140,6 +141,18 @@ class SigSubscription
             SessionManager::Event ev(event->params);
 
             std::cout << "-- SessionManagerEvent: "
+                      << "[sender=" << event->sender
+                      << ", interface=" << interface_name
+                      << ", path=" << event->object_path
+                      << "] " << ev
+                      << std::endl;
+            return;
+        }
+        else if ("ConfigurationManagerEvent" == event->signal_name)
+        {
+            ConfigManager::Event ev(event->params);
+
+            std::cout << "-- ConfigurationManagerEvent: "
                       << "[sender=" << event->sender
                       << ", interface=" << interface_name
                       << ", path=" << event->object_path

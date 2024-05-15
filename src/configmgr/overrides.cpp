@@ -30,8 +30,8 @@ const ValidOverride &GetConfigOverride(const std::string &key, bool ignoreCase)
         // comparision in C++
         if (ignoreCase && std::equal(vo.key.begin(), vo.key.end(), key.begin(), [](char a, char b)
                                      {
-            return std::tolower(a) == std::tolower(b);
-            }))
+                                         return std::tolower(a) == std::tolower(b);
+                                     }))
         {
             return vo;
         }

@@ -229,7 +229,8 @@ common_code = static_library(
 configmgr_lib = static_library(
         'configmgr',
         [
-            'src/configmgr/overrides.cpp'
+            'src/configmgr/overrides.cpp',
+            'src/configmgr/configmgr-events.cpp',
         ],
         dependencies: [
             base_dependencies,
@@ -295,6 +296,7 @@ subdir('src/log')
 subdir('src/netcfg')
 subdir('src/python')
 subdir('src/sessionmgr')
+subdir('src/configmgr')
 
 subdir('src/ovpn3cli')
 subdir('src/dbus')

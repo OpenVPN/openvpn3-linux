@@ -186,7 +186,7 @@ int main(int argc, char **argv)
     catch (const DBus::Exception &excp)
     {
         std::string e(excp.what());
-        if (e.find("v3.configmgr.error: Invalid override key 'non-existing-override'") != std::string::npos)
+        if (e.find("Invalid override key 'non-existing-override'") != std::string::npos)
         {
             std::cout << "PASS" << std::endl;
         }
