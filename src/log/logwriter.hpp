@@ -171,42 +171,9 @@ class LogWriter
     }
 
 
-    /**
-     *   Adds a LogTag value to the meta data variables in the log.
-     *   Calling this method will always add the meta information,
-     *   regardless if meta logging is enabled or not.
-     *
-     *  @param label   std::string of the label to use for this LogTag value
-     *  @param tag     LogTag::Ptr to a LogTag object to use in the log
-     */
-    virtual void AddLogTag(const std::string &label, const LogTag::Ptr tag)
-    {
-        metadata->AddMeta(label, tag, true);
-        PrependMeta("logtag", true);
-    }
-
-
     void AddMetaCopy(LogMetaData::Ptr mdc)
     {
         metadata = mdc->Duplicate();
-    }
-
-
-    /**
-     *  Puts a side-string from a meta data label which should be prepended to
-     *  the next @Write() operation.  This is depends on a prior @AddMeta()
-     *  call, where it uses the value set to a meta data label.  Only a single
-     *  meta data label can be prepended.
-     *
-     *  @param label     std::string the meta data entry to prepend before @Write()
-     *  @param prep_meta Bool indicating if this data should be prepended to
-     *                   the meta log line as well.  This is reset on each
-     *                   @Write() operation.
-     */
-    virtual void PrependMeta(const std::string &label, bool prep_meta = false)
-    {
-        prepend_label = label;
-        prepend_meta = prep_meta;
     }
 
 
@@ -215,6 +182,4 @@ class LogWriter
     bool log_meta = true;
     LogMetaData::Ptr metadata = nullptr;
     bool prepend_prefix = true;
-    std::string prepend_label;
-    bool prepend_meta = false;
 };

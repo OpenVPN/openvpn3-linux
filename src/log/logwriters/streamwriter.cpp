@@ -48,22 +48,14 @@ void StreamLogWriter::Write(const std::string &data,
     {
         dest << (timestamp ? GetTimestamp() : "") << " "
              << colour_init;
-        if (prepend_meta)
-        {
-            dest << metadata->GetMetaValue(prepend_label);
-        }
         dest << metadata << colour_reset
              << std::endl;
-        prepend_meta = false;
     }
+
     dest << (timestamp ? GetTimestamp() : "") << " "
          << colour_init;
-    if (!prepend_label.empty())
-    {
-        dest << metadata->GetMetaValue(prepend_label);
-    }
     dest << data << colour_reset << std::endl;
-    prepend_label.clear();
+
     if (metadata)
     {
         metadata->clear();

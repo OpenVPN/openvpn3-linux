@@ -98,10 +98,6 @@ void JournaldWriter::Write(const Events::Log &event)
     l[i++] = {(char *)strdup(lc.c_str()), lc.length()};
 
     std::string m("MESSAGE=");
-    if (prepend_prefix && prepend_meta && metadata)
-    {
-        m += metadata->GetMetaValue(prepend_label, true);
-    }
 
     m += event.message;
     l[i++] = {(char *)strdup(m.c_str()), m.length()};
@@ -122,7 +118,6 @@ void JournaldWriter::Write(const Events::Log &event)
     }
     free(l);
 
-    prepend_label.clear();
     if (metadata)
     {
         metadata->clear();

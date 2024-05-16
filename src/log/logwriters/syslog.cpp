@@ -59,20 +59,16 @@ void SyslogWriter::Write(const std::string &data,
     // care of that.  We also do not do anything about
     // colours, as that can mess up the log files.
 
-    std::ostringstream p;
-    p << (metadata && prepend_meta ? metadata->GetMetaValue(prepend_label) : "");
-
     if (log_meta && metadata && !metadata->empty())
     {
         std::ostringstream m;
         m << metadata;
 
-        syslog(LOG_INFO, "%s%s", p.str().c_str(), m.str().c_str());
-        prepend_meta = false;
+        syslog(LOG_INFO, "%s", m.str().c_str());
     }
 
-    syslog(LOG_INFO, "%s%s", p.str().c_str(), data.c_str());
-    prepend_label.clear();
+    syslog(LOG_INFO, "%s", data.c_str());
+
     if (metadata)
     {
         metadata->clear();
@@ -89,8 +85,6 @@ void SyslogWriter::Write(const LogGroup grp,
     // Equally simple to the other Write() method, but here
     // we have access to LogGroup and LogCategory, so we
     // include that information.
-    std::ostringstream p;
-    p << (metadata && prepend_meta ? metadata->GetMetaValue(prepend_label) : "");
 
     if (log_meta && metadata && !metadata->empty())
     {
@@ -98,18 +92,15 @@ void SyslogWriter::Write(const LogGroup grp,
         m << metadata;
 
         syslog(logcatg2syslog(ctg),
-               "%s%s",
-               p.str().c_str(),
+               "%s",
                m.str().c_str());
-        prepend_meta = false;
     }
 
     syslog(logcatg2syslog(ctg),
-           "%s%s%s",
-           p.str().c_str(),
+           "%s%s",
            LogPrefix(grp, ctg).c_str(),
            data.c_str());
-    prepend_label.clear();
+
     if (metadata)
     {
         metadata->clear();
