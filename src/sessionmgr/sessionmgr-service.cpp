@@ -239,27 +239,20 @@ SessionCollection SrvHandler::helper_retrieve_sessions(const std::string &caller
                                                        fn_search_filter &&filter_fn) const
 {
     std::vector<std::shared_ptr<Session>> sessions{};
-    bool root_path_found = false;
-    for (const auto &it : object_mgr->GetAllObjects())
+    for (const auto &[path, obj] : object_mgr->GetAllObjects())
     {
-        auto path = it.first;
-        if (!root_path_found && "/net/openvpn/v3/sessions" == path)
+        auto sess_obj = std::dynamic_pointer_cast<Session>(obj);
+        if (sess_obj)
         {
-            // We skip "/net/openvpn/v3/sessions" - that is not a session path
-            root_path_found = true;
-            continue;
-        }
+            // If the caller is empty, we don't do any ACL checks
+            bool caller_check = ((!caller.empty() && sess_obj->CheckACL(caller))
+                                 || caller.empty());
 
-        auto sess_obj = std::static_pointer_cast<Session>(it.second);
-
-        // If the caller is empty, we don't do any ACL checks
-        bool caller_check = ((!caller.empty() && sess_obj->CheckACL(caller))
-                             || caller.empty());
-
-        // If the device object is not null, the path should be valid
-        if (sess_obj && caller_check && filter_fn(sess_obj))
-        {
-            sessions.push_back(sess_obj);
+            // If the device object is not null, the path should be valid
+            if (sess_obj && caller_check && filter_fn(sess_obj))
+            {
+                sessions.push_back(sess_obj);
+            }
         }
     }
     return sessions;
