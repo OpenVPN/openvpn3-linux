@@ -59,38 +59,6 @@ OPTIONS
                 events from each other.  Log event colours are grouped by the
                 log level of the log event.
 
---config-manager
-                This is used when running as a stand-alone program.  This will
-                subscribe to log events sent by the
-                ``openvpn3-service-configmgr`` process.  Remember that the
-                configuration manager must be started with
-                ``--signal-broadcast`` for log events to be received this way.
-
---session-manager
-                This is used when running as a stand-alone program.  This will
-                subscribe to log events sent by the
-                ``openvpn3-service-sessionmgr`` process.  Remember that the
-                session manager must be started with
-                ``--signal-broadcast`` for log events to be received this way.
-
---session-manager-client-proxy
-                The session manager can proxy log events from the backend
-                VPN client process to users who is granted access to log events
-                from specific VPN sessions.  This extends the
-                ``--session-manager`` subscription to also include log events
-                it would proxy as well.  This will only happen for VPN sessions
-                which has the boolean :code:`receive_log_events` flag set in
-                the D-Bus session object.
-
---vpn-backend
-                This is used when running as a stand-alone program.  This will
-                subscribe to log events sent by ``openvpn3-service-client``
-                processes, also known as the backend VPN client processes.
-                This requires that the ``openvpn3-service-backendstart`` process
-                is started with ``--client-signal-broadcast``, which ensures
-                ``openvpn3-service-client`` is started correctly and adds the
-                ``signal-broadcast`` argument as well.
-
 --log-level LEVEL
                 Sets the system wide log verbosity for the log events being
                 logged to file or any other log destination
@@ -144,12 +112,6 @@ OPTIONS
                 To be used together with --syslog.  The default *LOG-FACILITY*
                 is *LOG_DAEMON*.  For other valid facilities, see the
                 *facility* section in ``syslog``\(3).
-
---service
-                This will start ``openvpn3-service-logger`` as a D-Bus service,
-                which log senders can attach their log streams to.  In this
-                mode, further adjustments to the running behaviour can be
-                managed via ``openvpn3-admin log-service``.
 
 --service-log-dbus-details
                 Each log event contains some more detailed meta-data of the

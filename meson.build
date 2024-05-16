@@ -277,6 +277,7 @@ configure_file(
 #
 subdir('src/dbus/signals')
 subdir('src/client')
+subdir('src/log')
 subdir('src/netcfg')
 subdir('src/python')
 subdir('src/sessionmgr')
