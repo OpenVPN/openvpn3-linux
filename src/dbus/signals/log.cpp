@@ -91,7 +91,7 @@ ReceiveLog::ReceiveLog(DBus::Signals::SubscriptionManager::Ptr subscr,
                        DBus::Signals::Target::Ptr subscr_tgt,
                        LogCallback callback)
     : subscriptionmgr(subscr), target(subscr_tgt),
-      log_callback(callback)
+      log_callback(std::move(callback))
 {
     if (!subscriptionmgr || !target)
     {
