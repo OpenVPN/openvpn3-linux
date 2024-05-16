@@ -817,8 +817,34 @@ void Session::close_session(const bool forced)
                                            StatusMinor::PROC_KILLED,
                                            "Session closed, killed backend client"));
     }
+
+    helper_stop_log_forwards();
     sig_session->LogVerb1("Session closing - " + GetPath());
     object_mgr->RemoveObject(GetPath());
+}
+
+
+void Session::helper_stop_log_forwards()
+{
+    for (auto &[owner_busid, obj] : log_forwarders)
+    {
+        try
+        {
+            obj->Remove();
+        }
+        catch (const std::exception &e)
+        {
+            sig_session->LogCritical("log_forwarders.erase(" + owner_busid + ") "
+                                     + "failed:" + std::string(e.what()));
+        }
+        sig_session->LogVerb2("Session closing, Removed log forwarding from "
+                              + owner_busid
+                              + " on " + GetPath()
+                              + " (user: "
+                              + lookup_username(creds_qry->GetUID(owner_busid))
+                              + ")");
+        log_forwarders.clear();
+    }
 }
 
 } // namespace SessionManager

@@ -238,6 +238,9 @@ class Session : public DBus::Object::Base
      *                ensures a clean disconnect and shutdown.
      */
     void close_session(const bool forced);
+
+
+    void helper_stop_log_forwards();
 };
 
 
