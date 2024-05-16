@@ -53,4 +53,54 @@ class StatusChange : public DBus::Signals::Signal
     DBus::Signals::Target::Ptr target{};
 };
 
-}
+/**
+ *  Provides a simpler interface to setup and process incoming
+ *  StatusChange D-Bus signals
+ *
+ *  This will call a lambda function providing each Log signal as a
+ *  Events::Status() object accessible directly.
+ */
+class ReceiveStatusChange
+{
+  public:
+    using Ptr = std::shared_ptr<ReceiveStatusChange>;
+    using StatusChgCallback = std::function<void(const std::string &sender,
+                                                 const DBus::Object::Path &path,
+                                                 const std::string &interface,
+                                                 Events::Status)>;
+
+    /**
+     *  Prepares the StatusChange event handler
+     *
+     *  This requires a SubscriptionManager and a Signals::Target object
+     *  for the signal subscription.
+     *
+     * @param subscr       DBus::Signals::SubscriptionManager managing the
+     *                     D-Bus signal subscriptions
+     * @param subscr_tgt   DBus::Signals::Target containing the subscription
+     *                     details.  May be empty strings, if a more broader
+     *                     subscription
+     * @param callback     Lambda function being called each time a Log
+     *                     signal is received
+     * @return ReceiveStatusChange::Ptr handling this particular subscription.
+     *         When deleted, this object will unsubscribe from the
+     *         StatusChange signal
+     */
+    [[nodiscard]] static Ptr Create(DBus::Signals::SubscriptionManager::Ptr subscr,
+                                    DBus::Signals::Target::Ptr subscr_tgt,
+                                    StatusChgCallback callback);
+    ~ReceiveStatusChange() noexcept;
+
+
+  protected:
+    ReceiveStatusChange(DBus::Signals::SubscriptionManager::Ptr subscr,
+                        DBus::Signals::Target::Ptr subscr_tgt,
+                        StatusChgCallback callback);
+
+  private:
+    DBus::Signals::SubscriptionManager::Ptr subscriptionmgr = nullptr;
+    DBus::Signals::Target::Ptr target = nullptr;
+    StatusChgCallback statuschg_callback{};
+};
+
+} // namespace Signals

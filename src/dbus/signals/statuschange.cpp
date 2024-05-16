@@ -82,4 +82,47 @@ GVariant *StatusChange::LastStatusChange() const
     return last_ev.GetGVariantTuple();
 }
 
+
+
+ReceiveStatusChange::Ptr ReceiveStatusChange::Create(DBus::Signals::SubscriptionManager::Ptr subscr,
+                                                     DBus::Signals::Target::Ptr subscr_tgt,
+                                                     StatusChgCallback callback)
+{
+    return ReceiveStatusChange::Ptr(new ReceiveStatusChange(subscr,
+                                                            subscr_tgt,
+                                                            std::move(callback)));
 }
+
+
+ReceiveStatusChange::ReceiveStatusChange(DBus::Signals::SubscriptionManager::Ptr subscr,
+                                         DBus::Signals::Target::Ptr subscr_tgt,
+                                         StatusChgCallback callback)
+    : subscriptionmgr(subscr), target(subscr_tgt),
+      statuschg_callback(callback)
+{
+    if (!subscriptionmgr || !target)
+    {
+        throw DBus::Signals::Exception("Undefined subscription manager or target");
+    }
+
+    subscriptionmgr->Subscribe(
+        target,
+        "StatusChange",
+        [&](DBus::Signals::Event::Ptr event)
+        {
+            GVariant *params = event->params;
+            auto stchgev = Events::Status(params);
+            statuschg_callback(event->sender,
+                               event->object_path,
+                               event->object_interface,
+                               std::move(stchgev));
+        });
+}
+
+
+ReceiveStatusChange::~ReceiveStatusChange() noexcept
+{
+    subscriptionmgr->Unsubscribe(target, "StatusChange");
+}
+
+} // namespace Signals
