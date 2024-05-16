@@ -360,6 +360,22 @@ Session::Session(DBus::Connection::Ptr dbuscon,
             return be_prx->GetPropertyGVariant(be_target, "device_name");
         });
 
+    AddPropertyBySpec(
+        "session_name",
+        glib2::DataType::DBus<std::string>(),
+        [=](const DBus::Object::Property::BySpec &prop)
+            -> GVariant *
+        {
+            if (!be_prx || !be_target)
+            {
+                throw DBus::Object::Property::Exception(this,
+                                                        "statistics",
+                                                        "Backend VPN client not available");
+            }
+            return be_prx->GetPropertyGVariant(be_target, "session_name");
+        });
+
+
     //
     // Prepare object properties which has information in other object and
     // which the caller may modify
