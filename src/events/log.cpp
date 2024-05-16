@@ -147,6 +147,18 @@ void Log::RemoveToken()
 }
 
 
+void Log::AddLogTag(LogTag::Ptr tag) noexcept
+{
+    logtag = tag;
+}
+
+
+LogTag::Ptr Log::GetLogTag() const noexcept
+{
+    return logtag;
+}
+
+
 GVariant *Log::GetGVariantTuple() const
 {
     if (Format::SESSION_TOKEN == format

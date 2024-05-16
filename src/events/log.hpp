@@ -20,6 +20,7 @@
 #include <gdbuspp/signals/group.hpp>
 
 #include "log/log-helpers.hpp"
+#include "log/logtag.hpp"
 
 
 namespace Events {
@@ -98,6 +99,21 @@ struct Log
      *  appending the session token to the string output.
      */
     void RemoveToken();
+
+    /**
+     *  Adds a LogTag which will prefix the log message
+     *
+     * @param tag  LogTag object to use
+     */
+    void AddLogTag(LogTag::Ptr tag) noexcept;
+
+
+    /**
+     *  Retrieve the currently set LogTag object
+     *
+     * @return LogTag::Ptr of the LogTag object; nullptr if not set
+     */
+    LogTag::Ptr GetLogTag() const noexcept;
 
     /**
      *  Create a GVariant object containing a tuple formatted object for
@@ -194,6 +210,7 @@ struct Log
     std::string session_token = {};
     std::string message = {};
     DBus::Signals::Target::Ptr sender = nullptr;
+    LogTag::Ptr logtag = nullptr;
     Format format = Format::AUTO;
     unsigned short indent_nl = 0;
 
