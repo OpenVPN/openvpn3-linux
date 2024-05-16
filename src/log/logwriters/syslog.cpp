@@ -50,25 +50,31 @@ bool SyslogWriter::TimestampEnabled()
 }
 
 
-void SyslogWriter::Write(const std::string &data,
-                         const std::string &colour_init,
-                         const std::string &colour_reset)
+void SyslogWriter::WriteLogLine(LogTag::Ptr logtag,
+                               const std::string &data,
+                               const std::string &colour_init,
+                               const std::string &colour_reset)
 {
     // This is a very simple log implementation.  We do not
     // care about timestamps, as we trust the syslog takes
     // care of that.  We also do not do anything about
     // colours, as that can mess up the log files.
 
-    if (log_meta && metadata && !metadata->empty())
+    std::ostringstream logtag_str;
+    if (logtag)
     {
-        std::ostringstream m;
-        m << metadata;
-
-        syslog(LOG_INFO, "%s", m.str().c_str());
+        logtag_str << logtag->str(true) << " ";
     }
 
-    syslog(LOG_INFO, "%s", data.c_str());
+    if (log_meta && metadata && !metadata->empty())
+    {
+        std::ostringstream meta_str;
+        meta_str << metadata;
 
+        syslog(LOG_INFO, "%s%s", logtag_str.str().c_str(), meta_str.str().c_str());
+    }
+
+    syslog(LOG_INFO, "%s%s", logtag_str.str().c_str(), data.c_str());
     if (metadata)
     {
         metadata->clear();
@@ -76,28 +82,37 @@ void SyslogWriter::Write(const std::string &data,
 }
 
 
-void SyslogWriter::Write(const LogGroup grp,
-                         const LogCategory ctg,
-                         const std::string &data,
-                         const std::string &colour_init,
-                         const std::string &colour_reset)
+void SyslogWriter::WriteLogLine(LogTag::Ptr logtag,
+                               const LogGroup grp,
+                               const LogCategory ctg,
+                               const std::string &data,
+                               const std::string &colour_init,
+                               const std::string &colour_reset)
 {
     // Equally simple to the other Write() method, but here
     // we have access to LogGroup and LogCategory, so we
     // include that information.
 
+    std::ostringstream logtag_str;
+    if (logtag)
+    {
+        logtag_str << logtag->str(true) << " ";
+    }
+
     if (log_meta && metadata && !metadata->empty())
     {
-        std::ostringstream m;
-        m << metadata;
+        std::ostringstream meta_str;
+        meta_str << metadata;
 
         syslog(logcatg2syslog(ctg),
-               "%s",
-               m.str().c_str());
+               "%s%s",
+               logtag_str.str().c_str(),
+               meta_str.str().c_str());
     }
 
     syslog(logcatg2syslog(ctg),
-           "%s%s",
+           "%s%s%s",
+           logtag_str.str().c_str(),
            LogPrefix(grp, ctg).c_str(),
            data.c_str());
 

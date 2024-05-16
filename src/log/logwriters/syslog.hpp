@@ -120,16 +120,19 @@ class SyslogWriter : public LogWriter
     }
 
 
-    void Write(const std::string &data,
-               const std::string &colour_init = "",
-               const std::string &colour_reset = "") override;
+  protected:
+    void WriteLogLine(LogTag::Ptr logtag,
+                     const std::string &data,
+                     const std::string &colour_init = "",
+                     const std::string &colour_reset = "") override;
 
 
-    void Write(const LogGroup grp,
-               const LogCategory ctg,
-               const std::string &data,
-               const std::string &colour_init,
-               const std::string &colour_reset) override;
+    void WriteLogLine(LogTag::Ptr logtag,
+                     const LogGroup grp,
+                     const LogCategory ctg,
+                     const std::string &data,
+                     const std::string &colour_init,
+                     const std::string &colour_reset) override;
 
 
   private:

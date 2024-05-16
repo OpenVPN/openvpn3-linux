@@ -52,9 +52,10 @@ class StreamLogWriter : public LogWriter
      * @param colour_reset std::string to be printed after the log data
      *                     to reset colour selection.  Empty by default.
      */
-    void Write(const std::string &data,
-               const std::string &colour_init = "",
-               const std::string &colour_reset = "") override;
+    void WriteLogLine(LogTag::Ptr logtag,
+                      const std::string &data,
+                      const std::string &colour_init = "",
+                      const std::string &colour_reset = "") override;
 
   protected:
     std::ostream &dest;
@@ -82,12 +83,13 @@ class ColourStreamWriter : public StreamLogWriter
 
     const std::string GetLogWriterInfo() const override;
 
+  protected:
     /*
      * Explicitly tells the compiler that we want to not to override an
-     * existing Write and our Write with different arguments should not
-     * generate a warning
+     * existing WriteLogTag and our WriteLogTag with different arguments
+     * should not generate a warning
      */
-    using StreamLogWriter::Write;
+    using StreamLogWriter::WriteLogLine;
 
     /**
      *  Writes log data to the destination buffer, but will prefix
@@ -103,11 +105,12 @@ class ColourStreamWriter : public StreamLogWriter
      * @param colour_init  (ignored; this is set by ColourEngine)
      * @param colour_reset (ignored; this is set by ColourEngine)
      */
-    void Write(const LogGroup grp,
-               const LogCategory ctg,
-               const std::string &data,
-               const std::string &colour_init = "",
-               const std::string &colour_reset = "") override;
+    void WriteLogLine(LogTag::Ptr logtag,
+                      const LogGroup grp,
+                      const LogCategory ctg,
+                      const std::string &data,
+                      const std::string &colour_init = "",
+                      const std::string &colour_reset = "") override;
 
   private:
     ColourEngine *colours = nullptr;

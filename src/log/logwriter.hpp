@@ -84,6 +84,13 @@ class LogWriter
     }
 
 
+    /**
+     *  Turns on/off prepending log events with LogTag information before
+     *  log message
+     *
+     * @param mp   Boolean flag to enable (true) or disable (false)
+     *             the log tag prepending
+     */
     void EnableMessagePrepend(const bool mp)
     {
         prepend_prefix = mp;
@@ -96,30 +103,33 @@ class LogWriter
     }
 
 
+
     /**
      *  Writes log data to the destination buffer
      *
-     *  This is a pure virtual method which must be implemented.
+     *  This will call the WriteLogTag() with the logtag argument being
+     *  nullptr
      *
      * @param data         std::string of data to be written
      * @param colour_init  std::string to be printed before log data, to
      *                     set the proper colours.  Empty by default.
      * @param colour_reset std::string to be printed after the log data
      *                     to reset colour selection.  Empty by default.
-     *
      */
-    // clang-format off
-    // bug in clang-format causes "= 0" to be wrapped
-
-    virtual void Write(const std::string &data,
-                       const std::string &colour_init = "",
-                       const std::string &colour_reset = "") = 0;
-    // clang-format on
+    void Write(const std::string &data,
+               const std::string &colour_init = "",
+               const std::string &colour_reset = "")
+    {
+        WriteLogLine(nullptr, data, colour_init, colour_reset);
+    }
 
 
     /**
      *  Writes log data to the destination buffer, but will prefix
      *  log lines with information about the log group and log category
+     *
+     *  This will call the WriteLogTag() with the logtag argument being
+     *  nullptr
      *
      * @param grp          LogGroup the log message belongs to
      * @param ctg          LogCategory the log message is categorized as
@@ -129,25 +139,34 @@ class LogWriter
      * @param colour_reset (optional) std::string to be printed after the log
      *                     data to reset colour selection.  Emtpy by default.
      */
-    virtual void Write(const LogGroup grp,
-                       const LogCategory ctg,
-                       const std::string &data,
-                       const std::string &colour_init = "",
-                       const std::string &colour_reset = "")
+    void Write(const LogGroup grp,
+               const LogCategory ctg,
+               const std::string &data,
+               const std::string &colour_init = "",
+               const std::string &colour_reset = "")
     {
-        Write(LogPrefix(grp, ctg) + data, colour_init, colour_reset);
+        WriteLogLine(nullptr,
+                    LogPrefix(grp, ctg) + data,
+                    colour_init,
+                    colour_reset);
     }
 
 
     /**
      *  Writes a LogEvent() object in a formatted way.
      *
+     *  If the Events::Log object contains a LogTag, this will
+     *  be provided to the logging backend
+     *
      * @param logev  Populated LogEvent() object to log
      *
      */
     virtual void Write(const Events::Log &logev)
     {
-        Write(logev.group, logev.category, logev.message);
+        WriteLogLine(logev.GetLogTag(),
+                    logev.group,
+                    logev.category,
+                    logev.message);
     }
 
 
@@ -182,4 +201,56 @@ class LogWriter
     bool log_meta = true;
     LogMetaData::Ptr metadata = nullptr;
     bool prepend_prefix = true;
+
+    /**
+     *  Writes log data and an optional LogTag to the log destination
+     *
+     *  This is a pure virtual method which must be implemented.
+     *
+     *  If the LogTag is nullptr, the implementation MUST accept this
+     *  and just ignore whatever information this object could carry.
+     *
+     * @param logtag       LogTag object details
+     * @param data         std::string of data to be written
+     * @param colour_init  std::string to be printed before log data, to
+     *                     set the proper colours.  Empty by default.
+     * @param colour_reset std::string to be printed after the log data
+     *                     to reset colour selection.  Empty by default.
+     */
+    // clang-format off
+    // bug in clang-format causes "= 0" to be wrapped
+    virtual void WriteLogLine(LogTag::Ptr logtag,
+                             const std::string &data,
+                             const std::string &colour_init = "",
+                             const std::string &colour_reset = "") = 0;
+    // clang-format on
+
+    /**
+     *  Writes log data to the destination buffer, but will prefix
+     *  log lines with information about the log group and log category.
+     *
+     *  If logtag points at a LogTag object (not nullptr), this information
+     *  will be included in the logged data.
+     *
+     * @param logtag       LogTag object details
+     * @param grp          LogGroup the log message belongs to
+     * @param ctg          LogCategory the log message is categorized as
+     * @param data         std::string containing the log data
+     * @param colour_init  (optional) std::string to be printed before log
+     *                     data, to set the proper colours.  Emtpy by default.
+     * @param colour_reset (optional) std::string to be printed after the log
+     *                     data to reset colour selection.  Emtpy by default.
+     */
+    virtual void WriteLogLine(LogTag::Ptr logtag,
+                             const LogGroup grp,
+                             const LogCategory ctg,
+                             const std::string &data,
+                             const std::string &colour_init = "",
+                             const std::string &colour_reset = "")
+    {
+        WriteLogLine(logtag,
+                    LogPrefix(grp, ctg) + data,
+                    colour_init,
+                    colour_reset);
+    }
 };

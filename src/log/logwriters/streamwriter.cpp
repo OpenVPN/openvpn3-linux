@@ -40,20 +40,30 @@ const std::string StreamLogWriter::GetLogWriterInfo() const
 }
 
 
-void StreamLogWriter::Write(const std::string &data,
-                            const std::string &colour_init,
-                            const std::string &colour_reset)
+void StreamLogWriter::WriteLogLine(LogTag::Ptr logtag,
+                                   const std::string &data,
+                                   const std::string &colour_init,
+                                   const std::string &colour_reset)
 {
     if (log_meta && metadata && !metadata->empty())
     {
         dest << (timestamp ? GetTimestamp() : "") << " "
              << colour_init;
+
+        if (!metadata->empty() && logtag)
+        {
+            dest << logtag->str(true) << " ";
+        }
         dest << metadata << colour_reset
              << std::endl;
     }
 
     dest << (timestamp ? GetTimestamp() : "") << " "
          << colour_init;
+    if (prepend_prefix && logtag)
+    {
+        dest << logtag->str(true) << " ";
+    }
     dest << data << colour_reset << std::endl;
 
     if (metadata)
@@ -79,32 +89,38 @@ const std::string ColourStreamWriter::GetLogWriterInfo() const
 }
 
 
-void ColourStreamWriter::Write(const LogGroup grp,
-                               const LogCategory ctg,
-                               const std::string &data,
-                               const std::string &colour_init,
-                               const std::string &colour_reset)
+void ColourStreamWriter::WriteLogLine(LogTag::Ptr logtag,
+                                      const LogGroup grp,
+                                      const LogCategory ctg,
+                                      const std::string &data,
+                                      const std::string &colour_init,
+                                      const std::string &colour_reset)
 {
     switch (colours->GetColourMode())
     {
     case ColourEngine::ColourMode::BY_CATEGORY:
-        LogWriter::Write(grp,
-                         ctg,
-                         data,
-                         colours->ColourByCategory(ctg),
-                         colours->Reset());
+        LogWriter::WriteLogLine(logtag,
+                                grp,
+                                ctg,
+                                data,
+                                colours->ColourByCategory(ctg),
+                                colours->Reset());
         return;
 
     case ColourEngine::ColourMode::BY_GROUP:
         {
             std::string grpcol = colours->ColourByGroup(grp);
-            // Highlights parts of the log event which are higher than LogCategory::INFO
-            std::string ctgcol = (LogCategory::INFO < ctg ? colours->ColourByCategory(ctg) : grpcol);
-            LogWriter::Write(grp,
-                             ctg,
-                             grpcol + data,
-                             ctgcol,
-                             colours->Reset());
+            // Highlights parts of the log event which are higher
+            // than LogCategory::INFO
+            std::string ctgcol = (LogCategory::INFO < ctg
+                                      ? colours->ColourByCategory(ctg)
+                                      : grpcol);
+            LogWriter::WriteLogLine(logtag,
+                                    grp,
+                                    ctg,
+                                    grpcol + data,
+                                    ctgcol,
+                                    colours->Reset());
         }
         break;
 
