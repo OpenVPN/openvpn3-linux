@@ -14,20 +14,21 @@
  *         from the systemd-journald
  */
 
-#include "config.h"
+#include "build-config.h"
 
 #include <iostream>
 #include <cstdarg>
 #include <sys/stat.h>
+#include <gdbuspp/connection.hpp>
+#include <gdbuspp/proxy.hpp>
 
-#ifdef HAVE_LIBSELINUX
+#ifdef HAVE_SELINUX
 #include <selinux/selinux.h>
 #include <selinux/restorecon.h>
 #endif
 
 #include "openvpn/common/stat.hpp"
 
-#include "dbus/proxy.hpp"
 #include "common/cmdargparser.hpp"
 #include "common/lookup.hpp"
 #include "log/service-configfile.hpp"
@@ -152,7 +153,7 @@ enum class LogMethod
  *
  * @param setupcfg
  */
-void configure_logger(const setup_config &setupcfg)
+void configure_logger(const setup_config &setupcfg, DBus::Connection::Ptr dbuscon)
 {
     LogMethod logm = LogMethod::NONE;
 
@@ -167,18 +168,21 @@ void configure_logger(const setup_config &setupcfg)
     {
         logm = LogMethod::SYSLOG;
 
-        DBusProxy prx(G_BUS_TYPE_SYSTEM,
-                      "org.freedesktop.systemd1",
-                      "org.freedesktop.systemd1.Unit",
-                      "/org/freedesktop/systemd1/unit/systemd_2djournald_2eservice");
-        std::string state = prx.GetStringProperty("ActiveState");
+        auto prx = DBus::Proxy::Client::Create(dbuscon,
+                                               "org.freedesktop.systemd1");
+        auto journald_service_tgt = DBus::Proxy::TargetPreset::Create(
+            "/org/freedesktop/systemd1/unit/systemd_2djournald_2eservice",
+            "org.freedesktop.systemd1.Unit");
+
+        std::string state = prx->GetProperty<std::string>(journald_service_tgt,
+                                                          "ActiveState");
         std::cout << "    systemd-journald active state: " << state << std::endl;
         if ("active" == state)
         {
             logm = LogMethod::JOURNALD;
         }
     }
-    catch (const DBusException &excp)
+    catch (const DBus::Proxy::Exception &excp)
     {
         std::cout << "    !! Could not retrieve systemd-journald.service details" << std::endl;
         std::cerr << excp.what() << std::endl;
@@ -257,7 +261,7 @@ enum class DNSresolver
  *
  * @param setupcfg
  */
-void configure_netcfg(const setup_config &setupcfg)
+void configure_netcfg(const setup_config &setupcfg, DBus::Connection::Ptr dbuscon)
 {
     const std::string cfgfile = setupcfg.statedir + "/netcfg.json";
     DNSresolver resolver = DNSresolver::NONE;
@@ -270,10 +274,7 @@ void configure_netcfg(const setup_config &setupcfg)
 #ifdef HAVE_SYSTEMD
     try
     {
-        DBus conn(G_BUS_TYPE_SYSTEM);
-        conn.Connect();
-        resolved::Manager resolvd(conn.GetConnection());
-        resolvd.Ping();
+        auto resolvd = resolved::Manager::Create(dbuscon);
         resolver = DNSresolver::RESOLVED;
         std::cout << "    Found systemd-resolved" << std::endl;
     }
@@ -281,7 +282,7 @@ void configure_netcfg(const setup_config &setupcfg)
     {
         std::cout << "    !! Could not access systemd-resolved" << std::endl;
     }
-    catch (const DBusException &excp)
+    catch (const DBus::Exception &excp)
     {
         std::cout << "    !! Could not connect to D-Bus" << std::endl;
     }
@@ -304,14 +305,14 @@ void configure_netcfg(const setup_config &setupcfg)
                     // Parse the resolv.conf file to see if systemd-resolved
                     // is configured or not
                     std::cout << "    Parsing /etc/resolv.conf ... ";
-                    ResolvConfFile r("/etc/resolv.conf");
+                    auto r = ResolvConfFile::Create("/etc/resolv.conf");
                     std::cout << "Done" << std::endl;
 
                     // Reset the resolver in this case, if systemd-resolved
                     // is not configured in /etc/resolv.conf we can't use
                     // that approach.
                     resolver = DNSresolver::NONE;
-                    for (const auto &ns : r.GetNameServers())
+                    for (const auto &ns : r->GetNameServers())
                     {
                         if ("127.0.0.53" == ns)
                         {
@@ -424,7 +425,7 @@ void setup_state_dir(const setup_config &setupcfg)
               << "* Checking OpenVPN 3 Linux state/configuration directory" << std::endl
               << "    Using directory: " << setupcfg.statedir << std::endl;
 
-    if (!is_directory(setupcfg.statedir, true))
+    if (!openvpn::is_directory(setupcfg.statedir, true))
     {
         std::cout << "    -- State directory is missing - creating it" << std::endl;
         if (0 != ::mkdir(setupcfg.statedir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP))
@@ -447,7 +448,7 @@ void setup_state_dir(const setup_config &setupcfg)
     }
 
     std::string cfgdir = setupcfg.statedir + "/configs";
-    if (!is_directory(cfgdir, true))
+    if (!openvpn::is_directory(cfgdir, true))
     {
         std::cout << "    -- Configurations sub-directory is missing - creating it" << std::endl;
         if (0 != ::mkdir(cfgdir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP))
@@ -469,7 +470,7 @@ void setup_state_dir(const setup_config &setupcfg)
  */
 int selinux_log_callback(int type, const char *fmt, ...)
 {
-#ifdef HAVE_LIBSELINUX
+#ifdef HAVE_SELINUX
     va_list ap;
     int len = 0;
 
@@ -531,7 +532,7 @@ int selinux_log_callback(int type, const char *fmt, ...)
  */
 void selinux_restorecon(const setup_config &setupcfg)
 {
-#ifdef HAVE_LIBSELINUX
+#ifdef HAVE_SELINUX
     union selinux_callback cb;
     cb.func_log = selinux_log_callback;
     selinux_set_callback(SELINUX_CB_LOG, cb);
@@ -607,6 +608,8 @@ int cmd_initcfg(ParsedArgs::Ptr args)
                   << (setupcfg.overwrite ? "OVERWRITTEN" : "preserved") << std::endl;
     }
 
+    auto dbusconn = DBus::Connection::Create(DBus::BusType::SYSTEM);
+
     // Find the proper UID and GID values for the openvpn user and group
     get_openvpn_uid_gid(setupcfg);
 
@@ -614,10 +617,10 @@ int cmd_initcfg(ParsedArgs::Ptr args)
     setup_state_dir(setupcfg);
 
     // Configure the logger service
-    configure_logger(setupcfg);
+    configure_logger(setupcfg, dbusconn);
 
     // Detect and configure settings suitable for the NetCfg service
-    configure_netcfg(setupcfg);
+    configure_netcfg(setupcfg, dbusconn);
 
     // Ensure SELinux file contexts are correctly setup
     selinux_restorecon(setupcfg);

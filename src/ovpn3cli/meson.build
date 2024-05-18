@@ -8,6 +8,7 @@
 commands_collection = static_library(
     'commandscollection',
     [
+        'commands/init-config.cpp',
         'commands/variables.cpp',
         'commands/version.cpp',
         'commands/version-services.cpp',
@@ -43,6 +44,7 @@ executable('openvpn3-admin-dev',
     link_with: [
         common_code,
         commands_collection,
+        netcfgmgr_lib,
     ],
     include_directories: [include_dirs, '../..'],
     install: false,
