@@ -27,9 +27,6 @@
 #include <getopt.h>
 #include <glib-unix.h>
 
-#include <openvpn/common/rc.hpp>
-using namespace openvpn;
-
 #include "common/cmdargparser-exceptions.hpp"
 #include "common/configfileparser.hpp"
 #include "common/utils.hpp"
@@ -338,12 +335,10 @@ using argHelperFunc = std::string (*)();
 class RegisterParsedArgs : public virtual ParsedArgs
 {
   public:
-    typedef std::shared_ptr<RegisterParsedArgs> Ptr;
+    using Ptr = std::shared_ptr<RegisterParsedArgs>;
 
-    RegisterParsedArgs(const std::string arg0)
-        : ParsedArgs(arg0)
-    {
-    }
+
+    [[nodiscard]] static Ptr Create(const std::string &arg0);
 
     virtual ~RegisterParsedArgs() = default;
 
@@ -373,6 +368,10 @@ class RegisterParsedArgs : public virtual ParsedArgs
      *  callback function may be run.
      */
     void set_completed();
+
+  private:
+    RegisterParsedArgs(const std::string &arg0);
+
 }; // class RegisterParsedArgs
 
 
@@ -384,15 +383,15 @@ class RegisterParsedArgs : public virtual ParsedArgs
  *  both for the getopt_long() parser as well as generating useful text strings
  *  to be used in help screens.
  */
-class SingleCommandOption : public RC<thread_unsafe_refcount>
+class SingleCommandOption
 {
   public:
-    typedef RCPtr<SingleCommandOption> Ptr;
+    using Ptr = std::shared_ptr<SingleCommandOption>;
 
     /**
-     * Registers an option, both short and long options, which does not take
-     * any additional value argument.  The short option is optional and can
-     * be set to 0 if no short option is required.
+     *  Registers an option, both short and long options, which does not take
+     *  any additional value argument.  The short option is optional and can
+     *  be set to 0 if no short option is required.
      *
      * @param longopt    std::string containing the long option name
      * @param shrtopt    char containing the single option character to use.
@@ -400,12 +399,12 @@ class SingleCommandOption : public RC<thread_unsafe_refcount>
      * @param help_text  A simple help text which describes this option in the
      *                   --help screen.
      */
-    SingleCommandOption(const std::string longopt,
-                        const char shrtopt,
-                        const std::string help_text);
+    [[nodiscard]] static SingleCommandOption::Ptr Create(const std::string &longopt,
+                                                         const char shrtopt,
+                                                         const std::string &help_text);
 
     /**
-     *  Similar to the other SingleCommandOption constructor.  This one takes
+     *  Similar to the SingleCommandOption constructor above.  This one takes
      *  two additional arguments to indicate it may need a value to provided
      *  together with the option.  Through the second new argument, it can
      *  also be indicated if it is required or optional.
@@ -420,12 +419,12 @@ class SingleCommandOption : public RC<thread_unsafe_refcount>
      * @param help_text  A simple help text which describes this option in the
      *                   --help screen.
      */
-    SingleCommandOption(const std::string longopt,
-                        const char shrtopt,
-                        const std::string metavar,
-                        const bool required,
-                        const std::string help_text,
-                        const argHelperFunc arg_helper_func = nullptr);
+    [[nodiscard]] static SingleCommandOption::Ptr Create(const std::string &longopt,
+                                                         const char shrtopt,
+                                                         const std::string &metavar,
+                                                         const bool required,
+                                                         const std::string &help_text,
+                                                         const argHelperFunc arg_helper_func = nullptr);
 
     ~SingleCommandOption();
 
@@ -538,6 +537,31 @@ class SingleCommandOption : public RC<thread_unsafe_refcount>
     struct option getopt_option;
     struct option getopt_alias;
 
+    /**
+     *  Registers an option, both short and long options, which does not take
+     *  any additional value argument.  The short option is optional and can
+     *  be set to 0 if no short option is required.  The metavar string
+     *  is used in the automatically genereted help text as a hint indicator
+     *  to the type of value which this option can take as an argument.  The
+     *  required bool flag indicates if a value to the option must be provided
+     *  or is optional.
+     *
+     * @param longopt    std::string containing the long option name
+     * @param shrtopt    char containing the single option character to use.
+     *                   Can be 0 if no short option is required
+     * @param metavar    A simple string describing the additional value; only
+     *                   used by the --help screen
+     * @param required   Indicates if this option is required (true) or
+     *                   optional (false).
+     * @param help_text  A simple help text which describes this option in the
+     *                   --help screen.
+     */
+    SingleCommandOption(const std::string &longopt,
+                        const char shrtopt,
+                        const std::string &metavar,
+                        const bool required,
+                        const std::string &help_text,
+                        const argHelperFunc arg_helper_func = nullptr);
 
     /**
      *  Used internally to just prepare a getopt_long() related struct option
@@ -566,10 +590,10 @@ class SingleCommandOption : public RC<thread_unsafe_refcount>
  *  up with one or more SingleCommandOption describing the options this
  *  command support.  A single binary can also contain several commands.
  */
-class SingleCommand : public RC<thread_unsafe_refcount>
+class SingleCommand
 {
   public:
-    typedef RCPtr<SingleCommand> Ptr;
+    using Ptr = std::shared_ptr<SingleCommand>;
 
     /**
      *  Comments to a command can add further description or details.
@@ -613,7 +637,7 @@ class SingleCommand : public RC<thread_unsafe_refcount>
         : command(command), description(description), command_func(cmdfunc),
           opt_version_added(false)
     {
-        options.push_back(new SingleCommandOption("help", 'h', "This help screen"));
+        options.push_back(SingleCommandOption::Create("help", 'h', "This help screen"));
     }
 
 
@@ -910,10 +934,10 @@ class SingleCommand : public RC<thread_unsafe_refcount>
  *  Whenever an error occurs, a CommandException will be thrown
  *
  */
-class Commands : public RC<thread_unsafe_refcount>
+class Commands
 {
   public:
-    typedef RCPtr<Commands> Ptr;
+    using Ptr = std::shared_ptr<Commands>;
 
     /**
      *  Instantiate the Commands container
@@ -927,7 +951,7 @@ class Commands : public RC<thread_unsafe_refcount>
         // Register a new ShellCompletion helper object.  This
         // will automatically build up the 'shell-completion' command,
         // based on the commands and options being added.
-        shellcompl.reset(new ShellCompletion());
+        shellcompl = std::make_shared<ShellCompletion>();
         commands.push_back(shellcompl);
     }
 
@@ -973,7 +997,7 @@ class Commands : public RC<thread_unsafe_refcount>
     class ShellCompletion : public SingleCommand
     {
       public:
-        typedef RCPtr<ShellCompletion> Ptr;
+        using Ptr = std::shared_ptr<ShellCompletion>;
 
         ShellCompletion();
 

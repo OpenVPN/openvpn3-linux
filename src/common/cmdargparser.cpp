@@ -26,9 +26,6 @@
 #include <glib-unix.h>
 #include <json/json.h>
 
-#include <openvpn/common/rc.hpp>
-using namespace openvpn;
-
 #include "common/utils.hpp"
 #include "common/cmdargparser.hpp"
 #include "common/configfileparser.hpp"
@@ -303,6 +300,17 @@ void ParsedArgs::remove_arg(const std::string &opt)
 //  RegisterParsedArgs implementation
 //
 
+RegisterParsedArgs::Ptr RegisterParsedArgs::Create(const std::string &arg0)
+{
+    return Ptr(new RegisterParsedArgs(arg0));
+}
+
+RegisterParsedArgs::RegisterParsedArgs(const std::string &arg0)
+    : ParsedArgs(arg0)
+{
+}
+
+
 void RegisterParsedArgs::register_option(const std::string k, const char *v)
 {
     if (NULL != v)
@@ -338,22 +346,39 @@ void RegisterParsedArgs::set_completed()
 //  SingleCommandOption implementation
 //
 
-SingleCommandOption::SingleCommandOption(const std::string longopt,
-                                         const char shrtopt,
-                                         const std::string help_text)
-    : longopt(longopt), shortopt(shrtopt),
-      metavar(""), arg_helper_func(nullptr),
-      help_text(help_text)
+SingleCommandOption::Ptr SingleCommandOption::Create(const std::string &longopt,
+                                                     const char shrtopt,
+                                                     const std::string &help_text)
 {
-    update_getopt(longopt, shortopt, no_argument);
+    return Ptr(new SingleCommandOption(longopt,
+                                       shrtopt,
+                                       "",
+                                       false,
+                                       help_text,
+                                       nullptr));
+}
+
+SingleCommandOption::Ptr SingleCommandOption::Create(const std::string &longopt,
+                                                     const char shrtopt,
+                                                     const std::string &metavar,
+                                                     const bool required,
+                                                     const std::string &help_text,
+                                                     const argHelperFunc arg_helper_func)
+{
+    return Ptr(new SingleCommandOption(longopt,
+                                       shrtopt,
+                                       metavar,
+                                       required,
+                                       help_text,
+                                       arg_helper_func));
 }
 
 
-SingleCommandOption::SingleCommandOption(const std::string longopt,
+SingleCommandOption::SingleCommandOption(const std::string &longopt,
                                          const char shrtopt,
-                                         const std::string metavar,
+                                         const std::string &metavar,
                                          const bool required,
-                                         const std::string help_text,
+                                         const std::string &help_text,
                                          const argHelperFunc arg_helper_func)
     : longopt(longopt), shortopt(shrtopt),
       metavar(metavar), arg_helper_func(arg_helper_func),
@@ -610,9 +635,9 @@ SingleCommandOption::Ptr SingleCommand::AddOption(const std::string longopt,
                                                   const char shortopt,
                                                   const std::string help_text)
 {
-    SingleCommandOption::Ptr opt = new SingleCommandOption(longopt,
-                                                           shortopt,
-                                                           help_text);
+    auto opt = SingleCommandOption::Create(longopt,
+                                           shortopt,
+                                           help_text);
     options.push_back(opt);
     return opt;
 }
@@ -625,12 +650,12 @@ SingleCommandOption::Ptr SingleCommand::AddOption(const std::string longopt,
                                                   const std::string help_text,
                                                   const argHelperFunc arg_helper)
 {
-    SingleCommandOption::Ptr opt = new SingleCommandOption(longopt,
-                                                           shortopt,
-                                                           metavar,
-                                                           required,
-                                                           help_text,
-                                                           arg_helper);
+    auto opt = SingleCommandOption::Create(longopt,
+                                           shortopt,
+                                           metavar,
+                                           required,
+                                           help_text,
+                                           arg_helper);
     options.push_back(opt);
     return opt;
 }
@@ -729,7 +754,7 @@ RegisterParsedArgs::Ptr SingleCommand::parse_commandline(const std::string &arg0
     }
 
     RegisterParsedArgs::Ptr cmd_args;
-    cmd_args.reset(new RegisterParsedArgs(arg0));
+    cmd_args = RegisterParsedArgs::Create(arg0);
     int c;
     optind = 1 + skip; // Skip argv[0] which contains this command name
     try
