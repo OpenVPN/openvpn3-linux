@@ -15,7 +15,6 @@
 #include <iostream>
 #include "common/cmdargparser.hpp"
 
-#ifdef OVPN3CLI_OPENVPN3ADMIN
 #include "common/machineid.hpp"
 
 
@@ -66,7 +65,6 @@ int cmd_variables(ParsedArgs::Ptr args)
 
     return 0;
 }
-#endif // OVPN3CLI_OPENVPN3ADMIN
 
 /**
  *  Creates the SingleCommand object for the 'variables' command
@@ -76,13 +74,11 @@ int cmd_variables(ParsedArgs::Ptr args)
 SingleCommand::Ptr prepare_command_variables()
 {
     SingleCommand::Ptr variables;
-#ifdef OVPN3CLI_OPENVPN3ADMIN
     variables.reset(new SingleCommand("variables",
                                       "Show various OpenVPN 3 variables",
                                       cmd_variables));
     variables->AddOption("machine-id",
                          "Show the Machine-ID variable sent to the OpenVPN server");
 
-#endif // OVPN3CLI_OPENVPN3ADMIN
     return variables;
 }
