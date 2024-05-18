@@ -253,6 +253,20 @@ executable('getlaststatus',
     include_directories: [include_dirs, '../..'],
 )
 
+executable('get-service-version-prop',
+    [
+        'dbus/get-service-version-prop.cpp',
+    ],
+    build_by_default: build_test_programs,
+    link_with: [
+        common_code,
+    ],
+    dependencies: [
+        base_dependencies,
+    ],
+    include_directories: [include_dirs, '../..'],
+    )
+
 logevent_selftest = executable('logevent-selftest',
     [
         'dbus/logevent-selftest.cpp',

@@ -14,9 +14,9 @@
  */
 
 #include <iostream>
-
-#include "dbus/core.hpp"
-#include "dbus/proxy.hpp"
+#include <gdbuspp/connection.hpp>
+#include <gdbuspp/proxy.hpp>
+#include <gdbuspp/proxy/utils.hpp>
 
 
 
@@ -25,19 +25,22 @@ int main(int argc, char **argv)
     if (argc != 4)
     {
         std::cout << "Usage: " << argv[0]
-                  << " <service name> <service interface> <service d-bus path>" << std::endl;
+                  << " <service name> <service d-bus path> <service interface>" << std::endl;
         return 1;
     }
 
     try
     {
         std::string service(argv[1]);
-        std::string interface(argv[2]);
-        std::string path(argv[3]);
-        DBusProxy prx(G_BUS_TYPE_SYSTEM, service, interface, path);
+        std::string path(argv[2]);
+        std::string interface(argv[3]);
+
+        auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
+        auto proxy = DBus::Proxy::Client::Create(dbuscon, service);
+        auto prxqry = DBus::Proxy::Utils::Query::Create(proxy);
 
         std::cout << "Service version: "
-                  << prx.GetServiceVersion(path)
+                  << prxqry->ServiceVersion(path, interface)
                   << std::endl;
         return 0;
     }
