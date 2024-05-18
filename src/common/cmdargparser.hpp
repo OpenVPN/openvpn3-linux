@@ -52,7 +52,7 @@ class ParsedArgs
     {
     }
 
-    ParsedArgs(const std::string argv0)
+    ParsedArgs(const std::string &argv0)
         : argv0(argv0)
     {
     }
@@ -202,7 +202,7 @@ class ParsedArgs
      * @param k  std::string containing the option name to look-up
      * @return Returns the number of elements found for that option name.
      */
-    unsigned int GetValueLen(const std::string k) const noexcept
+    unsigned int GetValueLen(const std::string &k) const noexcept
     {
         try
         {
@@ -223,7 +223,7 @@ class ParsedArgs
      * @param idx  unsigned int of the value element to retrieve
      * @return  Returns a std::string with the collected value
      */
-    std::string GetValue(const std::string k, const unsigned int idx) const
+    std::string GetValue(const std::string &k, const unsigned int idx) const
     {
         return key_value.at(k).at(idx);
     }
@@ -252,7 +252,7 @@ class ParsedArgs
      * @param k    std::string containing the option name to look-up
      * @return  Returns a bool with the collected value
      */
-    bool GetBoolValue(const std::string k, const unsigned int idx) const
+    bool GetBoolValue(const std::string &k, const unsigned int idx) const
     {
         return parse_bool_value(k, key_value.at(k).at(idx));
     }
@@ -279,7 +279,7 @@ class ParsedArgs
      * @return Returns a std::vector<std::string> containing the list of
      *         values affiliated with the provided option name.
      */
-    std::vector<std::string> GetAllValues(const std::string k) const
+    std::vector<std::string> GetAllValues(const std::string &k) const
     {
         try
         {
@@ -351,7 +351,7 @@ class RegisterParsedArgs : public virtual ParsedArgs
      * @param v  char * containing NULL or a pointer to the option value (string)
      *
      */
-    void register_option(const std::string k, const char *v);
+    void register_option(const std::string &k, const char *v);
 
 
     /**
@@ -579,7 +579,9 @@ class SingleCommandOption
      *                   argument (required_argument)
      *
      */
-    void update_getopt(const std::string longopt, const char shortopt, const int has_args);
+    void update_getopt(const std::string &longopt,
+                       const char shortopt,
+                       const int has_args);
 }; // class SingleCommandOption
 
 
@@ -631,8 +633,8 @@ class SingleCommand
      * @param cmdfunc      Callback function to run when this command is
      *                     invoked at the command line.
      */
-    SingleCommand(const std::string command,
-                  const std::string description,
+    SingleCommand(const std::string &command,
+                  const std::string &description,
                   const commandPtr cmdfunc)
         : command(command), description(description), command_func(cmdfunc),
           opt_version_added(false)
@@ -679,9 +681,9 @@ class SingleCommand
      * @return Returns SingleCommandOption::Ptr belonging to the new option
      *
      */
-    SingleCommandOption::Ptr AddOption(const std::string longopt,
+    SingleCommandOption::Ptr AddOption(const std::string &longopt,
                                        const char shortopt,
-                                       const std::string help_text);
+                                       const std::string &help_text);
 
 
     /**
@@ -702,11 +704,11 @@ class SingleCommand
      * @return Returns SingleCommandOption::Ptr belonging to the new option
      *
      */
-    SingleCommandOption::Ptr AddOption(const std::string longopt,
+    SingleCommandOption::Ptr AddOption(const std::string &longopt,
                                        const char shortopt,
-                                       const std::string metavar,
+                                       const std::string &metavar,
                                        const bool required,
-                                       const std::string help_text,
+                                       const std::string &help_text,
                                        const argHelperFunc arg_helper = nullptr);
 
 
@@ -721,8 +723,8 @@ class SingleCommand
      * @return Returns SingleCommandOption::Ptr belonging to the new option
      *
      */
-    SingleCommandOption::Ptr AddOption(const std::string longopt,
-                                       const std::string help_text)
+    SingleCommandOption::Ptr AddOption(const std::string &longopt,
+                                       const std::string &help_text)
     {
         return AddOption(longopt, 0, help_text);
     }
@@ -744,10 +746,10 @@ class SingleCommand
      * @return Returns SingleCommandOption::Ptr belonging to the new option
      *
      */
-    SingleCommandOption::Ptr AddOption(const std::string longopt,
-                                       const std::string metavar,
+    SingleCommandOption::Ptr AddOption(const std::string &longopt,
+                                       const std::string &metavar,
                                        const bool required,
-                                       const std::string help_text,
+                                       const std::string &help_text,
                                        const argHelperFunc arg_helper = nullptr)
     {
         return AddOption(longopt, 0, metavar, required, help_text, arg_helper);
@@ -794,7 +796,7 @@ class SingleCommand
      * @return  Returns a string with possible values for the provided option.
      *          Each value is separated by a space.
      */
-    std::string CallArgumentHelper(const std::string option_name);
+    std::string CallArgumentHelper(const std::string &option_name);
 
 
     /**
@@ -815,7 +817,7 @@ class SingleCommand
      * @param cmdn   std::string of the command name to match against.
      * @return
      */
-    bool CheckCommandName(const std::string cmdn)
+    bool CheckCommandName(const std::string &cmdn)
     {
         return (cmdn == command)
                || (!alias_cmd.empty() && cmdn == alias_cmd);
@@ -840,7 +842,7 @@ class SingleCommand
      *
      * @return  Returns the same exit code as the callback function returned.
      */
-    virtual int RunCommand(const std::string arg0,
+    virtual int RunCommand(const std::string &arg0,
                            unsigned int skip,
                            int argc,
                            char **argv);
@@ -860,7 +862,7 @@ class SingleCommand
      *
      * @return  Returns the same exit code as the callback function returned.
      */
-    virtual int RunCommand(const std::string arg0, int argc, char **argv)
+    virtual int RunCommand(const std::string &arg0, int argc, char **argv)
     {
         return RunCommand(arg0, 0, argc, argv);
     }
@@ -945,7 +947,7 @@ class Commands
      * @param progname     A short string defining this program
      * @param description  A short description of this programs function/role
      */
-    Commands(const std::string progname, const std::string description)
+    Commands(const std::string &progname, const std::string &description)
         : progname(progname), description(description)
     {
         // Register a new ShellCompletion helper object.  This
@@ -1027,7 +1029,7 @@ class Commands
          * @return  Will always return 0, as we do not depend on exit codes
          *          when generating shell completion strings.
          */
-        int RunCommand(const std::string arg0,
+        int RunCommand(const std::string &arg0,
                        unsigned int ignored_skip,
                        int argc,
                        char **argv);
@@ -1051,7 +1053,7 @@ class Commands
          * @param cmd  std::string containing the command to query for
          *             available options.
          */
-        void list_options(const std::string cmd);
+        void list_options(const std::string &cmd);
 
         /**
          *  The argument helper callback function generates a list of possible
@@ -1064,7 +1066,7 @@ class Commands
          * @param option  std::string containing the option to query for
          *                possible values.
          */
-        void call_arg_helper(const std::string cmd, const std::string option);
+        void call_arg_helper(const std::string &cmd, const std::string &option);
     }; // class Commands::ShellCompletion
 
 
@@ -1075,7 +1077,7 @@ class Commands
      * @param arg0  std::string containing the binary name (typically argv[0])
      *
      */
-    void print_generic_help(std::string arg0);
+    void print_generic_help(std::string &arg0);
 
 
     const std::string progname;

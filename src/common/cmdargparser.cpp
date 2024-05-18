@@ -94,7 +94,7 @@ void Commands::ShellCompletion::SetMainCommands(Commands *cmds)
 }
 
 
-int Commands::ShellCompletion::RunCommand(const std::string arg0,
+int Commands::ShellCompletion::RunCommand(const std::string &arg0,
                                           unsigned int ignored_skip,
                                           int argc,
                                           char **argv)
@@ -185,7 +185,7 @@ void Commands::ShellCompletion::list_commands()
  * @param cmd  std::string containing the command to query for
  *             available options.
  */
-void Commands::ShellCompletion::list_options(const std::string cmd)
+void Commands::ShellCompletion::list_options(const std::string &cmd)
 {
     for (auto const &c : commands->GetAllCommandObjects())
     {
@@ -198,7 +198,8 @@ void Commands::ShellCompletion::list_options(const std::string cmd)
 }
 
 
-void Commands::ShellCompletion::call_arg_helper(const std::string cmd, const std::string option)
+void Commands::ShellCompletion::call_arg_helper(const std::string &cmd,
+                                                const std::string &option)
 {
     for (auto const &c : commands->GetAllCommandObjects())
     {
@@ -311,7 +312,7 @@ RegisterParsedArgs::RegisterParsedArgs(const std::string &arg0)
 }
 
 
-void RegisterParsedArgs::register_option(const std::string k, const char *v)
+void RegisterParsedArgs::register_option(const std::string &k, const char *v)
 {
     if (NULL != v)
     {
@@ -614,7 +615,7 @@ std::string SingleCommandOption::gen_help_line_generator(const char opt_short,
 }
 
 
-void SingleCommandOption::update_getopt(const std::string longopt,
+void SingleCommandOption::update_getopt(const std::string &longopt,
                                         const char shortopt,
                                         const int has_args)
 {
@@ -631,9 +632,9 @@ void SingleCommandOption::update_getopt(const std::string longopt,
 }
 
 
-SingleCommandOption::Ptr SingleCommand::AddOption(const std::string longopt,
+SingleCommandOption::Ptr SingleCommand::AddOption(const std::string &longopt,
                                                   const char shortopt,
-                                                  const std::string help_text)
+                                                  const std::string &help_text)
 {
     auto opt = SingleCommandOption::Create(longopt,
                                            shortopt,
@@ -643,11 +644,11 @@ SingleCommandOption::Ptr SingleCommand::AddOption(const std::string longopt,
 }
 
 
-SingleCommandOption::Ptr SingleCommand::AddOption(const std::string longopt,
+SingleCommandOption::Ptr SingleCommand::AddOption(const std::string &longopt,
                                                   const char shortopt,
-                                                  const std::string metavar,
+                                                  const std::string &metavar,
                                                   const bool required,
-                                                  const std::string help_text,
+                                                  const std::string &help_text,
                                                   const argHelperFunc arg_helper)
 {
     auto opt = SingleCommandOption::Create(longopt,
@@ -702,7 +703,7 @@ std::string SingleCommand::GetOptionsList()
 }
 
 
-std::string SingleCommand::CallArgumentHelper(const std::string option_name)
+std::string SingleCommand::CallArgumentHelper(const std::string &option_name)
 {
     for (auto const &opt : options)
     {
@@ -725,7 +726,7 @@ std::string SingleCommand::CallArgumentHelper(const std::string option_name)
 }
 
 
-int SingleCommand::RunCommand(const std::string arg0, unsigned int skip, int argc, char **argv)
+int SingleCommand::RunCommand(const std::string &arg0, unsigned int skip, int argc, char **argv)
 {
     try
     {
@@ -1013,7 +1014,7 @@ std::vector<SingleCommand::Ptr> Commands::GetAllCommandObjects()
 }
 
 
-void Commands::print_generic_help(std::string arg0)
+void Commands::print_generic_help(std::string &arg0)
 {
     std::cout << arg0 << ": " << progname << std::endl;
     std::cout << std::setw(arg0.size() + 2) << " " << description;
