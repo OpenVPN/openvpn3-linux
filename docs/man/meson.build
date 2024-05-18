@@ -20,6 +20,7 @@ if generate_man
 endif
 man_config = configuration_data({
     'OPENVPN_USERNAME': get_option('openvpn_username'),
+    'OPENVPN_STATEDIR': openvpn3_statedir,
 })
 
 
@@ -49,6 +50,54 @@ custom_target(
     'man-openvpn3-service-client',
     input: man_backendclient,
     output: 'openvpn3-service-client.8',
+    command: [prog_rst2man, '@INPUT@', '@OUTPUT@'],
+    install: true,
+    install_dir: mandir_8,
+)
+
+
+#
+#  man pages - src/log
+#
+custom_target(
+    'man-openvpn3-service-log',
+    input: 'openvpn3-service-log.8.rst',
+    output: 'openvpn3-service-log.8',
+    command: [prog_rst2man, '@INPUT@', '@OUTPUT@'],
+    install: true,
+    install_dir: mandir_8,
+)
+
+
+#
+#  man pages - src/netcfg
+#
+man_netcfg = configure_file(
+    input: 'openvpn3-service-netcfg.8.rst.in',
+    output: 'openvpn3-service-netcfg.8.rst',
+    configuration: man_config,
+)
+custom_target(
+    'man-openvpn3-service-netcfg',
+    input: man_netcfg,
+    output: 'openvpn3-service-netcfg.8',
+    command: [prog_rst2man, '@INPUT@', '@OUTPUT@'],
+    install: true,
+    install_dir: mandir_8,
+)
+
+#
+#  man pages - src/sessionmgr
+#
+man_sessionmgr = configure_file(
+    input: 'openvpn3-service-sessionmgr.8.rst.in',
+    output: 'openvpn3-service-sessionmgr.8.rst',
+    configuration: man_config,
+)
+custom_target(
+    'man-openvpn3-service-sessionmgr',
+    input: man_sessionmgr,
+    output: 'openvpn3-service-sessionmgr.8',
     command: [prog_rst2man, '@INPUT@', '@OUTPUT@'],
     install: true,
     install_dir: mandir_8,

@@ -275,6 +275,7 @@ configure_file(
 #
 #  OpenVPN 3 Linux services
 #
+subdir('docs/man')
 subdir('src/dbus/signals')
 subdir('src/client')
 subdir('src/log')
