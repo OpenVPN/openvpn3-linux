@@ -24,6 +24,9 @@ using PrepareCommand = std::function<SingleCommand::Ptr()>;
 // Command provided in version.cpp
 SingleCommand::Ptr prepare_command_version();
 
+// Command provided in version-services.cpp
+SingleCommand::Ptr prepare_command_version_services();
+
 // Commands provided in config-import.cpp
 SingleCommand::Ptr prepare_command_config_import();
 

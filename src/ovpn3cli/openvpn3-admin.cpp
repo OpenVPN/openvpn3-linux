@@ -25,7 +25,7 @@
 //  openvpn3-admin command line utility
 //
 inline std::vector<PrepareCommand> registered_commands = {
-    prepare_command_version,
+    prepare_command_version_services,
     prepare_command_variables,
 
 #ifdef HAVE_SYSTEMD

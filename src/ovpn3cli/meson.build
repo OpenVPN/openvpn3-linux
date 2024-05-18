@@ -8,8 +8,9 @@
 commands_collection = static_library(
     'commandscollection',
     [
-        'commands/version.cpp',
         'commands/variables.cpp',
+        'commands/version.cpp',
+        'commands/version-services.cpp',
     ],
     dependencies: [
         base_dependencies,
