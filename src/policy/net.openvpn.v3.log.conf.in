@@ -17,6 +17,12 @@
            send_member="Get"/>
 
     <allow send_destination="net.openvpn.v3.log"
+           send_interface="org.freedesktop.DBus.Properties"
+           send_type="method_call"
+           send_member="GetAll"
+           send_path="/net/openvpn/v3/log"/>
+
+    <allow send_destination="net.openvpn.v3.log"
            send_path="/net/openvpn/v3/log"
            send_interface="org.freedesktop.DBus.Peer"
            send_type="method_call"
