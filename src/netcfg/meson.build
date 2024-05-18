@@ -14,13 +14,8 @@ bin_backend_netcfg = executable(
         'netcfg-device.cpp',
         'netcfg-service.cpp',
         'netcfg-service-handler.cpp',
-        'dns/systemd-resolved.cpp',
-        'dns/resolvconf-file.cpp',
-        'dns/resolver-settings.cpp',
-        'dns/settings-manager.cpp',
         dco_keyconfig_cc,
         dco_keyconfig_h,
-
     ],
     include_directories: [include_dirs, '../..'],
     dependencies: [
