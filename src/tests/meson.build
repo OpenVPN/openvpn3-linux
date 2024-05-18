@@ -92,6 +92,20 @@ executable('fetch-avail-config-path',
     include_directories: [include_dirs, '../..'],
 )
 
+executable('cmdparser-test',
+    [
+        'command-parser/cmdparser.cpp',
+    ],
+    build_by_default: build_test_programs,
+    link_with: [
+        common_code,
+    ],
+    dependencies: [
+        base_dependencies,
+    ],
+    include_directories: [include_dirs, '../..'],
+)
+
 executable('config-lock-down',
     [
         'dbus/config-lock-down.cpp'
