@@ -123,8 +123,8 @@ static int logger_service(ParsedArgs::Ptr args)
     servicecfg.log_colour = args->Present("colour");
 
     // Open a log destination
-    std::ofstream logfs;
-    std::streambuf *logstream;
+    std::ofstream logfs{};
+    std::streambuf *logstream = nullptr;
     bool do_console_info = true;
     if ("logfile" == servicecfg.log_method)
     {
