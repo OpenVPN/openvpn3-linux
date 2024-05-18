@@ -25,8 +25,6 @@
 #include "log-service.hpp"
 #include "service-configfile.hpp"
 
-using namespace openvpn;
-
 
 static int logger_service(ParsedArgs::Ptr args)
 {
