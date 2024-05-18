@@ -44,8 +44,8 @@
 class ParsedArgs
 {
   public:
-    typedef std::shared_ptr<ParsedArgs> Ptr;
-    typedef std::vector<std::vector<std::string>> ExclusiveGroups;
+    using Ptr = std::shared_ptr<ParsedArgs>;
+    using ExclusiveGroups = std::vector<std::vector<std::string>>;
 
     ParsedArgs()
         : argv0("")
