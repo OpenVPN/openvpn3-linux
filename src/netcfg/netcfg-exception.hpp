@@ -19,14 +19,16 @@
 
 #include <string>
 #include <exception>
+#include <gdbuspp/object/method.hpp>
+#include <gdbuspp/proxy.hpp>
 
-
-class NetCfgException : public std::exception
+class NetCfgException : public DBus::Object::Method::Exception
 {
   public:
     NetCfgException(const std::string &err)
-        : errormsg(err)
+        : DBus::Object::Method::Exception(err)
     {
+        error_domain = "net.openvpn.v3.netcfg.error";
     }
 
     ~NetCfgException() = default;
@@ -42,17 +44,19 @@ class NetCfgException : public std::exception
 
 
 
-class NetCfgDeviceException : public std::exception
+class NetCfgDeviceException : public DBus::Object::Method::Exception
 {
   public:
-    NetCfgDeviceException(const std::string objpath,
-                          const std::string devname,
-                          const std::string errmsg)
-        : object_path(objpath),
+    NetCfgDeviceException(const std::string &objpath,
+                          const std::string &devname,
+                          const std::string &errmsg)
+        : DBus::Object::Method::Exception(errmsg),
+          object_path(objpath),
           device_name(devname),
           errormsg(errmsg)
     {
-        user_error = device_name + ": " + errmsg;
+        error_domain = "net.openvpn.v3.netcfg.device.error";
+        user_error = device_name + ": " + errormsg;
     }
 
     const char *what() const noexcept override
@@ -65,45 +69,6 @@ class NetCfgDeviceException : public std::exception
         return object_path.c_str();
     }
 
-#ifdef __GIO_TYPES_H__ // Only add GLib/GDBus methods if this is already used
-    /**
-     *  Wrapper to more easily return a NetCfgDeviceException
-     *  back to an on going D-Bus method call.  This will transport the
-     *  error back to the D-Bus caller.
-     *
-     * @param error      Pointer to a GError pointer where the error will
-     *                   be saved
-     * @param domain     Error Quark domain used to classify the error
-     * @param code       A GIO error code, used for further error
-     *                   error classification.  Look up G_IO_ERROR_*
-     *                   entries in glib-2.0/gio/gioenums.h for details.
-     */
-    void SetDBusError(GError **error,
-                      const GQuark domain,
-                      const guint errcode) const noexcept
-    {
-        g_set_error(error, domain, errcode, "%s", user_error.c_str());
-    }
-
-    /**
-     *  Wrapper to more easily return a NetCfgDeviceException
-     *  back to an on going D-Bus method call.  This will transport the
-     *  error back to the D-Bus caller.
-     *
-     * @param invocation    Pointer to a invocation object of the on-going
-     *                      method call
-     *  @param domain       String which classifies the error (QuarkDomain)
-     */
-    void SetDBusError(GDBusMethodInvocation *invocation,
-                      const std::string &domain) const noexcept
-    {
-        GError *dbuserr = g_dbus_error_new_for_dbus_error(domain.c_str(),
-                                                          user_error.c_str());
-        g_dbus_method_invocation_return_gerror(invocation, dbuserr);
-        g_error_free(dbuserr);
-    }
-#endif // __GIO_TYPES_H__
-
   private:
     std::string object_path;
     std::string device_name;
@@ -112,13 +77,15 @@ class NetCfgDeviceException : public std::exception
 };
 
 
-
-class NetCfgProxyException : public std::exception
+class NetCfgProxyException : public DBus::Proxy::Exception
 {
   public:
-    NetCfgProxyException(std::string meth, std::string err) noexcept
-        : method(std::move(meth)), errormsg(std::move(err))
+    NetCfgProxyException(const std::string &meth,
+                         const std::string &err) noexcept
+        : DBus::Proxy::Exception(err),
+          method(meth), errormsg(err)
     {
+        error_domain = "net.openvpn.v3.netcfg.proxy";
         user_error = method + "(): " + errormsg;
     }
 
