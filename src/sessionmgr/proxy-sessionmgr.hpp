@@ -708,7 +708,6 @@ class Manager
                                                    Constants::GenInterface("sessions")))
     {
         auto prxqry = DBus::Proxy::Utils::DBusServiceQuery::Create(conn);
-        prxqry->StartServiceByName(Constants::GenServiceName("sessions"));
         prxqry->CheckServiceAvail(Constants::GenServiceName("sessions"));
     }
 };
