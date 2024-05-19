@@ -97,7 +97,7 @@ const DBus::Object::Path Manager::CreateVirtualInterface(const std::string &devi
     catch (const DBus::Exception &excp)
     {
         throw NetCfgProxyException("CreateVirtualInterface",
-                                   excp.what());
+                                   excp.GetRawError());
     }
 }
 
@@ -171,7 +171,7 @@ void Manager::Cleanup()
     catch (const DBus::Exception &excp)
     {
         throw NetCfgProxyException("Cleanup",
-                                   excp.what());
+                                   excp.GetRawError());
     }
 }
 
@@ -192,7 +192,7 @@ DBus::Object::Path::List Manager::FetchInterfaceList()
     catch (const DBus::Exception &excp)
     {
         throw NetCfgProxyException("FetchInterfaceList",
-                                   excp.what());
+                                   excp.GetRawError());
     }
 }
 
@@ -214,7 +214,7 @@ void Manager::NotificationSubscribe(NetCfgChangeType filter_flags)
     catch (const DBus::Exception &excp)
     {
         throw NetCfgProxyException("NotificationSubscribe",
-                                   excp.what());
+                                   excp.GetRawError());
     }
 }
 
@@ -241,8 +241,9 @@ void Manager::NotificationUnsubscribe(const std::string &subscriber)
     }
     catch (const DBus::Exception &excp)
     {
+
         throw NetCfgProxyException("NotificationUnsubscribe",
-                                   excp.what());
+                                   excp.GetRawError());
     }
 }
 
@@ -279,7 +280,7 @@ NetCfgSubscriptions::NetCfgNotifSubscriptions Manager::NotificationSubscriberLis
     catch (const DBus::Exception &excp)
     {
         throw NetCfgProxyException("NotificationSubscriberList",
-                                   excp.what());
+                                   excp.GetRawError());
     }
 }
 } // namespace NetCfgProxy
