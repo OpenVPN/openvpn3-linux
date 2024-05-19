@@ -61,7 +61,16 @@ void NetCfgSignals::LogFATAL(const std::string &msg)
 
 void NetCfgSignals::Debug(const std::string &msg, bool duplicate_check)
 {
-    Log(Events::Log(log_group, LogCategory::DEBUG, msg));
+    try
+    {
+        Log(Events::Log(log_group, LogCategory::DEBUG, msg));
+    }
+    catch (const DBus::Signals::Exception &excp)
+    {
+        std::cerr << "NetCfgSignals::Debug EXCEPTION: " << excp.what()
+                  << std::endl
+                  << "Message: " << msg << std::endl;
+    }
 }
 
 
@@ -81,18 +90,27 @@ void NetCfgSignals::AddSubscriptionList(NetCfgSubscriptions::Ptr subs)
 
 void NetCfgSignals::NetworkChange(const NetCfgChangeEvent &ev)
 {
-    GVariant *e = ev.GetGVariant();
-    if (subscriptions)
+    try
     {
-        GroupAddTargetList(object_path,
-                           subscriptions->GetSubscribersList(ev));
-        GroupSendGVariant(object_path, "NetworkChange", e);
-        GroupClearTargets(object_path);
+        GVariant *e = ev.GetGVariant();
+        if (subscriptions)
+        {
+            GroupAddTargetList(object_path,
+                               subscriptions->GetSubscribersList(ev));
+            GroupSendGVariant(object_path, "NetworkChange", e);
+            GroupClearTargets(object_path);
+        }
+        else
+        {
+            // If no subscription manager is configured, we switch
+            // to broadcasting NetworkChange signals.
+            SendGVariant("NetworkChange", e);
+        }
     }
-    else
+    catch (const DBus::Signals::Exception &excp)
     {
-        // If no subscription manager is configured, we switch
-        // to broadcasting NetworkChange signals.
-        SendGVariant("NetworkChange", e);
+        std::cerr << "NetCfgSignals::NetworkChange EXCEPTION: " << excp.what()
+                  << std::endl
+                  << "Event: " << ev << std::endl;
     }
 }
