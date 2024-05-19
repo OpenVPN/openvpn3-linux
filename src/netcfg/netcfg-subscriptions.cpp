@@ -55,7 +55,7 @@ void NetCfgSubscriptions::SubscriptionSetup(DBus::Object::Base *object_ptr,
         {
             this->method_name_unsubscribe(args);
         });
-    args_unsubscribe->AddInput("optional_subscriber",
+    args_unsubscribe->AddInput("subscriber",
                                glib2::DataType::DBus<std::string>());
 
     auto args_list = object_ptr->AddMethod(
@@ -64,6 +64,7 @@ void NetCfgSubscriptions::SubscriptionSetup(DBus::Object::Base *object_ptr,
         {
             this->method_name_list(args);
         });
+        args_list->AddOutput("subscriptions", "a(su)");
 }
 
 
