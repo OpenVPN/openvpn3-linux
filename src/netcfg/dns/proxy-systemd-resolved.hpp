@@ -160,10 +160,12 @@ class Link
      *
      * @param prx        DBus::Proxy::Client to use for communication
      * @param path       DBus::Object::Path to the interface in systemd-resolved
+     * @param devname    std::string of the device name this is related to
      * @return Link::Ptr
      */
     [[nodiscard]] static Link::Ptr Create(DBus::Proxy::Client::Ptr prx,
-                                          const DBus::Object::Path &path);
+                                          const DBus::Object::Path &path,
+                                          const std::string &devname);
     ~Link() noexcept = default;
 
     /**
@@ -172,6 +174,13 @@ class Link
      * @return const DBus::Object::Path
      */
     const DBus::Object::Path GetPath() const;
+
+    /**
+     *  Retrieve the device name this link object is related to
+     *
+     * @return std::string
+     */
+    std::string GetDeviceName() const;
 
     /**
      *  Retrieve a list of DNS servers configured for this interface
@@ -247,9 +256,12 @@ class Link
   private:
     DBus::Proxy::Client::Ptr proxy = nullptr;
     DBus::Proxy::TargetPreset::Ptr tgt_link = nullptr;
+    const std::string device_name;
     bool feature_set_default_route = true;
 
-    Link(DBus::Proxy::Client::Ptr dbuscon, const DBus::Object::Path &path);
+    Link(DBus::Proxy::Client::Ptr dbuscon,
+         const DBus::Object::Path &path,
+         const std::string &devname);
 };
 
 
@@ -284,7 +296,7 @@ class Manager
      *
      * @return Link::Ptr to the new Link object to the network interface
      */
-    Link::Ptr RetrieveLink(const std::string dev_name) const;
+    Link::Ptr RetrieveLink(const std::string &dev_name) const;
 
     /**
      *  Retrieve the D-Bus path to a link object used by the systemd-resolved

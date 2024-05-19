@@ -138,14 +138,17 @@ GVariant *SearchDomain::GetGVariant() const
 //
 
 Link::Ptr Link::Create(DBus::Proxy::Client::Ptr prx,
-                       const DBus::Object::Path &path)
+                       const DBus::Object::Path &path,
+                       const std::string &devname)
 {
-    return Link::Ptr(new Link(prx, path));
+    return Link::Ptr(new Link(prx, path, devname));
 }
 
 
-Link::Link(DBus::Proxy::Client::Ptr prx, const DBus::Object::Path &path)
-    : proxy(prx)
+Link::Link(DBus::Proxy::Client::Ptr prx,
+           const DBus::Object::Path &path,
+           const std::string &devname)
+    : proxy(prx), device_name(devname)
 {
     tgt_link = DBus::Proxy::TargetPreset::Create(path,
                                                  "org.freedesktop.resolve1.Link");
@@ -155,6 +158,12 @@ Link::Link(DBus::Proxy::Client::Ptr prx, const DBus::Object::Path &path)
 const DBus::Object::Path Link::GetPath() const
 {
     return (tgt_link ? tgt_link->object_path : "");
+}
+
+
+std::string Link::GetDeviceName() const
+{
+    return device_name;
 }
 
 
@@ -369,7 +378,7 @@ Manager::Manager(DBus::Connection::Ptr conn)
 }
 
 
-Link::Ptr Manager::RetrieveLink(const std::string dev_name) const
+Link::Ptr Manager::RetrieveLink(const std::string &dev_name) const
 {
     unsigned int if_idx = ::if_nametoindex(dev_name.c_str());
     if (0 == if_idx)
@@ -384,7 +393,7 @@ Link::Ptr Manager::RetrieveLink(const std::string dev_name) const
     {
         return nullptr;
     }
-    return Link::Create(proxy, link_path);
+    return Link::Create(proxy, link_path, dev_name);
 }
 
 
