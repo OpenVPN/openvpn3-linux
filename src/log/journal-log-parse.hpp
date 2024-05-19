@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2022 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2022 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2022-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2022-  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -15,13 +15,13 @@
 
 #pragma once
 
-#include "config.h"
+#include "build-config.h"
 
 #ifdef HAVE_SYSTEMD
 #include <systemd/sd-journal.h>
 #include <json/json.h>
 
-#include "logevent.hpp"
+#include "events/log.hpp"
 
 namespace Log {
 namespace Journald {
@@ -82,7 +82,7 @@ struct LogEntry
     std::string int_method = {};  //<  Internal method doing the call
     std::string logtag = {};      //<  OpenVPN 3 Linux LogTag value of the log event producer, if present
     std::string pid = {};         //<  Process ID of the logger process
-    LogEvent event = {};          //<  Reconstructed LogTag object of the log event
+    Events::Log event = {};       //<  Reconstructed LogTag object of the log event
 
 
   private:

@@ -204,6 +204,7 @@ common_code = static_library(
             'src/events/status.cpp',
             'src/log/core-dbus-logger.cpp',
             'src/log/dbus-log.cpp',
+            'src/log/journal-log-parse.cpp',
             'src/log/logfilter.cpp',
             'src/log/logtag.cpp',
             'src/log/logmetadata.cpp',

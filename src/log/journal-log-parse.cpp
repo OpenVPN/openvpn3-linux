@@ -13,7 +13,7 @@
  *         log lines from the systemd-journald
  */
 
-#include "config.h"
+#include "build-config.h"
 
 #ifdef HAVE_SYSTEMD
 
@@ -48,10 +48,10 @@ LogEntry::LogEntry(sd_journal *journal)
     pid = extract_journal_field(journal, "_PID");
 
     std::string msg = extract_journal_field(journal, "MESSAGE");
-    event = LogEvent(extract_journal_field(journal, "O3_LOG_GROUP"),
-                     extract_journal_field(journal, "O3_LOG_CATEGORY"),
-                     extract_journal_field(journal, "O3_SESSION_TOKEN"),
-                     strip_logtag(logtag, msg));
+    event = Events::Log(extract_journal_field(journal, "O3_LOG_GROUP"),
+                        extract_journal_field(journal, "O3_LOG_CATEGORY"),
+                        extract_journal_field(journal, "O3_SESSION_TOKEN"),
+                        strip_logtag(logtag, msg));
 }
 
 
