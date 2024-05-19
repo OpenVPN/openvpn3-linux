@@ -266,8 +266,8 @@ NetCfgSubscriptions::NetCfgNotifSubscriptions Manager::NotificationSubscriberLis
         NetCfgSubscriptions::NetCfgNotifSubscriptions subscriptions;
         while ((val = g_variant_iter_next_value(iter)))
         {
-            std::string busname = glib2::Value::Extract<std::string>(val, 0);
-            uint16_t filter_mask = glib2::Value::Extract<uint16_t>(val, 1);
+            auto busname = glib2::Value::Extract<std::string>(val, 0);
+            auto filter_mask = glib2::Value::Extract<uint32_t>(val, 1);
 
             subscriptions.insert(NetCfgSubscriptions::NetCfgNotifSubscriptions::
                                      value_type(busname, filter_mask));

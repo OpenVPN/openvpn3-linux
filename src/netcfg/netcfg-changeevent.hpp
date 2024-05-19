@@ -81,14 +81,14 @@ struct NetCfgChangeEvent
     }
 
 
-    static const std::vector<std::string> FilterMaskList(const uint16_t mask,
+    static const std::vector<std::string> FilterMaskList(const uint32_t mask,
                                                          bool tech_form = false)
     {
         std::vector<std::string> ret;
 
-        for (uint16_t i = 0; i < 16; ++i)
+        for (uint32_t i = 0; i < 16; ++i)
         {
-            uint16_t flag = 1 << i;
+            uint32_t flag = 1 << i;
             NetCfgChangeType t = (NetCfgChangeType)(flag);
             if (flag & mask)
             {
