@@ -32,7 +32,7 @@ inline std::vector<PrepareCommand> registered_commands = {
 #ifdef HAVE_SYSTEMD
     prepare_command_journal,
 #endif
-    // prepare_command_log_service,
+    prepare_command_log_service,
     // prepare_command_netcfg_service,
     // prepare_command_sessionmgr_service,
     prepare_command_initcfg,

@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2019 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2019 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2019-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2019-  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -12,16 +12,17 @@
  * @brief  Command for managing the openvpn3-service-logger
  */
 
+#include <gdbuspp/connection.hpp>
+#include <gdbuspp/credentials/query.hpp>
 
-#include "dbus/core.hpp"
-#include "dbus/connection-creds.hpp"
 #include "common/cmdargparser.hpp"
 #include "log/service-configfile.hpp"
 #include "log/proxy-log.hpp"
 #include "../arghelpers.hpp"
 
 
-static int manage_config_file(ParsedArgs::Ptr args,
+static int manage_config_file(DBus::Connection::Ptr dbuscon,
+                              ParsedArgs::Ptr args,
                               std::string cfgmode)
 {
     //
@@ -36,10 +37,8 @@ static int manage_config_file(ParsedArgs::Ptr args,
         {
             if (!args->Present("config-file-override"))
             {
-                DBus dbus(G_BUS_TYPE_SYSTEM);
-                dbus.Connect();
-                LogServiceProxy prx(dbus.GetConnection());
-                config_file = prx.GetConfigFile();
+                auto prx = LogServiceProxy::Create(dbuscon);
+                config_file = prx->GetConfigFile();
             }
             else
             {
@@ -159,10 +158,11 @@ static int manage_config_file(ParsedArgs::Ptr args,
 
 
 
-static void logsrv_list_subscriptions(LogServiceProxy &logsrvprx)
+static void logsrv_list_subscriptions(DBus::Connection::Ptr dbuscon,
+                                      LogServiceProxy::Ptr logsrvprx)
 {
-    DBusConnectionCreds creds(logsrvprx.GetConnection());
-    LogSubscribers list = logsrvprx.GetSubscriberList();
+    auto creds = DBus::Credentials::Query::Create(dbuscon);
+    LogSubscribers list = logsrvprx->GetSubscriberList();
 
     if (list.size() == 0)
     {
@@ -184,9 +184,9 @@ static void logsrv_list_subscriptions(LogServiceProxy &logsrvprx)
         std::string pid;
         try
         {
-            pid = std::to_string(creds.GetPID(e.busname));
+            pid = std::to_string(creds->GetPID(e.busname));
         }
-        catch (DBusException &)
+        catch (const DBus::Exception &)
         {
             pid = "-";
         }
@@ -226,38 +226,38 @@ static inline std::string print_change(const bool changed, const unsigned int ol
 }
 
 
-static void print_logger_settings(LogServiceProxy &logsrvprx)
+static void print_logger_settings(LogServiceProxy::Ptr logsrvprx)
 {
-    std::string log_method = logsrvprx.GetLogMethod();
+    std::string log_method = logsrvprx->GetLogMethod();
     std::cout << "                 Log method: "
               << log_method << std::endl;
     std::cout << " Attached log subscriptions: "
-              << logsrvprx.GetNumAttached() << std::endl;
+              << logsrvprx->GetNumAttached() << std::endl;
 
     std::cout << "             Log timestamps: "
-              << (logsrvprx.GetTimestampFlag() ? "enabled" : "disabled")
-              << print_change(logsrvprx.CheckChange(LogServiceProxy::Changed::TSTAMP),
-                              logsrvprx.GetTimestampFlag(true))
+              << (logsrvprx->GetTimestampFlag() ? "enabled" : "disabled")
+              << print_change(logsrvprx->CheckChange(LogServiceProxy::Changed::TSTAMP),
+                              logsrvprx->GetTimestampFlag(true))
               << std::endl;
 
     if ("journald" == log_method)
     {
         std::cout << "     Log tag prefix enabled: "
-                  << (logsrvprx.GetLogTagPrepend() ? "enabled" : "disabled")
-                  << print_change(logsrvprx.CheckChange(LogServiceProxy::Changed::LOGTAG_PREFIX),
-                                  logsrvprx.GetLogTagPrepend(true))
+                  << (logsrvprx->GetLogTagPrepend() ? "enabled" : "disabled")
+                  << print_change(logsrvprx->CheckChange(LogServiceProxy::Changed::LOGTAG_PREFIX),
+                                  logsrvprx->GetLogTagPrepend(true))
                   << std::endl;
     }
 
     std::cout << "          Log D-Bus details: "
-              << (logsrvprx.GetDBusDetailsLogging() ? "enabled" : "disabled")
-              << print_change(logsrvprx.CheckChange(LogServiceProxy::Changed::DBUS_DETAILS),
-                              logsrvprx.GetDBusDetailsLogging(true))
+              << (logsrvprx->GetDBusDetailsLogging() ? "enabled" : "disabled")
+              << print_change(logsrvprx->CheckChange(LogServiceProxy::Changed::DBUS_DETAILS),
+                              logsrvprx->GetDBusDetailsLogging(true))
               << std::endl;
 
-    std::cout << "          Current log level: " << std::to_string(logsrvprx.GetLogLevel())
-              << print_change(logsrvprx.CheckChange(LogServiceProxy::Changed::LOGLEVEL),
-                              logsrvprx.GetLogLevel(true))
+    std::cout << "          Current log level: " << std::to_string(logsrvprx->GetLogLevel())
+              << print_change(logsrvprx->CheckChange(LogServiceProxy::Changed::LOGLEVEL),
+                              logsrvprx->GetLogLevel(true))
               << std::endl;
 }
 
@@ -277,13 +277,14 @@ static int cmd_log_service(ParsedArgs::Ptr args)
 {
     try
     {
+        auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
         try
         {
             std::vector<std::string> cfgopts = {"config-show",
                                                 "config-set",
                                                 "config-unset"};
             std::string cfgmode = args->Present(cfgopts);
-            return manage_config_file(args, cfgmode);
+            return manage_config_file(dbuscon, args, cfgmode);
         }
         catch (const OptionNotFound &)
         {
@@ -291,48 +292,40 @@ static int cmd_log_service(ParsedArgs::Ptr args)
             // continue with the runtime configurations
         }
 
-        DBus dbus(G_BUS_TYPE_SYSTEM);
-        dbus.Connect();
-        LogServiceProxy logsrvprx(dbus.GetConnection());
+        auto logsrvprx = LogServiceProxy::Create(dbuscon);
 
         if (args->Present("list-subscriptions"))
         {
-            logsrv_list_subscriptions(logsrvprx);
+            logsrv_list_subscriptions(dbuscon, logsrvprx);
             return 0;
         }
 
         if (args->Present("log-level"))
         {
-            logsrvprx.SetLogLevel(std::atoi(args->GetValue("log-level", 0).c_str()));
+            logsrvprx->SetLogLevel(std::atoi(args->GetValue("log-level", 0).c_str()));
         }
 
         if (args->Present("timestamp"))
         {
-            logsrvprx.SetTimestampFlag(args->GetBoolValue("timestamp", 0));
+            logsrvprx->SetTimestampFlag(args->GetBoolValue("timestamp", 0));
         }
 
         if (args->Present("dbus-details"))
         {
-            logsrvprx.SetDBusDetailsLogging(args->GetBoolValue("dbus-details", 0));
+            logsrvprx->SetDBusDetailsLogging(args->GetBoolValue("dbus-details", 0));
         }
 
         if (args->Present("enable-log-prefix"))
         {
-            logsrvprx.SetLogTagPrepend(args->GetBoolValue("enable-log-prefix", 0));
+            logsrvprx->SetLogTagPrepend(args->GetBoolValue("enable-log-prefix", 0));
         }
 
         print_logger_settings(logsrvprx);
     }
-    catch (DBusProxyAccessDeniedException &excp)
+    catch (const DBus::Exception &excp)
     {
         std::string rawerr(excp.what());
         throw CommandException("log-service", rawerr);
-    }
-    catch (DBusException &excp)
-    {
-        std::string rawerr(excp.what());
-        throw CommandException("log-service",
-                               rawerr.substr(rawerr.rfind(":")));
     }
     return 0;
 }
