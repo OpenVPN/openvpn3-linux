@@ -17,7 +17,7 @@ project(
 dep_lz4 = dependency('liblz4', required: false)
 dep_selinux = dependency('libselinux', required: false)
 dep_systemd = dependency('libsystemd', version: '>218', required: false)
-dep_tinyxml2 = dependency('tinyxml2', required: false)
+dep_tinyxml2 = dependency('tinyxml2')
 
 # This is not a link dependency for this project, but we need it
 # to get the proper paths for policy and service config installation
@@ -37,7 +37,6 @@ base_dependencies = [
     dependency('jsoncpp'),
     dependency('openssl', version: '>= 1.0.2'),
     dependency('threads'),
-    dependency('tinyxml2'),
     dependency('uuid'),
 ]
 
@@ -108,8 +107,9 @@ build_config = configuration_data({
     'HAVE_LZ4': dep_lz4.found(),
     'HAVE_SELINUX': dep_selinux.found(),
     'HAVE_SYSTEMD': sd_id128,
-    'OVPN_TINYXML2_HAS_ERROR_NAME': dep_tinyxml2.version() >= '4.0.0',
-    'OVPN_TINYXML2_HAS_ERROR_STR': dep_tinyxml2.version() >= '6.0.0',
+    'HAVE_TINYXML': dep_tinyxml2.found(),
+    #'OVPN_TINYXML2_HAS_ERROR_NAME': dep_tinyxml2.version() >= '4.0.0',
+    #'OVPN_TINYXML2_HAS_ERROR_STR': dep_tinyxml2.version() >= '6.0.0',
     'ASIO_STANDALONE': true,
     'ASIO_NO_DEPRECATED': true,
     'USE_ASIO': true,
@@ -131,6 +131,14 @@ build_config.set_quoted('OPENVPN3_STATEDIR', openvpn3_statedir,
 configure_file(output : 'build-config.h',
     configuration: build_config
 )
+
+# Hack until OpenVPN 3 Core library is fixed
+if (dep_tinyxml2.version() >= '4.0.0')
+    add_project_arguments('-DOVPN_TINYXML2_HAS_ERROR_NAME', language:'cpp')
+    if (dep_tinyxml2.version() >= '6.0.0')
+        add_project_arguments('-DOVPN_TINYXML2_HAS_ERROR_STR', language:'cpp')
+    endif
+endif
 
 # Prepare some version details
 fs = import('fs')
