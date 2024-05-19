@@ -2,9 +2,9 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018 - 2023  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2018-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2018-  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018-  Arne Schwabe <arne@openvpn.net>
 //
 
 /**
@@ -16,7 +16,9 @@
 
 #include <string>
 #include <sstream>
+#include <gdbuspp/connection.hpp>
 
+#include "dbus/constants.hpp"
 #include "configmgr/proxy-configmgr.hpp"
 #include "common/cmdargparser.hpp"
 #include "sessionmgr/proxy-sessionmgr.hpp"
@@ -28,7 +30,9 @@
  */
 std::string arghelper_config_paths()
 {
-    OpenVPN3ConfigurationProxy confmgr(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration);
+    auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    OpenVPN3ConfigurationProxy confmgr(dbuscon,
+                                       Constants::GenPath("configuration"));
 
     std::stringstream res;
     for (auto &cfg : confmgr.FetchAvailableConfigs())
@@ -51,16 +55,15 @@ std::string arghelper_config_paths()
  */
 std::string arghelper_config_names()
 {
-    DBus conn(G_BUS_TYPE_SYSTEM);
-    conn.Connect();
-    OpenVPN3ConfigurationProxy confmgr(conn.GetConnection(),
-                                       OpenVPN3DBus_rootp_configuration);
+    auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    OpenVPN3ConfigurationProxy confmgr(dbuscon,
+                                       Constants::GenPath("configuration"));
 
     std::vector<std::string> cfgnames;
     for (const auto &cfgp : confmgr.FetchAvailableConfigs())
     {
-        OpenVPN3ConfigurationProxy cfg(conn.GetConnection(), cfgp);
-        std::string cfgname = cfg.GetStringProperty("name");
+        OpenVPN3ConfigurationProxy cfg(dbuscon, cfgp);
+        std::string cfgname = cfg.GetName();
 
         // Filter out duplicates
         bool found = false;
@@ -99,10 +102,11 @@ std::string arghelper_config_names()
  */
 std::string arghelper_session_paths()
 {
-    OpenVPN3SessionMgrProxy sessmgr(G_BUS_TYPE_SYSTEM);
+    auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    auto sessmgr = SessionManager::Proxy::Manager::Create(dbuscon);
 
     std::stringstream res;
-    for (auto &session : sessmgr.FetchAvailableSessionPaths())
+    for (auto &session : sessmgr->FetchAvailableSessionPaths())
     {
         if (session.empty())
         {
@@ -116,10 +120,11 @@ std::string arghelper_session_paths()
 
 std::string arghelper_managed_interfaces()
 {
-    OpenVPN3SessionMgrProxy sessmgr(G_BUS_TYPE_SYSTEM);
+    auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    auto sessmgr = SessionManager::Proxy::Manager::Create(dbuscon);
 
     std::stringstream res;
-    for (const auto &dev : sessmgr.FetchManagedInterfaces())
+    for (const auto &dev : sessmgr->FetchManagedInterfaces())
     {
         if (dev.empty())
         {
@@ -139,15 +144,14 @@ std::string arghelper_managed_interfaces()
  */
 std::string arghelper_config_names_sessions()
 {
-    DBus conn(G_BUS_TYPE_SYSTEM);
-    conn.Connect();
-    OpenVPN3SessionMgrProxy sessmgr(conn.GetConnection());
+    auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    auto sessmgr = SessionManager::Proxy::Manager::Create(dbuscon);
 
     std::vector<std::string> cfgnames;
-    for (const auto &sesp : sessmgr.FetchAvailableSessionPaths())
+    for (const auto &session_path : sessmgr->FetchAvailableSessionPaths())
     {
-        OpenVPN3SessionProxy sess(conn.GetConnection(), sesp);
-        std::string cfgname = sess.GetStringProperty("config_name");
+        auto session = sessmgr->Retrieve(session_path);
+        std::string cfgname = session->GetConfigName();
 
         // Filter out duplicates
         bool found = false;
@@ -253,9 +257,11 @@ std::string arghelper_log_levels()
 std::string retrieve_config_path(const std::string &cmd,
                                  const std::string &config_name)
 {
-    OpenVPN3ConfigurationProxy cfgmgr(G_BUS_TYPE_SYSTEM,
-                                      OpenVPN3DBus_rootp_configuration);
-    std::vector<std::string> paths = cfgmgr.LookupConfigName(config_name);
+    auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    OpenVPN3ConfigurationProxy cfgmgr(dbuscon,
+                                       Constants::GenPath("configuration"));
+
+    auto paths = cfgmgr.LookupConfigName(config_name);
     if (0 == paths.size())
     {
         throw CommandException(cmd,
