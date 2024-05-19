@@ -155,6 +155,13 @@ NetCfgServiceHandler::NetCfgServiceHandler(DBus::Connection::Ptr conn_,
                   args->SetMethodReturn(nullptr);
               });
 
+
+    subscriptions = NetCfgSubscriptions::Create(signals, creds_query);
+    subscriptions->SubscriptionSetup(this,
+                                     "NotificationSubscribe",
+                                     "NotificationUnsubscribe",
+                                     "NotificationSubscriberList");
+
     signals->Debug("Network Configuration service object ready");
     if (!resolver)
     {
