@@ -95,8 +95,13 @@ void NetCfgSignals::NetworkChange(const NetCfgChangeEvent &ev)
         GVariant *e = ev.GetGVariant();
         if (subscriptions)
         {
-            GroupAddTargetList(object_path,
-                               subscriptions->GetSubscribersList(ev));
+            auto subscr_list = subscriptions->GetSubscribersList(ev);
+            if (subscr_list.size() < 1)
+            {
+                // If there are no subscribers, we just bail out quickly
+                return;
+            }
+            GroupAddTargetList(object_path, subscr_list);
             GroupSendGVariant(object_path, "NetworkChange", e);
             GroupClearTargets(object_path);
         }
