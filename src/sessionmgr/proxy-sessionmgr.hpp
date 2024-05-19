@@ -23,6 +23,14 @@
 
 #include "build-config.h"
 
+#ifdef HAVE_TINYXML
+#include <tinyxml2.h>
+#include <openvpn/common/exception.hpp>
+#include <openvpn/common/xmlhelper.hpp>
+using XmlDocPtr = std::shared_ptr<openvpn::Xml::Document>;
+#endif
+
+
 #include "dbus/requiresqueue-proxy.hpp"
 #include "client/statistics.hpp"
 #include "events/status.hpp"
@@ -555,6 +563,17 @@ class Manager
     {
         return Ptr(new Manager(conn));
     };
+
+#ifdef HAVE_TINYXML
+    XmlDocPtr Introspect()
+    {
+        auto prxqry = DBus::Proxy::Utils::Query::Create(proxy);
+        std::string introsp = prxqry->Introspect(Constants::GenPath("sessions"));
+        XmlDocPtr doc;
+        doc.reset(new openvpn::Xml::Document(introsp, "introspect"));
+        return doc;
+    }
+#endif
 
 
     /**
