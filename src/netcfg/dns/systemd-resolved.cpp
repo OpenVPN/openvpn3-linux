@@ -135,10 +135,12 @@ void SystemdResolved::Commit(NetCfgSignals::Ptr signal)
             {
                 signal->LogVerb2("systemd-resolved: [" + upd->link->GetPath()
                                  + "] Committing DNS servers");
-                upd->link->SetDNSServers(upd->resolver);
+                auto applied_servers = upd->link->SetDNSServers(upd->resolver);
                 signal->LogVerb2("systemd-resolved: [" + upd->link->GetPath()
                                  + "] Committing DNS search domains");
-                upd->link->SetDomains(upd->search);
+                auto applied_search = upd->link->SetDomains(upd->search);
+
+
                 if (feat_dns_default_route
                     && !upd->link->SetDefaultRoute(upd->default_routing))
                 {
@@ -147,9 +149,27 @@ void SystemdResolved::Commit(NetCfgSignals::Ptr signal)
                                     "requests. Disabling calling this feature.");
                     feat_dns_default_route = false;
                 };
+
+                for (const auto &srv : applied_servers)
+                {
+                    NetCfgChangeEvent ev(NetCfgChangeType::DNS_SERVER_ADDED,
+                                         upd->link->GetDeviceName(),
+                                         {{"dns_server", srv}});
+                    signal->NetworkChange(ev);
+                }
+
+                for (const auto &domain : applied_search)
+                {
+                    NetCfgChangeEvent ev(NetCfgChangeType::DNS_SEARCH_ADDED,
+                                         upd->link->GetDeviceName(),
+                                         {{"search_domain", domain}});
+                    signal->NetworkChange(ev);
+                }
             }
             else
             {
+                // NetCfgChangeEvents for DNS_SERVER_REMOVED and
+                // DNS_SEARCH_REMOVED are sent by the caller of this method
                 upd->link->Revert();
             }
         }
