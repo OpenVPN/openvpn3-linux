@@ -79,6 +79,7 @@ void NetCfgSubscriptions::Subscribe(const std::string &sender, uint32_t filter_f
         throw NetCfgException("Invalid subscription flag, must be < 65535");
     }
     subscriptions[sender] = static_cast<uint16_t>(filter_flags);
+    subscr_owners[sender] = creds_query->GetUID(sender);
 }
 
 
@@ -90,6 +91,7 @@ void NetCfgSubscriptions::Unsubscribe(const std::string &subscriber)
                               + subscriber + "'");
     }
     subscriptions.erase(subscriber);
+    subscr_owners.erase(subscriber);
 }
 
 
@@ -124,6 +126,19 @@ std::vector<std::string> NetCfgSubscriptions::GetSubscribersList(const NetCfgCha
         }
     }
     return targets;
+}
+
+
+uid_t NetCfgSubscriptions::GetSubscriptionOwner(const std::string &sender) const
+{
+    try
+    {
+        return subscr_owners.at(sender);
+    }
+    catch (const std::out_of_range &)
+    {
+        return -1;
+    }
 }
 
 

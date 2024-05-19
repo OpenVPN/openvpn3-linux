@@ -42,7 +42,13 @@ class NetCfgSubscriptions
      *  Contains a list of D-Bus subscribers' unique D-Bus name, mapped against
      *  a filter bit mask built up of bitwise OR of NetCfgChangeType values
      */
-    typedef std::map<std::string, uint16_t> NetCfgNotifSubscriptions;
+    using NetCfgNotifSubscriptions = std::map<std::string, uint16_t>;
+
+    /**
+     *  TODO: Crude subscription owner tracking.  Maps the subscriber callers
+     *  unique busname to the UID of the caller
+     */
+    using NetCfgSubscriptionOwner = std::map<std::string, uid_t>;
 
     [[nodiscard]] static NetCfgSubscriptions::Ptr Create(std::shared_ptr<NetCfgSignals> sigs,
                                                          DBus::Credentials::Query::Ptr creds)
@@ -116,11 +122,22 @@ class NetCfgSubscriptions
     std::vector<std::string> GetSubscribersList(const NetCfgChangeEvent &ev) const;
 
 
+    /**
+     *  TODO: Crude and simplisitic way to extract the UID of the
+     *  subscription owner
+     *
+     * @param sender   Unique D-Bus busname of a D-Bus method caller
+     * @return uid_t Returns the UID of the owner, if found.  If not found -1
+     *         is returned
+     */
+    uid_t GetSubscriptionOwner(const std::string &sender) const;
+
+
   private:
     std::shared_ptr<NetCfgSignals> signals = nullptr;
-    ;
     DBus::Credentials::Query::Ptr creds_query = nullptr;
     NetCfgNotifSubscriptions subscriptions{};
+    NetCfgSubscriptionOwner subscr_owners{};
 
     NetCfgSubscriptions(std::shared_ptr<NetCfgSignals> signals_,
                         DBus::Credentials::Query::Ptr creds_qry_);

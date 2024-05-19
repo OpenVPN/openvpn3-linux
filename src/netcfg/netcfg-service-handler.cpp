@@ -165,12 +165,37 @@ NetCfgServiceHandler::NetCfgServiceHandler(DBus::Connection::Ptr conn_,
 
 const bool NetCfgServiceHandler::Authorize(const DBus::Authz::Request::Ptr authzreq)
 {
-    // - NetCfgSubscriptions related:
-    //    By default, the subscribe method access is managed by
-    //    the D-Bus policy.  The default policy will only allow
-    //    this by the openvpn user account.
 
-    // FIXME:  Implement a proper authorization check
+    if (DBus::Object::Operation::METHOD_CALL == authzreq->operation)
+    {
+        const uid_t caller_uid = creds_query->GetUID(authzreq->caller);
+
+        // - NetCfgSubscriptions related:
+        //    By default, the subscribe method access is managed by
+        //    the D-Bus policy.  The default policy will only allow
+        //    this by the openvpn user account.
+        if ("net.openvpn.v3.netcfg.NotificationSubscriberList" == authzreq->target)
+        {
+            // Only allow root to access the subscriber list
+            return caller_uid == 0;
+        }
+        else if ("net.openvpn.v3.netcfg.NotificationUnsubscribe" == authzreq->target)
+        {
+            if (!subscriptions)
+            {
+                return false;
+            }
+            uid_t sub_owner = subscriptions->GetSubscriptionOwner(authzreq->caller);
+            signals->Debug("net.openvpn.v3.netcfg.NotificationUnsubscribe: "
+                           "owner_uid=" + std::to_string(sub_owner)
+                           + ", caller_uid=" + std::to_string(caller_uid));
+            return (caller_uid == 0) || (caller_uid == sub_owner);
+        }
+    }
+
+    // TODO:  Improve with better ACL checks.  Historically, there has not
+    //        been much checks, with the exception above.  But this should
+    //        be hardened a bit.  Use polkit?
     return true;
 }
 
@@ -299,22 +324,30 @@ void NetCfgServiceHandler::method_protect_socket(DBus::Object::Method::Arguments
 
 void NetCfgServiceHandler::method_cleanup_process_resources(DBus::Object::Method::Arguments::Ptr args)
 {
-
-    pid_t pid = creds_query->GetPID(args->GetCallerBusName());
-    signals->LogInfo(std::string("Cleaning up resources for PID ")
-                     + std::to_string(pid) + ".");
-
-    // Just normal loop here, since we delete from the container while modifying it
-    for (const auto &it : object_manager->GetAllObjects())
+    try
     {
-        NetCfgDevice::Ptr tundev = std::static_pointer_cast<NetCfgDevice>(it.second);
-        if (tundev->getCreatorPID() == pid)
+        pid_t pid = creds_query->GetPID(args->GetCallerBusName());
+        signals->LogInfo(std::string("Cleaning up resources for PID ")
+                         + std::to_string(pid) + ".");
+
+        // Just normal loop here, since we delete from the container while modifying it
+        for (const auto &it : object_manager->GetAllObjects())
         {
-            // The teardown method will also call to the erase method which will
-            // then be a noop but doing the erase here gets us a valid next iterator
-            // tundev->teardown();
-            object_manager->RemoveObject(tundev->GetPath());
+            NetCfgDevice::Ptr tundev = std::static_pointer_cast<NetCfgDevice>(it.second);
+            if (tundev->getCreatorPID() == pid)
+            {
+                // The teardown method will also call to the erase method which will
+                // then be a noop but doing the erase here gets us a valid next iterator
+                // tundev->teardown();
+                object_manager->RemoveObject(tundev->GetPath());
+            }
         }
+        openvpn::cleanup_protected_sockets(pid, signals);
     }
-    openvpn::cleanup_protected_sockets(pid, signals);
+    catch (const DBus::Signals::Exception &excp)
+    {
+        std::cerr << __FUNCTION__ << ":" << __LINE__
+                  << " -- DBus::Signals::Exception: " << excp.what() << std::endl
+                  << "          D-Bus call details:" << args << std::endl;
+    }
 }
