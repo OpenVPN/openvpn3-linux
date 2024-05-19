@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2022 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2022 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2022-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2022-  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -378,9 +378,15 @@ LogEntries Parse::Retrieve()
 
     //  These are the common identifiers OpenVPN 3 Linux logger service
     //  identifiers on Linux
-    sd_journal_add_match(journal, "SYSLOG_IDENTIFIER=openvpn3-service-logger", 0);
+    sd_journal_add_match(journal, "O3_LOG_SENDER=net.openvpn.v3.log", 0);
     sd_journal_add_disjunction(journal);
     sd_journal_add_match(journal, "SYSLOG_IDENTIFIER=net.openvpn.v3.log", 0);
+    sd_journal_add_disjunction(journal);
+
+    // TODO: These two matches can be removed in v25
+    sd_journal_add_match(journal, "SYSLOG_IDENTIFIER=openvpn3-service-logger", 0);
+    sd_journal_add_disjunction(journal);
+    sd_journal_add_match(journal, "SYSLOG_IDENTIFIER=openvpn3-service-log-dev", 0);
 
     while (sd_journal_next(journal) > 0)
     {

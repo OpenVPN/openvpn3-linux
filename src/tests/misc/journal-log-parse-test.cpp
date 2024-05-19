@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2022 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2022 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2022-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2022-  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -12,6 +12,7 @@
  * @brief  Simple command line tool to test the Log::Journald::Parser API
  *
  */
+
 #include <iostream>
 #include "log/journal-log-parse.hpp"
 

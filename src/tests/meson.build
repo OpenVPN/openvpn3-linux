@@ -267,6 +267,20 @@ executable('get-service-version-prop',
     include_directories: [include_dirs, '../..'],
     )
 
+executable('journal-log-parse',
+    [
+        'misc/journal-log-parse-test.cpp',
+    ],
+    build_by_default: build_test_programs,
+    link_with: [
+        common_code,
+    ],
+    dependencies: [
+        base_dependencies,
+    ],
+    include_directories: [include_dirs, '../..'],
+)
+
 logevent_selftest = executable('logevent-selftest',
     [
         'dbus/logevent-selftest.cpp',
