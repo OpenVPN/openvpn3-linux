@@ -12,6 +12,7 @@ commands_collection = static_library(
         'commands/init-config.cpp',
         'commands/journal.cpp',
         'commands/log-service.cpp',
+        'commands/netcfg-service.cpp',
         'commands/variables.cpp',
         'commands/version.cpp',
         'commands/version-services.cpp',

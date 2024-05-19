@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2019 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2019 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2019-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2019-  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -12,8 +12,9 @@
  * @brief  Management commands for the net.openvpn.v3.netcfg service
  */
 
-#include "dbus/core.hpp"
-#include "dbus/connection-creds.hpp"
+#include <gdbuspp/connection.hpp>
+#include <gdbuspp/credentials/query.hpp>
+
 #include "common/cmdargparser.hpp"
 #include "common/configfileparser.hpp"
 #include "common/lookup.hpp"
@@ -25,15 +26,20 @@
 
 int cmd_netcfg_service(ParsedArgs::Ptr args)
 {
-    DBus dbuscon(G_BUS_TYPE_SYSTEM);
-    dbuscon.Connect();
+    auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
     NetCfgProxy::Manager::Ptr prx;
 
     try
     {
-        prx.reset(new NetCfgProxy::Manager(dbuscon.GetConnection()));
+        prx = NetCfgProxy::Manager::Create(dbuscon);
     }
-    catch (const DBusException &)
+    catch (const NetCfgProxyException &excp)
+    {
+        std::cerr << "Could not reach OpenVPN 3 Network Configuration Service: "
+                  << excp.GetError() << std::endl;
+        return 3;
+    }
+    catch (const DBus::Exception &)
     {
         // If --config-file-override is present, we expect
         // the user to want to do configuration changes directly
@@ -47,16 +53,9 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
             return 3;
         }
     }
-    catch (const NetCfgProxyException &excp)
-    {
-        std::cerr << "Could not reach OpenVPN 3 Network Configuration Service: "
-                  << excp.GetError() << std::endl;
-        return 3;
-    }
 
     try
     {
-        DBusConnectionCreds creds(dbuscon.GetConnection());
         args->CheckExclusiveOptions({{"unsubscribe",
                                       "list-subscribers",
                                       "config-show",
@@ -74,13 +73,14 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
 
         if (args->Present("list-subscribers"))
         {
+            auto creds = DBus::Credentials::Query::Create(dbuscon);
             std::cout << "Current subsribers: " << std::endl;
 
             for (const auto &sub : prx->NotificationSubscriberList())
             {
                 std::cout << "- " << sub.first
                           << " (PID "
-                          << std::to_string(creds.GetPID(sub.first)) << ")"
+                          << std::to_string(creds->GetPID(sub.first)) << ")"
                           << std::endl;
 
                 for (const auto &e : NetCfgChangeEvent::FilterMaskList(sub.second))
@@ -229,45 +229,25 @@ int cmd_netcfg_service(ParsedArgs::Ptr args)
     {
         throw CommandException("netcfg-service", excp.what());
     }
-    catch (const DBusException &excp)
-    {
-        throw CommandException("netcfg-service", excp.what());
-    }
-    catch (const DBusProxyAccessDeniedException &excp)
+    catch (const DBus::Exception &excp)
     {
         throw CommandException("netcfg-service", excp.what());
     }
 }
 
 
-
 std::string arghelper_netcfg_subscribers()
 {
-    DBusProxy prx(G_BUS_TYPE_SYSTEM,
-                  OpenVPN3DBus_name_netcfg,
-                  OpenVPN3DBus_interf_netcfg,
-                  OpenVPN3DBus_rootp_netcfg);
+    auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    auto prx = NetCfgProxy::Manager::Create(dbuscon);
 
-    GVariant *l = prx.Call("NotificationSubscriberList");
-    GVariantIter *list = nullptr;
-    g_variant_get(l, "(a(su))", &list);
-
-    GVariant *sub = nullptr;
-    std::string res;
-    while ((sub = g_variant_iter_next_value(list)))
+    auto subscr_list = prx->NotificationSubscriberList();
+    std::string ret{};
+    for (const auto &[subscriber, filtermask] : subscr_list)
     {
-        gchar *subscriber = nullptr;
-        unsigned int mask;
-        g_variant_get(sub, "(su)", &subscriber, &mask);
-
-        res += std::string(subscriber) + " ";
-        g_free(subscriber);
-        g_variant_unref(sub);
+        ret += subscriber + " ";
     }
-    g_variant_iter_free(list);
-    g_variant_unref(l);
-
-    return res;
+    return ret;
 }
 
 
