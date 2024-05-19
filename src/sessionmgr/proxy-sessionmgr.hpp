@@ -497,6 +497,21 @@ class Session : public DBusRequiresQueueProxy
     }
 
 
+    /**
+     *  Retrieve the configuration profile name used when the session
+     *  was started.
+     *
+     *  If the configuration name has been changed in the configuration
+     *  manager after the session was started, this method will still return
+     *  the old configuration name prior the name change.
+     *
+     * @return std::string with the configuration profile name
+     */
+    std::string GetConfigName() const
+    {
+        return proxy->GetProperty<std::string>(target, "config_name");
+    }
+
   private:
     DBus::Proxy::Client::Ptr proxy = nullptr;
     DBus::Proxy::TargetPreset::Ptr target = nullptr;
