@@ -9,6 +9,7 @@ commands_collection = static_library(
     'commandscollection',
     [
         'commands/init-config.cpp',
+        'commands/journal.cpp',
         'commands/variables.cpp',
         'commands/version.cpp',
         'commands/version-services.cpp',
