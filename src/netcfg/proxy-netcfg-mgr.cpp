@@ -234,10 +234,12 @@ void Manager::NotificationUnsubscribe(const std::string &subscriber)
     }
     try
     {
-        proxy->Call(tgt_mgr,
-                    "NotificationUnsubscribe",
-                    glib2::Value::CreateTupleWrapped(subscriber),
-                    true);
+        // This can't be an asynchronous call - the calling process might
+        // have exited before the netcfg service processes this call.
+        GVariant *r = proxy->Call(tgt_mgr,
+                                  "NotificationUnsubscribe",
+                                  glib2::Value::CreateTupleWrapped(subscriber));
+        g_variant_unref(r);
     }
     catch (const DBus::Exception &excp)
     {
