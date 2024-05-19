@@ -194,8 +194,9 @@ class Link
      *  list of servers
      *
      * @param servers ResolverRecord::List with all servers to use
+     * @return std::vector<std:string> of servers applied
      */
-    void SetDNSServers(const ResolverRecord::List &servers) const;
+    std::vector<std::string> SetDNSServers(const ResolverRecord::List &servers) const;
 
     /**
      *  Retrieve the DNS server currently being used for DNS queries
@@ -214,9 +215,11 @@ class Link
     /**
      *  Replace the currently used list of DNS search domains with a new
      *  list
+     *
      * @param doms
+     * @return  std::vector<std:string> of search domains applied
      */
-    void SetDomains(const SearchDomain::List &doms) const;
+    std::vector<std::string> SetDomains(const SearchDomain::List &doms) const;
 
     /**
      *  Retrieve the "Default Route" flag for the interface.

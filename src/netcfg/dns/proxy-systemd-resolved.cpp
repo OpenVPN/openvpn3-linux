@@ -190,18 +190,21 @@ const std::vector<std::string> Link::GetDNSServers() const
 }
 
 
-void Link::SetDNSServers(const ResolverRecord::List &servers) const
+std::vector<std::string> Link::SetDNSServers(const ResolverRecord::List &servers) const
 {
     GVariantBuilder *b = glib2::Builder::Create("a(iay)");
+    std::vector<std::string> applied{};
     for (const auto &srv : servers)
     {
         glib2::Builder::Add(b, srv.GetGVariant());
+        applied.push_back(srv.server);
     }
 
     GVariant *r = proxy->Call(tgt_link,
                               "SetDNS",
                               glib2::Builder::FinishWrapped(b));
     g_variant_unref(r);
+    return applied;
 }
 
 
@@ -250,15 +253,17 @@ const SearchDomain::List Link::GetDomains() const
 }
 
 
-void Link::SetDomains(const SearchDomain::List &doms) const
+std::vector<std::string> Link::SetDomains(const SearchDomain::List &doms) const
 {
     GVariantBuilder *b = glib2::Builder::Create("a(sb)");
+    std::vector<std::string> applied{};
     for (const auto &dom : doms)
     {
         GVariant *r = dom.GetGVariant();
         if (r)
         {
             g_variant_builder_add_value(b, r);
+            applied.push_back(dom.search);
         }
     }
 
@@ -266,6 +271,7 @@ void Link::SetDomains(const SearchDomain::List &doms) const
                               "SetDomains",
                               glib2::Builder::FinishWrapped(b));
     g_variant_unref(r);
+    return applied;
 }
 
 
