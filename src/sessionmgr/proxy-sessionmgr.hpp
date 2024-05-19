@@ -129,6 +129,17 @@ class Session : public DBusRequiresQueueProxy
     }
 
     /**
+     *  Retrieve the PID of the openvpn3-service-client process this
+     *  session object is assigned to
+     *
+     * @return pid_t
+     */
+    pid_t GetBackendPid() const
+    {
+        return proxy->GetProperty<uint32_t>(target, "backend_pid");
+    }
+
+    /**
      *  Makes the VPN backend client process start the connecting to the
      *  VPN server
      */
@@ -519,6 +530,37 @@ class Session : public DBusRequiresQueueProxy
     {
         return proxy->GetProperty<std::string>(target, "config_name");
     }
+
+
+    /**
+     *  Retrieve the assigned session name
+     *
+     *  Once the connection has been established, the OpenVPN 3 Core Library
+     *  will assign the session a session name.
+     *
+     * @return std::string
+     */
+    std::string GetSessionName() const
+    {
+        return proxy->GetProperty<std::string>(target, "session_name");
+    }
+
+
+    /**
+     *  Get a localized string with the timestamp of when the session was
+     *  started.
+     *
+     * @return std::string
+     */
+    std::string GetSessionCreated() const
+    {
+        std::time_t sess_created = proxy->GetProperty<uint64_t>(target,
+                                                                "session_created");
+        std::string c = std::asctime(std::localtime(&sess_created));
+        std::string created = c.substr(0, c.size() - 1);
+        return created;
+    }
+
 
   private:
     DBus::Proxy::Client::Ptr proxy = nullptr;
