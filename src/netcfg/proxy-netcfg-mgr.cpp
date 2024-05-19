@@ -257,7 +257,7 @@ NetCfgSubscriptions::NetCfgNotifSubscriptions Manager::NotificationSubscriberLis
     try
     {
         GVariant *res = proxy->Call(tgt_mgr, "NotificationSubscriberList");
-        glib2::Utils::checkParams(__func__, res, "(a(su)))");
+        glib2::Utils::checkParams(__func__, res, "(a(su))");
 
         GVariantIter *iter = nullptr;
         g_variant_get(res, "(a(su))", &iter);
