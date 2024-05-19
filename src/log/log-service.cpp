@@ -392,6 +392,7 @@ void ServiceHandler::method_attach(DBus::Object::Method::Arguments::Ptr args)
         throw MethodError("Already attached");
     }
 
+    std::lock_guard<std::mutex> guard(attachmap_mtx);
     log_attach_subscr[tag->hash] = AttachedService::Create(connection,
                                                            object_mgr,
                                                            log,
@@ -434,7 +435,6 @@ void ServiceHandler::method_assign_session(DBus::Object::Method::Arguments::Ptr 
 
 void ServiceHandler::method_detach(DBus::Object::Method::Arguments::Ptr args)
 {
-    cleanup_service_subscriptions();
     LogMetaData::Ptr meta = internal::prepare_metadata(this, "Detach", args);
 
     pid_t caller_pid = -1;
@@ -465,6 +465,10 @@ void ServiceHandler::method_detach(DBus::Object::Method::Arguments::Ptr args)
         throw MethodError("Access denied");
     }
 
+    // Serialize Detach method calls as a precaution
+    std::lock_guard<std::mutex> method_guard(method_detachmtx);
+    cleanup_service_subscriptions();
+
     if (log_attach_subscr.find(tag->hash) == log_attach_subscr.end())
     {
         std::ostringstream msg;
@@ -475,7 +479,9 @@ void ServiceHandler::method_detach(DBus::Object::Method::Arguments::Ptr args)
         throw MethodError("Not attached");
     }
 
+    std::lock_guard<std::mutex> remove_guard(attachmap_mtx);
     remove_log_subscription(tag, caller_pid, meta);
+
     args->SetMethodReturn(nullptr);
 }
 

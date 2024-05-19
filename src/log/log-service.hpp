@@ -134,6 +134,7 @@ class ServiceHandler : public DBus::Object::Base
     using AttachMap = std::map<size_t, AttachedService::Ptr>;
     AttachMap log_attach_subscr{};
     std::mutex attachmap_mtx{};
+    std::mutex method_detachmtx{};
 
     using SessionInterfKey = std::pair<DBus::Object::Path, std::string>;
     using SessionLogTagIndex = std::map<SessionInterfKey, size_t>;
@@ -248,9 +249,15 @@ class ServiceHandler : public DBus::Object::Base
     const bool check_busname_service_name(const std::string &caller,
                                           const std::string &busname) const;
     /**
+     *  Remove a log subscription from the subscription list
      *
-     * @param tag
-     * @param pid
+     *  NOTE: Call std::lock_guard<std::mutex> guard(attachmap_mtx) before
+     *        calling this method to avoid failure in other functions
+     *        accessing the subscription list in a parallel thread
+     *
+     * @param tag    LogTag of the subscription to remove
+     * @param pid    pid of the caller. May be 0 as it is only used for logging
+     * @param meta   LogMetaData object with details to attach to the log event
      */
     void remove_log_subscription(LogTag::Ptr tag,
                                  pid_t pid,
