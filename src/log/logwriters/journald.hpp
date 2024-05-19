@@ -24,7 +24,7 @@
 class JournaldWriter : public LogWriter
 {
   public:
-    JournaldWriter();
+    JournaldWriter(const std::string &log_sender);
     virtual ~JournaldWriter() = default;
 
     const std::string GetLogWriterInfo() const override;
@@ -57,5 +57,7 @@ class JournaldWriter : public LogWriter
                      const std::string &colour_init,
                      const std::string &colour_reset) override;
 
+  private:
+    const std::string log_sender;
 };
 #endif // HAVE_SYSTEMD

@@ -29,8 +29,8 @@
 
 
 
-JournaldWriter::JournaldWriter()
-    : LogWriter()
+JournaldWriter::JournaldWriter(const std::string &logsndr)
+    : LogWriter(), log_sender("O3_LOG_SENDER=" + logsndr)
 {
 }
 
@@ -76,10 +76,15 @@ void JournaldWriter::Write(const Events::Log &event)
     // We need extra elements for O3_LOGTAG, O3_SESSION_TOKEN,
     // O3_LOG_GROUP, O3_LOG_CATEGORY, MESSAGE and
     // the NULL termination
-    size_t meta_size = (metadata ? metadata->size() : 0) + 7;
+    size_t meta_size = (metadata ? metadata->size() : 0) + 8;
     struct iovec *l = (struct iovec *)calloc(sizeof(struct iovec) + 2,
                                              meta_size);
+
+    // Add the fixed O3_LOG_SENDER data, to more easily identify
+    // log events from this log service across all Linux distros in the journal
     size_t i = 0;
+    l[i++] = {(char *)strdup(log_sender.c_str()), log_sender.length()};
+
     if (metadata)
     {
         for (const auto &mdr : metadata->GetMetaDataRecords(true, false))
