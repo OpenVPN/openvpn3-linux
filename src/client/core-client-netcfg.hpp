@@ -36,7 +36,7 @@ class NetCfgTunBuilder : public T
                      const std::string &session_token_)
         : disabled_dns_config(false),
           signals(signals_),
-          netcfgmgr(dbuscon),
+          netcfgmgr(NetCfgProxy::Manager::Create(dbuscon)),
           session_token(session_token_),
           session_name("")
     {
@@ -46,7 +46,7 @@ class NetCfgTunBuilder : public T
 #ifdef OPENVPN3_CORE_CLI_TEST
     NetCfgTunBuilder(DBus::Connection::Ptr dbuscon)
         : disabled_dns_config(false),
-          netcfgmgr(dbuscon)
+          netcfgmgr(NetCfgProxy::Manager::Create(dbuscon))
     {
         signals = BackendSignals::Create(dbuscon,
                                          LogGroup::CLIENT,
@@ -75,7 +75,7 @@ class NetCfgTunBuilder : public T
         try
         {
             signals->Debug("Network configuration cleanup requested");
-            netcfgmgr.Cleanup();
+            netcfgmgr->Cleanup();
         }
         catch (const NetCfgProxyException &excp)
         {
@@ -338,7 +338,7 @@ class NetCfgTunBuilder : public T
         {
             devpath = device->GetDevicePath();
         }
-        return netcfgmgr.ProtectSocket(socket, remote, ipv6, devpath);
+        return netcfgmgr->ProtectSocket(socket, remote, ipv6, devpath);
     }
 
 
@@ -371,7 +371,7 @@ class NetCfgTunBuilder : public T
 #ifdef ENABLE_OVPNDCO
     bool tun_builder_dco_available() override
     {
-        return netcfgmgr.DcoAvailable();
+        return netcfgmgr->DcoAvailable();
     }
 
 
@@ -482,8 +482,8 @@ class NetCfgTunBuilder : public T
 
         try
         {
-            std::string devpath = netcfgmgr.CreateVirtualInterface(session_token);
-            device.reset(netcfgmgr.getVirtualInterface(devpath));
+            std::string devpath = netcfgmgr->CreateVirtualInterface(session_token);
+            device.reset(netcfgmgr->getVirtualInterface(devpath));
             try
             {
                 device->SetDNSscope(dns_scope);
@@ -507,7 +507,7 @@ class NetCfgTunBuilder : public T
 #ifdef ENABLE_OVPNDCO
     NetCfgProxy::DCO::Ptr dco;
 #endif
-    NetCfgProxy::Manager netcfgmgr;
+    NetCfgProxy::Manager::Ptr netcfgmgr = nullptr;
     std::string session_token;
     std::string session_name;
 };

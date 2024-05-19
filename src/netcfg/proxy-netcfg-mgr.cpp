@@ -36,6 +36,12 @@ namespace NetCfgProxy {
 //  class NetCfgProxy::Manager
 //
 
+Manager::Ptr Manager::Create(DBus::Connection::Ptr dbuscon)
+{
+    return Manager::Ptr(new Manager(dbuscon));
+}
+
+
 Manager::Manager(DBus::Connection::Ptr dbuscon_)
     : dbuscon(dbuscon_)
 {

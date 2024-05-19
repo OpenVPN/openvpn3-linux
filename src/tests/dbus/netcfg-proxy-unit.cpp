@@ -29,8 +29,8 @@
 int main(int argc, char **argv)
 {
     auto conn = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    auto netcfgmgr = NetCfgProxy::Manager::Create(conn);
 
-    NetCfgProxy::Manager netcfgmgr(conn);
     int failures = 0;
     size_t not_our_devs = 0;
 
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
         for (int i = 0; i < 10; i++)
         {
             std::string devname = "testdev" + std::to_string(i);
-            std::string devpath = netcfgmgr.CreateVirtualInterface(devname);
+            std::string devpath = netcfgmgr->CreateVirtualInterface(devname);
             std::cout << "    Device created: " << devname << " ... "
                       << devpath << std::endl;
             ;
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
         std::cout << std::endl;
 
         std::cout << "Fetching device paths ... " << std::endl;
-        DBus::Object::Path::List devpaths = netcfgmgr.FetchInterfaceList();
+        DBus::Object::Path::List devpaths = netcfgmgr->FetchInterfaceList();
         DBus::Object::Path::List our_devs{};
         size_t match_count = 0;
         for (const auto &p : devpaths)
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 
 
         std::cout << "Re-fetching device paths ... " << std::endl;
-        devpaths = netcfgmgr.FetchInterfaceList();
+        devpaths = netcfgmgr->FetchInterfaceList();
 
         if (devpaths.size() != not_our_devs)
         {

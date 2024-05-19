@@ -44,7 +44,7 @@ class Manager
      *
      * @param dbuscon  D-Bus connection to use for D-Bus calls
      */
-    Manager(DBus::Connection::Ptr dbuscon);
+    [[nodiscard]] static Manager::Ptr Create(DBus::Connection::Ptr dbuscon);
 
     const std::string GetConfigFile();
 
@@ -72,5 +72,7 @@ class Manager
     DBus::Proxy::Client::Ptr proxy{nullptr};
     DBus::Proxy::Utils::Query::Ptr proxy_helper{nullptr};
     DBus::Proxy::TargetPreset::Ptr tgt_mgr{nullptr};
+
+    Manager(DBus::Connection::Ptr dbuscon);
 };
 } // namespace NetCfgProxy
