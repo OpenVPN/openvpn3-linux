@@ -10,6 +10,7 @@ commands_collection = static_library(
     [
         'arghelpers.cpp',
         'commands/config/configs-list.cpp',
+        'commands/config/config-manage.cpp',
         'commands/init-config.cpp',
         'commands/journal.cpp',
         'commands/log-service.cpp',
@@ -35,6 +36,7 @@ executable('openvpn3-dev',
     link_with: [
         common_code,
         commands_collection,
+        configmgr_lib,
     ],
     include_directories: [include_dirs, '../..'],
     install: false,
