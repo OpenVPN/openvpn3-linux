@@ -22,6 +22,7 @@
 #include "configmgr/proxy-configmgr.hpp"
 #include "common/cmdargparser.hpp"
 #include "sessionmgr/proxy-sessionmgr.hpp"
+#include "arghelpers.hpp"
 
 /**
  * Retrieves a list of available configuration paths
@@ -247,6 +248,8 @@ std::string arghelper_log_levels()
  *                     case of errors
  * @param config_name  std::string containing the configuration name to
  *                     look up
+ * @param dbusconn     (optional) DBus::Connection to reuse an existing
+ *                     connection
  *
  * @return  Returns a std::string containing the D-Bus configuration path
  *          if a match was found.
@@ -255,11 +258,14 @@ std::string arghelper_log_levels()
  *          paths were found.
  */
 std::string retrieve_config_path(const std::string &cmd,
-                                 const std::string &config_name)
+                                 const std::string &config_name,
+                                 DBus::Connection::Ptr dbusconn)
 {
-    auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
-    OpenVPN3ConfigurationProxy cfgmgr(dbuscon,
-                                       Constants::GenPath("configuration"));
+    auto conn = (dbusconn
+                     ? dbusconn
+                     : DBus::Connection::Create(DBus::BusType::SYSTEM));
+    OpenVPN3ConfigurationProxy cfgmgr(conn,
+                                      Constants::GenPath("configuration"));
 
     auto paths = cfgmgr.LookupConfigName(config_name);
     if (0 == paths.size())

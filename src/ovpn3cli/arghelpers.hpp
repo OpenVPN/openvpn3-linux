@@ -16,6 +16,11 @@
 
 #pragma once
 
+#include <gdbuspp/connection.hpp>
+
+#include <string>
+
+
 /**
  * Retrieves a list of available configuration paths
  *
@@ -79,4 +84,5 @@ std::string arghelper_boolean();
 std::string arghelper_log_levels();
 
 std::string retrieve_config_path(const std::string &cmd,
-                                 const std::string &config_name);
+                                 const std::string &config_name,
+                                 DBus::Connection::Ptr dbusconn = nullptr);
