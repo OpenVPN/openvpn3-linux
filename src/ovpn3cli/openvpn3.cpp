@@ -21,7 +21,7 @@ inline const std::vector<PrepareCommand> registered_commands = {
 
     // prepare_command_config_import,
     prepare_command_config_manage,
-    // prepare_command_config_acl,
+    prepare_command_config_acl,
     // prepare_command_config_dump,
     // prepare_command_config_remove,
     prepare_command_configs_list,
