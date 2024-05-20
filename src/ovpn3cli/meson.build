@@ -13,6 +13,7 @@ commands_collection = static_library(
         'commands/config/config-acl.cpp',
         'commands/config/config-dump.cpp',
         'commands/config/config-manage.cpp',
+        'commands/config/config-remove.cpp',
         'commands/init-config.cpp',
         'commands/journal.cpp',
         'commands/log-service.cpp',

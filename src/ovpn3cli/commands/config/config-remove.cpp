@@ -2,28 +2,28 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018 - 2023  Arne Schwabe <arne@openvpn.net>
-//  Copyright (C) 2020 - 2023  Lev Stipakov <lev@openvpn.net>
+//  Copyright (C) 2018-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2018-  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018-  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2020-  Lev Stipakov <lev@openvpn.net>
 //
 
 /**
- * @file   config.hpp
+ * @file   config/config-remove.hpp
  *
  * @brief  Implementation of all the various openvpn3 config-* commands
  */
 
-#include "config.h"
+#include "build-config.h"
 #include <json/json.h>
+#include <gdbuspp/connection.hpp>
 
-#include "dbus/core.hpp"
 #include "common/cmdargparser.hpp"
 #include "common/lookup.hpp"
+#include "dbus/constants.hpp"
 #include "configmgr/proxy-configmgr.hpp"
 #include "sessionmgr/proxy-sessionmgr.hpp"
-#include "../arghelpers.hpp"
-
+#include "../../arghelpers.hpp"
 
 
 /**
@@ -45,11 +45,15 @@ static int cmd_config_remove(ParsedArgs::Ptr args)
                                "(--config, --path)");
     }
 
+    DBus::Connection::Ptr dbuscon = nullptr;
+    OpenVPN3ConfigurationProxy::Ptr conf = nullptr;
     try
     {
+        dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
         std::string path = (args->Present("config")
                                 ? retrieve_config_path("config-remove",
-                                                       args->GetValue("config", 0))
+                                                       args->GetValue("config", 0),
+                                                       dbuscon)
                                 : args->GetValue("path", 0));
 
         std::string response;
@@ -64,15 +68,16 @@ static int cmd_config_remove(ParsedArgs::Ptr args)
             std::cin >> response;
         }
 
+
         if ("YES" == response || args->Present("force"))
         {
-            OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, path);
-            if (!conf.CheckObjectExists())
+            conf = OpenVPN3ConfigurationProxy::Create(dbuscon, path);
+            if (!conf->CheckObjectExists())
             {
                 throw CommandException("config-remove",
                                        "Configuration does not exist");
             }
-            conf.Remove();
+            conf->Remove();
             std::cout << "Configuration removed." << std::endl;
         }
         else
@@ -82,7 +87,7 @@ static int cmd_config_remove(ParsedArgs::Ptr args)
         }
         return 0;
     }
-    catch (DBusException &err)
+    catch (const DBus::Exception &err)
     {
         throw CommandException("config-remove", err.GetRawError());
     }
@@ -128,7 +133,3 @@ SingleCommand::Ptr prepare_command_config_remove()
 
     return cmd;
 }
-
-
-
-//////////////////////////////////////////////////////////////////////////
