@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2017-  David Sommerseth <davids@openvpn.net>
 //
 
 #define OVPN3CLI_OPENVPN3
@@ -24,7 +24,7 @@ inline const std::vector<PrepareCommand> registered_commands = {
     // prepare_command_config_acl,
     // prepare_command_config_dump,
     // prepare_command_config_remove,
-    // prepare_command_configs_list,
+    prepare_command_configs_list,
 
     // prepare_command_session_start,
     // prepare_command_session_manage,

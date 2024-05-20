@@ -35,6 +35,8 @@ SingleCommand::Ptr prepare_command_config_manage();
 SingleCommand::Ptr prepare_command_config_acl();
 SingleCommand::Ptr prepare_command_config_dump();
 SingleCommand::Ptr prepare_command_config_remove();
+
+// Commands provided in config/configs-list.cpp
 SingleCommand::Ptr prepare_command_configs_list();
 
 // Commands provided in init-config.cpp
