@@ -101,6 +101,13 @@ class OpenVPN3ConfigurationProxy
     }
 
 
+    bool CheckObjectExists() const
+    {
+        return proxy_qry->CheckObjectExists(proxy_tgt->object_path,
+                                            proxy_tgt->interface);
+    }
+
+
     const bool CheckFeatures(const CfgMgrFeatures &feat)
     {
         if (features == CfgMgrFeatures::UNDEFINED)
