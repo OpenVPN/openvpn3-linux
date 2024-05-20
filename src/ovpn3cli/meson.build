@@ -12,6 +12,7 @@ commands_collection = static_library(
         'commands/config/configs-list.cpp',
         'commands/config/config-acl.cpp',
         'commands/config/config-dump.cpp',
+        'commands/config/config-import.cpp',
         'commands/config/config-manage.cpp',
         'commands/config/config-remove.cpp',
         'commands/init-config.cpp',

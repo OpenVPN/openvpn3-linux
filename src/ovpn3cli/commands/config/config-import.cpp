@@ -2,9 +2,9 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018 - 2023  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2018-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2018-  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018-  Arne Schwabe <arne@openvpn.net>
 //
 
 /**
@@ -15,19 +15,20 @@
 
 #include <string>
 #include <vector>
+#include <gdbuspp/connection.hpp>
 
-#include "config.h"
+#include "log/core-dbus-logger.hpp"
+#include <openvpn/options/merge.hpp>
+#include <openvpn/common/options.hpp>
+#include <openvpn/client/cliconstants.hpp>
 
-#define USE_TUN_BUILDER
-#include <client/ovpncli.cpp>
-
-#include "dbus/core.hpp"
+#include "build-config.h"
 #include "common/cmdargparser.hpp"
+
 #include "configmgr/proxy-configmgr.hpp"
-#include "../arghelpers.hpp"
+#include "../../arghelpers.hpp"
 
 using namespace openvpn;
-
 
 
 /**
@@ -95,13 +96,14 @@ std::string import_config(const std::string &filename,
     }
 
     // Import the configuration fileh
-    OpenVPN3ConfigurationProxy conf(G_BUS_TYPE_SYSTEM, OpenVPN3DBus_rootp_configuration);
-    conf.Ping();
+    auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    auto conf = OpenVPN3ConfigurationProxy::Create(dbuscon,
+                                                   Constants::GenPath("configuration"));
 
-    std::string cfgpath = conf.Import(cfgname,
-                                      pm.profile_content(),
-                                      single_use,
-                                      persistent);
+    DBus::Object::Path cfgpath = conf->Import(cfgname,
+                                              pm.profile_content(),
+                                              single_use,
+                                              persistent);
 
     // If the configuration profile contained --persist-tun,
     // set the related property in the D-Bus configuration object.
@@ -115,19 +117,19 @@ std::string import_config(const std::string &filename,
     //  them to the profile as well.
     if (persist_tun || !tags.empty())
     {
-        OpenVPN3ConfigurationProxy cfgprx(G_BUS_TYPE_SYSTEM, cfgpath, true);
+        auto cfgprx = OpenVPN3ConfigurationProxy::Create(dbuscon, cfgpath, true);
 
         if (persist_tun)
         {
-            const ValidOverride &vo = cfgprx.LookupOverride("persist-tun");
-            cfgprx.SetOverride(vo, true);
+            const ValidOverride &vo = cfgprx->LookupOverride("persist-tun");
+            cfgprx->SetOverride(vo, true);
         }
 
-        if (cfgprx.CheckFeatures(CfgMgrFeatures::TAGS))
+        if (cfgprx->CheckFeatures(CfgMgrFeatures::TAGS))
         {
             for (const auto &t : tags)
             {
-                cfgprx.AddTag(t);
+                cfgprx->AddTag(t);
             }
         }
         else
@@ -136,7 +138,6 @@ std::string import_config(const std::string &filename,
                       << "skipping tagging" << std::endl;
         }
     }
-
 
     // Return the object path to this configuration profile
     return cfgpath;
