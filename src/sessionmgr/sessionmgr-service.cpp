@@ -249,7 +249,7 @@ SessionCollection SrvHandler::helper_retrieve_sessions(const std::string &caller
                                  || caller.empty());
 
             // If the device object is not null, the path should be valid
-            if (sess_obj && caller_check && filter_fn(sess_obj))
+            if (caller_check && filter_fn(sess_obj))
             {
                 sessions.push_back(sess_obj);
             }
@@ -264,7 +264,7 @@ SessionCollection SrvHandler::helper_retrieve_sessions(const std::string &caller
 //
 //  SessionManager::Service
 //
-//// parentheses
+//
 
 
 
