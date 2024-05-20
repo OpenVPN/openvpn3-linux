@@ -18,7 +18,9 @@
 #include <gdbuspp/proxy/utils.hpp>
 
 #include "dbus/constants.hpp"
+#include "common/utils.hpp"
 #include "configmgr/overrides.hpp"
+
 
 
 class CfgMgrProxyException : public DBus::Exception
@@ -88,7 +90,7 @@ class OpenVPN3ConfigurationProxy
 
     void Ping() const
     {
-        if(!proxy_qry->Ping())
+        if (!proxy_qry->Ping())
         {
             throw DBus::Proxy::Exception(
                 Constants::GenServiceName("configuration"),
@@ -719,6 +721,83 @@ class OpenVPN3ConfigurationProxy
         auto ret = proxy->GetPropertyArray<uid_t>(proxy_tgt, "acl");
         return ret;
     }
+
+
+    /**
+     *  Get a textual representation of when this configuration profile
+     *  was last used for a VPN session
+     *
+     * @return std::string
+     */
+    std::string GetLastUsed() const
+    {
+        std::time_t tstmp = proxy->GetProperty<uint64_t>(proxy_tgt,
+                                                         "last_used_timestamp");
+        return get_local_tstamp(tstmp);
+    }
+
+    /**
+     *  Get the raw time_t (epoch) value of when this configuration
+     *  profile was last used
+     *
+     * @return std::time_t
+     */
+    std::time_t GetLastUsedTimestamp() const
+    {
+        std::time_t tstmp = proxy->GetProperty<uint64_t>(proxy_tgt,
+                                                         "last_used_timestamp");
+        return tstmp;
+    }
+
+    /**
+     *  Get a textual representation of when this configuration profile
+     *  was first imported into the configuration manager
+     *
+     * @return std::string
+     */
+    std::string GetImportTime() const
+    {
+        std::time_t tstmp = proxy->GetProperty<uint64_t>(proxy_tgt,
+                                                         "import_timestamp");
+        return get_local_tstamp(tstmp);
+    }
+
+    /**
+     *  Get the raw time_t (epoch) value of when this configuration
+     *  profile was first imported into the configuration manager
+     *
+     * @return std::time_t
+     */
+    std::time_t GetImportTimestamp() const
+    {
+        std::time_t tstmp = proxy->GetProperty<uint64_t>(proxy_tgt,
+                                                         "import_timestamp");
+        return tstmp;
+    }
+
+    /**
+     *  Get the uid_t of the owner (the user who imported) this
+     *  configuration profile
+     *
+     * @return uid_t
+     */
+    uid_t GetOwner() const
+    {
+        return proxy->GetProperty<uid_t>(proxy_tgt, "owner");
+    }
+
+    /**
+     *  Retrieve the counter how many times this configuration
+     *  profile has been used to start a VPN session
+     *
+     * @return uint32_t
+     */
+    uint32_t GetUsedCounter() const
+    {
+        return proxy->GetProperty<uint32_t>(proxy_tgt, "used_count");
+    }
+
+
 
 
   private:
