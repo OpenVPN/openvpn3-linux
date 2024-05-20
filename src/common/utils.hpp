@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2017-  David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <ctime>
 #include <string>
 
 #include "build-version.h"
@@ -35,3 +36,13 @@ static inline std::string simple_basename(const std::string filename)
 {
     return filename.substr(filename.rfind('/') + 1);
 }
+
+
+/**
+ *  Converts a time_t (epoch) value to a human readable
+ *  date/time string, based on the local time zone.
+ *
+ * @param epoch         time_t value to convert
+ * @return std::string containing the human readable representation
+ */
+std::string get_local_tstamp(const std::time_t epoch);

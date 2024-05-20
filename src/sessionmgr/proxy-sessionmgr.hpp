@@ -33,6 +33,7 @@ using XmlDocPtr = std::shared_ptr<openvpn::Xml::Document>;
 
 #include "dbus/requiresqueue-proxy.hpp"
 #include "client/statistics.hpp"
+#include "common/utils.hpp"
 #include "events/status.hpp"
 #include "log/log-helpers.hpp"
 #include "log/dbus-log.hpp"
@@ -556,9 +557,7 @@ class Session : public DBusRequiresQueueProxy
     {
         std::time_t sess_created = proxy->GetProperty<uint64_t>(target,
                                                                 "session_created");
-        std::string c = std::asctime(std::localtime(&sess_created));
-        std::string created = c.substr(0, c.size() - 1);
-        return created;
+        return get_local_tstamp(sess_created);
     }
 
 

@@ -2,14 +2,15 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2017-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2017-  David Sommerseth <davids@openvpn.net>
 //
 
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <cstring>
+#include <iomanip>
 #include <stdexcept>
 #include <algorithm>
 #include <string_view>
@@ -180,4 +181,16 @@ void set_console_echo(bool echo)
         console.c_lflag &= ~ECHO;
     }
     tcsetattr(STDIN_FILENO, TCSANOW, &console);
+}
+
+
+std::string get_local_tstamp(const std::time_t epoch)
+{
+    if (epoch > 0)
+    {
+        std::stringstream tstmp;
+        tstmp << std::put_time(std::localtime(&epoch), "%F %X");
+        return std::string(tstmp.str());
+    }
+    return "";
 }
