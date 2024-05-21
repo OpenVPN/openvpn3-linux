@@ -15,6 +15,7 @@ commands_collection = static_library(
         'commands/config/config-import.cpp',
         'commands/config/config-manage.cpp',
         'commands/config/config-remove.cpp',
+        'commands/session/sessions-list.cpp',
         'commands/init-config.cpp',
         'commands/journal.cpp',
         'commands/log-service.cpp',
