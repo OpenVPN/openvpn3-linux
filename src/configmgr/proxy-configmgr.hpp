@@ -94,7 +94,7 @@ class OpenVPN3ConfigurationProxy
                     Constants::GenServiceName("configuration"),
                     proxy_tgt->object_path,
                     proxy_tgt->interface,
-                    "Configuration profile object not found");
+                    "Configuration profile not found");
             }
         }
     }
