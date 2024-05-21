@@ -124,6 +124,14 @@ class Session : public DBusRequiresQueueProxy
         return Ptr(new Session(prx, objpath));
     };
 
+
+    bool CheckSessionExists() const noexcept
+    {
+        return prxqry->CheckObjectExists(target->object_path,
+                                         target->interface);
+    }
+
+
     const DBus::Object::Path GetPath() const
     {
         return target->object_path;
@@ -575,6 +583,7 @@ class Session : public DBusRequiresQueueProxy
   private:
     DBus::Proxy::Client::Ptr proxy = nullptr;
     DBus::Proxy::TargetPreset::Ptr target = nullptr;
+    DBus::Proxy::Utils::Query::Ptr prxqry = nullptr;
 
     Session(DBus::Proxy::Client::Ptr prx, const DBus::Object::Path &objpath)
         : DBusRequiresQueueProxy("UserInputQueueGetTypeGroup",
@@ -585,7 +594,7 @@ class Session : public DBusRequiresQueueProxy
     {
         target = DBus::Proxy::TargetPreset::Create(objpath,
                                                    Constants::GenInterface("sessions"));
-
+        prxqry = DBus::Proxy::Utils::Query::Create(proxy);
         AssignProxy(proxy, target);
     }
 
