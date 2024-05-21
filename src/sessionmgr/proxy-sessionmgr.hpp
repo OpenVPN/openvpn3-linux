@@ -534,6 +534,17 @@ class Session : public DBusRequiresQueueProxy
 
 
     /**
+     *  Retrieve the configuration profile D-Bus path for the session
+     *
+     * @return DBus::Object::Path
+     */
+    DBus::Object::Path GetConfigPath() const
+    {
+        return proxy->GetProperty<DBus::Object::Path>(target, "config_path");
+    }
+
+
+    /**
      *  Retrieve the assigned session name
      *
      *  Once the connection has been established, the OpenVPN 3 Core Library
