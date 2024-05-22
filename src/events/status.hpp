@@ -77,7 +77,7 @@ struct Status
      *  Configures what should be printed
      * @param m
      */
-    void GetPrintMode(const Status::PrintMode m);
+    void SetPrintMode(const Status::PrintMode m);
 
     /**
      *  Compares the saved status against a specific state

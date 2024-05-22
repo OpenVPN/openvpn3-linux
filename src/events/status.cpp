@@ -92,7 +92,7 @@ bool Status::empty() const
 }
 
 
-void Status::GetPrintMode(const Status::PrintMode m)
+void Status::SetPrintMode(const Status::PrintMode m)
 {
     print_mode = static_cast<unsigned short>(m);
 }
