@@ -19,36 +19,9 @@
 #include "common/cmdargparser.hpp"
 #include "sessionmgr/proxy-sessionmgr.hpp"
 #include "../../arghelpers.hpp"
+#include "helpers.hpp"
 
-
-/**
- *  Converts ConnectionStats into a plain-text string
- *
- * @param stats  The ConnectionStats object returned by fetch_stats()
- * @return Returns std::string with the statistics pre-formatted as text/plain
- */
-std::string statistics_plain(ConnectionStats &stats)
-{
-    if (stats.size() < 1)
-    {
-        return "";
-    }
-
-    std::stringstream out;
-    out << std::endl
-        << "Connection statistics:" << std::endl;
-    for (auto &sd : stats)
-    {
-        out << "     "
-            << sd.key
-            << std::setw(20 - sd.key.size()) << std::setfill('.') << "."
-            << std::setw(12) << std::setfill('.')
-            << sd.value
-            << std::endl;
-    }
-    out << std::endl;
-    return out.str();
-}
+using namespace ovpn3cli::session;
 
 
 /**

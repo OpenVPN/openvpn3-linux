@@ -77,6 +77,15 @@ void start_session(SessionManager::Proxy::Session::Ptr session,
  */
 bool start_url_auth(const std::string &url);
 
+
+/**
+ *  Parse ConnectionStats container into a human readable string
+ *
+ * @param stats
+ * @return std::string
+ */
+std::string statistics_plain(ConnectionStats &stats);
+
 } // namespace ovpn3cli::session
 
 
