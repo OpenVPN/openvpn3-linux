@@ -222,18 +222,19 @@ class Session : public DBusRequiresQueueProxy
     {
         try
         {
-            simple_call("Ready", "Connection not ready to connect yet");
+            GVariant *res = proxy->Call(target, "Ready");
+            g_variant_unref(res);
         }
         catch (DBus::Proxy::Exception &excp)
         {
             // Throw D-Bus errors related to "Ready" errors as ReadyExceptions
-            std::string e(excp.GetRawError());
+            std::string e(excp.what());
             if (e.find("net.openvpn.v3.error.ready") != std::string::npos)
             {
-                throw ReadyException(e);
+                throw ReadyException(excp.GetRawError());
             }
             // Otherwise, just rethrow the DBusException
-            throw SessionManager::Proxy::Exception(e);
+            throw SessionManager::Proxy::Exception(excp.GetRawError());
         }
     }
 
