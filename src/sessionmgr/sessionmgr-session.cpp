@@ -873,8 +873,8 @@ void Session::helper_stop_log_forwards()
                               + " (user: "
                               + lookup_username(creds_qry->GetUID(owner_busid))
                               + ")");
-        log_forwarders.clear();
     }
+    log_forwarders.clear();
 }
 
 } // namespace SessionManager
