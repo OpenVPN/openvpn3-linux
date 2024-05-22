@@ -608,7 +608,7 @@ class CoreVPNClient : public CLIENTBASECLASS
         signals->StatusChange(StatusMajor::SESSION,
                               StatusMinor::SESS_AUTH_URL,
                               url);
-        run_status = StatusMinor::CFG_REQUIRE_USER;
+        run_status = StatusMinor::SESS_AUTH_URL;
     }
 
 

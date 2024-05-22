@@ -149,6 +149,12 @@ class BackendClientObject : public DBus::Object::Base
                                                 "Missing user credentials",
                                                 "net.openvpn.v3.error.ready");
                       }
+                      if (StatusMinor::SESS_AUTH_URL == self->vpnclient->GetRunStatus())
+                      {
+                          throw ClientException("Ready",
+                                                "Pending web authentication",
+                                                "net.openvpn.v3.error.ready");
+                      }
                       args->SetMethodReturn(nullptr);
                   });
 
@@ -651,10 +657,12 @@ class BackendClientObject : public DBus::Object::Base
                 case StatusMinor::CONN_CONNECTING:
                 case StatusMinor::CONN_FAILED:
                 case StatusMinor::SESS_AUTH_CHALLENGE:
+                case StatusMinor::SESS_AUTH_URL:
                 default:
                     // Neither of these statuses should result in retrying
-                    // to connect.  SESS_AUTH_CHALLENGE already has a connection
-                    // running and no re-connect is needed.
+                    // to connect.  SESS_AUTH_CHALLENGE and SESS_AUTH_URL
+                    // already has a connection running and no re-connect
+                    // is needed.
                     return;
                 }
             } while (!can_continue);
