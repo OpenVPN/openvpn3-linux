@@ -225,7 +225,7 @@ class Session : public DBusRequiresQueueProxy
                 throw ReadyException(excp.GetRawError());
             }
             // Otherwise, just rethrow the DBusException
-            throw SessionManager::Proxy::Exception(excp.GetRawError());
+            throw SessionManager::Proxy::Exception(excp.what());
         }
     }
 
