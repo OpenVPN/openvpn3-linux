@@ -117,6 +117,7 @@ class Session : public DBusRequiresQueueProxy
 {
   public:
     using Ptr = std::shared_ptr<Session>;
+    using List = std::vector<Session::Ptr>;
 
     [[nodiscard]] static Ptr Create(DBus::Proxy::Client::Ptr prx,
                                     const DBus::Object::Path &objpath)
@@ -664,7 +665,7 @@ class Manager
     }
 
 
-    const std::vector<DBus::Object::Path> FetchAvailableSessionPaths() const
+    const DBus::Object::Path::List FetchAvailableSessionPaths() const
     {
         try
         {
@@ -683,11 +684,11 @@ class Manager
      *  Retrieve an array of Session objects for all available
      *  sessions
      *
-     * @return  std::vector<SessionManager::Proxy::Session::Ptr>
+     * @return  Session::List (aka std::vector<SessionManager::Proxy::Session::Ptr>)
      */
-    const std::vector<Session::Ptr> FetchAvailableSessions() const
+    const Session::List FetchAvailableSessions() const
     {
-        std::vector<Session::Ptr> ret{};
+        Session::List ret{};
         for (const auto &session_path : FetchAvailableSessionPaths())
         {
             ret.push_back(Session::Create(proxy, session_path));
@@ -725,11 +726,11 @@ class Manager
      * @param cfgname  std::string containing the configuration name to
      *                 look up
      *
-     * @return Returns a std::vector<std::string> with all session object
+     * @return Returns a DBus::Object::Path::list with all session object
      *         paths which were started with the given configuration name.
      *         If no match is found, the std::vector will be empty.
      */
-    const std::vector<DBus::Object::Path> LookupConfigName(const std::string &cfgname) const
+    const DBus::Object::Path::List LookupConfigName(const std::string &cfgname) const
     {
         try
         {
