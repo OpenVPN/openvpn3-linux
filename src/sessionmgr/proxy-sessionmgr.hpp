@@ -42,22 +42,13 @@ using XmlDocPtr = std::shared_ptr<openvpn::Xml::Document>;
 namespace SessionManager::Proxy {
 
 
-class Exception : public std::exception
+class Exception : public DBus::Exception
 {
   public:
     Exception(const std::string &err) noexcept
-        : error(err)
+        : DBus::Exception("SessionManager::Proxy", err)
     {
     }
-    ~Exception() noexcept = default;
-
-    const char *what() const noexcept
-    {
-        return error.c_str();
-    }
-
-  private:
-    const std::string error;
 };
 
 /**
