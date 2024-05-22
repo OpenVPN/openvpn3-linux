@@ -78,3 +78,11 @@ void start_session(SessionManager::Proxy::Session::Ptr session,
 bool start_url_auth(const std::string &url);
 
 } // namespace ovpn3cli::session
+
+
+// Implemented in config-import.cpp
+std::string import_config(const std::string &filename,
+                          const std::string &cfgname,
+                          const bool single_use,
+                          const bool persistent,
+                          const std::vector<std::string> &tags);

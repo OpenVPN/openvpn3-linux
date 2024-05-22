@@ -27,8 +27,19 @@ SessionException::SessionException(const std::string &msg)
 }
 
 
+enum class ExitReason
+{
+    NONE,
+    CTRL_C,
+    ERROR,
+    ABORTED,
+    DONE
+};
 
-bool sigint_received = false; /**< Global flag indicating SIGINT event */
+/**
+ *  namespace global flag to indicate why the program is exiting
+ */
+ExitReason exit_reason = ExitReason::NONE;
 
 /**
  *  Signal handler called on SIGINT events.  This just sets
@@ -38,7 +49,7 @@ bool sigint_received = false; /**< Global flag indicating SIGINT event */
  */
 static void sigint_handler(int sig)
 {
-    sigint_received = true;
+    exit_reason = ExitReason::CTRL_C;
     std::cout << "!!" << std::endl;
 }
 
@@ -80,72 +91,97 @@ bool start_url_auth(const std::string &url)
 bool query_user_input(SessionManager::Proxy::Session::Ptr session,
                       struct sigaction *sigact)
 {
-    for (auto &type_group : session->QueueCheckTypeGroup())
+    try
     {
-        ClientAttentionType type;
-        ClientAttentionGroup group;
-        std::tie(type, group) = type_group;
-
-        if (ClientAttentionType::CREDENTIALS == type)
+        for (auto &type_group : session->QueueCheckTypeGroup())
         {
-            if (sigact)
+            ClientAttentionType type;
+            ClientAttentionGroup group;
+            std::tie(type, group) = type_group;
+
+            if (ClientAttentionType::CREDENTIALS == type)
             {
-                sigaction(SIGINT, sigact, NULL);
-            }
-            std::vector<struct RequiresSlot> reqslots;
-            session->QueueFetchAll(reqslots, type, group);
-            for (auto &r : reqslots)
-            {
-                bool done = false;
-                if (sigint_received)
+                if (sigact)
                 {
-                    break;
+                    sigaction(SIGINT, sigact, NULL);
                 }
-                while (!done && !sigint_received)
+                std::vector<struct RequiresSlot> reqslots;
+                session->QueueFetchAll(reqslots, type, group);
+                for (auto &r : reqslots)
                 {
-                    try
+                    bool done = false;
+                    if (ExitReason::NONE != exit_reason)
                     {
-                        std::cout << r.user_description << ": ";
-                        if (r.hidden_input)
-                        {
-                            set_console_echo(false);
-                        }
-                        std::getline(std::cin, r.value);
-                        if (r.hidden_input)
-                        {
-                            std::cout << std::endl;
-                            set_console_echo(true);
-                        }
-                        if (!sigint_received)
-                        {
-                            session->ProvideResponse(r);
-                        }
-                        done = true;
+                        break;
                     }
-                    catch (const DBus::Exception &excp)
+                    while (!done && ExitReason::NONE == exit_reason)
                     {
-                        std::string err(excp.GetRawError());
-                        if (err.find("No value provided for") != std::string::npos)
+                        try
                         {
-                            std::cerr << "** ERROR **   Empty input not allowed" << std::endl;
-                        }
-                        else
-                        {
+                            std::cout << r.user_description << ": ";
+                            if (r.hidden_input)
+                            {
+                                set_console_echo(false);
+                            }
+                            std::getline(std::cin, r.value);
+                            if (r.hidden_input)
+                            {
+                                std::cout << std::endl;
+                                set_console_echo(true);
+                            }
+                            if (exit_reason == ExitReason::NONE)
+                            {
+                                session->ProvideResponse(r);
+                            }
                             done = true;
-                            sigint_received = true;
+                        }
+                        catch (const DBus::Exception &excp)
+                        {
+                            std::string err(excp.GetRawError());
+                            if (err.find("No value provided for") != std::string::npos)
+                            {
+                                if (ExitReason::CTRL_C != exit_reason)
+                                {
+                                    std::cerr << "** ERROR **   "
+                                              << "Empty input not allowed" << std::endl;
+                                }
+                                done = true;
+                            }
+                            else
+                            {
+                                done = true;
+                                exit_reason = ExitReason::ERROR;
+                            }
                         }
                     }
                 }
             }
         }
-        if (sigint_received)
+        if (ExitReason::ABORTED == exit_reason
+            || ExitReason::CTRL_C == exit_reason
+            || ExitReason::ERROR == exit_reason)
         {
             std::cerr << "** Aborted **" << std::endl;
-            session->Disconnect();
+            try
+            {
+                session->Disconnect();
+            }
+            catch (...)
+            {
+                // We're shutting down; no need for errors now
+            }
             return false;
         }
+        return true;
     }
-    return true;
+    catch (const DBus::Exception &excp)
+    {
+        std::string err(excp.what());
+        exit_reason = (err.find("No such interface") != std::string::npos
+                           ? ExitReason::ABORTED
+                           : ExitReason::ERROR);
+        return false;
+    }
 }
 
 
@@ -226,7 +262,7 @@ void start_session(SessionManager::Proxy::Session::Ptr session,
                     }
                     else
                     {
-                        sigint_received = true; // Simulate a CTRL-C to exit
+                        exit_reason = ExitReason::DONE;
                         std::cout << "Disconnecting" << std::endl;
                     }
                 }
@@ -276,7 +312,8 @@ void start_session(SessionManager::Proxy::Session::Ptr session,
                 }
                 // Check if an SIGINT / CTRL-C event has occurred.
                 // If it has, disconnect the connection attempt and abort.
-                if (sigint_received)
+                if (ExitReason::CTRL_C == exit_reason
+                    || ExitReason::ERROR == exit_reason)
                 {
                     try
                     {
@@ -303,7 +340,7 @@ void start_session(SessionManager::Proxy::Session::Ptr session,
                 throw SessionException(err.str());
             }
         }
-        catch (const SessionManager::Proxy::ReadyException &)
+        catch (const SessionManager::Proxy::ReadyException &e)
         {
             // If the ReadyException is thrown, it means the backend
             // needs more from the front-end side
@@ -319,17 +356,29 @@ void start_session(SessionManager::Proxy::Session::Ptr session,
                 std::cout << "Disconnecting" << std::endl;
                 return;
             }
-            else if (query_user_input(session, sact))
+            else if (!query_user_input(session, sact))
             {
-                loops = 10;
+                if (ExitReason::ABORTED == exit_reason)
+                {
+                    throw SessionException("Session aborted through another process");
+                }
             };
+            loops = 10;
         }
         catch (const DBus::Exception &err)
         {
             std::stringstream errm;
-            errm << "Failed to start new session: "
-                 << err.GetRawError();
-            throw SessionException(errm.str());
+            if (ExitReason::ERROR == exit_reason)
+            {
+                std::string e = err.GetRawError();
+                errm << "Failed to start new session: "
+                     << e.substr(e.find("')] ") + 4);
+                throw SessionException(errm.str());
+            }
+            // If a SIGINT was received, there will
+            // be errors we should ignore; it's noise for
+            // end-users
+            return;
         }
     }
 }
