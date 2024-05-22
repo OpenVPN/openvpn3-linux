@@ -244,7 +244,7 @@ class Session : public DBusRequiresQueueProxy
      *
      * @return  Returns a populated struct StatusEvent with the full status.
      */
-    const Events::Status GetLastStatus()
+    Events::Status GetLastStatus()
     {
         GVariant *status = proxy->GetPropertyGVariant(target, "status");
         Events::Status ret(status);
