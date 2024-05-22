@@ -57,7 +57,7 @@ class OpenVPN3ConfigurationProxy
                                     bool force_feature_load = false)
     {
         return Ptr(new OpenVPN3ConfigurationProxy(con,
-                                                  object_path,
+                                                  std::move(object_path),
                                                   force_feature_load));
     }
 
@@ -133,7 +133,10 @@ class OpenVPN3ConfigurationProxy
     }
 
 
-    DBus::Object::Path Import(std::string name, std::string config_blob, bool single_use, bool persistent)
+    DBus::Object::Path Import(const std::string &name,
+                              const std::string &config_blob,
+                              bool single_use,
+                              bool persistent)
     {
         GVariant *res = proxy->Call(proxy_tgt,
                                     "Import",
