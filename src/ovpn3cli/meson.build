@@ -19,6 +19,7 @@ commands_collection = static_library(
         'commands/session/sessions-list.cpp',
         'commands/session/session-acl.cpp',
         'commands/session/session-auth.cpp',
+        'commands/session/session-manage.cpp',
         'commands/session/session-start.cpp',
         'commands/session/session-stats.cpp',
         'commands/init-config.cpp',
@@ -49,7 +50,7 @@ executable('openvpn3-dev',
         configmgr_lib,
     ],
     include_directories: [include_dirs, '../..'],
-    install: false,
+    install: true,
 )
 
 executable('openvpn3-admin-dev',

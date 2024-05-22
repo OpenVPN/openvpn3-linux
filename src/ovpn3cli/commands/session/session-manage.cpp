@@ -2,32 +2,26 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2018-  David Sommerseth <davids@openvpn.net>
 //
 
 /**
- * @file   session.hpp
+ * @file   session-manage.cpp
  *
- * @brief  Commands to start and manage VPN sessions
+ * @brief  Command to manage started and running VPN sessions
  */
 
-#include <csignal>
-#include <json/json.h>
+#include <string>
+#include <gdbuspp/connection.hpp>
 
-#include "dbus/core.hpp"
 #include "common/cmdargparser.hpp"
-#include "common/lookup.hpp"
-#include "common/open-uri.hpp"
-#include "common/requiresqueue.hpp"
-#include "common/utils.hpp"
-#include "configmgr/proxy-configmgr.hpp"
 #include "sessionmgr/proxy-sessionmgr.hpp"
-#include "../arghelpers.hpp"
+#include "../../arghelpers.hpp"
+#include "helpers.hpp"
 
+using namespace ovpn3cli::session;
 
-
-//////////////////////////////////////////////////////////////////////////
 
 /**
  *  openvpn3 session-manage command
@@ -115,7 +109,8 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
             timeout = std::atoi(args->GetValue("timeout", 0).c_str());
         }
 
-        OpenVPN3SessionMgrProxy sessmgr(G_BUS_TYPE_SYSTEM);
+        auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
+        auto sessmgr = SessionManager::Proxy::Manager::Create(dbuscon);
 
         if (mode_cleanup == mode)
         {
@@ -123,7 +118,7 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
             // status available.  A valid status means it is not empty nor
             // unset.  If the status can't be retrieved, it is also
             // invalid.
-            std::vector<OpenVPN3SessionProxy::Ptr> sessions = sessmgr.FetchAvailableSessions();
+            auto sessions = sessmgr->FetchAvailableSessions();
             std::cout << "Cleaning up stale sessions - Found "
                       << std::to_string(sessions.size()) << " open sessions "
                       << "to check" << std::endl;
@@ -133,12 +128,12 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
             {
                 try
                 {
-                    std::string cfgname = s->GetStringProperty("config_name");
+                    std::string cfgname = s->GetConfigName();
 
                     std::cout << "Checking:  " << cfgname << " - " << s->GetPath()
                               << " ... ";
 
-                    StatusEvent st = s->GetLastStatus();
+                    Events::Status st = s->GetLastStatus();
                     if (st.Check(StatusMajor::UNSET, StatusMinor::UNSET)
                         && st.message.empty())
                     {
@@ -187,7 +182,7 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
         std::string sesspath = "";
         if (args->Present("config"))
         {
-            std::vector<std::string> paths = sessmgr.LookupConfigName(args->GetValue("config", 0));
+            auto paths = sessmgr->LookupConfigName(args->GetValue("config", 0));
             if (0 == paths.size())
             {
                 throw CommandException("session-manage",
@@ -204,17 +199,15 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
         }
         else if (args->Present("interface"))
         {
-            sesspath = sessmgr.LookupInterface(args->GetValue("interface", 0));
+            sesspath = sessmgr->LookupInterface(args->GetValue("interface", 0));
         }
         else
         {
             sesspath = args->GetValue("path", 0);
         }
 
-        OpenVPN3SessionProxy::Ptr session;
-        session.reset(new OpenVPN3SessionProxy(G_BUS_TYPE_SYSTEM, sesspath));
-
-        if (!session->CheckObjectExists())
+        auto session = sessmgr->Retrieve(sesspath);
+        if (!session->CheckSessionExists())
         {
             throw CommandException("session-manage",
                                    "Session not found");
@@ -275,7 +268,7 @@ static int cmd_session_manage(ParsedArgs::Ptr args)
         }
         return 0;
     }
-    catch (const DBusException &excp)
+    catch (const DBus::Exception &excp)
     {
         throw CommandException("session-manage", excp.GetRawError());
     }
@@ -355,7 +348,3 @@ SingleCommand::Ptr prepare_command_session_manage()
 
     return cmd;
 }
-
-
-
-//////////////////////////////////////////////////////////////////////////

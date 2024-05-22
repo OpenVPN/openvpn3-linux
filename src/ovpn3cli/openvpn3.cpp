@@ -27,7 +27,7 @@ inline const std::vector<PrepareCommand> registered_commands = {
     prepare_command_configs_list,
 
     prepare_command_session_start,
-    // prepare_command_session_manage,
+    prepare_command_session_manage,
     prepare_command_session_auth,
     prepare_command_session_acl,
     prepare_command_session_stats,

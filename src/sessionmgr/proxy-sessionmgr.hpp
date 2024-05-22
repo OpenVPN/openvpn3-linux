@@ -344,7 +344,7 @@ class Session : public DBusRequiresQueueProxy
      * @return Returns a ConnectionStats (std::vector<ConnectionStatDetails>)
      *         array of all gathered statistics.
      */
-    const ConnectionStats GetConnectionStats()
+    ConnectionStats GetConnectionStats()
     {
         GVariant *statsprops = proxy->GetPropertyGVariant(target, "statistics");
         GVariantIter *stats_ar = nullptr;
