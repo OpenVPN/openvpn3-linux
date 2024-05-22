@@ -251,15 +251,15 @@ std::string arghelper_log_levels()
  * @param dbusconn     (optional) DBus::Connection to reuse an existing
  *                     connection
  *
- * @return  Returns a std::string containing the D-Bus configuration path
- *          if a match was found.
+ * @return  Returns a DBus::Object::Path containing the D-Bus configuration
+ *          path if a match was found.
  *
  * @throws  Throws CommandException if no or more than one configuration
  *          paths were found.
  */
-std::string retrieve_config_path(const std::string &cmd,
-                                 const std::string &config_name,
-                                 DBus::Connection::Ptr dbusconn)
+DBus::Object::Path retrieve_config_path(const std::string &cmd,
+                                        const std::string &config_name,
+                                        DBus::Connection::Ptr dbusconn)
 {
     auto conn = (dbusconn
                      ? dbusconn
