@@ -17,6 +17,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 
 
 enum class OpenURIstatus : std::uint8_t
