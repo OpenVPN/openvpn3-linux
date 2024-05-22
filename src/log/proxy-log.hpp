@@ -130,7 +130,10 @@ class LogProxy
 
     void Remove()
     {
-        proxy->Call(target, "Remove", nullptr, true);
+        if (proxy && target)
+        {
+            proxy->Call(target, "Remove", nullptr, true);
+        }
     }
 
   private:
