@@ -94,6 +94,7 @@ class OpenVPN3ConfigurationProxy
                     Constants::GenServiceName("configuration"),
                     proxy_tgt->object_path,
                     proxy_tgt->interface,
+                    "ConfigurationProxy",
                     "Configuration profile not found");
             }
         }
@@ -107,6 +108,7 @@ class OpenVPN3ConfigurationProxy
                 Constants::GenServiceName("configuration"),
                 proxy_tgt->object_path,
                 proxy_tgt->interface,
+                "ConfigurationProxy::Ping",
                 "Could not reach service");
         }
     }
