@@ -263,6 +263,10 @@ Session::Session(DBus::Connection::Ptr dbuscon,
         [=](const DBus::Object::Property::BySpec &prop)
             -> GVariant *
         {
+            // Avoid parallel access to the log_forwarders map;
+            // see also helper_stop_log_forwards()
+            std::lock_guard<std::mutex> guard(log_forwarders_mtx);
+
             std::vector<DBus::Object::Path> res{};
             for (const auto &[target, fwd] : log_forwarders)
             {
@@ -738,6 +742,11 @@ void Session::method_log_forward(DBus::Object::Method::Arguments::Ptr args)
     bool enable = glib2::Value::Extract<bool>(params, 0);
 
     std::string caller = args->GetCallerBusName();
+
+    // Avoid parallel access to the log_forwarders map;
+    // see also helper_stop_log_forwards()
+    std::lock_guard<std::mutex> guard(log_forwarders_mtx);
+
     if (enable)
     {
         auto logservice = LogServiceProxy::Create(dbus_conn);
@@ -842,6 +851,10 @@ void Session::close_session(const bool forced)
 
 void Session::helper_stop_log_forwards()
 {
+    // Avoid parallel runs of this method; it depends
+    // on a stable 'log_forwarders'
+    std::lock_guard<std::mutex> guard(log_forwarders_mtx);
+
     for (auto &[owner_busid, obj] : log_forwarders)
     {
         try

@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <mutex>
 #include <gdbuspp/connection.hpp>
 #include <gdbuspp/object/base.hpp>
 #include <gdbuspp/object/manager.hpp>
@@ -101,6 +102,7 @@ class Session : public DBus::Object::Base
     GDBusPP::Object::Extension::ACL::Ptr object_acl;
     bool restrict_log_access = true;
     LogProxyList log_forwarders = {};
+    std::mutex log_forwarders_mtx = {};
     std::time_t created = std::time(nullptr);
     DBus::Proxy::Client::Ptr be_prx = nullptr;
     DBus::Proxy::TargetPreset::Ptr be_target = nullptr;
