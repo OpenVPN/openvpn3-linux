@@ -676,11 +676,12 @@ void Session::method_ready(DBus::Object::Method::Arguments::Ptr args)
     }
     catch (const DBus::Proxy::Exception &excp)
     {
-        std::string err(excp.GetRawError());
+        std::string err(excp.what());
+
         if (err.find("net.openvpn.v3.error.ready"))
         {
 
-            throw ReadyException(excp.GetRawError());
+            throw ReadyException(excp.what());
         }
         sig_session->LogCritical(excp.GetRawError());
         throw DBus::Object::Method::Exception(excp.GetRawError());
