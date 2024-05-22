@@ -91,7 +91,17 @@ const bool ACL::CheckACL(const std::string &caller,
         return true;
     }
 
-    uid_t caller_uid = creds_qry->GetUID(caller);
+    uid_t caller_uid = -1;
+    try
+    {
+        caller_uid = creds_qry->GetUID(caller);
+    }
+    catch (const DBus::Exception &)
+    {
+        // If we can't reach lookup the callers' UID,
+        // consider it an authz failure
+        return false;
+    }
 
     ACLList acl_check = acl_list;
     acl_check.insert(acl_check.end(), extra_acl.begin(), extra_acl.end());
@@ -108,7 +118,16 @@ const bool ACL::CheckACL(const std::string &caller,
 
 const bool ACL::CheckOwnerAccess(const std::string &caller) const
 {
-    return creds_qry->GetUID(caller) == owner;
+    try
+    {
+        return creds_qry->GetUID(caller) == owner;
+    }
+    catch (const DBus::Exception &)
+    {
+        // If we can't reach lookup the callers' UID,
+        // consider it an authz failure
+        return false;
+    }
 }
 
 
