@@ -51,7 +51,7 @@ static int logger_service(ParsedArgs::Ptr args)
         }
         catch (const ConfigFileException &)
         {
-            throw CommandException("openvpn3-service-logger",
+            throw CommandException("openvpn3-service-log",
                                    "Failed parsing configuration file: "
                                        + cfgfile->GetFilename());
         }
@@ -60,7 +60,7 @@ static int logger_service(ParsedArgs::Ptr args)
             std::stringstream e;
             e << "Error parsing configuration file (" << cfgfile->GetFilename()
               << "): " << err.what();
-            throw CommandException("openvpn3-service-logger", e.str());
+            throw CommandException("openvpn3-service-log", e.str());
         }
         args->ImportConfigFile(cfgfile);
     }
@@ -72,7 +72,7 @@ static int logger_service(ParsedArgs::Ptr args)
     }
     catch (const ExclusiveOptionError &excp)
     {
-        throw CommandException("openvpn3-service-logger",
+        throw CommandException("openvpn3-service-log",
                                excp.what());
     }
 
@@ -95,7 +95,7 @@ static int logger_service(ParsedArgs::Ptr args)
             }
             catch (SyslogException &excp)
             {
-                throw CommandException("openvpn3-service-logger",
+                throw CommandException("openvpn3-service-log",
                                        excp.what());
             }
         }

@@ -135,9 +135,9 @@ int cmd_send(ParsedArgs::Ptr args)
 
 int main(int argc, char **argv)
 {
-    Commands cmds("openvpn3-service-logger service tester",
+    Commands cmds("openvpn3-service-log service tester",
                   "Simple program to test the interfaces exposted by "
-                  "openvpn3-service-logger (net.openvpn.v3.log)");
+                  "openvpn3-service-log (net.openvpn.v3.log)");
 
     SingleCommand::Ptr props;
     props.reset(new SingleCommand("props", "Gets and sets properties", cmd_props));

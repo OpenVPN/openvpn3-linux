@@ -9,7 +9,7 @@
 /**
  * @file   service-configfile.hpp
  *
- * @brief  Definition of the elements used in the openvpn3-service-logger
+ * @brief  Definition of the elements used in the openvpn3-service-log
  *         configuration file
  */
 

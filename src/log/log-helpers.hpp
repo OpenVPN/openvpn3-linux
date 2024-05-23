@@ -55,7 +55,7 @@ enum class LogGroup : std::uint8_t
     BACKENDPROC,  /**< Session process (openvpn-service-client) */
     CLIENT,       /**< OpenVPN 3 Core tunnel object in the session process */
     NETCFG,       /**< Network Configuration service (openvpn3-service-netcfg)*/
-    EXTSERVICE    /**< External services integrating with openvpn3-service-logger */
+    EXTSERVICE    /**< External services integrating with openvpn3-service-log */
 };
 
 const std::array<const std::string, LogGroupCount> LogGroup_str = {

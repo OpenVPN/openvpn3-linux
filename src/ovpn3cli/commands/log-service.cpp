@@ -9,7 +9,7 @@
 /**
  * @file   log-service.cpp
  *
- * @brief  Command for managing the openvpn3-service-logger
+ * @brief  Command for managing the openvpn3-service-log
  */
 
 #include <gdbuspp/connection.hpp>
@@ -136,7 +136,7 @@ static int manage_config_file(DBus::Connection::Ptr dbuscon,
                 config.Save(config_file);
                 std::cout << "Configuration file updated.  "
                           << "Changes will be activated next time "
-                          << "openvpn3-service-logger restarts"
+                          << "openvpn3-service-log restarts"
                           << std::endl;
             }
             catch (const ExclusiveOptionError &err)
@@ -399,7 +399,7 @@ SingleCommand::Ptr prepare_command_log_service()
                    "CONFIG-FILE",
                    true,
                    "Overrides the default configuration file (default file "
-                   "provivded by openvpn3-service-logger)");
+                   "provivded by openvpn3-service-log)");
 
 
     return cmd;

@@ -136,7 +136,7 @@ void save_config_file(Configuration::File &cfg, const std::string cfgname, const
 //
 
 /**
- *  Log methods supported by openvpn3-service-logger which are reasonable for defaults
+ *  Log methods supported by openvpn3-service-log which are reasonable for defaults
  *
  */
 enum class LogMethod
