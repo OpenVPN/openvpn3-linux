@@ -74,7 +74,7 @@ void LogAttach::AttachByPath(const DBus::Object::Path &path)
 void LogAttach::AttachByConfig(const std::string &config)
 {
     config_name = config;
-    lookup_config_name(config_name);
+    lookup_config_name(config_name, 1);
     setup_session_logger(session_path);
 }
 
@@ -135,14 +135,15 @@ void LogAttach::sessionmgr_event(const SessionManager::Event &event)
 }
 
 
-void LogAttach::lookup_config_name(const std::string &cfgname)
+void LogAttach::lookup_config_name(const std::string &cfgname,
+                                   const uint16_t check_count)
 {
     // We need to try a few times, as the SESS_CREATED event comes
     // quite early and the session object itself might not be registered
     // quite yet.  This needs to be a tight loop to catch the earliest
     // log messages, as certificate only based authentication may do
     // the full connection establishing in a little bit less than 200ms.
-    for (unsigned int i = 250; i > 0; i--)
+    for (unsigned int i = check_count; i > 0; i--)
     {
         DBus::Object::Path::List paths = manager->LookupConfigName(cfgname);
         if (1 < paths.size())

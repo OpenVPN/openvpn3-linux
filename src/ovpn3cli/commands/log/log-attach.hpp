@@ -72,7 +72,8 @@ class LogAttach
 
     void sessionmgr_event(const SessionManager::Event &event);
 
-    void lookup_config_name(const std::string &cfgname);
+    void lookup_config_name(const std::string &cfgname,
+                            const uint16_t check_count = 250);
 
     void lookup_interface(const std::string &interf);
 
