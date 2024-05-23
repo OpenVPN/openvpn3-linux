@@ -33,7 +33,7 @@ inline const std::vector<PrepareCommand> registered_commands = {
     prepare_command_session_stats,
     prepare_command_sessions_list,
 
-    // prepare_command_log,
+    prepare_command_log,
 };
 
 #include "ovpn3cli.hpp" // main() is implemented here

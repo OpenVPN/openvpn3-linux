@@ -24,6 +24,9 @@ commands_collection = static_library(
         'commands/session/session-stats.cpp',
         'commands/init-config.cpp',
         'commands/journal.cpp',
+        'commands/log/event-logger.cpp',
+        'commands/log/log.cpp',
+        'commands/log/log-attach.cpp',
         'commands/log-service.cpp',
         'commands/netcfg-service.cpp',
         'commands/sessionmgr-service.cpp',
@@ -40,14 +43,17 @@ commands_collection = static_library(
 executable('openvpn3-dev',
     [
         'openvpn3.cpp',
+        '../dbus/signals/log.cpp',
+        '../dbus/signals/statuschange.cpp',
     ],
     dependencies: [
         base_dependencies,
     ],
     link_with: [
-        common_code,
         commands_collection,
+        common_code,
         configmgr_lib,
+        sessionmgr_lib,
     ],
     include_directories: [include_dirs, '../..'],
     install: true,
