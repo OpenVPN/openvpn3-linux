@@ -21,8 +21,8 @@
 //
 
 LogTag::Ptr LogTag::Create(const std::string &sender,
-                              const std::string &interface,
-                              const bool default_encaps)
+                           const std::string &interface,
+                           const bool default_encaps)
 {
     return LogTag::Ptr(new LogTag(sender, interface, default_encaps));
 }

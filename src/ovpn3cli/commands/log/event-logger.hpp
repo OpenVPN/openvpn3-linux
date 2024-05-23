@@ -13,7 +13,7 @@
  *         for a session
  */
 
- #pragma once
+#pragma once
 
 #include <fstream>
 
@@ -70,4 +70,4 @@ class EventLogger
                 const DBus::Object::Path &session_path);
 };
 
-}
+} // namespace ovpn3cli::log

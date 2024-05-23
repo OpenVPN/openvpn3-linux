@@ -142,7 +142,7 @@ const ValidOverride configProfileOverrides[] = {
 
     {"proxy-auth-cleartext", OverrideType::boolean,
      "Allows clear text HTTP authentication"}
-// clang-format on
+    // clang-format on
 };
 
 

@@ -95,7 +95,7 @@ static int cmd_session_acl(ParsedArgs::Ptr args)
         if (!session->CheckSessionExists())
         {
             throw CommandException("session-acl",
-                                    "Session not found");
+                                   "Session not found");
         }
 
         if (args->Present("grant"))

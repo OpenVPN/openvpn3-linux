@@ -47,7 +47,7 @@ struct ConstantMapping
     const std::string GetPyValue() const
     {
         std::ostringstream res;
-        switch(dbus_type[0])
+        switch (dbus_type[0])
         {
         case 'u':
             res << "dbus.UInt32(" << value << ")";
@@ -76,7 +76,8 @@ struct ConstantMapping
         default:
             throw glib2::Utils::Exception(__func__,
                                           "Missing type handling for "
-                                          "'" + dbus_type + "'");
+                                          "'" + dbus_type
+                                              + "'");
         }
         return res.str();
     }

@@ -40,7 +40,6 @@ class LogException : public std::exception
 
 
 
-
 /**
  * Log groups is used to classify the source of log events
  */

@@ -19,7 +19,7 @@
 namespace ovpn3cli::log {
 
 LogAttach::Ptr LogAttach::Create(DBus::MainLoop::Ptr mainloop,
-                      DBus::Connection::Ptr dbuscon)
+                                 DBus::Connection::Ptr dbuscon)
 {
     return Ptr(new LogAttach(mainloop, dbuscon));
 }

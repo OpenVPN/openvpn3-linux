@@ -63,4 +63,4 @@ class AttentionRequired : public DBus::Signals::Signal
               const std::string &msg) const;
 };
 
-}
+} // namespace Signals

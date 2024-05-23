@@ -37,8 +37,8 @@ struct LogTag
      *
      */
     [[nodiscard]] static LogTag::Ptr Create(const std::string &sender,
-                              const std::string &interface,
-                              const bool default_encaps = true);
+                                            const std::string &interface,
+                                            const bool default_encaps = true);
 
     LogTag(const LogTag &cp);
     ~LogTag() = default;
@@ -91,5 +91,4 @@ struct LogTag
 
   private:
     LogTag(std::string sender, std::string interface, const bool default_encaps = true);
-
 };

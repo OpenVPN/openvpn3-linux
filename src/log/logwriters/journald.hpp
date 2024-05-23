@@ -46,16 +46,16 @@ class JournaldWriter : public LogWriter
 
   protected:
     void WriteLogLine(LogTag::Ptr logtag,
-                     const std::string &data,
-                     const std::string &colour_init = "",
-                     const std::string &colour_reset = "") override;
+                      const std::string &data,
+                      const std::string &colour_init = "",
+                      const std::string &colour_reset = "") override;
 
     void WriteLogLine(LogTag::Ptr logtag,
-                     const LogGroup grp,
-                     const LogCategory ctg,
-                     const std::string &data,
-                     const std::string &colour_init,
-                     const std::string &colour_reset) override;
+                      const LogGroup grp,
+                      const LogCategory ctg,
+                      const std::string &data,
+                      const std::string &colour_init,
+                      const std::string &colour_reset) override;
 
   private:
     const std::string log_sender;

@@ -194,7 +194,8 @@ const bool NetCfgServiceHandler::Authorize(const DBus::Authz::Request::Ptr authz
             }
             uid_t sub_owner = subscriptions->GetSubscriptionOwner(authzreq->caller);
             signals->Debug("net.openvpn.v3.netcfg.NotificationUnsubscribe: "
-                           "owner_uid=" + std::to_string(sub_owner)
+                           "owner_uid="
+                           + std::to_string(sub_owner)
                            + ", caller_uid=" + std::to_string(caller_uid));
             return (caller_uid == 0) || (caller_uid == sub_owner);
         }

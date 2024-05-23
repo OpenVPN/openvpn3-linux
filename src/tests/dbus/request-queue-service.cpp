@@ -382,35 +382,35 @@ void selftest(std::ostream &log)
 
         // Check retrieving values via variable names
         log << "GetResponse('pk_passphrase') = "
-                  << queue->GetResponse(ClientAttentionType::CREDENTIALS,
-                                        ClientAttentionGroup::PK_PASSPHRASE,
-                                        "pk_passphrase")
-                  << std::endl;
+            << queue->GetResponse(ClientAttentionType::CREDENTIALS,
+                                  ClientAttentionGroup::PK_PASSPHRASE,
+                                  "pk_passphrase")
+            << std::endl;
         log << "GetResponse('username') = "
-                  << queue->GetResponse(ClientAttentionType::CREDENTIALS,
-                                        ClientAttentionGroup::USER_PASSWORD,
-                                        "username")
-                  << std::endl;
+            << queue->GetResponse(ClientAttentionType::CREDENTIALS,
+                                  ClientAttentionGroup::USER_PASSWORD,
+                                  "username")
+            << std::endl;
         log << "GetResponse('password') = "
-                  << queue->GetResponse(ClientAttentionType::CREDENTIALS,
-                                        ClientAttentionGroup::USER_PASSWORD,
-                                        "password")
-                  << std::endl;
+            << queue->GetResponse(ClientAttentionType::CREDENTIALS,
+                                  ClientAttentionGroup::USER_PASSWORD,
+                                  "password")
+            << std::endl;
         log << "GetResponse('dynamic_challenge') = "
-                  << queue->GetResponse(ClientAttentionType::CREDENTIALS,
-                                        ClientAttentionGroup::CHALLENGE_DYNAMIC,
-                                        "dynamic_challenge")
-                  << std::endl;
+            << queue->GetResponse(ClientAttentionType::CREDENTIALS,
+                                  ClientAttentionGroup::CHALLENGE_DYNAMIC,
+                                  "dynamic_challenge")
+            << std::endl;
         log << "GetResponse('static_challenge') = "
-                  << queue->GetResponse(ClientAttentionType::CREDENTIALS,
-                                        ClientAttentionGroup::CHALLENGE_STATIC,
-                                        "static_challenge")
-                  << std::endl;
+            << queue->GetResponse(ClientAttentionType::CREDENTIALS,
+                                  ClientAttentionGroup::CHALLENGE_STATIC,
+                                  "static_challenge")
+            << std::endl;
         log << "GetResponse('auth_pending') = "
-                  << queue->GetResponse(ClientAttentionType::CREDENTIALS,
-                                        ClientAttentionGroup::CHALLENGE_AUTH_PENDING,
-                                        "auth_pending")
-                  << std::endl;
+            << queue->GetResponse(ClientAttentionType::CREDENTIALS,
+                                  ClientAttentionGroup::CHALLENGE_AUTH_PENDING,
+                                  "auth_pending")
+            << std::endl;
 
         // Checking some out-of-bounds variables
         try
@@ -466,7 +466,7 @@ int main(int argc, char **argv)
 
     // D-Bus tests
     *log << std::endl
-        << "** Starting D-Bus server" << std::endl;
+         << "** Starting D-Bus server" << std::endl;
     auto conn = DBus::Connection::Create(DBus::BusType::SESSION);
     auto service = DBus::Service::Create<ReqQueueService>(conn);
     service->CreateServiceHandler<ReqQueueMain>(conn,

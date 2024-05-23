@@ -198,22 +198,22 @@ std::string get_local_tstamp(const std::time_t epoch)
 
 bool is_colour_terminal()
 {
-        if (getenv("NO_COLOR"))
-        {
-                return false;
-        }
+    if (getenv("NO_COLOR"))
+    {
+        return false;
+    }
 
-        if (!((isatty(STDOUT_FILENO) > 0)
-              && (isatty(STDERR_FILENO) > 0)))
-        {
-                return false;
-        }
+    if (!((isatty(STDOUT_FILENO) > 0)
+          && (isatty(STDERR_FILENO) > 0)))
+    {
+        return false;
+    }
 
-        const char *term_env = getenv("TERM");
-        std::string term(term_env ? term_env : "");
-        if (term.empty() || term == "dump")
-        {
-                return false;
-        }
-        return getenv("COLORTERM") != 0;
+    const char *term_env = getenv("TERM");
+    std::string term(term_env ? term_env : "");
+    if (term.empty() || term == "dump")
+    {
+        return false;
+    }
+    return getenv("COLORTERM") != 0;
 }

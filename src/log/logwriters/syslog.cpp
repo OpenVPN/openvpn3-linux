@@ -51,9 +51,9 @@ bool SyslogWriter::TimestampEnabled()
 
 
 void SyslogWriter::WriteLogLine(LogTag::Ptr logtag,
-                               const std::string &data,
-                               const std::string &colour_init,
-                               const std::string &colour_reset)
+                                const std::string &data,
+                                const std::string &colour_init,
+                                const std::string &colour_reset)
 {
     // This is a very simple log implementation.  We do not
     // care about timestamps, as we trust the syslog takes
@@ -83,11 +83,11 @@ void SyslogWriter::WriteLogLine(LogTag::Ptr logtag,
 
 
 void SyslogWriter::WriteLogLine(LogTag::Ptr logtag,
-                               const LogGroup grp,
-                               const LogCategory ctg,
-                               const std::string &data,
-                               const std::string &colour_init,
-                               const std::string &colour_reset)
+                                const LogGroup grp,
+                                const LogCategory ctg,
+                                const std::string &data,
+                                const std::string &colour_init,
+                                const std::string &colour_reset)
 {
     // Equally simple to the other Write() method, but here
     // we have access to LogGroup and LogCategory, so we

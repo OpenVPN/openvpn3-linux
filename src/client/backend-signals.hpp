@@ -71,7 +71,7 @@ class RegistrationRequest : public DBus::Signals::Signal
         return false;
     }
 };
-} // namespace Client::Signals
+} // namespace Backend::Signals
 
 
 class BackendSignals : public LogSender

@@ -147,9 +147,9 @@ class LogWriter
                const std::string &colour_reset = "")
     {
         WriteLogLine(nullptr,
-                    LogPrefix(grp, ctg) + data,
-                    colour_init,
-                    colour_reset);
+                     LogPrefix(grp, ctg) + data,
+                     colour_init,
+                     colour_reset);
     }
 
 
@@ -165,9 +165,9 @@ class LogWriter
     virtual void Write(const Events::Log &logev)
     {
         WriteLogLine(logev.GetLogTag(),
-                    logev.group,
-                    logev.category,
-                    logev.message);
+                     logev.group,
+                     logev.category,
+                     logev.message);
     }
 
 
@@ -266,15 +266,15 @@ class LogWriter
      *                     data to reset colour selection.  Emtpy by default.
      */
     virtual void WriteLogLine(LogTag::Ptr logtag,
-                             const LogGroup grp,
-                             const LogCategory ctg,
-                             const std::string &data,
-                             const std::string &colour_init = "",
-                             const std::string &colour_reset = "")
+                              const LogGroup grp,
+                              const LogCategory ctg,
+                              const std::string &data,
+                              const std::string &colour_init = "",
+                              const std::string &colour_reset = "")
     {
         WriteLogLine(logtag,
-                    LogPrefix(grp, ctg) + data,
-                    colour_init,
-                    colour_reset);
+                     LogPrefix(grp, ctg) + data,
+                     colour_init,
+                     colour_reset);
     }
 };

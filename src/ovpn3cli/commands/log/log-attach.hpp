@@ -91,4 +91,4 @@ class LogAttach
 };
 
 
-}
+} // namespace ovpn3cli::log

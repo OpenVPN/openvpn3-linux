@@ -64,7 +64,7 @@ void NetCfgSubscriptions::SubscriptionSetup(DBus::Object::Base *object_ptr,
         {
             this->method_name_list(args);
         });
-        args_list->AddOutput("subscriptions", "a(su)");
+    args_list->AddOutput("subscriptions", "a(su)");
 }
 
 

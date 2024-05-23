@@ -97,8 +97,8 @@ static int cmd_session_auth_complete(const pid_t authid)
                 return 2;
             }
         }
-        else if (StatusMajor::CONNECTION== status.major
-            && StatusMinor::CFG_REQUIRE_USER == status.minor)
+        else if (StatusMajor::CONNECTION == status.major
+                 && StatusMinor::CFG_REQUIRE_USER == status.minor)
         {
             start_session(session, SessionStartMode::START, -1, false);
         }

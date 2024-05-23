@@ -113,9 +113,8 @@ class BackendStarterSignals : public LogSender
     }
 
 
-private:
+  private:
     ::Signals::StatusChange::Ptr sig_statuschg = nullptr;
-
 };
 
 
@@ -197,7 +196,7 @@ class BackendStarterHandler : public DBus::Object::Base
         // in the service autostart configuration.
         uid_t caller = creds->GetUID(authzreq->caller);
         be_signals->Debug("Authorize: caller UID:" + std::to_string(caller)
-                       + " process UID: " + std::to_string(process_uid));
+                          + " process UID: " + std::to_string(process_uid));
         return (caller == process_uid);
     }
 

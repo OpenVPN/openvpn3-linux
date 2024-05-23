@@ -44,7 +44,7 @@ class LogHandler
             subscr_target,
             [=](Events::Log logevent)
             {
-              std::cout << "[" << tag << "] " << logevent << std::endl;
+                std::cout << "[" << tag << "] " << logevent << std::endl;
             });
     }
 

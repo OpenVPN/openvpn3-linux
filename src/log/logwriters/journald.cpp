@@ -48,9 +48,9 @@ bool JournaldWriter::TimestampEnabled()
 
 
 void JournaldWriter::WriteLogLine(LogTag::Ptr logtag,
-                                 const std::string &data,
-                                 const std::string &colour_init,
-                                 const std::string &colour_reset)
+                                  const std::string &data,
+                                  const std::string &colour_init,
+                                  const std::string &colour_reset)
 {
     Events::Log logev(LogGroup::UNDEFINED, LogCategory::INFO, data);
     logev.AddLogTag(logtag);
@@ -59,11 +59,11 @@ void JournaldWriter::WriteLogLine(LogTag::Ptr logtag,
 
 
 void JournaldWriter::WriteLogLine(LogTag::Ptr logtag,
-                                 const LogGroup grp,
-                                 const LogCategory ctg,
-                                 const std::string &data,
-                                 const std::string &colour_init,
-                                 const std::string &colour_reset)
+                                  const LogGroup grp,
+                                  const LogCategory ctg,
+                                  const std::string &data,
+                                  const std::string &colour_init,
+                                  const std::string &colour_reset)
 {
     Events::Log logev(grp, ctg, data);
     logev.AddLogTag(logtag);

@@ -119,12 +119,12 @@ class DebugResolvConfFile : public ResolvConfFile
     }
 
 
-    private:
-      DebugResolvConfFile(const std::string &filename,
-                          const std::string &backup_filename = "")
-          : ResolvConfFile(filename, backup_filename)
-      {
-      }
+  private:
+    DebugResolvConfFile(const std::string &filename,
+                        const std::string &backup_filename = "")
+        : ResolvConfFile(filename, backup_filename)
+    {
+    }
 };
 
 
@@ -217,7 +217,7 @@ int main()
 
     // Reopen the backup test file and modify it
     auto backuptest_start = DebugResolvConfFile::Create("backuptest-start.conf",
-                                                   "backuptest-backup.conf");
+                                                        "backuptest-backup.conf");
     backuptest_start->Debug_Fetch();
     std::cout << "DUMP OF backuptest_start [1] " << std::endl
               << backuptest_start->Dump();
