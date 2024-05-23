@@ -40,7 +40,7 @@ commands_collection = static_library(
     include_directories: [include_dirs, '../..'],
 )
 
-executable('openvpn3-dev',
+executable('openvpn3',
     [
         'openvpn3.cpp',
         '../dbus/signals/log.cpp',
@@ -59,7 +59,7 @@ executable('openvpn3-dev',
     install: true,
 )
 
-executable('openvpn3-admin-dev',
+executable('openvpn3-admin',
     [
         'openvpn3-admin.cpp',
     ],

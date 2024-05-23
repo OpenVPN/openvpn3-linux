@@ -6,7 +6,7 @@
 #  Copyright (C) 2024-  David Sommerseth <davids@openvpn.net>
 
 bin_backend_configmgr = executable(
-    'openvpn3-service-configmgr-dev',
+    'openvpn3-service-configmgr',
     [
         'openvpn3-service-configmgr.cpp',
         'configmgr-service.cpp',

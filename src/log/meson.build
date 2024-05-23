@@ -6,7 +6,7 @@
 #  Copyright (C) 2024-  David Sommerseth <davids@openvpn.net>
 
 bin_backend_log = executable(
-    'openvpn3-service-log-dev',
+    'openvpn3-service-log',
     [
         'openvpn3-service-log.cpp',
         'log-service.cpp',

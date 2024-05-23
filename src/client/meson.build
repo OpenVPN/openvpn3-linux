@@ -8,7 +8,7 @@
 
 # openvpn3-service-client
 bin_backend_client = executable(
-    'openvpn3-service-client-dev',
+    'openvpn3-service-client',
     [
         'openvpn3-service-client.cpp',
         dco_keyconfig_cc,
@@ -40,7 +40,7 @@ configure_file(
 
 #  openvpn3-service-backendstart
 bin_backend_start = executable(
-    'openvpn3-service-backendstart-dev',
+    'openvpn3-service-backendstart',
     [
         'openvpn3-service-backendstart.cpp',
     ],

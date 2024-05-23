@@ -6,7 +6,7 @@
 #  Copyright (C) 2024-  David Sommerseth <davids@openvpn.net>
 
 bin_backend_netcfg = executable(
-    'openvpn3-service-netcfg-dev',
+    'openvpn3-service-netcfg',
     [
         'openvpn3-service-netcfg.cpp',
         'core-tunbuilder.cpp',

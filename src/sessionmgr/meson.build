@@ -6,7 +6,7 @@
 #  Copyright (C) 2024-  David Sommerseth <davids@openvpn.net>
 
 bin_backend_sessionmgr = executable(
-    'openvpn3-service-sessionmgr-dev',
+    'openvpn3-service-sessionmgr',
     [
         'openvpn3-service-sessionmgr.cpp',
         'sessionmgr-service.cpp',
