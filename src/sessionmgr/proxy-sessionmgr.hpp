@@ -56,46 +56,26 @@ class Exception : public DBus::Exception
  * indicates the VPN backend client needs more information from the
  * frontend process.
  */
-class ReadyException : public std::exception
+class ReadyException : public SessionManager::Proxy::Exception
 {
   public:
     ReadyException(const std::string &err) noexcept
-        : errorstr(err)
+        : SessionManager::Proxy::Exception(err)
     {
     }
-
-    ~ReadyException() = default;
-
-    const char *what() const noexcept
-    {
-        return errorstr.c_str();
-    }
-
-  private:
-    std::string errorstr;
 };
 
 
 /**
  *  This is thrown when there are issues looking up a virtual interface name
  */
-class TunInterfaceException : public std::exception
+class TunInterfaceException : public SessionManager::Proxy::Exception
 {
   public:
     TunInterfaceException(const std::string &err)
-        : errorstr(err)
+        : SessionManager::Proxy::Exception(err)
     {
     }
-
-    ~TunInterfaceException() = default;
-
-    const char *what() const noexcept
-    {
-        return errorstr.c_str();
-    }
-
-  private:
-    const std::string errorstr;
 };
 
 
