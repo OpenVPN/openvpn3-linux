@@ -762,6 +762,10 @@ class Manager
     {
         auto prxqry = DBus::Proxy::Utils::DBusServiceQuery::Create(conn);
         prxqry->CheckServiceAvail(Constants::GenServiceName("sessions"));
+
+        auto prxchk = DBus::Proxy::Utils::Query::Create(proxy);
+        prxchk->CheckObjectExists(target->object_path,
+                                  target->interface);
     }
 };
 
