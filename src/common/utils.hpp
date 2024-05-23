@@ -46,3 +46,13 @@ static inline std::string simple_basename(const std::string filename)
  * @return std::string containing the human readable representation
  */
 std::string get_local_tstamp(const std::time_t epoch);
+
+
+/**
+ *  Checks if the currently available console/terminal is
+ *  capable of doing colours.
+ *
+ * @return bool, true if it is expected the terminal output can handle
+ *               colours; otherwise false
+ */
+bool is_colour_terminal();
