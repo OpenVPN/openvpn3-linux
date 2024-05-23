@@ -68,7 +68,7 @@ non-persistent data, they will automatically shutdown
 | Running as   | openvpn                                 |
 | Process name | openvpn3-service-log                    |
 | Started by   | Front-end clients and backend processes |
-|   | Log service which receives all `Log` events from all of the OpenVPN 3 Linux services and directs them to log files or console logging.  See also the [OpenVPN 3 Linux Client: Logging](dbus-logging.md) document for more details on the logging. |
+|              | Log service which receives all `Log` events from all of the OpenVPN 3 Linux services and directs them to log files or console logging.  See also the [OpenVPN 3 Linux Client: Logging](dbus-logging.md) document for more details on the logging. |
 |              |                                         |
 
 
@@ -116,7 +116,7 @@ non-persistent data, they will automatically shutdown
 | Running as   | openvpn                                 |
 | Process name | openvpn3-service-client                 |
 | Started by   | net.openvpn.v3.backends                 |
-|   | This is the process which is responsible for a single VPN tunnel. This process implements the OpenVPN 3 Core client, connects to remote servers and allows itself to be managed via the session manager. Each process will use its own unique service name, where the PID of the process is included in the service name. |
+|              | This is the process which is responsible for a single VPN tunnel. This process implements the OpenVPN 3 Core client, connects to remote servers and allows itself to be managed via the session manager. Each process will use its own unique service name, where the PID of the process is included in the service name. |
 |              |                                         |
 
 
