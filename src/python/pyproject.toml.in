@@ -1,0 +1,22 @@
+#  OpenVPN 3 Linux - Next generation OpenVPN
+#
+#  SPDX-License-Identifier: AGPL-3.0-only
+#
+#  Copyright (C) 2024-  OpenVPN Inc <sales@openvpn.net>
+#  Copyright (C) 2024-  David Sommerseth <davids@openvpn.net>
+
+[build-system]
+requires = [
+    'meson-python',
+]
+build-backend = 'mesonpy'
+
+[project]
+name = 'openvpn3'
+description = 'OpenVPN 3 Linux Python module'
+version = '@VERSION@'
+requires-python = '>=3.6.0'
+license = { file = '../../COPYRIGHT.md' }
+authors = [
+	{ name = 'David Sommerseth', email = 'davids@openvpn.net' },
+]
