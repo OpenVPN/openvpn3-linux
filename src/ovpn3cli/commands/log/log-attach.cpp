@@ -29,6 +29,8 @@ LogAttach::LogAttach(DBus::MainLoop::Ptr main_loop,
                      DBus::Connection::Ptr dbusc)
     : mainloop(main_loop), dbuscon(dbusc)
 {
+    manager = SessionManager::Proxy::Manager::Create(dbuscon);
+
     signal_subscr = DBus::Signals::SubscriptionManager::Create(dbuscon);
     auto sessionmgr_tgt = DBus::Signals::Target::Create(
         Constants::GenServiceName("sessions"),
@@ -41,8 +43,6 @@ LogAttach::LogAttach(DBus::MainLoop::Ptr main_loop,
                                  SessionManager::Event smgrev(event->params);
                                  sessionmgr_event(smgrev);
                              });
-
-    manager = SessionManager::Proxy::Manager::Create(dbuscon);
 }
 
 
