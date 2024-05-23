@@ -65,13 +65,19 @@ class OpenVPN3ConfigurationProxy
                                DBus::Object::Path object_path,
                                bool force_feature_load = false)
     {
+        auto prxqry = DBus::Proxy::Utils::DBusServiceQuery::Create(con);
+        prxqry->CheckServiceAvail(Constants::GenServiceName("configuration"));
+
         proxy = DBus::Proxy::Client::Create(con,
                                             Constants::GenServiceName("configuration"));
         proxy_tgt = DBus::Proxy::TargetPreset::Create(
             object_path,
             Constants::GenInterface("configuration"));
         proxy_qry = DBus::Proxy::Utils::Query::Create(proxy);
-        Ping();
+
+        auto prxchk = DBus::Proxy::Utils::Query::Create(proxy);
+        prxchk->CheckObjectExists(proxy_tgt->object_path,
+                                  proxy_tgt->interface);
 
         // Only try to ensure the configuration manager service is available
         // when accessing the main management object
