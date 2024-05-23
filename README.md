@@ -55,8 +55,8 @@ Pre-built binaries
 
 See the instructions on
 https://community.openvpn.net/openvpn/wiki/OpenVPN3Linux how to install
-pre-built OpenVPN 3 Linux packages on Debian, Ubuntu, Fedora,
-Red Hat Enterprise Linux, CentOS and Scientific Linux.
+pre-built OpenVPN 3 Linux packages on Debian, Ubuntu, Fedora and
+Red Hat Enterprise Linux.
 
 
 Getting started using OpenVPN 3 Linux
@@ -172,7 +172,7 @@ for a while with no data to maintain, they will shut-down automatically.
   Next time the ``openvpn3-service-netcfg`` service restarts,
   `systemd-resolved` support will be used instead.  Note, this requires at
   least **systemd v243** or newer (or a distribution which has back-ported
-  a newer version).  This works now with CentOS 8, Fedora 31 and newer,
+  a newer version).  This works now with Fedora 31 and newer,
   Red Hat Enterprise Linux 8 or Ubuntu 20.04 and newer.
 
   To disable the `systemd-resovled` integration and use `/etc/resolv.conf`
@@ -210,19 +210,10 @@ the [source code](https://gitlab.com/openvpn/ovpn-dco/).
 The ovpn-dco kernel module currently only support ***Linux kernel 5.4***
 and newer.  Currently supported distributions with DCO support:
 
- * CentOS 8
- * Fedora 36 and newer
+ * Debian 11 and newer
+ * Fedora 38 and newer
  * Red Hat Enterprise Linux 8 and newer
  * Ubuntu 20.04 and newer
-
-The ovpn-dco-v2 kernel module is currently not functional on RHEL/CentOS
-due to the kernel version is older than 4.18.  OpenVPN 3 Linux will build
-with the ``--enable-dco`` feature but requires a functional ``ovpn-dco``
-kernel module to be fully functional.
-
-To build OpenVPN 3 Linux with this support, add ``--enable-dco`` to the
-``./configure`` command.
-
 
 #### SELinux support
 
