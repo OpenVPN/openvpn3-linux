@@ -48,8 +48,8 @@ init-config
 log-service
                 Manage the OpenVPN 3 Log service
 
-                * D-Bus service: *net.openvpn.v3.logger*
-                * Provided by: **openvpn3-service-logger**\(8)
+                * D-Bus service: *net.openvpn.v3.log*
+                * Provided by: **openvpn3-service-log**\(8)
 
 netcfg-service
                 Manage the OpenVPN 3 Network Configuration service
@@ -73,7 +73,6 @@ SEE ALSO
 ``openvpn3-admin-netcfg-service``\(8)
 ``openvpn3-admin-sessionmgr-service``\(8)
 ``openvpn3-admin-variables``\(8)
-``openvpn3-service-logger``\(8)
+``openvpn3-service-log``\(8)
 ``openvpn3-service-netcfg``\(8)
 ``openvpn3-service-sessionmgr``\(8)
-

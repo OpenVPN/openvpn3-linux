@@ -22,7 +22,7 @@ terminal.  The user running this command must in advanced have been granted
 access to these log events, otherwise it will not generate any output.
 
 Log events received via ``openvpn3 log`` are processed in parallel with the
-system wide ``openvpn3-service-logger`` process.
+system wide ``openvpn3-service-log`` process.
 
 
 OPTIONS
@@ -63,5 +63,5 @@ SEE ALSO
 
 ``openvpn3``\(1)
 ``openvpn3-service-configmgr``\(8)
-``openvpn3-service-logger``\(8)
+``openvpn3-service-log``\(8)
 ``openvpn3-session-acl``\(1)

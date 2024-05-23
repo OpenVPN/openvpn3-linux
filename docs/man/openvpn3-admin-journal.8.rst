@@ -130,4 +130,4 @@ All of these filters can be combined to narrow down the amount of log data.
 SEE ALSO
 ========
 
-``openvpn3-service-logger``\(8)
+``openvpn3-service-log``\(8)

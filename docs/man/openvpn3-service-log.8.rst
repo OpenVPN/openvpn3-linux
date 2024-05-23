@@ -1,6 +1,6 @@
-=======================
-openvpn3-service-logger
-=======================
+====================
+openvpn3-service-log
+====================
 
 --------------------------------------
 OpenVPN 3 Linux - Internal Log Service
@@ -11,18 +11,18 @@ OpenVPN 3 Linux - Internal Log Service
 
 SYNOPSIS
 ========
-| ``openvpn3-service-logger`` ``[OPTIONS]``
-| ``openvpn3-service-logger`` ``-h`` | ``--help``
+| ``openvpn3-service-log`` ``[OPTIONS]``
+| ``openvpn3-service-log`` ``-h`` | ``--help``
 
 
 DESCRIPTION
 ===========
 This program can run in two modes; as a stand-alone program without any
 services enabled or as a D-Bus service.  By default the
-``openvpn3-service-logger`` process will be started automatically as a D-Bus
+``openvpn3-service-log`` process will be started automatically as a D-Bus
 service when any of the OpenVPN 3 Linux service backends wants to send log
 events.  The auto-start is handled by the ``dbus-daemon`` via the
-*net.openvpn.v3.logger.service* configuration file.
+*net.openvpn.v3.log.service* configuration file.
 
 When run as a stand-alone program, it is limited in what kind of log events it
 will receive.  The other backend services need to use the ``--signal-broadcast``
@@ -62,13 +62,13 @@ OPTIONS
 --log-level LEVEL
                 Sets the system wide log verbosity for the log events being
                 logged to file or any other log destination
-                ``openvpn3-service-logger`` is configured to use.  Valid values
+                ``openvpn3-service-log`` is configured to use.  Valid values
                 are *0* to *6*.  The higher value, the more verbose the log
                 events will be.  Log level *6* will retrieve all debug events.
 
                 Sets the system wide log verbosity for log events being logged
                 to file or any other log destination
-                ``openvpn3-service-logger`` is configured to use.
+                ``openvpn3-service-log`` is configured to use.
                 The default is :code:`3`.  Valid values are :code:`0` to
                 :code:`6`.  Higher log levels results in more verbose logs and
                 log level :code:`6` will contain all debug log events.
@@ -122,7 +122,7 @@ OPTIONS
                 production.
 
 --idle-exit MINUTES
-                The ``openvpn3-service-logger`` service will exit automatically
+                The ``openvpn3-service-log`` service will exit automatically
                 if it is being idle for *MINUTES* minutes.  By being idle, it
                 means no other services have attached their log streams to this
                 service.  To see how many log subscriptions are attached, see

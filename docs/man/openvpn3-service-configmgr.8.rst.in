@@ -56,7 +56,7 @@ OPTIONS
                 log events.
 
 --log-file LOG_DESTINATION
-                By default, logging will go via the ``openvpn3-service-logger``
+                By default, logging will go via the ``openvpn3-service-log``
                 service.  By providing this argument, logging will also be sent
                 to *LOG_DESTINATION*, which can be either a filename or
                 :code:`stdout:` where the latter one sends log data to the

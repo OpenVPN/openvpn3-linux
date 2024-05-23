@@ -138,7 +138,7 @@ set of features.
 
   D-Bus name: *net.openvpn.v3.netcfg*
 
-* **Logging** (``openvpn3-service-logger``)
+* **Logging** (``openvpn3-service-log``)
 
   This is responsible to receive log events from all the services above
   and ensure they get logged properly.  Whether that is to a terminal, a
@@ -211,7 +211,7 @@ SEE ALSO
 ``openvpn3-service-backendstart``\(8)
 ``openvpn3-service-client``\(8)
 ``openvpn3-service-configmgr``\(8)
-``openvpn3-service-logger``\(8)
+``openvpn3-service-log``\(8)
 ``openvpn3-service-netcfg``\(8)
 ``openvpn3-service-sessionmgr``\(8)
 ``openvpn3-systemd``\(8)

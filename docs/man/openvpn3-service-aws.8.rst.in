@@ -186,7 +186,7 @@ OPTIONS
                 log events.
 
 --log-file LOG_DESTINATION
-                By default, logging will go via the ``openvpn3-service-logger``
+                By default, logging will go via the ``openvpn3-service-log``
                 service.  By providing this argument, logging will also be sent
                 to *LOG_DESTINATION*, which can be either a filename or
                 :code:`stdout:` where the latter one sends log data to the
@@ -199,7 +199,7 @@ OPTIONS
 
 --signal-broadcast
                 Normally, the ``openvpn3-service-aws`` will attach a
-                log stream to the ``openvpn3-service-logger`` service.  By
+                log stream to the ``openvpn3-service-log`` service.  By
                 providing this option, it will instead broadcast all log events
                 to all listeners on the system.
 

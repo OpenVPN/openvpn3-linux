@@ -49,7 +49,7 @@ OPTIONS
                 log events.
 
 --log-file LOG_DESTINATION
-                By default, logging will go via the ``openvpn3-service-logger``
+                By default, logging will go via the ``openvpn3-service-log``
                 service.  By providing this argument, logging will also be sent
                 to *LOG_DESTINATION*, which can be either a filename or
                 :code:`stdout:` where the latter one sends log data to the
@@ -62,7 +62,7 @@ OPTIONS
 
 --signal-broadcast
                 Normally, the ``openvpn3-service-netcfg`` will attach a
-                log stream to the ``openvpn3-service-logger`` service.  By
+                log stream to the ``openvpn3-service-log`` service.  By
                 providing this option, it will instead broadcast all log events
                 to all listeners on the system.  This is more useful for
                 debugging when the standard logging does not provide any clues.
@@ -166,7 +166,7 @@ Attribute: log_file
 This is the equivalent of the ``--log-file`` command line argument.  Must
 be a filename where to write log files.  It also supports :code:`stdout:` to
 write log data to the console/tty.  Logging will also be sent to the
-``openvpn3-service-logger``\(8) service regardless of this setting.
+``openvpn3-service-log``\(8) service regardless of this setting.
 
 Attribute: idle_exit
 """"""""""""""""""""
@@ -201,5 +201,4 @@ SEE ALSO
 ``dbus-daemon``\(1)
 ``openvpn3``\(1)
 ``openvpn3-service-client``\(8)
-``openvpn3-service-logger``\(8)
-
+``openvpn3-service-log``\(8)

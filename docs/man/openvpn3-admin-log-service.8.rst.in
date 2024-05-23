@@ -17,7 +17,7 @@ SYNOPSIS
 
 DESCRIPTION
 ===========
-This manages a few adjustable knobs available in the ``openvpn3-service-logger``
+This manages a few adjustable knobs available in the ``openvpn3-service-log``
 when run as a D-Bus service.  The access control for this command is managed in
 the D-Bus policy, which by default is only allowed for the *root* and
 *@OPENVPN_USERNAME@* user accounts.
@@ -30,19 +30,19 @@ OPTIONS
 
 --config-show
                 Shows the contents of the configuration file used by
-                ``openvpn3-service-logger``\(8).
+                ``openvpn3-service-log``\(8).
 
 --config-set
                 Modifies a configuration setting in the configuration file.
                 Changing the configuration file will require the
-                ``openvpn3-service-logger``\(8) process to be restarted before
+                ``openvpn3-service-log``\(8) process to be restarted before
                 they become active.  This option requires two arguments:
                 *CONFIG-NAME* and *CONFIG-VALUE*.  Valid *CONFIG-NAMEs* are:
 
                 :code:`log-file`
                         Sets the log destination for log events.  See the
                         ``--log-file`` option in the man page to
-                        ``openvpn3-service-logger``\(8) for details.
+                        ``openvpn3-service-log``\(8) for details.
 
                         This cannot be set if ``journald`` or ``syslog`` has
                         been set.
@@ -55,19 +55,19 @@ OPTIONS
                 :code:`idle-exit`
                         Sets the automatic idle shut down time-out.  See the
                         ``--idle-exit`` option in the man page for
-                        ``openvpn3-service-logger``\(8) for details.
+                        ``openvpn3-service-log``\(8) for details.
 
                 :code:`journald`
-                        Configures ``openvpn3-service-logger``\(8) to send
+                        Configures ``openvpn3-service-log``\(8) to send
                         log events to the ``systemd-journald``\(8) service.
-                        See the ``openvpn3-service-logger``\(8) man page for
+                        See the ``openvpn3-service-log``\(8) man page for
                         more details.
 
                         This option cannot be combined with ``syslog``,
                         ``log-file`` or ``colour``.
 
                 :code:`syslog`
-                        Configures ``openvpn3-service-logger``\(8) to send
+                        Configures ``openvpn3-service-log``\(8) to send
                         log events to the locally running syslog service.
 
                         This option cannot be combined with ``journald``,
@@ -85,13 +85,13 @@ OPTIONS
 --log-level LEVEL
                 Sets the system wide log verbosity for the log events being
                 logged to file or any other log destination
-                ``openvpn3-service-logger`` is configured to use.  Valid values
+                ``openvpn3-service-log`` is configured to use.  Valid values
                 are :code:`0` to :code:`6`.  The higher value, the more verbose the log
                 events will be.  Log level :code:`6` will contain all debug events.
 
 --timestamp BOOL
                 Some of the log destinations supported by
-                ``openvpn3-service-logger`` may allow one to log with or without
+                ``openvpn3-service-log`` may allow one to log with or without
                 timestamps.  This option enables or disables timestamps attached
                 to log events.  Valid arguments: :code:`true`, :code:`false`.
 
@@ -104,7 +104,7 @@ OPTIONS
                 production.  Valid arguments: :code:`true`, :code:`false`
 
 --enable-log-prefix BOOL
-                This setting is only available if ``openvpn3-service-logger``\(8)
+                This setting is only available if ``openvpn3-service-log``\(8)
                 is configured to use ``journald``.  If enabled, each log line
                 (`MESSAGE=`) in the journal will be prefixed with a log tag.
                 The log tag is always logged as a journald meta data variable
@@ -120,4 +120,4 @@ SEE ALSO
 ========
 
 ``openvpn3``\(1)
-``openvpn3-service-logger``\(8)
+``openvpn3-service-log``\(8)
