@@ -160,6 +160,7 @@ else
     build_version_h = 'src/build-version.h'
 endif
 meson.add_dist_script(find_program('scripts/prepare-build-version-h'))
+cp_prog = find_program('cp', required: true)
 
 # Unless test_programs are not explicitly enabled,
 # only build them in debug builds

@@ -15,7 +15,6 @@ if (dco_enabled)
         dependency('protobuf', version: '>= 2.4.0'),
     ]
     protoc = find_program('protoc', required : true)
-    cp_prog = find_program('cp', required: true)
 
     protogen = generator(
         protoc,
