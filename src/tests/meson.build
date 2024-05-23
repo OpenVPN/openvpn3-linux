@@ -449,6 +449,22 @@ executable('signal-listener',
     include_directories: [include_dirs, '../..'],
 )
 
+executable('logfwd-listener',
+    [
+        'dbus/logfwd-listener.cpp',
+    ],
+    build_by_default: build_test_programs,
+    link_with: [
+        common_code,
+        sessionmgr_lib,
+        signals_code,
+    ],
+    dependencies: [
+        base_dependencies,
+    ],
+    include_directories: [include_dirs, '../..'],
+)
+
 executable('ovpncli-netcfg',
     [
         'netcfg/cli.cpp',
