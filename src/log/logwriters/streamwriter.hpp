@@ -83,6 +83,10 @@ class ColourStreamWriter : public StreamLogWriter
 
     const std::string GetLogWriterInfo() const override;
 
+    void WriteStatus(const Events::Status &status,
+                     const std::string &prefix_override = "[STATUS]") override;
+
+
   protected:
     /*
      * Explicitly tells the compiler that we want to not to override an

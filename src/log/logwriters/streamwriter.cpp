@@ -89,6 +89,23 @@ const std::string ColourStreamWriter::GetLogWriterInfo() const
 }
 
 
+void ColourStreamWriter::WriteStatus(const Events::Status &status,
+                                     const std::string &prefix_override)
+{
+    std::ostringstream msg;
+    Events::Status ev(status);
+    ev.SetPrintMode(Events::Status::PrintMode::ALL);
+    msg << prefix_override
+        << (!prefix_override.empty() ? " " : "")
+        << ev;
+
+    LogWriter::Write(msg.str(),
+                     colours->Set(ColourEngine::Colour::BRIGHT_WHITE,
+                                  ColourEngine::Colour::BLUE),
+                     colours->Reset());
+}
+
+
 void ColourStreamWriter::WriteLogLine(LogTag::Ptr logtag,
                                       const LogGroup grp,
                                       const LogCategory ctg,

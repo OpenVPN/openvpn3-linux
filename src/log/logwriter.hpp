@@ -23,6 +23,7 @@
 
 #include "build-config.h"
 #include "events/log.hpp"
+#include "events/status.hpp"
 #include "logtag.hpp"
 #include "logmetadata.hpp"
 
@@ -167,6 +168,29 @@ class LogWriter
                     logev.group,
                     logev.category,
                     logev.message);
+    }
+
+
+    /**
+     *  Writes an Events::Status object to the log stream
+     *
+     *  These events will be prefixed with '[STATUS]' unless the
+     *  prefix argument is provided.
+
+     * @param status    Events::Status object to log
+     * @param prefix    Override the prefix appearing in front
+     *                  of the logged status event
+     */
+    virtual void WriteStatus(const Events::Status &status,
+                             const std::string &prefix = "[STATUS]")
+    {
+        std::ostringstream msg;
+        Events::Status ev(status);
+        ev.SetPrintMode(Events::Status::PrintMode::ALL);
+        msg << prefix
+            << (!prefix.empty() ? " " : "")
+            << ev;
+        Write(msg.str());
     }
 
 
