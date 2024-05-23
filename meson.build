@@ -183,6 +183,8 @@ dbus_service_dir = dep_dbus.get_variable('system_bus_services_dir')
 dbus_config = {
     'OPENVPN_USERNAME': get_option('openvpn_username'),
     'LIBEXEC_PATH': get_option('prefix') / libexec_dir,
+    'DBUS_SYSTEM_POLICYDIR': dbus_policy_dir,
+    'DBUS_SYSTEM_SERVICEDIR': dbus_service_dir,
 }
 message('D-Bus system bus services dir: ' + dbus_service_dir)
 message('D-Bus system policy dir: ' + dbus_policy_dir)

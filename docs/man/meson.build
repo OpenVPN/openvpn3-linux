@@ -5,13 +5,51 @@
 #  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
 #  Copyright (C)  David Sommerseth <davids@openvpn.net>
 
+
+mandir_1 = get_option('mandir') / 'man1'
+mandir_7 = get_option('mandir') / 'man7'
+mandir_8 = get_option('mandir') / 'man8'
+
+manpage_sources = [
+    ['openvpn2.1.rst', mandir_1],
+    ['openvpn3-as.1.rst', mandir_1],
+    ['openvpn3-config-acl.1.rst', mandir_1],
+    ['openvpn3-config-dump.1.rst', mandir_1],
+    ['openvpn3-config-import.1.rst', mandir_1],
+    ['openvpn3-config-manage.1.rst', mandir_1],
+    ['openvpn3-config-remove.1.rst', mandir_1],
+    ['openvpn3-configs-list.1.rst', mandir_1],
+    ['openvpn3-log.1.rst', mandir_1],
+    ['openvpn3-session-acl.1.rst', mandir_1],
+    ['openvpn3-session-auth.1.rst', mandir_1],
+    ['openvpn3-session-manage.1.rst', mandir_1],
+    ['openvpn3-session-start.1.rst', mandir_1],
+    ['openvpn3-session-stats.1.rst', mandir_1],
+    ['openvpn3-sessions-list.1.rst', mandir_1],
+    ['openvpn3.1.rst', mandir_1],
+
+    ['openvpn3-linux.7.rst.in', mandir_7],
+
+    ['openvpn3-admin-init-config.8.rst.in', mandir_8],
+    ['openvpn3-admin-journal.8.rst', mandir_8],
+    ['openvpn3-admin-log-service.8.rst.in', mandir_8],
+    ['openvpn3-admin-netcfg-service.8.rst', mandir_8],
+    ['openvpn3-admin-sessionmgr-service.8.rst', mandir_8],
+    ['openvpn3-admin.8.rst', mandir_8],
+    ['openvpn3-autoload.8.rst', mandir_8],
+    ['openvpn3-service-backendstart.8.rst.in', mandir_8],
+    ['openvpn3-service-client.8.rst.in', mandir_8],
+    ['openvpn3-service-configmgr.8.rst.in', mandir_8],
+    ['openvpn3-service-log.8.rst', mandir_8],
+    ['openvpn3-service-netcfg.8.rst.in', mandir_8],
+    ['openvpn3-service-sessionmgr.8.rst.in', mandir_8],
+    ['openvpn3-systemd.8.rst', mandir_8],
+]
+
 #
 # Generic man page setup
 #
 generate_man = not get_option('generate-man').disabled()
-mandir_1 = get_option('mandir') / 'man1'
-mandir_7 = get_option('mandir') / 'man7'
-mandir_8 = get_option('mandir') / 'man8'
 prog_rst2man = disabler()
 if generate_man
     prog_rst2man = find_program('rst2man', 'rst2man.py',
@@ -21,101 +59,37 @@ endif
 man_config = configuration_data({
     'OPENVPN_USERNAME': get_option('openvpn_username'),
     'OPENVPN_STATEDIR': openvpn3_statedir,
+    'DBUS_SYSTEM_POLICYDIR': dbus_policy_dir,
+    'DBUS_SYSTEM_SERVICEDIR': dbus_service_dir,
 })
 
 
-#
-#  man pages - src/client
-#
-man_backendstart = configure_file(
-    input: 'openvpn3-service-backendstart.8.rst.in',
-    output: 'openvpn3-service-backendstart.8.rst',
-    configuration: man_config,
-)
-custom_target(
-    'man-openvpn3-service-backendstart',
-    input: man_backendstart,
-    output: 'openvpn3-service-backendstart.8',
-    command: [prog_rst2man, '@INPUT@', '@OUTPUT@'],
-    install: true,
-    install_dir: mandir_8,
-)
-
-man_backendclient = configure_file(
-    input: 'openvpn3-service-client.8.rst.in',
-    output: 'openvpn3-service-client.8.rst',
-    configuration: man_config,
-)
-custom_target(
-    'man-openvpn3-service-client',
-    input: man_backendclient,
-    output: 'openvpn3-service-client.8',
-    command: [prog_rst2man, '@INPUT@', '@OUTPUT@'],
-    install: true,
-    install_dir: mandir_8,
-)
-
-
-#
-#  man pages - src/log
-#
-custom_target(
-    'man-openvpn3-service-log',
-    input: 'openvpn3-service-log.8.rst',
-    output: 'openvpn3-service-log.8',
-    command: [prog_rst2man, '@INPUT@', '@OUTPUT@'],
-    install: true,
-    install_dir: mandir_8,
-)
-
-
-#
-#  man pages - src/netcfg
-#
-man_netcfg = configure_file(
-    input: 'openvpn3-service-netcfg.8.rst.in',
-    output: 'openvpn3-service-netcfg.8.rst',
-    configuration: man_config,
-)
-custom_target(
-    'man-openvpn3-service-netcfg',
-    input: man_netcfg,
-    output: 'openvpn3-service-netcfg.8',
-    command: [prog_rst2man, '@INPUT@', '@OUTPUT@'],
-    install: true,
-    install_dir: mandir_8,
-)
-
-#
-#  man pages - src/sessionmgr
-#
-man_sessionmgr = configure_file(
-    input: 'openvpn3-service-sessionmgr.8.rst.in',
-    output: 'openvpn3-service-sessionmgr.8.rst',
-    configuration: man_config,
-)
-custom_target(
-    'man-openvpn3-service-sessionmgr',
-    input: man_sessionmgr,
-    output: 'openvpn3-service-sessionmgr.8',
-    command: [prog_rst2man, '@INPUT@', '@OUTPUT@'],
-    install: true,
-    install_dir: mandir_8,
-)
-
-#
-#  man pages - src/configmgr
-#
-man_configmgr = configure_file(
-    input: 'openvpn3-service-configmgr.8.rst.in',
-    output: 'openvpn3-service-configmgr.8.rst',
-    configuration: man_config,
-)
-custom_target(
-    'man-openvpn3-service-configmgr',
-    input: man_configmgr,
-    output: 'openvpn3-service-configmgr.8',
-    command: [prog_rst2man, '@INPUT@', '@OUTPUT@'],
-    install: true,
-    install_dir: mandir_8,
-)
+foreach manp : manpage_sources
+    man_src = manp[0]
+    man_dest = manp[1]
+    if man_src.endswith('.rst.in')
+        manpage_cfg = configure_file(
+            input: man_src,
+            output: man_src.replace('.rst.in', '.rst'),
+            configuration: man_config,
+        )
+        custom_target(
+            'man-' + man_src.replace('.rst.in', ''),
+            input: manpage_cfg,
+            output: man_src.replace('.rst.in', ''),
+            command: [prog_rst2man, '@INPUT@', '@OUTPUT@'],
+            install: true,
+            install_dir: man_dest,
+        )
+    endif
+    if man_src.endswith('.rst')
+        custom_target(
+            'man-' + man_src.replace('.rst', ''),
+            input: man_src,
+            output: man_src.replace('.rst', ''),
+            command: [prog_rst2man, '@INPUT@', '@OUTPUT@'],
+            install: true,
+            install_dir: man_dest,
+        )
+    endif
+endforeach
