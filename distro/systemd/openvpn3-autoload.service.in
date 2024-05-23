@@ -4,7 +4,7 @@ After=network.target dbus.service
 
 [Service]
 Type=oneshot
-ExecStart=@SBINDIR@/openvpn3-autoload --directory @OPENVPN3_CONFIGDIR@/autoload
+ExecStart=@SBINDIR@/openvpn3-autoload --directory @SYSCONFDIR@/openvpn3/autoload
 RemainAfterExit=yes
 
 [Install]

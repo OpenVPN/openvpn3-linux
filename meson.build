@@ -305,6 +305,9 @@ subdir('src/ovpn3cli')
 subdir('src/dbus')
 subdir('src/selinux')
 
+if dep_systemd.found()
+    subdir('distro/systemd')
+endif
 #
 #  Test programs
 #
