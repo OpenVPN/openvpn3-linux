@@ -3,8 +3,8 @@
 #
 #  SPDX-License-Identifier: AGPL-3.0-only
 #
-#  Copyright (C) 2017 - 2023  OpenVPN Inc <sales@openvpn.net>
-#  Copyright (C) 2017 - 2023  David Sommerseth <davids@openvpn.net>
+#  Copyright (C) 2017-  OpenVPN Inc <sales@openvpn.net>
+#  Copyright (C) 2017-  David Sommerseth <davids@openvpn.net>
 #
 
 set -eu
@@ -24,10 +24,3 @@ git submodule init
 git submodule update
 echo
 
-echo "** Updating version.m4 ..."
-./update-version-m4.sh
-echo
-
-echo "** Running autoreconf ..."
-autoreconf -vi
-echo
