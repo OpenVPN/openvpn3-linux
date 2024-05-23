@@ -33,7 +33,6 @@
            send_member="GetAll"/>
 
     <allow send_destination="net.openvpn.v3.backends"
-           send_path="/net/openvpn/v3/backends"
            send_interface="org.freedesktop.DBus.Peer"
            send_type="method_call"
            send_member="Ping"/>
