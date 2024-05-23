@@ -18,7 +18,7 @@ There are six backend services to beware of.
   3. `openvpn3-service-backendstart`
   4. `openvpn3-service-client`
   5. `openvpn3-service-netcfg`
-  6. `openvpn3-service-logger`
+  6. `openvpn3-service-log`
 
 ## Running backend services in the terminal
 
@@ -35,9 +35,9 @@ capabilities and switch to the `openvpn` user as well.  If the other
 services are being started as `root`, they will also switch to `openvpn`
 automatically.
 
-All services except the `openvpn3-service-logger` has a `--log-file`
+All services except the `openvpn3-service-log` has a `--log-file`
 argument which can be set to `stdout:`.  This will print all log lines to
-the console.  The `openvpn3-service-logger` service will by default send
+the console.  The `openvpn3-service-log` service will by default send
 log events to the console.
 
 The log verbosity can be controlled via the `--log-level` argument.
@@ -170,15 +170,15 @@ bus.  This means it can quite often happen that D-Bus calls or signals are
 being rejected by the D-Bus daemon.  The best way to detect these issues,
 is to look into the D-Bus logs.  On systems with systemd, this is easily
 done via `journalctl --since today -u dbus`.  All log events processed by
-`openvpn3-service-logger` will typically also be present here.
+`openvpn3-service-log` will typically also be present here.
 
 
 ## Logging
 
 Almost all log events happens exclusively over D-Bus.  Some of these log
 events are targeted to either the session manager or the
-`openvpn3-service-logger` service.  To retrieve logs it is therefore needed
-to run `openvpn3-service-logger` with the `--service` argument as the
+`openvpn3-service-log` service.  To retrieve logs it is therefore needed
+to run `openvpn3-service-log` with the `--service` argument as the
 `openvpn` user.  This ensures that the services will fetch log entries
 directly.
 
@@ -200,7 +200,7 @@ you can run this command as root:
 See the [`openvpn3-admin-journal\(8)`](man/openvpn3-admin-journal.8.rst)
 man-page for more details.
 
-If no log events happens with `openvpn3-service-logger`, the
+If no log events happens with `openvpn3-service-log`, the
 `openvpn3-service-backendstart` can be run with
 `--client-signal-broadcast`.  Enabling this will send all backend client
 signals as system wide D-Bus broadcast signals.
@@ -217,5 +217,5 @@ When compiling from source, there are more debug tools under
      only listens for `Log` signals.
 
   * `logservice1` and `openvpn3 log-service`:  Can be used to query and
-     modify properties in the `openvpn3-service-logger` service.  The
+     modify properties in the `openvpn3-service-log` service.  The
      `logservice1` can also be used to generate some log events.

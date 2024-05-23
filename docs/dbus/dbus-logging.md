@@ -12,7 +12,7 @@ D-Bus service will regardless of file logging also send the Log signal over
 the message bus.
 
 Log signals are by default sent to the `net.openvpn.v3.log` service,
-provided by `openvpn3-service-logger`.  This service is normally
+provided by `openvpn3-service-log`.  This service is normally
 automatically started, as each process wanting to log requests this service
 to attach (subscribe) to their log events early in the start-up process.
 When doing this, only this log service will see the log messages being sent
@@ -51,8 +51,8 @@ The log group mapping is defined in the `LogGroup` enum class
 | CONFIGMGR    | 2  | Log messages sent by the configuration manager (`openvpn3-service-configmgr`)           |
 | SESSIONMGR   | 3  | Log messages sent by the session manager (`openvpn3-service-sessionmgr`)                |
 | BACKENDSTART | 4  | Log messages sent by the backend process starter (`openvpn3-service-backendstart`)      |
-| LOGGER       | 5  | Log messages sent by the `openvpn3-service-logger` process or similar logging services. |
-| BACKENDPROC  | 6  | Log messages sent by the `openvpn3-service-client` processes                           |
+| LOGGER       | 5  | Log messages sent by the `openvpn3-service-log` process or similar logging services.    |
+| BACKENDPROC  | 6  | Log messages sent by the `openvpn3-service-client` processes                            |
 | CLIENT       | 7  | Log messages coming from the OpenVPN 3 Core library's client implementation.  These are sent by the `openvpn3-service-client` process, but tagged separately to differentiate better what is VPN connection related and what is client process related. |
 
 

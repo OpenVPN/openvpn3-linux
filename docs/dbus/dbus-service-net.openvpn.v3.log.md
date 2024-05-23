@@ -1,26 +1,26 @@
 OpenVPN 3 D-Bus API: Log service
 ================================
 
-The `openvpn3-service-logger` program can be run in two modes, as a pure
+The `openvpn3-service-log` program can be run in two modes, as a pure
 signal consumer of broadcasted `Log` signals or as a log service where
 Log signal producers must attach to the service first.
 
 In signal consumer mode, the services sending log signals must broadcast
 the Log signals to anyone and the D-Bus policy must allow these signals to
-be received by the user running `openvpn3-service-logger`. In this mode the
+be received by the user running `openvpn3-service-log`. In this mode the
 program must be started with at least one of the `--config-manager`,
 `--session-manager` or `--vpn-backend` arguments.  This activates the
 subscription for broadcasted `Log` signals, but only for the selected
 senders.
 
-In service mode, `openvpn3-service-logger` must be started with `--service`.
+In service mode, `openvpn3-service-log` must be started with `--service`.
 This registers the `net.openvpn.v3.log` D-Bus service where Log signal
 producers can attach their signals to.  This has the benefit of ensuring
 only the log service receives the Log signals.  This log service will also
 be automatically started when needed by the D-Bus daemon, if it is not
 already running.
 
-In either mode, `openvpn3-service-logger` targets `Log` signals. For
+In either mode, `openvpn3-service-log` targets `Log` signals. For
 [`net.openvpn.v3.backend.be$PID`](docs/dbus/dbus-service-net.openvpn.v3.client.md)
 services, also StatusChange events are processed.
 
@@ -44,7 +44,7 @@ the same `LogForward()` method with the `false` value.
 When running with `--service`, there are a few tweakable knobs which can
 be managed using the `openvpn3-admin log-service` command.  This command can
 only be used by the `root` and `openvpn` user accounts.  If
-`openvpn3-service-logger` is started with the `--state-dir` option, these
+`openvpn3-service-log` is started with the `--state-dir` option, these
 runtime settings are preserved and will be reloaded automatically from the
 given directory.
 
@@ -167,7 +167,7 @@ also part of this feature.
 
 | Name          | Type             | Read/Write | Description                                         |
 |---------------|------------------|:----------:|-----------------------------------------------------|
-| config_file   |  string          | read-only  | Filename of the config/state file openvpn3-service-logger parsed at start-up. |
+| config_file   |  string          | read-only  | Filename of the config/state file openvpn3-service-log parsed at start-up. |
 | log_method    |  string          | Read-only  | Indicates which logging method is in use            |
 | log_level     | unsigned integer | Read/Write | How verbose should the logging be.  See the table below for the mapping between log levels and Log Category the `Log` signal carries` |
 | log_dbus_details | boolean       | Read/Write | Should each Log event being processed carry a meta data line before with details about the D-Bus sender of the `Log` signal? |

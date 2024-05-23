@@ -66,7 +66,7 @@ non-persistent data, they will automatically shutdown
 |-------------:|-----------------------------------------|
 | Service      | [`net.openvpn.v3.log`](dbus-service-net.openvpn.v3.log.md) |
 | Running as   | openvpn                                 |
-| Process name | openvpn3-service-logger                 |
+| Process name | openvpn3-service-log                    |
 | Started by   | Front-end clients and backend processes |
 |   | Log service which receives all `Log` events from all of the OpenVPN 3 Linux services and directs them to log files or console logging.  See also the [OpenVPN 3 Linux Client: Logging](dbus-logging.md) document for more details on the logging. |
 |              |                                         |
@@ -358,4 +358,3 @@ valid.
 
 This is also used to shutdown the VPN client process, regardless if
 the VPN tunnel is active or not.
-
