@@ -48,7 +48,8 @@ int main(int argc, char **argv)
     {
         if (e.gotErrorMessage())
         {
-            std::cerr << e.getCommand() << ": ** ERROR ** " << e.what() << std::endl;
+            std::cerr << simple_basename(argv[0]) << "/" << e.getCommand()
+                      << ": ** ERROR ** " << e.what() << std::endl;
         }
         return 8;
     }
