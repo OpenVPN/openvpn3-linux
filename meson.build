@@ -308,6 +308,12 @@ subdir('src/selinux')
 if dep_systemd.found()
     subdir('distro/systemd')
 endif
+
+if get_option('bash-completion').enabled()
+   subdir('src/shell/bash-completion')
+endif
+
+
 #
 #  Test programs
 #

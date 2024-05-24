@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3 -B
 #  OpenVPN 3 Linux client -- Next generation OpenVPN client
 #
 #  SPDX-License-Identifier: AGPL-3.0-only
@@ -14,6 +14,7 @@
 #         based on the arguments the openvpn3 python module supports
 #
 
+import importlib
 import sys
 import argparse
 from datetime import date
@@ -85,10 +86,25 @@ if __name__ == '__main__':
         sys.exit(2)
 
     # Configure a dummy OpenVPN 3 ConfigParser, so the
-    # supported options and arguments can be extracted
+    # supported options and arguments can be extracted.
+    #
+    # Since the openvpn3.constants are generated in a
+    # build directory, some tricker with importlib is
+    # required
+
+    sys.path.insert(0, 'src/python')
+    constants = importlib.import_module('openvpn3.constants',
+                                        package='openvpn3.constants')
+
+    # Load the configuration parser from the source directory
+    # It is not needed to have the openvpn3.ConfigParser inside
+    # the openvpn3 module in this program, so it's just loaded
+    # into the ovpn3parser variable
     sys.path.insert(0, args.python_source_dir)
-    import openvpn3
-    cfgparser = openvpn3.ConfigParser([sys.argv[0],], argp.description)
+    ovpn3parser = importlib.import_module('ConfigParser')
+    cfgparser = ovpn3parser.ConfigParser([sys.argv[0],], argp.description)
+
+    # Retriee the shell completion data from the openvpn3.ConfigParser
     completion_data = cfgparser.RetrieveShellCompletionData()
 
     # Prepare a list containing all valid options
