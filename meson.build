@@ -108,8 +108,8 @@ build_config = configuration_data({
     'HAVE_SELINUX': dep_selinux.found(),
     'HAVE_SYSTEMD': sd_id128,
     'HAVE_TINYXML': dep_tinyxml2.found(),
-    #'OVPN_TINYXML2_HAS_ERROR_NAME': dep_tinyxml2.version() >= '4.0.0',
-    #'OVPN_TINYXML2_HAS_ERROR_STR': dep_tinyxml2.version() >= '6.0.0',
+    #'OVPN_TINYXML2_HAS_ERROR_NAME': dep_tinyxml2.version().version_compare('>= 4.0.0'),
+    #'OVPN_TINYXML2_HAS_ERROR_STR': dep_tinyxml2.version().version_compare('>= 6.0.0'),
     'ASIO_STANDALONE': true,
     'ASIO_NO_DEPRECATED': true,
     'USE_ASIO': true,
@@ -133,9 +133,9 @@ configure_file(output : 'build-config.h',
 )
 
 # Hack until OpenVPN 3 Core library is fixed
-if (dep_tinyxml2.version() >= '4.0.0')
+if (dep_tinyxml2.version().version_compare('>= 4.0.0'))
     add_project_arguments('-DOVPN_TINYXML2_HAS_ERROR_NAME', language:'cpp')
-    if (dep_tinyxml2.version() >= '6.0.0')
+    if (dep_tinyxml2.version().version_compare('>= 6.0.0'))
         add_project_arguments('-DOVPN_TINYXML2_HAS_ERROR_STR', language:'cpp')
     endif
 endif
