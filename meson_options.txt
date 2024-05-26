@@ -59,6 +59,9 @@ option('openvpn_group', type: 'string', value: 'openvpn',
 option('openvpn3_statedir', type: 'string', value: '',
        description: 'Override OpenVPN 3 Linux state directory')
 
+option('polkit_rulesdir', type: 'string', value: '',
+       description: 'Override polkit rules directory')
+
 #
 #  OpenVPN 3 Linux features
 #
@@ -75,7 +78,8 @@ option('dco', type: 'feature', value: 'enabled',
 #  without JavaScript support
 option('use-legacy-polkit-pkla', type: 'feature', value: 'disabled',
        description: 'Installs the legacy PKLA based polkit policy files')
-
+option('polkit_pkla_rulesdir', type: 'string', value: '',
+       description: 'Override PolicyKit PKLA rules directory')
 
 #
 #  Testing tools

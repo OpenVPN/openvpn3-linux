@@ -304,6 +304,7 @@ subdir('src/configmgr')
 subdir('src/ovpn3cli')
 subdir('src/dbus')
 subdir('src/selinux')
+subdir('src/policy/polkit')
 
 if dep_systemd.found()
     subdir('distro/systemd')
