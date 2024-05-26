@@ -466,6 +466,17 @@ executable('logfwd-listener',
     include_directories: [include_dirs, '../..'],
 )
 
+executable('open-uri-test',
+    [
+        'misc/open-uri-test.cpp',
+    ],
+    build_by_default: build_test_programs,
+    link_with: [
+        common_code,
+    ],
+    include_directories: [include_dirs, '../..'],
+)
+
 executable('ovpncli-netcfg',
     [
         'netcfg/cli.cpp',
