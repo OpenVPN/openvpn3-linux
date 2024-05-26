@@ -14,13 +14,14 @@
  *         and querying it for specific options
  */
 
-#include "config.h"
+#include "build-config.h"
 
 #include <iostream>
 
-#define USE_TUN_BUILDER
-#include "openvpn/log/logsimple.hpp"
-#include <client/ovpncli.cpp>
+#include <log/core-dbus-logger.hpp>
+#include <openvpn/options/merge.hpp>
+#include <openvpn/common/options.hpp>
+#include <openvpn/client/cliconstants.hpp>
 
 #include "common/cmdargparser.hpp"
 #include "common/core-extensions.hpp"

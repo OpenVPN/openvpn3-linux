@@ -484,3 +484,17 @@ executable('ovpncli-netcfg',
     ],
     include_directories: [include_dirs, '../..'],
 )
+
+executable('profilemerge-optionlist',
+    [
+        'ovpn3-core/profilemerge-optionlist.cpp',
+    ],
+    build_by_default: build_test_programs,
+    link_with: [
+        common_code,
+    ],
+    dependencies: [
+        base_dependencies,
+    ],
+    include_directories: [include_dirs, '../..'],
+)
