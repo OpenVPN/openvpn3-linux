@@ -51,3 +51,8 @@ configure_file(
     install: true,
     install_dir: dbus_service_dir,
 )
+
+# Create the configs directory for persistent configuration profiles
+# NOTE: Can be replaced with install_emptydir() when Meson 0.60 or newer
+#       is available on all supported distros
+meson.add_install_script('sh','-c', 'mkdir -p $DESTDIR@0@'.format(openvpn3_statedir / 'configs'))
