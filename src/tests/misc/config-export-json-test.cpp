@@ -14,6 +14,8 @@
  *         to stdout as JSON.
  */
 
+#include "build-config.h"
+
 #include <iostream>
 #include <sstream>
 

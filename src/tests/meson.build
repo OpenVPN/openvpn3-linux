@@ -498,3 +498,25 @@ executable('profilemerge-optionlist',
     ],
     include_directories: [include_dirs, '../..'],
 )
+
+executable('config-export-json-test',
+    [
+        'misc/config-export-json-test.cpp',
+    ],
+    build_by_default: build_test_programs,
+    link_with: [
+        common_code,
+    ],
+    include_directories: [include_dirs, '../..'],
+)
+
+executable('json-config-import-test',
+    [
+        'misc/json-config-import-test.cpp',
+    ],
+    build_by_default: build_test_programs,
+    link_with: [
+        common_code,
+    ],
+    include_directories: [include_dirs, '../..'],
+)

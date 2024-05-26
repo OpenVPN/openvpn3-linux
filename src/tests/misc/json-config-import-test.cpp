@@ -14,6 +14,8 @@
  *         configuration as a text/plain OpenVPN configuration profile.
  */
 
+#include "build-config.h"
+
 #include <iostream>
 #include <sstream>
 
