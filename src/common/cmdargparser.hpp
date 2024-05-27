@@ -25,7 +25,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <getopt.h>
-#include <glib-unix.h>
 
 #include "common/cmdargparser-exceptions.hpp"
 #include "common/configfileparser.hpp"

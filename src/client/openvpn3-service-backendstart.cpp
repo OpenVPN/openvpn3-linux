@@ -22,6 +22,8 @@
  */
 
 #include <iostream>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <gdbuspp/connection.hpp>
 #include <gdbuspp/credentials/query.hpp>
 #include <gdbuspp/service.hpp>
