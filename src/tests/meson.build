@@ -101,7 +101,7 @@ executable('cmdparser-test',
         common_code,
     ],
     dependencies: [
-        base_dependencies,
+        dep_jsoncpp,
     ],
     include_directories: [include_dirs, '../..'],
 )
@@ -505,7 +505,7 @@ executable('profilemerge-optionlist',
         common_code,
     ],
     dependencies: [
-        base_dependencies,
+        dep_jsoncpp,
     ],
     include_directories: [include_dirs, '../..'],
 )
@@ -518,6 +518,9 @@ executable('config-export-json-test',
     link_with: [
         common_code,
     ],
+    dependencies: [
+        dep_jsoncpp,
+    ],
     include_directories: [include_dirs, '../..'],
 )
 
@@ -528,6 +531,9 @@ executable('json-config-import-test',
     build_by_default: build_test_programs,
     link_with: [
         common_code,
+    ],
+    dependencies: [
+        dep_jsoncpp,
     ],
     include_directories: [include_dirs, '../..'],
 )

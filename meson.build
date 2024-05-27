@@ -18,12 +18,14 @@ dep_lz4 = dependency('liblz4', required: false)
 dep_selinux = dependency('libselinux', required: false)
 dep_systemd = dependency('libsystemd', version: '>218', required: false)
 dep_tinyxml2 = dependency('tinyxml2')
+dep_jsoncpp = dependency('jsoncpp')
 
 # This is not a link dependency for this project, but we need it
 # to get the proper paths for policy and service config installation
 dep_dbus = dependency('dbus-1')
 
 base_dependencies = [
+    dep_jsoncpp,
     dep_lz4,
     dep_selinux,
     dep_systemd,
@@ -34,7 +36,6 @@ base_dependencies = [
     dependency('gio-unix-2.0'),
     dependency('libcap-ng'),
     dependency('libnl-3.0'),
-    dependency('jsoncpp'),
     dependency('openssl', version: '>= 1.0.2'),
     dependency('threads'),
     dependency('uuid'),

@@ -18,7 +18,7 @@
 
 #include <iostream>
 
-#include <log/core-dbus-logger.hpp>
+#include <openvpn/log/logsimple.hpp>
 #include <openvpn/options/merge.hpp>
 #include <openvpn/common/options.hpp>
 #include <openvpn/client/cliconstants.hpp>
