@@ -73,5 +73,5 @@ executable('openvpn3-admin',
     ],
     include_directories: [include_dirs, '../..'],
     install: true,
-    install_dir: get_option('prefix') / 'sbin',
+    install_dir: get_option('prefix') / get_option('sbindir'),
 )

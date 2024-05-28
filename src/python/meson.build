@@ -23,7 +23,7 @@ custom_target('openvpn2',
         output: 'openvpn2',
         command: [cp_prog, '@INPUT@', '@OUTPUT@'],
         install: true,
-        install_dir: get_option('prefix') / 'bin',
+        install_dir: get_option('prefix') / get_option('bindir'),
 )
 
 custom_target('openvpn3-as',
@@ -31,7 +31,7 @@ custom_target('openvpn3-as',
         output: 'openvpn3-as',
         command: [cp_prog, '@INPUT@', '@OUTPUT@'],
         install: true,
-        install_dir: get_option('prefix') / 'bin',
+        install_dir: get_option('prefix') / get_option('bindir'),
 )
 
 custom_target('openvpn3-autoload',
@@ -39,5 +39,5 @@ custom_target('openvpn3-autoload',
         output: 'openvpn3-autoload',
         command: [cp_prog, '@INPUT@', '@OUTPUT@'],
         install: true,
-        install_dir: get_option('prefix') / 'sbin',
+        install_dir: get_option('prefix') / get_option('sbindir'),
 )
