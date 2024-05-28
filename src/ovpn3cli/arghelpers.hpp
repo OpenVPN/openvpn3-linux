@@ -31,10 +31,23 @@ std::string arghelper_config_paths();
 
 
 /**
- * Retrieves a list of all available configuration profile names
+ *  Retrieve a list of configuration profiles (by their name) which
+ *  is available to the currently calling user
  *
- * @return std::string with all available profile names, each separated
- *         by space
+ * @param dbuscon        DBus::Connection object to use for the query
+ * @return std::string with configuration profile names, space separated
+ */
+std::string arghelper_config_names_dbus(DBus::Connection::Ptr dbuscon);
+
+
+/**
+ *  Retrieve a list of configuration profiles (by their name) which
+ *  is available to the currently calling user.
+ *
+ *  This function will create the D-Bus connection internally before
+ *  calling arghelper_config_names_dbus()
+ *
+ * @return std::string with configuration profile names, space separated
  */
 std::string arghelper_config_names();
 
@@ -53,12 +66,25 @@ std::string arghelper_session_paths();
  */
 std::string arghelper_managed_interfaces();
 
+
 /**
- * Retrieves a list of all available configuration profile names for
- * currently running sessions.
+ *  Retrieve a list of configuration profiles (by their name) which
+ *  is available to the currently calling user
  *
- * @return std::string with all available profile names, each separated
- *         by space
+ * @param dbuscon        DBus::Connection object to use for the query
+ * @return std::string with configuration profile names, space separated
+ */
+std::string arghelper_config_names_sessions_dbus(DBus::Connection::Ptr dbuscon);
+
+
+/**
+ *  Retrieve a list of configuration profiles (by their name) which
+ *  is available to the currently calling user
+ *
+ *  This function will create the D-Bus connection internally before
+ *  calling arghelper_config_names_sessions_dbus()
+ *
+ * @return std::string with configuration profile names, space separated
  */
 std::string arghelper_config_names_sessions();
 

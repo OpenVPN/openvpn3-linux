@@ -75,7 +75,9 @@ static int cmd_log(ParsedArgs::Ptr args)
 
 std::string arghelper_log_config_names()
 {
-    return arghelper_config_names() + arghelper_config_names_sessions();
+    auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    return arghelper_config_names_dbus(dbuscon)
+           + arghelper_config_names_sessions_dbus(dbuscon);
 }
 
 

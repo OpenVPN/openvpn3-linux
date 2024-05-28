@@ -48,15 +48,8 @@ std::string arghelper_config_paths()
 }
 
 
-/**
- * Retrieves a list of all available configuration profile names
- *
- * @return std::string with all available profile names, each separated
- *         by space
- */
-std::string arghelper_config_names()
+std::string arghelper_config_names_dbus(DBus::Connection::Ptr dbuscon)
 {
-    auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
     OpenVPN3ConfigurationProxy confmgr(dbuscon,
                                        Constants::GenPath("configuration"));
 
@@ -67,16 +60,13 @@ std::string arghelper_config_names()
         std::string cfgname = cfg.GetName();
 
         // Filter out duplicates
-        bool found = false;
-        for (const auto &chk : cfgnames)
-        {
-            if (chk == cfgname)
-            {
-                found = true;
-                break;
-            }
-        }
-        if (!found)
+        auto found = std::find_if(cfgnames.begin(),
+                                  cfgnames.end(),
+                                  [cfgname](const std::string chkname)
+                                  {
+                                        return cfgname == chkname;
+                                  });
+        if (found == cfgnames.end() && !cfgname.empty())
         {
             cfgnames.push_back(cfgname);
         }
@@ -86,13 +76,16 @@ std::string arghelper_config_names()
     std::stringstream res;
     for (const auto &n : cfgnames)
     {
-        if (n.empty())
-        {
-            continue;
-        }
         res << n << " ";
     }
     return res.str();
+}
+
+
+std::string arghelper_config_names()
+{
+    auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    return arghelper_config_names_dbus(dbuscon);
 }
 
 
@@ -136,16 +129,9 @@ std::string arghelper_managed_interfaces()
     return res.str();
 }
 
-/**
- * Retrieves a list of all available configuration profile names for
- * currently running sessions.
- *
- * @return std::string with all available profile names, each separated
- *         by space
- */
-std::string arghelper_config_names_sessions()
+
+std::string arghelper_config_names_sessions_dbus(DBus::Connection::Ptr dbuscon)
 {
-    auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
     auto sessmgr = SessionManager::Proxy::Manager::Create(dbuscon);
 
     std::vector<std::string> cfgnames;
@@ -155,16 +141,13 @@ std::string arghelper_config_names_sessions()
         std::string cfgname = session->GetConfigName();
 
         // Filter out duplicates
-        bool found = false;
-        for (const auto &chk : cfgnames)
-        {
-            if (chk == cfgname)
-            {
-                found = true;
-                break;
-            }
-        }
-        if (!found)
+        auto found = std::find_if(cfgnames.begin(),
+                                  cfgnames.end(),
+                                  [cfgname](const std::string chkname)
+                                  {
+                                        return cfgname == chkname;
+                                  });
+        if (found == cfgnames.end() && !cfgname.empty())
         {
             cfgnames.push_back(cfgname);
         }
@@ -174,13 +157,16 @@ std::string arghelper_config_names_sessions()
     std::stringstream res;
     for (const auto &n : cfgnames)
     {
-        if (n.empty())
-        {
-            continue;
-        }
         res << n << " ";
     }
     return res.str();
+}
+
+
+std::string arghelper_config_names_sessions()
+{
+    auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    return arghelper_config_names_sessions_dbus(dbuscon);
 }
 
 
