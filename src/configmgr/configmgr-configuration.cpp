@@ -179,7 +179,8 @@ const bool Configuration::Authorize(const DBus::Authz::Request::Ptr authzreq)
                 }
             }
 
-            if ("net.openvpn.v3.configuration.Fetch" == authzreq->target)
+            if ("net.openvpn.v3.configuration.Fetch" == authzreq->target
+                || "net.openvpn.v3.configuration.FetchJSON" == authzreq->target)
             {
                 if (prop_locked_down_)
                 {
@@ -191,28 +192,14 @@ const bool Configuration::Authorize(const DBus::Authz::Request::Ptr authzreq)
                            || creds_qry_->GetUID(authzreq->caller) == lookup_uid(OPENVPN_USERNAME);
                 }
 
+                // We don't grant access to Fetch/FetchJSON with only public-access
                 return object_acl_->CheckACL(authzreq->caller,
                                              {object_acl_->GetOwner(),
                                               lookup_uid(OPENVPN_USERNAME)},
                                              true);
             }
 
-            if ("net.openvpn.v3.configuration.FetchJSON" == authzreq->target)
-            {
-                if (prop_locked_down_)
-                {
-                    // If the configuration is locked down, restrict any
-                    // read-operations to anyone except the backend VPN client
-                    // process (openvpn user) or the configuration profile
-                    // owner.
-                    return object_acl_->CheckOwnerAccess(authzreq->caller);
-                }
-
-                // Manager processes do not get explicit access to
-                // the configuration profile as JSON.
-                // The final return should do the right thing.
-            }
-
+            // Only the owner is allowed to seal and remove configuration profiles
             for (const auto &method : {
                      "net.openvpn.v3.configuration.Seal",
                      "net.openvpn.v3.configuration.Remove"})
@@ -224,8 +211,7 @@ const bool Configuration::Authorize(const DBus::Authz::Request::Ptr authzreq)
             }
 
             return object_acl_->CheckACL(authzreq->caller,
-                                         {object_acl_->GetOwner()},
-                                         true);
+                                         {object_acl_->GetOwner()});
         }
 
     case DBus::Object::Operation::PROPERTY_GET:
