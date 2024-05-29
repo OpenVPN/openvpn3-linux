@@ -217,7 +217,10 @@ static int cmd_config_acl(ParsedArgs::Ptr args)
 
         if (args->Present("show"))
         {
-            std::cout << "    Configuration name: "
+            std::cout << std::endl
+                      << "    Configuration path: "
+                      << conf->GetConfigPath() << std::endl
+                      << "                  Name: "
                       << conf->GetName()
                       << std::endl;
 
@@ -257,6 +260,7 @@ static int cmd_config_acl(ParsedArgs::Ptr args)
                               << std::endl;
                 }
             }
+            std::cout << std::endl;
         }
         return ret;
     }
