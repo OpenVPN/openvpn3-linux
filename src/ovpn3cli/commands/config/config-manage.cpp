@@ -26,108 +26,218 @@
 #include "../../arghelpers.hpp"
 
 
+namespace ovpn3cli::config::manage {
+
+class ConfigProfileDetails
+{
+  public:
+    using Ptr = std::shared_ptr<ConfigProfileDetails>;
+
+    [[nodiscard]] static Ptr Create(OpenVPN3ConfigurationProxy::Ptr cfgprx);
+
+    bool AccessAllowed() const noexcept;
+
+    std::string name = "(n/a)";
+    std::string tags = "(n/a)";
+    std::string dns_scope = "(n/a)";
+    std::string sealed = "(n/a)";
+    std::string persistent = "(n/a)";
+    std::string dco = "(n/a)";
+    std::map<std::string, std::string> overrides{};
+
+  private:
+    OpenVPN3ConfigurationProxy::Ptr prx = nullptr;
+    bool access_allowed = false;
+
+    ConfigProfileDetails(OpenVPN3ConfigurationProxy::Ptr cfgprx);
+
+    std::string extract_tags() const;
+
+    std::string extract_override(const std::string &override,
+                                 const std::string &unavail_value,
+                                 const std::string &bool_true = "true",
+                                 const std::string &bool_false = "false") const;
+    void parse_overrides();
+};
+
+
+ConfigProfileDetails::Ptr ConfigProfileDetails::Create(OpenVPN3ConfigurationProxy::Ptr p)
+{
+    return ConfigProfileDetails::Ptr(new ConfigProfileDetails(p));
+}
+
+
+ConfigProfileDetails::ConfigProfileDetails(OpenVPN3ConfigurationProxy::Ptr cfgprx)
+    : prx(cfgprx)
+{
+    try
+    {
+        name = prx->GetName();
+        tags = extract_tags();
+        dns_scope = extract_override("dns-scope", "global (default)");
+        sealed = prx->GetSealed() ? "Yes" : "No";
+        persistent = prx->GetPersistent() ? "Yes" : "No";
+        dco = prx->GetDCO() ? "Yes" : "No";
+        parse_overrides();
+        access_allowed = true;
+    }
+    catch (const DBus::Exception &excp)
+    {
+        access_allowed = false;
+    }
+}
+
+
+bool ConfigProfileDetails::AccessAllowed() const noexcept
+{
+    return access_allowed;
+}
+
+std::string ConfigProfileDetails::extract_tags() const
+{
+    std::string tags = "";
+    try
+    {
+        if (prx->CheckFeatures(CfgMgrFeatures::TAGS))
+        {
+            bool first = true;
+            for (const auto &t : prx->GetTags())
+            {
+                tags += (!first ? ", " : "");
+                tags += t;
+                first = false;
+            }
+        }
+    }
+    catch (const DBus::Exception &ex)
+    {
+        tags = "(not available)";
+    }
+    return tags;
+}
+
+std::string ConfigProfileDetails::extract_override(const std::string &override,
+                                                   const std::string &unavail_value,
+                                                   const std::string &bool_true,
+                                                   const std::string &bool_false) const
+{
+    try
+    {
+        const OverrideValue &ov = prx->GetOverrideValue(override);
+        switch (ov.override.type)
+        {
+        case OverrideType::string:
+            return ov.strValue;
+
+        case OverrideType::boolean:
+            return (ov.boolValue ? bool_true : bool_false);
+
+        case OverrideType::invalid:
+        default:
+            return "(invalid)";
+        }
+    }
+    catch (const DBus::Exception &ex)
+    {
+        return unavail_value;
+    }
+    return "(inaccessible)";
+}
+
+
+void ConfigProfileDetails::parse_overrides()
+{
+    for (const auto &vo : configProfileOverrides)
+    {
+        std::string value = "(not set)";
+        for (const auto &ov : prx->GetOverrides(false))
+        {
+            if ("dns-scope" == ov.override.key)
+            {
+                // This override is retrieved in the global block
+                continue;
+            }
+            if (ov.override.key == vo.key)
+            {
+                switch (ov.override.type)
+                {
+                case OverrideType::string:
+                    overrides[vo.key] = ov.strValue;
+                    break;
+
+                case OverrideType::boolean:
+                    overrides[vo.key] = ov.boolValue ? "true" : "false";
+                    break;
+
+                case OverrideType::invalid:
+                    overrides[vo.key] = "(invalid)";
+                    break;
+                }
+            }
+        }
+    }
+}
+
+
+} // namespace ovpn3cli::config::manage
+
 /**
  * openvpn3 config-manage --show command
  *
  *  This command shows all overrides and other details about the config
  *  apart from the config itself
  */
-static int config_manage_show(OpenVPN3ConfigurationProxy::Ptr conf,
-                              bool showall = false)
+static int config_manage_show(OpenVPN3ConfigurationProxy::Ptr conf)
 {
 
     try
     {
-        std::string dns_scope = "(not available)";
-        try
-        {
-            const OverrideValue &ov = conf->GetOverrideValue("dns-scope");
-            if (ov.override.valid())
-            {
-                dns_scope = ov.strValue;
-            }
-        }
-        catch (const DBus::Exception &ex)
-        {
-            dns_scope = "global (default)";
-        }
+        auto prf = ovpn3cli::config::manage::ConfigProfileDetails::Create(conf);
 
-        std::string tags = "";
-        try
+        if (!prf->AccessAllowed())
         {
-            if (conf->CheckFeatures(CfgMgrFeatures::TAGS))
-            {
-                bool first = true;
-                for (const auto &t : conf->GetTags())
-                {
-                    tags += (!first ? ", " : "");
-                    tags += t;
-                    first = false;
-                }
-            }
+            throw CommandException("config-manage", "No access to profile");
         }
-        catch (const DBus::Exception &ex)
-        {
-            tags = "(not available)";
-        }
-
 
         // Right algin the field with explicit width
         std::cout << std::right;
         std::cout << std::setw(32) << "                  Name: "
-                  << conf->GetName() << std::endl;
-        if (!tags.empty())
+                  << prf->name << std::endl;
+
+        if (!prf->tags.empty())
         {
             std::cout << std::setw(32) << "                  Tags: "
-                      << tags << std::endl;
+                      << prf->tags << std::endl;
         }
         std::cout << std::setw(32) << "             Read only: "
-                  << (conf->GetSealed() ? "Yes" : "No") << std::endl
+                  << prf->sealed << std::endl
                   << std::setw(32) << "     Persistent config: "
-                  << (conf->GetPersistent() ? "Yes" : "No") << std::endl;
+                  << prf->persistent << std::endl;
 #ifdef ENABLE_OVPNDCO
         std::cout << std::setw(32) << "  Data Channel Offload: "
-                  << (conf->GetDCO() ? "Yes" : "No") << std::endl;
+                  << prf->dco << std::endl;
 #endif
 
         std::cout << std::setw(32) << "    DNS Resolver Scope: "
-                  << dns_scope << std::endl;
+                  << prf->dns_scope << std::endl;
 
         std::cout << std::endl
                   << "  Overrides: ";
-        auto overrides = conf->GetOverrides(false);
-        if (overrides.empty() && !showall)
+
+        if (prf->overrides.empty())
         {
             std::cout << " No overrides set." << std::endl;
         }
         else
         {
             std::cout << std::endl;
+            for (const auto &[key, value] : prf->overrides)
+            {
+                std::cout << std::setw(30) << key
+                          << ": " << value << std::endl;
+            }
         }
 
-        for (auto &vo : configProfileOverrides)
-        {
-            std::string value = "(not set)";
-            for (auto &ov : overrides)
-            {
-                if ("dns-scope" == ov.override.key)
-                {
-                    // This override is retrieved in the global block
-                    continue;
-                }
-                if (ov.override.key == vo.key)
-                {
-                    if (OverrideType::boolean == ov.override.type)
-                        value = ov.boolValue ? "true" : "false";
-                    else
-                        value = ov.strValue;
-                }
-            }
-            if (showall || value != "(not set)")
-            {
-                std::cout << std::setw(30) << vo.key << ": " << value << std::endl;
-            }
-        }
         return 0;
     }
     catch (const DBus::Exception &err)
