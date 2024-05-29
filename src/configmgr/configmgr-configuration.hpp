@@ -111,6 +111,9 @@ class Configuration : public DBus::Object::Base
      */
     const bool Authorize(const DBus::Authz::Request::Ptr authzreq) override;
 
+
+    const std::string AuthorizationRejected(const DBus::Authz::Request::Ptr request) const noexcept override;
+
     /**
      *  Exports the configuration, including all the available settings
      *  specific to the Linux client.  The output format is JSON.

@@ -294,6 +294,23 @@ const bool Configuration::Authorize(const DBus::Authz::Request::Ptr authzreq)
 }
 
 
+const std::string Configuration::AuthorizationRejected(const Authz::Request::Ptr request) const noexcept
+{
+    switch (request->operation)
+    {
+    case DBus::Object::Operation::PROPERTY_SET:
+        return (prop_readonly_
+                    ? "Configuration profile is sealed and read-only"
+                    : "Configuration can only be modified by the profile owner");
+
+    case DBus::Object::Operation::METHOD_CALL:
+    case DBus::Object::Operation::PROPERTY_GET:
+    default:
+        return "Access to the configuration profile is denied.";
+    }
+}
+
+
 void Configuration::add_methods()
 {
     auto fetch_args
