@@ -37,6 +37,7 @@ class ConfigProfileDetails
 
     bool AccessAllowed() const noexcept;
 
+    DBus::Object::Path path{};
     std::string name = "(n/a)";
     std::string tags = "(n/a)";
     std::string dns_scope = "(n/a)";
@@ -72,6 +73,7 @@ ConfigProfileDetails::ConfigProfileDetails(OpenVPN3ConfigurationProxy::Ptr cfgpr
 {
     try
     {
+        path = prx->GetConfigPath();
         name = prx->GetName();
         tags = extract_tags();
         dns_scope = extract_override("dns-scope", "global (default)");
@@ -200,9 +202,10 @@ static int config_manage_show(OpenVPN3ConfigurationProxy::Ptr conf)
         }
 
         // Right algin the field with explicit width
-        std::cout << std::right;
-        std::cout << std::setw(32) << "                  Name: "
-                  << prf->name << std::endl;
+        std::cout << std::endl << std::right;
+        std::cout << std::setw(32)
+                  << "    Configuration path: " << prf->path << std::endl
+                  << "                          Name: " << prf->name << std::endl;
 
         if (!prf->tags.empty())
         {
@@ -237,7 +240,7 @@ static int config_manage_show(OpenVPN3ConfigurationProxy::Ptr conf)
                           << ": " << value << std::endl;
             }
         }
-
+        std::cout << std::endl;
         return 0;
     }
     catch (const DBus::Exception &err)
@@ -502,9 +505,7 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
                           << "------------------------------"
                           << std::endl;
             }
-            std::cout << std::endl;
             config_manage_show(conf);
-            std::cout << std::endl;
             valid_option = true;
         }
 
