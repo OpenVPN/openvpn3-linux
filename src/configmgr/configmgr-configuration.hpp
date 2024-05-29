@@ -257,18 +257,23 @@ class Configuration : public DBus::Object::Base
         AddPropertyBySpec(
             name,
             dbus_type,
-            [=](const DBus::Object::Property::BySpec &prop)
+            [&](const DBus::Object::Property::BySpec &prop)
             {
                 return glib2::Value::Create(property_var);
             },
-            [this, &property_var](const DBus::Object::Property::BySpec &prop,
-                                  GVariant *value)
+            [&](const DBus::Object::Property::BySpec &prop,
+                GVariant *value)
             {
                 property_var = glib2::Value::Get<T>(value);
 
                 auto upd = prop.PrepareUpdate();
                 upd->AddValue(property_var);
 
+                std::ostringstream msg;
+                msg << GetPath()
+                    << " - Property " << prop.GetName()
+                    << " changed to '" << property_var << "'";
+                signals_->LogVerb2(msg.str());
                 update_persistent_file();
 
                 return upd;
