@@ -59,7 +59,7 @@ EventLogger::EventLogger(DBus::MainLoop::Ptr mainl,
         [&](const Events::Log logev)
         {
             Events::Log event(logev);
-            event.message = logev.str(23);
+            event.message = logev.str(23, false);
             logdest->Write(event);
         });
 
