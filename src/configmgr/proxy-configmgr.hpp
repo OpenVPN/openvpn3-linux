@@ -127,6 +127,17 @@ class OpenVPN3ConfigurationProxy
     }
 
 
+    /**
+     *  Retrieve the D-Bus object path to the current object
+     *
+     * @return DBus::Object::Path
+     */
+    DBus::Object::Path GetConfigPath() const
+    {
+        return proxy_tgt->object_path;
+    }
+
+
     const bool CheckFeatures(const CfgMgrFeatures &feat)
     {
         if (features == CfgMgrFeatures::UNDEFINED)
