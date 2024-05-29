@@ -219,19 +219,26 @@ const bool Configuration::Authorize(const DBus::Authz::Request::Ptr authzreq)
             if ("net.openvpn.v3.configuration.owner" == authzreq->target)
                 return true;
 
-            // Owner + openvpn.
+            // Owner + openvpn - optionally public access.
             for (const auto &property : {
                      "net.openvpn.v3.configuration.name",
                      "net.openvpn.v3.configuration.transfer_owner_session",
                      "net.openvpn.v3.configuration.overrides",
-                     "net.openvpn.v3.configuration.dco"})
+                     "net.openvpn.v3.configuration.dco",
+                     "net.openvpn.v3.configuration.persistent",
+                     "net.openvpn.v3.configuration.import_timestamp",
+                     "net.openvpn.v3.configuration.last_used_timestamp",
+                     "net.openvpn.v3.configuration.locked_down",
+                     "net.openvpn.v3.configuration.readonly",
+                     "net.openvpn.v3.configuration.used_count",
+                     "net.openvpn.v3.configuration.valid",
+                     "net.openvpn.v3.configuration.tags"})
             {
                 if (property == authzreq->target)
                 {
                     return object_acl_->CheckACL(authzreq->caller,
                                                  {object_acl_->GetOwner(),
-                                                  lookup_uid(OPENVPN_USERNAME)},
-                                                 true);
+                                                  lookup_uid(OPENVPN_USERNAME)});
                 }
             }
 
@@ -239,15 +246,7 @@ const bool Configuration::Authorize(const DBus::Authz::Request::Ptr authzreq)
             for (const auto &property : {
                      "net.openvpn.v3.configuration.public_access",
                      "net.openvpn.v3.configuration.acl",
-                     "net.openvpn.v3.configuration.persistent",
-                     "net.openvpn.v3.configuration.import_timestamp",
-                     "net.openvpn.v3.configuration.last_used_timestamp",
-                     "net.openvpn.v3.configuration.locked_down",
-                     "net.openvpn.v3.configuration.readonly",
-                     "net.openvpn.v3.configuration.single_use",
-                     "net.openvpn.v3.configuration.used_count",
-                     "net.openvpn.v3.configuration.valid",
-                     "net.openvpn.v3.configuration.tags"})
+                     "net.openvpn.v3.configuration.single_use"})
             {
                 if (property == authzreq->target)
                 {
