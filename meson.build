@@ -117,6 +117,7 @@ build_config = configuration_data({
     'DEBUG_DISABLE_SECURITY_CHECKS': get_option('debug_disable_security_checks'),
     'ENABLE_OVPNDCO': dco_enabled,
     'HAVE_LZ4': dep_lz4.found(),
+    'HAVE_JSONCPP': dep_jsoncpp.found(),
     'HAVE_SELINUX': dep_selinux.found(),
     'HAVE_SYSTEMD': sd_id128,
     'HAVE_TINYXML': dep_tinyxml2.found(),
@@ -324,6 +325,10 @@ endif
 
 if get_option('bash-completion').enabled()
    subdir('src/shell/bash-completion')
+endif
+
+if get_option('addon-aws').enabled()
+   subdir('addons/aws')
 endif
 
 if get_option('addon-deviceposture').enabled()

@@ -197,12 +197,6 @@ OPTIONS
                 or console.  Log events will be coloured based on the log
                 level of the event.
 
---signal-broadcast
-                Normally, the ``openvpn3-service-aws`` will attach a
-                log stream to the ``openvpn3-service-log`` service.  By
-                providing this option, it will instead broadcast all log events
-                to all listeners on the system.
-
 SEE ALSO
 ========
 

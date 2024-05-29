@@ -47,6 +47,10 @@ manpage_sources = [
     ['openvpn3-systemd.8.rst', mandir_8],
 ]
 
+if get_option('addon-aws').enabled()
+    manpage_sources += [['openvpn3-service-aws.8.rst.in', mandir_8]]
+endif
+
 #
 # Generic man page setup
 #
