@@ -120,7 +120,6 @@ void JournaldWriter::Write(const Events::Log &event)
     {
         m += logtag->str(true) + " ";
     }
-    m += event.GetLogGroupStr() + ": ";
 
     m += event.message;
     l[i++] = {(char *)strdup(m.c_str()), m.length()};
