@@ -621,7 +621,7 @@ class OpenVPN3ConfigurationProxy
         {
             std::stringstream e;
             e << excp.GetRawError() << ", tag value: " << tag;
-            throw CfgMgrProxyException(e.str().substr(e.str().find(":") + 1));
+            throw CfgMgrProxyException(e.str());
         }
     }
 
@@ -653,7 +653,7 @@ class OpenVPN3ConfigurationProxy
         {
             std::stringstream e;
             e << excp.GetRawError() << ", tag value: " << tag;
-            throw CfgMgrProxyException(e.str().substr(e.str().find(":") + 1));
+            throw CfgMgrProxyException(e.str());
         }
     }
 
