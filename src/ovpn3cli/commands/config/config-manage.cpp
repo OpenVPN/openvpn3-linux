@@ -261,7 +261,7 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
                 }
                 catch (const CfgMgrProxyException &err)
                 {
-                    std::cerr << "Warning: " << err.what() << std::endl;
+                    std::cerr << "Warning: " << err.GetRawError() << std::endl;
                 }
             }
             if (!taglist.empty() && !quiet)
@@ -287,7 +287,7 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
                 }
                 catch (const CfgMgrProxyException &err)
                 {
-                    std::cerr << "Warning: " << err.what() << std::endl;
+                    std::cerr << "Warning: " << err.GetRawError() << std::endl;
                 }
             }
             if (!taglist.empty() && !quiet)
