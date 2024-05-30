@@ -225,7 +225,7 @@ void Device::SetLayer(unsigned int layer)
 }
 
 
-void Device::SetMtu(unsigned int mtu)
+void Device::SetMtu(const uint16_t mtu)
 {
     proxy->SetProperty(prxtgt, "mtu", mtu);
 }

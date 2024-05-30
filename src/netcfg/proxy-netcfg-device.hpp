@@ -271,7 +271,7 @@ class Device
      *
      * @param mtu  unsigned int containing the new MTU value
      */
-    void SetMtu(unsigned int mtu);
+    void SetMtu(const uint16_t mtu);
 
 
     /**
