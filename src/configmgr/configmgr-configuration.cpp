@@ -313,80 +313,80 @@ const std::string Configuration::AuthorizationRejected(const Authz::Request::Ptr
 
 void Configuration::add_methods()
 {
-    auto fetch_args
-        = AddMethod("Fetch",
-                    [this](DBus::Object::Method::Arguments::Ptr args)
-                    {
-                        method_fetch(args, false);
+    auto fetch_args = AddMethod(
+        "Fetch",
+        [this](DBus::Object::Method::Arguments::Ptr args)
+        {
+            method_fetch(args, false);
 
-                        bool is_backend_client = false;
+            bool is_backend_client = false;
 
-                        try
-                        {
-                            // There are two checks happening here:
-                            //
-                            // 1. Retrieve the PID value of the sender and the
-                            //    well-known bus name for the backend client
-                            //
-                            //    It is expected that the unqiue bus ID is
-                            //    tied to the same process as the well-known bus
-                            //    name, which indicates the correct information has
-                            //    been retrieved.
-                            //
-                            // 2. The well-known busname for the backend
-                            //    client is re-composed and the unique bus ID for
-                            //    this busname is retrieved from the main D-Bus service
-                            //
-                            //    This value will be used to compare the the unique
-                            //    bus ID with the bus ID provided in the "sender"
-                            //    variable.
-                            //
-                            // If both of these checks matches, the check is complete:
-                            // The PID of both the well-known and unique bus IDs
-                            // indicates it is the same process.  And the unique bus ID
-                            // from the well-known bus name (recomposed from the PID)
-                            // matches the unique bus ID from the requestor for this
-                            // call.
+            try
+            {
+                // There are two checks happening here:
+                //
+                // 1. Retrieve the PID value of the sender and the
+                //    well-known bus name for the backend client
+                //
+                //    It is expected that the unqiue bus ID is
+                //    tied to the same process as the well-known bus
+                //    name, which indicates the correct information has
+                //    been retrieved.
+                //
+                // 2. The well-known busname for the backend
+                //    client is re-composed and the unique bus ID for
+                //    this busname is retrieved from the main D-Bus service
+                //
+                //    This value will be used to compare the the unique
+                //    bus ID with the bus ID provided in the "sender"
+                //    variable.
+                //
+                // If both of these checks matches, the check is complete:
+                // The PID of both the well-known and unique bus IDs
+                // indicates it is the same process.  And the unique bus ID
+                // from the well-known bus name (recomposed from the PID)
+                // matches the unique bus ID from the requestor for this
+                // call.
 
-                            const std::string caller = args->GetCallerBusName();
-                            pid_t caller_pid = creds_qry_->GetPID(caller);
+                const std::string caller = args->GetCallerBusName();
+                pid_t caller_pid = creds_qry_->GetPID(caller);
 
-                            // Re-compose the well-known bus name from the PID of the
-                            // sender.  If this call comes from a PID not being a
-                            // backend client, it will not be able to retrieve any
-                            // unique bus ID for the sender.
-                            std::string be_name = SERVICE_BACKEND + std::to_string(caller_pid);
-                            std::string be_unique = creds_qry_->GetUniqueBusName(be_name);
+                // Re-compose the well-known bus name from the PID of the
+                // sender.  If this call comes from a PID not being a
+                // backend client, it will not be able to retrieve any
+                // unique bus ID for the sender.
+                std::string be_name = SERVICE_BACKEND + std::to_string(caller_pid);
+                std::string be_unique = creds_qry_->GetUniqueBusName(be_name);
 
-                            pid_t be_pid = creds_qry_->GetPID(be_name);
+                pid_t be_pid = creds_qry_->GetPID(be_name);
 
-                            // Check if everything matches
-                            is_backend_client = (caller_pid == be_pid) && (caller == be_unique);
-                        }
-                        catch (const DBus::Exception &e)
-                        {
-                            // If any of these D-Bus checks (GetPID/GetUniqueBusID)
-                            // fails, it is not a backend client service.
+                // Check if everything matches
+                is_backend_client = (caller_pid == be_pid) && (caller == be_unique);
+            }
+            catch (const DBus::Exception &e)
+            {
+                // If any of these D-Bus checks (GetPID/GetUniqueBusID)
+                // fails, it is not a backend client service.
 
-                            is_backend_client = false;
-                        }
+                is_backend_client = false;
+            }
 
-                        if (is_backend_client)
-                        {
-                            // If this config is tagged as single-use only then we delete this
-                            // config from memory.
-                            if (prop_single_use_)
-                            {
-                                signals_->LogVerb2("Single-use configuration fetched");
-                                method_remove();
-                                return;
-                            }
+            if (is_backend_client)
+            {
+                // If this config is tagged as single-use only then we delete this
+                // config from memory.
+                if (prop_single_use_)
+                {
+                    signals_->LogVerb2("Single-use configuration fetched");
+                    method_remove();
+                    return;
+                }
 
-                            prop_used_count_++;
-                            prop_last_used_timestamp_ = std::time(nullptr);
-                            update_persistent_file();
-                        }
-                    });
+                prop_used_count_++;
+                prop_last_used_timestamp_ = std::time(nullptr);
+                update_persistent_file();
+            }
+        });
 
     fetch_args->AddOutput("config", glib2::DataType::DBus<std::string>());
 

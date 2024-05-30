@@ -202,8 +202,8 @@ static int config_manage_show(OpenVPN3ConfigurationProxy::Ptr conf)
         }
 
         // Right algin the field with explicit width
-        std::cout << std::endl << std::right;
-        std::cout << std::setw(32)
+        std::cout << std::endl
+                  << std::right << std::setw(32)
                   << "    Configuration path: " << prf->path << std::endl
                   << "                          Name: " << prf->name << std::endl;
 

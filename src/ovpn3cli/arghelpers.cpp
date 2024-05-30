@@ -64,7 +64,7 @@ std::string arghelper_config_names_dbus(DBus::Connection::Ptr dbuscon)
                                   cfgnames.end(),
                                   [cfgname](const std::string chkname)
                                   {
-                                        return cfgname == chkname;
+                                      return cfgname == chkname;
                                   });
         if (found == cfgnames.end() && !cfgname.empty())
         {
@@ -145,7 +145,7 @@ std::string arghelper_config_names_sessions_dbus(DBus::Connection::Ptr dbuscon)
                                   cfgnames.end(),
                                   [cfgname](const std::string chkname)
                                   {
-                                        return cfgname == chkname;
+                                      return cfgname == chkname;
                                   });
         if (found == cfgnames.end() && !cfgname.empty())
         {

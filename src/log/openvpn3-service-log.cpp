@@ -181,9 +181,8 @@ static int logger_service(ParsedArgs::Ptr args)
 #endif
     auto dbuscon = DBus::Connection::Create(bustype);
     auto main_service = DBus::Service::Create<LogService::MainService>(dbuscon);
-    auto service_handler
-        = main_service->CreateServiceHandler<LogService::ServiceHandler>(
-            dbuscon, main_service->GetObjectManager(), servicecfg);
+    auto service_handler = main_service->CreateServiceHandler<LogService::ServiceHandler>(
+        dbuscon, main_service->GetObjectManager(), servicecfg);
 
     // Enable automatic shutdown if the logger is
     // idling for 10 minute or more.  By idling, it means
