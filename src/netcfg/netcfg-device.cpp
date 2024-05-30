@@ -42,7 +42,9 @@ NetCfgDevice::NetCfgDevice(DBus::Connection::Ptr dbuscon_,
     : DBus::Object::Base(objpath, Constants::GenInterface("netcfg")),
       dbuscon(dbuscon_),
       object_manager(obj_mgr),
-      device_name(devname), creator_pid(creator_pid_),
+      device_name(devname),
+      object_acl(GDBusPP::Object::Extension::ACL::Create(dbuscon_, creator_)),
+      creator_pid(creator_pid_),
       resolver(resolver),
       logwr(logwr_),
       options(std::move(options))
@@ -58,12 +60,80 @@ NetCfgDevice::NetCfgDevice(DBus::Connection::Ptr dbuscon_,
         signals->AddSubscriptionList(subscriptions);
     }
 
+    if (resolver)
+    {
+        dnsconfig = resolver->NewResolverSettings();
+    }
+
     AddProperty("device_name", device_name, false);
     AddProperty("mtu", mtu, true);
     AddProperty("layer", device_type, true);
     AddProperty("txqueuelen", txqueuelen, true);
     AddProperty("reroute_ipv4", reroute_ipv4, true);
     AddProperty("reroute_ipv6", reroute_ipv6, true);
+
+    AddPropertyBySpec(
+        "owner",
+        glib2::DataType::DBus<uint32_t>(),
+        [&](const DBus::Object::Property::BySpec &prop) -> GVariant *
+        {
+            return glib2::Value::Create(object_acl->GetOwner());
+        });
+
+    AddPropertyBySpec(
+        "acl",
+        "au",
+        [=](const DBus::Object::Property::BySpec &prop) -> GVariant *
+        {
+            return glib2::Value::CreateVector(object_acl->GetAccessList());
+        });
+
+    AddPropertyBySpec(
+        "dns_scope",
+        glib2::DataType::DBus<std::string>(),
+        [&](const DBus::Object::Property::BySpec &prop) -> GVariant *
+        {
+            std::string scope = (dnsconfig
+                                     ? dnsconfig->GetDNSScopeStr()
+                                     : "");
+            return glib2::Value::Create(scope);
+        },
+        [&](const DBus::Object::Property::BySpec &prop, GVariant *value) -> DBus::Object::Property::Update::Ptr
+        {
+            if (!dnsconfig)
+            {
+                throw DBus::Object::Property::Exception(
+                    this, "dns_scope", "No DNS resolver configured");
+            }
+            std::string scope = dnsconfig->SetDNSScope(value);
+            signals->DebugDevice(device_name,
+                                 "Changed DNS resolver scope to '"
+                                     + scope + "'");
+            auto upd = prop.PrepareUpdate();
+            upd->AddValue(scope);
+            return upd;
+        });
+
+    AddPropertyBySpec(
+        "dns_name_servers",
+        glib2::DataType::DBus<std::string>(),
+        [&](const DBus::Object::Property::BySpec &prop) -> GVariant *
+        {
+            return (dnsconfig
+                        ? glib2::Value::CreateVector(dnsconfig->GetNameServers())
+                        : glib2::Value::CreateVector(std::vector<std::string>{}));
+        });
+
+    AddPropertyBySpec(
+        "dns_search_domains",
+        glib2::DataType::DBus<std::string>(),
+        [&](const DBus::Object::Property::BySpec &prop) -> GVariant *
+        {
+            return (dnsconfig
+                        ? glib2::Value::CreateVector(dnsconfig->GetSearchDomains())
+                        : glib2::Value::CreateVector(std::vector<std::string>{}));
+        });
+
 
     auto args_add_ipaddr = AddMethod(
         "AddIPAddress",
@@ -147,12 +217,6 @@ NetCfgDevice::NetCfgDevice(DBus::Connection::Ptr dbuscon_,
               {
                   this->method_destroy(args);
               });
-
-
-    if (resolver)
-    {
-        dnsconfig = resolver->NewResolverSettings();
-    }
 
     signals->LogVerb2("Network device '" + devname + "' prepared");
 }

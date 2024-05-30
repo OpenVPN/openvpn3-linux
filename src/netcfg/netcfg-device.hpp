@@ -34,6 +34,7 @@
 
 #include "common/lookup.hpp"
 #include "core-tunbuilder.hpp"
+#include "dbus/object-ownership.hpp"
 #include "netcfg/dns/resolver-settings.hpp"
 #include "netcfg/dns/settings-manager.hpp"
 #include "netcfg-options.hpp"
@@ -171,6 +172,7 @@ class NetCfgDevice : public DBus::Object::Base
     std::string device_name{};
     uint16_t mtu{1500};
     uint16_t txqueuelen{0};
+    GDBusPP::Object::Extension::ACL::Ptr object_acl = nullptr;
     pid_t creator_pid{-1};
     DNS::SettingsManager::Ptr resolver;
     bool modified = false;
