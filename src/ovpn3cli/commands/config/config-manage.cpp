@@ -273,11 +273,12 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
                                                    args->GetValue("config", 0),
                                                    dbuscon)
                             : args->GetValue("path", 0));
+
     auto conf = OpenVPN3ConfigurationProxy::Create(dbuscon, path);
     if (!conf->CheckObjectExists())
     {
         throw CommandException("config-manage",
-                               "Configuration does not exist");
+                               "Configuration profile does not exist");
     }
 
     bool quiet = args->Present("quiet");
