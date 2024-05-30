@@ -241,13 +241,10 @@ class LogWriter
      * @param colour_reset std::string to be printed after the log data
      *                     to reset colour selection.  Empty by default.
      */
-    // clang-format off
-    // bug in clang-format causes "= 0" to be wrapped
     virtual void WriteLogLine(LogTag::Ptr logtag,
-                             const std::string &data,
-                             const std::string &colour_init = "",
-                             const std::string &colour_reset = "") = 0;
-    // clang-format on
+                              const std::string &data,
+                              const std::string &colour_init = "",
+                              const std::string &colour_reset = "") = 0;
 
     /**
      *  Writes log data to the destination buffer, but will prefix
