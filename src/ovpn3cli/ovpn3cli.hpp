@@ -40,7 +40,8 @@ int main(int argc, char **argv)
     }
     catch (const DBus::Exception &e)
     {
-        std::cerr << "** ERROR **  " << e.what() << std::endl;
+        std::cerr << simple_basename(argv[0])
+                  << "** ERROR **  " << e.GetRawError() << std::endl;
 
         return 7;
     }
@@ -55,7 +56,8 @@ int main(int argc, char **argv)
     }
     catch (std::exception &e)
     {
-        std::cerr << "** ERROR ** " << e.what() << std::endl;
+        std::cerr << simple_basename(argv[0])
+                  << "** ERROR ** " << e.what() << std::endl;
         return 9;
     }
 }
