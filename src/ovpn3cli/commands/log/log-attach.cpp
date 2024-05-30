@@ -250,8 +250,15 @@ void LogAttach::setup_session_logger(const DBus::Object::Path &path)
     }
 
     // Setup the EventLogger object for the provided session path
-    session_proxy->LogForward(true);
-    eventlogger = EventLogger::Create(mainloop, dbuscon, path);
+    try
+    {
+        session_proxy->LogForward(true);
+        eventlogger = EventLogger::Create(mainloop, dbuscon, path);
+    }
+    catch (const SessionManager::Proxy::Exception &excp)
+    {
+        throw CommandException("log", "Could not connect to the session");
+    }
 }
 
 } // namespace ovpn3cli::log
