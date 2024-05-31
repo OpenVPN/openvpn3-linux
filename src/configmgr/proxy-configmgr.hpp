@@ -75,10 +75,6 @@ class OpenVPN3ConfigurationProxy
             Constants::GenInterface("configuration"));
         proxy_qry = DBus::Proxy::Utils::Query::Create(proxy);
 
-        auto prxchk = DBus::Proxy::Utils::Query::Create(proxy);
-        prxchk->CheckObjectExists(proxy_tgt->object_path,
-                                  proxy_tgt->interface);
-
         // Only try to ensure the configuration manager service is available
         // when accessing the main management object
         if ((Constants::GenPath("configuration") == object_path) || force_feature_load)
