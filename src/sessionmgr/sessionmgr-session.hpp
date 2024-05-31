@@ -243,6 +243,8 @@ class Session : public DBus::Object::Base
 
 
     void helper_stop_log_forwards();
+
+    void validate_vpn_backend(const std::string &property = "") const;
 };
 
 

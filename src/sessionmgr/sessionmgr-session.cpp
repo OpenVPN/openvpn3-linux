@@ -197,6 +197,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
         "UserInputQueueGetTypeGroup",
         [=](Object::Method::Arguments::Ptr args)
         {
+            validate_vpn_backend();
             GVariant *r = be_prx->Call(be_target,
                                        "UserInputQueueGetTypeGroup");
             args->SetMethodReturn(r);
@@ -207,6 +208,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
         "UserInputQueueFetch",
         [=](Object::Method::Arguments::Ptr args)
         {
+            validate_vpn_backend();
             GVariant *r = be_prx->Call(be_target,
                                        "UserInputQueueFetch",
                                        args->GetMethodParameters());
@@ -226,6 +228,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
         "UserInputQueueCheck",
         [=](Object::Method::Arguments::Ptr args)
         {
+            validate_vpn_backend();
             GVariant *r = be_prx->Call(be_target,
                                        "UserInputQueueCheck",
                                        args->GetMethodParameters());
@@ -239,6 +242,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
         "UserInputProvide",
         [=](Object::Method::Arguments::Ptr args)
         {
+            validate_vpn_backend();
             GVariant *r = be_prx->Call(be_target,
                                        "UserInputProvide",
                                        args->GetMethodParameters());
@@ -321,12 +325,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
         [=](const DBus::Object::Property::BySpec &prop)
             -> GVariant *
         {
-            if (!be_prx || !be_target)
-            {
-                throw DBus::Object::Property::Exception(this,
-                                                        "statistics",
-                                                        "Backend VPN client not available");
-            }
+            validate_vpn_backend("statistics");
             return be_prx->GetPropertyGVariant(be_target, "statistics");
         });
 
@@ -339,12 +338,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
         [=](const DBus::Object::Property::BySpec &prop)
             -> GVariant *
         {
-            if (!be_prx || !be_target)
-            {
-                throw DBus::Object::Property::Exception(this,
-                                                        "statistics",
-                                                        "Backend VPN client not available");
-            }
+            validate_vpn_backend("device_path");
             return be_prx->GetPropertyGVariant(be_target, "device_path");
         });
 
@@ -355,12 +349,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
         [=](const DBus::Object::Property::BySpec &prop)
             -> GVariant *
         {
-            if (!be_prx || !be_target)
-            {
-                throw DBus::Object::Property::Exception(this,
-                                                        "statistics",
-                                                        "Backend VPN client not available");
-            }
+            validate_vpn_backend("device_name");
             return be_prx->GetPropertyGVariant(be_target, "device_name");
         });
 
@@ -370,12 +359,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
         [=](const DBus::Object::Property::BySpec &prop)
             -> GVariant *
         {
-            if (!be_prx || !be_target)
-            {
-                throw DBus::Object::Property::Exception(this,
-                                                        "statistics",
-                                                        "Backend VPN client not available");
-            }
+            validate_vpn_backend("session_name");
             return be_prx->GetPropertyGVariant(be_target, "session_name");
         });
 
@@ -512,7 +496,7 @@ const bool Session::Authorize(DBus::Authz::Request::Ptr authzreq)
         }
         catch (const DBus::Proxy::Exception &excp)
         {
-            sig_session->LogCritical("Backend VPN did not respond:"
+            sig_session->LogCritical("Backend VPN did not respond: "
                                      + std::string(excp.GetRawError())
                                      + " - " + GetPath());
             close_session(true);
@@ -631,10 +615,7 @@ const std::string Session::GetConfigName() const noexcept
 
 const std::string Session::GetDeviceName() const noexcept
 {
-    if (!be_prx || !be_target)
-    {
-        return "";
-    }
+    validate_vpn_backend("device_name");
     return be_prx->GetProperty<std::string>(be_target, "device_name");
 }
 
@@ -664,10 +645,7 @@ void Session::MoveToOwner(const uid_t from_uid, const uid_t to_uid)
 
 void Session::method_ready(DBus::Object::Method::Arguments::Ptr args)
 {
-    if (!be_prx || !be_target)
-    {
-        throw DBus::Object::Method::Exception("Backend VPN client not available");
-    }
+    validate_vpn_backend();
 
     try
     {
@@ -694,10 +672,7 @@ void Session::method_proxy_be(DBus::Object::Method::Arguments::Ptr args,
                               const std::string &method,
                               const bool no_response)
 {
-    if (!be_prx || !be_target)
-    {
-        throw DBus::Object::Method::Exception("Backend VPN client not available");
-    }
+    validate_vpn_backend();
 
     GVariant *r = be_prx->Call(be_target,
                                method,
@@ -713,6 +688,8 @@ void Session::method_proxy_be(DBus::Object::Method::Arguments::Ptr args,
 
 void Session::method_connect(DBus::Object::Method::Arguments::Ptr args)
 {
+    validate_vpn_backend();
+
     if (connection_started)
     {
         args->SetMethodReturn(nullptr);
@@ -819,6 +796,7 @@ void Session::close_session(const bool forced)
 {
     try
     {
+        validate_vpn_backend();
         GVariant *r = be_prx->Call(be_target,
                                    (!forced ? "Disconnect" : "ForceShutdown"));
         if (r)
@@ -875,6 +853,27 @@ void Session::helper_stop_log_forwards()
                               + ")");
     }
     log_forwarders.clear();
+}
+
+
+void Session::validate_vpn_backend(const std::string &property) const
+{
+    if (!be_prx || !be_target)
+    {
+        if (property.empty())
+        {
+            // Without a property name, this is used in context of a
+            // D-Bus method call - throw a method exception
+            throw DBus::Object::Method::Exception("VPN session is stopped");
+        }
+        else
+        {
+            // A property name was provided, throw a property exception
+            throw DBus::Object::Property::Exception(this,
+                                                    property,
+                                                    "VPN session is stopped");
+        }
+    }
 }
 
 } // namespace SessionManager
