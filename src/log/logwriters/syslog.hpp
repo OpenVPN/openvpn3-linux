@@ -51,7 +51,7 @@ class SyslogWriter : public LogWriter
      * @param log_facility  Syslog facility to use for log messages.
      *                      (Default: LOG_DAEMON)
      */
-    SyslogWriter(const std::string &prgname = NULL,
+    SyslogWriter(const std::string &prgname = "",
                  const int log_facility = LOG_DAEMON);
     virtual ~SyslogWriter();
 
