@@ -763,9 +763,18 @@ class Manager
         auto prxqry = DBus::Proxy::Utils::DBusServiceQuery::Create(conn);
         prxqry->CheckServiceAvail(Constants::GenServiceName("sessions"));
 
+        // Delay the return up to 750ms, to ensure we have a valid
+        // Session Manager service object available
         auto prxchk = DBus::Proxy::Utils::Query::Create(proxy);
-        prxchk->CheckObjectExists(target->object_path,
-                                  target->interface);
+        for (uint8_t i = 5; i > 0; i--)
+        {
+            if (prxchk->CheckObjectExists(target->object_path,
+                                          target->interface))
+            {
+                break;
+            }
+            usleep(150000);
+        }
     }
 };
 
