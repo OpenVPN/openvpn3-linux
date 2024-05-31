@@ -804,9 +804,11 @@ void Session::close_session(const bool forced)
             g_variant_unref(r);
         }
     }
-    catch (const DBus::Proxy::Exception &)
+    catch (const DBus::Exception &)
     {
         // Ignore errors here; backend client may be dead already
+        be_prx.reset();
+        be_target.reset();
     }
 
     if (!forced)
