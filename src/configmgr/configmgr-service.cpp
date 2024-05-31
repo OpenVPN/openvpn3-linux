@@ -435,8 +435,16 @@ Service::Service(DBus::Connection::Ptr con, LogWriter::Ptr lwr)
       con_(con),
       logwr_(std::move(lwr))
 {
-    logsrvprx_ = LogServiceProxy::Create(con);
-    logsrvprx_->AttachInterface(con, INTERFACE_CONFIGMGR);
+    try
+    {
+        logsrvprx_ = LogServiceProxy::AttachInterface(con, INTERFACE_CONFIGMGR);
+    }
+    catch (const DBus::Exception &excp)
+    {
+        logwr_->Write(LogGroup::CONFIGMGR,
+                      LogCategory::CRIT,
+                      excp.GetRawError());
+    }
 }
 
 
