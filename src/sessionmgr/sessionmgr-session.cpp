@@ -503,6 +503,12 @@ const bool Session::Authorize(DBus::Authz::Request::Ptr authzreq)
             throw DBus::Object::Method::Exception("Backend VPN process did not respond");
         }
     }
+    else
+    {
+        // If there are no backends available, cleanup the session
+        close_session(true);
+        return false;
+    }
 
     switch (authzreq->operation)
     {
@@ -570,6 +576,11 @@ const bool Session::Authorize(DBus::Authz::Request::Ptr authzreq)
 
 const std::string Session::AuthorizationRejected(const Authz::Request::Ptr azreq) const noexcept
 {
+    if (!be_prx || !be_target)
+    {
+        return "Access denied: Session no longer valid";
+    }
+
     try
     {
         if (DBus::Object::Operation::PROPERTY_GET != azreq->operation)
