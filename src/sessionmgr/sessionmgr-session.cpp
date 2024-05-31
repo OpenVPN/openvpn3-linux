@@ -826,7 +826,14 @@ void Session::close_session(const bool forced)
 
     helper_stop_log_forwards();
     sig_session->LogVerb1("Session closing - " + GetPath());
-    object_mgr->RemoveObject(GetPath());
+    try
+    {
+        object_mgr->RemoveObject(GetPath());
+    }
+    catch (const DBus::Exception &excp)
+    {
+        sig_session->Debug("close_session(): " + std::string(excp.what()));
+    }
 }
 
 
