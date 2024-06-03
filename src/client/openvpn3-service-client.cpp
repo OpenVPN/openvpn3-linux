@@ -149,7 +149,8 @@ class BackendClientObject : public DBus::Object::Base
                                                 "Missing user credentials",
                                                 "net.openvpn.v3.error.ready");
                       }
-                      if (StatusMinor::SESS_AUTH_URL == self->vpnclient->GetRunStatus())
+                      if (self->vpnclient
+                          && StatusMinor::SESS_AUTH_URL == self->vpnclient->GetRunStatus())
                       {
                           throw ClientException("Ready",
                                                 "Pending web authentication",
