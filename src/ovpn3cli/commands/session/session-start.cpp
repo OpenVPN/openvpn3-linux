@@ -88,7 +88,7 @@ static int cmd_session_start(ParsedArgs::Ptr args)
                 {
                     throw;
                 }
-                cfgpath = import_config(cfgname, cfgname, true, false, {});
+                cfgpath = import_config(dbuscon, cfgname, cfgname, true, false, {});
                 std::cout << "Using configuration profile from file: "
                           << cfgname << std::endl;
             }

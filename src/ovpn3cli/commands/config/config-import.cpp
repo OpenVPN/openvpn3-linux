@@ -49,7 +49,8 @@ using namespace openvpn;
  *
  *  @return Retuns a string containing the D-Bus object path to the configuration
  */
-std::string import_config(const std::string &filename,
+std::string import_config(DBus::Connection::Ptr dbuscon,
+                          const std::string &filename,
                           const std::string &cfgname,
                           const bool single_use,
                           const bool persistent,
@@ -96,10 +97,13 @@ std::string import_config(const std::string &filename,
     }
 
     // Import the configuration fileh
-    auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
     auto conf = OpenVPN3ConfigurationProxy::Create(dbuscon,
                                                    Constants::GenPath("configuration"));
-
+    if (!conf->CheckObjectExists())
+    {
+        throw CommandException("config-import",
+                               "Could not connect to the Configuration Manager");
+    }
     DBus::Object::Path cfgpath = conf->Import(cfgname,
                                               pm.profile_content(),
                                               single_use,
@@ -173,7 +177,9 @@ static int cmd_config_import(ParsedArgs::Ptr args)
         };
         std::string name = (args->Present("name") ? args->GetValue("name", 0)
                                                   : args->GetValue("config", 0));
-        std::string path = import_config(args->GetValue("config", 0),
+        auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
+        std::string path = import_config(dbuscon,
+                                         args->GetValue("config", 0),
                                          name,
                                          false,
                                          args->Present("persistent"),

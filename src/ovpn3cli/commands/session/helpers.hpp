@@ -90,7 +90,8 @@ std::string statistics_plain(ConnectionStats &stats);
 
 
 // Implemented in config-import.cpp
-std::string import_config(const std::string &filename,
+std::string import_config(DBus::Connection::Ptr dbuscon,
+                          const std::string &filename,
                           const std::string &cfgname,
                           const bool single_use,
                           const bool persistent,
