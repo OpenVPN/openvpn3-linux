@@ -282,6 +282,10 @@ void ConfigHandler::method_import(DBus::Object::Method::Arguments::Ptr args)
 
         args->SetMethodReturn(glib2::Value::CreateTupleWrapped(config_path));
     }
+    catch (const DBus::Exception &e)
+    {
+        throw DBus::Object::Method::Exception(e.GetRawError());
+    }
     catch (const std::exception &e)
     {
         throw ConfigManager::Exception("Invalid configuration profile: "s

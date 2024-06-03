@@ -184,9 +184,11 @@ static int cmd_config_import(ParsedArgs::Ptr args)
                   << std::endl;
         return 0;
     }
-    catch (std::exception &e)
+    catch (const DBus::Exception &excp)
     {
-        throw CommandException("config-import", e.what());
+        throw CommandException("config-import",
+                               "Configuration file import failed: "
+                                   + std::string(excp.GetRawError()));
     }
 }
 
