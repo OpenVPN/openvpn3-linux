@@ -24,6 +24,7 @@
 #include <gdbuspp/signals/signal.hpp>
 #include <gdbuspp/signals/subscriptionmgr.hpp>
 
+#include "configmgr-exceptions.hpp"
 #include "configmgr-signals.hpp"
 #include "constants.hpp"
 
@@ -54,6 +55,13 @@ Log::Log(DBus::Connection::Ptr conn,
       object_path(object_path_), object_interface(INTERFACE_CONFIGMGR)
 {
     auto creds = DBus::Credentials::Query::Create(conn);
+
+    auto srvqry = DBus::Proxy::Utils::DBusServiceQuery::Create(conn);
+    if (!srvqry->CheckServiceAvail(Constants::GenServiceName("log")))
+    {
+        throw ConfigManager::Exception("Could not connect to log service");
+    }
+
     AddTarget(creds->GetUniqueBusName(Constants::GenServiceName("log")));
 
     SetLogLevel(default_log_level);
