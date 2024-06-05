@@ -138,7 +138,7 @@ cfg_override_sft = executable('config-override-selftest',
 )
 test('config-override-selftest',
     cfg_override_sft,
-    suite: 'dbus')
+    suite: 'post-install')
 
 executable('config-fetch',
     [

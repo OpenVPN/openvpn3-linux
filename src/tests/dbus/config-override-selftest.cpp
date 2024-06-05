@@ -13,6 +13,7 @@
  *         overrides available
  */
 
+#include <exception>
 #include <iostream>
 #include <vector>
 #include <gdbuspp/connection.hpp>
@@ -67,15 +68,28 @@ int main(int argc, char **argv)
 {
     auto conn = DBus::Connection::Create(DBus::BusType::SYSTEM);
 
-    OpenVPN3ConfigurationProxy cfgmgr(conn,
-                                      Constants::GenPath("configuration"));
-    cfgmgr.Ping();
+    OpenVPN3ConfigurationProxy::Ptr cfgmgr = nullptr;
+    try
+    {
+        cfgmgr = OpenVPN3ConfigurationProxy::Create(conn,
+                                                    Constants::GenPath("configuration"));
+        cfgmgr->Ping();
+        if (!cfgmgr->CheckObjectExists())
+        {
+            throw std::runtime_error("Service unavailable");
+        }
+    }
+    catch (const std::exception &)
+    {
+        // Skip this test if the config manager service is unavailable
+        return 77;
+    }
 
     std::stringstream profile;
     profile << "dev tun" << std::endl
             << "remote localhost" << std::endl
             << "client" << std::endl;
-    DBus::Object::Path cfgpath = cfgmgr.Import("selftest:overrides",
+    DBus::Object::Path cfgpath = cfgmgr->Import("selftest:overrides",
                                                profile.str(),
                                                false,
                                                false);
