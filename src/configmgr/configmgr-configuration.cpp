@@ -62,6 +62,7 @@ Configuration::Configuration(DBus::Connection::Ptr dbuscon,
                               ProfileParseLimits::MAX_DIRECTIVE_SIZE);
     options_.parse_from_config(config_str, &limits);
     options_.parse_meta_from_config(config_str, "OVPN_ACCESS_SERVER", &limits);
+    validate_profile();
 
     signals_->LogInfo("Parsed"s + (persistent ? " persistent" : "")
                       + (persistent && single_use ? "," : "")
@@ -150,6 +151,7 @@ Configuration::Configuration(DBus::Connection::Ptr dbuscon,
 
     // Parse the options from the imported configuration
     options_.json_import(profile["profile"]);
+    validate_profile();
 
     add_methods();
     add_properties();
@@ -313,6 +315,18 @@ const std::string Configuration::AuthorizationRejected(const Authz::Request::Ptr
 
 void Configuration::add_methods()
 {
+    AddMethod(
+        "Validate",
+        [&](DBus::Object::Method::Arguments::Ptr args)
+        {
+            std::string validation = validate_profile();
+            if (!validation.empty())
+            {
+                throw DBus::Object::Method::Exception(validation);
+            }
+            args->SetMethodReturn(nullptr);
+        });
+
     auto fetch_args = AddMethod(
         "Fetch",
         [this](DBus::Object::Method::Arguments::Ptr args)
@@ -637,6 +651,58 @@ void Configuration::update_persistent_file()
     state << Export();
 
     signals_->LogVerb2("Updated persistent config: " + persistent_file_);
+}
+
+
+std::string Configuration::validate_profile() noexcept
+{
+    bool client_configured = false;
+    bool remote_found = false;
+    bool ca_found = false;
+    bool dev_found = false;
+    for (const auto &opt : options_)
+    {
+        try
+        {
+            if ("setenv" == opt.get(0, 32))
+            {
+                if ("GENERIC_CONFIG" == opt.get(1, 32))
+                {
+                    prop_valid_ = false;
+                    return "Server locked profiles are unsupported";
+                }
+            }
+            else if ("remote" == opt.get(0, 32))
+            {
+                remote_found = true;
+            }
+            else if("ca" == opt.get(0, 32))
+            {
+                ca_found = true;
+            }
+            else if ("dev" == opt.get(0, 32))
+            {
+                dev_found = true;
+            }
+            else if ("client" == opt.get(0, 32)
+                     || "tls-client" == opt.get(0, 32))
+            {
+                client_configured = true;
+            }
+        }
+        catch (const std::exception &excp)
+        {
+            signals_->LogError("Failed validating profile: "
+                               + std::string(excp.what()));
+        }
+    }
+    if (!client_configured || !dev_found || !remote_found || !ca_found)
+    {
+        prop_valid_ = false;
+        return "Configration profile is missing required options";
+    }
+    prop_valid_ = true;
+    return "";
 }
 
 

@@ -139,6 +139,7 @@ D-Bus destination: `net.openvpn.v3.configuration` \- Object path: `/net/openvpn/
 node /net/openvpn/v3/configuration/${UNIQUE_ID} {
   interface net.openvpn.v3.configuration {
     methods:
+      Validate();
       Fetch(out s config);
       FetchJSON(out s config_json);
       SetOption(in  s option,
@@ -173,6 +174,21 @@ node /net/openvpn/v3/configuration/${UNIQUE_ID} {
   };
 };
 ```
+
+
+### Method: `net.openvpn.v3.configuration.Validate`
+
+This runs a validation check on the configuration profile to check
+if it is expected to be functional when used to start a VPN session.
+
+On success, this will just return.  If there are issues with the
+profile, it will return with an error containing a brief description
+of what the issue is.
+
+#### Arguments
+
+(No arguments)
+
 
 ### Method: `net.openvpn.v3.configuration.Fetch`
 

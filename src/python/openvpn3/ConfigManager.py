@@ -229,6 +229,14 @@ class Configuration(object):
 
 
     ##
+    #  Validates the configuration profile
+    #
+    @__delete_check
+    def Validate(self):
+        return self.__config_intf.Validate()
+
+
+    ##
     #  Fetch the configuration profile contents as a text/plain string
     #
     @__delete_check

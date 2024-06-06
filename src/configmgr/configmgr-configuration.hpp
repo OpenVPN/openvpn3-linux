@@ -177,6 +177,18 @@ class Configuration : public DBus::Object::Base
     void add_properties();
     void update_persistent_file();
 
+    /**
+     *  Very simple validation of the configuration profile.
+     *  Currently only checks if --dev, --remote, --ca and
+     *  --client or --tls-client is present in the configuration profile
+     *  and that the 'GENERIC_PROFILE' setting is absent ("server locked")
+     *
+     * @return std::string  Returns an empty string on success and sets the
+     *         prop_valid_ property to true.  Otherwise a reason why it failed
+     *         is returned with prop_valid_ set to false.
+     */
+    std::string validate_profile() noexcept;
+
     void method_fetch(DBus::Object::Method::Arguments::Ptr args, bool json);
     void method_add_tag(DBus::Object::Method::Arguments::Ptr args);
     void method_remove_tag(DBus::Object::Method::Arguments::Ptr args);
@@ -298,7 +310,7 @@ class Configuration : public DBus::Object::Base
     bool prop_locked_down_{false};
     bool prop_readonly_{false};
     unsigned int prop_used_count_{0};
-    bool prop_valid_{true};
+    bool prop_valid_{false};
     std::string persistent_file_;
     openvpn::OptionListJSON options_;
     std::vector<OverrideValue> override_list_;

@@ -277,6 +277,20 @@ class OpenVPN3ConfigurationProxy
     }
 
 
+    void Validate() const
+    {
+        try
+        {
+            GVariant *res = proxy->Call(proxy_tgt, "Validate");
+            g_variant_unref(res);
+        }
+        catch (const DBus::Proxy::Exception &excp)
+        {
+            throw CfgMgrProxyException(excp.GetRawError());
+        }
+    }
+
+
     std::string GetJSONConfig()
     {
         GVariant *res = proxy->Call(proxy_tgt, "FetchJSON");
