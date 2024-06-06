@@ -150,6 +150,7 @@ class OpenVPN3systemd(object):
             raise RuntimeError("More than one configuration profile found.")
 
         self.__config = self.__cmgr.Retrieve(cfglist[0])
+        self.__config.Validate()
         print("Loaded configuration profile %s (path: %s)" % (
             self.__config.GetProperty('name'),
             self.__config.GetPath()))

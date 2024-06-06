@@ -63,6 +63,7 @@ def import_config(bus, opts):
                         opts.GenerateConfig(),                    # config_str
                         single_use,                               # single_use
                         False)                                    # persistent
+    cfg.Validate()
 
     if opts.GetPersistTun() is True:
         # If --persist-tun was provided, set the persist-tun override
