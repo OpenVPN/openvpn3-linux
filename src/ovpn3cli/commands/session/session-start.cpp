@@ -98,12 +98,14 @@ static int cmd_session_start(ParsedArgs::Ptr args)
             cfgpath = args->GetValue("config-path", 0);
         }
 
+        auto cfgprx = OpenVPN3ConfigurationProxy::Create(dbuscon, cfgpath);
+        cfgprx->Validate();
+
         // If --persist-tun is given on the command line, enforce this
         // feature on this connection.  This can only be provided when using
         // --config, not --config-path.
         if (args->Present("persist-tun"))
         {
-            auto cfgprx = OpenVPN3ConfigurationProxy::Create(dbuscon, cfgpath);
             const ValidOverride &vo = cfgprx->LookupOverride("persist-tun");
             cfgprx->SetOverride(vo, true);
         }
@@ -127,14 +129,12 @@ static int cmd_session_start(ParsedArgs::Ptr args)
                       args->Present("background"));
         return 0;
     }
+    catch (const CfgMgrProxyException &excp)
+    {
+        throw CommandException("session-start", excp.GetRawError());
+    }
     catch (const SessionException &excp)
     {
-        std::string err{excp.what()};
-        if (err.find("ERR_PROFILE_SERVER_LOCKED_UNSUPPORTED:") != std::string::npos)
-        {
-            throw CommandException("session-start",
-                                   "Server locked profiles are unsupported");
-        }
         throw CommandException("session-start", excp.what());
     }
     catch (const DBus::Exception &excp)
