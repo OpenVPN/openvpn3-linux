@@ -118,13 +118,26 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
         }
         OpenVPN3ConfigurationProxy cprx(dbuscon, cfg, true);
 
-        std::string name = cprx.GetName();
+        std::string rawname = cprx.GetName();
+        std::string name = rawname;
         if (!filter_cfgname.empty()
             && name.substr(0, filter_cfgname.length()) != filter_cfgname)
         {
             continue;
         }
         ++cfgcount;
+
+        std::string invalid_reason{};
+        try
+        {
+            cprx.Validate();
+        }
+        catch(const CfgMgrProxyException &excp)
+        {
+            std::string warn("!! ");
+            name.insert(name.begin(), warn.begin(), warn.end());
+            invalid_reason = std::string(excp.GetRawError());
+        }
 
         if (only_count)
         {
@@ -160,6 +173,10 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
                           << std::endl;
                 std::cout << name << std::setw(58 - name.size()) << " " << user
                           << std::endl;
+                if (!invalid_reason.empty())
+                {
+                    std::cout << "Invalid:" << invalid_reason << std::endl;
+                }
 
                 if (confmgr.CheckFeatures(CfgMgrFeatures::TAGS))
                 {
@@ -191,12 +208,17 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
             std::time_t imp_tstamp = cprx.GetImportTimestamp();
             std::time_t last_u_tstamp = cprx.GetLastUsedTimestamp();
             Json::Value jcfg;
-            jcfg["name"] = name;
+            jcfg["name"] = rawname;
             jcfg["imported_tstamp"] = (Json::Value::UInt64)imp_tstamp;
             jcfg["imported"] = imported;
             jcfg["lastused_tstamp"] = (Json::Value::UInt64)last_u_tstamp;
             jcfg["lastused"] = last_used;
             jcfg["use_count"] = used_count;
+            jcfg["valid"] = invalid_reason.empty();
+            if (!invalid_reason.empty())
+            {
+                jcfg["invalid_reason"] = invalid_reason;
+            }
 
             if (confmgr.CheckFeatures(CfgMgrFeatures::TAGS))
             {

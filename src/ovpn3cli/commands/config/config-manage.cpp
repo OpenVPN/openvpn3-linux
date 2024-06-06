@@ -45,6 +45,7 @@ class ConfigProfileDetails
     std::string persistent = "(n/a)";
     std::string dco = "(n/a)";
     std::map<std::string, std::string> overrides{};
+    std::string invalid_reason = "";
 
   private:
     OpenVPN3ConfigurationProxy::Ptr prx = nullptr;
@@ -82,6 +83,15 @@ ConfigProfileDetails::ConfigProfileDetails(OpenVPN3ConfigurationProxy::Ptr cfgpr
         dco = prx->GetDCO() ? "Yes" : "No";
         parse_overrides();
         access_allowed = true;
+
+        try
+        {
+            prx->Validate();
+        }
+        catch (const CfgMgrProxyException &excp)
+        {
+            invalid_reason = std::string(excp.GetRawError());
+        }
     }
     catch (const DBus::Exception &excp)
     {
@@ -224,9 +234,16 @@ static int config_manage_show(OpenVPN3ConfigurationProxy::Ptr conf)
         std::cout << std::setw(32) << "    DNS Resolver Scope: "
                   << prf->dns_scope << std::endl;
 
+        if (!prf->invalid_reason.empty())
+        {
+            std::cout << std::endl
+                      << "    *WARNING*  Invalid profile:"
+                      << prf->invalid_reason
+                      << std::endl;
+        }
+
         std::cout << std::endl
                   << "  Overrides: ";
-
         if (prf->overrides.empty())
         {
             std::cout << " No overrides set." << std::endl;
