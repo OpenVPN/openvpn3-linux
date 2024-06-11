@@ -98,7 +98,7 @@ static int cmd_session_start(ParsedArgs::Ptr args)
             cfgpath = args->GetValue("config-path", 0);
         }
 
-        auto cfgprx = OpenVPN3ConfigurationProxy::Create(dbuscon, cfgpath);
+        auto cfgprx = OpenVPN3ConfigurationProxy::Create(dbuscon, cfgpath, true);
         cfgprx->Validate();
 
         // If --persist-tun is given on the command line, enforce this
