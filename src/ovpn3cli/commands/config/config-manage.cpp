@@ -291,7 +291,7 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
                                                    dbuscon)
                             : args->GetValue("path", 0));
 
-    auto conf = OpenVPN3ConfigurationProxy::Create(dbuscon, path);
+    auto conf = OpenVPN3ConfigurationProxy::Create(dbuscon, path, true);
     if (!conf->CheckObjectExists())
     {
         throw CommandException("config-manage",

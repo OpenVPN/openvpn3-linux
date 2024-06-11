@@ -38,6 +38,7 @@ enum class CfgMgrFeatures : std::uint32_t
     // clang-format off
         UNDEFINED        = 0,        //< Version not identified
         TAGS             = 1,        //< Supports configuration tags
+        VALIDATE         = 2,        //< Provides net.openvpn.v3.configuration.Valudate method
         DEVBUILD         = std::numeric_limits<std::uint32_t>::max()  //< Development build; unreleased
     // clang-format on
 };
@@ -279,6 +280,10 @@ class OpenVPN3ConfigurationProxy
 
     void Validate() const
     {
+        if (!(features & CfgMgrFeatures::VALIDATE))
+        {
+            return;
+        }
         try
         {
             GVariant *res = proxy->Call(proxy_tgt, "Validate");
@@ -866,6 +871,10 @@ class OpenVPN3ConfigurationProxy
             if (21 <= v)
             {
                 features = CfgMgrFeatures::TAGS;
+            }
+            if (22 <= v)
+            {
+                features = CfgMgrFeatures::VALIDATE;
             }
         }
         else
