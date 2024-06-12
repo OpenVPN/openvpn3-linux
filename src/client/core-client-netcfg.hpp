@@ -100,8 +100,20 @@ class NetCfgTunBuilder : public T
         {
             throw NetCfgProxyException(__func__, "Lost link to device interface");
         }
-        device->SetRemoteAddress(address, ipv6);
-        return true;
+        try
+        {
+            device->SetRemoteAddress(address, ipv6);
+            return true;
+        }
+        catch (const DBus::Proxy::Exception &excp)
+        {
+            std::ostringstream msg;
+            msg << "[" << device->GetDeviceName() << "] "
+                << "Failed saving remote address: "
+                << excp.GetRawError();
+            signals->LogError(msg.str());
+            return false;
+        }
     }
 
 
@@ -121,7 +133,7 @@ class NetCfgTunBuilder : public T
             device->AddIPAddress(address, (unsigned int)prefix_length, gateway, ipv6);
             return true;
         }
-        catch (NetCfgProxyException &e)
+        catch (const DBus::Proxy::Exception &e)
         {
             std::stringstream err;
             err << "Error adding IP address " << address
@@ -140,8 +152,20 @@ class NetCfgTunBuilder : public T
         {
             throw NetCfgProxyException(__func__, "Lost link to device interface");
         }
-        device->SetLayer(layer);
-        return true;
+        try
+        {
+            device->SetLayer(layer);
+            return true;
+        }
+        catch (const DBus::Proxy::Exception &excp)
+        {
+            std::ostringstream msg;
+            msg << "[" << device->GetDeviceName() << "] "
+                << "Failed setting tunnel layer: "
+                << excp.GetRawError();
+            signals->LogCritical(msg.str());
+            return false;
+        }
     }
 
 
@@ -151,8 +175,21 @@ class NetCfgTunBuilder : public T
         {
             throw NetCfgProxyException(__func__, "Lost link to device interface");
         }
-        device->SetMtu(mtu);
-        return true;
+
+        try
+        {
+            device->SetMtu(mtu);
+            return true;
+        }
+        catch (const DBus::Proxy::Exception &excp)
+        {
+            std::ostringstream msg;
+            msg << "[" << device->GetDeviceName() << "] "
+                << "Failed setting tunnel MTU: "
+                << excp.GetRawError();
+            signals->LogCritical(msg.str());
+            return false;
+        }
     }
 
 
@@ -174,15 +211,27 @@ class NetCfgTunBuilder : public T
          * needed on Linux
          */
 
-        if (ipv4)
+        try
         {
-            device->SetRerouteGw(false, true);
+            if (ipv4)
+            {
+                device->SetRerouteGw(false, true);
+            }
+            if (ipv6)
+            {
+                device->SetRerouteGw(true, true);
+            }
+            return true;
         }
-        if (ipv6)
+        catch (const DBus::Proxy::Exception &excp)
         {
-            device->SetRerouteGw(true, true);
+            std::ostringstream msg;
+            msg << "[" << device->GetDeviceName() << "] "
+                << "Failed setting gateway re-route flag: "
+                << excp.GetRawError();
+            signals->LogCritical(msg.str());
+            return false;
         }
-        return true;
     }
 
 
@@ -224,8 +273,20 @@ class NetCfgTunBuilder : public T
         }
 
         const std::vector<std::string> dnsserver{{address}};
-        device->AddDNS(dnsserver);
-        return true;
+        try
+        {
+            device->AddDNS(dnsserver);
+            return true;
+        }
+        catch (const DBus::Proxy::Exception &excp)
+        {
+            std::ostringstream msg;
+            msg << "[" << device->GetDeviceName() << "] "
+                << "Failed adding DNS server: "
+                << excp.GetRawError();
+            signals->LogError(msg.str());
+            return false;
+        }
     }
 
 
@@ -241,8 +302,20 @@ class NetCfgTunBuilder : public T
         }
 
         const std::vector<std::string> dnsdomain{{domain}};
-        device->AddDNSSearch(dnsdomain);
-        return true;
+        try
+        {
+            device->AddDNSSearch(dnsdomain);
+            return true;
+        }
+        catch (const DBus::Proxy::Exception &excp)
+        {
+            std::ostringstream msg;
+            msg << "[" << device->GetDeviceName() << "] "
+                << "Failed adding DNS search domain: "
+                << excp.GetRawError();
+            signals->LogError(msg.str());
+            return false;
+        }
     }
 
 
@@ -255,16 +328,28 @@ class NetCfgTunBuilder : public T
 
         // Set all routes in one go to avoid calling the function multiple
         // times
-        device->AddNetworks(networks);
-
-        int ret = -1;
         try
         {
-            ret = device->Establish();
+            device->AddNetworks(networks);
+        }
+        catch (const DBus::Proxy::Exception &excp)
+        {
+            std::ostringstream msg;
+            msg << "[" << device->GetDeviceName() << "] "
+                << "Failed adding networks: "
+                << excp.GetRawError();
+            signals->LogCritical(msg.str());
+        }
+
+        try
+        {
+            return device->Establish();
         }
         catch (const DBus::Exception &excp)
         {
             signals->StatusChange(Events::Status(StatusMajor::CONNECTION, StatusMinor::CONN_FAILED));
+            signals->LogFATAL("Error calling NetCfgDevice::Establish(): "
+                              + std::string(excp.what()));
             try
             {
                 tun_builder_teardown(true);
@@ -272,10 +357,8 @@ class NetCfgTunBuilder : public T
             catch (...)
             {
             }
-            signals->LogFATAL("Error calling NetCfgDevice::Establish(): "
-                              + std::string(excp.what()));
+            return -1; // Indicate no tun fd available
         }
-        return ret;
     }
 
 
@@ -338,7 +421,22 @@ class NetCfgTunBuilder : public T
         {
             devpath = device->GetDevicePath();
         }
-        return netcfgmgr->ProtectSocket(socket, remote, ipv6, devpath);
+        try
+        {
+            return netcfgmgr->ProtectSocket(socket, remote, ipv6, devpath);
+        }
+        catch (const DBus::Exception &excp)
+        {
+            std::ostringstream msg;
+            if (device)
+            {
+                msg << "[" << device->GetDeviceName() << "] ";
+            }
+            msg << "Failed setting tunnel layer: "
+                << excp.GetRawError();
+            signals->LogCritical(msg.str());
+            return false;
+        }
     }
 
 
@@ -439,7 +537,19 @@ class NetCfgTunBuilder : public T
             NetCfgProxyException(__func__, "Lost link to DCO device");
         }
 
-        device->AddNetworks(networks);
+        try
+        {
+            device->AddNetworks(networks);
+        }
+        catch (const DBus::Proxy::Exception &excp)
+        {
+            std::ostringstream msg;
+            msg << "[" << device->GetDeviceName() << "] "
+                << "Failed adding networks: "
+                << excp.GetRawError();
+            signals->LogCritical(msg.str());
+        }
+
         device->EstablishDCO();
     }
 
@@ -495,7 +605,7 @@ class NetCfgTunBuilder : public T
             }
             return true;
         }
-        catch (NetCfgProxyException &e)
+        catch (const std::exception &e)
         {
             signals->LogError(std::string("Error creating virtual network device: ") + e.what());
             return false;
