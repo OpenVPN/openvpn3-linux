@@ -165,8 +165,11 @@ void Manager::Cleanup()
     }
     try
     {
-        auto empty = proxy->Call(tgt_mgr, "Cleanup");
-        g_variant_unref(empty);
+        GVariant *res = proxy->Call(tgt_mgr, "Cleanup");
+        if (res)
+        {
+            g_variant_unref(res);
+        }
     }
     catch (const DBus::Exception &excp)
     {
@@ -239,7 +242,10 @@ void Manager::NotificationUnsubscribe(const std::string &subscriber)
         GVariant *r = proxy->Call(tgt_mgr,
                                   "NotificationUnsubscribe",
                                   glib2::Value::CreateTupleWrapped(subscriber));
-        g_variant_unref(r);
+        if (r)
+        {
+            g_variant_unref(r);
+        }
     }
     catch (const DBus::Exception &excp)
     {

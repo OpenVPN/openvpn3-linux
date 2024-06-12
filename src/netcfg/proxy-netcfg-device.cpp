@@ -70,7 +70,10 @@ void Device::SetRemoteAddress(const std::string &remote, bool ipv6)
     GVariant *r = proxy->Call(prxtgt,
                               "SetRemoteAddress",
                               g_variant_new("(sb)", remote.c_str(), ipv6));
-    g_variant_unref(r);
+    if (r)
+    {
+        g_variant_unref(r);
+    }
 }
 
 
@@ -80,7 +83,10 @@ bool Device::AddBypassRoute(const std::string &addr,
     GVariant *r = proxy->Call(prxtgt,
                               "AddBypassRoute",
                               g_variant_new("(sb)", addr.c_str(), ipv6));
-    g_variant_unref(r);
+    if (r)
+    {
+        g_variant_unref(r);
+    }
     // TODO: handle return value
     return true;
 }
@@ -98,7 +104,10 @@ void Device::AddIPAddress(const std::string &ip_address,
                                             prefix,
                                             gateway.c_str(),
                                             ipv6));
-    g_variant_unref(r);
+    if (r)
+    {
+        g_variant_unref(r);
+    }
 }
 
 
@@ -121,7 +130,11 @@ void Device::AddNetworks(const std::vector<Network> &networks)
                                 "AddNetworks",
                                 glib2::Builder::FinishWrapped(bld));
 
-    g_variant_unref(res);
+
+    if (res)
+    {
+        g_variant_unref(res);
+    }
 }
 
 
@@ -135,7 +148,10 @@ void Device::AddDNS(const std::vector<std::string> &server_list)
 {
     GVariant *list = glib2::Value::CreateTupleWrapped<std::string>(server_list);
     GVariant *res = proxy->Call(prxtgt, "AddDNS", list);
-    g_variant_unref(res);
+    if (res)
+    {
+        g_variant_unref(res);
+    }
 }
 
 
@@ -143,7 +159,10 @@ void Device::RemoveDNS(const std::vector<std::string> &server_list)
 {
     GVariant *list = glib2::Value::CreateTupleWrapped<std::string>(server_list);
     GVariant *res = proxy->Call(prxtgt, "RemoveDNS", list);
-    g_variant_unref(res);
+    if (res)
+    {
+        g_variant_unref(res);
+    }
 }
 
 
@@ -151,7 +170,10 @@ void Device::AddDNSSearch(const std::vector<std::string> &domains)
 {
     GVariant *list = glib2::Value::CreateTupleWrapped<std::string>(domains);
     GVariant *res = proxy->Call(prxtgt, "AddDNSSearch", list);
-    g_variant_unref(res);
+    if (res)
+    {
+        g_variant_unref(res);
+    }
 }
 
 
@@ -159,7 +181,10 @@ void Device::RemoveDNSSearch(const std::vector<std::string> &domains)
 {
     GVariant *list = glib2::Value::CreateTupleWrapped<std::string>(domains);
     GVariant *res = proxy->Call(prxtgt, "RemoveDNSSearch", list);
-    g_variant_unref(res);
+    if (res)
+    {
+        g_variant_unref(res);
+    }
 }
 
 
@@ -170,7 +195,10 @@ DCO *Device::EnableDCO(const std::string &dev_name)
                                 "EnableDCO",
                                 glib2::Value::CreateTupleWrapped(dev_name));
     auto dcopath = glib2::Value::Extract<DBus::Object::Path>(res, 0);
-    g_variant_unref(res);
+    if (res)
+    {
+        g_variant_unref(res);
+    }
     return new DCO(proxy, dcopath);
 }
 
@@ -179,16 +207,22 @@ void Device::EstablishDCO()
 {
     // same as Device::Establish() but without return value
     GVariant *res = proxy->Call(prxtgt, "Establish");
-    g_variant_unref(res);
+    if (res)
+    {
+        g_variant_unref(res);
+    }
 }
 #endif // ENABLE_OVPNDCO
 
 
 int Device::Establish()
 {
-    gint fd = -1;
+    int fd = -1;
     GVariant *res = proxy->GetFD(fd, prxtgt, "Establish", nullptr);
-    g_variant_unref(res);
+    if (res)
+    {
+        g_variant_unref(res);
+    }
     return fd;
 }
 
@@ -196,14 +230,20 @@ int Device::Establish()
 void Device::Disable()
 {
     GVariant *res = proxy->Call(prxtgt, "Disable");
-    g_variant_unref(res);
+    if (res)
+    {
+        g_variant_unref(res);
+    }
 }
 
 
 void Device::Destroy()
 {
     GVariant *res = proxy->Call(prxtgt, "Destroy");
-    g_variant_unref(res);
+    if (res)
+    {
+        g_variant_unref(res);
+    }
 }
 
 
@@ -341,7 +381,10 @@ int DCO::GetPipeFD()
 {
     gint fd = -1;
     GVariant *res = proxy->GetFD(fd, dcotgt, "GetPipeFD", nullptr);
-    g_variant_unref(res);
+    if (res)
+    {
+        g_variant_unref(res);
+    }
     return fd;
 }
 
@@ -398,7 +441,10 @@ void DCO::SwapKeys(unsigned int peer_id)
     GVariant *res = proxy->Call(dcotgt,
                                 "SwapKeys",
                                 g_variant_new("(u)", peer_id));
-    g_variant_unref(res);
+    if (res)
+    {
+        g_variant_unref(res);
+    }
 }
 
 
@@ -410,7 +456,10 @@ void DCO::SetPeer(unsigned int peer_id, int keepalive_interval, int keepalive_ti
                                               peer_id,
                                               keepalive_interval,
                                               keepalive_timeout));
-    g_variant_unref(res);
+    if (res)
+    {
+        g_variant_unref(res);
+    }
 }
 #endif // ENABLE_OVPNDCO
 } // namespace NetCfgProxy
