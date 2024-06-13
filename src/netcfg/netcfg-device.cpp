@@ -346,6 +346,7 @@ void NetCfgDevice::method_add_dns_search(GVariant *params)
     {
         signals->LogError("Failed adding DNS search domains: "
                           "No DNS resolver configured");
+        return;
     }
 
     // Adds DNS search domains
