@@ -209,10 +209,13 @@ void Manager::NotificationSubscribe(NetCfgChangeType filter_flags)
     }
     try
     {
-        proxy->Call(tgt_mgr,
-                    "NotificationSubscribe",
-                    glib2::Value::CreateTupleWrapped(static_cast<std::uint16_t>(filter_flags)),
-                    true);
+        GVariant *r = proxy->Call(tgt_mgr,
+                                  "NotificationSubscribe",
+                                  glib2::Value::CreateTupleWrapped(filter_flags));
+        if (r)
+        {
+            g_variant_unref(r);
+        }
     }
     catch (const DBus::Exception &excp)
     {
