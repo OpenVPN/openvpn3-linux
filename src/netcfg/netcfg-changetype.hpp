@@ -22,7 +22,7 @@
 #include <gdbuspp/glib2/utils.hpp>
 
 
-enum class NetCfgChangeType : std::uint16_t
+enum class NetCfgChangeType : std::uint32_t
 {
     // clang-format off
     UNSET              = 0,         //      0
