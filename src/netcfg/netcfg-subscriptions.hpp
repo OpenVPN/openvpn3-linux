@@ -42,7 +42,7 @@ class NetCfgSubscriptions
      *  Contains a list of D-Bus subscribers' unique D-Bus name, mapped against
      *  a filter bit mask built up of bitwise OR of NetCfgChangeType values
      */
-    using NetCfgNotifSubscriptions = std::map<std::string, uint16_t>;
+    using NetCfgNotifSubscriptions = std::map<std::string, uint32_t>;
 
     /**
      *  TODO: Crude subscription owner tracking.  Maps the subscriber callers

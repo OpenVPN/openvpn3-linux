@@ -78,7 +78,7 @@ void NetCfgSubscriptions::Subscribe(const std::string &sender, uint32_t filter_f
     {
         throw NetCfgException("Invalid subscription flag, must be < 65535");
     }
-    subscriptions[sender] = static_cast<uint16_t>(filter_flags);
+    subscriptions[sender] = filter_flags;
     subscr_owners[sender] = creds_query->GetUID(sender);
 }
 
