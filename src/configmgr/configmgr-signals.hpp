@@ -56,8 +56,6 @@ class Log : public LogSender
     void LogFATAL(const std::string &msg) override;
 
   private:
-    const std::string object_path;
-    const std::string object_interface;
     uint8_t default_log_level = 6;
 
     Log(DBus::Connection::Ptr conn,

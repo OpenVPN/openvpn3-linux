@@ -51,8 +51,7 @@ Log::Log(DBus::Connection::Ptr conn,
          LogGroup lgroup,
          const std::string &object_path_,
          LogWriter::Ptr logwr)
-    : LogSender(conn, lgroup, object_path_, INTERFACE_CONFIGMGR, false, logwr.get()),
-      object_path(object_path_), object_interface(INTERFACE_CONFIGMGR)
+    : LogSender(conn, lgroup, object_path_, INTERFACE_CONFIGMGR, false, logwr.get())
 {
     auto creds = DBus::Credentials::Query::Create(conn);
 
