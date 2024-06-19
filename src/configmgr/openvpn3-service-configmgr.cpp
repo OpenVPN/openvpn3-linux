@@ -80,14 +80,13 @@ static int config_manager(ParsedArgs::Ptr args)
     {
         log_level = std::atoi(args->GetValue("log-level", 0).c_str());
     }
+    configmgr_srv->SetLogLevel(log_level);
 
     if (args->Present("state-dir"))
     {
         configmgr_srv->SetStateDirectory(args->GetValue("state-dir", 0));
         umask(077);
     }
-
-    configmgr_srv->SetLogLevel(log_level);
 
     configmgr_srv->Run();
 

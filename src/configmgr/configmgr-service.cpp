@@ -29,8 +29,7 @@ namespace ConfigManager {
 ConfigHandler::ConfigHandler(DBus::Connection::Ptr dbuscon,
                              DBus::Object::Manager::Ptr object_manager,
                              uint8_t loglevel,
-                             LogWriter::Ptr logwr,
-                             const std::string &state_dir)
+                             LogWriter::Ptr logwr)
     : DBus::Object::Base(PATH_CONFIGMGR, INTERFACE_CONFIGMGR),
       dbuscon_(dbuscon), object_manager_(object_manager),
       creds_qry_(DBus::Credentials::Query::Create(dbuscon)),
@@ -48,8 +47,6 @@ ConfigHandler::ConfigHandler(DBus::Connection::Ptr dbuscon,
     signals_->GroupCreate("broadcast");
     signals_->GroupAddTarget("broadcast", "");
     sig_configmgr_event_ = signals_->GroupCreateSignal<::Signals::ConfigurationManagerEvent>("broadcast");
-
-    SetStateDirectory(state_dir);
 
     auto import_args = AddMethod("Import",
                                  [this](DBus::Object::Method::Arguments::Ptr args)
@@ -442,6 +439,10 @@ Service::Service(DBus::Connection::Ptr con, LogWriter::Ptr lwr)
     try
     {
         logsrvprx_ = LogServiceProxy::AttachInterface(con, INTERFACE_CONFIGMGR);
+        config_handler_ = CreateServiceHandler<ConfigHandler>(con_,
+                                                              GetObjectManager(),
+                                                              loglevel_,
+                                                              logwr_);
     }
     catch (const DBus::Exception &excp)
     {
@@ -463,11 +464,6 @@ Service::~Service() noexcept
 
 void Service::BusNameAcquired(const std::string &busname)
 {
-    CreateServiceHandler<ConfigHandler>(con_,
-                                        GetObjectManager(),
-                                        loglevel_,
-                                        logwr_,
-                                        state_dir_);
 }
 
 
@@ -484,5 +480,11 @@ void Service::SetLogLevel(uint8_t loglvl)
 {
     loglevel_ = loglvl;
 }
+
+void Service::SetStateDirectory(const std::string &stdir)
+{
+    config_handler_->SetStateDirectory(stdir);
+}
+
 
 } // namespace ConfigManager

@@ -52,11 +52,20 @@ class ConfigHandler : public DBus::Object::Base
     using fn_search_filter = std::function<bool(Configuration::Ptr)>;
 
   public:
+    /**
+     *  Create the main handler object for the Configuration Manager service
+     *
+     * @param dbuscon         DBus::Connection where this object is created
+     * @param object_manager  DBus::Object::Manager handling D-Bus configuration
+     *                        profile objects
+     * @param loglevel        uint8_t log verbosity level to use
+     * @param logwr           LogWriter object handling all logging in the
+     *                        service
+     */
     ConfigHandler(DBus::Connection::Ptr dbuscon,
                   DBus::Object::Manager::Ptr object_manager,
                   uint8_t loglevel,
-                  LogWriter::Ptr logwr,
-                  const std::string &state_dir);
+                  LogWriter::Ptr logwr);
 
   public:
     /**
@@ -166,22 +175,21 @@ class Service : public DBus::Service
 
     /**
      *  Enables the persistent storage feature.  This defines where
-     *  these configurations will saved on the file system.
+     *  these configurations will saved on the file system.  Calling this
+     *  method will also trigger loading configuration profiles already stored
+     *  in this directory.
      *
      * @param stdir  std::string containing the directory where to load and
      *               save persistent configuration profiles.
      */
-    void SetStateDirectory(const std::string &stdir)
-    {
-        state_dir_ = stdir;
-    }
+    void SetStateDirectory(const std::string &stdir);
 
   private:
     DBus::Connection::Ptr con_;
     LogWriter::Ptr logwr_;
     LogServiceProxy::Ptr logsrvprx_;
     uint8_t loglevel_{3};
-    std::string state_dir_;
+    ConfigHandler::Ptr config_handler_ = nullptr;
 };
 
 } // namespace ConfigManager
