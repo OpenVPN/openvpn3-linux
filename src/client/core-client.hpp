@@ -57,6 +57,7 @@
 #include "backend-signals.hpp"
 
 #include "core-client-netcfg.hpp"
+#include "proxy-devposture.hpp"
 
 using namespace openvpn;
 
@@ -178,13 +179,19 @@ class CoreVPNClient : public CLIENTBASECLASS
     CoreVPNClient(DBus::Connection::Ptr dbusconn,
                   BackendSignals::Ptr signal_,
                   RequiresQueue::Ptr userinputq_,
-                  const std::string &session_tok)
+                  const std::string &session_tok,
+                  const std::string &enterprise_id)
         : CLIENTBASECLASS(dbusconn, signal_, session_tok),
           disabled_socket_protect_fd(false),
           userinputq(userinputq_),
           failed_signal_sent(false),
           run_status(StatusMinor::CONN_INIT)
     {
+        if (!enterprise_id.empty())
+        {
+            devposture = DevPosture::Proxy::Handler::Create(dbusconn);
+            devposture_protocols = devposture->ProtocolLookup(enterprise_id);
+        }
     }
 
 
@@ -274,6 +281,12 @@ class CoreVPNClient : public CLIENTBASECLASS
     }
 
 
+    std::string DevicePostureProtocols() const
+    {
+        return devposture_protocols;
+    }
+
+
   private:
     std::string dc_cookie;
     unsigned long evntcount = 0;
@@ -284,6 +297,8 @@ class CoreVPNClient : public CLIENTBASECLASS
     StatusMinor run_status;
     bool initial_connection = true;
     uint32_t auth_pending_timeout = 0;
+    DevPosture::Proxy::Handler::Ptr devposture;
+    std::string devposture_protocols;
 
 
     bool socket_protect(int socket, std::string remote, bool ipv6) override
@@ -614,7 +629,37 @@ class CoreVPNClient : public CLIENTBASECLASS
 
     void acc_event(const ClientAPI::AppCustomControlMessageEvent &ev) override
     {
-        // support for app-control channel events is not implemented; silently ignore
+        signals->LogVerb2("[acc_event] protocol: " + ev.protocol);
+        signals->Debug("[acc_event] payload: " + ev.payload);
+
+        if (devposture)
+        {
+            if (ev.protocol == "internal:supported_protocols")
+            {
+                // TODO: Check against our supported_protocols variable.
+            }
+            else
+            {
+                Json::Value request_json;
+
+                Json::CharReaderBuilder builder;
+                builder["collectComments"] = false;
+
+                std::string errors;
+                std::istringstream instr(ev.payload);
+
+                if (Json::parseFromStream(builder, instr, &request_json, &errors))
+                {
+                    if (!request_json.isNull() && request_json.begin().key().asString() == "dpc_request")
+                    {
+                        const std::string checks = devposture->RunChecks(ev.protocol, ev.payload);
+
+                        signals->Debug("[acc_event] devposture returned: " + checks);
+                        send_app_control_channel_msg(ev.protocol, checks);
+                    }
+                }
+            }
+        }
     }
 
 

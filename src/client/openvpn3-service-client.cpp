@@ -509,6 +509,7 @@ class BackendClientObject : public DBus::Object::Base
     const std::vector<std::string> restricted_acl_prop_set{
         "net.openvpn.v3.backends.log_level",
         "net.openvpn.v3.backends.dco"};
+    std::string enterprise_id;
 
 
     /**
@@ -581,10 +582,20 @@ class BackendClientObject : public DBus::Object::Base
             std::string config_name = fetch_configuration();
             GVariant *ret = glib2::Value::CreateTupleWrapped(config_name);
 
-            // Sets initial state, which also allows us to early
-            // report back back if more data is required to be
-            // sent by the front-end interface.
-            initialize_client();
+            try
+            {
+                // Sets initial state, which also allows us to early
+                // report back back if more data is required to be
+                // sent by the front-end interface.
+                initialize_client();
+            }
+            catch (ClientException &excp)
+            {
+                signal->LogFATAL("Failed to initialize client: "
+                                 + std::string(excp.GetRawError()));
+                throw ClientException("Registration confirmation", excp.GetRawError());
+            }
+
             signal->LogVerb2("Assigned session path: " + session_path);
             return ret;
         }
@@ -975,9 +986,11 @@ class BackendClientObject : public DBus::Object::Base
 
         // Create a new VPN client object, which is handling the
         // tunnel itself.
-        vpnclient.reset(new CoreVPNClient(dbusconn, signal, userinputq, session_token));
+        vpnclient.reset(new CoreVPNClient(dbusconn, signal, userinputq, session_token, enterprise_id));
         vpnclient->disable_socket_protect(disabled_socket_protect);
         vpnclient->disable_dns_config(ignore_dns_cfg);
+
+        vpnconfig.appCustomProtocols = vpnclient->DevicePostureProtocols();
 
         if (userinputq->QueueCount(ClientAttentionType::CREDENTIALS,
                                    ClientAttentionGroup::PK_PASSPHRASE)
@@ -1336,6 +1349,11 @@ class BackendClientObject : public DBus::Object::Base
             else if (override.override.key == "proxy-auth-cleartext")
             {
                 vpnconfig.proxyAllowCleartextAuth = override.boolValue;
+                valid_override = true;
+            }
+            else if (override.override.key == "enterprise-profile")
+            {
+                enterprise_id = override.strValue;
                 valid_override = true;
             }
 
