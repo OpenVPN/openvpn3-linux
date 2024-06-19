@@ -2,8 +2,9 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2018-  OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2018-  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2024-  Razvan Cojocaru <razvan.cojocaru@openvpn.com>
 //
 
 /**
@@ -141,7 +142,10 @@ const ValidOverride configProfileOverrides[] = {
      "HTTP Proxy password to use for authentication"},
 
     {"proxy-auth-cleartext", OverrideType::boolean,
-     "Allows clear text HTTP authentication"}
+     "Allows clear text HTTP authentication"},
+
+    {"enterprise-profile", OverrideType::string,
+     "Enterprise profile for client side device posture checks"}
     // clang-format on
 };
 
