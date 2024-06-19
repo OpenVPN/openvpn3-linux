@@ -150,6 +150,17 @@ OPTIONS
                         If set to true, DNS lookups will happen synchronously.
                         Valid values are: :code:`true`, :code:`false`
 
+--enterprise-profile PROFILE_NAME
+                        This enables device posture checks if the server
+                        requests it.  The profile name need to match a
+                        device posture profile found in the
+                        ``@DEVPOSTURE_PROFILEDIR@`` directory.  The
+                        *PROFILE_NAME* is without any file extension.  For
+                        a successful device posture check, the profile must
+                        match the protocol the server side expects.  This
+                        information need to be provided by your VPN server
+                        administrator.
+
 --auth-fail-retry BOOL
                         If set to true, the client will try to reconnect instead
                         of disconnecting if authentication fails.  Valid values

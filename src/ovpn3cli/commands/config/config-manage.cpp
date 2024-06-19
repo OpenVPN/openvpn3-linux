@@ -44,6 +44,7 @@ class ConfigProfileDetails
     std::string sealed = "(n/a)";
     std::string persistent = "(n/a)";
     std::string dco = "(n/a)";
+    std::string enterprise_id = "";
     std::map<std::string, std::string> overrides{};
     std::string invalid_reason = "";
 
@@ -81,6 +82,7 @@ ConfigProfileDetails::ConfigProfileDetails(OpenVPN3ConfigurationProxy::Ptr cfgpr
         sealed = prx->GetSealed() ? "Yes" : "No";
         persistent = prx->GetPersistent() ? "Yes" : "No";
         dco = prx->GetDCO() ? "Yes" : "No";
+        enterprise_id = extract_override("enterprise-profile", "");
         parse_overrides();
         access_allowed = true;
 
@@ -164,7 +166,8 @@ void ConfigProfileDetails::parse_overrides()
         std::string value = "(not set)";
         for (const auto &ov : prx->GetOverrides(false))
         {
-            if ("dns-scope" == ov.override.key)
+            if ("dns-scope" == ov.override.key
+                || "enterprise-profile" == ov.override.key)
             {
                 // This override is retrieved in the global block
                 continue;
@@ -233,6 +236,13 @@ static int config_manage_show(OpenVPN3ConfigurationProxy::Ptr conf)
 
         std::cout << std::setw(32) << "    DNS Resolver Scope: "
                   << prf->dns_scope << std::endl;
+
+        if (!prf->enterprise_id.empty())
+        {
+            std::cout << std::setw(32) << "    Enterprise Profile: "
+                  << prf->enterprise_id << std::endl;
+        }
+
 
         if (!prf->invalid_reason.empty())
         {
