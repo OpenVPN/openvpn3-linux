@@ -43,6 +43,7 @@ manpage_sources = [
     ['openvpn3-service-log.8.rst', mandir_8],
     ['openvpn3-service-netcfg.8.rst.in', mandir_8],
     ['openvpn3-service-sessionmgr.8.rst.in', mandir_8],
+    ['openvpn3-service-devposture.8.rst.in', mandir_8],
     ['openvpn3-systemd.8.rst', mandir_8],
 ]
 
@@ -61,6 +62,7 @@ man_config = configuration_data({
     'OPENVPN_STATEDIR': openvpn3_statedir,
     'DBUS_SYSTEM_POLICYDIR': dbus_policy_dir,
     'DBUS_SYSTEM_SERVICEDIR': dbus_service_dir,
+    'DEVPOSTURE_PROFILEDIR': devposture_profiledir,
 })
 
 

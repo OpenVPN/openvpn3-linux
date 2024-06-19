@@ -1,0 +1,28 @@
+{
+  "name": "Cloud Connexa Device Posture",
+  "appcontrol_id": "cxa1:dpc1",
+  "ver": "1.0",
+  "control_mapping": {
+    "client_info": {
+      "module": "/net/openvpn/v3/devposture/modules/platform",
+      "result_mapping": {
+        "os": {
+          "type": "uname_sysname",
+          "version": "os_release_version_id",
+          "extra": {
+            "name": "os_release_id",
+            "arch": "uname_machine"
+          }
+        }
+      }
+    },
+    "localtime": {
+      "module": "/net/openvpn/v3/devposture/modules/datetime",
+      "result_mapping": {
+        "date": "date",
+        "time": "time",
+        "zone": "timezone"
+      }
+    }
+  }
+}

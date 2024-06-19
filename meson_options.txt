@@ -59,6 +59,9 @@ option('openvpn_group', type: 'string', value: 'openvpn',
 option('openvpn3_statedir', type: 'string', value: '',
        description: 'Override OpenVPN 3 Linux state directory')
 
+option('devposture_profiledir', type: 'string', value: '',
+       description: 'Override OpenVPN 3 Device Posture Protocol Profiles directory')
+
 option('polkit_rulesdir', type: 'string', value: '',
        description: 'Override polkit rules directory')
 
@@ -67,6 +70,9 @@ option('polkit_rulesdir', type: 'string', value: '',
 #
 option('addon-aws', type: 'feature', value: 'disabled',
        description: 'Enable the OpenVPN 3 AWS-VPC integration service')
+
+option('addon-deviceposture', type: 'feature', value: 'disabled',
+       description: 'Enable the OpenVPN 3 Device Posture service')
 
 option('bash-completion', type: 'feature', value: 'disabled',
        description: 'Build the bash-completion helper scripts')

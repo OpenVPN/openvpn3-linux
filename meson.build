@@ -13,6 +13,12 @@ project(
         meson_version: '>= 0.58'
 )
 
+compiler = meson.get_compiler('cpp')
+if compiler.get_id() == 'gcc' and compiler.version().version_compare('<10.0')
+    message('GCC compiler version < 10 found, adding "-lstdc++fs" linking flag')
+    add_project_link_arguments(['-lstdc++fs'], language: 'cpp')
+endif
+
 #  Dependencies
 dep_lz4 = dependency('liblz4', required: false)
 dep_selinux = dependency('libselinux', required: false)
@@ -89,6 +95,11 @@ add_project_arguments('-Wno-non-virtual-dtor',
 openvpn3_statedir = get_option('openvpn3_statedir')
 if openvpn3_statedir == ''
     openvpn3_statedir = get_option('sharedstatedir') / 'openvpn3'
+endif
+
+devposture_profiledir = get_option('devposture_profiledir')
+if devposture_profiledir == ''
+    devposture_profiledir = get_option('sharedstatedir') + '/openvpn3/deviceposture/profiles'
 endif
 
 #
@@ -315,6 +326,9 @@ if get_option('bash-completion').enabled()
    subdir('src/shell/bash-completion')
 endif
 
+if get_option('addon-deviceposture').enabled()
+   subdir('addons/devposture')
+endif
 
 #
 #  Test programs
