@@ -612,6 +612,12 @@ class CoreVPNClient : public CLIENTBASECLASS
     }
 
 
+    void acc_event(const ClientAPI::AppCustomControlMessageEvent &ev) override
+    {
+        // support for app-control channel events is not implemented; silently ignore
+    }
+
+
     /**
      *  Whenever the core library wants to provide log information, it will
      *  send a ClientAPI::LogInfo object to this method.  This will

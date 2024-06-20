@@ -844,7 +844,6 @@ class BackendClientObject : public DBus::Object::Base
                     creds.password = userinputq->GetResponse(ClientAttentionType::CREDENTIALS,
                                                              ClientAttentionGroup::USER_PASSWORD,
                                                              "password");
-                    creds.cachePassword = true;
                 }
 
                 if (userinputq->QueueCount(ClientAttentionType::CREDENTIALS,
@@ -855,7 +854,6 @@ class BackendClientObject : public DBus::Object::Base
                                                              ClientAttentionGroup::CHALLENGE_STATIC,
                                                              "static_challenge");
                 }
-                creds.replacePasswordWithSessionID = true; // If server sends auth-token
                 provide_creds = true;
             }
 
