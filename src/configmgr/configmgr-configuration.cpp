@@ -676,7 +676,7 @@ std::string Configuration::validate_profile() noexcept
             {
                 remote_found = true;
             }
-            else if("ca" == opt.get(0, 32))
+            else if ("ca" == opt.get(0, 32))
             {
                 ca_found = true;
             }

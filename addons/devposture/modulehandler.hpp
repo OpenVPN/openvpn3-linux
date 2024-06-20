@@ -55,11 +55,11 @@ class ModuleHandler : public DBus::Object::Base
     }
 
   private:
-    const Module::UPtr module_ = nullptr;  ///< Device check module
-    std::string prop_name_ = "";           ///< Name of the device posture check
-    std::string prop_type_ = "";           ///< Device posture check categorization
-    uint16_t prop_version_ = 0;            ///< Version of the device posture check
-    bool prop_external_ = false;           ///< Indicates externally loaded check
+    const Module::UPtr module_ = nullptr; ///< Device check module
+    std::string prop_name_ = "";          ///< Name of the device posture check
+    std::string prop_type_ = "";          ///< Device posture check categorization
+    uint16_t prop_version_ = 0;           ///< Version of the device posture check
+    bool prop_external_ = false;          ///< Indicates externally loaded check
 };
 
 } // namespace DevPosture

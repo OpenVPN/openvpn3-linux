@@ -132,7 +132,7 @@ static int cmd_configs_list(ParsedArgs::Ptr args)
         {
             cprx.Validate();
         }
-        catch(const CfgMgrProxyException &excp)
+        catch (const CfgMgrProxyException &excp)
         {
             std::string warn("!! ");
             name.insert(name.begin(), warn.begin(), warn.end());

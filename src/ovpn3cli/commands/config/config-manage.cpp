@@ -240,7 +240,7 @@ static int config_manage_show(OpenVPN3ConfigurationProxy::Ptr conf)
         if (!prf->enterprise_id.empty())
         {
             std::cout << std::setw(32) << "    Enterprise Profile: "
-                  << prf->enterprise_id << std::endl;
+                      << prf->enterprise_id << std::endl;
         }
 
 

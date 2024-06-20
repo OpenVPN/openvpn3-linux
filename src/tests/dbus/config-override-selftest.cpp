@@ -90,9 +90,9 @@ int main(int argc, char **argv)
             << "remote localhost" << std::endl
             << "client" << std::endl;
     DBus::Object::Path cfgpath = cfgmgr->Import("selftest:overrides",
-                                               profile.str(),
-                                               false,
-                                               false);
+                                                profile.str(),
+                                                false,
+                                                false);
 
     OpenVPN3ConfigurationProxy cfgobj(conn, cfgpath);
     unsigned int failed = 0;
