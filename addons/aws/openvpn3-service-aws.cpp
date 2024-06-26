@@ -242,7 +242,7 @@ class AWSObject : public DBus::Object::Base
 
     std::unique_ptr<AWS::Route::Context> prepare_route_context(const std::string &role_name)
     {
-        RandomAPI::Ptr rng(new SSLLib::RandomAPI(false));
+        StrongRandomAPI::Ptr rng(new SSLLib::RandomAPI());
         AWS::PCQuery::Info ii;
 
         WS::ClientSet::run_synchronous([&](WS::ClientSet::Ptr cs)
