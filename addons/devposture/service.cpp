@@ -262,7 +262,7 @@ void Handler::method_run_checks(DBus::Object::Method::Arguments::Ptr args) const
             }
         }
 
-        if (ret_payload_json)
+        if (!ret_payload_json.empty())
         {
             auto &dpc_response = ret_json["dpc_response"];
 
@@ -369,7 +369,7 @@ Json::Value Handler::create_merged_mapped_json(const Json::Value &arr_mapping_da
     {
         const Json::Value mapped_json = create_mapped_json(elem);
 
-        if (mapped_json)
+        if (!mapped_json.empty())
         {
             for (auto it = mapped_json.begin(); it != mapped_json.end(); ++it)
             {
