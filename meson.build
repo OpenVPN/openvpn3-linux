@@ -153,24 +153,29 @@ if (dep_tinyxml2.version().version_compare('>= 4.0.0'))
     endif
 endif
 
-# Prepare some version details
+# Prepare some version details - if on a git checkout
+# For tarball builds, the build-version.h should already pre-exist
+# in ./src
 fs = import('fs')
 if fs.exists(meson.project_source_root() / '.git')
+    openvpn3_core_ver = get_option('openvpn3_core_version')
+    if openvpn3_core_ver == ''
+       openvpn3_core_ver = run_command(openvpn3_core_inc / 'scripts/version', check: true).stdout().strip()
+    endif
+
     version_header = configuration_data()
     version_header.set_quoted('OPENVPN_VERSION',
-                              run_command(openvpn3_core_inc / 'scripts/version', check: true).stdout().strip(),
+                              openvpn3_core_ver,
                               description: 'OpenVPN 3 Core Library version')
     version_header.set_quoted('PACKAGE_GUIVERSION',
                               run_command(['scripts/get-version','--gui-version'], check: true).stdout().strip(),
                               description: 'OpenVPN 3 Linux version identifier')
     version_header.set_quoted('PACKAGE_NAME', meson.project_name(),
                               description: 'Name of this project')
-    build_version_h = configure_file(
+    configure_file(
         configuration: version_header,
         output: 'build-version.h'
     )
-else
-    build_version_h = 'src/build-version.h'
 endif
 meson.add_dist_script(find_program('scripts/prepare-build-version-h'))
 cp_prog = find_program('cp', required: true)

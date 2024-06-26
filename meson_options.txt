@@ -32,6 +32,9 @@ option('asio_path', type: 'string', value: './vendor/asio',
 option('openvpn3_core_path', type: 'string', value: './openvpn3-core',
        description: 'Path to the OpenVPN 3 Core Library header files')
 
+option('openvpn3_core_version', type: 'string', value: '',
+       description: 'Override OpenVPN 3 Core Library version string (for packaging)')
+
 option('doxygen', type: 'feature', value: 'disabled',
        description: 'Build Doxygen documentation')
 
