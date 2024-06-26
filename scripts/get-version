@@ -62,7 +62,7 @@ case "$1" in
 		echo "${VERSION}"
 		;;
 	--gui-version)
-		echo "${VERSION}" | sed -e 's/_/:/' -e 's#/#_#g'
+		echo "${VERSION}" | sed -e 's#/#-#g'
 		;;
 	--prod-version)
 		echo "${PRODVERSION}"
