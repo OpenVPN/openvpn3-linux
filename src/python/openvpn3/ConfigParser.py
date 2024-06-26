@@ -259,6 +259,29 @@ class ConfigParser():
                                    action=ConfigParser.ReadConfigFile,
                                    help='Read configuration options from file')
 
+        self.__parser.add_argument('--connect-retry',
+                                   metavar='SEC [MAX]',
+                                   action=ConfigParser.OpenVPNvarArgs,
+                                   min_args=1,
+                                   help='Wait SEC seconds between connection '
+                                   +'attempts (default=5). Repeated reconnection '
+                                   +'attempts are slowed down after 5 retries '
+                                   +'per remote by doubling the wait time after '
+                                   +'each unsuccessful attempt. The optional '
+                                   +'argument MAX specifies the maximum value '
+                                   +'of wait time in seconds at which it gets '
+                                   +'capped (default=300)')
+
+        self.__parser.add_argument('--connect-retry-max',
+                                   metavar='RETRIES',
+                                   action='store',
+                                   help='RETRIES specifies the number of '
+                                   +'times each --remote or <connection> '
+                                   +'entry is tried. Specifying RETRIES '
+                                   +'as one would try each entry exactly '
+                                   +'once. A successful connection resets the '
+                                   +'counter.')
+
         self.__parser.add_argument('--daemon',
                                    action='store_true',
                                    help='Run the VPN tunnel in the background')
