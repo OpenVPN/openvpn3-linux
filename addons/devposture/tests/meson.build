@@ -29,6 +29,9 @@ executable('devposture-proxy',
         'devposture-proxy/main.cpp'
     ],
     build_by_default: build_test_programs,
+    link_with: [
+        common_code,
+    ],
     dependencies: [
         base_dependencies,
     ],

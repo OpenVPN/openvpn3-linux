@@ -39,6 +39,8 @@ bin_devposture_start = executable(
 
 # Sample protocol profile
 install_data(
+    'profiles/example1.json',
+    'profiles/example2.json',
     'profiles/openvpninc.json',
     install_dir: devposture_profiledir
 )

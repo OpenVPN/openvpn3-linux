@@ -1,0 +1,30 @@
+{
+  "name": "Device Posture Example 2 - merged results",
+  "appcontrol_id": "dpc-example2",
+  "ver": "1.0",
+  "control_mapping": {
+    "merged-results": [
+      {
+        "module": "/net/openvpn/v3/devposture/modules/platform",
+        "result_mapping": {
+          "operating_system": {
+            "sysname": "uname_sysname",
+            "version_id": "os_release_version_id",
+            "nested_details": {
+                "name": "os_release_id",
+                "arch": "uname_machine"
+            }
+          }
+        }
+      },
+      {
+        "module": "/net/openvpn/v3/devposture/modules/datetime",
+        "result_mapping": {
+          "client_date": "date",
+          "client_time": "time",
+          "client_tz": "timezone"
+        }
+      }
+    ]
+  }
+}
