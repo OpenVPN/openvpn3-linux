@@ -102,6 +102,12 @@ if devposture_profiledir == ''
     devposture_profiledir = get_option('sharedstatedir') + '/openvpn3/deviceposture/profiles'
 endif
 
+docdir = get_option('docdir')
+if docdir == ''
+    docdir = get_option('prefix') / get_option('datadir') / 'doc' / 'openvpn3'
+endif
+message('Documentation install directory: ' + docdir)
+
 #
 #  Create a build configuration header file
 #
@@ -306,6 +312,21 @@ configure_file(
     install_dir: dbus_policy_dir,
 )
 
+
+#
+# Generic documentation
+#
+install_data(
+    'README.md',
+    'QUICK-START.md',
+    'COPYRIGHT.md',
+    install_dir: docdir,
+)
+
+install_subdir(
+    'docs/dbus',
+    install_dir: docdir
+)
 
 #
 #  OpenVPN 3 Linux services

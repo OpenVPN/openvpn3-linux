@@ -50,6 +50,9 @@ option('selinux_policy', type: 'feature', value: 'auto',
 option('selinux_devel_path', type: 'string', value: '',
        description: 'Override default SELinux path to the Makfile for policy building')
 
+option('docdir', type: 'string', value: '',
+       description: 'Override install path for documentation')
+
 #
 #  Various runtime defaults
 #

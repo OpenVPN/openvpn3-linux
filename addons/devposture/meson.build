@@ -37,12 +37,18 @@ bin_devposture_start = executable(
 )
 
 
-# Sample protocol profile
+# Device posture protocol profiles
 install_data(
     'profiles/example1.json',
     'profiles/example2.json',
     'profiles/openvpninc.json',
     install_dir: devposture_profiledir
+)
+
+# Documentation
+install_data(
+    'profiles/profile-format.md',
+    install_dir: docdir / 'device-posture'
 )
 
 # D-Bus policy
