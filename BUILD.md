@@ -19,11 +19,11 @@ The following dependencies are needed:
 
   https://mesonbuild.com/
 
-* OpenSSL 1.1.1 or newer (recommended, not needed if building with mbed TLS)
+* OpenSSL 1.1.1 or newer
 
   https://www.openssl.org/
 
-* GDBus++
+* GDBus++ v1 or newer
 
   https://codeberg.org/OpenVPN/gdbuspp/
 
