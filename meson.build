@@ -176,7 +176,7 @@ if fs.exists(meson.project_source_root() / '.git')
     version_header.set_quoted('PACKAGE_GUIVERSION',
                               run_command(['scripts/get-version','--gui-version'], check: true).stdout().strip(),
                               description: 'OpenVPN 3 Linux version identifier')
-    version_header.set_quoted('PACKAGE_NAME', meson.project_name(),
+    version_header.set_quoted('PACKAGE_NAME', 'OpenVPN3/Linux',
                               description: 'Name of this project')
     configure_file(
         configuration: version_header,
