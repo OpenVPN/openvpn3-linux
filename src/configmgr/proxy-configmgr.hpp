@@ -11,6 +11,7 @@
 #pragma once
 
 #include <limits>
+#include <regex>
 #include <vector>
 #include <gdbuspp/glib2/utils.hpp>
 #include <gdbuspp/object/path.hpp>
@@ -867,7 +868,15 @@ class OpenVPN3ConfigurationProxy
     {
         if ('v' == vs[0])
         {
-            unsigned int v = std::stoi(vs.substr(1));
+            unsigned int v = 0;
+            std::smatch m;
+            const std::regex version_regex{R"(v(\d+)(_\w*)*)"};
+
+            if (std::regex_match(vs, m, version_regex) && !m.empty())
+            {
+                v = std::stoi(m[1]);
+            }
+
             if (21 <= v)
             {
                 features = CfgMgrFeatures::TAGS;
