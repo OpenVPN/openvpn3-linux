@@ -34,15 +34,17 @@ class CfgMgrProxyException : public DBus::Exception
 };
 
 
-enum class CfgMgrFeatures : std::uint32_t
+enum CfgMgrFeatures : std::uint32_t
 {
     // clang-format off
         UNDEFINED        = 0,        //< Version not identified
         TAGS             = 1,        //< Supports configuration tags
-        VALIDATE         = 2,        //< Provides net.openvpn.v3.configuration.Valudate method
+        VALIDATE         = 2,        //< Provides net.openvpn.v3.configuration.Validate method
         DEVBUILD         = std::numeric_limits<std::uint32_t>::max()  //< Development build; unreleased
     // clang-format on
 };
+
+
 static inline bool operator&(const CfgMgrFeatures &a, const CfgMgrFeatures &b)
 {
     return (static_cast<uint32_t>(a) & static_cast<uint32_t>(b)) > 0;
@@ -879,11 +881,11 @@ class OpenVPN3ConfigurationProxy
 
             if (21 <= v)
             {
-                features = CfgMgrFeatures::TAGS;
+                features = static_cast<CfgMgrFeatures>(features | CfgMgrFeatures::TAGS);
             }
             if (22 <= v)
             {
-                features = CfgMgrFeatures::VALIDATE;
+                features = static_cast<CfgMgrFeatures>(features | CfgMgrFeatures::VALIDATE);
             }
         }
         else
