@@ -252,6 +252,57 @@ enum class DNSresolver
 
 
 /**
+ *  Checks if the given file path is accessible by this process.
+ *
+ * @param file
+ */
+bool is_accessible(const char *file)
+{
+    // We should probably replace this with std::filesystem code.
+    // For now, this is copied-over legacy code.
+
+    struct stat st;
+    if (::stat(file, &st) == 0 && st.st_size > 0
+        && (st.st_mode & (S_IRUSR | S_IWUSR)) > 0)
+    {
+        std::cout << "    Found accessible " << file << std::endl;
+        return true;
+    }
+
+    std::cout << "    !! Could not read " << file << std::endl;
+    return false;
+}
+
+
+/**
+ *  Checks if the given file contains the special 127.0.0.53 nameserver.
+ *
+ * @param conf_file
+ */
+bool is_systemd_resolved_configured(const char *conf_file)
+{
+    // Parse the resolv config file to see if systemd-resolved
+    // is configured or not
+    std::cout << "    Parsing " << conf_file << " ... ";
+    auto r = ResolvConfFile::Create(conf_file);
+    std::cout << "Done" << std::endl;
+
+    for (const auto &ns : r->GetNameServers())
+    {
+        if ("127.0.0.53" == ns)
+        {
+            std::cout << "    Found systemd-resolved configured "
+                      << "(" << ns << ") in " << conf_file << " "
+                      << std::endl;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+/**
  *  Try to find which Network Configuration settings would be reasonable defaults
  *  on this host.
  *
@@ -291,49 +342,21 @@ void configure_netcfg(const setup_config &setupcfg, DBus::Connection::Ptr dbusco
 #endif
 
     // Check if /etc/resolv.conf is available
+    if (is_accessible("/etc/resolv.conf"))
     {
-        struct stat st;
-        if (::stat("/etc/resolv.conf", &st) == 0)
+        if (DNSresolver::RESOLVED == resolver
+            && !is_systemd_resolved_configured("/etc/resolv.conf"))
         {
-            if ((st.st_size > 0)
-                && ((st.st_mode & (S_IRUSR | S_IWUSR)) > 0))
+            if (!is_accessible("/run/systemd/resolve/stub-resolv.conf")
+                || !is_systemd_resolved_configured("/run/systemd/resolve/stub-resolv.conf"))
             {
-                std::cout << "    Found accessible /etc/resolv.conf" << std::endl;
-
-                if (DNSresolver::RESOLVED == resolver)
-                {
-                    // Parse the resolv.conf file to see if systemd-resolved
-                    // is configured or not
-                    std::cout << "    Parsing /etc/resolv.conf ... ";
-                    auto r = ResolvConfFile::Create("/etc/resolv.conf");
-                    std::cout << "Done" << std::endl;
-
-                    // Reset the resolver in this case, if systemd-resolved
-                    // is not configured in /etc/resolv.conf we can't use
-                    // that approach.
-                    resolver = DNSresolver::NONE;
-                    for (const auto &ns : r->GetNameServers())
-                    {
-                        if ("127.0.0.53" == ns)
-                        {
-                            std::cout << "    Found systemd-resolved configured "
-                                      << "(" << ns << ") in /etc/resolv.conf "
-                                      << std::endl;
-                            resolver = DNSresolver::RESOLVED;
-                            break;
-                        }
-                    }
-                }
-
-                if (DNSresolver::NONE == resolver)
-                {
-                    resolver = DNSresolver::RESOLVCONF;
-                }
+                resolver = DNSresolver::RESOLVCONF;
             }
-            else
-            {
-                std::cout << "    !! Could not read /etc/resolv.conf" << std::endl;
-            }
+        }
+
+        if (DNSresolver::NONE == resolver)
+        {
+            resolver = DNSresolver::RESOLVCONF;
         }
     }
 
