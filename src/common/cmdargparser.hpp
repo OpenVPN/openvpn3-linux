@@ -642,6 +642,9 @@ class SingleCommand
     }
 
 
+    virtual ~SingleCommand() = default;
+
+
     /**
      *   Add an alias command to this main command.  This is useful
      *   when wanting to deprecate a command while keeping the old one
