@@ -43,6 +43,7 @@ ConfigHandler::ConfigHandler(DBus::Connection::Ptr dbuscon,
                                           logwr);
     signals_->SetLogLevel(loglevel);
     RegisterSignals(signals_);
+    CoreLog::Connect(signals_);
 
     signals_->GroupCreate("broadcast");
     signals_->GroupAddTarget("broadcast", "");
