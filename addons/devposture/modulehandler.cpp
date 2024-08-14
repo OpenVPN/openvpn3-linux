@@ -10,7 +10,6 @@
 
 #include "constants.hpp"
 #include "modulehandler.hpp"
-#include "sysinfo/sysinfo.hpp"
 
 
 namespace DevPosture {

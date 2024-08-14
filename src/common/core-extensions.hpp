@@ -8,8 +8,10 @@
 
 #pragma once
 
+#include "build-config.h"
 #include <iostream>
 #include <json/json.h>
+
 #include <openvpn/client/cliconstants.hpp>
 #include <openvpn/common/options.hpp>
 #include <openvpn/options/merge.hpp>
