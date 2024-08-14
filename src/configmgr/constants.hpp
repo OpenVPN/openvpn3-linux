@@ -17,6 +17,7 @@
 #pragma once
 
 #include <string>
+#include "dbus/constants.hpp"
 
 namespace ConfigManager {
 

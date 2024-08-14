@@ -9,17 +9,17 @@
 //
 
 #include "build-config.h"
-#include <gdbuspp/connection.hpp>
-#include <gdbuspp/service.hpp>
-#include <log/ansicolours.hpp>
-#include <log/logwriter.hpp>
-#include <log/logwriters/implementations.hpp>
-#include <log/dbus-log.hpp>
-#include <log/proxy-log.hpp>
-#include <common/cmdargparser.hpp>
-#include <common/utils.hpp>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <gdbuspp/connection.hpp>
+#include <gdbuspp/service.hpp>
+
+#include "log/ansicolours.hpp"
+#include "log/logwriter.hpp"
+#include "log/logwriters/implementations.hpp"
+#include "log/proxy-log.hpp"
+#include "common/cmdargparser.hpp"
+#include "common/utils.hpp"
 #include "configmgr-service.hpp"
 
 

@@ -16,7 +16,6 @@
  *        net.openvpn.v3.configuration
  */
 
-#include <memory>
 #include <gdbuspp/connection.hpp>
 #include <gdbuspp/credentials/query.hpp>
 #include <gdbuspp/proxy/utils.hpp>

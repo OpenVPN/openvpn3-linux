@@ -15,8 +15,8 @@
  * @brief Implementation of the net.openvpn.v3.configuration D-Bus service
  */
 
-#include <common/lookup.hpp>
-#include <dbus/path.hpp>
+#include "common/lookup.hpp"
+#include "dbus/path.hpp"
 #include "configmgr-service.hpp"
 #include "configmgr-exceptions.hpp"
 #include "constants.hpp"

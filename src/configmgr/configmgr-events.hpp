@@ -19,7 +19,6 @@
 
 #include <cstdint>
 #include <string>
-#include <sstream>
 #include <gdbuspp/glib2/utils.hpp>
 #include <gdbuspp/signals/group.hpp>
 

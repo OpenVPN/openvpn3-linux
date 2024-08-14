@@ -22,10 +22,9 @@
 #include <gdbuspp/connection.hpp>
 #include <gdbuspp/signals/signal.hpp>
 #include <gdbuspp/signals/subscriptionmgr.hpp>
-#include <events/attention-req.hpp>
-#include <events/status.hpp>
-#include <log/dbus-log.hpp>
+
 #include "configmgr-events.hpp"
+#include "log/dbus-log.hpp"
 
 namespace ConfigManager {
 

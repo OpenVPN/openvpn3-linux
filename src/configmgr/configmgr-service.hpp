@@ -17,18 +17,16 @@
 
 #pragma once
 
-#include <openvpn/log/logsimple.hpp>
+#include <string>
+#include <vector>
 #include <gdbuspp/connection.hpp>
 #include <gdbuspp/credentials/query.hpp>
 #include <gdbuspp/object/base.hpp>
 #include <gdbuspp/service.hpp>
-#include <log/logwriter.hpp>
-#include <log/logwriters/implementations.hpp>
-#include <log/proxy-log.hpp>
-#include <common/core-extensions.hpp>
-#include <common/utils.hpp>
-#include <string>
-#include <vector>
+
+#include "log/logwriter.hpp"
+#include "log/proxy-log.hpp"
+#include "common/utils.hpp"
 #include "configmgr-configuration.hpp"
 #include "configmgr-signals.hpp"
 

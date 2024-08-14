@@ -11,18 +11,19 @@
 
 #pragma once
 
+#include <ctime>
+#include <set>
+#include <string>
+#include <vector>
+#include <gdbuspp/authz-request.hpp>
 #include <gdbuspp/service.hpp>
 #include <gdbuspp/credentials/query.hpp>
 #include <gdbuspp/object/base.hpp>
-#include <dbus/object-ownership.hpp>
-#include <openvpn/log/logsimple.hpp>
-#include <log/logwriter.hpp>
-#include <common/utils.hpp>
-#include <common/core-extensions.hpp>
-#include <ctime>
-#include <string>
-#include <vector>
-#include "configmgr-exceptions.hpp"
+
+#include "log/core-dbus-logger.hpp"
+#include "common/core-extensions.hpp"
+#include "dbus/object-ownership.hpp"
+#include "log/logwriter.hpp"
 #include "configmgr-signals.hpp"
 #include "overrides.hpp"
 

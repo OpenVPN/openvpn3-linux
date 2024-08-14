@@ -9,12 +9,13 @@
 //  Copyright (C) 2024-  Răzvan Cojocaru <razvan.cojocaru@openvpn.com>
 //
 
-#include <common/lookup.hpp>
-#include <dbus/path.hpp>
 #include <cstdio>
 #include <ctime>
+#include <set>
+
+#include "common/lookup.hpp"
+#include "common/utils.hpp"
 #include "configmgr-configuration.hpp"
-#include "configmgr-service.hpp"
 #include "constants.hpp"
 
 
@@ -296,7 +297,7 @@ const bool Configuration::Authorize(const DBus::Authz::Request::Ptr authzreq)
 }
 
 
-const std::string Configuration::AuthorizationRejected(const Authz::Request::Ptr request) const noexcept
+const std::string Configuration::AuthorizationRejected(const DBus::Authz::Request::Ptr request) const noexcept
 {
     switch (request->operation)
     {
