@@ -167,19 +167,9 @@ const bool Configuration::Authorize(const DBus::Authz::Request::Ptr authzreq)
         {
             // These methods are always restricted to the owner only;
             // we don't provide sharing user admin rights to configurations
-            for (const auto &method : {
-                     "net.openvpn.v3.configuration.AccessGrant",
-                     "net.openvpn.v3.configuration.AccessRevoke",
-                     "net.openvpn.v3.configuration.SetOption",
-                     "net.openvpn.v3.configuration.SetOverride",
-                     "net.openvpn.v3.configuration.UnsetOverride",
-                     "net.openvpn.v3.configuration.AddTag",
-                     "net.openvpn.v3.configuration.RemoveTag"})
+            if (write_methods_.end() != write_methods_.find(authzreq->target))
             {
-                if (method == authzreq->target)
-                {
-                    return !prop_readonly_ && object_acl_->CheckOwnerAccess(authzreq->caller);
-                }
+                return !prop_readonly_ && object_acl_->CheckOwnerAccess(authzreq->caller);
             }
 
             if ("net.openvpn.v3.configuration.Fetch" == authzreq->target
@@ -307,6 +297,13 @@ const std::string Configuration::AuthorizationRejected(const DBus::Authz::Reques
                     : "Configuration can only be modified by the profile owner");
 
     case DBus::Object::Operation::METHOD_CALL:
+        // If it's a read-only object and these methods are called,
+        // we reject it with a better error message.
+        if (prop_readonly_ && write_methods_.end() != write_methods_.find(request->target))
+        {
+            return "Configuration profile is sealed and read-only";
+        }
+
     case DBus::Object::Operation::PROPERTY_GET:
     default:
         return "Access to the configuration profile is denied.";

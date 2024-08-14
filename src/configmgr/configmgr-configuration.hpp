@@ -315,6 +315,20 @@ class Configuration : public DBus::Object::Base
     std::string persistent_file_;
     openvpn::OptionListJSON options_;
     std::vector<OverrideValue> override_list_;
+
+    /**
+     *  Methods which will modify the content of this object.
+     *  Used by the ACL checks to ensure only the owner has
+     *  of the object can modify it.
+     */
+    const std::set<std::string> write_methods_ = {
+        "net.openvpn.v3.configuration.AccessGrant",
+        "net.openvpn.v3.configuration.AccessRevoke",
+        "net.openvpn.v3.configuration.SetOption",
+        "net.openvpn.v3.configuration.SetOverride",
+        "net.openvpn.v3.configuration.UnsetOverride",
+        "net.openvpn.v3.configuration.AddTag",
+        "net.openvpn.v3.configuration.RemoveTag"};
 };
 
 } // namespace ConfigManager
