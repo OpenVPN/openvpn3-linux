@@ -11,7 +11,9 @@
           "version": "os_release_version_id",
           "extra": {
             "name": "os_release_id",
-            "arch": "uname_machine"
+            "arch": "uname_machine",
+            "core_ver": "uname_release",
+            "extra_ver": "extra_version"
           }
         }
       }
