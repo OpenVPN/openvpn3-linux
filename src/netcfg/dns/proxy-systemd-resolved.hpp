@@ -14,12 +14,13 @@
 
 #pragma once
 
-#include <exception>
 #include <memory>
 #include <string>
 #include <gdbuspp/connection.hpp>
 #include <gdbuspp/object/path.hpp>
 #include <gdbuspp/proxy.hpp>
+
+#include "netcfg/dns/systemd-resolved-exception.hpp"
 
 
 namespace NetCfg {
@@ -116,27 +117,6 @@ struct SearchDomain
     std::string search{};
     bool routing = false;
 };
-
-
-
-class Exception : public std::exception
-{
-  public:
-    Exception(const std::string &err)
-        : errmsg(err)
-    {
-    }
-    virtual ~Exception() = default;
-
-    virtual const char *what() const noexcept
-    {
-        return errmsg.c_str();
-    }
-
-  private:
-    std::string errmsg;
-};
-
 
 
 /**

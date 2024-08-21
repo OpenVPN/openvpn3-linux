@@ -24,7 +24,7 @@
 #include <openvpn/common/split.hpp>
 
 #include "netcfg/dns/proxy-systemd-resolved.hpp"
-
+#include "netcfg/dns/systemd-resolved-exception.hpp"
 
 using namespace NetCfg::DNS::resolved;
 
