@@ -103,9 +103,15 @@ int program(ParsedArgs::Ptr args)
     resolved::Link::Ptr link = srmgr->RetrieveLink(exargs[0]);
 
     std::cout << "systemd-resolved path: " << link->GetPath() << std::endl;
-    bool mods = args->Present("add-resolver") || args->Present("reset-resolver")
-                || args->Present("add-search") || args->Present("reset-search")
-                || args->Present("set-default-route") || args->Present("revert");
+
+    std::vector<std::string> mod_ops = {"add-resolver4",
+                                        "add-resolver6",
+                                        "reset-resolver",
+                                        "add-search",
+                                        "reset-search",
+                                        "set-default-route",
+                                        "revert"};
+    bool mods = !args->Present(mod_ops, true).empty();
     if (mods)
     {
         std::cout << "Before changes: " << std::endl;
@@ -113,18 +119,28 @@ int program(ParsedArgs::Ptr args)
 
     print_details(link);
 
-    if (args->Present("add-resolver") || args->Present("reset-resolver"))
+    std::string op = args->Present({"add-resolver4", "add-resolver6", "reset-resolver"}, true);
+    if (!op.empty())
     {
         // Set a new DNS resolver server
         resolved::ResolverRecord::List rslv;
 
-        if (args->Present("add-resolver"))
+        if (args->Present("add-resolver6"))
         {
-            for (const auto &ip : args->GetAllValues("add-resolver"))
+            for (const auto &ip : args->GetAllValues("add-resolver6"))
+            {
+                rslv.push_back(resolved::ResolverRecord(AF_INET6, ip));
+            }
+        }
+
+        if (args->Present("add-resolver4"))
+        {
+            for (const auto &ip : args->GetAllValues("add-resolver4"))
             {
                 rslv.push_back(resolved::ResolverRecord(AF_INET, ip));
             }
         }
+
         link->SetDNSServers(rslv);
     }
 
@@ -176,7 +192,8 @@ int main(int argc, char **argv)
     SingleCommand cmd("netcfg-systemd-resolved",
                       "Test program for the systemd-resolved D-Bus API",
                       program);
-    cmd.AddOption("add-resolver", "IP-ADDRESS", true, "Add a DNS resolver (can be used multiple times)");
+    cmd.AddOption("add-resolver4", "IPv4-ADDRESS", true, "Add an IPv4 DNS resolver (can be used multiple times)");
+    cmd.AddOption("add-resolver6", "IPv6-ADDRESS", true, "Add an IPv6 DNS resolver (can be used multiple times)");
     cmd.AddOption("reset-resolver",
                   "Remove all DNS resolvers for this device");
     cmd.AddOption("add-search", "SEARCH-DOMAIN", true, "Add a DNS search domain (can be used multiple times)");
