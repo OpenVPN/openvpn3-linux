@@ -276,6 +276,7 @@ netcfgmgr_lib = static_library(
             'src/netcfg/netcfg-subscriptions.cpp',
             'src/netcfg/dns/proxy-systemd-resolved.cpp',
             'src/netcfg/dns/systemd-resolved.cpp',
+            'src/netcfg/dns/systemd-resolved-ipaddr.cpp',
             'src/netcfg/dns/resolvconf-file.cpp',
             'src/netcfg/dns/resolver-settings.cpp',
             'src/netcfg/dns/settings-manager.cpp',

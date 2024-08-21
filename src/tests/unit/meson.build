@@ -30,6 +30,7 @@ unit_tests = executable(
                 'sessionmgr-events.cpp',
                 'statusevent.cpp',
                 'syslog-facility-mapping.cpp',
+                'systemd-resolved-ipaddr.cpp',
                 'timestamp.cpp',
                 '../../netcfg/dns/resolver-settings.cpp',
                 '../../netcfg/dns/settings-manager.cpp',
