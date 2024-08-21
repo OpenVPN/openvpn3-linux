@@ -17,10 +17,23 @@
 
 int devposture_proxy(ParsedArgs::Ptr args)
 {
-    args->CheckExclusiveOptions({{"list-modules", "enterprise-profile"},
-                                 {"list-modules", "protocol"},
-                                 {"protocol", "enterprise-profile"}});
-    std::string mode = args->Present({"list-modules", "enterprise-profile", "protocol"}, false);
+    std::string mode;
+    try
+    {
+        args->CheckExclusiveOptions({{"list-modules", "enterprise-profile"},
+                                     {"list-modules", "protocol"},
+                                     {"protocol", "enterprise-profile"}});
+        mode = args->Present({"list-modules", "enterprise-profile", "protocol"});
+    }
+    catch (const OptionNotFound &)
+    {
+        throw CommandException(args->GetArgv0(),
+                               "Missing arguments, see --help");
+    }
+    catch (const ExclusiveOptionError &excp)
+    {
+        throw CommandException(args->GetArgv0(), excp.what());
+    }
 
     drop_root();
     try
@@ -140,6 +153,8 @@ int main(int argc, char **argv)
     }
     catch (const CommandException &excp)
     {
+        std::cout << simple_basename(argv[0])
+                  << ": ** ERROR **  " << excp.what() << std::endl;
         return 2;
     }
 }
