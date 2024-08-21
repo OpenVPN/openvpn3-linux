@@ -26,11 +26,6 @@
 
 bool check_override_value(const OverrideValue ov, OverrideType ovt, bool expect)
 {
-    if (false == ov.override.valid())
-    {
-        return false;
-    }
-
     if (ovt != ov.override.type)
     {
         return false;
@@ -46,11 +41,6 @@ bool check_override_value(const OverrideValue ov, OverrideType ovt, bool expect)
 
 bool check_override_value(const OverrideValue ov, OverrideType ovt, std::string expect)
 {
-    if (false == ov.override.valid())
-    {
-        return false;
-    }
-
     if (ovt != ov.override.type)
     {
         return false;
@@ -100,8 +90,8 @@ int main(int argc, char **argv)
     std::cout << ".. Testing unsetting an unset override ... ";
     try
     {
-        const ValidOverride ov = GetConfigOverride("ipv6");
-        cfgobj.UnsetOverride(ov);
+        auto ov = GetConfigOverride("ipv6");
+        cfgobj.UnsetOverride(*ov);
         std::cout << "FAIL" << std::endl;
         ++failed;
     }
@@ -119,29 +109,7 @@ int main(int argc, char **argv)
         }
     }
 
-    std::cout << ".. Testing unsetting an invalid override (1)... ";
-    try
-    {
-        const ValidOverride ov = GetConfigOverride("non-existent-fake-override");
-        cfgobj.UnsetOverride(ov);
-        std::cout << "FAIL" << std::endl;
-        ++failed;
-    }
-    catch (const DBus::Exception &excp)
-    {
-        std::string e(excp.what());
-        if (e.find("Invalid override") != std::string::npos)
-        {
-            std::cout << "PASS" << std::endl;
-        }
-        else
-        {
-            std::cout << "ERROR:" << excp.what() << std::endl;
-            ++failed;
-        }
-    }
-
-    std::cout << ".. Testing unsetting an invalid override (2)... ";
+    std::cout << ".. Testing unsetting an invalid override ... ";
     try
     {
         ValidOverride ov = {"non-existing-override",
@@ -165,29 +133,7 @@ int main(int argc, char **argv)
         }
     }
 
-    std::cout << ".. Testing setting an invalid override (1)... ";
-    try
-    {
-        const ValidOverride ov = GetConfigOverride("non-existent-fake-override");
-        cfgobj.SetOverride(ov, "string-value");
-        std::cout << "FAIL" << std::endl;
-        ++failed;
-    }
-    catch (const DBus::Exception &excp)
-    {
-        std::string e(excp.what());
-        if (e.find("Invalid override") != std::string::npos)
-        {
-            std::cout << "PASS" << std::endl;
-        }
-        else
-        {
-            std::cout << "ERROR:" << excp.what() << std::endl;
-            ++failed;
-        }
-    }
-
-    std::cout << ".. Testing setting an invalid override (2)... ";
+    std::cout << ".. Testing setting an invalid override ... ";
     try
     {
         const ValidOverride ov = {"non-existing-override",
@@ -214,8 +160,8 @@ int main(int argc, char **argv)
     std::cout << ".. Testing setting an override with invalid type [bool:string] (1) ... ";
     try
     {
-        const ValidOverride ov = GetConfigOverride("dns-sync-lookup");
-        cfgobj.SetOverride(ov, std::string("string-value"));
+        auto ov = GetConfigOverride("dns-sync-lookup");
+        cfgobj.SetOverride(*ov, std::string("string-value"));
         std::cout << "FAIL" << std::endl;
         ++failed;
     }
@@ -236,9 +182,9 @@ int main(int argc, char **argv)
     std::cout << ".. Testing setting an override with invalid type [bool:string] (2) ... ";
     try
     {
-        ValidOverride ov = GetConfigOverride("dns-sync-lookup");
-        ov.type = OverrideType::string;
-        cfgobj.SetOverride(ov, std::string("string-value"));
+        auto ov = GetConfigOverride("dns-sync-lookup");
+        ov->type = OverrideType::string;
+        cfgobj.SetOverride(*ov, std::string("string-value"));
         std::cout << "FAIL" << std::endl;
         ++failed;
     }
@@ -259,8 +205,8 @@ int main(int argc, char **argv)
     std::cout << ".. Testing setting an override with invalid type [string:bool] (1) ... ";
     try
     {
-        const ValidOverride ov = GetConfigOverride("server-override");
-        cfgobj.SetOverride(ov, true);
+        auto ov = GetConfigOverride("server-override");
+        cfgobj.SetOverride(*ov, true);
         std::cout << "FAIL" << std::endl;
         ++failed;
     }

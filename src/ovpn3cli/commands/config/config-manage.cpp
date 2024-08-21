@@ -145,10 +145,6 @@ std::string ConfigProfileDetails::extract_override(const std::string &override,
 
         case OverrideType::boolean:
             return (ov.boolValue ? bool_true : bool_false);
-
-        case OverrideType::invalid:
-        default:
-            return "(invalid)";
         }
     }
     catch (const DBus::Exception &ex)
@@ -183,11 +179,7 @@ void ConfigProfileDetails::parse_overrides()
                 case OverrideType::boolean:
                     overrides[vo.key] = ov.boolValue ? "true" : "false";
                     break;
-
-                case OverrideType::invalid:
-                    overrides[vo.key] = "(invalid)";
-                    break;
-                }
+               }
             }
         }
     }
@@ -487,9 +479,9 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
         {
             for (const auto &key : args->GetAllValues("unset-override"))
             {
-                const ValidOverride &override = GetConfigOverride(key, true);
+                auto ov = GetConfigOverride(key, true);
 
-                if (OverrideType::invalid == override.type)
+                if (!ov)
                 {
                     throw CommandException("config-manage",
                                            "Unsetting invalid override "
@@ -498,10 +490,10 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
 
                 try
                 {
-                    conf->UnsetOverride(override);
+                    conf->UnsetOverride(*ov);
                     if (!quiet)
                     {
-                        std::cout << "Unset override '" + override.key + "'" << std::endl;
+                        std::cout << "Unset override '" + ov->key + "'" << std::endl;
                     }
                     valid_option = true;
                 }

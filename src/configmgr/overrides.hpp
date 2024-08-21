@@ -15,14 +15,14 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 
 
 enum class OverrideType
 {
     string,
-    boolean,
-    invalid
+    boolean
 };
 
 /**
@@ -38,12 +38,6 @@ struct ValidOverride
     ValidOverride(std::string key, OverrideType type, std::string help, std::string (*argument_helper)())
         : key(key), type(type), help(help), argument_helper(argument_helper)
     {
-    }
-
-
-    inline bool valid() const
-    {
-        return type != OverrideType::invalid;
     }
 
 
@@ -150,10 +144,5 @@ const ValidOverride configProfileOverrides[] = {
 };
 
 
-const ValidOverride invalidOverride(std::string("invalid"),
-                                    OverrideType::invalid,
-                                    "Invalid override");
-
-
-const ValidOverride &GetConfigOverride(const std::string &key,
-                                       bool ignoreCase = false);
+std::optional<ValidOverride> GetConfigOverride(const std::string &key,
+                                               bool ignoreCase = false);

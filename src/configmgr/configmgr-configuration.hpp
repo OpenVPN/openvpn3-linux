@@ -223,8 +223,8 @@ class Configuration : public DBus::Object::Base
     template <typename T>
     OverrideValue set_override(const std::string &key, T value)
     {
-        const ValidOverride &vo = GetConfigOverride(key);
-        if (!vo.valid())
+        auto vo = GetConfigOverride(key);
+        if (!vo)
         {
             throw DBus::Object::Method::Exception("Invalid override key '"
                                                   + std::string(key) + "'");
@@ -233,11 +233,11 @@ class Configuration : public DBus::Object::Base
         // Ensure that a previous override value is removed.
         remove_override(key);
 
-        switch (vo.type)
+        switch (vo->type)
         {
         case OverrideType::string:
         case OverrideType::boolean:
-            override_list_.push_back(OverrideValue(vo, value));
+            override_list_.push_back(OverrideValue(*vo, value));
             return override_list_.back();
 
         default:

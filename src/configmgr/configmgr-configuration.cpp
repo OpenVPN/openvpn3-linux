@@ -883,9 +883,9 @@ void Configuration::method_remove()
 
 OverrideValue Configuration::set_override(const std::string &key, GVariant *value)
 {
-    const ValidOverride &vo = GetConfigOverride(key);
+    auto vo = GetConfigOverride(key);
 
-    if (!vo.valid())
+    if (!vo)
     {
         throw DBus::Object::Method::Exception("Invalid override key '"
                                               + std::string(key) + "'");
@@ -898,7 +898,7 @@ OverrideValue Configuration::set_override(const std::string &key, GVariant *valu
 
     if ("s" == g_type)
     {
-        if (OverrideType::string != vo.type)
+        if (OverrideType::string != vo->type)
         {
             throw DBus::Object::Method::Exception("(SetOverride) Invalid override data type for '"
                                                   + key + "': " + g_type);
@@ -909,7 +909,7 @@ OverrideValue Configuration::set_override(const std::string &key, GVariant *valu
     }
     else if ("b" == g_type)
     {
-        if (OverrideType::boolean != vo.type)
+        if (OverrideType::boolean != vo->type)
         {
             throw DBus::Object::Method::Exception("(SetOverride) Invalid override data type for '"
                                                   + key + "': " + g_type);

@@ -49,11 +49,6 @@ int main(int argc, char **argv)
             type = "string";
             break;
 
-        case OverrideType::invalid:
-            value = "(invalid)";
-            type = "(invalid)";
-            break;
-
         default:
             value = "(unknown)";
             type = "(unknown)";

@@ -561,20 +561,20 @@ class OpenVPN3ConfigurationProxy
             GVariant *val = nullptr;
             g_variant_get(override, "{sv}", &key, &val);
 
-            const ValidOverride vo = GetConfigOverride(key);
-            if (!vo.valid())
+            auto vo = GetConfigOverride(key);
+            if (!vo)
             {
                 throw DBus::Proxy::Exception("Invalid override found");
             }
-            if (OverrideType::string == vo.type)
+            if (OverrideType::string == vo->type)
             {
                 std::string v(glib2::Value::Get<std::string>(val));
-                ret.push_back(OverrideValue(vo, v));
+                ret.push_back(OverrideValue(*vo, v));
             }
-            else if (OverrideType::boolean == vo.type)
+            else if (OverrideType::boolean == vo->type)
             {
                 bool v = glib2::Value::Get<bool>(val);
-                ret.push_back(OverrideValue(vo, v));
+                ret.push_back(OverrideValue(*vo, v));
             }
         }
         cached_overrides = ret;
@@ -589,10 +589,6 @@ class OpenVPN3ConfigurationProxy
      */
     void SetOverride(const ValidOverride &override, bool value)
     {
-        if (!override.valid())
-        {
-            DBus::Proxy::Exception("Invalid override");
-        }
         if (OverrideType::boolean != override.type)
         {
             DBus::Proxy::Exception("SetOverride for bool called for non-bool override");
@@ -609,10 +605,6 @@ class OpenVPN3ConfigurationProxy
      */
     void SetOverride(const ValidOverride &override, std::string value)
     {
-        if (!override.valid())
-        {
-            DBus::Proxy::Exception("Invalid override");
-        }
         if (OverrideType::string != override.type)
         {
             DBus::Proxy::Exception("SetOverride for string called for non-string override");
@@ -757,10 +749,6 @@ class OpenVPN3ConfigurationProxy
      */
     void UnsetOverride(const ValidOverride &override)
     {
-        if (!override.valid())
-        {
-            throw DBus::Proxy::Exception("Invalid override");
-        }
         proxy->Call(proxy_tgt,
                     "UnsetOverride",
                     g_variant_new("(s)", override.key.c_str()));

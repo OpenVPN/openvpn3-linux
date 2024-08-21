@@ -1245,42 +1245,35 @@ class BackendClientObject : public DBus::Object::Base
     {
         for (const auto &override : overrides)
         {
-            bool valid_override = false;
+            bool valid_override = true;
             if (override.override.key == "server-override")
             {
                 vpnconfig.serverOverride = override.strValue;
-                valid_override = true;
             }
             else if (override.override.key == "port-override")
             {
                 vpnconfig.portOverride = override.strValue;
-                valid_override = true;
             }
             else if (override.override.key == "proto-override")
             {
                 vpnconfig.protoOverride = override.strValue;
-                valid_override = true;
             }
             else if (override.override.key == "ipv6")
             {
                 vpnconfig.allowUnusedAddrFamilies = override.strValue;
-                valid_override = true;
             }
             else if (override.override.key == "log-level")
             {
                 signal->SetLogLevel(std::atoi(override.strValue.c_str()));
                 profile_log_level_override = true;
-                valid_override = true;
             }
             else if (override.override.key == "dns-fallback-google")
             {
                 vpnconfig.googleDnsFallback = override.boolValue;
-                valid_override = true;
             }
             else if (override.override.key == "dns-setup-disabled")
             {
                 ignore_dns_cfg = override.boolValue;
-                valid_override = true;
             }
             else if (override.override.key == "dns-scope")
             {
@@ -1288,73 +1281,67 @@ class BackendClientObject : public DBus::Object::Base
                     || "tunnel" == override.strValue)
                 {
                     dns_scope = override.strValue;
-                    valid_override = true;
+                }
+                else
+                {
+                    valid_override = false;
                 }
             }
             else if (override.override.key == "dns-sync-lookup")
             {
                 vpnconfig.synchronousDnsLookup = override.boolValue;
-                valid_override = true;
             }
             else if (override.override.key == "auth-fail-retry")
             {
                 vpnconfig.retryOnAuthFailed = override.boolValue;
-                valid_override = true;
             }
             else if (override.override.key == "allow-compression")
             {
                 vpnconfig.compressionMode = override.strValue;
-                valid_override = true;
             }
             else if (override.override.key == "enable-legacy-algorithms")
             {
                 vpnconfig.enableNonPreferredDCAlgorithms = override.boolValue;
-                valid_override = true;
             }
             else if (override.override.key == "tls-version-min")
             {
                 vpnconfig.tlsVersionMinOverride = override.strValue;
-                valid_override = true;
             }
             else if (override.override.key == "tls-cert-profile")
             {
                 vpnconfig.tlsCertProfileOverride = override.strValue;
-                valid_override = true;
             }
             else if (override.override.key == "persist-tun")
             {
                 vpnconfig.tunPersist = override.boolValue;
-                valid_override = true;
             }
             else if (override.override.key == "proxy-host")
             {
                 vpnconfig.proxyHost = override.strValue;
-                valid_override = true;
             }
             else if (override.override.key == "proxy-port")
             {
                 vpnconfig.proxyPort = override.strValue;
-                valid_override = true;
             }
             else if (override.override.key == "proxy-username")
             {
                 vpnconfig.proxyUsername = override.strValue;
-                valid_override = true;
             }
             else if (override.override.key == "proxy-password")
             {
                 vpnconfig.proxyPassword = override.strValue;
-                valid_override = true;
             }
             else if (override.override.key == "proxy-auth-cleartext")
             {
                 vpnconfig.proxyAllowCleartextAuth = override.boolValue;
-                valid_override = true;
             }
             else if (override.override.key == "enterprise-profile")
             {
                 enterprise_id = override.strValue;
-                valid_override = true;
+            }
+            else
+            {
+                valid_override = false;
             }
 
             // Add some logging to the overrides which got processed
@@ -1365,7 +1352,6 @@ class BackendClientObject : public DBus::Object::Base
                 msg << "Configuration override '"
                     << override.override.key << "' ";
 
-                bool invalid = false;
                 switch (override.override.type)
                 {
                 case OverrideType::string:
@@ -1376,23 +1362,10 @@ class BackendClientObject : public DBus::Object::Base
                     msg << "set to "
                         << (override.boolValue ? "True" : "False");
                     break;
-
-                case OverrideType::invalid:
-                    msg << "contains an invalid value";
-                    invalid = true;
-                    break;
                 }
 
-                if (!invalid)
-                {
-                    // Valid override values are logged as VERB1 messages
-                    signal->LogVerb1(msg.str());
-                }
-                else
-                {
-                    // Invalid override values are logged as errors
-                    signal->LogError(msg.str());
-                }
+                // Valid override values are logged as VERB1 messages
+                signal->LogVerb1(msg.str());
             }
             else
             {
