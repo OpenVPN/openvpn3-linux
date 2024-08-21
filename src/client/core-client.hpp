@@ -187,10 +187,19 @@ class CoreVPNClient : public CLIENTBASECLASS
           failed_signal_sent(false),
           run_status(StatusMinor::CONN_INIT)
     {
-        if (!enterprise_id.empty())
+        try
         {
-            devposture = DevPosture::Proxy::Handler::Create(dbusconn);
-            devposture_protocols = devposture->ProtocolLookup(enterprise_id);
+            if (!enterprise_id.empty())
+            {
+                devposture = DevPosture::Proxy::Handler::Create(dbusconn);
+                devposture_protocols = devposture->ProtocolLookup(enterprise_id);
+            }
+        }
+        catch (const DevPosture::Proxy::Exception &excp)
+        {
+            devposture.reset();
+            signal_->LogError("Failed enabling enterprise profile features: "
+                              + std::string(excp.what()));
         }
     }
 
@@ -652,10 +661,18 @@ class CoreVPNClient : public CLIENTBASECLASS
                 {
                     if (!request_json.isNull() && request_json.begin().key().asString() == "dpc_request")
                     {
-                        const std::string checks = devposture->RunChecks(ev.protocol, ev.payload);
+                        try
+                        {
+                            const std::string checks = devposture->RunChecks(ev.protocol, ev.payload);
 
-                        signals->Debug("[acc_event] devposture returned: " + checks);
-                        send_app_control_channel_msg(ev.protocol, checks);
+                            signals->Debug("[acc_event] devposture returned: " + checks);
+                            send_app_control_channel_msg(ev.protocol, checks);
+                        }
+                        catch (const DevPosture::Proxy::Exception &excp)
+                        {
+                            signals->LogError("Error running Device Posture Checks: "
+                                              + std::string(excp.what()));
+                        }
                     }
                 }
             }
