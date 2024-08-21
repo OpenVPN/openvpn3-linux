@@ -329,6 +329,11 @@ install_subdir(
     install_dir: docdir
 )
 
+# Build Doxygen documentation?
+if (get_option('doxygen').enabled())
+        subdir('doxygen')
+endif
+
 #
 #  OpenVPN 3 Linux services
 #
