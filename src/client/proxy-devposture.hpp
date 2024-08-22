@@ -145,26 +145,34 @@ class Handler
     DBus::Proxy::TargetPreset::Ptr target;
 
     Handler(DBus::Connection::Ptr conn)
-        : proxy(DBus::Proxy::Client::Create(conn, Constants::GenServiceName("devposture"))),
-          target(DBus::Proxy::TargetPreset::Create(Constants::GenPath("devposture"),
-                                                   Constants::GenInterface("devposture")))
     {
-        auto prxqry = DBus::Proxy::Utils::DBusServiceQuery::Create(conn);
-        prxqry->CheckServiceAvail(Constants::GenServiceName("devposture"));
-
-        // Delay the return up to 750ms, to ensure we have a valid
-        // Device Posture service object available
-        auto prxchk = DBus::Proxy::Utils::Query::Create(proxy);
-
-        for (uint8_t i = 5; i > 0; i--)
+        try
         {
-            if (prxchk->CheckObjectExists(target->object_path,
-                                          target->interface))
-            {
-                break;
-            }
+            proxy = DBus::Proxy::Client::Create(conn, Constants::GenServiceName("devposture"));
+            target = DBus::Proxy::TargetPreset::Create(Constants::GenPath("devposture"),
+                                                       Constants::GenInterface("devposture"));
 
-            usleep(150000);
+            auto prxqry = DBus::Proxy::Utils::DBusServiceQuery::Create(conn);
+            prxqry->CheckServiceAvail(Constants::GenServiceName("devposture"));
+
+            // Delay the return up to 750ms, to ensure we have a valid
+            // Device Posture service object available
+            auto prxchk = DBus::Proxy::Utils::Query::Create(proxy);
+
+            for (uint8_t i = 5; i > 0; i--)
+            {
+                if (prxchk->CheckObjectExists(target->object_path,
+                                              target->interface))
+                {
+                    break;
+                }
+
+                usleep(150000);
+            }
+        }
+        catch (const DBus::Proxy::Exception &excp)
+        {
+            throw Exception("Device Posture service is unavailable");
         }
     }
 };
