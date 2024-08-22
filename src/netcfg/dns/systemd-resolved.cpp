@@ -13,10 +13,6 @@
  */
 
 
-#include <algorithm>
-#include <cstdio>
-#include <fstream>
-#include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -25,7 +21,6 @@
 #include "build-config.h"
 #include <openvpn/addr/ip.hpp>
 
-#include "common/timestamp.hpp"
 #include "netcfg/dns/resolver-settings.hpp"
 #include "netcfg/dns/resolver-backend-interface.hpp"
 #include "netcfg/dns/proxy-systemd-resolved.hpp"
@@ -87,8 +82,8 @@ void SystemdResolved::Apply(const ResolverSettings::Ptr settings)
                 continue;
             }
             openvpn::IP::Addr addr(r);
-            upd->resolver.push_back(ResolverRecord((addr.is_ipv6() ? AF_INET6 : AF_INET),
-                                                   addr.to_string()));
+            upd->resolvers.push_back(resolved::IPAddress(addr.to_string(),
+                                                         addr.is_ipv6() ? AF_INET6 : AF_INET));
         }
 
         for (const auto &sd : settings->GetSearchDomains())
@@ -135,7 +130,7 @@ void SystemdResolved::Commit(NetCfgSignals::Ptr signal)
             {
                 signal->LogVerb2("systemd-resolved: [" + upd->link->GetPath()
                                  + "] Committing DNS servers");
-                auto applied_servers = upd->link->SetDNSServers(upd->resolver);
+                auto applied_servers = upd->link->SetDNSServers(upd->resolvers);
                 signal->LogVerb2("systemd-resolved: [" + upd->link->GetPath()
                                  + "] Committing DNS search domains");
                 auto applied_search = upd->link->SetDomains(upd->search);

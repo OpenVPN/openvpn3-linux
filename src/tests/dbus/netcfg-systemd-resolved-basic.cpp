@@ -123,13 +123,13 @@ int program(ParsedArgs::Ptr args)
     if (!op.empty())
     {
         // Set a new DNS resolver server
-        resolved::ResolverRecord::List rslv;
+        resolved::IPAddress::List rslv;
 
         if (args->Present("add-resolver6"))
         {
             for (const auto &ip : args->GetAllValues("add-resolver6"))
             {
-                rslv.push_back(resolved::ResolverRecord(AF_INET6, ip));
+                rslv.push_back(resolved::IPAddress(ip, AF_INET6));
             }
         }
 
@@ -137,7 +137,7 @@ int program(ParsedArgs::Ptr args)
         {
             for (const auto &ip : args->GetAllValues("add-resolver4"))
             {
-                rslv.push_back(resolved::ResolverRecord(AF_INET, ip));
+                rslv.push_back(resolved::IPAddress(ip, AF_INET));
             }
         }
 

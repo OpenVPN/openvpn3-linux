@@ -27,51 +27,6 @@ namespace NetCfg {
 namespace DNS {
 namespace resolved {
 
-
-/**
- *  Helper struct to manage a resolver record used by the systemd-resolved
- *  service.
- *
- *  This is capable of converting between the D-Bus data types the D-Bus
- *  service uses and C++ data types.
- */
-struct ResolverRecord
-{
-    /**
-     * Defines a ResolverRecord::List as an alias to std::vector<ResolverRecord>
-     */
-    using List = std::vector<ResolverRecord>;
-
-    /**
-     *  Registers a new resolver record
-     *
-     * @param family  IPv4/IPv6 IP address identifier
-     * @param server  std::string containing the DNS server IP address
-     */
-    ResolverRecord(const unsigned short family, const std::string &server);
-
-    /**
-     *  Registers a new resolver record, parsing a GVariant* D-Bus value
-     *  response from the systemd-resolved
-     *
-     * @param entry   GVariant object containing the D-Bus values to parse
-     */
-    ResolverRecord(GVariant *entry);
-
-    ~ResolverRecord() = default;
-
-    /**
-     *  Retrieve the data stored in this struct as a D-Bus value object
-     *  which can be passed directly to the systemd-resolved service
-     *
-     * @return GVariant*  D-Bus value object containing all the information
-     */
-    GVariant *GetGVariant() const;
-
-    IPAddress server;
-};
-
-
 /**
  *  Helper struct to manage search domain records used by the systemd-resolved
  *  service.
@@ -175,7 +130,7 @@ class Link
      * @param servers ResolverRecord::List with all servers to use
      * @return std::vector<std:string> of servers applied
      */
-    std::vector<std::string> SetDNSServers(const ResolverRecord::List &servers) const;
+    std::vector<std::string> SetDNSServers(const IPAddress::List &servers) const;
 
     /**
      *  Retrieve the DNS server currently being used for DNS queries

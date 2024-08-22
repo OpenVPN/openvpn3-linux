@@ -34,28 +34,6 @@ namespace DNS {
 namespace resolved {
 
 //
-//  NetCfg::DNS::resolved::ResolverRecord
-//
-ResolverRecord::ResolverRecord(const unsigned short f, const std::string &s)
-    : server(IPAddress(s, f))
-{
-}
-
-
-ResolverRecord::ResolverRecord(GVariant *entry)
-    : server(IPAddress(entry))
-{
-}
-
-
-GVariant *ResolverRecord::GetGVariant() const
-{
-    return server.GetGVariant();
-}
-
-
-
-//
 //  NetCfg::DNS::resolved::SearchDomain
 //
 SearchDomain::SearchDomain(const std::string &srch, const bool rout)
@@ -133,8 +111,8 @@ const std::vector<std::string> Link::GetDNSServers() const
     std::vector<std::string> dns_srvs;
     while ((rec = g_variant_iter_next_value(it)))
     {
-        struct ResolverRecord d(rec);
-        dns_srvs.push_back(d.server.str());
+        IPAddress d(rec);
+        dns_srvs.push_back(d.str());
         g_variant_unref(rec);
     }
     g_variant_iter_free(it);
@@ -144,14 +122,14 @@ const std::vector<std::string> Link::GetDNSServers() const
 }
 
 
-std::vector<std::string> Link::SetDNSServers(const ResolverRecord::List &servers) const
+std::vector<std::string> Link::SetDNSServers(const IPAddress::List &servers) const
 {
     GVariantBuilder *b = glib2::Builder::Create("a(iay)");
     std::vector<std::string> applied{};
     for (const auto &srv : servers)
     {
         glib2::Builder::Add(b, srv.GetGVariant());
-        applied.push_back(srv.server.str());
+        applied.push_back(srv.str());
     }
 
     GVariant *r = proxy->Call(tgt_link,
@@ -168,9 +146,9 @@ const std::string Link::GetCurrentDNSServer() const
     try
     {
         r = proxy->GetPropertyGVariant(tgt_link, "CurrentDNSServer");
-        struct ResolverRecord d(r);
+        IPAddress d(r);
         g_variant_unref(r);
-        return d.server.str();
+        return d.str();
     }
     catch (const Exception &)
     {
