@@ -123,11 +123,8 @@ GVariant *SearchDomain::GetGVariant() const
         return nullptr;
     }
     GVariantBuilder *b = glib2::Builder::Create("(sb)");
-    // TODO: For some reason, glib2::Builder::Add() does not
-    // work, even though the glib2 call is essentially identical
-    // to the call below.
-    g_variant_builder_add(b, "s", search.c_str());
-    g_variant_builder_add(b, "b", routing);
+    glib2::Builder::Add(b, search);
+    glib2::Builder::Add(b, routing);
     return glib2::Builder::Finish(b);
 }
 
