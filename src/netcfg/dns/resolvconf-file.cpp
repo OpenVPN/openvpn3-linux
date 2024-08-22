@@ -127,7 +127,6 @@ void FileGenerator::Write()
     for (const auto &line : file_contents)
     {
         output << line << std::endl;
-        ;
     }
 }
 

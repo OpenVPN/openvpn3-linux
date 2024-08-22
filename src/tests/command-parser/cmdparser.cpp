@@ -24,7 +24,6 @@ int cmd_dump_arg_test(ParsedArgs::Ptr args)
 {
     std::cout << "===> cmd_dump_arg_test()" << std::endl
               << std::endl;
-    ;
 
     for (auto const &key : args->GetOptionNames())
     {

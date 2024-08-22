@@ -45,7 +45,7 @@ int main(int argc, char **argv)
             std::string devpath = netcfgmgr->CreateVirtualInterface(devname);
             std::cout << "    Device created: " << devname << " ... "
                       << devpath << std::endl;
-            ;
+
             genpaths.push_back(devpath);
         }
         std::cout << std::endl;
@@ -135,7 +135,6 @@ int main(int argc, char **argv)
     catch (std::exception &excp)
     {
         std::cerr << "** FAILURE: " << excp.what() << std::endl;
-        ;
         return 2;
     }
     std::cout << std::endl
