@@ -20,7 +20,7 @@
 #include <gdbuspp/object/path.hpp>
 #include <gdbuspp/proxy.hpp>
 
-#include "netcfg/dns/systemd-resolved-exception.hpp"
+#include "netcfg/dns/systemd-resolved-ipaddr.hpp"
 
 
 namespace NetCfg {
@@ -68,8 +68,7 @@ struct ResolverRecord
      */
     GVariant *GetGVariant() const;
 
-    unsigned short family; ///< IPv4/IPv6 identifier
-    std::string server;    ///< IP address as a string to the DNS server
+    IPAddress server;
 };
 
 

@@ -37,63 +37,20 @@ namespace resolved {
 //  NetCfg::DNS::resolved::ResolverRecord
 //
 ResolverRecord::ResolverRecord(const unsigned short f, const std::string &s)
-    : family(f), server(s)
+    : server(IPAddress(s, f))
 {
 }
 
 
 ResolverRecord::ResolverRecord(GVariant *entry)
+    : server(IPAddress(entry))
 {
-    glib2::Utils::checkParams(__func__, entry, "(iay)", 2);
-
-    family = glib2::Value::Extract<int>(entry, 0);
-    if (AF_INET != family && AF_INET6 != family)
-    {
-        throw Exception("Unsupported address family");
-    }
-
-    GVariantIter *it = g_variant_iter_new(g_variant_get_child_value(entry, 1));
-    std::stringstream s;
-
-    GVariant *el = nullptr;
-    bool first = true;
-    while ((el = g_variant_iter_next_value(it)))
-    {
-        if (!first)
-        {
-            s << ".";
-        }
-        first = false;
-        s << std::to_string(g_variant_get_byte(el));
-        g_variant_unref(el);
-    }
-    g_variant_iter_free(it);
-
-    server = std::string(s.str());
 }
 
 
 GVariant *ResolverRecord::GetGVariant() const
 {
-    GVariantBuilder *b = glib2::Builder::Create("(iay)");
-    glib2::Builder::Add(b, family, "i");
-
-    // FIXME:  Lacking IPv6 support
-    std::vector<std::string> ip;
-    ip = openvpn::Split::by_char<std::vector<std::string>,
-                                 openvpn::NullLex,
-                                 openvpn::Split::NullLimit>(server, '.');
-    GVariantBuilder *ip_b = glib2::Builder::Create("ay");
-    for (const auto &e : ip)
-    {
-        // TODO: For some reason, glib2::Builder::Add() does not
-        // work, even though the glib2 call is essentially identical
-        // to the call below.
-        g_variant_builder_add(ip_b, "y", std::stoi(e));
-    }
-    glib2::Builder::Add(b, glib2::Builder::Finish(ip_b));
-
-    return glib2::Builder::Finish(b);
+    return server.GetGVariant();
 }
 
 
@@ -177,7 +134,7 @@ const std::vector<std::string> Link::GetDNSServers() const
     while ((rec = g_variant_iter_next_value(it)))
     {
         struct ResolverRecord d(rec);
-        dns_srvs.push_back(d.server);
+        dns_srvs.push_back(d.server.str());
         g_variant_unref(rec);
     }
     g_variant_iter_free(it);
@@ -194,7 +151,7 @@ std::vector<std::string> Link::SetDNSServers(const ResolverRecord::List &servers
     for (const auto &srv : servers)
     {
         glib2::Builder::Add(b, srv.GetGVariant());
-        applied.push_back(srv.server);
+        applied.push_back(srv.server.str());
     }
 
     GVariant *r = proxy->Call(tgt_link,
@@ -213,7 +170,7 @@ const std::string Link::GetCurrentDNSServer() const
         r = proxy->GetPropertyGVariant(tgt_link, "CurrentDNSServer");
         struct ResolverRecord d(r);
         g_variant_unref(r);
-        return d.server;
+        return d.server.str();
     }
     catch (const Exception &)
     {
