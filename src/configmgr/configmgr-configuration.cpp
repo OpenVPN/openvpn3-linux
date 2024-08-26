@@ -894,7 +894,7 @@ OverrideValue Configuration::set_override(const std::string &key, GVariant *valu
     // Ensure that a previous override value is removed
     remove_override(key);
 
-    std::string g_type(g_variant_get_type_string(value));
+    std::string g_type = glib2::DataType::Extract(value);
 
     if ("s" == g_type)
     {
