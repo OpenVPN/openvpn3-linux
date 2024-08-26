@@ -31,29 +31,24 @@ int main(int argc, char **argv)
     auto conn = DBus::Connection::Create(DBus::BusType::SYSTEM);
     OpenVPN3ConfigurationProxy config(conn, argv[1]);
 
-    std::vector<OverrideValue> overrides = config.GetOverrides();
+    std::vector<ValidOverride> overrides = config.GetOverrides();
     for (const auto &ov : overrides)
     {
         std::string value;
         std::string type;
 
-        switch (ov.override.type)
+        if (std::holds_alternative<bool>(ov.value))
         {
-        case OverrideType::boolean:
-            value = (ov.boolValue ? "True" : "False");
+            value = (std::get<bool>(ov.value) ? "True" : "False");
             type = "boolean";
-            break;
-
-        case OverrideType::string:
-            value = ov.strValue;
-            type = "string";
-            break;
-
-        default:
-            value = "(unknown)";
-            type = "(unknown)";
         }
-        std::cout << ov.override.key << " "
+        else
+        {
+            value = std::get<std::string>(ov.value);
+            type = "string";
+        }
+
+        std::cout << ov.key << " "
                   << "[type: " << type << "]: "
                   << value
                   << std::endl;

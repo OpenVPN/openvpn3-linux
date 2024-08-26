@@ -17,128 +17,104 @@
 
 #include <optional>
 #include <string>
+#include <variant>
 
-
-enum class OverrideType
-{
-    string,
-    boolean
-};
 
 /**
  * Helper classes to store the list of overrides
  */
 struct ValidOverride
 {
-    ValidOverride(std::string key, OverrideType type, std::string help)
-        : key(key), type(type), help(help)
+    ValidOverride(const std::string &key, const std::string &value, const std::string &help, std::string (*argument_helper)() = nullptr)
+        : key(key), value(value), help(help), argument_helper(argument_helper)
     {
     }
 
-    ValidOverride(std::string key, OverrideType type, std::string help, std::string (*argument_helper)())
-        : key(key), type(type), help(help), argument_helper(argument_helper)
+
+    ValidOverride(const std::string &key, bool value, const std::string &help, std::string (*argument_helper)() = nullptr)
+        : key(key), value(value), help(help), argument_helper(argument_helper)
     {
     }
 
 
     std::string key;
-    OverrideType type;
+    std::variant<std::string, bool> value;
     std::string help;
     std::string (*argument_helper)() = nullptr;
 };
 
 
-struct OverrideValue
-{
-    OverrideValue(const ValidOverride &override, bool value)
-        : override(override), boolValue(value)
-    {
-    }
-
-
-    OverrideValue(const ValidOverride &override, std::string value)
-        : override(override), strValue(value)
-    {
-    }
-
-
-    ValidOverride override;
-    bool boolValue;
-    std::string strValue;
-};
-
-
 const ValidOverride configProfileOverrides[] = {
     // clang-format off
-    {"server-override", OverrideType::string,
+    {"server-override", std::string {},
      "Replace the remote, connecting to this server instead the server specified in the configuration"},
 
-    {"port-override", OverrideType::string,
+    {"port-override", std::string {},
      "Replace the remote port, connecting to this port instead of the configuration value"},
 
-    {"proto-override", OverrideType::string,
+    {"proto-override", std::string {},
      "Overrides the protocol being used",
      [] {return std::string("tcp udp");}},
 
-    {"ipv6", OverrideType::string,
+    {"ipv6", std::string {},
      "Sets the IPv6 policy of the client",
      [] { return std::string("yes no default");}},
 
-    {"persist-tun", OverrideType::boolean,
+    {"persist-tun", false,
      "The tun interface should persist during reconnect"},
 
-    {"log-level", OverrideType::string,
+    {"log-level", std::string {},
      "Override the configuration profile --verb setting",
      [] { return std::string("1 2 3 4 5 6");}},
 
-    {"dns-fallback-google", OverrideType::boolean,
+    {"dns-fallback-google", false,
      "Uses Google DNS servers (8.8.8.8/8.8.4.4) if no DNS server are provided"},
 
-    {"dns-setup-disabled", OverrideType::boolean,
+    {"dns-setup-disabled", false,
      "Do not change the DNS settings on the system"},
 
-    {"dns-scope", OverrideType::string,
+    {"dns-scope", std::string {},
      "Defines which domain scope can be queried via VPN provided DNS servers",
       [] {return std::string("global tunnel");}},
 
-    {"dns-sync-lookup", OverrideType::boolean,
+    {"dns-sync-lookup", false,
      "Use synchronous DNS Lookups"},
 
-    {"auth-fail-retry", OverrideType::boolean,
+    {"auth-fail-retry", false,
      "Should failed authentication be considered a temporary error"},
 
-    {"allow-compression", OverrideType::string,
+    {"allow-compression", std::string {},
      "Set compression mode",
      [] {return std::string("no asym yes");}},
 
-    {"enable-legacy-algorithms", OverrideType::boolean,
+    {"enable-legacy-algorithms", false,
      "Enable legacy non-AEAD cipher algorithms for the data channel",
      [] {return std::string("true false");}},
 
-    {"tls-version-min", OverrideType::string,
+    {"tls-version-min", std::string {},
      "Sets the minimal TLS version for the control channel",
      [] {return std::string("tls_1_0 tls_1_1 tls_1_2 tls_1_3");}},
 
-    {"tls-cert-profile", OverrideType::string,
+    {"tls-cert-profile", std::string {},
      "Sets the control channel tls profile",
      [] {return std::string("legacy preferred suiteb");}},
 
-    {"proxy-host", OverrideType::string,
+    {"proxy-host", std::string {},
      "HTTP Proxy to connect via, overrides configuration file http-proxy"},
 
-    {"proxy-port", OverrideType::string,
+    {"proxy-port", std::string {},
      "HTTP Proxy port to connect on"},
 
-    {"proxy-username", OverrideType::string,
+    {"proxy-username", std::string {},
      "HTTP Proxy username to authenticate as"},
 
-    {"proxy-password", OverrideType::string,
+    {"proxy-password", std::string {},
      "HTTP Proxy password to use for authentication"},
 
-    {"proxy-auth-cleartext", OverrideType::boolean,
+    {"proxy-auth-cleartext", false,
      "Allows clear text HTTP authentication"},
 
-    {"enterprise-profile", OverrideType::string,
+    {"enterprise-profile", std::string {},
      "Enterprise profile for client side device posture checks"}
     // clang-format on
 };

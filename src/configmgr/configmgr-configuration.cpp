@@ -513,11 +513,11 @@ void Configuration::add_properties()
 
                           for (const auto &o : override_list_)
                           {
-                              auto value = (o.override.type == OverrideType::string
-                                                ? glib2::Value::Create(o.strValue)
-                                                : glib2::Value::Create(o.boolValue));
+                              auto value = (std::holds_alternative<std::string>(o.value)
+                                                ? glib2::Value::Create(std::get<std::string>(o.value))
+                                                : glib2::Value::Create(std::get<bool>(o.value)));
 
-                              g_variant_builder_add(b, "{sv}", o.override.key.c_str(), value);
+                              g_variant_builder_add(b, "{sv}", o.key.c_str(), value);
                           }
 
                           return glib2::Builder::Finish(b);
@@ -596,19 +596,13 @@ Json::Value Configuration::Export() const
 
     for (const auto &ov : override_list_)
     {
-        switch (ov.override.type)
+        if (std::holds_alternative<bool>(ov.value))
         {
-        case OverrideType::boolean:
-            ret["overrides"][ov.override.key] = ov.boolValue;
-            break;
-
-        case OverrideType::string:
-            ret["overrides"][ov.override.key] = ov.strValue;
-            break;
-
-        default:
-            throw DBus::Object::Method::Exception("Invalid override type for key '"
-                                                  + ov.override.key + "'");
+            ret["overrides"][ov.key] = std::get<bool>(ov.value);
+        }
+        else
+        {
+            ret["overrides"][ov.key] = std::get<std::string>(ov.value);
         }
     }
 
@@ -774,13 +768,17 @@ void Configuration::method_set_override(DBus::Object::Method::Arguments::Ptr arg
     auto name = glib2::Value::Extract<std::string>(params, 0);
     GVariant *value = g_variant_get_variant(g_variant_get_child_value(params, 1));
 
-    const OverrideValue vo = set_override(name, value);
+    const ValidOverride vo = set_override(name, value);
 
-    std::string new_value = vo.strValue;
+    std::string new_value;
 
-    if (OverrideType::boolean == vo.override.type)
+    if (std::holds_alternative<std::string>(vo.value))
     {
-        new_value = vo.boolValue ? "true" : "false";
+        new_value = std::get<std::string>(vo.value);
+    }
+    else
+    {
+        new_value = std::get<bool>(vo.value) ? "true" : "false";
     }
 
     const std::string caller = args->GetCallerBusName();
@@ -881,7 +879,7 @@ void Configuration::method_remove()
 }
 
 
-OverrideValue Configuration::set_override(const std::string &key, GVariant *value)
+ValidOverride Configuration::set_override(const std::string &key, GVariant *value)
 {
     auto vo = GetConfigOverride(key);
 
@@ -898,7 +896,7 @@ OverrideValue Configuration::set_override(const std::string &key, GVariant *valu
 
     if ("s" == g_type)
     {
-        if (OverrideType::string != vo->type)
+        if (!std::holds_alternative<std::string>(vo->value))
         {
             throw DBus::Object::Method::Exception("(SetOverride) Invalid override data type for '"
                                                   + key + "': " + g_type);
@@ -909,7 +907,7 @@ OverrideValue Configuration::set_override(const std::string &key, GVariant *valu
     }
     else if ("b" == g_type)
     {
-        if (OverrideType::boolean != vo->type)
+        if (!std::holds_alternative<bool>(vo->value))
         {
             throw DBus::Object::Method::Exception("(SetOverride) Invalid override data type for '"
                                                   + key + "': " + g_type);
@@ -925,7 +923,7 @@ bool Configuration::remove_override(const std::string &key)
 {
     for (auto it = override_list_.begin(); it != override_list_.end(); it++)
     {
-        if ((*it).override.key == key)
+        if (it->key == key)
         {
             override_list_.erase(it);
             return true;

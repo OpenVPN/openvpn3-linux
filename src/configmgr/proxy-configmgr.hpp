@@ -529,7 +529,7 @@ class OpenVPN3ConfigurationProxy
      *
      * @return A list of VpnOverride key, value pairs
      */
-    std::vector<OverrideValue> GetOverrides(bool clear_cache = true)
+    std::vector<ValidOverride> GetOverrides(bool clear_cache = true)
     {
         // If we have cache available ...
         if (!cached_overrides.empty())
@@ -552,7 +552,7 @@ class OpenVPN3ConfigurationProxy
         GVariantIter *override_iter = NULL;
         g_variant_get(res, "a{sv}", &override_iter);
 
-        std::vector<OverrideValue> ret;
+        std::vector<ValidOverride> ret;
 
         GVariant *override;
         while ((override = g_variant_iter_next_value(override_iter)))
@@ -566,15 +566,15 @@ class OpenVPN3ConfigurationProxy
             {
                 throw DBus::Proxy::Exception("Invalid override found");
             }
-            if (OverrideType::string == vo->type)
+            if (std::holds_alternative<std::string>(vo->value))
             {
-                std::string v(glib2::Value::Get<std::string>(val));
-                ret.push_back(OverrideValue(*vo, v));
+                vo->value = glib2::Value::Get<std::string>(val);
+                ret.push_back(*vo);
             }
-            else if (OverrideType::boolean == vo->type)
+            else
             {
-                bool v = glib2::Value::Get<bool>(val);
-                ret.push_back(OverrideValue(*vo, v));
+                vo->value = glib2::Value::Get<bool>(val);
+                ret.push_back(*vo);
             }
         }
         cached_overrides = ret;
@@ -589,7 +589,7 @@ class OpenVPN3ConfigurationProxy
      */
     void SetOverride(const ValidOverride &override, bool value)
     {
-        if (OverrideType::boolean != override.type)
+        if (!std::holds_alternative<bool>(override.value))
         {
             DBus::Proxy::Exception("SetOverride for bool called for non-bool override");
         }
@@ -605,7 +605,7 @@ class OpenVPN3ConfigurationProxy
      */
     void SetOverride(const ValidOverride &override, std::string value)
     {
-        if (OverrideType::string != override.type)
+        if (!std::holds_alternative<std::string>(override.value))
         {
             DBus::Proxy::Exception("SetOverride for string called for non-string override");
         }
@@ -706,14 +706,14 @@ class OpenVPN3ConfigurationProxy
 
 
     /**
-     *  Retrieve an OverrideValue object for a specific configuration
+     *  Retrieve a ValidOverride object for a specific configuration
      *  profile override.
      *
      * @param key    std::string of the override key to look up
-     * @return const OverrideValue& to the override value object
+     * @return const ValidOverride& to the override value object
      * @throws DBusException if the override key was not found
      */
-    const OverrideValue &GetOverrideValue(const std::string &key)
+    const ValidOverride &GetOverrideValue(const std::string &key)
     {
         if (cached_overrides.empty())
         {
@@ -722,7 +722,7 @@ class OpenVPN3ConfigurationProxy
 
         for (const auto &ov : cached_overrides)
         {
-            if (ov.override.key == key)
+            if (ov.key == key)
             {
                 return ov;
             }
@@ -851,7 +851,7 @@ class OpenVPN3ConfigurationProxy
     DBus::Proxy::Utils::Query::Ptr proxy_qry{nullptr};
 
     CfgMgrFeatures features = CfgMgrFeatures::UNDEFINED;
-    std::vector<OverrideValue> cached_overrides = {};
+    std::vector<ValidOverride> cached_overrides = {};
 
 
     void set_feature_flags(const std::string &vs)

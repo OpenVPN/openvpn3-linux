@@ -1228,7 +1228,7 @@ class BackendClientObject : public DBus::Object::Base
             // config, we cannot query it for more details after the first
             // GetConfig() call.
             bool dco = cfg_proxy.GetDCO();
-            std::vector<OverrideValue> overrides = cfg_proxy.GetOverrides();
+            std::vector<ValidOverride> overrides = cfg_proxy.GetOverrides();
 
             // Parse the configuration
             ProfileMergeFromString pm(cfg_proxy.GetConfig(),
@@ -1264,103 +1264,103 @@ class BackendClientObject : public DBus::Object::Base
     }
 
 
-    void set_overrides(std::vector<OverrideValue> &overrides)
+    void set_overrides(std::vector<ValidOverride> &overrides)
     {
         for (const auto &override : overrides)
         {
             bool valid_override = true;
-            if (override.override.key == "server-override")
+            if (override.key == "server-override")
             {
-                vpnconfig.serverOverride = override.strValue;
+                vpnconfig.serverOverride = std::get<std::string>(override.value);
             }
-            else if (override.override.key == "port-override")
+            else if (override.key == "port-override")
             {
-                vpnconfig.portOverride = override.strValue;
+                vpnconfig.portOverride = std::get<std::string>(override.value);
             }
-            else if (override.override.key == "proto-override")
+            else if (override.key == "proto-override")
             {
-                vpnconfig.protoOverride = override.strValue;
+                vpnconfig.protoOverride = std::get<std::string>(override.value);
             }
-            else if (override.override.key == "ipv6")
+            else if (override.key == "ipv6")
             {
-                vpnconfig.allowUnusedAddrFamilies = override.strValue;
+                vpnconfig.allowUnusedAddrFamilies = std::get<std::string>(override.value);
             }
-            else if (override.override.key == "log-level")
+            else if (override.key == "log-level")
             {
-                signal->SetLogLevel(std::atoi(override.strValue.c_str()));
+                signal->SetLogLevel(std::atoi(std::get<std::string>(override.value).c_str()));
                 profile_log_level_override = true;
             }
-            else if (override.override.key == "dns-fallback-google")
+            else if (override.key == "dns-fallback-google")
             {
-                vpnconfig.googleDnsFallback = override.boolValue;
+                vpnconfig.googleDnsFallback = std::get<bool>(override.value);
             }
-            else if (override.override.key == "dns-setup-disabled")
+            else if (override.key == "dns-setup-disabled")
             {
-                ignore_dns_cfg = override.boolValue;
+                ignore_dns_cfg = std::get<bool>(override.value);
             }
-            else if (override.override.key == "dns-scope")
+            else if (override.key == "dns-scope")
             {
-                if ("global" == override.strValue
-                    || "tunnel" == override.strValue)
+                if ("global" == std::get<std::string>(override.value)
+                    || "tunnel" == std::get<std::string>(override.value))
                 {
-                    dns_scope = override.strValue;
+                    dns_scope = std::get<std::string>(override.value);
                 }
                 else
                 {
                     valid_override = false;
                 }
             }
-            else if (override.override.key == "dns-sync-lookup")
+            else if (override.key == "dns-sync-lookup")
             {
-                vpnconfig.synchronousDnsLookup = override.boolValue;
+                vpnconfig.synchronousDnsLookup = std::get<bool>(override.value);
             }
-            else if (override.override.key == "auth-fail-retry")
+            else if (override.key == "auth-fail-retry")
             {
-                vpnconfig.retryOnAuthFailed = override.boolValue;
+                vpnconfig.retryOnAuthFailed = std::get<bool>(override.value);
             }
-            else if (override.override.key == "allow-compression")
+            else if (override.key == "allow-compression")
             {
-                vpnconfig.compressionMode = override.strValue;
+                vpnconfig.compressionMode = std::get<std::string>(override.value);
             }
-            else if (override.override.key == "enable-legacy-algorithms")
+            else if (override.key == "enable-legacy-algorithms")
             {
-                vpnconfig.enableNonPreferredDCAlgorithms = override.boolValue;
+                vpnconfig.enableNonPreferredDCAlgorithms = std::get<bool>(override.value);
             }
-            else if (override.override.key == "tls-version-min")
+            else if (override.key == "tls-version-min")
             {
-                vpnconfig.tlsVersionMinOverride = override.strValue;
+                vpnconfig.tlsVersionMinOverride = std::get<std::string>(override.value);
             }
-            else if (override.override.key == "tls-cert-profile")
+            else if (override.key == "tls-cert-profile")
             {
-                vpnconfig.tlsCertProfileOverride = override.strValue;
+                vpnconfig.tlsCertProfileOverride = std::get<std::string>(override.value);
             }
-            else if (override.override.key == "persist-tun")
+            else if (override.key == "persist-tun")
             {
-                vpnconfig.tunPersist = override.boolValue;
+                vpnconfig.tunPersist = std::get<bool>(override.value);
             }
-            else if (override.override.key == "proxy-host")
+            else if (override.key == "proxy-host")
             {
-                vpnconfig.proxyHost = override.strValue;
+                vpnconfig.proxyHost = std::get<std::string>(override.value);
             }
-            else if (override.override.key == "proxy-port")
+            else if (override.key == "proxy-port")
             {
-                vpnconfig.proxyPort = override.strValue;
+                vpnconfig.proxyPort = std::get<std::string>(override.value);
             }
-            else if (override.override.key == "proxy-username")
+            else if (override.key == "proxy-username")
             {
-                vpnconfig.proxyUsername = override.strValue;
+                vpnconfig.proxyUsername = std::get<std::string>(override.value);
             }
-            else if (override.override.key == "proxy-password")
+            else if (override.key == "proxy-password")
             {
-                vpnconfig.proxyPassword = override.strValue;
+                vpnconfig.proxyPassword = std::get<std::string>(override.value);
             }
-            else if (override.override.key == "proxy-auth-cleartext")
+            else if (override.key == "proxy-auth-cleartext")
             {
-                vpnconfig.proxyAllowCleartextAuth = override.boolValue;
+                vpnconfig.proxyAllowCleartextAuth = std::get<bool>(override.value);
             }
-            else if (override.override.key == "enterprise-profile")
+            else if (override.key == "enterprise-profile")
             {
-                enterprise_id = override.strValue;
+                enterprise_id = std::get<std::string>(override.value);
             }
             else
             {
@@ -1373,18 +1373,16 @@ class BackendClientObject : public DBus::Object::Base
                 std::stringstream msg;
 
                 msg << "Configuration override '"
-                    << override.override.key << "' ";
+                    << override.key << "' ";
 
-                switch (override.override.type)
+                if (std::holds_alternative<std::string>(override.value))
                 {
-                case OverrideType::string:
-                    msg << "set to '" << override.strValue << "'";
-                    break;
-
-                case OverrideType::boolean:
+                    msg << "set to '" << std::get<std::string>(override.value) << "'";
+                }
+                else
+                {
                     msg << "set to "
-                        << (override.boolValue ? "True" : "False");
-                    break;
+                        << (std::get<bool>(override.value) ? "True" : "False");
                 }
 
                 // Valid override values are logged as VERB1 messages
@@ -1396,7 +1394,7 @@ class BackendClientObject : public DBus::Object::Base
                 // the valid_override will typically be false.  Log this
                 // scenario slightly different
                 signal->LogError("Unsupported override: "
-                                 + override.override.key);
+                                 + override.key);
             }
         }
     }

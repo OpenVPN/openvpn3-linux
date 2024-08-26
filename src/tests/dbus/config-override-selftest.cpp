@@ -24,33 +24,25 @@
 
 
 
-bool check_override_value(const OverrideValue ov, OverrideType ovt, bool expect)
+bool check_override_value(const ValidOverride ov, bool expect)
 {
-    if (ovt != ov.override.type)
+    if (!std::holds_alternative<bool>(ov.value))
     {
         return false;
     }
 
-    if (expect != ov.boolValue)
-    {
-        return false;
-    }
-    return true;
+    return expect == std::get<bool>(ov.value);
 }
 
 
-bool check_override_value(const OverrideValue ov, OverrideType ovt, std::string expect)
+bool check_override_value(const ValidOverride ov, std::string expect)
 {
-    if (ovt != ov.override.type)
+    if (!std::holds_alternative<std::string>(ov.value))
     {
         return false;
     }
 
-    if (expect != ov.strValue)
-    {
-        return false;
-    }
-    return true;
+    return expect == std::get<std::string>(ov.value);
 }
 
 
@@ -113,7 +105,7 @@ int main(int argc, char **argv)
     try
     {
         ValidOverride ov = {"non-existing-override",
-                            OverrideType::string,
+                            std::string{},
                             "Non-existing override"};
         cfgobj.UnsetOverride(ov);
         std::cout << "FAIL" << std::endl;
@@ -137,7 +129,7 @@ int main(int argc, char **argv)
     try
     {
         const ValidOverride ov = {"non-existing-override",
-                                  OverrideType::string,
+                                  std::string{},
                                   "Non-existing override"};
         cfgobj.SetOverride(ov, std::string("string-value"));
         std::cout << "FAIL" << std::endl;
@@ -183,7 +175,7 @@ int main(int argc, char **argv)
     try
     {
         auto ov = GetConfigOverride("dns-sync-lookup");
-        ov->type = OverrideType::string;
+        ov->value = std::string{};
         cfgobj.SetOverride(*ov, std::string("string-value"));
         std::cout << "FAIL" << std::endl;
         ++failed;
@@ -228,7 +220,7 @@ int main(int argc, char **argv)
     try
     {
         const ValidOverride ov = {"server-override",
-                                  OverrideType::boolean,
+                                  false,
                                   "Non-existing override"};
         cfgobj.SetOverride(ov, true);
         std::cout << "FAIL" << std::endl;
@@ -250,7 +242,7 @@ int main(int argc, char **argv)
 
 
     std::cout << ".. Checking all overrides are unset ... ";
-    std::vector<OverrideValue> overrides = cfgobj.GetOverrides();
+    std::vector<ValidOverride> overrides = cfgobj.GetOverrides();
     if (0 != overrides.size())
     {
         ++failed;
@@ -266,7 +258,7 @@ int main(int argc, char **argv)
     // Set all overrides to some values
     for (auto &cfgoverride : configProfileOverrides)
     {
-        if (OverrideType::string == cfgoverride.type)
+        if (std::holds_alternative<std::string>(cfgoverride.value))
         {
             std::cout << ".. Setting override: [type string] "
                       << cfgoverride.key << " = '"
@@ -274,58 +266,47 @@ int main(int argc, char **argv)
                       << "'" << std::endl;
             cfgobj.SetOverride(cfgoverride, "override:" + cfgoverride.key);
         }
-        else if (OverrideType::boolean == cfgoverride.type)
+        else
         {
             std::cout << ".. Setting override: [type boolean] "
                       << cfgoverride.key << " = true" << std::endl;
             cfgobj.SetOverride(cfgoverride, true);
         }
-        else
-        {
-            ++failed;
-            std::cout << "!! Unknown data type for override key "
-                      << cfgoverride.key << std::endl;
-        }
     }
 
     // Get all the overrides, and check if the value is what we expects
-    std::vector<OverrideValue> chkov = cfgobj.GetOverrides();
+    std::vector<ValidOverride> chkov = cfgobj.GetOverrides();
     for (const auto &cfgoverride : configProfileOverrides)
     {
         std::cout << ".. Checking override '" << cfgoverride.key << "': ";
         std::string failmsg = "";
         for (const auto &cov : chkov)
         {
-            if (cov.override.key != cfgoverride.key)
+            if (cov.key != cfgoverride.key)
             {
                 continue;
             }
 
-            if (cov.override.type != cfgoverride.type)
+            if (cov.value.index() != cfgoverride.value.index())
             {
                 failmsg = "FAIL - Type mismatch";
                 break;
             }
-            else if (OverrideType::string == cov.override.type)
+            else if (std::holds_alternative<std::string>(cov.value))
             {
-                std::string expect = "override:" + cov.override.key;
-                if (!check_override_value(cov, OverrideType::string, expect))
+                std::string expect = "override:" + cov.key;
+                if (!check_override_value(cov, expect))
                 {
                     failmsg = "FAIL - incorrect override string value";
                 }
                 break;
             }
-            else if (OverrideType::boolean == cov.override.type)
+            else
             {
-                if (!check_override_value(cov, OverrideType::boolean, true))
+                if (!check_override_value(cov, true))
                 {
                     failmsg = "FAIL - incorrect override boolean value";
                 }
-                break;
-            }
-            else
-            {
-                failmsg = "FAIL - Unknown override type";
                 break;
             }
         }
@@ -352,7 +333,7 @@ int main(int argc, char **argv)
 
         // Check all overrides are once again unset
         std::cout << ".. Checking all unset overrides are unset ... ";
-        std::vector<OverrideValue> unset = cfgobj.GetOverrides();
+        std::vector<ValidOverride> unset = cfgobj.GetOverrides();
         if (0 != unset.size())
         {
             ++failed;

@@ -206,10 +206,10 @@ class Configuration : public DBus::Object::Base
      * @param key    char * of the override key
      * @param value  GVariant object of the override value to use
      *
-     * @return  Returns the OverrideValue object added to the
+     * @return  Returns the ValidOverride object added to the
      *          array of override settings
      */
-    OverrideValue set_override(const std::string &key, GVariant *value);
+    ValidOverride set_override(const std::string &key, GVariant *value);
 
     /**
      *  Sets an override value for the configuration profile
@@ -217,11 +217,11 @@ class Configuration : public DBus::Object::Base
      * @param key    char * of the override key
      * @param value  Value for the override
      *
-     * @return  Returns the OverrideValue object added to the
+     * @return  Returns the ValidOverride object added to the
      *          array of override settings
      */
     template <typename T>
-    OverrideValue set_override(const std::string &key, T value)
+    ValidOverride set_override(const std::string &key, T value)
     {
         auto vo = GetConfigOverride(key);
         if (!vo)
@@ -233,21 +233,13 @@ class Configuration : public DBus::Object::Base
         // Ensure that a previous override value is removed.
         remove_override(key);
 
-        switch (vo->type)
-        {
-        case OverrideType::string:
-        case OverrideType::boolean:
-            override_list_.push_back(OverrideValue(*vo, value));
-            return override_list_.back();
-
-        default:
-            throw DBus::Object::Method::Exception("Unsupported data type for key '"
-                                                  + std::string(key) + "'");
-        }
+        vo->value = value;
+        override_list_.push_back(*vo);
+        return override_list_.back();
     }
 
     /**
-     *  Removes and override from the std::vector<OverrideValue> array
+     *  Removes and override from the std::vector<ValidOverride> array
      *
      * @param key  std::string of the override key to remove
      *
@@ -256,7 +248,7 @@ class Configuration : public DBus::Object::Base
     bool remove_override(const std::string &key);
 
     /**
-     *  Removes and override from the std::vector<OverrideValue> array
+     *  Removes and override from the std::vector<ValidOverride> array
      *
      * @param key  std::string of the override key to remove
      *
@@ -314,7 +306,7 @@ class Configuration : public DBus::Object::Base
     bool prop_valid_{false};
     std::string persistent_file_;
     openvpn::OptionListJSON options_;
-    std::vector<OverrideValue> override_list_;
+    std::vector<ValidOverride> override_list_;
 
     /**
      *  Methods which will modify the content of this object.

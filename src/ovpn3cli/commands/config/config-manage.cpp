@@ -137,15 +137,12 @@ std::string ConfigProfileDetails::extract_override(const std::string &override,
 {
     try
     {
-        const OverrideValue &ov = prx->GetOverrideValue(override);
-        switch (ov.override.type)
-        {
-        case OverrideType::string:
-            return ov.strValue;
+        const ValidOverride &ov = prx->GetOverrideValue(override);
 
-        case OverrideType::boolean:
-            return (ov.boolValue ? bool_true : bool_false);
-        }
+        if (std::holds_alternative<std::string>(ov.value))
+            return std::get<std::string>(ov.value);
+
+        return std::get<bool>(ov.value) ? bool_true : bool_false;
     }
     catch (const DBus::Exception &ex)
     {
@@ -162,24 +159,22 @@ void ConfigProfileDetails::parse_overrides()
         std::string value = "(not set)";
         for (const auto &ov : prx->GetOverrides(false))
         {
-            if ("dns-scope" == ov.override.key
-                || "enterprise-profile" == ov.override.key)
+            if ("dns-scope" == ov.key
+                || "enterprise-profile" == ov.key)
             {
                 // This override is retrieved in the global block
                 continue;
             }
-            if (ov.override.key == vo.key)
+            if (ov.key == vo.key)
             {
-                switch (ov.override.type)
+                if (std::holds_alternative<std::string>(ov.value))
                 {
-                case OverrideType::string:
-                    overrides[vo.key] = ov.strValue;
-                    break;
-
-                case OverrideType::boolean:
-                    overrides[vo.key] = ov.boolValue ? "true" : "false";
-                    break;
-               }
+                    overrides[vo.key] = std::get<std::string>(ov.value);
+                }
+                else
+                {
+                    overrides[vo.key] = std::get<bool>(ov.value) ? "true" : "false";
+                }
             }
         }
     }
@@ -451,7 +446,7 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
         {
             if (args->Present(vo.key))
             {
-                if (OverrideType::boolean == vo.type)
+                if (std::holds_alternative<bool>(vo.value))
                 {
                     bool value = args->GetBoolValue(vo.key, 0);
                     conf->SetOverride(vo, value);
@@ -461,7 +456,7 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
                                   << std::endl;
                     }
                 }
-                else if (OverrideType::string == vo.type)
+                else
                 {
                     std::string value = args->GetValue(vo.key, 0);
                     conf->SetOverride(vo, value);
@@ -606,7 +601,7 @@ SingleCommand::Ptr prepare_command_config_manage()
     // as defined in overrides.hpp
     for (const auto &override : configProfileOverrides)
     {
-        if (OverrideType::boolean == override.type)
+        if (std::holds_alternative<bool>(override.value))
         {
             cmd->AddOption(override.key,
                            "<true|false>",

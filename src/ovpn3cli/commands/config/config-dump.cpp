@@ -103,21 +103,13 @@ static int cmd_config_dump(ParsedArgs::Ptr args)
             }
             for (const auto &ov : conf->GetOverrides())
             {
-                switch (ov.override.type)
+                if (std::holds_alternative<std::string>(ov.value))
                 {
-                case OverrideType::boolean:
-                    json["overrides"][ov.override.key] = ov.boolValue;
-                    break;
-
-                case OverrideType::string:
-                    json["overrides"][ov.override.key] = ov.strValue;
-                    break;
-
-                default:
-                    throw CommandException("config-dump",
-                                           "Invalid override type for key "
-                                           "'" + ov.override.key
-                                               + "'");
+                    json["overrides"][ov.key] = std::get<std::string>(ov.value);
+                }
+                else
+                {
+                    json["overrides"][ov.key] = std::get<bool>(ov.value);
                 }
             }
 
