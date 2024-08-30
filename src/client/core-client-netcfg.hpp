@@ -319,6 +319,23 @@ class NetCfgTunBuilder : public T
     }
 
 
+    /**
+     *   Add support for --dhcp-option ADAPTER_DOMAIN_SUFFIX, used by
+     *   Access Server and many open source community server configurations.
+     *
+     *   Since the goal is to set the DNS search domain for an interface,
+     *   it reuses the @tun_builder_add_search_domain() method.
+     *
+     * @param name   Domain name to add as a DNS search domain
+     *
+     * @return true when addition was handled correctly, otherise false
+     */
+    bool tun_builder_set_adapter_domain_suffix(const std::string &name) override
+    {
+        return tun_builder_add_search_domain(name);
+    }
+
+
     int tun_builder_establish() override
     {
         if (!device)
