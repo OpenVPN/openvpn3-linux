@@ -368,6 +368,14 @@ class BackendClientObject : public DBus::Object::Base
         {
             try
             {
+                // If a VPN client is running, stop that thread - otherwise
+                // the client_thread->join() call will hang, waiting for the
+                // VPN client to stop.
+                if (vpnclient)
+                {
+                    vpnclient->stop();
+                    vpnclient.reset();
+                }
                 client_thread->join();
             }
             catch (...)
