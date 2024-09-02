@@ -26,7 +26,7 @@ option('debug_options', type: 'boolean', value: false,
 #
 #  Build environment and related build time options
 #
-option('asio_path', type: 'string', value: './vendor/asio',
+option('asio_path', type: 'string', value: './vendor/asio/asio',
        description: 'Path to the ASIO header files')
 
 option('openvpn3_core_path', type: 'string', value: './openvpn3-core',

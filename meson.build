@@ -74,7 +74,7 @@ endif
 #
 #  Setup additional include header dirs
 #
-asio_inc = get_option('asio_path') / 'asio' / 'include'
+asio_inc = get_option('asio_path') / 'include'
 message ('ASIO library: ' + asio_inc)
 
 openvpn3_core_inc = get_option('openvpn3_core_path')
