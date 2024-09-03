@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <memory>
 #include <sstream>
 #include <thread>
@@ -163,13 +164,19 @@ class BackendSignals : public LogSender
      */
     void LogFATAL(const std::string &msg) override
     {
+        using namespace std::chrono_literals;
+
         Log(Events::Log(log_group, LogCategory::FATAL, msg));
         // This is essentially a glib2 hack, to allow on going signals to
         // be properly sent before we shut down.
+        if (delayed_shutdown)
+        {
+            return;
+        }
         delayed_shutdown.reset(
             new std::thread([]()
                             {
-                                sleep(3);
+                                std::this_thread::sleep_for(3s);
                                 kill(getpid(), SIGHUP);
                             }));
     }
