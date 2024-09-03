@@ -303,9 +303,7 @@ void start_session(SessionManager::Proxy::Session::Ptr session,
                 {
                     try
                     {
-                        {
-                            session->Disconnect();
-                        }
+                        session->Disconnect();
                     }
                     catch (...)
                     {
