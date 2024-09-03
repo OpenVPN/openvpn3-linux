@@ -22,6 +22,7 @@
 #include <gdbuspp/signals/group.hpp>
 #include <gdbuspp/signals/signal.hpp>
 #include <gdbuspp/credentials/query.hpp>
+#include <gdbuspp/mainloop.hpp>
 
 #include "dbus/constants.hpp"
 #include "dbus/signals/attention-required.hpp"
@@ -128,6 +129,15 @@ class BackendSignals : public LogSender
                                                       logwr));
     }
 
+    void AssignMainLoop(DBus::MainLoop::Ptr ml)
+    {
+        if (mainloop)
+        {
+            return;
+        }
+        mainloop = ml;
+    }
+
     void RegistrationRequest(const std::string &busname,
                              const std::string &token,
                              const pid_t pid)
@@ -167,10 +177,21 @@ class BackendSignals : public LogSender
         using namespace std::chrono_literals;
 
         Log(Events::Log(log_group, LogCategory::FATAL, msg));
-        // This is essentially a glib2 hack, to allow on going signals to
-        // be properly sent before we shut down.
+
+        // Start the shutdown
+        if (mainloop)
+        {
+            mainloop->Stop();
+            return;
+        }
+
+        // This is essentially a fragile glib2 hack, to allow on going signals
+        // to be properly sent before we shut down.  This should normally only
+        // happen if a mainloop object does not exist; it's more a failsafe.
         if (delayed_shutdown)
         {
+            // If there is a shutdown thread already running,
+            // the shutdown has already been requested.
             return;
         }
         delayed_shutdown.reset(
@@ -218,5 +239,6 @@ class BackendSignals : public LogSender
     ::Signals::AttentionRequired::Ptr sig_attreq = nullptr;
     ::Signals::StatusChange::Ptr sig_statuschg = nullptr;
     Backend::Signals::RegistrationRequest::Ptr sig_regreq = nullptr;
+    DBus::MainLoop::Ptr mainloop = nullptr;
     std::unique_ptr<std::thread> delayed_shutdown;
 };

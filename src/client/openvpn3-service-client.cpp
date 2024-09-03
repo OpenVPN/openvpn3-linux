@@ -1471,6 +1471,7 @@ class ClientService : public DBus::Service
                                             session_token,
                                             logwr));
             signal->SetLogLevel(default_log_level);
+            signal->AssignMainLoop(mainloop);
             be_obj->SetMainLoop(mainloop);
             signal->LogVerb2("Backend client process started as pid "
                              + std::to_string(start_pid)
