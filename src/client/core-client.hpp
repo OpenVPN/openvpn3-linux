@@ -490,6 +490,15 @@ class CoreVPNClient : public CLIENTBASECLASS
         {
             signals->LogCritical(ev.info);
         }
+        else if ("COMPRESS_ERROR" == ev.name)
+        {
+            signals->LogError("Compression Error: " + ev.info);
+            run_status = StatusMinor::CONN_FAILED;
+            signals->StatusChange(StatusMajor::CONNECTION,
+                                  run_status,
+                                  "Compression is not available");
+            failed_signal_sent = true;
+        }
         else if ("GET_CONFIG" == ev.name)
         {
             signals->LogVerb2("Retrieving configuration from server", true);
