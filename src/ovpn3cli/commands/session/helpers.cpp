@@ -21,10 +21,18 @@
 
 namespace ovpn3cli::session {
 
-SessionException::SessionException(const std::string &msg)
-    : CommandArgBaseException(msg)
+SessionException::SessionException(const std::string &msg,
+                                   const std::string &details_)
+    : CommandArgBaseException(msg), details(details_)
 {
 }
+
+
+std::string SessionException::GetDetails() const
+{
+    return details;
+};
+
 
 
 enum class ExitReason
@@ -303,12 +311,12 @@ void start_session(SessionManager::Proxy::Session::Ptr session,
                     {
                         // ignore errors
                     }
-                    std::string err = "Failed to start the connection";
+                    static const char *err = "Failed to start the connection";
                     if (s.message.find("PEM_PASSWORD_FAIL") != std::string::npos)
                     {
-                        err += ", incorrect Private Key passphrase";
+                        throw SessionException(err, "Incorrect Private Key passphrase");
                     }
-                    throw SessionException(err);
+                    throw SessionException(err, s.message);
                 }
                 // Check if an SIGINT / CTRL-C event has occurred.
                 // If it has, disconnect the connection attempt and abort.

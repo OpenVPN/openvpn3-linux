@@ -135,6 +135,11 @@ static int cmd_session_start(ParsedArgs::Ptr args)
     }
     catch (const SessionException &excp)
     {
+        if (!excp.GetDetails().empty())
+        {
+            std::cout << "Could not start session: "
+                      << excp.GetDetails() << std::endl;
+        }
         throw CommandException("session-start", excp.what());
     }
     catch (const DBus::Exception &excp)

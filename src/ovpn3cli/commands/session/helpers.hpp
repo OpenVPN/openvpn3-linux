@@ -26,7 +26,11 @@ namespace ovpn3cli::session {
 class SessionException : public CommandArgBaseException
 {
   public:
-    SessionException(const std::string &msg);
+    SessionException(const std::string &msg, const std::string &details_ = {});
+    std::string GetDetails() const;
+
+  private:
+    const std::string details;
 };
 
 
