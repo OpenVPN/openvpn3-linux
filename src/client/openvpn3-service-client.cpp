@@ -963,9 +963,25 @@ class BackendClientObject : public DBus::Object::Base
                                                                 msg.str()));
                         }
                     }
-                    catch (openvpn::Exception &excp)
+                    catch (const openvpn::ErrorCode &err)
                     {
-                        signal->LogFATAL(excp.what());
+                        std::ostringstream errmsg;
+                        errmsg << "[" << openvpn::Error::name(err.code()) << "] "
+                               << err.what();
+                        signal->LogError(errmsg.str());
+                        signal->StatusChange(Events::Status(StatusMajor::CONNECTION,
+                                                            StatusMinor::CONN_FAILED,
+                                                            err.what()));
+                    }
+                    catch (const openvpn::Exception &excp)
+                    {
+                        signal->LogFATAL("[openvpn::Exception] "
+                                         + std::string(excp.what()));
+                    }
+                    catch (const std::exception &excp)
+                    {
+                        signal->LogFATAL("[exception] "
+                                         + std::string(excp.what()));
                     }
                 }));
         }
