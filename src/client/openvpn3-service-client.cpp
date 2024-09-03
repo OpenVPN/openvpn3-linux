@@ -798,30 +798,29 @@ class BackendClientObject : public DBus::Object::Base
     {
         // Disconnect from the server.  This will also shutdown this
         // process.
-
-        if (!registered)
+        signal->LogInfo("Stopping VPN client");
+        if (vpncli_ptr)
         {
-            throw ClientException("Disconnect",
-                                  "Backend service is not initialized");
-        }
-
-        signal->LogInfo("Stopping connection");
-        signal->StatusChange(Events::Status(StatusMajor::CONNECTION,
-                                            StatusMinor::CONN_DISCONNECTING));
-        vpncli_ptr->stop();
-        if (client_thread)
-        {
-            client_thread->join();
+            // client thread is running, stop it
+            signal->StatusChange(Events::Status(StatusMajor::CONNECTION,
+                                                StatusMinor::CONN_DISCONNECTING));
+            vpncli_ptr->stop();
+            if (client_thread)
+            {
+                client_thread->join();
+            }
         }
         signal->StatusChange(Events::Status(StatusMajor::CONNECTION,
                                             StatusMinor::CONN_DONE));
 
         if (mainloop)
         {
+            signal->Debug("Stopping client mainloop");
             mainloop->Stop();
         }
         else
         {
+            signal->Debug("Killing main client process; mainloop unavailable");
             kill(getpid(), SIGTERM);
         }
     }
@@ -1393,10 +1392,12 @@ class ClientService : public DBus::Service
 {
   public:
     ClientService(pid_t start_pid_,
+                  DBus::MainLoop::Ptr mainloop_,
                   DBus::Connection::Ptr dbuscon_,
                   std::string sesstoken,
                   LogWriter *logwr_)
         : DBus::Service(dbuscon_, Constants::GenServiceName("backends.be") + to_string(getpid())),
+          mainloop(mainloop_),
           dbuscon(dbuscon_),
           start_pid(start_pid_),
           session_token(sesstoken),
@@ -1415,24 +1416,8 @@ class ClientService : public DBus::Service
         }
         catch (const std::exception &excp)
         {
-            std::cerr << "** ERROR **  Failed closing down D-Bus connection: "
+            std::cerr << "** ERROR **  Failed closing down: "
                       << std::string(excp.what());
-        }
-    }
-
-
-    /**
-     *  Provides a reference to the Glib2 main loop object.  This is used
-     *  to cleanly shutdown this process when the session manager wants to
-     *  shutdown this process via D-Bus.
-     *
-     * @param ml   GMainLoop pointer to the current main loop thread
-     */
-    void SetMainLoop(DBus::MainLoop::Ptr ml)
-    {
-        if (be_obj)
-        {
-            be_obj->SetMainLoop(ml);
         }
     }
 
@@ -1473,19 +1458,20 @@ class ClientService : public DBus::Service
             logservice->Attach(Constants::GenInterface("sessions"));
 
             DBus::Object::Path object_path = Constants::GenPath("backends/session");
-            CreateServiceHandler<BackendClientObject>(dbuscon,
-                                                      busname,
-                                                      object_path,
-                                                      session_token,
-                                                      default_log_level,
-                                                      logwr,
-                                                      disabled_socket_protect);
+            be_obj = CreateServiceHandler<BackendClientObject>(dbuscon,
+                                                               busname,
+                                                               object_path,
+                                                               session_token,
+                                                               default_log_level,
+                                                               logwr,
+                                                               disabled_socket_protect);
 
             signal.reset(new BackendSignals(GetConnection(),
                                             LogGroup::BACKENDPROC,
                                             session_token,
                                             logwr));
             signal->SetLogLevel(default_log_level);
+            be_obj->SetMainLoop(mainloop);
             signal->LogVerb2("Backend client process started as pid "
                              + std::to_string(start_pid)
                              + " daemonized as pid " + std::to_string(getpid()));
@@ -1510,6 +1496,7 @@ class ClientService : public DBus::Service
 
 
   private:
+    DBus::MainLoop::Ptr mainloop = nullptr;
     DBus::Connection::Ptr dbuscon = nullptr;
     uint32_t default_log_level = 3; // LogCategory::INFO messages
     const pid_t start_pid;
@@ -1540,7 +1527,9 @@ void start_client_thread(pid_t start_pid,
     try
     {
         auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
+        auto mainloop = DBus::MainLoop::Create();
         auto clientsrv = DBus::Service::Create<ClientService>(start_pid,
+                                                              mainloop,
                                                               dbuscon,
                                                               sesstoken,
                                                               logwr);
@@ -1550,7 +1539,7 @@ void start_client_thread(pid_t start_pid,
             clientsrv->SetDefaultLogLevel(log_level);
         }
         clientsrv->DisableSocketProtect(disable_socket_protect);
-        clientsrv->Run();
+        mainloop->Run();
     }
     catch (const DBus::Exception &excp)
     {
