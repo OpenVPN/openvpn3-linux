@@ -924,7 +924,7 @@ class BackendClientObject : public DBus::Object::Base
                 }
             }
 
-            signal->Debug("Using DNS resolver scope: " + dns_scope);
+            signal->LogVerb2("Using DNS resolver scope: " + dns_scope);
             vpnclient->set_dns_resolver_scope(dns_scope);
 
             // Start a new client thread ...
