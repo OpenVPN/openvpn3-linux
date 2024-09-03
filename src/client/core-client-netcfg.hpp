@@ -449,7 +449,7 @@ class NetCfgTunBuilder : public T
             {
                 msg << "[" << device->GetDeviceName() << "] ";
             }
-            msg << "Failed setting tunnel layer: "
+            msg << "Failed protecting socket: "
                 << excp.GetRawError();
             signals->LogCritical(msg.str());
             return false;
