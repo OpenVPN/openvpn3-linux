@@ -320,6 +320,32 @@ class BackendClientObject : public DBus::Object::Base
         };
         AddPropertyBySpec("session_name", "s", prop_session_name);
 
+        auto prop_connection = [this](const DBus::Object::Property::BySpec &prop)
+        {
+            GVariantBuilder *ci = glib2::Builder::Create("(sssu)");
+            if (this->vpnclient
+                && StatusMinor::CONN_CONNECTED == this->vpnclient->GetRunStatus())
+            {
+                ClientAPI::ConnectionInfo conninfo = this->vpnclient->connection_info();
+                glib2::Builder::Add(ci, openvpn::string::to_lower_copy(conninfo.serverProto));
+                glib2::Builder::Add(ci, conninfo.serverHost);
+                glib2::Builder::Add(ci, conninfo.serverIp);
+                uint32_t port = (conninfo.serverPort.empty()
+                                     ? 0
+                                     : std::stoi(conninfo.serverPort));
+                glib2::Builder::Add(ci, port);
+            }
+            else
+            {
+                glib2::Builder::Add(ci, std::string{});
+                glib2::Builder::Add(ci, std::string{});
+                glib2::Builder::Add(ci, std::string{});
+                glib2::Builder::Add(ci, static_cast<uint32_t>(0));
+            }
+            return glib2::Builder::Finish(ci);
+        };
+        AddPropertyBySpec("connection", "(sssu)", prop_connection);
+
         auto prop_statistics = [this](const DBus::Object::Property::BySpec &prop)
         {
             GVariantBuilder *res = glib2::Builder::Create("a{sx}");
