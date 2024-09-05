@@ -206,10 +206,10 @@ class Configuration : public DBus::Object::Base
      * @param key    char * of the override key
      * @param value  GVariant object of the override value to use
      *
-     * @return  Returns the ValidOverride object added to the
+     * @return  Returns the Override object added to the
      *          array of override settings
      */
-    ValidOverride set_override(const std::string &key, GVariant *value);
+    Override set_override(const std::string &key, GVariant *value);
 
     /**
      *  Sets an override value for the configuration profile
@@ -217,11 +217,11 @@ class Configuration : public DBus::Object::Base
      * @param key    char * of the override key
      * @param value  Value for the override
      *
-     * @return  Returns the ValidOverride object added to the
+     * @return  Returns the Override object added to the
      *          array of override settings
      */
     template <typename T>
-    ValidOverride set_override(const std::string &key, T value)
+    Override set_override(const std::string &key, T value)
     {
         auto vo = GetConfigOverride(key);
         if (!vo)
@@ -239,7 +239,7 @@ class Configuration : public DBus::Object::Base
     }
 
     /**
-     *  Removes and override from the std::vector<ValidOverride> array
+     *  Removes an override from the std::vector<Override> array
      *
      * @param key  std::string of the override key to remove
      *
@@ -248,7 +248,7 @@ class Configuration : public DBus::Object::Base
     bool remove_override(const std::string &key);
 
     /**
-     *  Removes and override from the std::vector<ValidOverride> array
+     *  Removes an override from the std::vector<Override> array
      *
      * @param key  std::string of the override key to remove
      *
@@ -306,7 +306,7 @@ class Configuration : public DBus::Object::Base
     bool prop_valid_{false};
     std::string persistent_file_;
     openvpn::OptionListJSON options_;
-    std::vector<ValidOverride> override_list_;
+    std::vector<Override> override_list_;
 
     /**
      *  Methods which will modify the content of this object.

@@ -106,8 +106,8 @@ static int cmd_session_start(ParsedArgs::Ptr args)
         // --config, not --config-path.
         if (args->Present("persist-tun"))
         {
-            const ValidOverride &vo = cfgprx->LookupOverride("persist-tun");
-            cfgprx->SetOverride(vo, true);
+            const Override &o = cfgprx->LookupOverride("persist-tun");
+            cfgprx->SetOverride(o, true);
         }
 
         // Create a new tunnel session

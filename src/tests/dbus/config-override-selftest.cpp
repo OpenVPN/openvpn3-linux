@@ -24,7 +24,7 @@
 
 
 
-bool check_override_value(const ValidOverride ov, bool expect)
+bool check_override_value(const Override ov, bool expect)
 {
     if (!std::holds_alternative<bool>(ov.value))
     {
@@ -35,7 +35,7 @@ bool check_override_value(const ValidOverride ov, bool expect)
 }
 
 
-bool check_override_value(const ValidOverride ov, std::string expect)
+bool check_override_value(const Override ov, std::string expect)
 {
     if (!std::holds_alternative<std::string>(ov.value))
     {
@@ -104,9 +104,9 @@ int main(int argc, char **argv)
     std::cout << ".. Testing unsetting an invalid override ... ";
     try
     {
-        ValidOverride ov = {"non-existing-override",
-                            std::string{},
-                            "Non-existing override"};
+        Override ov = {"non-existing-override",
+                       std::string{},
+                       "Non-existing override"};
         cfgobj.UnsetOverride(ov);
         std::cout << "FAIL" << std::endl;
         ++failed;
@@ -128,9 +128,9 @@ int main(int argc, char **argv)
     std::cout << ".. Testing setting an invalid override ... ";
     try
     {
-        const ValidOverride ov = {"non-existing-override",
-                                  std::string{},
-                                  "Non-existing override"};
+        const Override ov = {"non-existing-override",
+                             std::string{},
+                             "Non-existing override"};
         cfgobj.SetOverride(ov, std::string("string-value"));
         std::cout << "FAIL" << std::endl;
         ++failed;
@@ -219,9 +219,9 @@ int main(int argc, char **argv)
     std::cout << ".. Testing setting an override with invalid type [string:bool] (2) ... ";
     try
     {
-        const ValidOverride ov = {"server-override",
-                                  false,
-                                  "Non-existing override"};
+        const Override ov = {"server-override",
+                             false,
+                             "Non-existing override"};
         cfgobj.SetOverride(ov, true);
         std::cout << "FAIL" << std::endl;
         ++failed;
@@ -242,7 +242,7 @@ int main(int argc, char **argv)
 
 
     std::cout << ".. Checking all overrides are unset ... ";
-    std::vector<ValidOverride> overrides = cfgobj.GetOverrides();
+    std::vector<Override> overrides = cfgobj.GetOverrides();
     if (0 != overrides.size())
     {
         ++failed;
@@ -275,7 +275,7 @@ int main(int argc, char **argv)
     }
 
     // Get all the overrides, and check if the value is what we expects
-    std::vector<ValidOverride> chkov = cfgobj.GetOverrides();
+    std::vector<Override> chkov = cfgobj.GetOverrides();
     for (const auto &cfgoverride : configProfileOverrides)
     {
         std::cout << ".. Checking override '" << cfgoverride.key << "': ";
@@ -333,7 +333,7 @@ int main(int argc, char **argv)
 
         // Check all overrides are once again unset
         std::cout << ".. Checking all unset overrides are unset ... ";
-        std::vector<ValidOverride> unset = cfgobj.GetOverrides();
+        std::vector<Override> unset = cfgobj.GetOverrides();
         if (0 != unset.size())
         {
             ++failed;

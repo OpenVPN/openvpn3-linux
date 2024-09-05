@@ -178,9 +178,9 @@ std::string arghelper_config_names_sessions()
 std::string arghelper_unset_overrides()
 {
     std::stringstream out;
-    for (const ValidOverride &vo : configProfileOverrides)
+    for (const Override &o : configProfileOverrides)
     {
-        out << vo.key << " ";
+        out << o.key << " ";
     }
     return out.str();
 }

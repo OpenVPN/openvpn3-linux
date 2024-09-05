@@ -137,12 +137,12 @@ std::string ConfigProfileDetails::extract_override(const std::string &override,
 {
     try
     {
-        const ValidOverride &ov = prx->GetOverrideValue(override);
+        const Override &o = prx->GetOverrideValue(override);
 
-        if (std::holds_alternative<std::string>(ov.value))
-            return std::get<std::string>(ov.value);
+        if (std::holds_alternative<std::string>(o.value))
+            return std::get<std::string>(o.value);
 
-        return std::get<bool>(ov.value) ? bool_true : bool_false;
+        return std::get<bool>(o.value) ? bool_true : bool_false;
     }
     catch (const DBus::Exception &ex)
     {
@@ -154,26 +154,26 @@ std::string ConfigProfileDetails::extract_override(const std::string &override,
 
 void ConfigProfileDetails::parse_overrides()
 {
-    for (const auto &vo : configProfileOverrides)
+    for (const auto &config_override : configProfileOverrides)
     {
         std::string value = "(not set)";
-        for (const auto &ov : prx->GetOverrides(false))
+        for (const auto &o : prx->GetOverrides(false))
         {
-            if ("dns-scope" == ov.key
-                || "enterprise-profile" == ov.key)
+            if ("dns-scope" == o.key
+                || "enterprise-profile" == o.key)
             {
                 // This override is retrieved in the global block
                 continue;
             }
-            if (ov.key == vo.key)
+            if (o.key == config_override.key)
             {
-                if (std::holds_alternative<std::string>(ov.value))
+                if (std::holds_alternative<std::string>(o.value))
                 {
-                    overrides[vo.key] = std::get<std::string>(ov.value);
+                    overrides[config_override.key] = std::get<std::string>(o.value);
                 }
                 else
                 {
-                    overrides[vo.key] = std::get<bool>(ov.value) ? "true" : "false";
+                    overrides[config_override.key] = std::get<bool>(o.value) ? "true" : "false";
                 }
             }
         }
@@ -319,17 +319,17 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
 
 
     bool override_present = false;
-    for (const ValidOverride &vo : configProfileOverrides)
+    for (const Override &o : configProfileOverrides)
     {
-        if (args->Present(vo.key)
-            && (args->Present("unset-override") && args->GetValue("unset-override", 0) == vo.key))
+        if (args->Present(o.key)
+            && (args->Present("unset-override") && args->GetValue("unset-override", 0) == o.key))
         {
             throw CommandException("config-manage",
-                                   "Cannot provide both --" + vo.key + " and "
-                                       + "--unset-" + vo.key
+                                   "Cannot provide both --" + o.key + " and "
+                                       + "--unset-" + o.key
                                        + " at the same time.");
         }
-        if (args->Present(vo.key))
+        if (args->Present(o.key))
         {
             override_present = true;
         }
@@ -442,27 +442,27 @@ static int cmd_config_manage(ParsedArgs::Ptr args)
         }
 #endif
 
-        for (const ValidOverride &vo : configProfileOverrides)
+        for (const Override &o : configProfileOverrides)
         {
-            if (args->Present(vo.key))
+            if (args->Present(o.key))
             {
-                if (std::holds_alternative<bool>(vo.value))
+                if (std::holds_alternative<bool>(o.value))
                 {
-                    bool value = args->GetBoolValue(vo.key, 0);
-                    conf->SetOverride(vo, value);
+                    bool value = args->GetBoolValue(o.key, 0);
+                    conf->SetOverride(o, value);
                     if (!quiet)
                     {
-                        std::cout << "Override '" + vo.key + "' is " + (value ? "enabled" : "disabled")
+                        std::cout << "Override '" + o.key + "' is " + (value ? "enabled" : "disabled")
                                   << std::endl;
                     }
                 }
                 else
                 {
-                    std::string value = args->GetValue(vo.key, 0);
-                    conf->SetOverride(vo, value);
+                    std::string value = args->GetValue(o.key, 0);
+                    conf->SetOverride(o, value);
                     if (!quiet)
                     {
-                        std::cout << "Set override '" + vo.key + "' to '" + value + "'"
+                        std::cout << "Set override '" + o.key + "' to '" + value + "'"
                                   << std::endl;
                     }
                 }

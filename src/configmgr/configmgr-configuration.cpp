@@ -768,17 +768,17 @@ void Configuration::method_set_override(DBus::Object::Method::Arguments::Ptr arg
     auto name = glib2::Value::Extract<std::string>(params, 0);
     GVariant *value = g_variant_get_variant(g_variant_get_child_value(params, 1));
 
-    const ValidOverride vo = set_override(name, value);
+    const Override o = set_override(name, value);
 
     std::string new_value;
 
-    if (std::holds_alternative<std::string>(vo.value))
+    if (std::holds_alternative<std::string>(o.value))
     {
-        new_value = std::get<std::string>(vo.value);
+        new_value = std::get<std::string>(o.value);
     }
     else
     {
-        new_value = std::get<bool>(vo.value) ? "true" : "false";
+        new_value = std::get<bool>(o.value) ? "true" : "false";
     }
 
     const std::string caller = args->GetCallerBusName();
@@ -879,11 +879,11 @@ void Configuration::method_remove()
 }
 
 
-ValidOverride Configuration::set_override(const std::string &key, GVariant *value)
+Override Configuration::set_override(const std::string &key, GVariant *value)
 {
-    auto vo = GetConfigOverride(key);
+    auto o = GetConfigOverride(key);
 
-    if (!vo)
+    if (!o)
     {
         throw DBus::Object::Method::Exception("Invalid override key '"
                                               + std::string(key) + "'");
@@ -896,7 +896,7 @@ ValidOverride Configuration::set_override(const std::string &key, GVariant *valu
 
     if ("s" == g_type)
     {
-        if (!std::holds_alternative<std::string>(vo->value))
+        if (!std::holds_alternative<std::string>(o->value))
         {
             throw DBus::Object::Method::Exception("(SetOverride) Invalid override data type for '"
                                                   + key + "': " + g_type);
@@ -907,7 +907,7 @@ ValidOverride Configuration::set_override(const std::string &key, GVariant *valu
     }
     else if ("b" == g_type)
     {
-        if (!std::holds_alternative<bool>(vo->value))
+        if (!std::holds_alternative<bool>(o->value))
         {
             throw DBus::Object::Method::Exception("(SetOverride) Invalid override data type for '"
                                                   + key + "': " + g_type);

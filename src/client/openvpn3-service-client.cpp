@@ -1228,7 +1228,7 @@ class BackendClientObject : public DBus::Object::Base
             // config, we cannot query it for more details after the first
             // GetConfig() call.
             bool dco = cfg_proxy.GetDCO();
-            std::vector<ValidOverride> overrides = cfg_proxy.GetOverrides();
+            std::vector<Override> overrides = cfg_proxy.GetOverrides();
 
             // Parse the configuration
             ProfileMergeFromString pm(cfg_proxy.GetConfig(),
@@ -1264,7 +1264,7 @@ class BackendClientObject : public DBus::Object::Base
     }
 
 
-    void set_overrides(std::vector<ValidOverride> &overrides)
+    void set_overrides(std::vector<Override> &overrides)
     {
         for (const auto &override : overrides)
         {

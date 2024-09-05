@@ -17,7 +17,7 @@
 #include "overrides.hpp"
 
 
-std::optional<ValidOverride> GetConfigOverride(const std::string &key, bool ignoreCase)
+std::optional<Override> GetConfigOverride(const std::string &key, bool ignoreCase)
 {
     for (const auto &vo : configProfileOverrides)
     {

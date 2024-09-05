@@ -23,15 +23,15 @@
 /**
  * Helper classes to store the list of overrides
  */
-struct ValidOverride
+struct Override
 {
-    ValidOverride(const std::string &key, const std::string &value, const std::string &help, std::string (*argument_helper)() = nullptr)
+    Override(const std::string &key, const std::string &value, const std::string &help, std::string (*argument_helper)() = nullptr)
         : key(key), value(value), help(help), argument_helper(argument_helper)
     {
     }
 
 
-    ValidOverride(const std::string &key, bool value, const std::string &help, std::string (*argument_helper)() = nullptr)
+    Override(const std::string &key, bool value, const std::string &help, std::string (*argument_helper)() = nullptr)
         : key(key), value(value), help(help), argument_helper(argument_helper)
     {
     }
@@ -44,7 +44,7 @@ struct ValidOverride
 };
 
 
-const ValidOverride configProfileOverrides[] = {
+const Override configProfileOverrides[] = {
     // clang-format off
     {"server-override", std::string {},
      "Replace the remote, connecting to this server instead the server specified in the configuration"},
@@ -120,5 +120,5 @@ const ValidOverride configProfileOverrides[] = {
 };
 
 
-std::optional<ValidOverride> GetConfigOverride(const std::string &key,
-                                               bool ignoreCase = false);
+std::optional<Override> GetConfigOverride(const std::string &key,
+                                          bool ignoreCase = false);

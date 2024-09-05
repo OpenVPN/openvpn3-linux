@@ -31,7 +31,7 @@ int main(int argc, char **argv)
     auto conn = DBus::Connection::Create(DBus::BusType::SYSTEM);
     OpenVPN3ConfigurationProxy config(conn, argv[1]);
 
-    std::vector<ValidOverride> overrides = config.GetOverrides();
+    std::vector<Override> overrides = config.GetOverrides();
     for (const auto &ov : overrides)
     {
         std::string value;

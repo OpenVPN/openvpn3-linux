@@ -125,8 +125,8 @@ std::string import_config(DBus::Connection::Ptr dbuscon,
 
         if (persist_tun)
         {
-            const ValidOverride &vo = cfgprx->LookupOverride("persist-tun");
-            cfgprx->SetOverride(vo, true);
+            const Override &o = cfgprx->LookupOverride("persist-tun");
+            cfgprx->SetOverride(o, true);
         }
 
         if (cfgprx->CheckFeatures(CfgMgrFeatures::TAGS))

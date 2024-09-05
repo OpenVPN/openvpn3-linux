@@ -529,7 +529,7 @@ class OpenVPN3ConfigurationProxy
      *
      * @return A list of VpnOverride key, value pairs
      */
-    std::vector<ValidOverride> GetOverrides(bool clear_cache = true)
+    std::vector<Override> GetOverrides(bool clear_cache = true)
     {
         // If we have cache available ...
         if (!cached_overrides.empty())
@@ -552,7 +552,7 @@ class OpenVPN3ConfigurationProxy
         GVariantIter *override_iter = NULL;
         g_variant_get(res, "a{sv}", &override_iter);
 
-        std::vector<ValidOverride> ret;
+        std::vector<Override> ret;
 
         GVariant *override;
         while ((override = g_variant_iter_next_value(override_iter)))
@@ -561,20 +561,20 @@ class OpenVPN3ConfigurationProxy
             GVariant *val = nullptr;
             g_variant_get(override, "{sv}", &key, &val);
 
-            auto vo = GetConfigOverride(key);
-            if (!vo)
+            auto o = GetConfigOverride(key);
+            if (!o)
             {
                 throw DBus::Proxy::Exception("Invalid override found");
             }
-            if (std::holds_alternative<std::string>(vo->value))
+            if (std::holds_alternative<std::string>(o->value))
             {
-                vo->value = glib2::Value::Get<std::string>(val);
-                ret.push_back(*vo);
+                o->value = glib2::Value::Get<std::string>(val);
+                ret.push_back(*o);
             }
             else
             {
-                vo->value = glib2::Value::Get<bool>(val);
-                ret.push_back(*vo);
+                o->value = glib2::Value::Get<bool>(val);
+                ret.push_back(*o);
             }
         }
         cached_overrides = ret;
@@ -587,7 +587,7 @@ class OpenVPN3ConfigurationProxy
     /**
      * Adds a bool override to this object.
      */
-    void SetOverride(const ValidOverride &override, bool value)
+    void SetOverride(const Override &override, bool value)
     {
         if (!std::holds_alternative<bool>(override.value))
         {
@@ -603,7 +603,7 @@ class OpenVPN3ConfigurationProxy
     /**
      * Adds a string override to this object.
      */
-    void SetOverride(const ValidOverride &override, std::string value)
+    void SetOverride(const Override &override, std::string value)
     {
         if (!std::holds_alternative<std::string>(override.value))
         {
@@ -706,14 +706,14 @@ class OpenVPN3ConfigurationProxy
 
 
     /**
-     *  Retrieve a ValidOverride object for a specific configuration
+     *  Retrieve a Override object for a specific configuration
      *  profile override.
      *
      * @param key    std::string of the override key to look up
-     * @return const ValidOverride& to the override value object
+     * @return const Override& to the override value object
      * @throws DBusException if the override key was not found
      */
-    const ValidOverride &GetOverrideValue(const std::string &key)
+    const Override &GetOverrideValue(const std::string &key)
     {
         if (cached_overrides.empty())
         {
@@ -731,13 +731,13 @@ class OpenVPN3ConfigurationProxy
     }
 
 
-    const ValidOverride &LookupOverride(const std::string key)
+    const Override &LookupOverride(const std::string key)
     {
-        for (const ValidOverride &vo : configProfileOverrides)
+        for (const Override &o : configProfileOverrides)
         {
-            if (vo.key == key)
+            if (o.key == key)
             {
-                return vo;
+                return o;
             }
         }
         throw DBus::Proxy::Exception("Invalid override key:" + key);
@@ -747,7 +747,7 @@ class OpenVPN3ConfigurationProxy
     /**
      * Removes an override from this object.
      */
-    void UnsetOverride(const ValidOverride &override)
+    void UnsetOverride(const Override &override)
     {
         proxy->Call(proxy_tgt,
                     "UnsetOverride",
@@ -851,7 +851,7 @@ class OpenVPN3ConfigurationProxy
     DBus::Proxy::Utils::Query::Ptr proxy_qry{nullptr};
 
     CfgMgrFeatures features = CfgMgrFeatures::UNDEFINED;
-    std::vector<ValidOverride> cached_overrides = {};
+    std::vector<Override> cached_overrides = {};
 
 
     void set_feature_flags(const std::string &vs)
