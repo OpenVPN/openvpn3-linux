@@ -71,7 +71,10 @@ static int config_manager(ParsedArgs::Ptr args)
         }
     }
 
-    auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    DBus::BusType bus = (args->Present("use-session-bus")
+                             ? DBus::BusType::SESSION
+                             : DBus::BusType::SYSTEM);
+    auto dbuscon = DBus::Connection::Create(bus);
     auto configmgr_srv = DBus::Service::Create<ConfigManager::Service>(dbuscon, logwr);
     configmgr_srv->PrepareIdleDetector(std::chrono::minutes(idle_wait_min));
 
@@ -118,6 +121,10 @@ int main(int argc, char **argv)
                         "DIRECTORY",
                         true,
                         "Directory where to save persistent data");
+#ifdef OPENVPN_DEBUG
+    argparser.AddOption("use-session-bus",
+                        "Debug: Starts the configmgr service on the session bus");
+#endif
 
     try
     {

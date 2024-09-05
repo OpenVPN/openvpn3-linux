@@ -48,7 +48,13 @@ bool check_override_value(const Override ov, std::string expect)
 
 int main(int argc, char **argv)
 {
-    auto conn = DBus::Connection::Create(DBus::BusType::SYSTEM);
+    DBus::BusType bus = DBus::BusType::SYSTEM;
+    if (argc > 1 && std::string(argv[1]) == "--use-session-bus")
+    {
+        bus = DBus::BusType::SESSION;
+    }
+
+    auto conn = DBus::Connection::Create(bus);
 
     OpenVPN3ConfigurationProxy::Ptr cfgmgr = nullptr;
     try
