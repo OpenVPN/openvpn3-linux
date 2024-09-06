@@ -110,20 +110,11 @@ DBus::Object::Path AttachedService::AddProxyTarget(const std::string &recv_tgt,
     auto proxy_obj = object_mgr->CreateObject<ProxyLogEvents>(
         connection,
         object_mgr,
+        log,
         recv_tgt,
         session_path,
         src_target->object_interface,
         6);
-
-    object_mgr->AttachRemoveCallback(
-        proxy_obj->GetPath(),
-        [&](const DBus::Object::Path &path)
-        {
-            auto tgt = proxies.at(path)->GetReceiverTarget();
-            proxies.erase(path);
-            log->LogVerb1("Log proxy " + path
-                          + ", receiver " + tgt + " removed");
-        });
 
     proxies[proxy_obj->GetPath()] = proxy_obj;
     log->LogVerb1("Log proxy configured for " + session_path

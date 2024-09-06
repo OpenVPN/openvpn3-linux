@@ -65,11 +65,12 @@ class ProxyLogEvents : public DBus::Object::Base
 
     ProxyLogEvents(DBus::Connection::Ptr connection_,
                    DBus::Object::Manager::Ptr obj_mgr,
+                   LogService::Logger::Ptr log_,
                    const std::string &recv_tgt,
                    const DBus::Object::Path &session_objpath,
                    const std::string &session_interf,
                    const uint32_t init_loglev);
-    virtual ~ProxyLogEvents() noexcept = default;
+    virtual ~ProxyLogEvents() noexcept;
 
     std::string GetReceiverTarget() const noexcept;
 
@@ -83,6 +84,7 @@ class ProxyLogEvents : public DBus::Object::Base
   private:
     DBus::Connection::Ptr connection = nullptr;
     DBus::Object::Manager::Ptr object_mgr = nullptr;
+    LogService::Logger::Ptr log = nullptr;
     Log::EventFilter::Ptr filter = nullptr;
     DBus::Object::Path session_path = {};
     const std::string receiver_target;

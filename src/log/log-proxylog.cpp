@@ -41,13 +41,14 @@ void ProxyLogSignals::SendStatusChange(const Events::Status &stchgev) const
 
 ProxyLogEvents::ProxyLogEvents(DBus::Connection::Ptr connection_,
                                DBus::Object::Manager::Ptr obj_mgr,
+                               LogService::Logger::Ptr log_,
                                const std::string &recv_tgt,
                                const DBus::Object::Path &session_objpath,
                                const std::string &session_interf,
                                const uint32_t init_loglev)
     : DBus::Object::Base(generate_path_uuid(Constants::GenPath("log/proxy"), 'l'),
                          Constants::GenInterface("log")),
-      connection(connection_), object_mgr(obj_mgr),
+      connection(connection_), object_mgr(obj_mgr), log(log_),
       filter(Log::EventFilter::Create(init_loglev)),
       session_path(session_objpath),
       receiver_target(recv_tgt)
@@ -98,6 +99,13 @@ ProxyLogEvents::ProxyLogEvents(DBus::Connection::Ptr connection_,
         {
             return glib2::Value::Create(receiver_target);
         });
+}
+
+
+ProxyLogEvents::~ProxyLogEvents() noexcept
+{
+    log->LogVerb1("Log proxy " + GetPath()
+                  + ", receiver " + receiver_target + " removed");
 }
 
 
