@@ -121,13 +121,9 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
 
         // Retrieve the tun interface name for this session
         std::string devname{};
-        bool dco = false;
         try
         {
             devname = sprx->GetDeviceName();
-#ifdef ENABLE_OVPNDCO
-            dco = sprx->GetDCO();
-#endif
         }
         catch (const DBus::Exception &)
         {
@@ -137,20 +133,41 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
             devname = "(None)";
         }
 
-        // Retrieve the session name set by the VPN backend
-        std::stringstream sessionname_line;
+        // Retrieve connection details about the session
+        std::ostringstream session_details;
         try
         {
-            std::string sessname = sprx->GetSessionName();
-            if (!sessname.empty())
+            auto cti = sprx->GetConnectedToInfo();
+            bool ipv6_addr = cti.server_ip.find(":") != std::string::npos;
+            session_details << "Connected to: "
+                         << cti.protocol << ":"
+                         << (ipv6_addr ? "[" : "")
+                         << cti.server_ip
+                         << (ipv6_addr ? "]" : "");
+            if (cti.server_port > 0)
             {
-                sessionname_line << "Session name: " << sessname << std::endl;
+                // DCO connections currently does not expose the port number
+                session_details << ":"
+                             << std::to_string(cti.server_port);
             }
+            session_details << std::endl;
         }
-        catch (const DBus::Exception &)
+        catch (const SessionManager::Proxy::Exception &)
         {
-            // Ignore any errors if this property is unavailable
-            sessionname_line << "";
+            // If connection details are unavailable, try extracting
+            // session name instead - as used in v23 and older releases
+            try
+            {
+                std::string sessname = sprx->GetSessionName();
+                if (!sessname.empty())
+                {
+                    session_details << "Session name: " << sessname << std::endl;
+                }
+            }
+            catch (const DBus::Exception &)
+            {
+                // Ignore any errors if this property is unavailable
+            }
         }
 
         Events::Status status{};
@@ -182,10 +199,9 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
                   << std::endl;
         std::cout << "       Owner: " << owner
                   << std::setw(47 - owner.size()) << "Device: " << devname
-                  << (dco ? " (DCO)" : "")
                   << std::endl;
         std::cout << config_line.str();
-        std::cout << sessionname_line.str();
+        std::cout << session_details.str();
 
         std::cout << "      Status: ";
         if (status.Check(StatusMajor::SESSION, StatusMinor::SESS_AUTH_URL))
