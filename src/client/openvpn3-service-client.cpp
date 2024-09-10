@@ -244,6 +244,13 @@ class BackendClientObject : public DBus::Object::Base
 
         auto prop_dco_get = [this](const DBus::Object::Property::BySpec &prop)
         {
+            // if we have a connection running, check if the tun_name contains "dco"
+            // there are no other direct ways accessible currently
+            if (this->vpnclient)
+            {
+                auto ci = this->vpnclient->connection_info();
+                return glib2::Value::Create(ci.tunName.find("dco") != std::string::npos);
+            }
             return glib2::Value::Create(this->vpnconfig.dco);
         };
         auto prop_dco_set = [this](const DBus::Object::Property::BySpec &prop, GVariant *value)
