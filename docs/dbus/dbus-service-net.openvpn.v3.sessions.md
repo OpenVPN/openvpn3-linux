@@ -190,6 +190,7 @@ node /net/openvpn/v3/sessions/${UNIQUE_ID} {
       readonly s device_name;
       readonly o config_path;
       readonly s config_name;
+      readonly (ssbu) connected_to;
       readonly s session_name;
       readonly u backend_pid;
       readwrite b restrict_log_access;
@@ -383,6 +384,7 @@ documentation](dbus-logging.md) for details on this signal.
 | device_name   | string           | Read-only  | Virtual network interface name used by this session |
 | config_path   | object path      | Read-only  | D-Bus object path to the configuration profile used |
 | config_name   | string           | Read-only  | Name of the configuration profile when the session was started |
+| connected_to  | (string, string, uint) | Read-only | Information about the server the client is connected to |
 | session_name  | string           | Read-only  | Name of the VPN session, named by the the OpenVPN 3 Core library on successful connect |
 | backend_pid   | uint             | Read-only  | Process ID of the VPN backend client process |
 | restrict_log_access | boolean    | Read-Write | If set to true, only the session owner can modify receive_log_events and log_verbosity, otherwise all granted users can access the log settings |
@@ -418,3 +420,11 @@ See the properties section in [`net.openvpn.v3.backends`
 client](dbus-service-net.openvpn.v3.client.md) documentation for
 details.  The session manager just proxies the contents of the
 `statistics` property from the backend process.
+
+#### Struct: connected_to
+
+| Field | Name        |  type  | Description                                                                                        |
+|-------|-------------|--------|----------------------------------------------------------------------------------------------------|
+|    0  | proto       | string | Protocol used for the connection: udp, tcp                                                         |
+|    1  | server_ip   | string | IP address of the server the client is connected to                                                |
+|    2  | server_port | uint   | Server TCP/UDP port number used for the connection                                                 |

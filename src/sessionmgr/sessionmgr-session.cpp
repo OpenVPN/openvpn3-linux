@@ -363,6 +363,31 @@ Session::Session(DBus::Connection::Ptr dbuscon,
             return be_prx->GetPropertyGVariant(be_target, "session_name");
         });
 
+    AddPropertyBySpec(
+        "connected_to",
+        "(ssu)",
+        [=](const DBus::Object::Property::BySpec &prop)
+            -> GVariant *
+        {
+            validate_vpn_backend("connection");
+            GVariantBuilder *res = glib2::Builder::Create("(ssu)");
+            GVariant *r = be_prx->GetPropertyGVariant(be_target, "connection");
+            try
+            {
+                glib2::Utils::checkParams(__func__, r, "(sssu)");
+                glib2::Builder::Add(res, glib2::Value::Extract<std::string>(r, 0));
+                glib2::Builder::Add(res, glib2::Value::Extract<std::string>(r, 2));
+                glib2::Builder::Add(res, glib2::Value::Extract<uint32_t>(r, 3));
+            }
+            catch (const glib2::Utils::Exception &)
+            {
+                glib2::Builder::Add(res, std::string{});
+                glib2::Builder::Add(res, std::string{});
+                glib2::Builder::Add(res, static_cast<uint32_t>(0));
+            }
+            return glib2::Builder::Finish(res);
+        });
+
 
     //
     // Prepare object properties which has information in other object and

@@ -81,6 +81,38 @@ class TunInterfaceException : public SessionManager::Proxy::Exception
 
 
 /**
+ *  Container object for connection details of the server a session
+ *  is connected to
+ */
+struct ConnectedToDetails
+{
+    /**
+     *  Construct and populate a new ConnectedToDetails object
+     *
+     * @param proto      std::string, protocol
+     * @param srv_ip     std::string, server IP address
+     * @param srv_port   uint32_t server port client is connected to
+     */
+    ConnectedToDetails(const std::string &proto,
+                       const std::string &srv_ip,
+                       uint32_t srv_port)
+        : protocol(proto), server_ip(srv_ip), server_port(srv_port)
+    {
+    }
+
+    /// Protocol the connection uses, udp/tcp, udp-dco/tcp-dco
+    const std::string protocol;
+
+    /// IP address of the VPN server the client is connected with
+    const std::string server_ip;
+
+    /// UDP/TCP port the client is connected to
+    const uint32_t server_port;
+};
+
+
+
+/**
  *  Client proxy implementation interacting with a
  *  SessionObject in the session manager over D-Bus
  */
@@ -536,6 +568,34 @@ class Session : public DBusRequiresQueueProxy
     std::string GetSessionName() const
     {
         return proxy->GetProperty<std::string>(target, "session_name");
+    }
+
+
+    /**
+     *  Retrieve information about the server this session is connected to
+     *
+     *  The collected information will be provided in a ConnectedToDetails
+     *  object.
+     *
+     * @return ConnectedToDetails
+     * @throws SessionManager::Proxy::Exception if information is accessible
+     */
+    ConnectedToDetails GetConnectedToInfo() const
+    {
+        try
+        {
+            GVariant *cd = proxy->GetPropertyGVariant(target, "connected_to");
+            glib2::Utils::checkParams(__func__, cd, "(ssu)");
+            ConnectedToDetails ret{
+                glib2::Value::Extract<std::string>(cd, 0),
+                glib2::Value::Extract<std::string>(cd, 1),
+                glib2::Value::Extract<uint32_t>(cd, 2)};
+            return ret;
+        }
+        catch (const DBus::Exception &)
+        {
+            throw SessionManager::Proxy::Exception("Connection details are not available");
+        }
     }
 
 
