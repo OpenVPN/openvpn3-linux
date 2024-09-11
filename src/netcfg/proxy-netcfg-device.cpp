@@ -144,6 +144,98 @@ void Device::SetDNSscope(const std::string &scope) const
 }
 
 
+bool Device::AddDnsOptions(LogSender::Ptr log, const openvpn::DnsOptions &dns) const
+{
+    try
+    {
+        // Parse --dns search-domains DOMAIN...
+        std::vector<std::string> search_domains{};
+        for (const auto &dns_srch : dns.search_domains)
+        {
+            search_domains.push_back(dns_srch.to_string());
+        }
+
+        bool split_dns = false;
+        std::vector<std::string> dns_servers{};
+        for (const auto &[idx, dnsopts] : dns.servers)
+        {
+            // Parse --dns search-domain DOMAIN...
+            if (dnsopts.domains.size() > 0)
+            {
+                for (const auto &dns_srch : dnsopts.domains)
+                {
+                    search_domains.push_back(dns_srch.to_string());
+                }
+                split_dns = true;
+            }
+
+            // Parse --dns server X dnssec SECURITY
+            if (openvpn::DnsServer::Security::Yes == dnsopts.dnssec)
+            {
+                log->LogWarn("DNS resolver setup: Enforcing DNSSEC is not "
+                             "implemented. Allowing non-DNSSEC responses.");
+            }
+
+            // Parse --dns server X transport TRANSSPORT
+            switch (dnsopts.transport)
+            {
+            case openvpn::DnsServer::Transport::Plain:
+            case openvpn::DnsServer::Transport::Unset:
+                // These transports are supported
+                break;
+
+            default:
+                {
+                    log->LogWarn("DNS resolver setup: DNS transport "
+                                 + dnsopts.transport_string(dnsopts.transport)
+                                 + " is not implemented.");
+                    log->Debug("Ignoring this DNS resolver setup: " + dnsopts.to_string());
+                    continue;
+                }
+            }
+
+            // Parse --dns server X address RESOLVER_ADDR...
+            for (const auto &dns_addr : dnsopts.addresses)
+            {
+                std::string addr = dns_addr.address.to_string();
+                if ("UNSPEC" == addr)
+                {
+                    log->LogError("DNS resolver setup: "
+                                  "Ignoring incorrect DNS server address: "
+                                  + dns_addr.to_string());
+                    continue;
+                }
+
+                if (dns_addr.port != 0 && dns_addr.port != 53)
+                {
+                    log->LogWarn("DNS resolver setup: "
+                                 "DNS server port not supported, ignoring "
+                                 + dns_addr.to_string());
+                    continue;
+                }
+                dns_servers.push_back(addr);
+            }
+        }
+
+        // Send the parsed DNS resolver settings to the netcfg service
+        AddDNSSearch(search_domains);
+        AddDNS(dns_servers);
+        if (split_dns)
+        {
+            log->LogInfo("Changing DNS scope to 'tunnel'");
+            SetDNSscope("tunnel");
+        }
+        return true;
+    }
+    catch (const std::exception &excp)
+    {
+        log->LogError("Failed to parse --dns options: "
+                      + std::string(excp.what()));
+        return false;
+    }
+}
+
+
 void Device::AddDNS(const std::vector<std::string> &server_list) const
 {
     GVariant *list = glib2::Value::CreateTupleWrapped<std::string>(server_list);

@@ -27,6 +27,10 @@
 #include <gdbuspp/object/path.hpp>
 #include <gdbuspp/proxy.hpp>
 
+#include <openvpn/client/dns.hpp>
+
+#include "log/dbus-log.hpp"
+
 #ifdef ENABLE_OVPNDCO
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -198,6 +202,22 @@ class Device
      */
     void SetDNSscope(const std::string &scope) const;
 
+
+    /**
+     *  Processes the parsed --dns options in the configuration profile
+     *
+     *  This is an alternative to calling the AddDNS(), AddDNSSearch()
+     *  and SetDNSscope() methods.
+     *
+     *  This method is normally called by the tun_builder_add_dns_options()
+     *  method
+     *
+     * @param log    LogSender::Ptr where log events will be sent
+     * @param dns    openvpn::DnsOptions object with the DNS resolver setup
+     *
+     * @return true on success, otherwise false
+     */
+    bool AddDnsOptions(LogSender::Ptr log, const openvpn::DnsOptions &dns) const;
 
     /**
      *  Takes a list of DNS server IP addresses to enlist as
