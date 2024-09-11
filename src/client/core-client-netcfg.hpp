@@ -20,6 +20,10 @@
 
 #pragma once
 
+#include "build-config.h"
+
+#include <openvpn/client/dns.hpp>
+
 #include "netcfg/proxy-netcfg-device.hpp"
 #include "netcfg/proxy-netcfg-mgr.hpp"
 #include "backend-signals.hpp"
@@ -316,6 +320,12 @@ class NetCfgTunBuilder : public T
             signals->LogError(msg.str());
             return false;
         }
+    }
+
+
+    bool tun_builder_add_dns_options(const openvpn::DnsOptions &dns) override
+    {
+        return device->AddDnsOptions(signals, dns);
     }
 
 
