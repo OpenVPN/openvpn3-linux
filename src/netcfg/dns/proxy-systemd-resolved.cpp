@@ -247,6 +247,42 @@ bool Link::SetDefaultRoute(const bool route)
 }
 
 
+std::string Link::GetDNSSEC() const
+{
+    try
+    {
+        return proxy->GetProperty<std::string>(tgt_link, "DNSSEC");
+    }
+    catch (const DBus::Exception &excp)
+    {
+        throw Exception("Could not retrieve DNSSEC mode: "
+                        + std::string(excp.GetRawError()));
+    }
+}
+
+
+void Link::SetDNSSEC(const std::string &mode) const
+{
+    if (mode != "yes" && mode != "no" && mode != "allow-downgrade")
+    {
+        throw Exception("Invalid DNSSEC mode requested: " + mode);
+    }
+
+    try
+    {
+        GVariant *r = proxy->Call(tgt_link,
+                                  "SetDNSSEC",
+                                  glib2::Value::CreateTupleWrapped(mode));
+        g_variant_unref(r);
+    }
+    catch (const DBus::Proxy::Exception &excp)
+    {
+        throw Exception("Could not set the DNSSEC mode: "
+                        + std::string(excp.GetRawError()));
+    }
+}
+
+
 void Link::Revert() const
 {
     GVariant *r = proxy->Call(tgt_link, "Revert");

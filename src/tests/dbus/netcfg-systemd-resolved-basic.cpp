@@ -86,6 +86,15 @@ void print_details(resolved::Link::Ptr link)
                   << " routing: " << (dom.routing ? "true" : "false")
                   << std::endl;
     }
+
+    try
+    {
+        std::cout << "DNSSEC mode: " << link->GetDNSSEC() << std::endl;
+    }
+    catch (const DBus::Exception &excp)
+    {
+        std::cout << "** ERROR **  " << excp.what() << std::endl;
+    }
 }
 
 
@@ -110,6 +119,7 @@ int program(ParsedArgs::Ptr args)
                                         "add-search",
                                         "reset-search",
                                         "set-default-route",
+                                        "set-dnssec",
                                         "revert"};
     bool mods = !args->Present(mod_ops, true).empty();
     if (mods)
@@ -170,6 +180,11 @@ int program(ParsedArgs::Ptr args)
         };
     }
 
+    if (args->Present("set-dnssec"))
+    {
+        link->SetDNSSEC(args->GetValue("set-dnssec", 0));
+    }
+
     if (args->Present("revert"))
     {
         link->Revert();
@@ -201,6 +216,7 @@ int main(int argc, char **argv)
                   "Remove all DNS search domains for this device");
     cmd.AddOption("search-routing", 0, "Sets the routing flag for the SEARCH-DOMAIN being added");
     cmd.AddOption("set-default-route", "BOOL", true, "Changes the DefaultRoute flag for the interface");
+    cmd.AddOption("set-dnssec", "MODE", true, "Set DNSSEC mode for the device");
     cmd.AddOption("revert", 0, "Revert all DNS settings on the interface to systemd-resovled defaults");
 
     try

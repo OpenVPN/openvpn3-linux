@@ -183,6 +183,24 @@ class Link
      */
     bool SetDefaultRoute(const bool route);
 
+    /**
+     *  Retrieve the DNSSEC mode for the interface
+     *
+     * @return std::string
+     */
+    std::string GetDNSSEC() const;
+
+    /**
+     *  Set the DNSSEC mode for the interface.
+     *
+     *  Valid modes are:
+     *   - allow-downgrade  -  Opportunistic DNSSEC validation
+     *   - yes              -  Enforce DNSSEC validation
+     *   - no               -  Disable DNSSEC validation
+     *
+     * @param mode   std::string of the DNSSEC mode
+     */
+    void SetDNSSEC(const std::string &mode) const;
 
     /**
      *  Revert the DNS interface settings to the interface defaults, basically
