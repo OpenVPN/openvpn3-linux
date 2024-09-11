@@ -65,7 +65,7 @@ Device::Device(DBus::Connection::Ptr dbuscon_, const DBus::Object::Path &devpath
 }
 
 
-void Device::SetRemoteAddress(const std::string &remote, bool ipv6)
+void Device::SetRemoteAddress(const std::string &remote, bool ipv6) const
 {
     GVariant *r = proxy->Call(prxtgt,
                               "SetRemoteAddress",
@@ -78,7 +78,7 @@ void Device::SetRemoteAddress(const std::string &remote, bool ipv6)
 
 
 bool Device::AddBypassRoute(const std::string &addr,
-                            bool ipv6)
+                            bool ipv6) const
 {
     GVariant *r = proxy->Call(prxtgt,
                               "AddBypassRoute",
@@ -95,7 +95,7 @@ bool Device::AddBypassRoute(const std::string &addr,
 void Device::AddIPAddress(const std::string &ip_address,
                           const unsigned int prefix,
                           const std::string &gateway,
-                          bool ipv6)
+                          bool ipv6) const
 {
     GVariant *r = proxy->Call(prxtgt,
                               "AddIPAddress",
@@ -111,7 +111,7 @@ void Device::AddIPAddress(const std::string &ip_address,
 }
 
 
-void Device::AddNetworks(const std::vector<Network> &networks)
+void Device::AddNetworks(const std::vector<Network> &networks) const
 {
     GVariantBuilder *bld = glib2::Builder::Create("a(subb)");
     for (const auto &net : networks)
@@ -144,7 +144,7 @@ void Device::SetDNSscope(const std::string &scope) const
 }
 
 
-void Device::AddDNS(const std::vector<std::string> &server_list)
+void Device::AddDNS(const std::vector<std::string> &server_list) const
 {
     GVariant *list = glib2::Value::CreateTupleWrapped<std::string>(server_list);
     GVariant *res = proxy->Call(prxtgt, "AddDNS", list);
@@ -155,7 +155,7 @@ void Device::AddDNS(const std::vector<std::string> &server_list)
 }
 
 
-void Device::RemoveDNS(const std::vector<std::string> &server_list)
+void Device::RemoveDNS(const std::vector<std::string> &server_list) const
 {
     GVariant *list = glib2::Value::CreateTupleWrapped<std::string>(server_list);
     GVariant *res = proxy->Call(prxtgt, "RemoveDNS", list);
@@ -166,7 +166,7 @@ void Device::RemoveDNS(const std::vector<std::string> &server_list)
 }
 
 
-void Device::AddDNSSearch(const std::vector<std::string> &domains)
+void Device::AddDNSSearch(const std::vector<std::string> &domains) const
 {
     GVariant *list = glib2::Value::CreateTupleWrapped<std::string>(domains);
     GVariant *res = proxy->Call(prxtgt, "AddDNSSearch", list);
@@ -177,7 +177,7 @@ void Device::AddDNSSearch(const std::vector<std::string> &domains)
 }
 
 
-void Device::RemoveDNSSearch(const std::vector<std::string> &domains)
+void Device::RemoveDNSSearch(const std::vector<std::string> &domains) const
 {
     GVariant *list = glib2::Value::CreateTupleWrapped<std::string>(domains);
     GVariant *res = proxy->Call(prxtgt, "RemoveDNSSearch", list);
@@ -189,7 +189,7 @@ void Device::RemoveDNSSearch(const std::vector<std::string> &domains)
 
 
 #ifdef ENABLE_OVPNDCO
-DCO *Device::EnableDCO(const std::string &dev_name)
+DCO *Device::EnableDCO(const std::string &dev_name) const
 {
     GVariant *res = proxy->Call(prxtgt,
                                 "EnableDCO",
@@ -203,7 +203,7 @@ DCO *Device::EnableDCO(const std::string &dev_name)
 }
 
 
-void Device::EstablishDCO()
+void Device::EstablishDCO() const
 {
     // same as Device::Establish() but without return value
     GVariant *res = proxy->Call(prxtgt, "Establish");
@@ -215,7 +215,7 @@ void Device::EstablishDCO()
 #endif // ENABLE_OVPNDCO
 
 
-int Device::Establish()
+int Device::Establish() const
 {
     int fd = -1;
     GVariant *res = proxy->GetFD(fd, prxtgt, "Establish", nullptr);
@@ -227,7 +227,7 @@ int Device::Establish()
 }
 
 
-void Device::Disable()
+void Device::Disable() const
 {
     GVariant *res = proxy->Call(prxtgt, "Disable");
     if (res)
@@ -237,7 +237,7 @@ void Device::Disable()
 }
 
 
-void Device::Destroy()
+void Device::Destroy() const
 {
     GVariant *res = proxy->Call(prxtgt, "Destroy");
     if (res)
@@ -247,37 +247,37 @@ void Device::Destroy()
 }
 
 
-unsigned int Device::GetLogLevel()
+unsigned int Device::GetLogLevel() const
 {
     return proxy->GetProperty<uint32_t>(prxtgt, "log_level");
 }
 
 
-void Device::SetLogLevel(unsigned int lvl)
+void Device::SetLogLevel(unsigned int lvl) const
 {
     proxy->SetProperty(prxtgt, "log_level", lvl);
 }
 
 
-void Device::SetLayer(unsigned int layer)
+void Device::SetLayer(unsigned int layer) const
 {
     proxy->SetProperty(prxtgt, "layer", layer);
 }
 
 
-void Device::SetMtu(const uint16_t mtu)
+void Device::SetMtu(const uint16_t mtu) const
 {
     proxy->SetProperty(prxtgt, "mtu", mtu);
 }
 
 
-uid_t Device::GetOwner()
+uid_t Device::GetOwner() const
 {
     return proxy->GetProperty<uid_t>(prxtgt, "owner");
 }
 
 
-void Device::SetRerouteGw(bool ipv6, bool value)
+void Device::SetRerouteGw(bool ipv6, bool value) const
 {
     if (ipv6)
     {
@@ -290,7 +290,7 @@ void Device::SetRerouteGw(bool ipv6, bool value)
 }
 
 
-std::vector<uid_t> Device::GetACL()
+std::vector<uid_t> Device::GetACL() const
 {
     std::vector<uid_t> ret = proxy->GetPropertyArray<uid_t>(prxtgt, "acl");
     return ret;
@@ -320,7 +320,7 @@ bool Device::GetActive() const
 }
 
 
-std::vector<std::string> Device::GetIPv4Addresses()
+std::vector<std::string> Device::GetIPv4Addresses() const
 {
     // FIXME:
     std::vector<std::string> ret;
@@ -328,7 +328,7 @@ std::vector<std::string> Device::GetIPv4Addresses()
 }
 
 
-std::vector<std::string> Device::GetIPv4Routes()
+std::vector<std::string> Device::GetIPv4Routes() const
 {
     // FIXME:
     std::vector<std::string> ret;
@@ -336,7 +336,7 @@ std::vector<std::string> Device::GetIPv4Routes()
 }
 
 
-std::vector<std::string> Device::GetIPv6Addresses()
+std::vector<std::string> Device::GetIPv6Addresses() const
 {
     // FIXME:
     std::vector<std::string> ret;
@@ -344,7 +344,7 @@ std::vector<std::string> Device::GetIPv6Addresses()
 }
 
 
-std::vector<std::string> Device::GetIPv6Routes()
+std::vector<std::string> Device::GetIPv6Routes() const
 {
     // FIXME:
     std::vector<std::string> ret;
@@ -352,7 +352,7 @@ std::vector<std::string> Device::GetIPv6Routes()
 }
 
 
-std::vector<std::string> Device::GetDNS()
+std::vector<std::string> Device::GetDNS() const
 {
     // FIXME:
     std::vector<std::string> ret;
@@ -360,7 +360,7 @@ std::vector<std::string> Device::GetDNS()
 }
 
 
-std::vector<std::string> Device::GetDNSSearch()
+std::vector<std::string> Device::GetDNSSearch() const
 {
     // FIXME:
     std::vector<std::string> ret;
@@ -394,7 +394,7 @@ void DCO::NewPeer(unsigned int peer_id,
                   const sockaddr *sa,
                   unsigned int salen,
                   const IPv4::Addr &vpn4,
-                  const IPv6::Addr &vpn6)
+                  const IPv6::Addr &vpn6) const
 {
     auto sa_str = base64->encode(sa, salen);
 
@@ -410,7 +410,8 @@ void DCO::NewPeer(unsigned int peer_id,
 }
 
 
-void DCO::NewKey(unsigned int key_slot, const KoRekey::KeyConfig *kc_arg)
+void DCO::NewKey(unsigned int key_slot,
+                 const KoRekey::KeyConfig *kc_arg) const
 {
     DcoKeyConfig kc;
 
@@ -418,7 +419,8 @@ void DCO::NewKey(unsigned int key_slot, const KoRekey::KeyConfig *kc_arg)
     kc.set_remote_peer_id(kc_arg->remote_peer_id);
     kc.set_cipher_alg(kc_arg->cipher_alg);
 
-    auto copyKeyDirection = [](const KoRekey::KeyDirection &src, DcoKeyConfig_KeyDirection *dst)
+    auto copyKeyDirection = [](const KoRekey::KeyDirection &src,
+                               DcoKeyConfig_KeyDirection *dst)
     {
         dst->set_cipher_key(src.cipher_key, src.cipher_key_size);
         dst->set_nonce_tail(src.nonce_tail, sizeof(src.nonce_tail));
@@ -436,7 +438,7 @@ void DCO::NewKey(unsigned int key_slot, const KoRekey::KeyConfig *kc_arg)
 }
 
 
-void DCO::SwapKeys(unsigned int peer_id)
+void DCO::SwapKeys(unsigned int peer_id) const
 {
     GVariant *res = proxy->Call(dcotgt,
                                 "SwapKeys",
@@ -448,7 +450,9 @@ void DCO::SwapKeys(unsigned int peer_id)
 }
 
 
-void DCO::SetPeer(unsigned int peer_id, int keepalive_interval, int keepalive_timeout)
+void DCO::SetPeer(unsigned int peer_id,
+                  int keepalive_interval,
+                  int keepalive_timeout) const
 {
     GVariant *res = proxy->Call(dcotgt,
                                 "SetPeer",

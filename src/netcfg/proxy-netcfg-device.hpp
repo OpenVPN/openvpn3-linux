@@ -70,7 +70,7 @@ class DCO
                  const struct sockaddr *sa,
                  unsigned int salen,
                  const openvpn::IPv4::Addr &vpn4,
-                 const openvpn::IPv6::Addr &vpn6);
+                 const openvpn::IPv6::Addr &vpn6) const;
 
 
     /**
@@ -82,7 +82,8 @@ class DCO
      *                  cipher algorithm, cipher key size, nonces (for gcm),
      *                  hmac algorithm, hmacs and hmac key size (for cbc)
      */
-    void NewKey(unsigned int key_slot, const openvpn::KoRekey::KeyConfig *kc);
+    void NewKey(unsigned int key_slot,
+                const openvpn::KoRekey::KeyConfig *kc) const;
 
 
     /**
@@ -90,7 +91,7 @@ class DCO
      *
      * @param peer_id ID of the peer to swap keys for
      */
-    void SwapKeys(unsigned int peer_id);
+    void SwapKeys(unsigned int peer_id) const;
 
 
     /**
@@ -100,7 +101,9 @@ class DCO
      * @param keepalive_interval keepalive interval
      * @param keepalive_timeout  keepalive timeout
      */
-    void SetPeer(unsigned int peer_id, int keepalive_interval, int keepalive_timeout);
+    void SetPeer(unsigned int peer_id,
+                 int keepalive_interval,
+                 int keepalive_timeout) const;
 
   private:
     DBus::Proxy::Client::Ptr proxy = nullptr;
@@ -129,6 +132,7 @@ class Network
 // FIXME: Migration hack - netcfg-device.hpp need refactoring
 using NetCfgDeviceType = unsigned int;
 
+
 /**
  *   Class replicating a specific D-Bus network device object
  */
@@ -155,7 +159,7 @@ class Device
      * @param ipv6 Is this Address an IPv6 address
      * @return true if success
      */
-    bool AddBypassRoute(const std::string &addr, bool ipv6);
+    bool AddBypassRoute(const std::string &addr, bool ipv6) const;
 
 
     /**
@@ -169,7 +173,7 @@ class Device
     void AddIPAddress(const std::string &ip_address,
                       unsigned int prefix,
                       const std::string &gateway,
-                      bool ipv6);
+                      bool ipv6) const;
 
 
     /**
@@ -179,9 +183,19 @@ class Device
      * @param routes
      * @param gateway
      */
-    void AddNetworks(const std::vector<Network> &networks);
+    void AddNetworks(const std::vector<Network> &networks) const;
 
-    // FIXME: docs
+
+    /**
+     *  Changes the DNS query scope for the virtual interface
+     *
+     *  Valid values are:
+     *    - global  -  (default mode) will be used to query all domains
+     *    - tunnel  -  (split-dns) will only be used for lookup ups on the
+     *                 registered DNS search domains.
+     *
+     *  @param scope   std::string with the DNS resolver scope
+     */
     void SetDNSscope(const std::string &scope) const;
 
 
@@ -191,7 +205,7 @@ class Device
      *
      * @param server_list
      */
-    void AddDNS(const std::vector<std::string> &server_list);
+    void AddDNS(const std::vector<std::string> &server_list) const;
 
 
     /**
@@ -200,7 +214,7 @@ class Device
      *
      * @param server_list
      */
-    void RemoveDNS(const std::vector<std::string> &server_list);
+    void RemoveDNS(const std::vector<std::string> &server_list) const;
 
 
     /**
@@ -208,7 +222,7 @@ class Device
      *
      * @param domains
      */
-    void AddDNSSearch(const std::vector<std::string> &domains);
+    void AddDNSSearch(const std::vector<std::string> &domains) const;
 
 
     /**
@@ -216,7 +230,7 @@ class Device
      *
      * @param domains
      */
-    void RemoveDNSSearch(const std::vector<std::string> &domains);
+    void RemoveDNSSearch(const std::vector<std::string> &domains) const;
 
 
 #ifdef ENABLE_OVPNDCO
@@ -226,14 +240,14 @@ class Device
      * @param dev_name name of net device to create
      * @return DCO* DCO proxy object
      */
-    DCO *EnableDCO(const std::string &dev_name);
+    DCO *EnableDCO(const std::string &dev_name) const;
 
 
     /**
      * Applies configuration to DCO interface.
      *
      */
-    void EstablishDCO();
+    void EstablishDCO() const;
 #endif
 
 
@@ -247,7 +261,7 @@ class Device
      *
      *  @return Tun file descript or -1 on error
      */
-    int Establish();
+    int Establish() const;
 
 
     /**
@@ -257,13 +271,13 @@ class Device
      *  reverse any routes or DNS settings.  These settings can be
      *  activated again by calling the @Activate() method again.
      */
-    void Disable();
+    void Disable() const;
 
 
     /**
      *   Destroys and completely removes this virtual network interface.
      */
-    void Destroy();
+    void Destroy() const;
 
 
     /**
@@ -271,7 +285,7 @@ class Device
      *
      * @param mtu  unsigned int containing the new MTU value
      */
-    void SetMtu(const uint16_t mtu);
+    void SetMtu(const uint16_t mtu) const;
 
 
     /**
@@ -280,7 +294,7 @@ class Device
      * @param layer  unsigned int of the tunnel device layer type.
      *               Valid values are 2 (TAP) or 3 (TUN).
      */
-    void SetLayer(unsigned int layer);
+    void SetLayer(unsigned int layer) const;
 
 
     /**
@@ -289,18 +303,18 @@ class Device
      * @param ipv6 if ipv4 or ipv6 should be redirected
      * @param value if it should be enabled for this protocol
      */
-    void SetRerouteGw(bool ipv6, bool value);
+    void SetRerouteGw(bool ipv6, bool value) const;
 
 
     /*
      *  Generic functions for processing various properties
      */
-    unsigned int GetLogLevel();
-    void SetLogLevel(unsigned int lvl);
+    unsigned int GetLogLevel() const;
+    void SetLogLevel(unsigned int lvl) const;
 
 
-    uid_t GetOwner();
-    std::vector<uid_t> GetACL();
+    uid_t GetOwner() const;
+    std::vector<uid_t> GetACL() const;
 
 
     NetCfgDeviceType GetDeviceType() const;
@@ -308,15 +322,15 @@ class Device
     const DBus::Object::Path GetDevicePath() const;
     bool GetActive() const;
 
-    std::vector<std::string> GetIPv4Addresses();
-    std::vector<std::string> GetIPv4Routes();
-    std::vector<std::string> GetIPv6Addresses();
-    std::vector<std::string> GetIPv6Routes();
+    std::vector<std::string> GetIPv4Addresses() const;
+    std::vector<std::string> GetIPv4Routes() const;
+    std::vector<std::string> GetIPv6Addresses() const;
+    std::vector<std::string> GetIPv6Routes() const;
 
-    std::vector<std::string> GetDNS();
-    std::vector<std::string> GetDNSSearch();
+    std::vector<std::string> GetDNS() const;
+    std::vector<std::string> GetDNSSearch() const;
 
-    void SetRemoteAddress(const std::string &remote, bool ipv6);
+    void SetRemoteAddress(const std::string &remote, bool ipv6) const;
 
 
   private:
