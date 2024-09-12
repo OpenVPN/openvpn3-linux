@@ -175,6 +175,57 @@ std::vector<std::string> ResolverSettings::GetSearchDomains(bool removable) cons
 }
 
 
+
+void ResolverSettings::SetDNSSEC(const openvpn::DnsServer::Security &mode)
+{
+    switch (mode)
+    {
+    case openvpn::DnsServer::Security::No:
+    case openvpn::DnsServer::Security::Yes:
+    case openvpn::DnsServer::Security::Optional:
+    case openvpn::DnsServer::Security::Unset:
+        dnssec_mode = mode;
+        break;
+    default:
+        throw NetCfgException("[SetDNSSEC] Invalid DNSSEC value");
+    }
+}
+
+
+openvpn::DnsServer::Security ResolverSettings::GetDNSSEC() const
+{
+    switch (dnssec_mode)
+    {
+    case openvpn::DnsServer::Security::No:
+    case openvpn::DnsServer::Security::Yes:
+    case openvpn::DnsServer::Security::Optional:
+    case openvpn::DnsServer::Security::Unset:
+        return dnssec_mode;
+    default:
+        throw NetCfgException("[GetDNSSEC] Invalid DNSSEC value");
+    }
+}
+
+
+std::string ResolverSettings::GetDNSSEC_string() const
+{
+    switch (dnssec_mode)
+    {
+    case openvpn::DnsServer::Security::No:
+        return "no";
+    case openvpn::DnsServer::Security::Yes:
+        return "yes";
+    case openvpn::DnsServer::Security::Optional:
+        return "optional";
+    case openvpn::DnsServer::Security::Unset:
+        return "unset";
+    default:
+        throw NetCfgException("[GetDNSSEC_string] Invalid DNSSEC value");
+    }
+}
+
+
+
 const std::string ResolverSettings::SetDNSScope(GVariant *params)
 {
     std::string params_type = glib2::DataType::Extract(params);
@@ -243,5 +294,35 @@ void ResolverSettings::AddSearchDomains(GVariant *params)
         }
     }
 }
+
+
+openvpn::DnsServer::Security ResolverSettings::SetDNSSEC(GVariant *params)
+{
+    std::string params_type = glib2::DataType::Extract(params);
+    if ("(s)" != params_type)
+    {
+        throw NetCfgException("[SetDNSSEC] Invalid D-Bus data type");
+    }
+
+    auto mode = glib2::Value::Extract<std::string>(params, 0);
+    if ("yes" == mode)
+    {
+        dnssec_mode = openvpn::DnsServer::Security::Yes;
+    }
+    else if ("no" == mode)
+    {
+        dnssec_mode = openvpn::DnsServer::Security::No;
+    }
+    else if ("optional" == mode)
+    {
+        dnssec_mode = openvpn::DnsServer::Security::Optional;
+    }
+    else
+    {
+        throw NetCfgException("[SetDNSSEC] Invalid DNSSEC mode: '" + mode + "'");
+    }
+    return dnssec_mode;
+}
+
 } // namespace DNS
 } // namespace NetCfg

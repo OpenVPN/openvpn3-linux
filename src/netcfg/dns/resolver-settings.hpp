@@ -15,9 +15,15 @@
  */
 #pragma once
 
+#include "build-config.h"
+
 #include <memory>
 #include <sstream>
 #include <vector>
+
+#include "log/core-dbus-logger.hpp"
+#include <openvpn/client/dns.hpp>
+
 
 namespace NetCfg {
 namespace DNS {
@@ -210,7 +216,6 @@ class ResolverSettings
      */
     void ClearSearchDomains();
 
-
     /**
      *  Retrieve the current list of DNS search domains
      *
@@ -225,6 +230,56 @@ class ResolverSettings
      */
     std::vector<std::string> GetSearchDomains(bool removable = false) const noexcept;
 
+    /**
+     *  Set the DNSSEC mode for the interface
+     *
+     *  Supported modes:
+     *
+     *   - DnsServer::Security::No        -  DNSSEC is not enabled
+     *   - DnsServer::Security::Yes       -  DNSSEC is enabled and mandatory
+     *   - DnsServer::Security::Optional  -  Opportunistic DNSSEC enabled
+     *   - DnsServer::Security::Unset     -  DNSSEC is not configured, system
+     *                                       default settings will be used.
+     *
+     *  They are defined in openvpn3-core/openvpn/client/dns.hpp
+     *  in the openvpn namespace
+     *
+     * @param mode  openvpn::DnsServer::Security
+     */
+    void SetDNSSEC(const openvpn::DnsServer::Security &mode);
+
+    /**
+     *  Retrieve the DNSSEC mode for the interface
+     *
+     *  Supported return values:
+     *
+     *   - DnsServer::Security::No        -  DNSSEC is not enabled
+     *   - DnsServer::Security::Yes       -  DNSSEC is enabled and mandatory
+     *   - DnsServer::Security::Optional  -  Opportunistic DNSSEC enabled
+     *   - DnsServer::Security::Unset     -  DNSSEC is not configured, system
+     *                                       default settings will be used.
+     *
+     *  They are defined in openvpn3-core/openvpn/client/dns.hpp
+     *  in the openvpn namespace
+     *
+     * @return openvpn::DnsServer::Security
+     */
+    openvpn::DnsServer::Security GetDNSSEC() const;
+
+    /**
+     *  Retrieve the DNSSEC mode for the interfacse as std::string
+     *
+     *  Expected return values should be one of these:
+     *
+     *   - no        -  DNSSEC is not enabled
+     *   - yes       -  DNSSEC is enabled and mandatory
+     *   - optional  -  Opportunistic DNSSEC enabled
+     *   - unset     -  DNSSEC is not configured, system default settings
+     *                  will be used.
+     *
+     * @return std::string
+     */
+    std::string GetDNSSEC_string() const;
 
     /**
      *  Makes it possible to write ResolverSettings in a readable format
@@ -311,6 +366,23 @@ class ResolverSettings
      *                array of elements to process
      */
     void AddSearchDomains(GVariant *params);
+
+    /**
+     *  Set the DNSSEC mode for the interface provided as a string via a
+     *  a GVariant container of the (s) type.
+     *
+     *  Supported values:
+     *
+     *   - "no"        -  DNSSEC is not enabled
+     *   - "yes"       -  DNSSEC is enabled and mandatory
+     *   - "optional"  -  Opportunistic DNSSEC enabled
+     *
+     * @param params  GVariant object containing a (s) based string containing
+     *                the DNSSEC mode
+     *
+     * @return openvpn::DnsServer::Security of the parsed and set DNSSEC mode
+     */
+    openvpn::DnsServer::Security SetDNSSEC(GVariant *params);
 #endif
 
 
@@ -322,6 +394,7 @@ class ResolverSettings
     Scope scope = DNS::Scope::GLOBAL;
     std::vector<std::string> name_servers;
     std::vector<std::string> search_domains;
+    openvpn::DnsServer::Security dnssec_mode = openvpn::DnsServer::Security::Unset;
 
     ResolverSettings(const ssize_t idx);
 };

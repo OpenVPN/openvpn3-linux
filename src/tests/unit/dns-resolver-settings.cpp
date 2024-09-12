@@ -21,8 +21,11 @@
 #include <gtest/gtest.h>
 
 #include "netcfg/dns/resolver-settings.hpp"
+#include "netcfg/netcfg-exception.hpp"
 
 using namespace NetCfg::DNS;
+
+namespace unittest {
 
 TEST(DNSResolverSettings, init)
 {
@@ -350,3 +353,71 @@ TEST(DNSResolverSettings, GVariantTests_DuplicatedEntries)
     r1->AddSearchDomains(d);
     ASSERT_EQ(r1->GetSearchDomains().size(), 2);
 }
+
+
+TEST(DNSResolverSettings, DNSSEC_tests)
+{
+    auto rs = ResolverSettings::Create(14);
+    rs->AddNameServer("9.9.9.9");
+
+    EXPECT_EQ(openvpn::DnsServer::Security::Unset, rs->GetDNSSEC());
+    EXPECT_STREQ("unset", rs->GetDNSSEC_string().c_str());
+
+    rs->SetDNSSEC(openvpn::DnsServer::Security::Yes);
+    EXPECT_EQ(openvpn::DnsServer::Security::Yes, rs->GetDNSSEC());
+    EXPECT_STREQ("yes", rs->GetDNSSEC_string().c_str());
+
+    rs->SetDNSSEC(openvpn::DnsServer::Security::No);
+    EXPECT_EQ(openvpn::DnsServer::Security::No, rs->GetDNSSEC());
+    EXPECT_STREQ("no", rs->GetDNSSEC_string().c_str());
+
+    rs->SetDNSSEC(openvpn::DnsServer::Security::Optional);
+    EXPECT_EQ(openvpn::DnsServer::Security::Optional, rs->GetDNSSEC());
+    EXPECT_STREQ("optional", rs->GetDNSSEC_string().c_str());
+
+    rs->SetDNSSEC(openvpn::DnsServer::Security::Unset);
+    EXPECT_EQ(openvpn::DnsServer::Security::Unset, rs->GetDNSSEC());
+    EXPECT_STREQ("unset", rs->GetDNSSEC_string().c_str());
+
+    EXPECT_THROW(rs->SetDNSSEC((openvpn::DnsServer::Security)999),
+                 NetCfgException);
+}
+
+
+TEST(DNSResolverSettings, DNSSEC_tests_gvariant)
+{
+    auto rs = ResolverSettings::Create(15);
+    rs->AddNameServer("9.9.9.9");
+
+    std::string dnssec_mode = "yes";
+    GVariant *d = glib2::Value::CreateTupleWrapped(dnssec_mode);
+    rs->SetDNSSEC(d);
+    g_variant_unref(d);
+    EXPECT_EQ(openvpn::DnsServer::Security::Yes, rs->GetDNSSEC());
+    EXPECT_STREQ("yes", rs->GetDNSSEC_string().c_str());
+
+    dnssec_mode = "no";
+    d = glib2::Value::CreateTupleWrapped(dnssec_mode);
+    rs->SetDNSSEC(d);
+    g_variant_unref(d);
+    EXPECT_EQ(openvpn::DnsServer::Security::No, rs->GetDNSSEC());
+    EXPECT_STREQ("no", rs->GetDNSSEC_string().c_str());
+
+    dnssec_mode = "optional";
+    d = glib2::Value::CreateTupleWrapped(dnssec_mode);
+    rs->SetDNSSEC(d);
+    g_variant_unref(d);
+    EXPECT_EQ(openvpn::DnsServer::Security::Optional, rs->GetDNSSEC());
+    EXPECT_STREQ("optional", rs->GetDNSSEC_string().c_str());
+
+    dnssec_mode = "unset"; // Not supported value
+    d = glib2::Value::CreateTupleWrapped(dnssec_mode);
+    EXPECT_THROW(rs->SetDNSSEC(d), NetCfgException);
+    g_variant_unref(d);
+
+    // The failure above should not have changed the state
+    EXPECT_EQ(openvpn::DnsServer::Security::Optional, rs->GetDNSSEC());
+    EXPECT_STREQ("optional", rs->GetDNSSEC_string().c_str());
+}
+
+} // namespace unittest

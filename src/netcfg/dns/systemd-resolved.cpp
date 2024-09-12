@@ -95,6 +95,8 @@ void SystemdResolved::Apply(const ResolverSettings::Ptr settings)
             upd->search.push_back(SearchDomain(sd, false));
         }
 
+        upd->dnssec = settings->GetDNSSEC();
+
         if (settings->GetDNSScope() == DNS::Scope::GLOBAL)
         {
             upd->search.push_back(SearchDomain(".", true));
@@ -144,6 +146,36 @@ void SystemdResolved::Commit(NetCfgSignals::Ptr signal)
                                     "requests. Disabling calling this feature.");
                     feat_dns_default_route = false;
                 };
+
+                if (upd->dnssec != openvpn::DnsServer::Security::Unset)
+                {
+                    std::string mode;
+                    switch (upd->dnssec)
+                    {
+                    case openvpn::DnsServer::Security::Yes:
+                        mode = "yes";
+                        break;
+
+                    case openvpn::DnsServer::Security::No:
+                        mode = "no";
+                        break;
+
+                    case openvpn::DnsServer::Security::Optional:
+                        mode = "allow-downgrade";
+                        break;
+
+                    default:
+                        break;
+                    }
+
+                    if (!mode.empty())
+                    {
+                        upd->link->SetDNSSEC(mode);
+                        signal->LogVerb2("systemd-resolved: ["
+                                         + upd->link->GetPath()
+                                         + "] DNSSEC mode set to " + mode);
+                    }
+                }
 
                 for (const auto &srv : applied_servers)
                 {
