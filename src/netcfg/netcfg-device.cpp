@@ -134,6 +134,17 @@ NetCfgDevice::NetCfgDevice(DBus::Connection::Ptr dbuscon_,
                         : glib2::Value::CreateVector(std::vector<std::string>{}));
         });
 
+    AddPropertyBySpec(
+        "dnssec_mode",
+        glib2::DataType::DBus<std::string>(),
+        [&](const DBus::Object::Property::BySpec &prop) -> GVariant *
+        {
+            std::string mode = (dnsconfig
+                                    ? dnsconfig->GetDNSSEC_string()
+                                    : "");
+            return glib2::Value::Create(mode);
+        });
+
 
     auto args_add_ipaddr = AddMethod(
         "AddIPAddress",
@@ -185,6 +196,15 @@ NetCfgDevice::NetCfgDevice(DBus::Connection::Ptr dbuscon_,
             args->SetMethodReturn(nullptr);
         });
     args_add_dns_srch->AddInput("domains", "as");
+
+    auto args_set_dnssec = AddMethod(
+        "SetDNSSEC",
+        [this](DBus::Object::Method::Arguments::Ptr args)
+        {
+            this->method_set_dnssec(args->GetMethodParameters());
+            args->SetMethodReturn(nullptr);
+        });
+    args_set_dnssec->AddInput("mode", "s");
 
 #ifdef ENABLE_OVPNDCO
     auto args_enable_dco = AddMethod(
@@ -351,6 +371,19 @@ void NetCfgDevice::method_add_dns_search(GVariant *params)
 
     // Adds DNS search domains
     dnsconfig->AddSearchDomains(params);
+    modified = true;
+}
+
+
+void NetCfgDevice::method_set_dnssec(GVariant *params)
+{
+    if (!resolver || !dnsconfig)
+    {
+        signals->LogError("Failed setting DNSSEC mode: "
+                          "No DNS resolver configured");
+        return;
+    }
+    dnsconfig->SetDNSSEC(params);
     modified = true;
 }
 

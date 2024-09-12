@@ -208,6 +208,7 @@ interface net.openvpn.v3.netcfg {
       AddNetworks(in  a(subb) networks);
       AddDNS(in  as server_list);
       AddDNSSearch(in  as domains);
+      SetDNSSEC(in s mode);
       EnableDCO(in  s dev_name,
                 in  u proto,
                 out o dco_device_path);
@@ -229,6 +230,7 @@ interface net.openvpn.v3.netcfg {
       readonly b modified;
       readonly as dns_name_servers;
       readonly as dns_search_domains;
+      readonly s dnssec_mode;
       readonly s device_name;
       readwrite u layer;
       readwrite u mtu;
@@ -307,6 +309,26 @@ of DNS search to the network.
 | Direction | Name         | Type              | Description                                              |
 |-----------|--------------|-------------------|----------------------------------------------------------|
 | In        | domains      | array of strings  | An array of DNS domains                                  |
+
+
+### Method: `net.openvpn.v3.netcfg.SetDNSSEC`
+
+Changes the DNSSEC validation behavior for DNS queries done via the DNS server configured for this
+virtual interface.
+
+#### Arguments
+| Direction | Name         | Type              | Description                                              |
+|-----------|--------------|-------------------|----------------------------------------------------------|
+| In        | mode         | strings           | DNSSEC mode to use                                       |
+
+##### Valid `mode` values
+
+| value     | Description                                                                                 |
+|-----------|---------------------------------------------------------------------------------------------|
+|  yes      | DNSSEC validation is enabled and enforced                                                   |
+|  no       | DNSSEC validation is disabled                                                               |
+|  optional | Opportunistic DNSSEC validation. If available, DNSSEC validation will be used               |
+|  unset    | DNSSEC validation depends on the default host configuration (cannot be set, only read-value)|
 
 
 ### Method: `net.openvpn.v3.netcfg.EnableDCO`
@@ -400,6 +422,7 @@ not providing any details are not mentioned.
 | modified            | boolean          | Read-only  |                                                                                                                          |
 | dns_name_servers    | array(string)    | Read-only  | List of DNS name servers pushed by the VPN server                                                                        |
 | dns_search_domains  | array(string)    | Read-only  | List of DNS search domains pushed by the VPN server                                                                      |
+| dnssec_mode         | string           | Read-only  | Current DNSSEC mode.  See SetDNSSEC() method for details.
 | device_name         | string           | Read-only  | Virtual device name used by the session.  This may change if the interface needs to be completely reconfigured           |
 | layer               | unsigned integer | Read-write | OSI layer for the VPN to use, 3 for IP (tun device). Setting to 2 (tap device) is currently not implemented              |
 | mtu                 | unsigned integer | Read-write | Sets the MTU for the tun device. Default is 1500                                                                         |
