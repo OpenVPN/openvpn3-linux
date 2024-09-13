@@ -280,6 +280,60 @@ void Device::RemoveDNSSearch(const std::vector<std::string> &domains) const
 }
 
 
+void Device::SetDNSSEC(const openvpn::DnsServer::Security &mode) const
+{
+    std::string mode_str;
+    switch (mode)
+    {
+    case openvpn::DnsServer::Security::Yes:
+        mode_str = "yes";
+        break;
+
+    case openvpn::DnsServer::Security::No:
+        mode_str = "no";
+        break;
+
+    case openvpn::DnsServer::Security::Optional:
+        mode_str = "optional";
+        break;
+
+    default:
+        throw NetCfgProxyException("SetDNSSEC", "Invalid DNSSEC mode");
+    }
+
+    GVariant *res = proxy->Call(prxtgt,
+                                "SetDNSSEC",
+                                glib2::Value::CreateTupleWrapped(mode_str));
+    if (res)
+    {
+        g_variant_unref(res);
+    }
+}
+
+
+openvpn::DnsServer::Security Device::GetDNSSEC() const
+{
+    auto mode = proxy->GetProperty<std::string>(prxtgt, "dnssec_mode");
+    if ("yes" == mode)
+    {
+        return openvpn::DnsServer::Security::Yes;
+    }
+    else if ("no" == mode)
+    {
+        return openvpn::DnsServer::Security::No;
+    }
+    else if ("optional" == mode)
+    {
+        return openvpn::DnsServer::Security::Optional;
+    }
+    else if ("unset" == mode)
+    {
+        return openvpn::DnsServer::Security::Unset;
+    }
+    throw NetCfgProxyException("GetDNSSEC", "Invalid DNSSEC mode");
+}
+
+
 #ifdef ENABLE_OVPNDCO
 DCO *Device::EnableDCO(const std::string &dev_name) const
 {

@@ -252,6 +252,41 @@ class Device
      */
     void RemoveDNSSearch(const std::vector<std::string> &domains) const;
 
+    /**
+     *  Set the DNSSEC mode for the interface
+     *
+     *  Valid modes are:
+     *
+     *   - DnsServer::Security::No        -  DNSSEC is not enabled
+     *   - DnsServer::Security::Yes       -  DNSSEC is enabled and mandatory
+     *   - DnsServer::Security::Optional  -  Opportunistic DNSSEC enabled
+     *   - DnsServer::Security::Unset     -  DNSSEC is not configured, system
+     *                                       default settings will be used.
+     *
+     *  They are defined in openvpn3-core/openvpn/client/dns.hpp
+     *  in the openvpn namespace
+     *
+     * @param mode   openvpn::DnsServer::Security
+     */
+    void SetDNSSEC(const openvpn::DnsServer::Security &mode) const;
+
+    /**
+     *  Retrieve the DNSSEC mode for the interface
+     *
+     *  Valid modes are:
+     *
+     *   - DnsServer::Security::No        -  DNSSEC is not enabled
+     *   - DnsServer::Security::Yes       -  DNSSEC is enabled and mandatory
+     *   - DnsServer::Security::Optional  -  Opportunistic DNSSEC enabled
+     *   - DnsServer::Security::Unset     -  DNSSEC is not configured, system
+     *                                       default settings will be used.
+     *
+     *  They are defined in openvpn3-core/openvpn/client/dns.hpp
+     *  in the openvpn namespace
+     *
+     * @return openvpn::DnsServer::Security
+     */
+    openvpn::DnsServer::Security GetDNSSEC() const;
 
 #ifdef ENABLE_OVPNDCO
     /**
