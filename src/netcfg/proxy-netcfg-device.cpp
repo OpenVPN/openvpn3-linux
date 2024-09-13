@@ -170,10 +170,20 @@ bool Device::AddDnsOptions(LogSender::Ptr log, const openvpn::DnsOptions &dns) c
             }
 
             // Parse --dns server X dnssec SECURITY
-            if (openvpn::DnsServer::Security::Yes == dnsopts.dnssec)
+            if (openvpn::DnsServer::Security::Unset != dnsopts.dnssec)
             {
-                log->LogWarn("DNS resolver setup: Enforcing DNSSEC is not "
-                             "implemented. Allowing non-DNSSEC responses.");
+                try
+                {
+                    SetDNSSEC(dnsopts.dnssec);
+                    log->LogInfo("DNS resolver setup: DNSSEC set to "
+                                 + dnsopts.dnssec_string(dnsopts.dnssec));
+                }
+                catch (const DBus::Exception &excp)
+                {
+                    log->LogWarn("DNS resolver setup: "
+                                 "Could not set DNSSEC mode: "
+                                 + std::string(excp.GetRawError()));
+                }
             }
 
             // Parse --dns server X transport TRANSSPORT
