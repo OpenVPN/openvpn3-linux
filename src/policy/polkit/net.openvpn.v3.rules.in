@@ -18,6 +18,7 @@ polkit.addRule(function(action, subject) {
          action.id == "org.freedesktop.resolve1.set-domains" ||
          action.id == "org.freedesktop.resolve1.set-default-route" ||
          action.id == "org.freedesktop.resolve1.set-dnssec" ||
+         action.id == "org.freedesktop.resolve1.set-dns-over-tls" ||
          action.id == "org.freedesktop.resolve1.revert")
         && (subject.user == "@OPENVPN_USERNAME@"))
     {
