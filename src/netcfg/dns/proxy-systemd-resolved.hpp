@@ -203,6 +203,44 @@ class Link
     void SetDNSSEC(const std::string &mode) const;
 
     /**
+     *  Retrieve the DNS-over-TLS mode for the interface
+     *
+     *  The known values systemd-resolved uses (until version 252) are:
+     *
+     *  - yes            - All connections to the DNS server will be encrypted
+     *  - no             - The connection to the DNS server will be unencrypted
+     *  - opportunistic  - Connections to the server will be attempted to be
+     *                     encrypted, but will fallback to unencrypted
+     *
+     *  For details of these modes, see the DNSOverTLS= setting in the
+     *  resolved.conf(5) man page.
+     *
+     * @return std::string
+     */
+    std::string GetDNSOverTLS() const;
+
+    /**
+     *  Set the DNS-over-TLS mode for the interface
+     *
+     *  Valid mode values are:
+     *
+     *  - yes/true       - All connections to the DNS server will be encrypted
+     *  - no/false       - The connection to the DNS server will be unencrypted
+     *  - opportunistic  - Connections to the server will be attempted to be
+     *                     encrypted, but will fallback to unencrypted
+     *
+     *  Not all values are available in all version of systemd-resolved.
+     *  v245 is known to accept all, v239 can only use "no/false" or
+     *  "opportunistic".
+     *
+     *  For details of these modes, see the DNSOverTLS= setting in the
+     *  resolved.conf(5) man page.
+     *
+     * @param mode
+     */
+    void SetDNSOverTLS(const std::string &mode) const;
+
+    /**
      *  Revert the DNS interface settings to the interface defaults, basically
      *  undoing any DNS settings set prior
      */

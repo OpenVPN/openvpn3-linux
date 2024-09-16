@@ -283,6 +283,43 @@ void Link::SetDNSSEC(const std::string &mode) const
 }
 
 
+std::string Link::GetDNSOverTLS() const
+{
+    try
+    {
+        return proxy->GetProperty<std::string>(tgt_link, "DNSOverTLS");
+    }
+    catch (const DBus::Exception &excp)
+    {
+        throw Exception("Could not retrieve DNSOverTLS mode: "
+                        + std::string(excp.GetRawError()));
+    }
+}
+
+
+void Link::SetDNSOverTLS(const std::string &mode) const
+{
+    if (mode != "no" && mode != "false"
+        && mode != "yes" && mode != "true"
+        && mode != "opportunistic")
+    {
+        throw Exception("Invalid DNSOverTLS mode requested: " + mode);
+    }
+    try
+    {
+        GVariant *r = proxy->Call(tgt_link,
+                                  "SetDNSOverTLS",
+                                  glib2::Value::CreateTupleWrapped(mode));
+        g_variant_unref(r);
+    }
+    catch (const DBus::Proxy::Exception &excp)
+    {
+        throw Exception("Could not set the DNSOverTLS mode: "
+                        + std::string(excp.GetRawError()));
+    }
+}
+
+
 void Link::Revert() const
 {
     GVariant *r = proxy->Call(tgt_link, "Revert");

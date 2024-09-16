@@ -95,6 +95,15 @@ void print_details(resolved::Link::Ptr link)
     {
         std::cout << "** ERROR **  " << excp.what() << std::endl;
     }
+
+    try
+    {
+        std::cout << "DNSOverTLS mode: " << link->GetDNSOverTLS() << std::endl;
+    }
+    catch (const DBus::Exception &excp)
+    {
+        std::cout << "** ERROR **  " << excp.what() << std::endl;
+    }
 }
 
 
@@ -120,6 +129,7 @@ int program(ParsedArgs::Ptr args)
                                         "reset-search",
                                         "set-default-route",
                                         "set-dnssec",
+                                        "set-dnsovertls",
                                         "revert"};
     bool mods = !args->Present(mod_ops, true).empty();
     if (mods)
@@ -185,6 +195,11 @@ int program(ParsedArgs::Ptr args)
         link->SetDNSSEC(args->GetValue("set-dnssec", 0));
     }
 
+    if (args->Present("set-dnsovertls"))
+    {
+        link->SetDNSOverTLS(args->GetValue("set-dnsovertls", 0));
+    }
+
     if (args->Present("revert"))
     {
         link->Revert();
@@ -217,6 +232,7 @@ int main(int argc, char **argv)
     cmd.AddOption("search-routing", 0, "Sets the routing flag for the SEARCH-DOMAIN being added");
     cmd.AddOption("set-default-route", "BOOL", true, "Changes the DefaultRoute flag for the interface");
     cmd.AddOption("set-dnssec", "MODE", true, "Set DNSSEC mode for the device");
+    cmd.AddOption("set-dnsovertls", "MODE", true, "Set the DNSOverTLS mode for the device");
     cmd.AddOption("revert", 0, "Revert all DNS settings on the interface to systemd-resovled defaults");
 
     try
