@@ -187,19 +187,18 @@ bool Device::AddDnsOptions(LogSender::Ptr log, const openvpn::DnsOptions &dns) c
             }
 
             // Parse --dns server X transport TRANSSPORT
-            switch (dnsopts.transport)
+            if (openvpn::DnsServer::Transport::Unset != dnsopts.transport)
             {
-            case openvpn::DnsServer::Transport::Plain:
-            case openvpn::DnsServer::Transport::Unset:
-                // These transports are supported
-                break;
-
-            default:
+                try
                 {
-                    log->LogWarn("DNS resolver setup: DNS transport "
-                                 + dnsopts.transport_string(dnsopts.transport)
-                                 + " is not implemented.");
-                    log->Debug("Ignoring this DNS resolver setup: " + dnsopts.to_string());
+                    SetDNSTransport(dnsopts.transport);
+                }
+                catch (const DBus::Exception &excp)
+                {
+                    log->LogWarn("DNS resolver setup: Failed setting DNS transport "
+                                 + dnsopts.transport_string(dnsopts.transport));
+                    log->Debug("DNS transport setting error: "
+                               + std::string(excp.GetRawError()));
                     continue;
                 }
             }
