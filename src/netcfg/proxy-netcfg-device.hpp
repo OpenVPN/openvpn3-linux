@@ -288,6 +288,41 @@ class Device
      */
     openvpn::DnsServer::Security GetDNSSEC() const;
 
+    /**
+     *  Set the transport protocol the DNS resolver backend should
+     *  use when connecting to the DNS server
+     *
+     *  Valid modes are:
+     *
+     *  - DnsServer::Transport::Plain  -  Unencrypted (traditional port 53)
+     *  - DnsServer::Transport::TLS    -  DNS over TLS (encrypted)
+     *  - DnsServer::Transport::HTTPS  -  DNS over HTTPS
+     *  - DnsServer::Transport::Unset  -  Not set, use the default of the
+     *                                    backend resolver
+     *
+     *  NOTE:  Not all resolver backends will support this setting or all
+     *         of the alternatives.
+     *
+     * @param mode
+     */
+    void SetDNSTransport(const openvpn::DnsServer::Transport &mode) const;
+
+    /**
+     *  Get the transport protocol used when the DNS resolver connects
+     *  to the DNS server
+     *
+     *  Supported values are:
+     *
+     *  - DnsServer::Transport::Plain  -  Unencrypted (traditional port 53)
+     *  - DnsServer::Transport::TLS    -  DNS over TLS (encrypted)
+     *  - DnsServer::Transport::HTTPS  -  DNS over HTTPS
+     *  - DnsServer::Transport::Unset  -  Not set, use the default of the
+     *                                    backend resolver
+     *
+     * @return openvpn::DnsServer::Transport
+     */
+    openvpn::DnsServer::Transport GetDNSTransport() const;
+
 #ifdef ENABLE_OVPNDCO
     /**
      * Enables DCO functionality. This requires ovpn-dco kernel module.

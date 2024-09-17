@@ -344,6 +344,63 @@ openvpn::DnsServer::Security Device::GetDNSSEC() const
 }
 
 
+void Device::SetDNSTransport(const openvpn::DnsServer::Transport &mode) const
+{
+    std::string mode_str;
+    switch (mode)
+    {
+    case openvpn::DnsServer::Transport::Plain:
+        mode_str = "plain";
+        break;
+
+    case openvpn::DnsServer::Transport::TLS:
+        mode_str = "dot";
+        break;
+
+    case openvpn::DnsServer::Transport::HTTPS:
+        mode_str = "doh";
+        break;
+
+    case openvpn::DnsServer::Transport::Unset:
+        mode_str = "unset";
+        break;
+
+    default:
+        throw NetCfgProxyException("SetDNSTransport", "Invalid DNS transport mode");
+    }
+    GVariant *res = proxy->Call(prxtgt,
+                                "SetDNSTransport",
+                                glib2::Value::CreateTupleWrapped(mode_str));
+    if (res)
+    {
+        g_variant_unref(res);
+    }
+}
+
+
+openvpn::DnsServer::Transport Device::GetDNSTransport() const
+{
+    auto mode = proxy->GetProperty<std::string>(prxtgt, "dns_transport");
+    if ("plain" == mode)
+    {
+        return openvpn::DnsServer::Transport::Plain;
+    }
+    else if ("dot" == mode)
+    {
+        return openvpn::DnsServer::Transport::TLS;
+    }
+    else if ("doh" == mode)
+    {
+        return openvpn::DnsServer::Transport::HTTPS;
+    }
+    else if ("unset" == mode)
+    {
+        return openvpn::DnsServer::Transport::Unset;
+    }
+    throw NetCfgProxyException("GetDNSTransport", "Invalid DNS transport mode");
+}
+
+
 #ifdef ENABLE_OVPNDCO
 DCO *Device::EnableDCO(const std::string &dev_name) const
 {
