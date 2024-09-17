@@ -420,4 +420,74 @@ TEST(DNSResolverSettings, DNSSEC_tests_gvariant)
     EXPECT_STREQ("optional", rs->GetDNSSEC_string().c_str());
 }
 
+
+TEST(DNSResolverSettings, DNSTransport_tests)
+{
+    auto rs = ResolverSettings::Create(16);
+    rs->AddNameServer("9.9.9.9");
+
+    EXPECT_EQ(openvpn::DnsServer::Transport::Unset, rs->GetDNSTransport());
+    EXPECT_STREQ("unset", rs->GetDNSTransport_string().c_str());
+
+    rs->SetDNSTransport(openvpn::DnsServer::Transport::TLS);
+    EXPECT_EQ(openvpn::DnsServer::Transport::TLS, rs->GetDNSTransport());
+    EXPECT_STREQ("dot", rs->GetDNSTransport_string().c_str());
+
+    rs->SetDNSTransport(openvpn::DnsServer::Transport::HTTPS);
+    EXPECT_EQ(openvpn::DnsServer::Transport::HTTPS, rs->GetDNSTransport());
+    EXPECT_STREQ("doh", rs->GetDNSTransport_string().c_str());
+
+    rs->SetDNSTransport(openvpn::DnsServer::Transport::Plain);
+    EXPECT_EQ(openvpn::DnsServer::Transport::Plain, rs->GetDNSTransport());
+    EXPECT_STREQ("plain", rs->GetDNSTransport_string().c_str());
+
+    rs->SetDNSTransport(openvpn::DnsServer::Transport::Unset);
+    EXPECT_EQ(openvpn::DnsServer::Transport::Unset, rs->GetDNSTransport());
+    EXPECT_STREQ("unset", rs->GetDNSTransport_string().c_str());
+
+    EXPECT_THROW(rs->SetDNSTransport((openvpn::DnsServer::Transport)5353),
+                 NetCfgException);
+
+    // The failure above should not have changed the state
+    EXPECT_EQ(openvpn::DnsServer::Transport::Unset, rs->GetDNSTransport());
+    EXPECT_STREQ("unset", rs->GetDNSTransport_string().c_str());
+}
+
+
+TEST(DNSResolverSettings, DNSTransport_tests_gvariant)
+{
+    auto rs = ResolverSettings::Create(17);
+    rs->AddNameServer("9.9.9.9");
+
+    std::string transport = "plain";
+    GVariant *d = glib2::Value::CreateTupleWrapped(transport);
+    rs->SetDNSTransport(d);
+    g_variant_unref(d);
+    EXPECT_EQ(openvpn::DnsServer::Transport::Plain, rs->GetDNSTransport());
+    EXPECT_STREQ("plain", rs->GetDNSTransport_string().c_str());
+
+    transport = "dot";
+    d = glib2::Value::CreateTupleWrapped(transport);
+    rs->SetDNSTransport(d);
+    g_variant_unref(d);
+    EXPECT_EQ(openvpn::DnsServer::Transport::TLS, rs->GetDNSTransport());
+    EXPECT_STREQ("dot", rs->GetDNSTransport_string().c_str());
+
+    transport = "doh";
+    d = glib2::Value::CreateTupleWrapped(transport);
+    rs->SetDNSTransport(d);
+    g_variant_unref(d);
+    EXPECT_EQ(openvpn::DnsServer::Transport::HTTPS, rs->GetDNSTransport());
+    EXPECT_STREQ("doh", rs->GetDNSTransport_string().c_str());
+
+    transport = "unset"; // Not supported value
+    d = glib2::Value::CreateTupleWrapped(transport);
+    EXPECT_THROW(rs->SetDNSTransport(d), NetCfgException);
+    g_variant_unref(d);
+
+    // The failure above should not have changed the state
+    EXPECT_EQ(openvpn::DnsServer::Transport::HTTPS, rs->GetDNSTransport());
+    EXPECT_STREQ("doh", rs->GetDNSTransport_string().c_str());
+}
+
 } // namespace unittest

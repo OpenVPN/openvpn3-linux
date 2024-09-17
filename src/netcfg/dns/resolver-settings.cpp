@@ -249,6 +249,58 @@ const std::string ResolverSettings::SetDNSScope(GVariant *params)
 }
 
 
+void ResolverSettings::SetDNSTransport(const openvpn::DnsServer::Transport &mode)
+{
+    switch (mode)
+    {
+    case openvpn::DnsServer::Transport::Plain:
+    case openvpn::DnsServer::Transport::TLS:
+    case openvpn::DnsServer::Transport::HTTPS:
+    case openvpn::DnsServer::Transport::Unset:
+        dns_transport = mode;
+        break;
+    default:
+        throw NetCfgException("[SetDNSTransport] "
+                              "Unsupported DNS transport mode");
+    }
+}
+
+
+openvpn::DnsServer::Transport ResolverSettings::GetDNSTransport() const
+{
+    switch (dns_transport)
+    {
+    case openvpn::DnsServer::Transport::Plain:
+    case openvpn::DnsServer::Transport::TLS:
+    case openvpn::DnsServer::Transport::HTTPS:
+    case openvpn::DnsServer::Transport::Unset:
+        return dns_transport;
+    default:
+        throw NetCfgException("[GetDNSTransport] "
+                              "Unsupported DNS transport mode");
+    }
+}
+
+
+std::string ResolverSettings::GetDNSTransport_string() const
+{
+    switch (dns_transport)
+    {
+    case openvpn::DnsServer::Transport::Plain:
+        return "plain";
+    case openvpn::DnsServer::Transport::TLS:
+        return "dot";
+    case openvpn::DnsServer::Transport::HTTPS:
+        return "doh";
+    case openvpn::DnsServer::Transport::Unset:
+        return "unset";
+    default:
+        throw NetCfgException("[GetDNSTransport] "
+                              "Unsupported transport mode");
+    }
+}
+
+
 const std::string ResolverSettings::AddNameServers(GVariant *params)
 {
     std::string params_type = glib2::DataType::Extract(params);
@@ -322,6 +374,36 @@ openvpn::DnsServer::Security ResolverSettings::SetDNSSEC(GVariant *params)
         throw NetCfgException("[SetDNSSEC] Invalid DNSSEC mode: '" + mode + "'");
     }
     return dnssec_mode;
+}
+
+
+openvpn::DnsServer::Transport ResolverSettings::SetDNSTransport(GVariant *params)
+{
+    std::string params_type = glib2::DataType::Extract(params);
+    if ("(s)" != params_type)
+    {
+        throw NetCfgException("[SetDNSTransport] Invalid D-Bus data type");
+    }
+
+    auto mode = glib2::Value::Extract<std::string>(params, 0);
+    if ("plain" == mode)
+    {
+        dns_transport = openvpn::DnsServer::Transport::Plain;
+    }
+    else if ("dot" == mode)
+    {
+        dns_transport = openvpn::DnsServer::Transport::TLS;
+    }
+    else if ("doh" == mode)
+    {
+        dns_transport = openvpn::DnsServer::Transport::HTTPS;
+    }
+    else
+    {
+        throw NetCfgException("[SetDNSTransport] Invalid DNS transport mode: '"
+                              + mode + "'");
+    }
+    return dns_transport;
 }
 
 } // namespace DNS

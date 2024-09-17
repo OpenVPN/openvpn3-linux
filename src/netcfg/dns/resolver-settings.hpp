@@ -282,6 +282,54 @@ class ResolverSettings
     std::string GetDNSSEC_string() const;
 
     /**
+     *  Set the transport method used to connect to the DNS server
+     *
+     *  Supported modes are:
+     *
+     *  - DnsServer::Transport::Plain  -  Unencrypted (traditional port 53)
+     *  - DnsServer::Transport::TLS    -  DNS over TLS (encrypted)
+     *  - DnsServer::Transport::HTTPS  -  DNS over HTTPS
+     *  - DnsServer::Transport::Unset  -  Not set, use the default of the
+     *                                    backend resolver
+     *
+     *  NOTE:  Not all resolver backends will support this setting or all
+     *         of the alternatives.
+     *
+     * @param mode    openvpn::DnsServer::Transport
+     */
+    void SetDNSTransport(const openvpn::DnsServer::Transport &mode);
+
+    /**
+     *  Get the transport method used to connect to the DNS server
+     *
+     *  Supported values are:
+     *
+     *  - DnsServer::Transport::Plain  -  Unencrypted (traditional port 53)
+     *  - DnsServer::Transport::TLS    -  DNS over TLS (encrypted)
+     *  - DnsServer::Transport::HTTPS  -  DNS over HTTPS
+     *  - DnsServer::Transport::Unset  -  Not set, use the default of the
+     *                                    backend resolver
+     *
+     * @return openvpn::DnsServer::Transport
+     */
+    openvpn::DnsServer::Transport GetDNSTransport() const;
+
+    /**
+     *  Get the transport method used to connect to the DNS server,
+     *  returned as a std::string
+     *
+     *  Supported values are:
+     *
+     *  - "plain"  -  Unencrypted (traditional port 53)
+     *  - "dot"    -  DNS over TLS (encrypted)
+     *  - "doh"    -  DNS over HTTPS
+     *  - "unset"  -  Not set, use the default of the backend resolver
+     *
+     * @return std::string
+     */
+    std::string GetDNSTransport_string() const;
+
+    /**
      *  Makes it possible to write ResolverSettings in a readable format
      *  via iostreams, such as 'std::cout << rs', where rs is a
      *  ResolverSettings object.
@@ -368,7 +416,7 @@ class ResolverSettings
     void AddSearchDomains(GVariant *params);
 
     /**
-     *  Set the DNSSEC mode for the interface provided as a string via a
+     *  Set the DNSSEC mode for the interface provided as a string via
      *  a GVariant container of the (s) type.
      *
      *  Supported values:
@@ -383,6 +431,22 @@ class ResolverSettings
      * @return openvpn::DnsServer::Security of the parsed and set DNSSEC mode
      */
     openvpn::DnsServer::Security SetDNSSEC(GVariant *params);
+
+    /**
+     *  Set the transport method used to connect to the DNS server as a
+     *  string via a GVariant container of the (s) type.
+     *
+     *  Supported values:
+     *
+     *  - "plain"  -  Unencrypted (traditional port 53)
+     *  - "dot"    -  DNS over TLS (encrypted)
+     *  - "doh"    -  DNS over HTTPS
+     *
+     * @param params
+     * @return openvpn::DnsServer::Transport of the parsed and set transport
+     *         mode
+     */
+    openvpn::DnsServer::Transport SetDNSTransport(GVariant *params);
 #endif
 
 
@@ -395,6 +459,7 @@ class ResolverSettings
     std::vector<std::string> name_servers;
     std::vector<std::string> search_domains;
     openvpn::DnsServer::Security dnssec_mode = openvpn::DnsServer::Security::Unset;
+    openvpn::DnsServer::Transport dns_transport = openvpn::DnsServer::Transport::Unset;
 
     ResolverSettings(const ssize_t idx);
 };

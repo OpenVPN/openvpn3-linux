@@ -96,6 +96,7 @@ void SystemdResolved::Apply(const ResolverSettings::Ptr settings)
         }
 
         upd->dnssec = settings->GetDNSSEC();
+        upd->transport = settings->GetDNSTransport();
 
         if (settings->GetDNSScope() == DNS::Scope::GLOBAL)
         {
@@ -174,6 +175,79 @@ void SystemdResolved::Commit(NetCfgSignals::Ptr signal)
                         signal->LogVerb2("systemd-resolved: ["
                                          + upd->link->GetPath()
                                          + "] DNSSEC mode set to " + mode);
+                    }
+                }
+
+                if (upd->transport != openvpn::DnsServer::Transport::Unset)
+                {
+                    std::string transport;
+                    switch (upd->transport)
+                    {
+                    case openvpn::DnsServer::Transport::HTTPS:
+                        signal->LogWarn("systemd-resolved: ["
+                                        + upd->link->GetPath()
+                                        + "] DNS-over-HTTP is not supported");
+                        break;
+                    case openvpn::DnsServer::Transport::Plain:
+                        transport = "no";
+                        break;
+
+                    case openvpn::DnsServer::Transport::TLS:
+                        transport = (feat_dnsovertls_enforce
+                                         ? "yes"
+                                         : "opportunistic");
+                        break;
+
+                    default:
+                        break;
+                    }
+
+                    if (!transport.empty())
+                    {
+                        bool done = false;
+                        while (!done)
+                        {
+                            try
+                            {
+                                upd->link->SetDNSOverTLS(transport);
+                                signal->LogVerb2("systemd-resolved: "
+                                                 "Set DNSOverTLS to '"
+                                                 + transport + "'");
+                                done = true;
+                            }
+                            catch (const resolved::Exception &excp)
+                            {
+                                std::string err(excp.what());
+                                if (err.find("Invalid DNSOverTLS setting:") != std::string::npos)
+                                {
+                                    if ("yes" != transport)
+                                    {
+                                        done = true;
+                                        signal->LogError(
+                                            "systemd-resolved: Failed to set DNSOverTLS"
+                                            " to '"
+                                            + transport + "'");
+                                    }
+                                    else
+                                    {
+                                        // if enforced DoT is failing, try
+                                        // opportunistic mode instead
+                                        transport = "opportunistic";
+                                        feat_dnsovertls_enforce = false;
+                                        signal->LogInfo(
+                                            "systemd-resolved: Enforced DNS-over-TLS "
+                                            "not supported, switching to opportunistic mode");
+                                    }
+                                }
+                                else
+                                {
+                                    done = true;
+                                    signal->LogError(
+                                        "systemd-resolved: Failed to set DNS transport: "
+                                        + std::string(excp.what()));
+                                }
+                            }
+                        }
                     }
                 }
 

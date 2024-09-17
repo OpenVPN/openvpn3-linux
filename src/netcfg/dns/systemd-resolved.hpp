@@ -62,6 +62,7 @@ class SystemdResolved : public ResolverBackendInterface
         resolved::IPAddress::List resolvers{};     ///< List of DNS resolver IP addresses for this link
         resolved::SearchDomain::List search{};     ///< List of DNS search domains to add for this link
         openvpn::DnsServer::Security dnssec;       ///< DNSSEC mode
+        openvpn::DnsServer::Transport transport;   ///< DNS transport mode (plain/DoT/DoH)
 
 
       private:
@@ -138,6 +139,7 @@ class SystemdResolved : public ResolverBackendInterface
     std::vector<updateQueueEntry::Ptr> update_queue = {};
     resolved::Manager::Ptr sdresolver = nullptr;
     bool feat_dns_default_route = true;
+    bool feat_dnsovertls_enforce = true;
 
     SystemdResolved(DBus::Connection::Ptr dbc);
 };
