@@ -206,6 +206,15 @@ NetCfgDevice::NetCfgDevice(DBus::Connection::Ptr dbuscon_,
         });
     args_set_dnssec->AddInput("mode", "s");
 
+    auto args_set_dnstransp = AddMethod(
+        "SetDNSTransport",
+        [this](DBus::Object::Method::Arguments::Ptr args)
+        {
+            this->method_set_dns_transport(args->GetMethodParameters());
+            args->SetMethodReturn(nullptr);
+        });
+    args_set_dnstransp->AddInput("mode", "s");
+
 #ifdef ENABLE_OVPNDCO
     auto args_enable_dco = AddMethod(
         "EnableDCO",
@@ -384,6 +393,19 @@ void NetCfgDevice::method_set_dnssec(GVariant *params)
         return;
     }
     dnsconfig->SetDNSSEC(params);
+    modified = true;
+}
+
+
+void NetCfgDevice::method_set_dns_transport(GVariant *params)
+{
+    if (!resolver || !dnsconfig)
+    {
+        signals->LogError("Failed setting DNS transport mode: "
+                          "No DNS resolver configured");
+        return;
+    }
+    dnsconfig->SetDNSTransport(params);
     modified = true;
 }
 

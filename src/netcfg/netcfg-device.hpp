@@ -196,6 +196,7 @@ class NetCfgDevice : public DBus::Object::Base
     void method_add_dns(GVariant *params);
     void method_add_dns_search(GVariant *params);
     void method_set_dnssec(GVariant *params);
+    void method_set_dns_transport(GVariant *params);
     void method_enable_dco(DBus::Object::Method::Arguments::Ptr args);
     void method_establish(DBus::Object::Method::Arguments::Ptr args);
     void method_disable();

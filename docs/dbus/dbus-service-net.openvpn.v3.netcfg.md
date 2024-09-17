@@ -209,6 +209,7 @@ interface net.openvpn.v3.netcfg {
       AddDNS(in  as server_list);
       AddDNSSearch(in  as domains);
       SetDNSSEC(in s mode);
+      SetDNSTransport(in s mode);
       EnableDCO(in  s dev_name,
                 in  u proto,
                 out o dco_device_path);
@@ -231,6 +232,7 @@ interface net.openvpn.v3.netcfg {
       readonly as dns_name_servers;
       readonly as dns_search_domains;
       readonly s dnssec_mode;
+      readonly s dns_transport;
       readonly s device_name;
       readwrite u layer;
       readwrite u mtu;
@@ -331,6 +333,28 @@ virtual interface.
 |  unset    | DNSSEC validation depends on the default host configuration (cannot be set, only read-value)|
 
 
+### Method: `net.openvpn.v3.netcfg.SetDNSTransport`
+
+Sets the protocol the DNS resolver should use when connecting to the DNS server.
+
+Not all DNS resolvers backends are able to support all modes.  When a backend resolver attempts to
+configure an unsupported mode, the backend should report this in the logs.
+
+#### Arguments
+| Direction | Name         | Type              | Description                                              |
+|-----------|--------------|-------------------|----------------------------------------------------------|
+| In        | mode         | strings           | DNS transport mode to use                                |
+
+##### Valid `mode` values
+
+| value     | Description                                                                                 |
+|-----------|---------------------------------------------------------------------------------------------|
+|  plain    | Standard unencrypted DNS resolver (classic port 53 resolver)                                |
+|  dot      | DNS over TLS - encrypted connection to the DNS resolver                                     |
+|  doh      | DNS over HTTPS - encrypted via HTTP                                                         |
+|  unset    | Unset, uses the default transport of the resolver backend (cannot be set, only read-value)  |
+
+
 ### Method: `net.openvpn.v3.netcfg.EnableDCO`
 
 Instantiates DCO device object, which handles DCO functionality.
@@ -422,7 +446,8 @@ not providing any details are not mentioned.
 | modified            | boolean          | Read-only  |                                                                                                                          |
 | dns_name_servers    | array(string)    | Read-only  | List of DNS name servers pushed by the VPN server                                                                        |
 | dns_search_domains  | array(string)    | Read-only  | List of DNS search domains pushed by the VPN server                                                                      |
-| dnssec_mode         | string           | Read-only  | Current DNSSEC mode.  See SetDNSSEC() method for details.
+| dnssec_mode         | string           | Read-only  | Current DNSSEC mode.  See SetDNSSEC() method for details.                                                                |
+| dns_transport       | string           | Read-only  | Current DNS transport mode.  See SetDNSTransport() method for details.                                                   |
 | device_name         | string           | Read-only  | Virtual device name used by the session.  This may change if the interface needs to be completely reconfigured           |
 | layer               | unsigned integer | Read-write | OSI layer for the VPN to use, 3 for IP (tun device). Setting to 2 (tap device) is currently not implemented              |
 | mtu                 | unsigned integer | Read-write | Sets the MTU for the tun device. Default is 1500                                                                         |
