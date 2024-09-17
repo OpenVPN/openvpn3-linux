@@ -55,14 +55,14 @@ class SystemdResolved : public ResolverBackendInterface
             return Ptr(new updateQueueEntry(link, enabled));
         }
 
-        bool enable = false;                       ///< enabled by config profile
-        bool disabled = false;                     ///< disabled internally by errors
-        bool default_routing = false;              ///< set the default routing dns flag
-        resolved::Link::Ptr link = nullptr;        ///< Pointer to the resolved::Link interface object
-        resolved::IPAddress::List resolvers{};     ///< List of DNS resolver IP addresses for this link
-        resolved::SearchDomain::List search{};     ///< List of DNS search domains to add for this link
-        openvpn::DnsServer::Security dnssec;       ///< DNSSEC mode
-        openvpn::DnsServer::Transport transport;   ///< DNS transport mode (plain/DoT/DoH)
+        bool enable = false;                     ///< enabled by config profile
+        bool disabled = false;                   ///< disabled internally by errors
+        bool default_routing = false;            ///< set the default routing dns flag
+        resolved::Link::Ptr link = nullptr;      ///< Pointer to the resolved::Link interface object
+        resolved::IPAddress::List resolvers{};   ///< List of DNS resolver IP addresses for this link
+        resolved::SearchDomain::List search{};   ///< List of DNS search domains to add for this link
+        openvpn::DnsServer::Security dnssec;     ///< DNSSEC mode
+        openvpn::DnsServer::Transport transport; ///< DNS transport mode (plain/DoT/DoH)
 
 
       private:

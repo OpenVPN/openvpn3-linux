@@ -466,9 +466,7 @@ int backend_starter(ParsedArgs::Ptr args)
 
     if (logsrvprx)
     {
-        std::string interface {
-            Constants::GenInterface("backends")
-        };
+        std::string interface{Constants::GenInterface("backends")};
         logsrvprx->Detach(interface);
     }
     return 0;

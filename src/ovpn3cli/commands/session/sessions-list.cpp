@@ -148,7 +148,7 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
             {
                 // DCO connections currently does not expose the port number
                 session_details << ":"
-                             << std::to_string(cti.server_port);
+                                << std::to_string(cti.server_port);
             }
             session_details << std::endl;
         }

@@ -18,7 +18,6 @@
 #include "dbus/constants.hpp"
 #include "common/utils.hpp"
 #include "common/cmdargparser.hpp"
-//#include "logger.hpp"
 #include "logwriter.hpp"
 #include "logwriters/implementations.hpp"
 #include "ansicolours.hpp"
