@@ -142,6 +142,28 @@ class SystemdResolved : public ResolverBackendInterface
     bool feat_dnsovertls_enforce = true;
 
     SystemdResolved(DBus::Connection::Ptr dbc);
+
+    /**
+     *  Internal helper method configuring DNSSEC mode
+     *
+     * @param dnssec_mode  openvpn::DnsServer::Security with the DNSSEC mode
+     * @param link         resolved::Link where the change need to happen
+     * @param signals      NetCfgSignals where the logging will happen
+     */
+    void configure_dnssec(const openvpn::DnsServer::Security &dnssec_mode,
+                          resolved::Link::Ptr link,
+                          NetCfgSignals::Ptr signals);
+
+    /**
+     *  Internal helper method configure DNS transport mode
+     *
+     * @param transport    openvpn::DnsServer::Transport with the transport mode
+     * @param link         resolved::Link where the change need to happen
+     * @param signals      NetCfgSignals where the logging will happen
+     */
+    void configure_transport(const openvpn::DnsServer::Transport &transport,
+                             resolved::Link::Ptr link,
+                             NetCfgSignals::Ptr signals);
 };
 } // namespace DNS
 } // namespace NetCfg

@@ -129,149 +129,60 @@ void SystemdResolved::Commit(NetCfgSignals::Ptr signal)
         }
         try
         {
-            if (upd->enable)
-            {
-                signal->LogVerb2("systemd-resolved: [" + upd->link->GetPath()
-                                 + "] Committing DNS servers");
-                auto applied_servers = upd->link->SetDNSServers(upd->resolvers);
-                signal->LogVerb2("systemd-resolved: [" + upd->link->GetPath()
-                                 + "] Committing DNS search domains");
-                auto applied_search = upd->link->SetDomains(upd->search);
-
-
-                if (feat_dns_default_route
-                    && !upd->link->SetDefaultRoute(upd->default_routing))
-                {
-                    signal->LogWarn("systemd-resolved: Service does not "
-                                    "support setting default route for DNS "
-                                    "requests. Disabling calling this feature.");
-                    feat_dns_default_route = false;
-                };
-
-                if (upd->dnssec != openvpn::DnsServer::Security::Unset)
-                {
-                    std::string mode;
-                    switch (upd->dnssec)
-                    {
-                    case openvpn::DnsServer::Security::Yes:
-                        mode = "yes";
-                        break;
-
-                    case openvpn::DnsServer::Security::No:
-                        mode = "no";
-                        break;
-
-                    case openvpn::DnsServer::Security::Optional:
-                        mode = "allow-downgrade";
-                        break;
-
-                    default:
-                        break;
-                    }
-
-                    if (!mode.empty())
-                    {
-                        upd->link->SetDNSSEC(mode);
-                        signal->LogVerb2("systemd-resolved: ["
-                                         + upd->link->GetPath()
-                                         + "] DNSSEC mode set to " + mode);
-                    }
-                }
-
-                if (upd->transport != openvpn::DnsServer::Transport::Unset)
-                {
-                    std::string transport;
-                    switch (upd->transport)
-                    {
-                    case openvpn::DnsServer::Transport::HTTPS:
-                        signal->LogWarn("systemd-resolved: ["
-                                        + upd->link->GetPath()
-                                        + "] DNS-over-HTTP is not supported");
-                        break;
-                    case openvpn::DnsServer::Transport::Plain:
-                        transport = "no";
-                        break;
-
-                    case openvpn::DnsServer::Transport::TLS:
-                        transport = (feat_dnsovertls_enforce
-                                         ? "yes"
-                                         : "opportunistic");
-                        break;
-
-                    default:
-                        break;
-                    }
-
-                    if (!transport.empty())
-                    {
-                        bool done = false;
-                        while (!done)
-                        {
-                            try
-                            {
-                                upd->link->SetDNSOverTLS(transport);
-                                signal->LogVerb2("systemd-resolved: "
-                                                 "Set DNSOverTLS to '"
-                                                 + transport + "'");
-                                done = true;
-                            }
-                            catch (const resolved::Exception &excp)
-                            {
-                                std::string err(excp.what());
-                                if (err.find("Invalid DNSOverTLS setting:") != std::string::npos)
-                                {
-                                    if ("yes" != transport)
-                                    {
-                                        done = true;
-                                        signal->LogError(
-                                            "systemd-resolved: Failed to set DNSOverTLS"
-                                            " to '"
-                                            + transport + "'");
-                                    }
-                                    else
-                                    {
-                                        // if enforced DoT is failing, try
-                                        // opportunistic mode instead
-                                        transport = "opportunistic";
-                                        feat_dnsovertls_enforce = false;
-                                        signal->LogInfo(
-                                            "systemd-resolved: Enforced DNS-over-TLS "
-                                            "not supported, switching to opportunistic mode");
-                                    }
-                                }
-                                else
-                                {
-                                    done = true;
-                                    signal->LogError(
-                                        "systemd-resolved: Failed to set DNS transport: "
-                                        + std::string(excp.what()));
-                                }
-                            }
-                        }
-                    }
-                }
-
-                for (const auto &srv : applied_servers)
-                {
-                    NetCfgChangeEvent ev(NetCfgChangeType::DNS_SERVER_ADDED,
-                                         upd->link->GetDeviceName(),
-                                         {{"dns_server", srv}});
-                    signal->NetworkChange(ev);
-                }
-
-                for (const auto &domain : applied_search)
-                {
-                    NetCfgChangeEvent ev(NetCfgChangeType::DNS_SEARCH_ADDED,
-                                         upd->link->GetDeviceName(),
-                                         {{"search_domain", domain}});
-                    signal->NetworkChange(ev);
-                }
-            }
-            else
+            if (!upd->enable)
             {
                 // NetCfgChangeEvents for DNS_SERVER_REMOVED and
                 // DNS_SEARCH_REMOVED are sent by the caller of this method
                 upd->link->Revert();
+                continue;
+            }
+
+            //
+            //  Commit the requested DNS resolver setup changes
+            //
+            signal->LogVerb2("systemd-resolved: [" + upd->link->GetPath()
+                             + "] Committing DNS servers");
+            auto applied_servers = upd->link->SetDNSServers(upd->resolvers);
+            signal->LogVerb2("systemd-resolved: [" + upd->link->GetPath()
+                             + "] Committing DNS search domains");
+            auto applied_search = upd->link->SetDomains(upd->search);
+
+            if (feat_dns_default_route
+                && !upd->link->SetDefaultRoute(upd->default_routing))
+            {
+                signal->LogWarn("systemd-resolved: Service does not "
+                                "support setting default route for DNS "
+                                "requests. Disabling calling this feature.");
+                feat_dns_default_route = false;
+            };
+
+            if (upd->dnssec != openvpn::DnsServer::Security::Unset)
+            {
+                configure_dnssec(upd->dnssec, upd->link, signal);
+            }
+
+            if (upd->transport != openvpn::DnsServer::Transport::Unset)
+            {
+                configure_transport(upd->transport, upd->link, signal);
+            }
+
+            //
+            // Send the NetworkChange signals
+            //
+            for (const auto &srv : applied_servers)
+            {
+                NetCfgChangeEvent ev(NetCfgChangeType::DNS_SERVER_ADDED,
+                                     upd->link->GetDeviceName(),
+                                     {{"dns_server", srv}});
+                signal->NetworkChange(ev);
+            }
+
+            for (const auto &domain : applied_search)
+            {
+                NetCfgChangeEvent ev(NetCfgChangeType::DNS_SEARCH_ADDED,
+                                     upd->link->GetDeviceName(),
+                                     {{"search_domain", domain}});
+                signal->NetworkChange(ev);
             }
         }
         catch (const DBus::Exception &excp)
@@ -287,4 +198,114 @@ void SystemdResolved::Commit(NetCfgSignals::Ptr signal)
         upd.reset();
     }
     update_queue.clear();
+}
+
+
+void SystemdResolved::configure_dnssec(const openvpn::DnsServer::Security &dnssec_mode,
+                                       resolved::Link::Ptr link,
+                                       NetCfgSignals::Ptr signals)
+{
+    std::string mode;
+    switch (dnssec_mode)
+    {
+    case openvpn::DnsServer::Security::Yes:
+        mode = "yes";
+        break;
+
+    case openvpn::DnsServer::Security::No:
+        mode = "no";
+        break;
+
+    case openvpn::DnsServer::Security::Optional:
+        mode = "allow-downgrade";
+        break;
+
+    default:
+        break;
+    }
+
+    if (!mode.empty())
+    {
+        link->SetDNSSEC(mode);
+        signals->LogVerb2("systemd-resolved: ["
+                          + link->GetPath()
+                          + "] DNSSEC mode set to " + mode);
+    }
+}
+
+
+void SystemdResolved::configure_transport(const openvpn::DnsServer::Transport &dns_transport,
+                                          resolved::Link::Ptr link,
+                                          NetCfgSignals::Ptr signals)
+
+{
+    std::string transport;
+    switch (dns_transport)
+    {
+    case openvpn::DnsServer::Transport::HTTPS:
+        signals->LogWarn("systemd-resolved: ["
+                         + link->GetPath()
+                         + "] DNS-over-HTTP is not supported");
+        break;
+    case openvpn::DnsServer::Transport::Plain:
+        transport = "no";
+        break;
+
+    case openvpn::DnsServer::Transport::TLS:
+        transport = (feat_dnsovertls_enforce
+                         ? "yes"
+                         : "opportunistic");
+        break;
+
+    default:
+        break;
+    }
+
+    if (!transport.empty())
+    {
+        bool done = false;
+        while (!done)
+        {
+            try
+            {
+                link->SetDNSOverTLS(transport);
+                signals->LogVerb2("systemd-resolved: "
+                                  "Set DNSOverTLS to '"
+                                  + transport + "'");
+                done = true;
+            }
+            catch (const resolved::Exception &excp)
+            {
+                std::string err(excp.what());
+                if (err.find("Invalid DNSOverTLS setting:") != std::string::npos)
+                {
+                    if ("yes" != transport)
+                    {
+                        done = true;
+                        signals->LogError(
+                            "systemd-resolved: Failed to set DNSOverTLS"
+                            " to '"
+                            + transport + "'");
+                    }
+                    else
+                    {
+                        // if enforced DoT is failing, try
+                        // opportunistic mode instead
+                        transport = "opportunistic";
+                        feat_dnsovertls_enforce = false;
+                        signals->LogInfo(
+                            "systemd-resolved: Enforced DNS-over-TLS "
+                            "not supported, switching to opportunistic mode");
+                    }
+                }
+                else
+                {
+                    done = true;
+                    signals->LogError(
+                        "systemd-resolved: Failed to set DNS transport: "
+                        + std::string(excp.what()));
+                }
+            }
+        }
+    }
 }
