@@ -94,6 +94,18 @@ option('polkit_pkla_rulesdir', type: 'string', value: '',
        description: 'Override PolicyKit PKLA rules directory')
 
 #
+# Installation
+#
+option('dbus_policy_dir', type: 'string',
+       description: 'D-Bus policy directory')
+option('dbus_system_service_dir', type: 'string',
+       description: 'D-Bus system service directory')
+option('systemd_system_unit_dir', type: 'string',
+       description: 'Path to systemd system unit directory')
+option('create_statedir', type: 'feature', value: 'enabled',
+       description: 'Create directory for OpenVPN 3 state during install phase')
+
+#
 #  Testing tools
 #
 option('unit_tests', type: 'feature', value: 'enabled',

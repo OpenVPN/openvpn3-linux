@@ -15,12 +15,17 @@ systemd_cfg = configuration_data({
 
 systemd_service_cfg = dependency('systemd')
 
+systemd_system_unit_dir = get_option('systemd_system_unit_dir')
+if systemd_system_unit_dir == ''
+  systemd_system_unit_dir = systemd_service_cfg.get_variable('systemdsystemunitdir')
+endif
+
 configure_file(
     input: 'openvpn3-autoload.service.in',
     output: 'openvpn3-autoload.service',
     configuration: systemd_cfg,
     install: true,
-    install_dir: systemd_service_cfg.get_variable('systemdsystemunitdir'),
+    install_dir: systemd_system_unit_dir,
 )
 
 configure_file(
@@ -28,7 +33,7 @@ configure_file(
     output: 'openvpn3-session@.service',
     configuration: systemd_cfg,
     install: true,
-    install_dir: systemd_service_cfg.get_variable('systemdsystemunitdir'),
+    install_dir: systemd_system_unit_dir,
 )
 
 custom_target('openvpn3-systemd',

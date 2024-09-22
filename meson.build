@@ -203,8 +203,16 @@ message('OpenVPN 3 Linux service binary directory: ' + get_option('prefix') / li
 
 #
 #  D-Bus configuration
-dbus_policy_dir = dep_dbus.get_variable('datadir') / 'dbus-1' / 'system.d'
-dbus_service_dir = dep_dbus.get_variable('system_bus_services_dir')
+dbus_policy_dir = get_option('dbus_policy_dir')
+if dbus_policy_dir == ''
+    dbus_policy_dir = dep_dbus.get_variable('datadir') / 'dbus-1' / 'system.d'
+endif
+
+dbus_service_dir = get_option('dbus_system_service_dir')
+if dbus_service_dir == ''
+    dbus_service_dir = dep_dbus.get_variable('system_bus_services_dir')
+endif
+
 dbus_config = {
     'OPENVPN_USERNAME': get_option('openvpn_username'),
     'LIBEXEC_PATH': get_option('prefix') / libexec_dir,
