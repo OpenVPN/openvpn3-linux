@@ -230,6 +230,11 @@ class BackendSignals : public LogSender
         return sig_statuschg->LastStatusChange();
     }
 
+    Events::Status LastStatusEvent() const
+    {
+        return sig_statuschg->LastEvent();
+    }
+
 
   private:
     const uint32_t default_log_level = 6; // LogCategory::DEBUG
