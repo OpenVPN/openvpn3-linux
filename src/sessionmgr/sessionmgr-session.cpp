@@ -701,11 +701,6 @@ void Session::method_connect(DBus::Object::Method::Arguments::Ptr args)
 {
     validate_vpn_backend();
 
-    if (connection_started)
-    {
-        args->SetMethodReturn(nullptr);
-    }
-
     // Set and lock the DCO mode
     if (DCOstatus::MODIFIED == dco_status)
     {

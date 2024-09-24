@@ -108,7 +108,6 @@ class Session : public DBus::Object::Base
     DBus::Proxy::TargetPreset::Ptr be_target = nullptr;
     DCOstatus dco_status = DCOstatus::UNCHANGED;
     bool dco = false;
-    bool connection_started = false;
 
     /**
      *  D-Bus method: net.openvpn.v3.sessions.Ready
