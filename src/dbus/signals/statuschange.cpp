@@ -70,6 +70,11 @@ bool StatusChange::Send(const Events::Status &stch) noexcept
 }
 
 
+Events::Status StatusChange::LastEvent() const
+{
+    return last_ev;
+}
+
 GVariant *StatusChange::LastStatusChange() const
 {
     if (last_ev.empty())

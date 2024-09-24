@@ -46,6 +46,7 @@ class StatusChange : public DBus::Signals::Signal
     const std::string GetSignature() const;
 
     bool Send(const Events::Status &stch) noexcept;
+    Events::Status LastEvent() const;
     GVariant *LastStatusChange() const;
 
   private:
