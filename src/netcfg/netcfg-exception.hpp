@@ -22,6 +22,7 @@
 #include <gdbuspp/object/method.hpp>
 #include <gdbuspp/proxy.hpp>
 
+
 class NetCfgException : public DBus::Object::Method::Exception
 {
   public:
@@ -30,16 +31,6 @@ class NetCfgException : public DBus::Object::Method::Exception
     {
         error_domain = "net.openvpn.v3.netcfg.error";
     }
-
-    ~NetCfgException() = default;
-
-    virtual const char *what() const noexcept
-    {
-        return errormsg.c_str();
-    }
-
-  private:
-    std::string errormsg;
 };
 
 
