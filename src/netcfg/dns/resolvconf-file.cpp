@@ -237,6 +237,33 @@ void ResolvConfFile::Apply(const ResolverSettings::Ptr settings)
 
     std::vector<std::string> srvs = settings->GetNameServers();
     std::vector<std::string> dmns = settings->GetSearchDomains();
+
+    // Remove nameservers that are already set up.
+    for (auto it = srvs.begin(); it != srvs.end();)
+    {
+        if (std::find(vpn_name_servers.begin(), vpn_name_servers.end(), *it) == vpn_name_servers.end())
+        {
+            ++it;
+        }
+        else
+        {
+            it = srvs.erase(it);
+        }
+    }
+
+    // Remove search domains that are already set up.
+    for (auto it = dmns.begin(); it != dmns.end();)
+    {
+        if (std::find(vpn_search_domains.begin(), vpn_search_domains.end(), *it) == vpn_search_domains.end())
+        {
+            ++it;
+        }
+        else
+        {
+            it = dmns.erase(it);
+        }
+    }
+
     if (settings->GetEnabled())
     {
         vpn_name_servers.insert(vpn_name_servers.end(),
