@@ -52,7 +52,7 @@ configure_file(
     install_dir: dbus_service_dir,
 )
 
-if get_option('create_statedir').enabled()
+if get_option('create_statedir')
     # Create the configs directory for persistent configuration profiles
     # NOTE: Can be replaced with install_emptydir() when Meson 0.60 or newer
     #       is available on all supported distros
