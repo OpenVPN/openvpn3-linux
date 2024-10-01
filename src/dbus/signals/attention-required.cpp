@@ -22,29 +22,42 @@ namespace Signals {
 AttentionRequired::AttentionRequired(DBus::Signals::Emit::Ptr emitter,
                                      DBus::Signals::SubscriptionManager::Ptr subscr,
                                      DBus::Signals::Target::Ptr subscr_tgt)
-    : DBus::Signals::Signal(emitter, "AttentionRequired")
+    : DBus::Signals::Signal(emitter, "AttentionRequired"),
+      subscr_mgr(subscr), target(subscr_tgt)
 {
     SetArguments(Events::AttentionReq::SignalDeclaration());
+    Subscribe(subscr_tgt);
+}
 
+
+void AttentionRequired::Subscribe(DBus::Signals::Target::Ptr subscr_tgt)
+{
     // If a SubscriptionManager and Signals::Target object is provided,
     // prepare proxying incoming AttentionRequired signals from that target
-    if (subscr && subscr_tgt)
+    if (subscr_mgr && subscr_tgt)
     {
-        subscr->Subscribe(subscr_tgt,
-                          "AttentionRequired",
-                          [=](DBus::Signals::Event::Ptr event)
-                          {
-                              try
+        if (target)
+        {
+            subscr_mgr->Unsubscribe(target, "AttentionRequired");
+        }
+
+        subscr_mgr->Subscribe(subscr_tgt,
+                              "AttentionRequired",
+                              [=](DBus::Signals::Event::Ptr event)
                               {
-                                  Events::AttentionReq ev(event->params);
-                                  (void)Send(ev);
-                              }
-                              catch (const DBus::Exception &ex)
-                              {
-                                  std::cerr << "AttentionReq EXCEPTION:"
-                                            << ex.what() << std::endl;
-                              }
-                          });
+                                  try
+                                  {
+                                      Events::AttentionReq ev(event->params);
+                                      (void)Send(ev);
+                                  }
+                                  catch (const DBus::Exception &ex)
+                                  {
+                                      std::cerr << "AttentionReq EXCEPTION:"
+                                                << ex.what() << std::endl;
+                                  }
+                              });
+
+        target = subscr_tgt;
     }
 }
 

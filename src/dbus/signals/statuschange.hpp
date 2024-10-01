@@ -43,6 +43,8 @@ class StatusChange : public DBus::Signals::Signal
                  DBus::Signals::Target::Ptr subscr_tgt = nullptr);
     ~StatusChange() noexcept = default;
 
+    void Subscribe(DBus::Signals::Target::Ptr subscr_tgt);
+
     const std::string GetSignature() const;
 
     bool Send(const Events::Status &stch) noexcept;
@@ -52,6 +54,7 @@ class StatusChange : public DBus::Signals::Signal
   private:
     Events::Status last_ev{};
     DBus::Signals::Target::Ptr target{};
+    DBus::Signals::SubscriptionManager::Ptr subscr_mgr;
 };
 
 /**

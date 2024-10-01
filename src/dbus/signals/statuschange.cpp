@@ -23,28 +23,40 @@ StatusChange::StatusChange(DBus::Signals::Emit::Ptr emitter,
                            DBus::Signals::SubscriptionManager::Ptr subscr,
                            DBus::Signals::Target::Ptr subscr_tgt)
     : DBus::Signals::Signal(emitter, "StatusChange"),
-      target(subscr_tgt)
+      target(subscr_tgt), subscr_mgr(subscr)
 {
     SetArguments(Events::Status::SignalDeclaration());
+    Subscribe(subscr_tgt);
+}
 
+
+void StatusChange::Subscribe(DBus::Signals::Target::Ptr subscr_tgt)
+{
     // Prepare proxying incoming StatusChange signals
-    if (subscr && subscr_tgt)
+    if (subscr_mgr && subscr_tgt)
     {
-        subscr->Subscribe(target,
-                          "StatusChange",
-                          [=](DBus::Signals::Event::Ptr event)
-                          {
-                              try
+        if (target)
+        {
+            subscr_mgr->Unsubscribe(target, "StatusChange");
+        }
+
+        subscr_mgr->Subscribe(subscr_tgt,
+                              "StatusChange",
+                              [=](DBus::Signals::Event::Ptr event)
                               {
-                                  Events::Status ev(event->params);
-                                  (void)Send(ev);
-                              }
-                              catch (const DBus::Exception &ex)
-                              {
-                                  std::cerr << "StatusChange EXCEPTION:"
-                                            << ex.what() << std::endl;
-                              }
-                          });
+                                  try
+                                  {
+                                      Events::Status ev(event->params);
+                                      (void)Send(ev);
+                                  }
+                                  catch (const DBus::Exception &ex)
+                                  {
+                                      std::cerr << "StatusChange EXCEPTION:"
+                                                << ex.what() << std::endl;
+                                  }
+                              });
+
+        target = subscr_tgt;
     }
 }
 

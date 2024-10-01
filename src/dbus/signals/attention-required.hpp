@@ -57,10 +57,16 @@ class AttentionRequired : public DBus::Signals::Signal
                       DBus::Signals::Target::Ptr subscr_tgt = nullptr);
     ~AttentionRequired() noexcept = default;
 
+    void Subscribe(DBus::Signals::Target::Ptr subscr_tgt);
+
     bool Send(Events::AttentionReq &event) const;
     bool Send(const ClientAttentionType &type,
               const ClientAttentionGroup &group,
               const std::string &msg) const;
+
+  private:
+    DBus::Signals::SubscriptionManager::Ptr subscr_mgr;
+    DBus::Signals::Target::Ptr target;
 };
 
 } // namespace Signals
