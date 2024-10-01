@@ -18,14 +18,20 @@
 
 namespace SessionManager {
 
-TunnelRecord::Ptr TunnelRecord::Create(const DBus::Object::Path &cfgpath, const uid_t owner_uid)
+TunnelRecord::Ptr TunnelRecord::Create(const DBus::Object::Path &cfgpath,
+                                       const uid_t owner_uid,
+                                       const std::optional<std::string> &session_path)
 {
-    return TunnelRecord::Ptr(new TunnelRecord(cfgpath, owner_uid));
+    return TunnelRecord::Ptr(new TunnelRecord(cfgpath, owner_uid, session_path));
 }
 
 
-TunnelRecord::TunnelRecord(const DBus::Object::Path &cfgpath, const uid_t owner_uid)
-    : config_path(std::move(cfgpath)), owner(owner_uid)
+TunnelRecord::TunnelRecord(const DBus::Object::Path &cfgpath,
+                           const uid_t owner_uid,
+                           const std::optional<std::string> &session_path_arg)
+    : session_path(session_path_arg ? *session_path_arg : generate_path_uuid(Constants::GenPath("sessions"), 's')),
+      config_path(std::move(cfgpath)),
+      owner(owner_uid)
 {
 }
 
@@ -72,7 +78,8 @@ NewTunnelQueue::NewTunnelQueue(DBus::Connection::Ptr dbuscon_,
 
 
 const DBus::Object::Path NewTunnelQueue::AddTunnel(const std::string &config_path,
-                                                   const uid_t owner)
+                                                   const uid_t owner,
+                                                   const std::optional<std::string> &existing_session_path)
 {
     try
     {
@@ -80,7 +87,8 @@ const DBus::Object::Path NewTunnelQueue::AddTunnel(const std::string &config_pat
         // the details.  The TunnelRecord will generate the session path this
         // backend VPN client process can be reached via.
         const std::string session_token(generate_path_uuid("", 't'));
-        auto trq = TunnelRecord::Create(config_path, owner);
+        auto trq = TunnelRecord::Create(config_path, owner, existing_session_path);
+
         queue[session_token] = trq;
 
         // Request the backend VPN client process to be started.
@@ -144,43 +152,78 @@ void NewTunnelQueue::process_registration(DBus::Signals::Event::Ptr event)
                    + ", config_path=" + tunnel->config_path
                    + ", owner=" + std::to_string(tunnel->owner));
 
-        // Create the session object which will be used to manage the
-        // VPN session.  This is the bridge point betweeen the
-        // end-users managing their session and the backend VPN client process
-        auto session = object_mgr->CreateObject<Session>(dbuscon,
-                                                         object_mgr,
-                                                         creds_qry,
-                                                         sesmgr_event,
-                                                         tunnel->session_path,
-                                                         tunnel->owner,
-                                                         busn,
-                                                         be_pid,
-                                                         tunnel->config_path,
-                                                         log->GetLogLevel(),
-                                                         logwr);
-
-        // Retrieve ACL details from the configuration manager for the
-        // configuration profile this session uses
         auto cfgprx = OpenVPN3ConfigurationProxy(dbuscon, tunnel->config_path);
+        std::string restart;
+
         try
         {
-            if (cfgprx.GetTransferOwnerSession())
-            {
-                // If this configuration profile has the "transfer ownership"
-                // flag set, the session owner will be moved from the user
-                // starting the VPN session to the user owning the configuration
-                // profile
-                session->MoveToOwner(session->GetOwner(),
-                                     cfgprx.GetOwner());
-            }
+            auto restart_override = cfgprx.GetOverrideValue("automatic-restart");
+            restart = std::get<std::string>(restart_override.value);
         }
-        catch (const DBus::Exception &excp)
+        catch (...)
         {
-            log->LogCritical("Failed to move the session ownership from "
-                             + lookup_username(session->GetOwner())
-                             + " to " + lookup_username(cfgprx.GetOwner()));
+            // If the override is not present, GetOverrideValue() throws.
         }
 
+        log->Debug("Backend process restart config value: " + restart);
+
+        std::shared_ptr<Session> session;
+        bool pre_existing_session = false;
+
+        if (restart == "on-failure")
+        {
+            for (auto &&[path, object] : object_mgr->GetAllObjects())
+            {
+                auto sess_object = std::dynamic_pointer_cast<Session>(object);
+
+                if (sess_object && sess_object->GetPath() == tunnel->session_path)
+                {
+                    pre_existing_session = true;
+                    session = sess_object;
+
+                    break;
+                }
+            }
+        }
+
+        if (!session)
+        {
+            // Create the session object which will be used to manage the
+            // VPN session.  This is the bridge point betweeen the
+            // end-users managing their session and the backend VPN client process
+            session = object_mgr->CreateObject<Session>(dbuscon,
+                                                        object_mgr,
+                                                        creds_qry,
+                                                        sesmgr_event,
+                                                        tunnel->session_path,
+                                                        tunnel->owner,
+                                                        busn,
+                                                        be_pid,
+                                                        tunnel->config_path,
+                                                        log->GetLogLevel(),
+                                                        logwr);
+
+            // Retrieve ACL details from the configuration manager for the
+            // configuration profile this session uses
+            try
+            {
+                if (cfgprx.GetTransferOwnerSession())
+                {
+                    // If this configuration profile has the "transfer ownership"
+                    // flag set, the session owner will be moved from the user
+                    // starting the VPN session to the user owning the configuration
+                    // profile
+                    session->MoveToOwner(session->GetOwner(),
+                                         cfgprx.GetOwner());
+                }
+            }
+            catch (const DBus::Exception &excp)
+            {
+                log->LogCritical("Failed to move the session ownership from "
+                                 + lookup_username(session->GetOwner())
+                                 + " to " + lookup_username(cfgprx.GetOwner()));
+            }
+        }
 
         // Prepare a registration confirmation to the VPN client process
         auto be_client = DBus::Proxy::Client::Create(dbuscon, busn);
@@ -225,9 +268,66 @@ void NewTunnelQueue::process_registration(DBus::Signals::Event::Ptr event)
             object_mgr->RemoveObject(session->GetPath());
         }
 
+        auto watcher = std::make_shared<BusWatcher>(dbuscon->GetBusType(), busn);
+
+        watcher->SetNameDisappearedHandler(
+            [this, config_path = tunnel->config_path, owner = tunnel->owner](const std::string &bus_name)
+            {
+                bool session_exists = false;
+                DBus::Object::Path session_path;
+
+                for (auto &&[path, object] : object_mgr->GetAllObjects())
+                {
+                    auto sess_object = std::dynamic_pointer_cast<Session>(object);
+
+                    if (sess_object && sess_object->GetBackendBusName() == bus_name)
+                    {
+                        session_path = path;
+                        session_exists = true;
+
+                        auto last_event = sess_object->GetLastEvent();
+
+                        log->Debug("Bus name '" + bus_name + "' disappeared with last know state ["
+                                   + std::to_string(static_cast<int>(last_event.major)) + ", "
+                                   + std::to_string(static_cast<int>(last_event.minor))
+                                   + "], message: " + last_event.message);
+
+                        break;
+                    }
+                }
+
+                if (session_exists)
+                {
+                    AddTunnel(config_path, owner, session_path);
+                }
+
+                log->Debug("Bus name '" + bus_name + "' disappeared, session "
+                           + (session_exists ? "exists" : "doesn't exist"));
+
+                // We can't just erase the current backend watcher, since we're in the
+                // middle of using it. It needs to be cleaned up later, so just mark it
+                // for now.
+                expired_backend_watchers.insert(bus_name);
+            });
+
+        for (auto &&ew : expired_backend_watchers)
+        {
+            backend_watchers.erase(ew);
+        }
+
+        expired_backend_watchers.clear();
+        backend_watchers[busn] = std::move(watcher);
+
         // Clean up and remove the tracking in the tunnel queue
         tunnel.reset();
         queue.erase(sesstok);
+
+        if (pre_existing_session)
+        {
+            session->ResetBackend(be_pid, busn);
+            session->Ready();
+            session->Connect();
+        }
     }
     catch (const DBus::Exception &excp)
     {

@@ -19,6 +19,9 @@
 #pragma once
 #include <ctime>
 #include <map>
+#include <optional>
+#include <set>
+#include <gdbuspp/bus-watcher.hpp>
 #include <gdbuspp/connection.hpp>
 #include <gdbuspp/credentials/query.hpp>
 #include <gdbuspp/object/manager.hpp>
@@ -43,16 +46,20 @@ struct TunnelRecord
   public:
     using Ptr = std::shared_ptr<TunnelRecord>;
 
-    static TunnelRecord::Ptr Create(const DBus::Object::Path &cfgpath, const uid_t owner_uid);
+    static TunnelRecord::Ptr Create(const DBus::Object::Path &cfgpath,
+                                    const uid_t owner_uid,
+                                    const std::optional<std::string> &session_path = std::nullopt);
 
 
     const std::time_t created = std::time(nullptr);
-    const DBus::Object::Path session_path = generate_path_uuid(Constants::GenPath("sessions"), 's');
+    const DBus::Object::Path session_path;
     const DBus::Object::Path config_path;
     const uid_t owner;
 
   private:
-    TunnelRecord(const DBus::Object::Path &cfgpath, const uid_t owner_uid);
+    TunnelRecord(const DBus::Object::Path &cfgpath,
+                 const uid_t owner_uid,
+                 const std::optional<std::string> &session_path);
 };
 
 /**
@@ -103,7 +110,8 @@ class NewTunnelQueue
      * @return const DBus::Object::Path with the assigned session path
      */
     const DBus::Object::Path AddTunnel(const std::string &config_path,
-                                       const uid_t owner);
+                                       const uid_t owner,
+                                       const std::optional<std::string> &existing_session_path = std::nullopt);
 
   private:
     DBus::Connection::Ptr dbuscon = nullptr;
@@ -116,6 +124,8 @@ class NewTunnelQueue
     DBus::Signals::SubscriptionManager::Ptr signal_subscr = nullptr;
     DBus::Signals::Target::Ptr subscr_target = nullptr;
     QueuedTunnels queue{};
+    std::map<std::string, BusWatcher::Ptr> backend_watchers;
+    std::set<std::string> expired_backend_watchers;
 
     /**
      *  Callback function triggered when the backend VPN client

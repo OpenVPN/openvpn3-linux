@@ -20,6 +20,7 @@ bin_backend_sessionmgr = executable(
     ],
     link_with: [
         common_code,
+        configmgr_lib,
         signals_code,
         sessionmgr_lib,
     ],

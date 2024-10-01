@@ -551,6 +551,7 @@ class BackendClientObject : public DBus::Object::Base
         "net.openvpn.v3.backends.log_level",
         "net.openvpn.v3.backends.dco"};
     std::string enterprise_id;
+    std::string automatic_restart;
 
 
     /**
@@ -1394,6 +1395,10 @@ class BackendClientObject : public DBus::Object::Base
             else if (override.key == "enterprise-profile")
             {
                 enterprise_id = std::get<std::string>(override.value);
+            }
+            else if (override.key == "automatic-restart")
+            {
+                automatic_restart = std::get<std::string>(override.value);
             }
             else
             {

@@ -115,7 +115,11 @@ const Override configProfileOverrides[] = {
      "Allows clear text HTTP authentication"},
 
     {"enterprise-profile", std::string {},
-     "Enterprise profile for client side device posture checks"}
+     "Enterprise profile for client side device posture checks"},
+
+    {"automatic-restart", std::string {},
+     "Restart policy for backend client processes",
+     [] {return std::string("no on-failure");}}
     // clang-format on
 };
 
