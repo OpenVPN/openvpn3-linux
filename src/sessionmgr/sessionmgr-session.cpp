@@ -80,33 +80,28 @@ Session::Session(DBus::Connection::Ptr dbuscon,
                  LogWriter::Ptr logwr)
     : DBus::Object::Base(std::move(sespath), Constants::GenInterface("sessions")),
       dbus_conn(dbuscon), object_mgr(objmgr), creds_qry(creds_qry_),
-      sig_sessmgr(sig_sessionmgr),
-      backend_pid(be_pid), config_path(std::move(cfg_path))
+      sig_sessmgr(sig_sessionmgr), config_path(std::move(cfg_path))
 {
-    // Set up the D-Bus proxy towards the back-end VPN client process
-    be_prx = DBus::Proxy::Client::Create(dbus_conn, be_busname);
     be_target = DBus::Proxy::TargetPreset::Create(Constants::GenPath("backends/session"),
                                                   Constants::GenInterface("backends"));
 
     // Prepare the signal subscription handler, this will handle
     sigsubscr = DBus::Signals::SubscriptionManager::Create(dbus_conn);
 
-    // The subscriptions being configured is targeting the backend VPN client
-    auto subscr_tgt = DBus::Signals::Target::Create(be_busname,
-                                                    be_target->object_path,
-                                                    be_target->interface);
-
     // Prepare signals the session object will send
     sig_session = Log::Create(dbus_conn, LogGroup::SESSIONMGR, GetPath(), logwr);
-    sig_statuschg = sig_session->CreateSignal<::Signals::StatusChange>(sigsubscr, subscr_tgt);
 
     // Prepare a signal group which will do broadcasts, this will be used
     // for when proxying the AttentionRequired signals
     sig_session->GroupCreate("broadcast");
     sig_session->GroupAddTarget("broadcast", "");
     sig_attreq = sig_session->GroupCreateSignal<::Signals::AttentionRequired>("broadcast",
-                                                                              sigsubscr,
-                                                                              subscr_tgt);
+                                                                              sigsubscr);
+
+    sig_statuschg = sig_session->CreateSignal<::Signals::StatusChange>(sigsubscr);
+
+    ResetBackend(be_pid, be_busname);
+
     // Prepare the object handling access control lists
     object_acl = GDBusPP::Object::Extension::ACL::Create(dbus_conn, owner);
 
@@ -496,6 +491,23 @@ Session::~Session() noexcept
         std::cerr << "EXCEPTION [" << __func__ << "]: "
                   << excp.what() << std::endl;
     }
+}
+
+
+void Session::ResetBackend(pid_t be_pid, const std::string &be_busname)
+{
+    backend_pid = be_pid;
+
+    // Set up the D-Bus proxy towards the back-end VPN client process
+    be_prx = DBus::Proxy::Client::Create(dbus_conn, be_busname);
+
+    // The subscriptions being configured is targeting the backend VPN client
+    auto subscr_tgt = DBus::Signals::Target::Create(be_busname,
+                                                    be_target->object_path,
+                                                    be_target->interface);
+
+    sig_attreq->Subscribe(subscr_tgt);
+    sig_statuschg->Subscribe(subscr_tgt);
 }
 
 

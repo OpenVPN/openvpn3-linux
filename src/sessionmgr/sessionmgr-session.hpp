@@ -66,6 +66,15 @@ class Session : public DBus::Object::Base
     ~Session() noexcept;
 
     /**
+     *  Sets up a D-Bus proxy for the backend process and subscribes
+     *  to relevant signals coming from it.
+     *
+     * @param be_pid      The PID of the backend process.
+     * @param be_busname  Bus name the backend process is using.
+     */
+    void ResetBackend(pid_t be_pid, const std::string &be_busname);
+
+    /**
      *  Checks if the VPN tunnel is ready to be started or if it needs
      *  more information from the VPN session owner.
      *  Used by method_ready().
