@@ -710,6 +710,18 @@ const std::string Session::GetDeviceName() const noexcept
 }
 
 
+std::string Session::GetBackendBusName() const noexcept
+{
+    return be_prx->GetDestination();
+}
+
+
+Events::Status Session::GetLastEvent() const noexcept
+{
+    return sig_statuschg ? sig_statuschg->LastEvent() : Events::Status{};
+}
+
+
 const bool Session::CheckACL(const std::string &caller) const noexcept
 {
     return object_acl->CheckACL(caller, {object_acl->GetOwner()});

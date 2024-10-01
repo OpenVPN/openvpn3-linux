@@ -102,6 +102,8 @@ class Session : public DBus::Object::Base
     void SetConfigName(const std::string &cfg_name);
     const std::string GetConfigName() const noexcept;
     const std::string GetDeviceName() const noexcept;
+    std::string GetBackendBusName() const noexcept;
+    Events::Status GetLastEvent() const noexcept;
 
     const bool CheckACL(const std::string &caller) const noexcept;
     const uid_t GetOwner() const noexcept;
