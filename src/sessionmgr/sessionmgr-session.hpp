@@ -66,6 +66,25 @@ class Session : public DBus::Object::Base
     ~Session() noexcept;
 
     /**
+     *  Checks if the VPN tunnel is ready to be started or if it needs
+     *  more information from the VPN session owner.
+     *  Used by method_ready().
+     *
+     *  Throws: net.openvpn.v3.error.ready with a human readable string
+     *          if the session owner needs to provide more information.
+     */
+    void Ready();
+
+    /**
+     *  Tells the backend VPN client service to start connecting to the
+     *  configured VPN servers
+     *  Used by method_connect().
+     *
+     * @param args  DBus::Object::Method::Arguments
+     */
+    void Connect();
+
+    /**
      *  Changes the session's configuration name property (config_name)
      *
      *  This is called by the RegistrationRequest

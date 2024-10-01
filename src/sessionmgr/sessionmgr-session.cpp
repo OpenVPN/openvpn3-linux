@@ -499,6 +499,48 @@ Session::~Session() noexcept
 }
 
 
+void Session::Ready()
+{
+    try
+    {
+        GVariant *r = be_prx->Call(be_target, "Ready", nullptr);
+        g_variant_unref(r);
+    }
+    catch (const DBus::Proxy::Exception &excp)
+    {
+        std::string err(excp.what());
+
+        if (err.find("net.openvpn.v3.error.ready"))
+        {
+
+            throw ReadyException(excp.what());
+        }
+        sig_session->LogCritical(excp.GetRawError());
+        throw DBus::Object::Method::Exception(excp.GetRawError());
+    }
+}
+
+
+void Session::Connect()
+{
+    // Set and lock the DCO mode
+    if (DCOstatus::MODIFIED == dco_status)
+    {
+        sig_session->Debug(std::string("DCO setting changed to ")
+                           + (dco ? "enabled" : "disabled"));
+        be_prx->SetProperty(be_target, "dco", dco);
+    }
+    dco_status = DCOstatus::LOCKED;
+
+    auto loglvl = be_prx->GetProperty<uint32_t>(be_target, "log_level");
+    sig_session->SetLogLevel(loglvl);
+
+    GVariant *r = be_prx->Call(be_target, "Connect", nullptr);
+    g_variant_unref(r);
+    sig_session->LogVerb2("Starting connection - " + GetPath());
+}
+
+
 const bool Session::Authorize(DBus::Authz::Request::Ptr authzreq)
 {
     // Early sanity check to see if the backend VPN process is accesible or not
@@ -683,23 +725,8 @@ void Session::method_ready(DBus::Object::Method::Arguments::Ptr args)
 {
     validate_vpn_backend();
 
-    try
-    {
-        GVariant *r = be_prx->Call(be_target, "Ready", nullptr);
-        g_variant_unref(r);
-    }
-    catch (const DBus::Proxy::Exception &excp)
-    {
-        std::string err(excp.what());
+    Ready();
 
-        if (err.find("net.openvpn.v3.error.ready"))
-        {
-
-            throw ReadyException(excp.what());
-        }
-        sig_session->LogCritical(excp.GetRawError());
-        throw DBus::Object::Method::Exception(excp.GetRawError());
-    }
     args->SetMethodReturn(nullptr);
 }
 
@@ -726,21 +753,8 @@ void Session::method_connect(DBus::Object::Method::Arguments::Ptr args)
 {
     validate_vpn_backend();
 
-    // Set and lock the DCO mode
-    if (DCOstatus::MODIFIED == dco_status)
-    {
-        sig_session->Debug(std::string("DCO setting changed to ")
-                           + (dco ? "enabled" : "disabled"));
-        be_prx->SetProperty(be_target, "dco", dco);
-    }
-    dco_status = DCOstatus::LOCKED;
+    Connect();
 
-    auto loglvl = be_prx->GetProperty<uint32_t>(be_target, "log_level");
-    sig_session->SetLogLevel(loglvl);
-
-    GVariant *r = be_prx->Call(be_target, "Connect", nullptr);
-    g_variant_unref(r);
-    sig_session->LogVerb2("Starting connection - " + GetPath());
     args->SetMethodReturn(nullptr);
 }
 
