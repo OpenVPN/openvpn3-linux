@@ -10,6 +10,7 @@
  *
  */
 
+#include <cmath>
 #include "common/lookup.hpp"
 #include "configmgr/proxy-configmgr.hpp"
 #include "sessionmgr-session.hpp"
@@ -35,6 +36,11 @@ TunnelRecord::TunnelRecord(const DBus::Object::Path &cfgpath,
 {
 }
 
+
+NewTunnelQueue::~NewTunnelQueue()
+{
+    io_context.stop();
+}
 
 
 NewTunnelQueue::Ptr NewTunnelQueue::Create(DBus::Connection::Ptr dbuscon,
@@ -74,6 +80,12 @@ NewTunnelQueue::NewTunnelQueue(DBus::Connection::Ptr dbuscon_,
                              {
                                  process_registration(event);
                              });
+
+    io_context_future = std::async(std::launch::async, [this]
+                                   {
+                                       auto work = make_work_guard(io_context);
+                                       io_context.run();
+                                   });
 }
 
 
@@ -298,7 +310,43 @@ void NewTunnelQueue::process_registration(DBus::Signals::Event::Ptr event)
 
                 if (session_exists)
                 {
-                    AddTunnel(config_path, owner, session_path);
+                    auto it = restart_timers.find(session_path);
+
+                    if (it == restart_timers.end())
+                    {
+                        it = restart_timers.insert(it, {session_path, std::pair{asio::steady_timer(io_context), 1}});
+                    }
+
+                    if (it != restart_timers.end())
+                    {
+                        auto &&[timer, retries] = it->second;
+
+                        if (retries > 10)
+                        {
+                            log->LogCritical("Will NOT try to restart backend process '" + bus_name
+                                             + "': number of retries exceeded");
+                        }
+                        else
+                        {
+                            const int seconds_to_restart = std::min(768, 3 * static_cast<int>(std::pow(2, retries - 1)));
+
+                            auto &[timer, retries] = it->second;
+
+                            ++retries;
+
+                            log->LogCritical("Will attempt to restart backend process '" + bus_name
+                                             + "' in " + std::to_string(seconds_to_restart) + "s");
+
+                            timer.expires_after(std::chrono::seconds(seconds_to_restart));
+                            timer.async_wait([this, config_path, owner, session_path](const asio::error_code &error)
+                                             {
+                                                 if (!error)
+                                                 {
+                                                     AddTunnel(config_path, owner, session_path);
+                                                 }
+                                             });
+                        }
+                    }
                 }
 
                 log->Debug("Bus name '" + bus_name + "' disappeared, session "

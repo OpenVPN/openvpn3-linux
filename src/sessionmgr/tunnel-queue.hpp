@@ -17,7 +17,10 @@
  */
 
 #pragma once
+
+#include <asio.hpp>
 #include <ctime>
+#include <future>
 #include <map>
 #include <optional>
 #include <set>
@@ -88,6 +91,8 @@ class NewTunnelQueue
   public:
     using Ptr = std::shared_ptr<NewTunnelQueue>;
 
+    ~NewTunnelQueue();
+
     [[nodiscard]] static NewTunnelQueue::Ptr Create(DBus::Connection::Ptr dbuscon,
                                                     DBus::Credentials::Query::Ptr creds_qry,
                                                     DBus::Object::Manager::Ptr objmgr,
@@ -126,7 +131,9 @@ class NewTunnelQueue
     QueuedTunnels queue{};
     std::map<std::string, BusWatcher::Ptr> backend_watchers;
     std::set<std::string> expired_backend_watchers;
-
+    asio::io_context io_context;
+    std::future<void> io_context_future;
+    std::map<std::string, std::pair<asio::steady_timer, int>> restart_timers;
     /**
      *  Callback function triggered when the backend VPN client
      *  (openvpn3-service-client) sends the RegistrationRequest signal.
