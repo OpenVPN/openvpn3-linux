@@ -235,7 +235,8 @@ class BackendStarterHandler : public DBus::Object::Base
             //  to stdout, which will be picked up by other logs on the
             //  system
             //
-            const char *args[client_args.size() + 2];
+            const char **args = (const char **)std::calloc(client_args.size() + 2, sizeof(char *));
+            char **env = {0};
             unsigned int i = 0;
 
             for (const auto &arg : client_args)
@@ -246,17 +247,16 @@ class BackendStarterHandler : public DBus::Object::Base
             args[i++] = nullptr;
 
 #ifdef OPENVPN_DEBUG
-            std::cout << "[openvpn3-service-backend] {" << getpid() << "} "
+            std::cerr << "[openvpn3-service-backend] {" << getpid() << "} "
                       << "Command line to be started: ";
             for (unsigned int j = 0; j < i; j++)
             {
-                std::cout << args[j] << " ";
+                std::cerr << args[j] << " ";
             }
-            std::cout << std::endl
-                      << std::endl;
-#endif
+            std::cerr << std::endl
+                      << std::endl
+                      << std::flush;
 
-            char **env = {0};
             if (client_envvars.size() > 0)
             {
                 env = (char **)std::calloc(client_envvars.size(), sizeof(char *));
@@ -267,7 +267,14 @@ class BackendStarterHandler : public DBus::Object::Base
                     ++idx;
                 }
                 env[idx] = nullptr;
+
+                for (unsigned int j = 0; j < idx; j++)
+                {
+                    std::cerr << "[ENV]: " << env[j] << "\n"
+                              << std::flush;
+                }
             }
+#endif
 
             execve(args[0], (char **)(args), env);
 
