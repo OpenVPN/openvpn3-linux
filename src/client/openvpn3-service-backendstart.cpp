@@ -335,10 +335,11 @@ class BackendStarterSrv : public DBus::Service
                       unsigned int log_level)
         : DBus::Service(conn, Constants::GenServiceName("backends")),
           client_args(cliargs),
-          log_level(log_level){};
+          log_level(log_level) {};
 
     ~BackendStarterSrv()
     {
+        logsrvprx->Detach(Constants::GenInterface("backends"));
     }
 
 
@@ -350,6 +351,9 @@ class BackendStarterSrv : public DBus::Service
 
     void BusNameAcquired(const std::string &busname) override
     {
+        logsrvprx = LogServiceProxy::Create(GetConnection());
+        logsrvprx->Attach(Constants::GenInterface("backends"));
+
         CreateServiceHandler<BackendStarterHandler>(GetConnection(),
                                                     client_args,
                                                     client_envvars,
@@ -369,6 +373,7 @@ class BackendStarterSrv : public DBus::Service
     BackendStarterHandler::Ptr mainobj{nullptr};
     std::vector<std::string> client_args{};
     unsigned int log_level{3};
+    LogServiceProxy::Ptr logsrvprx;
     std::vector<std::string> client_envvars{};
 };
 
@@ -437,8 +442,6 @@ int backend_starter(ParsedArgs::Ptr args)
     }
 
     auto dbus = DBus::Connection::Create(DBus::BusType::SYSTEM);
-    auto logsrvprx = LogServiceProxy::AttachInterface(dbus,
-                                                      Constants::GenInterface("backends"));
     auto backstart = DBus::Service::Create<BackendStarterSrv>(dbus,
                                                               client_args,
                                                               log_level);
@@ -471,11 +474,6 @@ int backend_starter(ParsedArgs::Ptr args)
 
     backstart->Run();
 
-    if (logsrvprx)
-    {
-        std::string interface{Constants::GenInterface("backends")};
-        logsrvprx->Detach(interface);
-    }
     return 0;
 }
 
