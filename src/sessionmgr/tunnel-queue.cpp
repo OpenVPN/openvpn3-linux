@@ -136,6 +136,13 @@ void NewTunnelQueue::process_registration(DBus::Signals::Event::Ptr event)
         // Get access to the TunnelRecord object
         auto tunnel = rec.mapped();
 
+        log->Debug("RegistrationRequest: busname=" + busn
+                   + ", session_token=" + sesstok
+                   + ", backend_pid=" + std::to_string(be_pid)
+                   + ", session_path=" + tunnel->session_path
+                   + ", config_path=" + tunnel->config_path
+                   + ", owner=" + std::to_string(tunnel->owner));
+
         // Create the session object which will be used to manage the
         // VPN session.  This is the bridge point betweeen the
         // end-users managing their session and the backend VPN client process
