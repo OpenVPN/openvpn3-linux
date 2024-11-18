@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <condition_variable>
 #include <iostream>
 #include <memory>
 #include <gdbuspp/proxy.hpp>
@@ -37,7 +38,7 @@ using XmlDocPtr = std::shared_ptr<openvpn::Xml::Document>;
 #include "events/status.hpp"
 #include "log/log-helpers.hpp"
 #include "log/dbus-log.hpp"
-
+#include "sessionmgr-events.hpp"
 
 namespace SessionManager::Proxy {
 
@@ -677,17 +678,57 @@ class Manager
      * @return Returns an OpenVPN3SessionProxy::Ptr to the new session
      *         D-Bus object
      */
-    Session::Ptr NewTunnel(const DBus::Object::Path &cfgpath) const
+    Session::Ptr NewTunnel(const DBus::Object::Path &cfgpath)
     {
+        using namespace std::literals;
+
         try
         {
-            GVariant *r = proxy->Call(target,
-                                      "NewTunnel",
-                                      glib2::Value::CreateTupleWrapped(cfgpath));
-            auto session_path = glib2::Value::Extract<DBus::Object::Path>(r, 0);
-            // TODO: Listen for SessionManagerEvent::SESS_CREATED signal before
-            // returning
-            sleep(1);
+            auto signal_subscr = DBus::Signals::SubscriptionManager::Create(dbuscon);
+            auto subscr_target = DBus::Signals::Target::Create(
+                "",
+                Constants::GenPath("sessions"),
+                "");
+
+            bool sessmgr_event = false;
+            std::mutex new_tunnel_mtx;
+            std::condition_variable new_tunnel_cv;
+            std::string session_path;
+            signal_subscr->Subscribe(subscr_target,
+                                     "SessionManagerEvent",
+                                     [&](DBus::Signals::Event::Ptr event)
+                                     {
+                                         std::lock_guard signal_lock{new_tunnel_mtx};
+                                         SessionManager::Event ev(event->params);
+                                         if (SessionManager::EventType::SESS_CREATED == ev.type
+                                             && ev.path == session_path)
+                                         {
+                                             sessmgr_event = true;
+                                             new_tunnel_cv.notify_all();
+                                         }
+                                     });
+            {
+                // This blocks the signal handler from trying to check
+                // the session_path before it's been set.
+                std::unique_lock<std::mutex> lock{new_tunnel_mtx};
+                GVariant *r = proxy->Call(target,
+                                          "NewTunnel",
+                                          glib2::Value::CreateTupleWrapped(cfgpath));
+                session_path = glib2::Value::Extract<DBus::Object::Path>(r, 0);
+            }
+
+            // Wait for the SessionManagerEvent for our session to arrive
+            // before trying to create the Session object.
+            std::unique_lock<std::mutex> lock{new_tunnel_mtx};
+            bool res = new_tunnel_cv.wait_for(lock, 15s, [&]
+                                              {
+                                                  return sessmgr_event;
+                                              });
+            if (!res)
+            {
+                throw SessionManager::Proxy::Exception("New tunnel did not respond");
+            }
+
             return Session::Create(proxy, session_path);
         }
         catch (const DBus::Proxy::Exception &)
@@ -811,11 +852,13 @@ class Manager
     }
 
   private:
+    DBus::Connection::Ptr dbuscon = nullptr;
     DBus::Proxy::Client::Ptr proxy = nullptr;
     DBus::Proxy::TargetPreset::Ptr target = nullptr;
 
     Manager(DBus::Connection::Ptr conn)
-        : proxy(DBus::Proxy::Client::Create(conn,
+        : dbuscon(conn),
+          proxy(DBus::Proxy::Client::Create(conn,
                                             Constants::GenServiceName("sessions"))),
           target(DBus::Proxy::TargetPreset::Create(Constants::GenPath("sessions"),
                                                    Constants::GenInterface("sessions")))
