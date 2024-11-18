@@ -91,6 +91,7 @@ const DBus::Object::Path NewTunnelQueue::AddTunnel(const std::string &config_pat
         }
         auto be_start = DBus::Proxy::Client::Create(dbuscon,
                                                     Constants::GenServiceName("backends"));
+        usleep(100000);
         auto be_qry = DBus::Proxy::Utils::Query::Create(be_start);
         (void)be_qry->CheckObjectExists(Constants::GenPath("backends"),
                                         Constants::GenInterface("backends"));
