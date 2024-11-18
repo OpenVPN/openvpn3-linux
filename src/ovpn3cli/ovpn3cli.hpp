@@ -18,7 +18,9 @@
  *         OVPN3CLI_COMMANDS_LIST to be defined in advance.
  */
 
+#include <future>
 #include <gdbuspp/exceptions.hpp>
+#include <gdbuspp/mainloop.hpp>
 #include "common/cmdargparser.hpp"
 
 
@@ -33,17 +35,26 @@ int main(int argc, char **argv)
         cmds.RegisterCommand(cmd());
     }
 
+    auto mainloop = DBus::MainLoop::Create();
+    auto async_ml = std::async(std::launch::async, [&mainloop]()
+                               {
+                                   mainloop->Run();
+                               });
+    usleep(25000); // let the async_ml settle
+    int exit_code = 0;
+
     // Parse the command line arguments and execute the commands given
     try
     {
-        return cmds.ProcessCommandLine(argc, argv);
+        // The D-Bus Proxy code requires a running main loop to work
+        exit_code = cmds.ProcessCommandLine(argc, argv);
     }
     catch (const DBus::Exception &e)
     {
         std::cerr << simple_basename(argv[0])
                   << "** ERROR **  " << e.GetRawError() << std::endl;
 
-        return 7;
+        exit_code = 7;
     }
     catch (CommandException &e)
     {
@@ -52,12 +63,19 @@ int main(int argc, char **argv)
             std::cerr << simple_basename(argv[0]) << "/" << e.getCommand()
                       << ": ** ERROR ** " << e.what() << std::endl;
         }
-        return 8;
+        exit_code = 8;
     }
     catch (std::exception &e)
     {
         std::cerr << simple_basename(argv[0])
                   << "** ERROR ** " << e.what() << std::endl;
-        return 9;
+        exit_code = 9;
     }
+
+    if (mainloop->Running())
+    {
+        mainloop->Stop();
+        async_ml.get();
+    }
+    return exit_code;
 }

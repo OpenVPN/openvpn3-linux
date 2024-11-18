@@ -13,7 +13,6 @@
  */
 
 #include <gdbuspp/connection.hpp>
-#include <gdbuspp/mainloop.hpp>
 
 #include "common/cmdargparser.hpp"
 #include "../../arghelpers.hpp"
@@ -67,7 +66,7 @@ static int cmd_log(ParsedArgs::Ptr args)
     }
 
     // Start the main loop.  This will exit on SIGINT or SIGTERM signals only
-    mainloop->Run();
+    mainloop->Wait();
 
     return 0;
 }
