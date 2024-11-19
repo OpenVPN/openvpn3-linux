@@ -195,11 +195,11 @@ bool Device::AddDnsOptions(LogSender::Ptr log, const openvpn::DnsOptions &dns) c
                 }
                 catch (const DBus::Exception &excp)
                 {
-                    log->LogWarn("DNS resolver setup: Failed setting DNS transport "
-                                 + dnsopts.transport_string(dnsopts.transport));
+                    log->LogError("DNS resolver setup: Failed setting DNS transport to "
+                                  + dnsopts.transport_string(dnsopts.transport));
                     log->Debug("DNS transport setting error: "
                                + std::string(excp.GetRawError()));
-                    continue;
+                    return false;
                 }
             }
 
@@ -357,8 +357,7 @@ void Device::SetDNSTransport(const openvpn::DnsServer::Transport &mode) const
         break;
 
     case openvpn::DnsServer::Transport::HTTPS:
-        mode_str = "doh";
-        break;
+        throw NetCfgProxyException("SetDNSTransport", "DNS-over-HTTPS is not supported");
 
     case openvpn::DnsServer::Transport::Unset:
         mode_str = "unset";
@@ -390,7 +389,7 @@ openvpn::DnsServer::Transport Device::GetDNSTransport() const
     }
     else if ("doh" == mode)
     {
-        return openvpn::DnsServer::Transport::HTTPS;
+        throw NetCfgProxyException("SetDNSTransport", "DNS-over-HTTPS is not supported");
     }
     else if ("unset" == mode)
     {
