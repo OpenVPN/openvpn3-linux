@@ -139,18 +139,21 @@ static int cmd_sessions_list(ParsedArgs::Ptr args)
         {
             auto cti = sprx->GetConnectedToInfo();
             bool ipv6_addr = cti.server_ip.find(":") != std::string::npos;
-            session_details << "Connected to: "
-                         << cti.protocol << ":"
-                         << (ipv6_addr ? "[" : "")
-                         << cti.server_ip
-                         << (ipv6_addr ? "]" : "");
-            if (cti.server_port > 0)
+            if (!cti.protocol.empty())
             {
-                // DCO connections currently does not expose the port number
-                session_details << ":"
-                                << std::to_string(cti.server_port);
+                session_details << "Connected to: "
+                                << cti.protocol << ":"
+                                << (ipv6_addr ? "[" : "")
+                                << cti.server_ip
+                                << (ipv6_addr ? "]" : "");
+                if (cti.server_port > 0)
+                {
+                    // DCO connections currently does not expose the port number
+                    session_details << ":"
+                                    << std::to_string(cti.server_port);
+                }
+                session_details << std::endl;
             }
-            session_details << std::endl;
         }
         catch (const SessionManager::Proxy::Exception &)
         {
