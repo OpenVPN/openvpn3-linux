@@ -579,6 +579,24 @@ class CoreVPNClient : public CLIENTBASECLASS
             run_status = StatusMinor::CONN_FAILED;
             failed_signal_sent = true;
         }
+        else if ("TLS_SIGALG_DISALLOWED_OR_UNSUPPORTED" == ev.name)
+        {
+            signals->LogCritical("Unsupported TLS algorithm: " + ev.info);
+            signals->StatusChange(StatusMajor::CONNECTION,
+                                  StatusMinor::CONN_FAILED,
+                                  "Unsupported TLS algorithm");
+            run_status = StatusMinor::CONN_FAILED;
+            failed_signal_sent = true;
+        }
+        else if ("TLS_ALERT_MISC" == ev.name)
+        {
+            signals->LogCritical("Unspecified TLS error: " + ev.info);
+            signals->StatusChange(StatusMajor::CONNECTION,
+                                  StatusMinor::CONN_FAILED,
+                                  "Unspecified TLS error during connection setup");
+            run_status = StatusMinor::CONN_FAILED;
+            failed_signal_sent = true;
+        }
         else if ("CONNECTION_TIMEOUT" == ev.name)
         {
             signals->LogInfo("Connection timeout");
