@@ -118,6 +118,14 @@ class BackendSignals : public LogSender
         sig_regreq = GroupCreateSignal<Backend::Signals::RegistrationRequest>("sessionmgr");
     }
 
+    ~BackendSignals() noexcept
+    {
+        if (delayed_shutdown && delayed_shutdown->joinable())
+        {
+            delayed_shutdown->join();
+        }
+    }
+
     [[nodiscard]] static BackendSignals::Ptr Create(DBus::Connection::Ptr conn,
                                                     LogGroup lgroup,
                                                     std::string session_token,
