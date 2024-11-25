@@ -885,12 +885,25 @@ void Session::helper_stop_log_forwards()
             sig_session->LogCritical("log_forwarders.erase(" + owner_busid + ") "
                                      + "failed:" + std::string(e.what()));
         }
+
+        std::string user_details;
+        try
+        {
+            user_details = " (user: "
+                           + lookup_username(creds_qry->GetUID(owner_busid))
+                           + ")";
+        }
+        catch (const DBus::Exception &)
+        {
+            // If this information is unavailable, ignore these details.
+            // The owner of this log forwarder might have stopped running
+            // without removing the log forwarding.
+        }
+
         sig_session->LogVerb2("Session closing, Removed log forwarding from "
                               + owner_busid
                               + " on " + GetPath()
-                              + " (user: "
-                              + lookup_username(creds_qry->GetUID(owner_busid))
-                              + ")");
+                              + user_details);
     }
     log_forwarders.clear();
 }
