@@ -24,6 +24,65 @@
 #include "common/cmdargparser.hpp"
 
 
+/**
+ *   Container used to synchronise the execution between
+ *   an async thread running the glib2 mainloop and the main thread
+ *   running main().
+ */
+struct mainloop_sync
+{
+    std::mutex mtx;
+    std::condition_variable cv;
+    bool ml_running = false;
+};
+
+
+/**
+ *  Helper function which is run by the main loop in glib2 as soon as
+ *  the main loop has been started.  This is triggered by a g_idle_add()
+ *  call before starting the async thread running the main loop.
+ *
+ *  The purpose is to let the main() function wait for the glib2 main loop
+ *  to properly settle and get started.
+ *
+ *  The data pointer points at a mainloop_sync object which contains
+ *  the needed mutex and condvar to for the synchronisation.
+ *
+ * @param data   pointer to the mainloop_sync object
+ * @return int   Will always return G_SOURCE_REMOVE.  This is to avoid
+ *               this function being called more than once.
+ */
+int mainloop_running(void *data)
+{
+    auto mls = static_cast<mainloop_sync *>(data);
+
+    // Signal the wait_for_mainloop() function so it can be unlocked
+    std::lock_guard lg(mls->mtx);
+    mls->ml_running = true;
+    mls->cv.notify_all();
+
+    // This should only be run once
+    return G_SOURCE_REMOVE;
+}
+
+
+/**
+ *  Helper function to block further execution until the glib2 main loop
+ *  has properly started.  See mainloop_running() for details.
+ *
+ * @param ml_sync  mainloop_sync object keeping the lock synchronisation
+ */
+void wait_for_mainloop(mainloop_sync &ml_sync)
+{
+    // Wait for the mainloop_running() function to be called
+    std::unique_lock<std::mutex> mls_lock(ml_sync.mtx);
+    ml_sync.cv.wait(mls_lock, [&ml_sync]()
+                    {
+                        return ml_sync.ml_running;
+                    });
+}
+
+
 int main(int argc, char **argv)
 {
     Commands cmds(OVPN3CLI_PROGNAME,
@@ -36,14 +95,23 @@ int main(int argc, char **argv)
     }
 
     auto mainloop = DBus::MainLoop::Create();
+
+    // Run the mainloop_running() function once when the glib2
+    // main loop starts running
+    mainloop_sync ml_sync;
+    g_idle_add(&mainloop_running, &ml_sync);
+
+    // start the main loop in a separate thread
     auto async_ml = std::async(std::launch::async, [&mainloop]()
                                {
                                    mainloop->Run();
                                });
-    usleep(25000); // let the async_ml settle
-    int exit_code = 0;
+
+    // Wait for the async thread to have started the glib2 main loop
+    wait_for_mainloop(ml_sync);
 
     // Parse the command line arguments and execute the commands given
+    int exit_code = 0;
     try
     {
         // The D-Bus Proxy code requires a running main loop to work
