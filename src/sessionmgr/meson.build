@@ -46,7 +46,6 @@ configure_file(
             'BUSNAME': 'net.openvpn.v3.sessions',
             'SERVICE_BIN': bin_backend_sessionmgr.name(),
             'SERVICE_ARGS': '',
-            'OPENVPN_USERNAME': 'openvpn',
         }
     ),
     install: true,

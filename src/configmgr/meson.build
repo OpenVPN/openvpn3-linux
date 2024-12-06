@@ -45,7 +45,6 @@ configure_file(
             'BUSNAME': 'net.openvpn.v3.configuration',
             'SERVICE_BIN': bin_backend_configmgr.name(),
             'SERVICE_ARGS': '--state-dir "' + openvpn3_statedir + '/configs"',
-            'OPENVPN_USERNAME': 'openvpn',
         }
     ),
     install: true,
