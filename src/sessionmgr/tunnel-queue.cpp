@@ -131,7 +131,7 @@ void NewTunnelQueue::process_registration(DBus::Signals::Event::Ptr event)
         auto rec = queue.extract(sesstok);
         if (rec.empty())
         {
-            log->LogCritical("Unknown session token recieved: " + sesstok);
+            log->LogCritical("Unknown session token received: " + sesstok);
             return;
         }
         // Get access to the TunnelRecord object

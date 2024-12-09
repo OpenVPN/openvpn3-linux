@@ -98,7 +98,7 @@ std::string ServiceProxy::GetBinaryName() const
 {
     if (!proxy)
     {
-        return "(unkown binary)";
+        return "(unknown binary)";
     }
 
     //  Extract the executable binary filename for this service by

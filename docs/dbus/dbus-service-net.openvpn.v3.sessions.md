@@ -190,7 +190,7 @@ node /net/openvpn/v3/sessions/${UNIQUE_ID} {
       readonly s device_name;
       readonly o config_path;
       readonly s config_name;
-      readonly (ssbu) connected_to;
+      readonly (ssu) connected_to;
       readonly s session_name;
       readonly u backend_pid;
       readwrite b restrict_log_access;

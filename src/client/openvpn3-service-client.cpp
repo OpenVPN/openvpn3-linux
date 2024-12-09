@@ -1591,14 +1591,14 @@ void start_client_thread(pid_t start_pid,
     }
     catch (const DBus::Exception &excp)
     {
-        std::cerr << "** ERROR **  An unrecoveralbe D-Bus error occured"
+        std::cerr << "** ERROR **  An unrecoverable D-Bus error occurred"
                   << std::endl
                   << "             " << excp.GetRawError()
                   << std::endl;
     }
     catch (const std::exception &excp)
     {
-        std::cerr << "** ERROR **  An unrecoveralbe exception occired"
+        std::cerr << "** ERROR **  An unrecoverable exception occurred"
                   << std::endl
                   << "             " << excp.what()
                   << std::endl;

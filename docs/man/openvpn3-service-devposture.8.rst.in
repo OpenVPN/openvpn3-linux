@@ -18,7 +18,7 @@ SYNOPSIS
 DESCRIPTION
 ===========
 The ``openvpn3-service-devposture`` process is a backend service for OpenVPN 3
-Linux, reponsible for retrieving client environment information, such as OS
+Linux, responsible for retrieving client environment information, such as OS
 details (distro, version, etc.) and presenting it to ``openvpn3-service-client``
 upon request.
 

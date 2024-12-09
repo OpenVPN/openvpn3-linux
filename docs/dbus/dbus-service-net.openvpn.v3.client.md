@@ -87,7 +87,7 @@ node /net/openvpn/v3/backends/session {
     properties:
       readwrite u log_level;
       readonly s session_name;
-      readonly (sssbusb) connection;
+      readonly (sssu) connection;
       readonly a{sx} statistics;
       readonly (uus) status;
       readwrite b dco;

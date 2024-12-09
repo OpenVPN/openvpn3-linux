@@ -683,7 +683,7 @@ std::string Configuration::validate_profile() noexcept
     if (!client_configured || !dev_found || !remote_found || !ca_found)
     {
         prop_valid_ = false;
-        return "Configration profile is missing required options";
+        return "Configuration profile is missing required options";
     }
     prop_valid_ = true;
     return "";

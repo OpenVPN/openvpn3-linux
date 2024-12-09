@@ -23,7 +23,7 @@ node /net/openvpn/v3/netcfg {
       ProtectSocket(in  s remote,
                     in  b ipv6,
                     in  o device_path,
-                    out b succeded);
+                    out b succeeded);
       DcoAvailable(out b available);
       Cleanup();
       NotificationSubscribe(in  u filter);

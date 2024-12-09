@@ -201,7 +201,7 @@ TEST(resolved_IPAddress, ctor_gvariant_incorrect)
     g_variant_unref(ipv6_inet);
 
     GVariant *ipv6_wrong_family = create_gvariant_addr(12, TestData::Correct::ipv6_byte);
-    EXPECT_THROW(IPAddress parsed_ipv6_unkown(ipv6_wrong_family), NetCfg::DNS::resolved::Exception);
+    EXPECT_THROW(IPAddress parsed_ipv6_unknown(ipv6_wrong_family), NetCfg::DNS::resolved::Exception);
     g_variant_unref(ipv6_wrong_family);
 }
 

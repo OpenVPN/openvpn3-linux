@@ -133,7 +133,7 @@ NetCfgServiceHandler::NetCfgServiceHandler(DBus::Connection::Ptr conn_,
     args_protect_socket->AddInput("remote", glib2::DataType::DBus<std::string>());
     args_protect_socket->AddInput("ipv6", glib2::DataType::DBus<bool>());
     args_protect_socket->AddInput("device_path", "o");
-    args_protect_socket->AddOutput("succeded", glib2::DataType::DBus<bool>());
+    args_protect_socket->AddOutput("succeeded", glib2::DataType::DBus<bool>());
 
     auto args_dco_avail = AddMethod(
         "DcoAvailable",

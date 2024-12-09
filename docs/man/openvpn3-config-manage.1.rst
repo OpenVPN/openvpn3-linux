@@ -17,7 +17,7 @@ SYNOPSIS
 
 DESCRIPTION
 ===========
-Manage settings for an imported configuration profile.  This allows to override parts
+Manage settings for an imported configuration profile.  This allows one to override parts
 of the original config profile.  Note that this will not be reflected in the output
 of ``openvpn3 config-dump``.  Use ``openvpn3 config-manage --show`` to see the existing
 overrides.
