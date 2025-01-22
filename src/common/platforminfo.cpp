@@ -44,14 +44,35 @@ PlatformInfo::PlatformInfo(DBus::Connection::Ptr con)
     {
         return;
     }
-    proxy = DBus::Proxy::Client::Create(con, "org.freedesktop.hostname1");
-    hostname1_tgt = DBus::Proxy::TargetPreset::Create("/org/freedesktop/hostname1",
-                                                      "org.freedesktop.hostname1");
+    try
+    {
+        constexpr const char *srvname = "org.freedesktop.hostname1";
+
+        // First do a quick check if the hostname1 service exists on the system
+        auto srvprx = DBus::Proxy::Utils::DBusServiceQuery::Create(con);
+        if (!srvprx->LookupService(srvname) && !srvprx->LookupActivatable(srvname))
+        {
+            // If it does not exist, don't attempt setting up a proxy for it
+            return;
+        }
+        proxy = DBus::Proxy::Client::Create(con, srvname);
+        hostname1_tgt = DBus::Proxy::TargetPreset::Create("/org/freedesktop/hostname1",
+                                                          "org.freedesktop.hostname1");
+    }
+    catch (const DBus::Proxy::Exception &)
+    {
+        // the org.freedesktop.hostname1 service is not available,
+        // continue without it.
+    }
 }
 
 
 const bool PlatformInfo::DBusAvailable() const
 {
+    if (!proxy)
+    {
+        return false;
+    }
     auto qry = DBus::Proxy::Utils::Query::Create(proxy);
     return qry->Ping();
 }
