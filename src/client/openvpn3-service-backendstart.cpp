@@ -339,7 +339,15 @@ class BackendStarterSrv : public DBus::Service
 
     ~BackendStarterSrv()
     {
-        logsrvprx->Detach(Constants::GenInterface("backends"));
+        try
+        {
+            logsrvprx->Detach(Constants::GenInterface("backends"));
+        }
+        catch (const DBus::Exception &excp)
+        {
+            std::cerr << "[EXCEPTION] ~BackendStarterSrv(): "
+                      << excp.what() << std::endl;
+        }
     }
 
 
