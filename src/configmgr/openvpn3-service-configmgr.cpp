@@ -31,8 +31,8 @@ static int config_manager(ParsedArgs::Ptr args)
     std::cout << get_version(args->GetArgv0()) << std::endl;
 
     // Enable automatic shutdown if the config manager is
-    // idling for 1 minute or more.  By idling, it means
-    // no configuration files is stored in memory.
+    // idling for 3 minutes or more.  By idling, it means
+    // no ephemeral configuration files are stored in memory.
     unsigned int idle_wait_min = 3;
     if (args->Present("idle-exit"))
     {
