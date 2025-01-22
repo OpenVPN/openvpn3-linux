@@ -344,24 +344,6 @@ Manager::Manager(DBus::Connection::Ptr conn)
     tgt_resolved = DBus::Proxy::TargetPreset::Create(
         "/org/freedesktop/resolve1", "org.freedesktop.resolve1.Manager");
 
-    // Check if org.freedesktop.resolve1 (systemd-resolved) is available.
-    // We test this by connecting to the service.
-    //
-    // This is a pre-condition for this integration to work at all.  If
-    // this is not available, openvpn3-service-netcfg should continue to
-    // run without DNS configured.
-    try
-    {
-        auto prxqry = DBus::Proxy::Utils::Query::Create(proxy);
-        prxqry->Ping();
-    }
-    catch (const DBus::Exception &excp)
-    {
-        throw Exception(std::string("Could not reach ")
-                        + "org.freedesktop.resolve1 (systemd-resolved). "
-                        + "Ensure this service is running and available.");
-    }
-
     // Check for presence of org.freedesktop.PolicyKit1
     // This service is needed to be allowed to send update requests
     // to systemd-resolved as the 'openvpn' user which net.openvpn.v3.netcfg
