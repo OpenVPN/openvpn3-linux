@@ -273,7 +273,7 @@ executable('journal-log-parse',
     [
         'misc/journal-log-parse-test.cpp',
     ],
-    build_by_default: build_test_programs,
+    build_by_default: dep_systemd.found() and build_test_programs,
     link_with: [
         common_code,
     ],
