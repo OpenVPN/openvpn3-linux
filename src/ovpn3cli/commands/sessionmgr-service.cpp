@@ -115,24 +115,48 @@ static void list_running_sessions(bool verbose)
                 devname = "-";
             }
 
-            std::string sessionname{};
+            std::ostringstream session_details;
             std::string configname{};
             Events::Status status;
             if (verbose)
             {
-                // Retrieve the session name set by the VPN backend
+                // Retrieve connection details about the session
                 try
                 {
-                    std::string sessname = sess->GetSessionName();
-                    if (!sessname.empty())
+                    auto cti = sess->GetConnectedToInfo();
+                    bool ipv6_addr = cti.server_ip.find(":") != std::string::npos;
+                    if (!cti.protocol.empty())
                     {
-                        sessionname = sessname;
+                        session_details << "Connected to: "
+                                        << cti.protocol << ":"
+                                        << (ipv6_addr ? "[" : "")
+                                        << cti.server_ip
+                                        << (ipv6_addr ? "]" : "");
+                        if (cti.server_port > 0)
+                        {
+                            // DCO connections currently does not expose the port number
+                            session_details << ":"
+                                            << std::to_string(cti.server_port);
+                        }
+                        session_details << std::endl;
                     }
                 }
-                catch (DBus::Exception &)
+                catch (const SessionManager::Proxy::Exception &)
                 {
-                    // Ignore any errors if this property is unavailable
-                    sessionname = "-";
+                    // If connection details are unavailable, try extracting
+                    // session name instead - as used in v23 and older releases
+                    try
+                    {
+                        std::string sessname = sess->GetSessionName();
+                        if (!sessname.empty())
+                        {
+                            session_details << "Session name: " << sessname << std::endl;
+                        }
+                    }
+                    catch (const DBus::Exception &)
+                    {
+                        // Ignore any errors if this property is unavailable
+                    }
                 }
 
                 // Retrieve the configuration profile name used when starting
@@ -174,10 +198,10 @@ static void list_running_sessions(bool verbose)
                 {
                     std::cout << std::setw(18) << " "
                               << "Config name" << std::setw(17) << " "
-                              << "Session name" << std::setw(28) << " "
+                              << "Status" << std::setw(28) << " "
                               << std::endl
                               << std::setw(18) << " "
-                              << "Last status"
+                              << "Session details"
                               << std::endl;
                 }
                 std::cout << std::setw(79) << std::setfill('-') << "-"
@@ -211,7 +235,7 @@ static void list_running_sessions(bool verbose)
                 std::cout << std::setw(18) << " "
                           << configname << std::setw(28 - configname.length())
                           << " "
-                          << sessionname
+                          << status
                           << std::endl;
                 std::cout << std::setw(18) << " ";
                 if (status.Check(StatusMajor::SESSION, StatusMinor::SESS_AUTH_URL))
@@ -220,9 +244,8 @@ static void list_running_sessions(bool verbose)
                 }
                 else
                 {
-                    std::cout << status;
+                    std::cout << session_details.str();
                 }
-                std::cout << std::endl;
             }
         }
         // Output closing separator
