@@ -140,11 +140,27 @@ Configuration::Configuration(DBus::Connection::Ptr dbuscon,
         switch (ov.type())
         {
         case Json::ValueType::booleanValue:
-            set_override(ovkey, ov.asBool());
+            try
+            {
+                set_override(ovkey, ov.asBool());
+            }
+            catch (const DBus::Object::Method::Exception &excp)
+            {
+                signals_->LogError("Incorrect override key: " + ovkey + ", ignoring");
+            }
             break;
+
         case Json::ValueType::stringValue:
-            set_override(ovkey, ov.asString());
+            try
+            {
+                set_override(ovkey, ov.asString());
+            }
+            catch (const DBus::Object::Method::Exception &excp)
+            {
+                signals_->LogError("Incorrect override key: " + ovkey + ", ignoring");
+            }
             break;
+
         default:
             throw DBus::Object::Method::Exception("Invalid data type for ...");
         }
