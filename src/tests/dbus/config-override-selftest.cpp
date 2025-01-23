@@ -262,6 +262,7 @@ int main(int argc, char **argv)
 
 
     // Set all overrides to some values
+    std::vector<std::string> failed_overrides;
     for (auto &cfgoverride : configProfileOverrides)
     {
         if (std::holds_alternative<std::string>(cfgoverride.value))
@@ -270,21 +271,50 @@ int main(int argc, char **argv)
                       << cfgoverride.key << " = '"
                       << "override:" + cfgoverride.key
                       << "'" << std::endl;
-            cfgobj.SetOverride(cfgoverride, "override:" + cfgoverride.key);
+            try
+            {
+                cfgobj.SetOverride(cfgoverride, "override:" + cfgoverride.key);
+            }
+            catch (const CfgMgrProxyException &err)
+            {
+                std::cout << "                     EXCEPTION: "
+                          << err.what()
+                          << std::endl;
+                failed_overrides.push_back(cfgoverride.key);
+            }
         }
         else
         {
             std::cout << ".. Setting override: [type boolean] "
                       << cfgoverride.key << " = true" << std::endl;
-            cfgobj.SetOverride(cfgoverride, true);
+            try
+            {
+                cfgobj.SetOverride(cfgoverride, true);
+            }
+            catch (const CfgMgrProxyException &err)
+            {
+                std::cout << "                     EXCEPTION: "
+                          << err.what()
+                          << std::endl;
+                failed_overrides.push_back(cfgoverride.key);
+            }
         }
     }
+    failed += failed_overrides.size();
 
     // Get all the overrides, and check if the value is what we expects
     std::vector<Override> chkov = cfgobj.GetOverrides();
     for (const auto &cfgoverride : configProfileOverrides)
     {
         std::cout << ".. Checking override '" << cfgoverride.key << "': ";
+
+        // Don't test a known failed override
+        if (std::find(failed_overrides.begin(), failed_overrides.end(), cfgoverride.key) != failed_overrides.end())
+        {
+            std::cout << "SKIPPING" << std::endl;
+            continue;
+        }
+
         std::string failmsg = "";
         for (const auto &cov : chkov)
         {
@@ -361,5 +391,16 @@ int main(int argc, char **argv)
                                     + " failed)")
               << std::endl;
 
+    if (failed_overrides.size() > 0)
+    {
+        std::cout << "Failed overrides: ";
+        bool first = true;
+        for (const auto &fov : failed_overrides)
+        {
+            std::cout << (first ? "" : ", ") << fov;
+            first = false;
+        }
+        std::cout << std::endl;
+    }
     return (0 == failed ? 0 : 2);
 }
