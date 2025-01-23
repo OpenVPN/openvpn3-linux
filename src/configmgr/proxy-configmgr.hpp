@@ -594,9 +594,18 @@ class OpenVPN3ConfigurationProxy
             DBus::Proxy::Exception("SetOverride for bool called for non-bool override");
         }
         GVariant *val = glib2::Value::Create(value);
-        proxy->Call(proxy_tgt,
-                    "SetOverride",
-                    g_variant_new("(sv)", override.key.c_str(), val));
+        try
+        {
+            proxy->Call(proxy_tgt,
+                        "SetOverride",
+                        g_variant_new("(sv)", override.key.c_str(), val));
+        }
+        catch (const DBus::Exception &excp)
+        {
+            std::stringstream e;
+            e << "SetOverride Error:" << excp.GetRawError();
+            throw CfgMgrProxyException(e.str());
+        }
     }
 
 
@@ -609,10 +618,19 @@ class OpenVPN3ConfigurationProxy
         {
             DBus::Proxy::Exception("SetOverride for string called for non-string override");
         }
-        GVariant *val = glib2::Value::Create(value);
-        proxy->Call(proxy_tgt,
-                    "SetOverride",
-                    g_variant_new("(sv)", override.key.c_str(), val));
+        try
+        {
+            GVariant *val = glib2::Value::Create(value);
+            proxy->Call(proxy_tgt,
+                        "SetOverride",
+                        g_variant_new("(sv)", override.key.c_str(), val));
+        }
+        catch (const DBus::Exception &excp)
+        {
+            std::stringstream e;
+            e << "SetOverride Error:" << excp.GetRawError();
+            throw CfgMgrProxyException(e.str());
+        }
     }
 
 
