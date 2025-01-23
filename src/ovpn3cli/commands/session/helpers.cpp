@@ -276,7 +276,10 @@ void start_session(SessionManager::Proxy::Session::Ptr session,
                 }
                 else if (s.minor == StatusMinor::CONN_CONNECTED)
                 {
-                    std::cout << "Connected" << std::endl;
+                    auto details = session->GetConnectedToInfo();
+                    std::cout << "Connected to " << details.server_ip
+                              << " (" << session->GetSessionName() << ")"
+                              << std::endl;
                     return;
                 }
                 else if (s.minor == StatusMinor::CONN_DISCONNECTED)
