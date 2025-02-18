@@ -490,7 +490,7 @@ executable('ovpncli-netcfg',
         common_code,
         netcfgmgr_lib,
         signals_code,
-
+        libcore_epoch,
     ],
     dependencies: [
         base_dependencies,

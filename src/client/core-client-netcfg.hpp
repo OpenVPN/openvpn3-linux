@@ -265,84 +265,9 @@ class NetCfgTunBuilder : public T
     }
 
 
-    bool tun_builder_add_dns_server(const std::string &address, bool ipv6) override
-    {
-        if (disabled_dns_config)
-        {
-            return true;
-        }
-        if (!device)
-        {
-            throw NetCfgProxyException(__func__, "Lost link to device interface");
-        }
-
-        const std::vector<std::string> dnsserver{{address}};
-        try
-        {
-            device->AddDNS(dnsserver);
-            return true;
-        }
-        catch (const DBus::Proxy::Exception &excp)
-        {
-            std::ostringstream msg;
-            msg << "[" << device->GetDeviceName() << "] "
-                << "Failed adding DNS server: "
-                << excp.GetRawError();
-            signals->LogError(msg.str());
-            return false;
-        }
-    }
-
-
-    bool tun_builder_add_search_domain(const std::string &domain) override
-    {
-        if (disabled_dns_config)
-        {
-            return true;
-        }
-        if (!device)
-        {
-            throw NetCfgProxyException(__func__, "Lost link to device interface");
-        }
-
-        const std::vector<std::string> dnsdomain{{domain}};
-        try
-        {
-            device->AddDNSSearch(dnsdomain);
-            return true;
-        }
-        catch (const DBus::Proxy::Exception &excp)
-        {
-            std::ostringstream msg;
-            msg << "[" << device->GetDeviceName() << "] "
-                << "Failed adding DNS search domain: "
-                << excp.GetRawError();
-            signals->LogError(msg.str());
-            return false;
-        }
-    }
-
-
-    bool tun_builder_add_dns_options(const openvpn::DnsOptions &dns) override
+    bool tun_builder_set_dns_options(const openvpn::DnsOptions &dns) override
     {
         return device->AddDnsOptions(signals, dns);
-    }
-
-
-    /**
-     *   Add support for --dhcp-option ADAPTER_DOMAIN_SUFFIX, used by
-     *   Access Server and many open source community server configurations.
-     *
-     *   Since the goal is to set the DNS search domain for an interface,
-     *   it reuses the @tun_builder_add_search_domain() method.
-     *
-     * @param name   Domain name to add as a DNS search domain
-     *
-     * @return true when addition was handled correctly, otherise false
-     */
-    bool tun_builder_set_adapter_domain_suffix(const std::string &name) override
-    {
-        return tun_builder_add_search_domain(name);
     }
 
 

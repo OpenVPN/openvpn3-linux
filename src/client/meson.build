@@ -7,6 +7,16 @@
 
 
 # openvpn3-service-client
+
+libcore_epoch = static_library(
+    'core-epoch',
+    [
+        '../../openvpn3-core/openvpn/crypto/data_epoch.cpp',
+    ],
+    include_directories: [include_dirs, '../..'],
+    cpp_args: ['-DUSE_OPENSSL', '-DUSE_ASIO'],
+)
+
 bin_backend_client = executable(
     'openvpn3-service-client',
     [
@@ -24,6 +34,7 @@ bin_backend_client = executable(
         signals_code,
         configmgr_lib,
         netcfgmgr_lib,
+        libcore_epoch,
     ],
     install: true,
     install_dir: get_option('libexecdir') / meson.project_name()

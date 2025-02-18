@@ -206,8 +206,7 @@ bool Device::AddDnsOptions(LogSender::Ptr log, const openvpn::DnsOptions &dns) c
             // Parse --dns server X address RESOLVER_ADDR...
             for (const auto &dns_addr : dnsopts.addresses)
             {
-                std::string addr = dns_addr.address.to_string();
-                if ("UNSPEC" == addr)
+                if ("UNSPEC" == dns_addr.address)
                 {
                     log->LogError("DNS resolver setup: "
                                   "Ignoring incorrect DNS server address: "
@@ -222,7 +221,7 @@ bool Device::AddDnsOptions(LogSender::Ptr log, const openvpn::DnsOptions &dns) c
                                  + dns_addr.to_string());
                     continue;
                 }
-                dns_servers.push_back(addr);
+                dns_servers.push_back(dns_addr.address);
             }
         }
 
