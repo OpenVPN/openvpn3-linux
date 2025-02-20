@@ -50,6 +50,7 @@ struct setup_config
     std::string statedir = OPENVPN3_STATEDIR;
     bool write = false;
     bool overwrite = false;
+    bool debug = false;
     uid_t openvpn_uid = -1;
     gid_t openvpn_gid = -1;
 };
@@ -185,7 +186,11 @@ void configure_logger(const setup_config &setupcfg, DBus::Connection::Ptr dbusco
     catch (const DBus::Proxy::Exception &excp)
     {
         std::cout << "    !! Could not retrieve systemd-journald.service details" << std::endl;
-        std::cerr << excp.what() << std::endl;
+        if (setupcfg.debug)
+        {
+            std::cout << "    [DBus::Proxy::Exception] "
+                      << excp.what() << std::endl;
+        }
     }
 #else
     std::cout << "    Built without systemd support; no systemd-journald support available" << std::endl;
@@ -332,10 +337,20 @@ void configure_netcfg(const setup_config &setupcfg, DBus::Connection::Ptr dbusco
     catch (const resolved::Exception &excp)
     {
         std::cout << "    !! Could not access systemd-resolved" << std::endl;
+        if (setupcfg.debug)
+        {
+            std::cout << "    [resolved::Exception] "
+                      << excp.what() << std::endl;
+        }
     }
     catch (const DBus::Exception &excp)
     {
         std::cout << "    !! Could not connect to D-Bus" << std::endl;
+        if (setupcfg.debug)
+        {
+            std::cout << "    [DBus::Exception] "
+                      << excp.what() << std::endl;
+        }
     }
 #else
     std::cout << "    Built without systemd support; no systemd-resolved support available" << std::endl;
@@ -621,6 +636,7 @@ int cmd_initcfg(ParsedArgs::Ptr args)
     }
     setupcfg.write = args->Present("write-configs");
     setupcfg.overwrite = args->Present("force");
+    setupcfg.debug = args->Present("debug");
 
     // Basic information
     std::cout << "- Detected settings will be saved to disk? "
@@ -673,5 +689,6 @@ SingleCommand::Ptr prepare_command_initcfg()
     initcfg->AddOption("write-configs", "Write configuration files to disk");
     initcfg->AddOption("force", "Force overwriting existing configuration files");
     initcfg->AddOption("state-dir", "DIRNAME", true, "Main OpenVPN 3 Linux state directory (Default: '" OPENVPN3_STATEDIR "')");
+    initcfg->AddOption("debug", "Print debug details in error situtations");
     return initcfg;
 }
