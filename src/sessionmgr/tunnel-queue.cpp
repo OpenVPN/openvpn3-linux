@@ -280,91 +280,94 @@ void NewTunnelQueue::process_registration(DBus::Signals::Event::Ptr event)
             object_mgr->RemoveObject(session->GetPath());
         }
 
-        auto watcher = std::make_shared<BusWatcher>(dbuscon->GetBusType(), busn);
-
-        watcher->SetNameDisappearedHandler(
-            [this, config_path = tunnel->config_path, owner = tunnel->owner](const std::string &bus_name)
-            {
-                bool session_exists = false;
-                DBus::Object::Path session_path;
-
-                for (auto &&[path, object] : object_mgr->GetAllObjects())
-                {
-                    auto sess_object = std::dynamic_pointer_cast<Session>(object);
-
-                    if (sess_object && sess_object->GetBackendBusName() == bus_name)
-                    {
-                        session_path = path;
-                        session_exists = true;
-
-                        auto last_event = sess_object->GetLastEvent();
-
-                        log->Debug("Bus name '" + bus_name + "' disappeared with last know state ["
-                                   + std::to_string(static_cast<int>(last_event.major)) + ", "
-                                   + std::to_string(static_cast<int>(last_event.minor))
-                                   + "], message: " + last_event.message);
-
-                        break;
-                    }
-                }
-
-                if (session_exists)
-                {
-                    auto it = restart_timers.find(session_path);
-
-                    if (it == restart_timers.end())
-                    {
-                        it = restart_timers.insert(it, {session_path, std::pair{asio::steady_timer(io_context), 1}});
-                    }
-
-                    if (it != restart_timers.end())
-                    {
-                        auto &&[timer, retries] = it->second;
-
-                        if (retries > 10)
-                        {
-                            log->LogCritical("Will NOT try to restart backend process '" + bus_name
-                                             + "': number of retries exceeded");
-                        }
-                        else
-                        {
-                            const int seconds_to_restart = std::min(768, 3 * static_cast<int>(std::pow(2, retries - 1)));
-
-                            auto &[timer, retries] = it->second;
-
-                            ++retries;
-
-                            log->LogCritical("Will attempt to restart backend process '" + bus_name
-                                             + "' in " + std::to_string(seconds_to_restart) + "s");
-
-                            timer.expires_after(std::chrono::seconds(seconds_to_restart));
-                            timer.async_wait([this, config_path, owner, session_path](const asio::error_code &error)
-                                             {
-                                                 if (!error)
-                                                 {
-                                                     AddTunnel(config_path, owner, session_path);
-                                                 }
-                                             });
-                        }
-                    }
-                }
-
-                log->Debug("Bus name '" + bus_name + "' disappeared, session "
-                           + (session_exists ? "exists" : "doesn't exist"));
-
-                // We can't just erase the current backend watcher, since we're in the
-                // middle of using it. It needs to be cleaned up later, so just mark it
-                // for now.
-                expired_backend_watchers.insert(bus_name);
-            });
-
-        for (auto &&ew : expired_backend_watchers)
+        if (!restart.empty())
         {
-            backend_watchers.erase(ew);
-        }
+            auto watcher = std::make_shared<BusWatcher>(dbuscon->GetBusType(), busn);
 
-        expired_backend_watchers.clear();
-        backend_watchers[busn] = std::move(watcher);
+            watcher->SetNameDisappearedHandler(
+                [this, config_path = tunnel->config_path, owner = tunnel->owner](const std::string &bus_name)
+                {
+                    bool session_exists = false;
+                    DBus::Object::Path session_path;
+
+                    for (auto &&[path, object] : object_mgr->GetAllObjects())
+                    {
+                        auto sess_object = std::dynamic_pointer_cast<Session>(object);
+
+                        if (sess_object && sess_object->GetBackendBusName() == bus_name)
+                        {
+                            session_path = path;
+                            session_exists = true;
+
+                            auto last_event = sess_object->GetLastEvent();
+
+                            log->Debug("Bus name '" + bus_name + "' disappeared with last know state ["
+                                       + std::to_string(static_cast<int>(last_event.major)) + ", "
+                                       + std::to_string(static_cast<int>(last_event.minor))
+                                       + "], message: " + last_event.message);
+
+                            break;
+                        }
+                    }
+
+                    if (session_exists)
+                    {
+                        auto it = restart_timers.find(session_path);
+
+                        if (it == restart_timers.end())
+                        {
+                            it = restart_timers.insert(it, {session_path, std::pair{asio::steady_timer(io_context), 1}});
+                        }
+
+                        if (it != restart_timers.end())
+                        {
+                            auto &&[timer, retries] = it->second;
+
+                            if (retries > 10)
+                            {
+                                log->LogCritical("Will NOT try to restart backend process '" + bus_name
+                                                 + "': number of retries exceeded");
+                            }
+                            else
+                            {
+                                const int seconds_to_restart = std::min(768, 3 * static_cast<int>(std::pow(2, retries - 1)));
+
+                                auto &[timer, retries] = it->second;
+
+                                ++retries;
+
+                                log->LogCritical("Will attempt to restart backend process '" + bus_name
+                                                 + "' in " + std::to_string(seconds_to_restart) + "s");
+
+                                timer.expires_after(std::chrono::seconds(seconds_to_restart));
+                                timer.async_wait([this, config_path, owner, session_path](const asio::error_code &error)
+                                                 {
+                                                     if (!error)
+                                                     {
+                                                         AddTunnel(config_path, owner, session_path);
+                                                     }
+                                                 });
+                            }
+                        }
+                    }
+
+                    log->Debug("Bus name '" + bus_name + "' disappeared, session "
+                               + (session_exists ? "exists" : "doesn't exist"));
+
+                    // We can't just erase the current backend watcher, since we're in the
+                    // middle of using it. It needs to be cleaned up later, so just mark it
+                    // for now.
+                    expired_backend_watchers.insert(bus_name);
+                });
+
+            for (auto &&ew : expired_backend_watchers)
+            {
+                backend_watchers.erase(ew);
+            }
+
+            expired_backend_watchers.clear();
+            backend_watchers[busn] = std::move(watcher);
+        }
 
         // Clean up and remove the tracking in the tunnel queue
         tunnel.reset();
