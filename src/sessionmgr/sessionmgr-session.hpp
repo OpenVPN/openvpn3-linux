@@ -100,6 +100,14 @@ class Session : public DBus::Object::Base
      * @param cfg_name
      */
     void SetConfigName(const std::string &cfg_name);
+
+    /**
+     *  Resets the log forwarders to newly-setup ones.
+     *  This is useful for preventing client process crashes where front-end log processes
+     *  would end up dangling with no log output.
+     */
+    void ResetLogForwarders();
+
     const std::string GetConfigName() const noexcept;
     const std::string GetDeviceName() const noexcept;
     std::string GetBackendBusName() const noexcept;

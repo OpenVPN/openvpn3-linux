@@ -377,6 +377,7 @@ void NewTunnelQueue::process_registration(DBus::Signals::Event::Ptr event)
         {
             session->ResetBackend(be_pid, busn);
             session->Ready();
+            session->ResetLogForwarders();
             session->Connect();
         }
     }

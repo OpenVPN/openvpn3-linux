@@ -745,6 +745,36 @@ void Session::MoveToOwner(const uid_t from_uid, const uid_t to_uid)
 }
 
 
+void Session::ResetLogForwarders()
+{
+    std::lock_guard<std::mutex> guard(log_forwarders_mtx);
+
+    auto logservice = LogServiceProxy::Create(dbus_conn);
+
+    for (auto &[caller, forwarder] : log_forwarders)
+    {
+        try
+        {
+            std::string user_details = " (user: "
+                                       + lookup_username(creds_qry->GetUID(caller))
+                                       + ")";
+            forwarder->Remove();
+            forwarder = logservice->ProxyLogEvents(caller, GetPath());
+
+            sig_session->LogVerb2("Reset log forwarding to " + caller
+                                  + " on " + GetPath() + user_details);
+        }
+        catch (const DBus::Exception &)
+        {
+            // If this information is unavailable, ignore these details.
+            // The owner of this log forwarder might have stopped running
+            // without removing the log forwarding.
+            continue;
+        }
+    }
+}
+
+
 void Session::method_ready(DBus::Object::Method::Arguments::Ptr args)
 {
     validate_vpn_backend();
@@ -809,7 +839,6 @@ void Session::method_log_forward(DBus::Object::Method::Arguments::Ptr args)
         try
         {
             log_forwarders.at(caller)->Remove();
-            log_forwarders.at(caller).reset();
             log_forwarders.erase(caller);
         }
         catch (const std::exception &e)
