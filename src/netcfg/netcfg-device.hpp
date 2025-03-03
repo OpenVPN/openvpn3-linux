@@ -23,6 +23,7 @@
 #include <functional>
 #include <gio/gunixfdlist.h>
 #include <gio/gunixconnection.h>
+#include <gdbuspp/bus-watcher.hpp>
 #include <gdbuspp/connection.hpp>
 #include <gdbuspp/credentials/query.hpp>
 #include <gdbuspp/exceptions.hpp>
@@ -189,6 +190,9 @@ class NetCfgDevice : public DBus::Object::Base
 #ifdef ENABLE_OVPNDCO
     NetCfgDCO::Ptr dco_device = nullptr;
 #endif
+    std::unique_ptr<DBus::BusWatcher> watcher;
+
+    void destroy();
 
     void method_add_ip_address(GVariant *params);
     void method_set_remote_addr(GVariant *params);

@@ -497,6 +497,17 @@ void NetCfgDevice::method_establish(DBus::Object::Method::Arguments::Ptr args)
         signals->LogCritical("DNS Resolver settings: "
                              + std::string(excp.what()));
     }
+
+    std::string caller = args->GetCallerBusName();
+
+    watcher = std::make_unique<DBus::BusWatcher>(dbuscon->GetBusType(), caller);
+    watcher->SetNameDisappearedHandler(
+        [this](const std::string &bus_name)
+        {
+            signals->LogError("Client process with bus name " + bus_name + " disappeared! Cleaning up.");
+            destroy();
+        });
+
 #ifdef ENABLE_OVPNDCO
     // in DCO case don't return anything
     if (!dco_device)
@@ -539,13 +550,8 @@ void NetCfgDevice::method_disable()
 }
 
 
-void NetCfgDevice::method_destroy(DBus::Object::Method::Arguments::Ptr args)
+void NetCfgDevice::destroy()
 {
-    auto credsq = DBus::Credentials::Query::Create(dbuscon);
-    std::string caller = args->GetCallerBusName();
-    uid_t caller_uid = credsq->GetUID(caller);
-    // CheckOwnerAccess(caller);
-
     if (resolver && dnsconfig)
     {
         std::stringstream details;
@@ -559,14 +565,24 @@ void NetCfgDevice::method_destroy(DBus::Object::Method::Arguments::Ptr args)
         modified = false;
     }
 
-    std::string sender_name = lookup_username(caller_uid);
-    signals->LogVerb1("Device '" + device_name + "' was removed by "
-                      + sender_name);
-
-    // Remove this object from the D-Bus.  This will also
     // release the NetCfgDevice object from memory as well, which
     // will should do the proper interface teardown calls in the
     // destructor
     object_manager->RemoveObject(GetPath());
-    args->SetMethodReturn(nullptr);
+}
+
+
+void NetCfgDevice::method_destroy(DBus::Object::Method::Arguments::Ptr args)
+{
+    auto credsq = DBus::Credentials::Query::Create(dbuscon);
+    std::string caller = args->GetCallerBusName();
+    uid_t caller_uid = credsq->GetUID(caller);
+    // CheckOwnerAccess(caller);
+
+    std::string sender_name = lookup_username(caller_uid);
+
+    destroy();
+
+    signals->LogVerb1("Device '" + device_name + "' was removed by "
+                      + sender_name);
 }
