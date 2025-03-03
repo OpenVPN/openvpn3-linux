@@ -10,6 +10,7 @@
  *
  */
 
+#include <chrono>
 #include <cmath>
 #include "common/lookup.hpp"
 #include "configmgr/proxy-configmgr.hpp"
@@ -288,6 +289,7 @@ void NewTunnelQueue::process_registration(DBus::Signals::Event::Ptr event)
                 [this, config_path = tunnel->config_path, owner = tunnel->owner](const std::string &bus_name)
                 {
                     bool session_exists = false;
+                    bool client_was_connected = false;
                     DBus::Object::Path session_path;
 
                     for (auto &&[path, object] : object_mgr->GetAllObjects())
@@ -300,6 +302,8 @@ void NewTunnelQueue::process_registration(DBus::Signals::Event::Ptr event)
                             session_exists = true;
 
                             auto last_event = sess_object->GetLastEvent();
+                            client_was_connected = (last_event.major == StatusMajor::CONNECTION
+                                                    && last_event.minor == StatusMinor::CONN_CONNECTED);
 
                             log->Debug("Bus name '" + bus_name + "' disappeared with last know state ["
                                        + std::to_string(static_cast<int>(last_event.major)) + ", "
@@ -316,12 +320,25 @@ void NewTunnelQueue::process_registration(DBus::Signals::Event::Ptr event)
 
                         if (it == restart_timers.end())
                         {
-                            it = restart_timers.insert(it, {session_path, std::pair{asio::steady_timer(io_context), 1}});
+                            it = restart_timers.insert(it, {session_path, std::tuple{asio::steady_timer(io_context), 1, 0}});
                         }
 
                         if (it != restart_timers.end())
                         {
-                            auto &&[timer, retries] = it->second;
+                            using namespace std::chrono;
+
+                            auto &[timer, retries, last_triggered] = it->second;
+                            const auto now = system_clock::now().time_since_epoch();
+                            const auto secs = duration_cast<seconds>(now).count();
+
+                            if (client_was_connected && secs - last_triggered > 90)
+                            {
+                                log->LogInfo("More than 90s have passed before the previously connected '" + bus_name
+                                             + "' process crashed, resetting the retry interval.");
+                                retries = 1;
+                            }
+
+                            last_triggered = secs;
 
                             if (retries > 10)
                             {
@@ -331,8 +348,6 @@ void NewTunnelQueue::process_registration(DBus::Signals::Event::Ptr event)
                             else
                             {
                                 const int seconds_to_restart = std::min(768, 3 * static_cast<int>(std::pow(2, retries - 1)));
-
-                                auto &[timer, retries] = it->second;
 
                                 ++retries;
 

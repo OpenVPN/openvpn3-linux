@@ -133,7 +133,7 @@ class NewTunnelQueue
     std::set<std::string> expired_backend_watchers;
     asio::io_context io_context;
     std::future<void> io_context_future;
-    std::map<std::string, std::pair<asio::steady_timer, int>> restart_timers;
+    std::map<std::string, std::tuple<asio::steady_timer, int, time_t>> restart_timers;
     /**
      *  Callback function triggered when the backend VPN client
      *  (openvpn3-service-client) sends the RegistrationRequest signal.
