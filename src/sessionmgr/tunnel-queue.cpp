@@ -178,13 +178,13 @@ void NewTunnelQueue::process_registration(DBus::Signals::Event::Ptr event)
             // If the override is not present, GetOverrideValue() throws.
         }
 
-        log->Debug("Backend process restart config value: " + restart);
 
         std::shared_ptr<Session> session;
         bool pre_existing_session = false;
 
         if (restart == "on-failure")
         {
+            log->LogVerb1("Enabled backend process automatic restart mode: " + restart);
             for (auto &&[path, object] : object_mgr->GetAllObjects())
             {
                 auto sess_object = std::dynamic_pointer_cast<Session>(object);
@@ -286,7 +286,7 @@ void NewTunnelQueue::process_registration(DBus::Signals::Event::Ptr event)
             auto watcher = std::make_shared<BusWatcher>(dbuscon->GetBusType(), busn);
 
             watcher->SetNameDisappearedHandler(
-                [this, config_path = tunnel->config_path, owner = tunnel->owner](const std::string &bus_name)
+                [this, config_path = tunnel->config_path, owner = tunnel->owner, sesstoken = sesstok](const std::string &bus_name)
                 {
                     bool session_exists = false;
                     bool client_was_connected = false;
@@ -305,11 +305,12 @@ void NewTunnelQueue::process_registration(DBus::Signals::Event::Ptr event)
                             client_was_connected = (last_event.major == StatusMajor::CONNECTION
                                                     && last_event.minor == StatusMinor::CONN_CONNECTED);
 
-                            log->Debug("Bus name '" + bus_name + "' disappeared with last know state ["
-                                       + std::to_string(static_cast<int>(last_event.major)) + ", "
-                                       + std::to_string(static_cast<int>(last_event.minor))
-                                       + "], message: " + last_event.message);
-
+                            log->LogCritical("Session disappeared with last know state ["
+                                             + std::to_string(static_cast<int>(last_event.major)) + ", "
+                                             + std::to_string(static_cast<int>(last_event.minor))
+                                             + "] " + last_event.message
+                                             + ", session token: " + sesstoken
+                                             + ", bus name: " + bus_name);
                             break;
                         }
                     }
@@ -317,7 +318,6 @@ void NewTunnelQueue::process_registration(DBus::Signals::Event::Ptr event)
                     if (session_exists)
                     {
                         auto it = restart_timers.find(session_path);
-
                         if (it == restart_timers.end())
                         {
                             it = restart_timers.insert(it, {session_path, std::tuple{asio::steady_timer(io_context), 1, 0}});
@@ -333,8 +333,8 @@ void NewTunnelQueue::process_registration(DBus::Signals::Event::Ptr event)
 
                             if (client_was_connected && secs - last_triggered > 90)
                             {
-                                log->LogInfo("More than 90s have passed before the previously connected '" + bus_name
-                                             + "' process crashed, resetting the retry interval.");
+                                log->LogVerb1("More than 90s have passed before the previously connected '" + bus_name
+                                              + "' process crashed, resetting the retry interval.");
                                 retries = 1;
                             }
 
@@ -351,8 +351,8 @@ void NewTunnelQueue::process_registration(DBus::Signals::Event::Ptr event)
 
                                 ++retries;
 
-                                log->LogCritical("Will attempt to restart backend process '" + bus_name
-                                                 + "' in " + std::to_string(seconds_to_restart) + "s");
+                                log->LogInfo("Will attempt to restart backend process '" + bus_name
+                                             + "' in " + std::to_string(seconds_to_restart) + "s");
 
                                 timer.expires_after(std::chrono::seconds(seconds_to_restart));
                                 timer.async_wait([this, config_path, owner, session_path](const asio::error_code &error)
