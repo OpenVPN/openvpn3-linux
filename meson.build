@@ -188,7 +188,6 @@ cp_prog = find_program('cp', required: true)
 
 # Unless test_programs are not explicitly enabled,
 # only build them in debug builds
-debug = get_option('debug')
 build_test_programs = get_option('test_programs').enabled()
 if (get_option('test_programs').auto())
     build_test_programs = get_option('debug')

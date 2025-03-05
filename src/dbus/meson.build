@@ -16,7 +16,7 @@ gen_constants_bin = executable('gen-c-constants',
     include_directories: [include_dirs, '../..'],
 )
 
-constants_h = custom_target(
+custom_target(
     'gen-c-constants-h',
     output: 'constants.h',
     command: gen_constants_bin,

@@ -16,7 +16,7 @@ gen_py_consts = executable('gen-py-constants',
         include_directories: [include_dirs, '../../..'],
 )
 
-py_consts = custom_target(
+custom_target(
         'python-constants',
         output: 'constants.py',
         command: gen_py_consts,
