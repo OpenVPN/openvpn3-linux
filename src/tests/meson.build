@@ -11,7 +11,7 @@
 
 mkdir = find_program('mkdir')
 test_workdir = meson.project_build_root() / 'test-workdir'
-run_command([mkdir, test_workdir] )
+run_command([mkdir, '-p', test_workdir], check: true)
 
 if (build_unit_tests)
     subdir('unit')
