@@ -129,60 +129,90 @@ void SystemdResolved::Commit(NetCfgSignals::Ptr signal)
         }
         try
         {
+            std::vector<std::string> applied_servers;
+            std::vector<std::string> applied_search;
+
             if (!upd->enable)
             {
                 // NetCfgChangeEvents for DNS_SERVER_REMOVED and
                 // DNS_SEARCH_REMOVED are sent by the caller of this method
                 upd->link->Revert();
-                continue;
+            }
+            else
+            {
+                //
+                //  Commit the requested DNS resolver setup changes
+                //
+                signal->LogVerb2("systemd-resolved: [" + upd->link->GetPath()
+                                 + "] Committing DNS servers");
+                applied_servers = upd->link->SetDNSServers(upd->resolvers);
+                signal->LogVerb2("systemd-resolved: [" + upd->link->GetPath()
+                                 + "] Committing DNS search domains");
+                applied_search = upd->link->SetDomains(upd->search);
+
+                if (feat_dns_default_route
+                    && !upd->link->SetDefaultRoute(upd->default_routing))
+                {
+                    signal->LogWarn("systemd-resolved: Service does not "
+                                    "support setting default route for DNS "
+                                    "requests. Disabling calling this feature.");
+                    feat_dns_default_route = false;
+                };
+
+                if (upd->dnssec != openvpn::DnsServer::Security::Unset)
+                {
+                    configure_dnssec(upd->dnssec, upd->link, signal);
+                }
+
+                if (upd->transport != openvpn::DnsServer::Transport::Unset)
+                {
+                    configure_transport(upd->transport, upd->link, signal);
+                }
             }
 
-            //
-            //  Commit the requested DNS resolver setup changes
-            //
-            signal->LogVerb2("systemd-resolved: [" + upd->link->GetPath()
-                             + "] Committing DNS servers");
-            auto applied_servers = upd->link->SetDNSServers(upd->resolvers);
-            signal->LogVerb2("systemd-resolved: [" + upd->link->GetPath()
-                             + "] Committing DNS search domains");
-            auto applied_search = upd->link->SetDomains(upd->search);
-
-            if (feat_dns_default_route
-                && !upd->link->SetDefaultRoute(upd->default_routing))
+            resolved::Error::Message::List errors = upd->link->GetErrors();
+            bool error_servers = false;
+            bool error_domains = false;
+            if (!errors.empty())
             {
-                signal->LogWarn("systemd-resolved: Service does not "
-                                "support setting default route for DNS "
-                                "requests. Disabling calling this feature.");
-                feat_dns_default_route = false;
-            };
-
-            if (upd->dnssec != openvpn::DnsServer::Security::Unset)
-            {
-                configure_dnssec(upd->dnssec, upd->link, signal);
-            }
-
-            if (upd->transport != openvpn::DnsServer::Transport::Unset)
-            {
-                configure_transport(upd->transport, upd->link, signal);
+                for (const auto &err : errors)
+                {
+                    signal->LogCritical("systemd-resolved: " + err.str());
+                    if ("SetDNS" == err.method)
+                    {
+                        error_servers = true;
+                    }
+                    if ("SetDomains" == err.method)
+                    {
+                        error_domains = true;
+                    }
+                }
+                upd->disabled = true;
             }
 
             //
             // Send the NetworkChange signals
             //
-            for (const auto &srv : applied_servers)
+            if (!error_servers)
             {
-                NetCfgChangeEvent ev(NetCfgChangeType::DNS_SERVER_ADDED,
-                                     upd->link->GetDeviceName(),
-                                     {{"dns_server", srv}});
-                signal->NetworkChange(ev);
+                for (const auto &srv : applied_servers)
+                {
+                    NetCfgChangeEvent ev(NetCfgChangeType::DNS_SERVER_ADDED,
+                                         upd->link->GetDeviceName(),
+                                         {{"dns_server", srv}});
+                    signal->NetworkChange(ev);
+                }
             }
 
-            for (const auto &domain : applied_search)
+            if (!error_domains)
             {
-                NetCfgChangeEvent ev(NetCfgChangeType::DNS_SEARCH_ADDED,
-                                     upd->link->GetDeviceName(),
-                                     {{"search_domain", domain}});
-                signal->NetworkChange(ev);
+                for (const auto &domain : applied_search)
+                {
+                    NetCfgChangeEvent ev(NetCfgChangeType::DNS_SEARCH_ADDED,
+                                         upd->link->GetDeviceName(),
+                                         {{"search_domain", domain}});
+                    signal->NetworkChange(ev);
+                }
             }
         }
         catch (const DBus::Exception &excp)
