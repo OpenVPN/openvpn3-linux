@@ -189,7 +189,7 @@ const std::vector<std::string> Link::GetDNSServers() const
 }
 
 
-std::vector<std::string> Link::SetDNSServers(const IPAddress::List &servers) const
+std::vector<std::string> Link::SetDNSServers(const IPAddress::List &servers)
 {
     GVariantBuilder *b = glib2::Builder::Create("a(iay)");
     std::vector<std::string> applied{};
@@ -199,10 +199,8 @@ std::vector<std::string> Link::SetDNSServers(const IPAddress::List &servers) con
         applied.push_back(srv.str());
     }
 
-    GVariant *r = proxy->Call(tgt_link,
-                              "SetDNS",
-                              glib2::Builder::FinishWrapped(b));
-    g_variant_unref(r);
+    BackgroundCall("SetDNS",
+                   glib2::Builder::FinishWrapped(b));
     return applied;
 }
 
@@ -252,7 +250,7 @@ const SearchDomain::List Link::GetDomains() const
 }
 
 
-std::vector<std::string> Link::SetDomains(const SearchDomain::List &doms) const
+std::vector<std::string> Link::SetDomains(const SearchDomain::List &doms)
 {
     GVariantBuilder *b = glib2::Builder::Create("a(sb)");
     std::vector<std::string> applied{};
@@ -266,10 +264,8 @@ std::vector<std::string> Link::SetDomains(const SearchDomain::List &doms) const
         }
     }
 
-    GVariant *r = proxy->Call(tgt_link,
-                              "SetDomains",
-                              glib2::Builder::FinishWrapped(b));
-    g_variant_unref(r);
+    BackgroundCall("SetDomains",
+                   glib2::Builder::FinishWrapped(b));
     return applied;
 }
 
@@ -328,25 +324,15 @@ std::string Link::GetDNSSEC() const
 }
 
 
-void Link::SetDNSSEC(const std::string &mode) const
+void Link::SetDNSSEC(const std::string &mode)
 {
     if (mode != "yes" && mode != "no" && mode != "allow-downgrade")
     {
         throw Exception("Invalid DNSSEC mode requested: " + mode);
     }
 
-    try
-    {
-        GVariant *r = proxy->Call(tgt_link,
-                                  "SetDNSSEC",
-                                  glib2::Value::CreateTupleWrapped(mode));
-        g_variant_unref(r);
-    }
-    catch (const DBus::Proxy::Exception &excp)
-    {
-        throw Exception("Could not set the DNSSEC mode: "
-                        + std::string(excp.GetRawError()));
-    }
+    BackgroundCall("SetDNSSEC",
+                   glib2::Value::CreateTupleWrapped(mode));
 }
 
 
@@ -364,7 +350,7 @@ std::string Link::GetDNSOverTLS() const
 }
 
 
-void Link::SetDNSOverTLS(const std::string &mode) const
+void Link::SetDNSOverTLS(const std::string &mode)
 {
     if (mode != "no" && mode != "false"
         && mode != "yes" && mode != "true"
@@ -372,25 +358,14 @@ void Link::SetDNSOverTLS(const std::string &mode) const
     {
         throw Exception("Invalid DNSOverTLS mode requested: " + mode);
     }
-    try
-    {
-        GVariant *r = proxy->Call(tgt_link,
-                                  "SetDNSOverTLS",
-                                  glib2::Value::CreateTupleWrapped(mode));
-        g_variant_unref(r);
-    }
-    catch (const DBus::Proxy::Exception &excp)
-    {
-        throw Exception("Could not set the DNSOverTLS mode: "
-                        + std::string(excp.GetRawError()));
-    }
+    BackgroundCall("SetDNSOverTLS",
+                   glib2::Value::CreateTupleWrapped(mode));
 }
 
 
-void Link::Revert() const
+void Link::Revert()
 {
-    GVariant *r = proxy->Call(tgt_link, "Revert");
-    g_variant_unref(r);
+    BackgroundCall("Revert");
 }
 
 

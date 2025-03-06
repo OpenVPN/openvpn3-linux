@@ -222,9 +222,9 @@ class Link
      *  list of servers
      *
      * @param servers ResolverRecord::List with all servers to use
-     * @return std::vector<std:string> of servers applied
+     * @return std::vector<std:string> of servers requested to be applied
      */
-    std::vector<std::string> SetDNSServers(const IPAddress::List &servers) const;
+    std::vector<std::string> SetDNSServers(const IPAddress::List &servers);
 
     /**
      *  Retrieve the DNS server currently being used for DNS queries
@@ -245,9 +245,9 @@ class Link
      *  list
      *
      * @param doms
-     * @return  std::vector<std:string> of search domains applied
+     * @return  std::vector<std:string> of search domains requested to be applied
      */
-    std::vector<std::string> SetDomains(const SearchDomain::List &doms) const;
+    std::vector<std::string> SetDomains(const SearchDomain::List &doms);
 
     /**
      *  Retrieve the "Default Route" flag for the interface.
@@ -294,7 +294,7 @@ class Link
      *
      * @param mode   std::string of the DNSSEC mode
      */
-    void SetDNSSEC(const std::string &mode) const;
+    void SetDNSSEC(const std::string &mode);
 
     /**
      *  Retrieve the DNS-over-TLS mode for the interface
@@ -332,13 +332,13 @@ class Link
      *
      * @param mode
      */
-    void SetDNSOverTLS(const std::string &mode) const;
+    void SetDNSOverTLS(const std::string &mode);
 
     /**
      *  Revert the DNS interface settings to the interface defaults, basically
      *  undoing any DNS settings set prior
      */
-    void Revert() const;
+    void Revert();
 
 
     /**
