@@ -14,8 +14,10 @@
 
 #pragma once
 
+#include <future>
 #include <memory>
 #include <string>
+#include <asio.hpp>
 #include <gdbuspp/connection.hpp>
 #include <gdbuspp/object/path.hpp>
 #include <gdbuspp/proxy.hpp>
@@ -179,12 +181,17 @@ class Link
     /**
      *  Prepare a new proxy object for a Link/network interface
      *
+     * @param asio_ctx   ASIO io_context where background D-Bus calls will
+     *                   be executed
+     * @param errors     Error::Storage to use for handling error messages
      * @param prx        DBus::Proxy::Client to use for communication
      * @param path       DBus::Object::Path to the interface in systemd-resolved
      * @param devname    std::string of the device name this is related to
      * @return Link::Ptr
      */
-    [[nodiscard]] static Link::Ptr Create(DBus::Proxy::Client::Ptr prx,
+    [[nodiscard]] static Link::Ptr Create(asio::io_context &asio_ctx,
+                                          Error::Storage::Ptr errors,
+                                          DBus::Proxy::Client::Ptr prx,
                                           const DBus::Object::Path &path,
                                           const std::string &devname);
     ~Link() noexcept = default;
@@ -333,15 +340,49 @@ class Link
      */
     void Revert() const;
 
+
+    /**
+     *  Retrieve all unprocessed error messages gathered in
+     *  background calls.
+     *
+     *  @returns Error::List (std::vector<Message>) with
+     *           all unprocessed error messages for this
+     *           specific link.
+     */
+    Error::Message::List GetErrors() const;
+
+
   private:
+    asio::io_context &asio_proxy;
+    Error::Storage::Ptr errors;
     DBus::Proxy::Client::Ptr proxy = nullptr;
     DBus::Proxy::TargetPreset::Ptr tgt_link = nullptr;
     const std::string device_name;
     bool feature_set_default_route = true;
 
-    Link(DBus::Proxy::Client::Ptr dbuscon,
+    Link(asio::io_context &asio_ctx,
+         Error::Storage::Ptr errors,
+         DBus::Proxy::Client::Ptr dbuscon,
          const DBus::Object::Path &path,
          const std::string &devname);
+
+
+    /**
+     *  Do a background D-Bus call to org.freedesktop.resolve1
+     *  (systemd-resolved).  This will not provide any results
+     *  back to the caller.
+     *
+     *  If a DBus::Proxy::Exception happens, the error message
+     *  can be retrieved via the GetErrors() call.
+     *
+     *  @param method  std::string with the D-Bus method to call
+     *  @param params  GVariant object containing all the arguments
+     *                 to the D-Bus call
+     *
+     *  @throws resolved::Exception if the ASIO background worker
+     *          thread is not running
+     */
+    void BackgroundCall(const std::string &method, GVariant *params = nullptr);
 };
 
 
@@ -366,7 +407,7 @@ class Manager
      * @return Manager::Ptr (shared_ptr) to the new Manager object
      */
     [[nodiscard]] static Manager::Ptr Create(DBus::Connection::Ptr conn);
-    ~Manager() noexcept = default;
+    ~Manager() noexcept;
 
 
     /**
@@ -376,7 +417,7 @@ class Manager
      *
      * @return Link::Ptr to the new Link object to the network interface
      */
-    Link::Ptr RetrieveLink(const std::string &dev_name) const;
+    Link::Ptr RetrieveLink(const std::string &dev_name);
 
     /**
      *  Retrieve the D-Bus path to a link object used by the systemd-resolved
@@ -389,9 +430,13 @@ class Manager
      */
     DBus::Object::Path GetLink(unsigned int if_idx) const;
 
+
   private:
     DBus::Proxy::Client::Ptr proxy = nullptr;
     DBus::Proxy::TargetPreset::Ptr tgt_resolved = nullptr;
+    std::future<void> async_proxy_thread;
+    asio::io_context asio_proxy;
+    Error::Storage::Ptr asio_errors = nullptr;
 
     Manager(DBus::Connection::Ptr conn);
 };

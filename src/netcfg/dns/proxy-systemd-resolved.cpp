@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <net/if.h>
 #include <sys/socket.h>
+#include <asio.hpp>
 #include <gdbuspp/connection.hpp>
 #include <gdbuspp/glib2/utils.hpp>
 #include <gdbuspp/object/path.hpp>
@@ -131,18 +132,22 @@ GVariant *SearchDomain::GetGVariant() const
 //  NetCfg::DNS::resolved::Link
 //
 
-Link::Ptr Link::Create(DBus::Proxy::Client::Ptr prx,
+Link::Ptr Link::Create(asio::io_context &asio_ctx,
+                       Error::Storage::Ptr errors,
+                       DBus::Proxy::Client::Ptr prx,
                        const DBus::Object::Path &path,
                        const std::string &devname)
 {
-    return Link::Ptr(new Link(prx, path, devname));
+    return Link::Ptr(new Link(asio_ctx, errors, prx, path, devname));
 }
 
 
-Link::Link(DBus::Proxy::Client::Ptr prx,
+Link::Link(asio::io_context &asio_ctx,
+           Error::Storage::Ptr errors_,
+           DBus::Proxy::Client::Ptr prx,
            const DBus::Object::Path &path,
            const std::string &devname)
-    : proxy(prx), device_name(devname)
+    : asio_proxy(asio_ctx), errors(errors_), proxy(prx), device_name(devname)
 {
     tgt_link = DBus::Proxy::TargetPreset::Create(path,
                                                  "org.freedesktop.resolve1.Link");
@@ -389,6 +394,55 @@ void Link::Revert() const
 }
 
 
+Error::Message::List Link::GetErrors() const
+{
+    return errors->GetErrors(tgt_link->object_path);
+}
+
+
+void Link::BackgroundCall(const std::string &method, GVariant *params)
+{
+    if (asio_proxy.stopped())
+    {
+        throw Exception("Background ASIO thread not running");
+    }
+
+    // Increase the reference counter to the parameters to use
+    // in the asynchronous D-Bus call.  The async call itself can
+    // happen after the caller of this method has released the
+    // the params.
+    GVariant *post_params = g_variant_ref(params);
+    std::weak_ptr<DBus::Proxy::Client> prx{proxy};
+    std::weak_ptr<DBus::Proxy::TargetPreset> tgt{tgt_link};
+    std::weak_ptr<Error::Storage> errs{errors};
+
+    asio_proxy.post(
+        [prx, tgt, method, post_params, errs]()
+        {
+            auto proxy = prx.lock();
+            auto target = tgt.lock();
+            auto errors = errs.lock();
+            if (!proxy || !target || !errors)
+            {
+                // If one of these are invalid, the Link object has been
+                // or is being destructed.  Then we just bail out.
+                g_variant_unref(post_params);
+                return;
+            }
+
+	        try
+            {
+                GVariant *r = proxy->Call(target, method, post_params);
+                g_variant_unref(r);
+                g_variant_unref(post_params);
+            }
+            catch (const DBus::Proxy::Exception &excp)
+            {
+                errors->Add(target->object_path, method, excp.what());
+            }
+        });
+}
+
 
 //
 //  NetCfg::DNS::resolved::Manager
@@ -430,10 +484,36 @@ Manager::Manager(DBus::Connection::Ptr conn)
                         + "org.freedesktop.PolicyKit1 (polkitd) service. "
                         + "Cannot configure systemd-resolved integration");
     }
+
+    //  Start the a background thread responisble for executing
+    //  some selected D-Bus calls to the systemd-resolved in the
+    //  background.  This is to avoid various potential timeouts in
+    //  calls where there is little value to wait for a reply.
+    asio_errors = Error::Storage::Create();
+    async_proxy_thread = std::async(
+        std::launch::async,
+        [&]()
+        {
+            asio::io_context::work asio_proxy_work{asio_proxy};
+            asio_proxy.run();
+        });
 }
 
 
-Link::Ptr Manager::RetrieveLink(const std::string &dev_name) const
+Manager::~Manager() noexcept
+{
+    if (!asio_proxy.stopped())
+    {
+        asio_proxy.stop();
+    }
+    if (async_proxy_thread.valid())
+    {
+        async_proxy_thread.get();
+    }
+}
+
+
+Link::Ptr Manager::RetrieveLink(const std::string &dev_name)
 {
     unsigned int if_idx = ::if_nametoindex(dev_name.c_str());
     if (0 == if_idx)
@@ -448,7 +528,7 @@ Link::Ptr Manager::RetrieveLink(const std::string &dev_name) const
     {
         return nullptr;
     }
-    return Link::Create(proxy, link_path, dev_name);
+    return Link::Create(asio_proxy, asio_errors, proxy, link_path, dev_name);
 }
 
 
