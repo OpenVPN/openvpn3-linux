@@ -27,6 +27,7 @@ unit_tests = executable(
                 'machine-id.cpp',
                 'netcfg-changeevent.cpp',
                 'platforminfo.cpp',
+                'proxy-systemd-resolved-error.cpp',
                 'sessionmgr-events.cpp',
                 'statusevent.cpp',
                 'syslog-facility-mapping.cpp',

@@ -27,6 +27,93 @@ namespace NetCfg {
 namespace DNS {
 namespace resolved {
 
+namespace Error {
+/**
+ *   Container for holding an internal error message
+ */
+struct Message
+{
+  using List = std::vector<Message>;
+
+    /**
+     *  Stores a new error message
+     *
+     *  @param method_   The D-Bus method involved causing this error
+     *  @param message_  The error message itself
+     */
+    Message(const std::string &method_,
+            const std::string &message_);
+
+    std::string str() const;
+
+    const std::string method;
+    const std::string message;
+};
+
+
+/**
+ *  Container for holding multiple error messages
+ */
+
+
+/**
+ *  Main Error Storage object for handling internal
+ *  Error messages across more interfaces/links
+ */
+class Storage
+{
+  public:
+    using Ptr = std::shared_ptr<Storage>;
+
+    [[nodiscard]] static Storage::Ptr Create();
+    ~Storage() noexcept;
+
+    /**
+     *  Adds a new error message for a specific link device
+     *
+     *  @param link     Link name the error is related to
+     *  @param method   D-Bus method where the error was caused
+     *  @param message  The error message itself
+     */
+    void Add(const std::string &link, const std::string &method, const std::string &message);
+
+    /**
+     *  Reports all the links containing errors messages
+     *
+     *  @return std::vector<std::string> of all the link references with errors
+     */
+    std::vector<std::string> GetLinks() const;
+
+    /**
+     *  Returns the number of available errors for a specific link
+     *
+     *  @param link     Link name to lookup
+     *
+     *  @return uint32_t containing the number of stored error messages
+     */
+    size_t NumErrors(const std::string &link) const;
+
+    /**
+     *  Retrieves all the error messages for a specitic link.
+     *
+     *  Calling this will clear the error messages stored for
+     *  that link
+     *
+     *  @param link     Link name to retrieve errors for
+     *
+     *  @return Error::List (std::vector<Error::Message>)
+     */
+    Error::Message::List GetErrors(const std::string &link);
+
+  private:
+    std::map<std::string, Error::Message::List> errors_;
+    Storage();
+};
+
+} // namespace Error
+
+
+
 /**
  *  Helper struct to manage search domain records used by the systemd-resolved
  *  service.

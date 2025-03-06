@@ -33,6 +33,68 @@ namespace NetCfg {
 namespace DNS {
 namespace resolved {
 
+namespace Error {
+
+std::mutex access_mtx;
+
+Message::Message(const std::string &method_,
+                 const std::string &message_)
+    : method(method_), message(message_)
+{
+}
+
+
+std::string Message::str() const
+{
+    return "[" + method + "] " + message;
+}
+
+Storage::Ptr Storage::Create()
+{
+    return Storage::Ptr(new Storage());
+}
+
+Storage::Storage() = default;
+Storage::~Storage() noexcept = default;
+
+
+void Storage::Add(const std::string &link, const std::string &method, const std::string &message)
+{
+    std::lock_guard<std::mutex> lock_guard(Error::access_mtx);
+    errors_[link].emplace_back(method, message);
+}
+
+
+std::vector<std::string> Storage::GetLinks() const
+{
+    std::lock_guard<std::mutex> lock_guard(Error::access_mtx);
+    std::vector<std::string> ret;
+    for (const auto &[link, err] : errors_)
+    {
+        ret.push_back(link);
+    }
+    return ret;
+}
+
+
+size_t Storage::NumErrors(const std::string &link) const
+{
+    auto f = errors_.find(link);
+    return (f != errors_.end() ? f->second.size() : 0);
+}
+
+
+Error::Message::List Storage::GetErrors(const std::string &link)
+{
+    std::lock_guard<std::mutex> lock_guard(Error::access_mtx);
+    auto recs = errors_.extract(link);
+    return !recs.empty() ? recs.mapped() : Error::Message::List{};
+}
+
+} // namespace Error
+
+
+
 //
 //  NetCfg::DNS::resolved::SearchDomain
 //
