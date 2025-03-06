@@ -92,7 +92,6 @@ class BackendClientObject : public DBus::Object::Base
      *  tied to is based on the PID value of this client process.
      *
      * @param conn           D-Bus connection this object is tied to
-     * @param bus_name       Unique D-Bus bus name
      * @param objpath        D-Bus object path where to reach this instance
      * @param session_token  String based token which is used to register
      *                       itself with the session manager.  This token
@@ -100,7 +99,6 @@ class BackendClientObject : public DBus::Object::Base
      *                       this openvpn3-service-client process.
      */
     BackendClientObject(DBus::Connection::Ptr conn,
-                        std::string bus_name,
                         DBus::Object::Path objpath,
                         std::string session_token_,
                         uint32_t default_log_level,
@@ -389,9 +387,7 @@ class BackendClientObject : public DBus::Object::Base
         };
         AddPropertyBySpec("last_log_line", "a{sv}", prop_last_log);
 
-        // Send the registration request to the session manager
-        signal->RegistrationRequest(bus_name, session_token, getpid());
-        signal->LogVerb1("Initializing VPN client session, token "
+        signal->LogVerb1("Initialized VPN client session, token "
                          + session_token);
     }
 
@@ -517,6 +513,21 @@ class BackendClientObject : public DBus::Object::Base
     void SetMainLoop(DBus::MainLoop::Ptr ml)
     {
         mainloop = ml;
+    }
+
+
+    /**
+     *  Sends the RegistrationRequest, which the Session Manager needs
+     *  to complete the session setup.  The session manager receives
+     *  this client's bus name via this signal, which is how it learns
+     *  which client process is related to which session path
+     *
+     *  @param bus_name  std::string of the bus name of this client
+     */
+    void RegisterClient(const std::string &bus_name)
+    {
+        // Send the registration request to the session manager
+        signal->RegistrationRequest(bus_name, session_token, getpid());
     }
 
 
@@ -1455,7 +1466,35 @@ class ClientService : public DBus::Service
           session_token(sesstoken),
           logwr(logwr_)
     {
-        logservice = LogServiceProxy::Create(dbuscon);
+        try
+        {
+            logservice = LogServiceProxy::Create(dbuscon);
+
+            logservice->Attach(Constants::GenInterface("backends"));
+            logservice->Attach(Constants::GenInterface("sessions"));
+
+            DBus::Object::Path object_path = Constants::GenPath("backends/session");
+            be_obj = CreateServiceHandler<BackendClientObject>(dbuscon,
+                                                               object_path,
+                                                               session_token,
+                                                               default_log_level,
+                                                               logwr,
+                                                               disabled_socket_protect);
+
+            signal = std::make_shared<BackendSignals>(GetConnection(),
+                                                      LogGroup::BACKENDPROC,
+                                                      session_token,
+                                                      logwr);
+            signal->SetLogLevel(default_log_level);
+            signal->AssignMainLoop(mainloop);
+            be_obj->SetMainLoop(mainloop);
+        }
+        catch (const DBus::Exception &excp)
+        {
+            throw DBus::Service::Exception(
+                "FATAL ERROR: openvpn3-service-client failed to start: "
+                + std::string(excp.what()));
+        }
     };
 
     ~ClientService() noexcept
@@ -1504,41 +1543,14 @@ class ClientService : public DBus::Service
 
     void BusNameAcquired(const std::string &busname) override
     {
-        try
-        {
-            logservice->Attach(Constants::GenInterface("backends"));
-            logservice->Attach(Constants::GenInterface("sessions"));
-
-            DBus::Object::Path object_path = Constants::GenPath("backends/session");
-            be_obj = CreateServiceHandler<BackendClientObject>(dbuscon,
-                                                               busname,
-                                                               object_path,
-                                                               session_token,
-                                                               default_log_level,
-                                                               logwr,
-                                                               disabled_socket_protect);
-
-            signal.reset(new BackendSignals(GetConnection(),
-                                            LogGroup::BACKENDPROC,
-                                            session_token,
-                                            logwr));
-            signal->SetLogLevel(default_log_level);
-            signal->AssignMainLoop(mainloop);
-            be_obj->SetMainLoop(mainloop);
-            signal->LogVerb2("Backend client process started as pid "
-                             + std::to_string(start_pid)
-                             + " daemonized as pid " + std::to_string(getpid()));
-            signal->Debug("BackendClientDBus registered on '" + busname
-                          + "': " + object_path);
-        }
-        catch (const DBus::Exception &excp)
-        {
-            std::cerr << "FATAL ERROR: openvpn3-service-client could not "
-                      << "attach to the log service: "
-                      << excp.what() << std::endl;
-            return; // Throwing an exception here will not be caught/reported
-        }
+        signal->LogVerb2("Backend client process started as pid "
+                         + std::to_string(start_pid)
+                         + " daemonized as pid " + std::to_string(getpid()));
+        signal->Debug("BackendClientDBus registered on '" + busname
+                      + "': " + be_obj->GetPath());
+        be_obj->RegisterClient(busname);
     }
+
 
     void BusNameLost(const std::string &busname) override
     {
