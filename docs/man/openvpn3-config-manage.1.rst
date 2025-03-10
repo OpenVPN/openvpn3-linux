@@ -240,6 +240,13 @@ OPTIONS
                         Allow HTTP proxy authentication to happen in clear-text.
                         Valid values are: :code:`true`, :code:`false`
 
+--automatic-restart MODE
+                        Instructs the Session Manager how to handle
+                        sessions if the OpenVPN 3 Client process disappears
+                        unexpectedly.  The :code:`MODE` argument can be
+                        either :code:`on-failure` to enable this feature or
+                        :code:`no` to disable it.  The default is :code:`no`.
+
 --unset-override OVERRIDE
                         This removes an override setting from the configuration
                         profile.  The ``OVERRIDE`` value is the setting
