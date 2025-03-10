@@ -28,14 +28,30 @@
 
 
 NetCfgService::NetCfgService(DBus::Connection::Ptr dbuscon,
-                             DNS::SettingsManager::Ptr resolver,
-                             LogWriter *logwr,
-                             NetCfgOptions options)
+                             DNS::SettingsManager::Ptr resolver_,
+                             LogWriter *logwr_,
+                             NetCfgOptions options_)
     : DBus::Service(dbuscon, Constants::GenServiceName("netcfg")),
-      resolver(std::move(resolver)),
-      logwr(logwr),
-      options(std::move(options))
+      resolver(resolver_),
+      logwr(logwr_),
+      options(options_)
 {
+    // Setup a signal object of the backend
+    signals = NetCfgSignals::Create(GetConnection(),
+                                    LogGroup::NETCFG,
+                                    Constants::GenPath("netcfg"),
+                                    logwr);
+    signals->SetLogLevel(default_log_level);
+
+    CreateServiceHandler<NetCfgServiceHandler>(GetConnection(),
+                                               default_log_level,
+                                               resolver,
+                                               GetObjectManager(),
+                                               logwr,
+                                               options);
+
+    // Log which redirect method is in use
+    signals->LogVerb1(options.str());
 }
 
 
@@ -47,26 +63,8 @@ void NetCfgService::SetDefaultLogLevel(unsigned int lvl)
 
 void NetCfgService::BusNameAcquired(const std::string &busname)
 {
-    // Setup a signal object of the backend
-    signals = NetCfgSignals::Create(GetConnection(),
-                                    LogGroup::NETCFG,
-                                    Constants::GenPath("netcfg"),
-                                    logwr);
-    signals->SetLogLevel(default_log_level);
-
-
-    CreateServiceHandler<NetCfgServiceHandler>(GetConnection(),
-                                               default_log_level,
-                                               resolver,
-                                               GetObjectManager(),
-                                               logwr,
-                                               options);
     signals->Debug("NetCfg service registered on '" + busname
                    + "': " + Constants::GenPath("netcfg"));
-
-    // Log which redirect method is in use
-    signals->LogVerb1(options.str());
-
     if (resolver)
     {
         signals->LogVerb2(resolver->GetBackendInfo());
