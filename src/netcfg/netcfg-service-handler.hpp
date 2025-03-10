@@ -52,7 +52,6 @@ class NetCfgServiceHandler : public DBus::Object::Base
      *  is the entrypoint object used by the backend VPN client process
      *
      * @param conn_              DBus::Connection to use
-     * @param default_log_level  Default log level the service starts with
      * @param resolver           DNS::SettingsManager handling DNS resolver
      *                           configuration
      * @param obj_mgr            DBus::Object::Manager which will keep track of
@@ -62,7 +61,6 @@ class NetCfgServiceHandler : public DBus::Object::Base
      *                           of the service
      */
     NetCfgServiceHandler(DBus::Connection::Ptr conn_,
-                         const unsigned int default_log_level,
                          DNS::SettingsManager::Ptr resolver,
                          DBus::Object::Manager::Ptr obj_mgr,
                          LogWriter *logwr,

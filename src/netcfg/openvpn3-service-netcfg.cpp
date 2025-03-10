@@ -192,12 +192,6 @@ int netcfg_main(ParsedArgs::Ptr args)
     //
     apply_capabilities(args, netcfgopts);
 
-    int log_level = 4;
-    if (args->Present("log-level"))
-    {
-        log_level = std::atoi(args->GetLastValue("log-level").c_str());
-    }
-
     // Enable automatic shutdown if the config manager is
     // idling for 1 minute or more.  By idling, it means
     // no configuration files is stored in memory.
@@ -266,7 +260,6 @@ int netcfg_main(ParsedArgs::Ptr args)
                                                               resolvmgr,
                                                               logwr.get(),
                                                               netcfgopts);
-        netcfgsrv->SetDefaultLogLevel(log_level);
         netcfgsrv->PrepareIdleDetector(std::chrono::minutes(idle_wait_min));
 
         netcfgsrv->Run();

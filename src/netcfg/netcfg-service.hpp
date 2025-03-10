@@ -49,16 +49,6 @@ class NetCfgService : public DBus::Service
                   NetCfgOptions options);
     ~NetCfgService() = default;
 
-
-    /**
-     *  Sets the default log levnetcfg.hpp"el when the backend client starts.  This
-     *  can later on be adjusted by modifying the log_level D-Bus object
-     *  property.  When not being changed, the default log level is 6.
-     *
-     * @param lvl  Unsigned integer of the default log level.
-     */
-    void SetDefaultLogLevel(unsigned int lvl);
-
     void BusNameAcquired(const std::string &busname) override;
 
     void BusNameLost(const std::string &busname) override;
@@ -67,7 +57,6 @@ class NetCfgService : public DBus::Service
     DNS::SettingsManager::Ptr resolver = nullptr;
     LogWriter *logwr = nullptr;
 
-    unsigned int default_log_level = 4;
     NetCfgSignals::Ptr signals = nullptr;
     std::shared_ptr<NetCfgServiceHandler> srv_obj = nullptr;
     NetCfgOptions options;

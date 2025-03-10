@@ -41,10 +41,9 @@ NetCfgService::NetCfgService(DBus::Connection::Ptr dbuscon,
                                     LogGroup::NETCFG,
                                     Constants::GenPath("netcfg"),
                                     logwr);
-    signals->SetLogLevel(default_log_level);
+    signals->SetLogLevel(4);
 
     CreateServiceHandler<NetCfgServiceHandler>(GetConnection(),
-                                               default_log_level,
                                                resolver,
                                                GetObjectManager(),
                                                logwr,
@@ -52,12 +51,6 @@ NetCfgService::NetCfgService(DBus::Connection::Ptr dbuscon,
 
     // Log which redirect method is in use
     signals->LogVerb1(options.str());
-}
-
-
-void NetCfgService::SetDefaultLogLevel(unsigned int lvl)
-{
-    default_log_level = lvl;
 }
 
 

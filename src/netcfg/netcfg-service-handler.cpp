@@ -23,7 +23,6 @@
 
 
 NetCfgServiceHandler::NetCfgServiceHandler(DBus::Connection::Ptr conn_,
-                                           const unsigned int default_log_level,
                                            DNS::SettingsManager::Ptr resolver,
                                            DBus::Object::Manager::Ptr obj_mgr,
                                            LogWriter *logwr,
@@ -43,7 +42,7 @@ NetCfgServiceHandler::NetCfgServiceHandler(DBus::Connection::Ptr conn_,
                                     LogGroup::NETCFG,
                                     Constants::GenPath("netcfg"),
                                     logwr),
-    signals->SetLogLevel(default_log_level);
+    signals->SetLogLevel(4);
     RegisterSignals(signals);
 
     auto prop_glob_dns_srvs = [resolver](const DBus::Object::Property::BySpec &prop) -> GVariant *
