@@ -41,7 +41,7 @@ NetCfgService::NetCfgService(DBus::Connection::Ptr dbuscon,
                                     LogGroup::NETCFG,
                                     Constants::GenPath("netcfg"),
                                     logwr);
-    signals->SetLogLevel(4);
+    signals->SetLogLevel(options.log_level);
 
     CreateServiceHandler<NetCfgServiceHandler>(GetConnection(),
                                                resolver,

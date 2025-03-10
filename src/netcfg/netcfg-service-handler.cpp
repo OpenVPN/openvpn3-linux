@@ -32,7 +32,7 @@ NetCfgServiceHandler::NetCfgServiceHandler(DBus::Connection::Ptr conn_,
       conn(conn_),
       object_manager(obj_mgr),
       resolver(resolver),
-      options(std::move(options))
+      options(options)
 {
     DisableIdleDetector(true);
 
@@ -42,7 +42,7 @@ NetCfgServiceHandler::NetCfgServiceHandler(DBus::Connection::Ptr conn_,
                                     LogGroup::NETCFG,
                                     Constants::GenPath("netcfg"),
                                     logwr),
-    signals->SetLogLevel(4);
+    signals->SetLogLevel(options.log_level);
     RegisterSignals(signals);
 
     auto prop_glob_dns_srvs = [resolver](const DBus::Object::Property::BySpec &prop) -> GVariant *

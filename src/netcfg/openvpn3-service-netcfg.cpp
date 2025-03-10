@@ -161,13 +161,11 @@ int netcfg_main(ParsedArgs::Ptr args)
 
     openvpn::base64_init_static();
 
-    if (args->Present("log-file"))
+    if (!netcfgopts.log_file.empty())
     {
-        std::string fname = args->GetLastValue("log-file");
-
-        if ("stdout:" != fname)
+        if ("stdout:" != netcfgopts.log_file)
         {
-            logfs.open(fname.c_str(), std::ios_base::app);
+            logfs.open(netcfgopts.log_file.c_str(), std::ios_base::app);
             logfile = &logfs;
         }
         else
@@ -175,7 +173,7 @@ int netcfg_main(ParsedArgs::Ptr args)
             logfile = &std::cout;
         }
 
-        if (args->Present("colour"))
+        if (netcfgopts.log_colour)
         {
             colourengine.reset(new ANSIColours());
             logwr.reset(new ColourStreamWriter(*logfile,
