@@ -33,6 +33,18 @@ enum class RedirectMethod : std::uint8_t
  */
 struct NetCfgOptions
 {
+    /** Initial log verbosity for the service */
+    uint32_t log_level = 4;
+
+    /**
+     *  Log destination for log events. If empty, only logging
+     *  via openvpn3-service-log
+     */
+    std::string log_file;
+
+    /**  Will logging to console/file be coloured? */
+    bool log_colour = false;
+
     /** Decides wether use the tun-builder redirect functionality */
     RedirectMethod redirect_method = RedirectMethod::HOST_ROUTE;
 
@@ -48,6 +60,19 @@ struct NetCfgOptions
 
     NetCfgOptions(ParsedArgs::Ptr args, NetCfgConfigFile::Ptr config)
     {
+        if (args->Present("log-file"))
+        {
+            log_file = args->GetLastValue("log-file");
+        }
+        if (args->Present("colour"))
+        {
+            log_colour = true;
+        }
+        if (args->Present("log-level"))
+        {
+            log_level = std::atoi(args->GetLastValue("log-level").c_str());
+        }
+
         if (config && args->Present("state-dir"))
         {
             config_file = args->GetLastValue("state-dir") + "/netcfg.json";
