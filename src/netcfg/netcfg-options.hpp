@@ -51,9 +51,6 @@ struct NetCfgOptions
     /** the SO_MARK to use if > 0 */
     int so_mark = -1;
 
-    /** Will signals be broadcast to all users? */
-    bool signal_broadcast = false;
-
     /** Configuration file to use, if --state-dir is given */
     std::string config_file = "";
 
@@ -125,8 +122,6 @@ struct NetCfgOptions
         {
             so_mark = std::atoi(args->GetValue("set-somark", 0).c_str());
         }
-
-        signal_broadcast = args->Present("signal-broadcast");
     }
 
 

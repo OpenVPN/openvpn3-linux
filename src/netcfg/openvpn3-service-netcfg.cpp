@@ -205,13 +205,10 @@ int netcfg_main(ParsedArgs::Ptr args)
     {
         auto dbuscon = DBus::Connection::Create(DBus::BusType::SYSTEM);
 
-        // If we do unicast (!broadcast), attach to the log service
-        if (!netcfgopts.signal_broadcast)
-        {
-            logservice = LogServiceProxy::AttachInterface(dbuscon,
-                                                          Constants::GenInterface("netcfg"));
-            logservice->Attach(Constants::GenInterface("netcfg.core"));
-        }
+        // Register this service for logging via net.openvpn.v3.log
+        logservice = LogServiceProxy::AttachInterface(dbuscon,
+                                                      Constants::GenInterface("netcfg"));
+        logservice->Attach(Constants::GenInterface("netcfg.core"));
 
         std::cout << get_version(args->GetArgv0()) << std::endl;
 
@@ -320,9 +317,6 @@ int main(int argc, char **argv)
     argparser.AddOption("colour",
                         0,
                         "Make the log lines colourful");
-    argparser.AddOption("signal-broadcast",
-                        0,
-                        "Broadcast all D-Bus signals instead of targeted unicast");
     argparser.AddOption("idle-exit",
                         "MINUTES",
                         true,
