@@ -58,6 +58,5 @@ class NetCfgService : public DBus::Service
     LogWriter *logwr = nullptr;
 
     NetCfgSignals::Ptr signals = nullptr;
-    std::shared_ptr<NetCfgServiceHandler> srv_obj = nullptr;
     NetCfgOptions options;
 };
