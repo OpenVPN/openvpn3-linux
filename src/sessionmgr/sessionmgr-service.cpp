@@ -279,9 +279,19 @@ Service::Service(DBus::Connection::Ptr con, LogWriter::Ptr lwr)
 
 Service::~Service() noexcept
 {
-    if (logsrvprx)
+    try
     {
-        logsrvprx->Detach(Constants::GenInterface("sessions"));
+        if (logsrvprx)
+        {
+            logsrvprx->Detach(Constants::GenInterface("sessions"));
+        }
+    }
+    catch (const DBus::Proxy::Exception &)
+    {
+        // Ignore errors; The Detach call might fail, but is not critical
+        // when shutting down.  The error happening is essentially just
+        // that the log service didn't recognise this service as ever
+        // being attached
     }
 }
 
