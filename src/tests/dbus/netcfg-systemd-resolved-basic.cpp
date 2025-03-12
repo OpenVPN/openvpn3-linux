@@ -233,7 +233,7 @@ int main(int argc, char **argv)
     cmd.AddOption("set-default-route", "BOOL", true, "Changes the DefaultRoute flag for the interface");
     cmd.AddOption("set-dnssec", "MODE", true, "Set DNSSEC mode for the device");
     cmd.AddOption("set-dnsovertls", "MODE", true, "Set the DNSOverTLS mode for the device");
-    cmd.AddOption("revert", 0, "Revert all DNS settings on the interface to systemd-resovled defaults");
+    cmd.AddOption("revert", 0, "Revert all DNS settings on the interface to systemd-resolved defaults");
 
     try
     {

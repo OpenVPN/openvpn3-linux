@@ -175,7 +175,7 @@ for a while with no data to maintain, they will shut-down automatically.
   a newer version).  This works now with Fedora 31 and newer,
   Red Hat Enterprise Linux 8 or Ubuntu 20.04 and newer.
 
-  To disable the `systemd-resovled` integration and use `/etc/resolv.conf`
+  To disable the `systemd-resolved` integration and use `/etc/resolv.conf`
   instead, run these commands as `root`:
 
       # openvpn3-admin netcfg-service --config-unset systemd-resolved
