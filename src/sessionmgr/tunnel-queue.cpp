@@ -305,12 +305,11 @@ void NewTunnelQueue::process_registration(DBus::Signals::Event::Ptr event)
                             client_was_connected = (last_event.major == StatusMajor::CONNECTION
                                                     && last_event.minor == StatusMinor::CONN_CONNECTED);
 
-                            log->LogCritical("Session disappeared with last know state ["
-                                             + std::to_string(static_cast<int>(last_event.major)) + ", "
-                                             + std::to_string(static_cast<int>(last_event.minor))
-                                             + "] " + last_event.message
-                                             + ", session token: " + sesstoken
-                                             + ", bus name: " + bus_name);
+                            std::ostringstream msg;
+                            msg << "Session disappeared with last know state {" << last_event << "} "
+                                << ", session token: " + sesstoken
+                                << ", bus name: " << bus_name;
+                            log->LogCritical(msg.str());
                             break;
                         }
                     }
