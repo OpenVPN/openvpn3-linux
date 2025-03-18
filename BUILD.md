@@ -23,7 +23,7 @@ The following dependencies are needed:
 
   https://www.openssl.org/
 
-* GDBus++ v1 or newer
+* GDBus++ v3 or newer
 
   https://codeberg.org/OpenVPN/gdbuspp/
 
@@ -117,7 +117,8 @@ First install the package dependencies needed to run the build.
                         libxml2-utils python3-minimal python3-dbus          \
                         python3-docutils python3-jinja2 libxml2-utils       \
                         libtinyxml2-dev policykit-1 libsystemd-dev          \
-                        python3-systemd libssl-dev libssl1.1 libgdbuspp-dev
+                        python3-systemd libssl-dev libssl1.1 libgdbuspp-dev \
+                        libdbus-1-dev
 
 - Dependencies to build with DCO support:
 
@@ -133,7 +134,7 @@ First install the package dependencies needed to run the build.
                     lz4-devel zlib-devel libxml2 tinyxml2-devel python3-dbus \
                     python3-gobject python3-pyOpenSSL python3-jinja2         \
                     python3-docutils bzip2 polkit systemd-devel              \
-                    python3-systemd openssl-devel gdbuspp-devel
+                    python3-systemd openssl-devel gdbuspp-devel dbus-devel
 
 - Dependencies to build with DCO support:
 
