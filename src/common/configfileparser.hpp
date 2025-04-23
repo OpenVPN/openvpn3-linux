@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <filesystem>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -22,6 +23,8 @@
 #include <json/json.h>
 
 #include "common/cmdargparser-exceptions.hpp"
+
+namespace fs = std::filesystem;
 
 namespace Configuration {
 
@@ -112,7 +115,7 @@ class File
   public:
     typedef std::shared_ptr<File> Ptr;
 
-    File(const std::string fname = "");
+    File(const fs::path &fname = "");
     virtual ~File() = default;
 
 
@@ -133,11 +136,12 @@ class File
     /**
      *  Loads a JSON configration file and parses it
      *
-     * @param cfgfile  std::string containing the filename to parse
+     * @param cfgfile  Configuration file to parse. If empty, the file name
+     *                 given in the constructor will be the default file name.
      * @throws ConfigFileException if there were issues opening or parsing the
      *         configuration file
      */
-    void Load(const std::string &cfgfile = "");
+    void Load(const fs::path &cfgfile = "");
 
 
     /**
@@ -241,10 +245,11 @@ class File
      *  Writes the configuration file containing the currently set values
      *  to a file.
      *
-     * @param cfgfname  std::string of the filename to use when saving
-     *                  the file.
+     * @param cfgfname  Filename to use when saving the file.  If empty,
+     *                  the file name used in the constructor will be used
+     *                  instead.
      */
-    void Save(const std::string cfgfname = "");
+    void Save(const fs::path &cfgfname = "");
 
 
     /**
@@ -291,7 +296,7 @@ class File
 
 
   private:
-    std::string config_filename{};
+    fs::path config_filename{};
     bool map_configured = false; ///< Has ConfigureMapping() been run?
     OptionMap map;               ///< Currently active configuration map
 
