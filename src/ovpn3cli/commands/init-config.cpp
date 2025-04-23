@@ -474,6 +474,22 @@ void setup_state_dir(const setup_config &setupcfg)
 
     try
     {
+        // First check if the state directory or the configs subdirectory are symlinks.
+        // If one of them are, we bailout quickly for security reasons.
+        if (fs::is_symlink(setupcfg.statedir))
+        {
+            std::cout << "    !! The state directory is a symlink - skipping directory checks" << std::endl
+                      << "    !! The state directory and the configs sub-directory must be setup manually." << std::endl;
+            return;
+        }
+
+        fs::path cfgdir = setupcfg.statedir / "configs";
+        if (fs::is_symlink(cfgdir))
+        {
+            std::cout << "    !! " << cfgdir << " is a symlink.  This must be setup manually." << std::endl;
+            return;
+        }
+
         const fs::perms dirperms = (fs::perms::owner_all | fs::perms::group_read | fs::perms::group_exec);
         if (!fs::is_directory(setupcfg.statedir))
         {
@@ -486,14 +502,13 @@ void setup_state_dir(const setup_config &setupcfg)
         }
 
         // Ensure the root state directory has proper ownership and permissions
-        fs::permissions(setupcfg.statedir, dirperms, fs::perm_options::replace);
-        if (0 != ::chown(setupcfg.statedir.c_str(), setupcfg.openvpn_uid, setupcfg.openvpn_gid))
+        fs::permissions(setupcfg.statedir, dirperms, fs::perm_options::replace | fs::perm_options::nofollow);
+        if (0 != ::lchown(setupcfg.statedir.c_str(), setupcfg.openvpn_uid, setupcfg.openvpn_gid))
         {
             throw CommandException("init-config", "Failed to change ownership of state directory");
         }
 
         // Check the configs sub-directory
-        fs::path cfgdir = setupcfg.statedir / "configs";
         if (!fs::is_directory(cfgdir))
         {
             std::cout << "    -- Configurations sub-directory is missing - creating it" << std::endl;
@@ -505,8 +520,8 @@ void setup_state_dir(const setup_config &setupcfg)
         }
 
         // Ensure the configs sub-directory has proper ownership and permissions
-        fs::permissions(cfgdir, dirperms, fs::perm_options::replace);
-        if (0 != ::chown(cfgdir.c_str(), setupcfg.openvpn_uid, setupcfg.openvpn_gid))
+        fs::permissions(cfgdir, dirperms, fs::perm_options::replace | fs::perm_options::nofollow);
+        if (0 != ::lchown(cfgdir.c_str(), setupcfg.openvpn_uid, setupcfg.openvpn_gid))
         {
             throw CommandException("init-config", "Failed to change ownership of the configurations sub-directory");
         }
