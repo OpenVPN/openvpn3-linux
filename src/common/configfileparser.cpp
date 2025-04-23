@@ -59,7 +59,7 @@ OptionMapEntry::OptionMapEntry(const std::string &option,
 //   class Configuration::File
 //
 
-File::File(const std::string fname)
+File::File(const fs::path &fname)
 {
     config_filename = fname;
 }
@@ -112,7 +112,7 @@ void File::Parse(Json::Value &config)
 }
 
 
-void File::Load(const std::string &cfgfile)
+void File::Load(const fs::path &cfgfile)
 {
     std::string fname = cfgfile.empty() ? config_filename : cfgfile;
     if (fname.empty())
@@ -400,7 +400,7 @@ Json::Value File::Generate()
 }
 
 
-void File::Save(const std::string cfgfname)
+void File::Save(const fs::path &cfgfname)
 {
     std::string fname = cfgfname.empty() ? config_filename : cfgfname;
     if (fname.empty())
