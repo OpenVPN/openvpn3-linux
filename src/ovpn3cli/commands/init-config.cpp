@@ -16,9 +16,9 @@
 
 #include "build-config.h"
 
-#include <iostream>
 #include <cstdarg>
-#include <sys/stat.h>
+#include <filesystem>
+#include <iostream>
 #include <gdbuspp/connection.hpp>
 #include <gdbuspp/proxy.hpp>
 
@@ -26,8 +26,6 @@
 #include <selinux/selinux.h>
 #include <selinux/restorecon.h>
 #endif
-
-#include "openvpn/common/stat.hpp"
 
 #include "common/cmdargparser.hpp"
 #include "common/lookup.hpp"
@@ -39,6 +37,7 @@
 #include "netcfg/dns/proxy-systemd-resolved.hpp"
 #endif
 
+namespace fs = std::filesystem;
 using namespace NetCfg::DNS;
 
 /**
@@ -47,7 +46,7 @@ using namespace NetCfg::DNS;
  */
 struct setup_config
 {
-    std::string statedir = OPENVPN3_STATEDIR;
+    fs::path statedir = OPENVPN3_STATEDIR;
     bool write = false;
     bool overwrite = false;
     uid_t openvpn_uid = -1;
@@ -96,34 +95,41 @@ void unset_configfile_options(Configuration::File &cfgfile, const std::vector<st
  * @param cfgname   The filename, including path, where to save it
  * @param setupcfg  The command line option settings
  */
-void save_config_file(Configuration::File &cfg, const std::string cfgname, const setup_config &setupcfg)
+void save_config_file(Configuration::File &cfg, const fs::path cfgname, const setup_config &setupcfg)
 {
-    if (setupcfg.write && (!openvpn::file_exists(cfgname) || setupcfg.overwrite))
+    try
     {
-        cfg.Save(cfgname);
-        std::cout << "    Configuration saved" << std::endl;
-    }
-    else
-    {
-        if (setupcfg.write && openvpn::file_exists(cfgname))
+        if (setupcfg.write && (!fs::exists(cfgname) || setupcfg.overwrite))
         {
-            std::cout << "    !! Will not overwrite existing configuration file" << std::endl;
+            cfg.Save(cfgname);
+            std::cout << "    Configuration saved" << std::endl;
         }
-        std::cout << "    !! Configuration UNCHANGED" << std::endl;
-    }
+        else
+        {
+            if (setupcfg.write && fs::exists(cfgname))
+            {
+                std::cout << "    !! Will not overwrite existing configuration file" << std::endl;
+            }
+            std::cout << "    !! Configuration UNCHANGED" << std::endl;
+        }
 
-    if (!openvpn::file_exists(cfgname))
-    {
-        return;
-    }
+        if (!fs::exists(cfgname))
+        {
+            return;
+        }
 
-    if (0 != chmod(cfgname.c_str(), 0644))
-    {
-        std::cout << "    ** ERROR ** Failed to change the file access on the config file (chmod 0644)" << std::endl;
+        if (0 != chmod(cfgname.c_str(), 0644))
+        {
+            std::cout << "    ** ERROR ** Failed to change the file access on the config file (chmod 0644)" << std::endl;
+        }
+        if (0 != chown(cfgname.c_str(), setupcfg.openvpn_uid, setupcfg.openvpn_gid))
+        {
+            std::cout << "    ** ERROR ** Failed to change the file ownership on the config file" << std::endl;
+        }
     }
-    if (0 != chown(cfgname.c_str(), setupcfg.openvpn_uid, setupcfg.openvpn_gid))
+    catch (const fs::filesystem_error &err)
     {
-        std::cout << "    ** ERROR ** Failed to change the file ownership on the config file" << std::endl;
+        throw CommandException("init-config(save_config_file)", "Unexpected error saving config: " + err.code().message());
     }
 }
 
@@ -160,7 +166,7 @@ void configure_logger(const setup_config &setupcfg, DBus::Connection::Ptr dbusco
     std::cout << std::endl
               << "* Logger Configuration" << std::endl;
 
-    const std::string cfgfile = setupcfg.statedir + "/log-service.json";
+    const fs::path cfgfile = setupcfg.statedir / "log-service.json";
     std::cout << "    Configuration file: " << cfgfile << std::endl;
 
 #ifdef HAVE_SYSTEMD
@@ -196,7 +202,7 @@ void configure_logger(const setup_config &setupcfg, DBus::Connection::Ptr dbusco
     LogServiceConfigFile logcfg;
 
     // If config file already exists, parse it to preserve other settings
-    if (openvpn::file_exists(cfgfile))
+    if (fs::exists(cfgfile))
     {
         logcfg.Load(cfgfile);
     }
@@ -256,17 +262,20 @@ enum class DNSresolver
  *
  * @param file
  */
-bool is_accessible(const char *file)
+bool is_accessible(const fs::path &file)
 {
     // We should probably replace this with std::filesystem code.
     // For now, this is copied-over legacy code.
 
-    struct stat st;
-    if (::stat(file, &st) == 0 && st.st_size > 0
-        && (st.st_mode & (S_IRUSR | S_IWUSR)) > 0)
+    if (fs::exists(file) && !fs::is_empty(file))
     {
-        std::cout << "    Found accessible " << file << std::endl;
-        return true;
+        fs::perms fileperm = fs::status(file).permissions();
+        fs::perms perm = fileperm & (fs::perms::owner_read | fs::perms::group_read | fs::perms::others_read);
+        if (perm != fs::perms::none)
+        {
+            std::cout << "    Found accessible " << file << std::endl;
+            return true;
+        }
     }
 
     std::cout << "    !! Could not read " << file << std::endl;
@@ -314,7 +323,7 @@ bool is_systemd_resolved_configured(const char *conf_file)
  */
 void configure_netcfg(const setup_config &setupcfg, DBus::Connection::Ptr dbuscon)
 {
-    const std::string cfgfile = setupcfg.statedir + "/netcfg.json";
+    const fs::path cfgfile = setupcfg.statedir / "netcfg.json";
     DNSresolver resolver = DNSresolver::NONE;
 
     std::cout << std::endl
@@ -364,7 +373,7 @@ void configure_netcfg(const setup_config &setupcfg, DBus::Connection::Ptr dbusco
     NetCfgConfigFile config;
 
     // If config file already exists, parse it to preserve other settings
-    if (openvpn::file_exists(cfgfile))
+    if (fs::exists(cfgfile))
     {
         config.Load(cfgfile);
     }
@@ -448,41 +457,51 @@ void setup_state_dir(const setup_config &setupcfg)
               << "* Checking OpenVPN 3 Linux state/configuration directory" << std::endl
               << "    Using directory: " << setupcfg.statedir << std::endl;
 
-    if (!openvpn::is_directory(setupcfg.statedir, true))
+    try
     {
-        std::cout << "    -- State directory is missing - creating it" << std::endl;
-        if (0 != ::mkdir(setupcfg.statedir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP))
+        const fs::perms dirperms = (fs::perms::owner_all | fs::perms::group_read | fs::perms::group_exec);
+        if (!fs::is_directory(setupcfg.statedir))
         {
-            throw CommandException("init-config", "Failed to create a new state directory");
+            std::cout << "    -- State directory is missing - creating it" << std::endl;
+            fs::create_directory(setupcfg.statedir);
+        }
+        else
+        {
+            std::cout << "    Directory found" << std::endl;
+        }
+
+        // Ensure the root state directory has proper ownership and permissions
+        fs::permissions(setupcfg.statedir, dirperms, fs::perm_options::replace);
+        if (0 != ::chown(setupcfg.statedir.c_str(), setupcfg.openvpn_uid, setupcfg.openvpn_gid))
+        {
+            throw CommandException("init-config", "Failed to change ownership of state directory");
+        }
+
+        // Check the configs sub-directory
+        fs::path cfgdir = setupcfg.statedir / "configs";
+        if (!fs::is_directory(cfgdir))
+        {
+            std::cout << "    -- Configurations sub-directory is missing - creating it" << std::endl;
+            fs::create_directory(cfgdir);
+        }
+        else
+        {
+            std::cout << "    Configs sub-directory found" << std::endl;
+        }
+
+        // Ensure the configs sub-directory has proper ownership and permissions
+        fs::permissions(cfgdir, dirperms, fs::perm_options::replace);
+        if (0 != ::chown(cfgdir.c_str(), setupcfg.openvpn_uid, setupcfg.openvpn_gid))
+        {
+            throw CommandException("init-config", "Failed to change ownership of the configurations sub-directory");
         }
     }
-    else
+    catch (const fs::filesystem_error &err)
     {
-        std::cout << "    Directory found" << std::endl;
-        if (0 != ::chmod(setupcfg.statedir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP))
-        {
-            throw CommandException("init-config", "Failed fixing access mode to state directory (chmod)");
-        }
-    }
-
-    if (0 != ::chown(setupcfg.statedir.c_str(), setupcfg.openvpn_uid, setupcfg.openvpn_gid))
-    {
-        throw CommandException("init-config", "Failed to change ownership of state directory");
-    }
-
-    std::string cfgdir = setupcfg.statedir + "/configs";
-    if (!openvpn::is_directory(cfgdir, true))
-    {
-        std::cout << "    -- Configurations sub-directory is missing - creating it" << std::endl;
-        if (0 != ::mkdir(cfgdir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP))
-        {
-            throw CommandException("init-config", "Failed to create a new configurations sub-directory");
-        }
-    }
-
-    if (0 != ::chown(cfgdir.c_str(), setupcfg.openvpn_uid, setupcfg.openvpn_gid))
-    {
-        throw CommandException("init-config", "Failed to change ownership of configurations sub-directory");
+        std::ostringstream msg;
+        msg << "Failed to prepare directory '" << err.path1() << "': "
+            << err.code().message();
+        throw CommandException("init-config", msg.str());
     }
 }
 
