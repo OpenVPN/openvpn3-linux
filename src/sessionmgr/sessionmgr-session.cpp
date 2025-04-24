@@ -407,12 +407,21 @@ Session::Session(DBus::Connection::Ptr dbuscon,
             -> DBus::Object::Property::Update::Ptr
         {
             auto v = glib2::Value::Get<uint32_t>(value);
-            sig_session->SetLogLevel(v);
-            auto upd = prop.PrepareUpdate();
-            upd->AddValue(v);
-            sig_session->LogInfo("Log level changed to " + std::to_string(sig_session->GetLogLevel())
-                                 + " on " + GetPath());
-            return upd;
+            try
+            {
+                sig_session->SetLogLevel(v);
+                auto upd = prop.PrepareUpdate();
+                upd->AddValue(v);
+                sig_session->LogInfo("Log level changed to " + std::to_string(sig_session->GetLogLevel())
+                                     + " on " + GetPath());
+                return upd;
+            }
+            catch (const LogException &)
+            {
+                sig_session->LogError("Invalid log level requested on session "
+                                      + GetPath() + ": " + std::to_string(v));
+                throw DBus::Object::Property::Exception(this, "log_verbosity", "Incorrect log level");
+            }
         });
 
     // ACL - public access: Anyone can interact with this session
