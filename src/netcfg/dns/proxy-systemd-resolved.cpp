@@ -151,6 +151,7 @@ Link::Link(asio::io_context &asio_ctx,
 {
     tgt_link = DBus::Proxy::TargetPreset::Create(path,
                                                  "org.freedesktop.resolve1.Link");
+
 }
 
 
@@ -405,16 +406,27 @@ void Link::BackgroundCall(const std::string &method, GVariant *params)
                 return;
             }
 
-	        try
+            // It might be the call to systemd-resolved times out,
+            // so we're being a bit more persistent in these background
+            // calls
+            for (uint8_t attempts = 3; attempts > 0; attempts--)
             {
-                GVariant *r = proxy->Call(target, method, post_params);
-                g_variant_unref(r);
-                g_variant_unref(post_params);
+                try
+                {
+                    GVariant *r = proxy->Call(target, method, post_params);
+                    g_variant_unref(r);
+                    break;
+                }
+                catch (const DBus::Proxy::Exception &excp)
+                {
+                    std::string err = excp.what();
+                    if (!err.find("Timeout was reached") || attempts < 1)
+                    {
+                        errors->Add(target->object_path, method, excp.what());
+                    }
+                }
             }
-            catch (const DBus::Proxy::Exception &excp)
-            {
-                errors->Add(target->object_path, method, excp.what());
-            }
+            g_variant_unref(post_params);
         });
 }
 
