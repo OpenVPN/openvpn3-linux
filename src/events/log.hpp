@@ -50,10 +50,12 @@ struct Log
      * @param grp  LogGroup value to use.
      * @param ctg  LogCategory value to use.
      * @param msg  std::string containing the log message to use.
+     * @param filter_nl  (optional) Filter out newline (\n) characters in log message (default true)
      */
     Log(const LogGroup grp,
         const LogCategory ctg,
-        const std::string &msg);
+        const std::string &msg,
+        bool filter_nl = true);
 
     /**
      *  Initialize the LogEvent object with the provided details.
@@ -61,11 +63,28 @@ struct Log
      * @param grp  LogGroup value to use.
      * @param ctg  LogCategory value to use.
      * @param msg  std::string containing the log message to use.
+     * @param filter_nl  (optional) Filter out newline (\n) characters in log message (default true)
      */
     Log(const LogGroup grp,
         const LogCategory ctg,
         const std::string &session_token,
-        const std::string &msg);
+        const std::string &msg,
+        bool filter_nl = true);
+
+    /**
+     *  Initialize the LogEvent object with the provided details.
+     *
+     * @param grp            LogGroup value to use.
+     * @param ctg            LogCategory value to use.
+     * @param session_token  char * containing the log message to use.
+     * @param msg            char * containing the log message to use.
+     * @param filter_nl      (optional) Filter out newline (\n) characters in log message (default true)
+     */
+    Log(const LogGroup grp,
+        const LogCategory ctg,
+        const char *session_token,
+        const char *msg,
+        bool filter_nl = true);
 
     Log(const Log &logev, const std::string &session_token);
 
@@ -194,8 +213,16 @@ struct Log
     /**
      *  Internal helper function, removes NL characters at the end of the
      *  log event message string
+     *  Internal helper function, filtering out unwanted characters
+     *  from log messages.  It will also remove any trailing newline
+     *  characters.
+     *
+     *  If filter_nl is false, it will remove any char values < 0x20.
+     *  If filter_nl is true, it will only allow \n below 0x20.
+     *
+     *  @param filter_nl  Filter out newline (\n) characters in log message
      */
-    void remove_trailing_nl();
+    void filter_log_message(bool filter_nl);
 };
 
 
@@ -208,11 +235,13 @@ struct Log
  * @param ctg_s       std::string containing the LogCategory string representation
  * @param sess_token  std::string containing the session token value
  * @param msg         std::string containing the log message
+ * @param filter_nl  (optional) Filter out newline (\n) characters in log message (default true)
  */
 [[nodiscard]] Log ParseLog(const std::string &grp_s,
                            const std::string &ctg_s,
                            const std::string &sess_token,
-                           const std::string &msg);
+                           const std::string &msg,
+                           bool filter_nl = true);
 
 
 /**
@@ -223,10 +252,12 @@ struct Log
  * @param grp_s  std::string containing the LogGroup string representation
  * @param ctg_s  std::string containing the LogCategory string representation
  * @param msg    std::string containing the log message
+ * @param filter_nl  (optional) Filter out newline (\n) characters in log message (default true)
  */
 [[nodiscard]] Log ParseLog(const std::string &grp_s,
                            const std::string &ctg_s,
-                           const std::string &msg);
+                           const std::string &msg,
+                           bool filter_nl = true);
 
 
 /**

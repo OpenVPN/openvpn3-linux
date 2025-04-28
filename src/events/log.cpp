@@ -50,10 +50,11 @@ Log::Log()
 
 Log::Log(const LogGroup grp,
          const LogCategory ctg,
-         const std::string &msg)
+         const std::string &msg,
+         bool filter_nl)
     : group(grp), category(ctg), message(msg)
 {
-    remove_trailing_nl();
+    filter_log_message(filter_nl);
     format = Format::NORMAL;
 }
 
@@ -61,11 +62,25 @@ Log::Log(const LogGroup grp,
 Log::Log(const LogGroup grp,
          const LogCategory ctg,
          const std::string &session_token,
-         const std::string &msg)
+         const std::string &msg,
+         bool filter_nl)
     : group(grp), category(ctg),
       session_token(session_token), message(msg)
 {
-    remove_trailing_nl();
+    filter_log_message(filter_nl);
+    format = Format::SESSION_TOKEN;
+}
+
+
+Log::Log(const LogGroup grp,
+         const LogCategory ctg,
+         const char *session_token,
+         const char *msg,
+         bool filter_nl)
+    : group(grp), category(ctg),
+      session_token(session_token), message(msg)
+{
+    filter_log_message(filter_nl);
     format = Format::SESSION_TOKEN;
 }
 
@@ -74,7 +89,7 @@ Log::Log(const Log &logev, const std::string &session_token)
     : group(logev.group), category(logev.category),
       session_token(session_token), message(logev.message)
 {
-    remove_trailing_nl();
+    filter_log_message(false);
     format = Format::SESSION_TOKEN;
 }
 
@@ -240,9 +255,27 @@ bool Log::operator!=(const Log &compare) const
 }
 
 
-void Log::remove_trailing_nl()
+void Log::filter_log_message(bool filter_nl)
 {
+    // Remove trailing new lines
     message.erase(message.find_last_not_of("\n") + 1);
+
+    // Remove all control characters (< 0x20) - except
+    // of preserving only newlines (\n) if requested.
+    message.erase(
+        std::remove_if(message.begin(),
+                       message.end(),
+                       [filter_nl](char c)
+                       {
+                           // We allow characters being 0x20 or higher
+                           // unless filter_nl is true, then we also allow
+                           // only \n.
+                           //
+                           // The inversion is due std::remove_if will
+                           // remove if we return true.
+                           return !(c > 0x19 || (!filter_nl && c == '\n'));
+                       }),
+        message.end());
 }
 
 
@@ -302,7 +335,7 @@ Log parse_dict(GVariant *logevent)
         // and then we treat this event as a "normal" LogEvent without
         // the sessoin token value
     }
-    return Log(group, category, message);
+    return Log(group, category, message, false);
 }
 
 
@@ -328,7 +361,7 @@ Log parse_tuple(GVariant *logevent, bool with_session_token)
         auto group = glib2::Value::Extract<LogGroup>(logevent, 0);
         auto category = glib2::Value::Extract<LogCategory>(logevent, 1);
         auto message = glib2::Value::Extract<std::string>(logevent, 2);
-        return Log(group, category, message);
+        return Log(group, category, message, false);
     }
     else
     {
@@ -337,7 +370,7 @@ Log parse_tuple(GVariant *logevent, bool with_session_token)
         auto category = glib2::Value::Extract<LogCategory>(logevent, 1);
         auto session_token = glib2::Value::Extract<std::string>(logevent, 2);
         auto message = glib2::Value::Extract<std::string>(logevent, 3);
-        return Log(group, category, session_token, message);
+        return Log(group, category, session_token, message, false);
     }
 }
 
@@ -349,20 +382,22 @@ Log parse_tuple(GVariant *logevent, bool with_session_token)
 Log ParseLog(const std::string &grp_s,
              const std::string &ctg_s,
              const std::string &sess_token,
-             const std::string &msg)
+             const std::string &msg,
+             bool filter_nl)
 {
     auto [grp, ctg] = parse_group_category(grp_s, ctg_s);
     return sess_token.empty()
-               ? Log(grp, ctg, msg)
-               : Log(grp, ctg, sess_token, msg);
+               ? Log(grp, ctg, msg, filter_nl)
+               : Log(grp, ctg, sess_token, msg, filter_nl);
 }
 
 
 Log ParseLog(const std::string &grp_s,
              const std::string &ctg_s,
-             const std::string &msg)
+             const std::string &msg,
+             bool filter_nl)
 {
-    return ParseLog(grp_s, ctg_s, {}, msg);
+    return ParseLog(grp_s, ctg_s, {}, msg, filter_nl);
 }
 
 
