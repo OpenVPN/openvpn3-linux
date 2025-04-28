@@ -78,6 +78,12 @@ void LogSender::Debug(const std::string &msg, const bool duplicate_check)
     Log(Events::Log(log_group, LogCategory::DEBUG, msg), duplicate_check);
 }
 
+void LogSender::Debug_wnl(const std::string &msg, const bool duplicate_check)
+{
+    // Variant of Debug() (with newline) which will not filter out newline (\n)
+    Log(Events::Log(log_group, LogCategory::DEBUG, msg, false), duplicate_check);
+}
+
 
 void LogSender::LogVerb2(const std::string &msg, const bool duplicate_check)
 {
