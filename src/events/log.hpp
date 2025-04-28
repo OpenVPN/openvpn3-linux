@@ -69,29 +69,6 @@ struct Log
 
     Log(const Log &logev, const std::string &session_token);
 
-    Log(const std::string &grp_s,
-        const std::string &ctg_s,
-        const std::string &msg);
-
-    Log(const std::string &grp_s,
-        const std::string &ctg_s,
-        const std::string &sess_token,
-        const std::string &msg);
-
-    /**
-     *  Initialize a LogEvent, based on a GVariant object containing
-     *  a Log signal.  It supports both tuple based and dictonary based
-     *  Log signals. See @parse_dict() and @parse_tuple for more
-     *  information.
-     *
-     * @param logev  Pointer to a GVariant object containing the the Log event
-     * @param sender (optional) DBus::Signals::Target object with details about
-     *               the signal sender
-     * @throws LogException on invalid input data
-     */
-    Log(GVariant *logev, DBus::Signals::Target::Ptr sender = nullptr);
-
-
     /**
      *  Remove the session token from the current log event
      *
@@ -101,12 +78,20 @@ struct Log
     void RemoveToken();
 
     /**
+     *  Attach meta information about the D-Bus sender of the log event.
+     *  This can only be called once.  Additional calls will be silently
+     *  ignored.
+     *
+     *  @param sender  DBus::Signals::Target object containing the sender details
+     */
+    void SetDBusSender(DBus::Signals::Target::Ptr sender);
+
+    /**
      *  Adds a LogTag which will prefix the log message
      *
      * @param tag  LogTag object to use
      */
     void AddLogTag(LogTag::Ptr tag) noexcept;
-
 
     /**
      *  Retrieve the currently set LogTag object
@@ -221,46 +206,51 @@ struct Log
      *  log event message string
      */
     void remove_trailing_nl();
-
-    /**
-     *  Parses a GVariant object containing a Log signal.  The input
-     *  GVariant needs to be of 'a{sv}' which is a named dictionary.  It
-     *  must contain the following key values to be valid:
-     *
-     *     - (u) log_group          Translated into LogGroup
-     *     - (u) log_category       Translated into LogCategory
-     *     - (s) log_session_token  An optional session token string
-     *     - (s) log_message        A string with the log message
-     *
-     * @param logevent  Pointer to the GVariant object containig the
-     *                  log event
-     */
-    void parse_dict(GVariant *logevent);
-
-    /**
-     *  Parses a tuple oriented GVariant object matching the data type
-     *  for a LogEvent object.  The data type must be (uus) if the
-     *  GVariant object is does not carry a session token value; otherwise
-     *  it must be (uuss) if it does.
-     *
-     * @param logevent            Pointer to the GVariant object containig the
-     *                            log event
-     * @param with_session_token  Boolean flag indicating if the logevent
-     *                            GVariant object is expected to contain a
-     *                            session token.
-     */
-    void parse_tuple(GVariant *logevent, bool with_session_token);
-
-    /**
-     *  Parses group and category strings to the appropriate LogGroup
-     *  and LogGroup enum values.  This method sets the group and category members
-     *  directly and does not return any values.  String values not found will
-     *  result in the UNDEFINED value being set.
-     *
-     * @param grp_s std::string containing the human readable LogGroup string
-     * @param ctg_s std::string containing the human readable LogCategory string
-     */
-    void parse_group_category(const std::string &grp_s, const std::string &ctg_s);
 };
+
+
+/**
+ *  Helper function to generate a Log event where the group and category
+ *  fields are passed as strings and parsed into LogGroup and LogCategory
+ *  types.
+ *
+ * @param grp_s       std::string containing the LogGroup string representation
+ * @param ctg_s       std::string containing the LogCategory string representation
+ * @param sess_token  std::string containing the session token value
+ * @param msg         std::string containing the log message
+ */
+[[nodiscard]] Log ParseLog(const std::string &grp_s,
+                           const std::string &ctg_s,
+                           const std::string &sess_token,
+                           const std::string &msg);
+
+
+/**
+ *  Helper function to generate a Log event where the group and category
+ *  fields are passed as strings and parsed into LogGroup and LogCategory
+ *  types.
+ *
+ * @param grp_s  std::string containing the LogGroup string representation
+ * @param ctg_s  std::string containing the LogCategory string representation
+ * @param msg    std::string containing the log message
+ */
+[[nodiscard]] Log ParseLog(const std::string &grp_s,
+                           const std::string &ctg_s,
+                           const std::string &msg);
+
+
+/**
+ *  Helper function parsing a GVariant object containing
+ *  a Log signal into an Event::Log object.  It supports both tuple based and
+ *  dictionary based Log signals. See @parse_dict() and @parse_tuple for more
+ *  information.
+ *
+ * @param logev  Pointer to a GVariant object containing the the Log event
+ * @param sender (optional) DBus::Signals::Target object with details about
+ *               the signal sender
+ * @throws LogException on invalid input data
+ */
+[[nodiscard]] Log ParseLog(GVariant *logev, DBus::Signals::Target::Ptr sender = nullptr);
+
 
 } // namespace Events

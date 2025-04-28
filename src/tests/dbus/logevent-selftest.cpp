@@ -115,7 +115,7 @@ int test2_without_session_token()
                              static_cast<uint32_t>(StatusMinor::CFG_OK),
                              1234,
                              "Invalid data");
-        Events::Log parsed(data);
+        auto parsed = Events::ParseLog(data);
         std::cout << "FAILED - should not be parsed successfully." << std::endl;
         ++ret;
     }
@@ -145,7 +145,7 @@ int test2_without_session_token()
         g_variant_builder_add(b, "{sv}", "log_category", glib2::Value::Create(LogCategory::DEBUG));
         g_variant_builder_add(b, "{sv}", "log_message", glib2::Value::Create<std::string>("Test log message"));
         GVariant *data = glib2::Builder::Finish(b);
-        Events::Log parsed(data);
+        auto parsed = Events::ParseLog(data);
 
         if (LogGroup::LOGGER != parsed.group
             || LogCategory::DEBUG != parsed.category
@@ -174,7 +174,7 @@ int test2_without_session_token()
                                        static_cast<uint32_t>(LogGroup::BACKENDPROC),
                                        static_cast<uint32_t>(LogCategory::INFO),
                                        "Parse testing again");
-        Events::Log parsed(data);
+        auto parsed = Events::ParseLog(data);
         g_variant_unref(data);
 
         if (LogGroup::BACKENDPROC != parsed.group
@@ -238,7 +238,7 @@ int test2_without_session_token()
 
         // Reuse the parser in LogEvent.  As that has already passed the
         // test, expect this to work too.
-        Events::Log cmp(revparse);
+        auto cmp = Events::ParseLog(revparse);
 
         if (dicttest.group != cmp.group
             || dicttest.category != cmp.category
@@ -277,7 +277,7 @@ int test2_with_session_token()
         g_variant_builder_add(b, "{sv}", "log_session_token", glib2::Value::Create<std::string>("session_token_value"));
         g_variant_builder_add(b, "{sv}", "log_message", glib2::Value::Create<std::string>("Test log message"));
         GVariant *data = glib2::Builder::Finish(b);
-        Events::Log parsed(data);
+        auto parsed = Events::ParseLog(data);
 
         if (LogGroup::LOGGER != parsed.group
             || LogCategory::DEBUG != parsed.category
@@ -308,7 +308,7 @@ int test2_with_session_token()
                                        static_cast<LogCategory>(LogCategory::INFO),
                                        "session_token_val",
                                        "Parse testing again");
-        Events::Log parsed(data);
+        auto parsed = Events::ParseLog(data);
         g_variant_unref(data);
 
         if (LogGroup::BACKENDPROC != parsed.group
@@ -375,7 +375,7 @@ int test2_with_session_token()
 
         // Reuse the parser in LogEvent.  As that has already passed the
         // test, expect this to work too.
-        Events::Log cmp(revparse);
+        auto cmp = Events::ParseLog(revparse);
 
         if (dicttest.group != cmp.group
             || dicttest.category != cmp.category

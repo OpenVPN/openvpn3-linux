@@ -79,71 +79,19 @@ Log::Log(const Log &logev, const std::string &session_token)
 }
 
 
-Log::Log(const std::string &grp_s,
-         const std::string &ctg_s,
-         const std::string &msg)
-    : message(msg)
-{
-    parse_group_category(grp_s, ctg_s);
-    remove_trailing_nl();
-    format = Format::NORMAL;
-}
-
-
-Log::Log(const std::string &grp_s,
-         const std::string &ctg_s,
-         const std::string &sess_token,
-         const std::string &msg)
-    : message(msg)
-{
-    parse_group_category(grp_s, ctg_s);
-    remove_trailing_nl();
-    if (sess_token.empty())
-    {
-        format = Format::NORMAL;
-    }
-    else
-    {
-        session_token = sess_token;
-        format = Format::SESSION_TOKEN;
-    }
-}
-
-
-Log::Log(GVariant *logev, DBus::Signals::Target::Ptr sndr)
-{
-    reset();
-    if (nullptr != logev)
-    {
-        std::string g_type(g_variant_get_type_string(logev));
-        if ("a{sv}" == g_type)
-        {
-            parse_dict(logev);
-        }
-        else if ("(uus)" == g_type)
-        {
-            parse_tuple(logev, false);
-            format = Format::NORMAL;
-        }
-        else if ("(uuss)" == g_type)
-        {
-            parse_tuple(logev, true);
-            format = Format::SESSION_TOKEN;
-        }
-        else
-        {
-            throw LogException("LogEvent: Invalid LogEvent data type");
-        }
-        remove_trailing_nl();
-        sender = sndr;
-    }
-}
-
-
 void Log::RemoveToken()
 {
     format = Format::NORMAL;
     session_token.clear();
+}
+
+
+void Log::SetDBusSender(DBus::Signals::Target::Ptr sndr)
+{
+    if (!sender)
+    {
+        sender = sndr;
+    }
 }
 
 
@@ -304,58 +252,157 @@ void Log::remove_trailing_nl()
 }
 
 
-void Log::parse_dict(GVariant *logevent)
+namespace {
+/**
+ *  Parses group and category strings to the appropriate LogGroup
+ *  and LogGroup enum values.  This method sets the group and category members
+ *  directly and does not return any values.  String values not found will
+ *  result in the UNDEFINED value being set.
+ *
+ * @param grp_s std::string containing the human readable LogGroup string
+ * @param ctg_s std::string containing the human readable LogCategory string
+ */
+static std::pair<LogGroup, LogCategory> parse_group_category(const std::string &grp_s, const std::string &ctg_s)
 {
-    group = glib2::Value::Dict::Lookup<LogGroup>(logevent, "log_group");
-    category = glib2::Value::Dict::Lookup<LogCategory>(logevent, "log_category");
+    auto grp_item = std::find(LogGroup_str.begin(), LogGroup_str.end(), grp_s);
+    LogGroup group = (grp_item != LogGroup_str.end()
+                          ? static_cast<LogGroup>(std::distance(LogGroup_str.begin(), grp_item))
+                          : LogGroup::UNDEFINED);
+    auto catg_item = std::find(LogCategory_str.begin(), LogCategory_str.end(), ctg_s);
+    LogCategory category = (catg_item != LogCategory_str.end()
+                                ? static_cast<LogCategory>(std::distance(LogCategory_str.begin(), catg_item))
+                                : LogCategory::UNDEFINED);
+    return std::make_pair(group, category);
+}
+
+/**
+ *  Parses a GVariant object containing a Log signal.  The input
+ *  GVariant needs to be of 'a{sv}' which is a named dictionary.  It
+ *  must contain the following key values to be valid:
+ *
+ *     - (u) log_group          Translated into LogGroup
+ *     - (u) log_category       Translated into LogCategory
+ *     - (s) log_session_token  An optional session token string
+ *     - (s) log_message        A string with the log message
+ *
+ * @param logevent  Pointer to the GVariant object containig the
+ *                  log event
+ *
+ * @return Events::Log object of the parsed GVariant object
+ */
+Log parse_dict(GVariant *logevent)
+{
+    auto group = glib2::Value::Dict::Lookup<LogGroup>(logevent, "log_group");
+    auto category = glib2::Value::Dict::Lookup<LogCategory>(logevent, "log_category");
+    auto message = glib2::Value::Dict::Lookup<std::string>(logevent,
+                                                           "log_message");
     try
     {
-        session_token = glib2::Value::Dict::Lookup<std::string>(logevent,
-                                                                "log_session_token");
-        format = Format::SESSION_TOKEN;
+        auto session_token = glib2::Value::Dict::Lookup<std::string>(logevent,
+                                                                     "log_session_token");
+        return Log(group, category, session_token, message);
     }
     catch (const glib2::Utils::Exception &)
     {
         // This is fine; the log_session_token may not be available
         // and then we treat this event as a "normal" LogEvent without
         // the sessoin token value
-        format = Format::NORMAL;
     }
-    message = glib2::Value::Dict::Lookup<std::string>(logevent,
-                                                      "log_message");
+    return Log(group, category, message);
 }
 
 
-void Log::parse_tuple(GVariant *logevent, bool with_session_token)
+/**
+ *  Parses a tuple oriented GVariant object matching the data type
+ *  for a LogEvent object.  The data type must be (uus) if the
+ *  GVariant object is does not carry a session token value; otherwise
+ *  it must be (uuss) if it does.
+ *
+ * @param logevent            Pointer to the GVariant object containig the
+ *                            log event
+ * @param with_session_token  Boolean flag indicating if the logevent
+ *                            GVariant object is expected to contain a
+ *                            session token.
+ *
+ * @return Events::Log object of the parsed GVariant object
+ */
+Log parse_tuple(GVariant *logevent, bool with_session_token)
 {
     if (!with_session_token)
     {
         glib2::Utils::checkParams(__func__, logevent, "(uus)", 3);
-        group = glib2::Value::Extract<LogGroup>(logevent, 0);
-        category = glib2::Value::Extract<LogCategory>(logevent, 1);
-        message = glib2::Value::Extract<std::string>(logevent, 2);
+        auto group = glib2::Value::Extract<LogGroup>(logevent, 0);
+        auto category = glib2::Value::Extract<LogCategory>(logevent, 1);
+        auto message = glib2::Value::Extract<std::string>(logevent, 2);
+        return Log(group, category, message);
     }
     else
     {
         glib2::Utils::checkParams(__func__, logevent, "(uuss)", 4);
-        group = glib2::Value::Extract<LogGroup>(logevent, 0);
-        category = glib2::Value::Extract<LogCategory>(logevent, 1);
-        session_token = glib2::Value::Extract<std::string>(logevent, 2);
-        message = glib2::Value::Extract<std::string>(logevent, 3);
+        auto group = glib2::Value::Extract<LogGroup>(logevent, 0);
+        auto category = glib2::Value::Extract<LogCategory>(logevent, 1);
+        auto session_token = glib2::Value::Extract<std::string>(logevent, 2);
+        auto message = glib2::Value::Extract<std::string>(logevent, 3);
+        return Log(group, category, session_token, message);
     }
 }
 
 
-void Log::parse_group_category(const std::string &grp_s, const std::string &ctg_s)
+
+} // Anonymous namespace
+
+
+Log ParseLog(const std::string &grp_s,
+             const std::string &ctg_s,
+             const std::string &sess_token,
+             const std::string &msg)
 {
-    auto grp_item = std::find(LogGroup_str.begin(), LogGroup_str.end(), grp_s);
-    group = (grp_item != LogGroup_str.end()
-                 ? static_cast<LogGroup>(std::distance(LogGroup_str.begin(), grp_item))
-                 : LogGroup::UNDEFINED);
-    auto catg_item = std::find(LogCategory_str.begin(), LogCategory_str.end(), ctg_s);
-    category = (catg_item != LogCategory_str.end()
-                    ? static_cast<LogCategory>(std::distance(LogCategory_str.begin(), catg_item))
-                    : LogCategory::UNDEFINED);
+    auto [grp, ctg] = parse_group_category(grp_s, ctg_s);
+    return sess_token.empty()
+               ? Log(grp, ctg, msg)
+               : Log(grp, ctg, sess_token, msg);
 }
+
+
+Log ParseLog(const std::string &grp_s,
+             const std::string &ctg_s,
+             const std::string &msg)
+{
+    return ParseLog(grp_s, ctg_s, {}, msg);
+}
+
+
+Log ParseLog(GVariant *logev, DBus::Signals::Target::Ptr sndr)
+{
+    if (nullptr != logev)
+    {
+        std::string g_type(g_variant_get_type_string(logev));
+        Log event;
+        if ("a{sv}" == g_type)
+        {
+            event = parse_dict(logev);
+        }
+        else if ("(uus)" == g_type)
+        {
+            event = parse_tuple(logev, false);
+        }
+        else if ("(uuss)" == g_type)
+        {
+            event = parse_tuple(logev, true);
+        }
+        else
+        {
+            throw LogException("LogEvent: Invalid LogEvent data type");
+        }
+
+        if (sndr)
+        {
+            event.SetDBusSender(sndr);
+        }
+        return event;
+    }
+    throw LogException("LogEvent: Invalid LogEvent GVariant data");
+}
+
 
 } // namespace Events

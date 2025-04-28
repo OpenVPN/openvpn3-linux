@@ -127,7 +127,7 @@ TEST(LogEvent, parse_gvariant_tuple_invalid)
                                    (guint)StatusMinor::CFG_OK,
                                    1234,
                                    "Invalid data");
-    ASSERT_THROW(Events::Log parsed(data), LogException);
+    ASSERT_THROW(auto parsed = Events::ParseLog(data), LogException);
     if (nullptr != data)
     {
         g_variant_unref(data);
@@ -144,7 +144,7 @@ TEST(LogEvent, parse_gvariant_dict)
     GVariant *data = g_variant_builder_end(b);
     g_variant_builder_unref(b);
 
-    Events::Log parsed(data);
+    auto parsed = Events::ParseLog(data);
     g_variant_unref(data);
 
     ASSERT_EQ(parsed.group, LogGroup::LOGGER);
@@ -160,7 +160,7 @@ TEST(LogEvent, parse_gvariant_tuple)
                                    (guint)LogGroup::BACKENDPROC,
                                    (guint)LogCategory::INFO,
                                    "Parse testing again");
-    Events::Log parsed(data);
+    auto parsed = Events::ParseLog(data);
     g_variant_unref(data);
 
     ASSERT_EQ(parsed.group, LogGroup::BACKENDPROC);
@@ -196,7 +196,7 @@ TEST(LogEvent, GetVariantDict)
 
     // Reuse the parser in LogEvent.  As that has already passed the
     // test, expect this to work too.
-    Events::Log cmp(revparse);
+    auto cmp = Events::ParseLog(revparse);
     g_variant_unref(revparse);
 
     ASSERT_EQ(cmp.group, dicttest.group);
@@ -214,7 +214,7 @@ TEST(LogEvent, parse_gvariant_dict_session_token)
     g_variant_builder_add(b, "{sv}", "log_message", g_variant_new_string("Test log message"));
     GVariant *data = g_variant_builder_end(b);
     g_variant_builder_unref(b);
-    Events::Log parsed(data);
+    auto parsed = Events::ParseLog(data);
     g_variant_unref(data);
 
     ASSERT_EQ(parsed.group, LogGroup::LOGGER);
@@ -232,7 +232,7 @@ TEST(LogEvent, parse_gvariant_tuple_session_token)
                                    (guint)LogCategory::INFO,
                                    "session_token_val",
                                    "Parse testing again");
-    Events::Log parsed(data);
+    auto parsed = Events::ParseLog(data);
     g_variant_unref(data);
 
     ASSERT_EQ(parsed.group, LogGroup::BACKENDPROC);
@@ -275,7 +275,7 @@ TEST(LogEvent, GetVariantDict_session_token)
 
     // Reuse the parser in LogEvent.  As that has already passed the
     // test, expect this to work too.
-    Events::Log cmp(revparse);
+    auto cmp = Events::ParseLog(revparse);
     g_variant_unref(revparse);
 
     ASSERT_EQ(cmp.group, dicttest.group);
@@ -396,14 +396,14 @@ TEST(LogEvent, group_category_string_parser)
         for (uint8_t c = 0; c < 9; c++)
         {
             std::string msg1 = "Message without session token";
-            Events::Log ev1(LogGroup_str[g], LogCategory_str[c], msg1);
+            auto ev1 = Events::ParseLog(LogGroup_str[g], LogCategory_str[c], msg1);
             Events::Log chk_ev1((LogGroup)g, (LogCategory)c, msg1);
             std::string res1 = test_compare(ev1, chk_ev1, true);
             EXPECT_TRUE(res1.empty()) << res1;
 
             std::string msg2 = "Message with session token";
             std::string sesstok = "SESSION_TOKEN";
-            Events::Log ev2(LogGroup_str[g], LogCategory_str[c], sesstok, msg2);
+            auto ev2 = Events::ParseLog(LogGroup_str[g], LogCategory_str[c], sesstok, msg2);
             Events::Log chk_ev2((LogGroup)g, (LogCategory)c, sesstok, msg2);
             std::string res2 = test_compare(ev2, chk_ev2, true);
             EXPECT_TRUE(res2.empty()) << res2;
