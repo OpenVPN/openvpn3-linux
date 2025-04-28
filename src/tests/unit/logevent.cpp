@@ -448,17 +448,6 @@ TEST(LogEvent, stringstream_multiline)
              << "     Log line 2" << std::endl
              << "     Log Line 3";
     EXPECT_EQ(ev1.str(5, false), msg1ind5.str());
-
-    // Check formatting with LogPrefix and 5 space indenting of NL, default str()
-    std::stringstream msg1indprfx;
-    msg1indprfx << LogPrefix(LogGroup::LOGGER, LogCategory::DEBUG) << msg1ind5.str();
-    ev1.indent_nl = 5;
-    EXPECT_EQ(ev1.str(), msg1indprfx.str());
-
-    // Check formatting via stream with LogPrefix and 5 space indenting of NL (default formatting)
-    std::stringstream ev1_chk5;
-    ev1_chk5 << ev1;
-    EXPECT_EQ(ev1_chk5.str(), msg1indprfx.str());
 }
 
 

@@ -216,12 +216,6 @@ const std::string Log::str(unsigned short indent, bool prefix) const
 }
 
 
-const std::string Log::str() const
-{
-    return str(indent_nl, true);
-}
-
-
 bool Log::operator==(const Log &compare) const
 {
     if (session_token.empty())
