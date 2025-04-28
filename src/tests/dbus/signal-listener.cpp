@@ -114,7 +114,7 @@ class SigSubscription
         }
         else if ("Log" == event->signal_name)
         {
-            Events::Log log(event->params);
+            auto log = Events::ParseLog(event->params);
             std::cout << "-- Log: "
                       << "sender=" << event->sender
                       << ", interface=" << interface_name

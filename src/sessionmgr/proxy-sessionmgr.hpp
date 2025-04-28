@@ -344,7 +344,7 @@ class Session : public DBusRequiresQueueProxy
     const Events::Log GetLastLogEvent()
     {
         GVariant *logev = proxy->GetPropertyGVariant(target, "last_log");
-        Events::Log ret(logev);
+        auto ret = Events::ParseLog(logev);
         g_variant_unref(logev);
         return ret;
     }
