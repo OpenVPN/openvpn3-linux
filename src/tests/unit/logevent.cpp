@@ -429,7 +429,7 @@ TEST(LogEvent, stringstream_multiline)
     msg1 << "Log line 1" << std::endl
          << "Log line 2" << std::endl
          << "Log Line 3";
-    Events::Log ev1(LogGroup::LOGGER, LogCategory::DEBUG, msg1.str());
+    Events::Log ev1(LogGroup::LOGGER, LogCategory::DEBUG, msg1.str(), false);
     EXPECT_EQ(ev1.str(0, false), msg1.str());
 
     // Check formatting with LogPrefix and no indenting of NL
@@ -448,6 +448,14 @@ TEST(LogEvent, stringstream_multiline)
              << "     Log line 2" << std::endl
              << "     Log Line 3";
     EXPECT_EQ(ev1.str(5, false), msg1ind5.str());
+
+    // Check formatting filtering out newlines
+    std::stringstream msg_nonl;
+    msg_nonl << LogPrefix(LogGroup::LOGGER, LogCategory::DEBUG) << "Log line 1"
+             << "Log line 2"
+             << "Log Line 3";
+    Events::Log ev_nonl(LogGroup::LOGGER, LogCategory::DEBUG, msg1.str());
+    EXPECT_EQ(ev_nonl.str(), msg_nonl.str());
 }
 
 
@@ -484,6 +492,18 @@ TEST(LogEvent, stringstream_grp_ctg_limits)
             EXPECT_EQ(ev.str(), chk.str());
         }
     }
+}
+
+
+TEST(LogEvent, message_filter)
+{
+    // Checks that messages containing characters < 0x20 are filtered out
+    std::string orig{"This is a \1 test \x20with \b various \x0A\ncontrol "
+                     "\x19\x0E characters"};
+    Events::Log ev1(LogGroup::LOGGER, LogCategory::DEBUG, orig);
+
+    std::string expected{"This is a  test  with  various control  characters"};
+    EXPECT_EQ(ev1.str(0, false), expected);
 }
 
 } // namespace unittest
