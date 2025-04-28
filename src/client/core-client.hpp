@@ -336,7 +336,7 @@ class CoreVPNClient : public CLIENTBASECLASS
 #ifdef DEBUG_CORE_EVENTS
         std::stringstream entry;
         entry << " EVENT [" << evntcount << "][name=" << ev.name << "]: " << ev.info;
-        signals->Debug(entry.str());
+        signals->Debug_wnl(entry.str());
 #endif
 
         if ("DYNAMIC_CHALLENGE" == ev.name)
@@ -717,7 +717,7 @@ class CoreVPNClient : public CLIENTBASECLASS
     void log(const ClientAPI::LogInfo &log) override
     {
         // Log events going via log() are to be considered debug information
-        signals->Debug(log.text);
+        signals->Debug_wnl(log.text);
     }
 
 

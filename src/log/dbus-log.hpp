@@ -41,6 +41,7 @@ class LogSender : public DBus::Signals::Group,
 
     virtual void Log(const Events::Log &logev, const bool duplicate_check = false, const std::string &target = "");
     virtual void Debug(const std::string &msg, const bool duplicate_check = false);
+    virtual void Debug_wnl(const std::string &msg, const bool duplicate_check = false);
     virtual void LogVerb2(const std::string &msg, const bool duplicate_check = false);
     virtual void LogVerb1(const std::string &msg, const bool duplicate_check = false);
     virtual void LogInfo(const std::string &msg, const bool duplicate_check = false);
