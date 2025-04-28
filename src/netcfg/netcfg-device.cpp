@@ -83,7 +83,7 @@ NetCfgDevice::NetCfgDevice(DBus::Connection::Ptr dbuscon_,
     AddPropertyBySpec(
         "acl",
         "au",
-        [=](const DBus::Object::Property::BySpec &prop) -> GVariant *
+        [this](const DBus::Object::Property::BySpec &prop) -> GVariant *
         {
             return glib2::Value::CreateVector(object_acl->GetAccessList());
         });

@@ -111,7 +111,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
 
     AddMethod(
         "Ready",
-        [=](Object::Method::Arguments::Ptr args)
+        [this](Object::Method::Arguments::Ptr args)
         {
             method_ready(args);
         });
@@ -119,14 +119,14 @@ Session::Session(DBus::Connection::Ptr dbuscon,
 
     AddMethod(
         "Connect",
-        [=](Object::Method::Arguments::Ptr args)
+        [this](Object::Method::Arguments::Ptr args)
         {
             method_connect(args);
         });
 
     AddMethod(
         "Restart",
-        [=](Object::Method::Arguments::Ptr args)
+        [this](Object::Method::Arguments::Ptr args)
         {
             method_proxy_be(args, "Restart", true);
             sig_session->LogVerb2("Session restarting - " + GetPath());
@@ -134,7 +134,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
 
     auto arg_pause = AddMethod(
         "Pause",
-        [=](Object::Method::Arguments::Ptr args)
+        [this](Object::Method::Arguments::Ptr args)
         {
             GVariant *params = args->GetMethodParameters();
             auto reason = glib2::Value::Extract<std::string>(params, 0);
@@ -147,7 +147,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
 
     AddMethod(
         "Resume",
-        [=](Object::Method::Arguments::Ptr args)
+        [this](Object::Method::Arguments::Ptr args)
         {
             method_proxy_be(args, "Resume", true);
             sig_session->LogVerb2("Session resuming - " + GetPath());
@@ -155,7 +155,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
 
     AddMethod(
         "Disconnect",
-        [=](Object::Method::Arguments::Ptr args)
+        [this](Object::Method::Arguments::Ptr args)
         {
             close_session(false);
             sig_session->LogVerb2("Session disconnecting - " + GetPath());
@@ -165,7 +165,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
 
     auto arg_grant = AddMethod(
         "AccessGrant",
-        [=](Object::Method::Arguments::Ptr args)
+        [this](Object::Method::Arguments::Ptr args)
         {
             method_access_grant(args);
         });
@@ -174,7 +174,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
 
     auto arg_revoke = AddMethod(
         "AccessRevoke",
-        [=](Object::Method::Arguments::Ptr args)
+        [this](Object::Method::Arguments::Ptr args)
         {
             method_access_revoke(args);
         });
@@ -182,7 +182,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
 
     auto arg_logfwd = AddMethod(
         "LogForward",
-        [=](Object::Method::Arguments::Ptr args)
+        [this](Object::Method::Arguments::Ptr args)
         {
             method_log_forward(args);
         });
@@ -190,7 +190,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
 
     auto arg_usrinpq_gettypegr = AddMethod(
         "UserInputQueueGetTypeGroup",
-        [=](Object::Method::Arguments::Ptr args)
+        [this](Object::Method::Arguments::Ptr args)
         {
             validate_vpn_backend();
             GVariant *r = be_prx->Call(be_target,
@@ -201,7 +201,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
 
     auto arg_usrinpq_fetch = AddMethod(
         "UserInputQueueFetch",
-        [=](Object::Method::Arguments::Ptr args)
+        [this](Object::Method::Arguments::Ptr args)
         {
             validate_vpn_backend();
             GVariant *r = be_prx->Call(be_target,
@@ -221,7 +221,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
 
     auto arg_usrinpq_check = AddMethod(
         "UserInputQueueCheck",
-        [=](Object::Method::Arguments::Ptr args)
+        [this](Object::Method::Arguments::Ptr args)
         {
             validate_vpn_backend();
             GVariant *r = be_prx->Call(be_target,
@@ -235,7 +235,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
 
     auto arg_usrinpq_provide = AddMethod(
         "UserInputProvide",
-        [=](Object::Method::Arguments::Ptr args)
+        [this](Object::Method::Arguments::Ptr args)
         {
             validate_vpn_backend();
             GVariant *r = be_prx->Call(be_target,
@@ -259,7 +259,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
     AddPropertyBySpec(
         "log_forwards",
         "ao",
-        [=](const DBus::Object::Property::BySpec &prop)
+        [this](const DBus::Object::Property::BySpec &prop)
             -> GVariant *
         {
             // Avoid parallel access to the log_forwarders map;
@@ -278,7 +278,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
     AddPropertyBySpec(
         "owner",
         glib2::DataType::DBus<uint32_t>(),
-        [=](const DBus::Object::Property::BySpec &prop) -> GVariant *
+        [this](const DBus::Object::Property::BySpec &prop) -> GVariant *
         {
             return glib2::Value::Create(object_acl->GetOwner());
         });
@@ -288,7 +288,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
     AddPropertyBySpec(
         "acl",
         "au",
-        [=](const DBus::Object::Property::BySpec &prop) -> GVariant *
+        [this](const DBus::Object::Property::BySpec &prop) -> GVariant *
         {
             return glib2::Value::CreateVector(object_acl->GetAccessList());
         });
@@ -297,7 +297,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
     AddPropertyBySpec(
         "status",
         sig_statuschg->GetSignature(),
-        [=](const DBus::Object::Property::BySpec &prop)
+        [this](const DBus::Object::Property::BySpec &prop)
             -> GVariant *
         {
             return sig_statuschg->LastStatusChange();
@@ -307,7 +307,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
     AddPropertyBySpec(
         "last_log",
         "a{sv}",
-        [=](const DBus::Object::Property::BySpec &prop)
+        [this](const DBus::Object::Property::BySpec &prop)
             -> GVariant *
         {
             return sig_session->GetLastLogEvent().GetGVariantDict();
@@ -317,7 +317,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
     AddPropertyBySpec(
         "statistics",
         "a{sx}",
-        [=](const DBus::Object::Property::BySpec &prop)
+        [this](const DBus::Object::Property::BySpec &prop)
             -> GVariant *
         {
             validate_vpn_backend("statistics");
@@ -330,7 +330,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
         // Ideally, the data type here should be DBus::Object::Path,
         // but it must support an empty value until the device is configured
         glib2::DataType::DBus<std::string>(),
-        [=](const DBus::Object::Property::BySpec &prop)
+        [this](const DBus::Object::Property::BySpec &prop)
             -> GVariant *
         {
             validate_vpn_backend("device_path");
@@ -341,7 +341,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
     AddPropertyBySpec(
         "device_name",
         glib2::DataType::DBus<std::string>(),
-        [=](const DBus::Object::Property::BySpec &prop)
+        [this](const DBus::Object::Property::BySpec &prop)
             -> GVariant *
         {
             validate_vpn_backend("device_name");
@@ -351,7 +351,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
     AddPropertyBySpec(
         "session_name",
         glib2::DataType::DBus<std::string>(),
-        [=](const DBus::Object::Property::BySpec &prop)
+        [this](const DBus::Object::Property::BySpec &prop)
             -> GVariant *
         {
             validate_vpn_backend("session_name");
@@ -361,7 +361,7 @@ Session::Session(DBus::Connection::Ptr dbuscon,
     AddPropertyBySpec(
         "connected_to",
         "(ssu)",
-        [=](const DBus::Object::Property::BySpec &prop)
+        [this](const DBus::Object::Property::BySpec &prop)
             -> GVariant *
         {
             validate_vpn_backend("connection");
@@ -393,12 +393,12 @@ Session::Session(DBus::Connection::Ptr dbuscon,
     AddPropertyBySpec(
         "log_verbosity",
         glib2::DataType::DBus<uint32_t>(),
-        [=](const DBus::Object::Property::BySpec &prop)
+        [this](const DBus::Object::Property::BySpec &prop)
             -> GVariant *
         {
             return glib2::Value::Create(sig_session->GetLogLevel());
         },
-        [=](const DBus::Object::Property::BySpec &prop, GVariant *value)
+        [this](const DBus::Object::Property::BySpec &prop, GVariant *value)
             -> DBus::Object::Property::Update::Ptr
         {
             auto v = glib2::Value::Get<uint32_t>(value);
@@ -423,12 +423,12 @@ Session::Session(DBus::Connection::Ptr dbuscon,
     AddPropertyBySpec(
         "public_access",
         glib2::DataType::DBus<bool>(),
-        [=](const DBus::Object::Property::BySpec &prop)
+        [this](const DBus::Object::Property::BySpec &prop)
             -> GVariant *
         {
             return glib2::Value::Create(object_acl->GetPublicAccess());
         },
-        [=](const DBus::Object::Property::BySpec &prop, GVariant *value)
+        [this](const DBus::Object::Property::BySpec &prop, GVariant *value)
             -> DBus::Object::Property::Update::Ptr
         {
             object_acl->SetPublicAccess(glib2::Value::Get<bool>(value));

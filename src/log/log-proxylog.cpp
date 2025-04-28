@@ -62,7 +62,7 @@ ProxyLogEvents::ProxyLogEvents(DBus::Connection::Ptr connection_,
     signal_proxy->AddTarget(receiver_target);
 
     AddMethod("Remove",
-              [=](DBus::Object::Method::Arguments::Ptr args)
+              [this](DBus::Object::Method::Arguments::Ptr args)
               {
                   object_mgr->RemoveObject(GetPath());
                   args->SetMethodReturn(nullptr);

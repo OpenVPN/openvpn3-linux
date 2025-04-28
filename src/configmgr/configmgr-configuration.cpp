@@ -507,14 +507,14 @@ void Configuration::add_properties()
     AddPropertyBySpec(
         "owner",
         glib2::DataType::DBus<uint32_t>(),
-        [=](const DBus::Object::Property::BySpec &prop)
+        [this](const DBus::Object::Property::BySpec &prop)
         {
             return glib2::Value::Create(object_acl_->GetOwner());
         });
 
     AddPropertyBySpec("acl",
                       "au",
-                      [=](const DBus::Object::Property::BySpec &prop)
+                      [this](const DBus::Object::Property::BySpec &prop)
                       {
                           using namespace glib2::Builder;
 
@@ -523,7 +523,7 @@ void Configuration::add_properties()
 
     AddPropertyBySpec("overrides",
                       "a{sv}",
-                      [=](const DBus::Object::Property::BySpec &prop)
+                      [this](const DBus::Object::Property::BySpec &prop)
                       {
                           GVariantBuilder *b = glib2::Builder::Create("a{sv}");
 
@@ -544,7 +544,7 @@ void Configuration::add_properties()
     AddPropertyBySpec(
         "public_access",
         "b",
-        [=](const DBus::Object::Property::BySpec &prop)
+        [this](const DBus::Object::Property::BySpec &prop)
         {
             return glib2::Value::Create(object_acl_->GetPublicAccess());
         },

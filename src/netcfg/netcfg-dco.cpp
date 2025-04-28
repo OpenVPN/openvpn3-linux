@@ -267,7 +267,7 @@ void NetCfgDCO::method_new_key(GVariant *params)
     };
 
     openvpn_io::post(io_context,
-                     [=]()
+                     [this, key_slot, dco_kc, copyKeyDirection]()
                      {
                          KoRekey::KeyConfig kc;
                          std::memset(&kc, 0, sizeof(kc));
@@ -292,7 +292,7 @@ void NetCfgDCO::method_swap_keys(GVariant *params)
     unsigned int peer_id = glib2::Value::Extract<unsigned int>(params, 0);
 
     openvpn_io::post(io_context,
-                     [=]()
+                     [this, peer_id]()
                      {
                          this->genl->swap_keys(peer_id);
                      });

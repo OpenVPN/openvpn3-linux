@@ -32,7 +32,7 @@ Log::Log(DBus::Signals::Emit::Ptr emitter,
     {
         subscr->Subscribe(target,
                           "Log",
-                          [=](DBus::Signals::Event::Ptr event)
+                          [this](DBus::Signals::Event::Ptr event)
                           {
                               try
                               {

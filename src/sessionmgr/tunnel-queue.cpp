@@ -77,7 +77,7 @@ NewTunnelQueue::NewTunnelQueue(DBus::Connection::Ptr dbuscon_,
                                                   Constants::GenInterface("backends"));
     signal_subscr->Subscribe(subscr_target,
                              "RegistrationRequest",
-                             [=](DBus::Signals::Event::Ptr event)
+                             [this](DBus::Signals::Event::Ptr event)
                              {
                                  process_registration(event);
                              });

@@ -50,7 +50,7 @@ class SigSubscription
         tgt_subscription = DBus::Signals::Target::Create(bus_name, object_path, interface);
         sig_subscrptions->Subscribe(tgt_subscription,
                                     signal_name,
-                                    [=](DBus::Signals::Event::Ptr event)
+                                    [this](DBus::Signals::Event::Ptr event)
                                     {
                                         try
                                         {

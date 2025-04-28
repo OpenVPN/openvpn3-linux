@@ -42,7 +42,7 @@ void StatusChange::Subscribe(DBus::Signals::Target::Ptr subscr_tgt)
 
         subscr_mgr->Subscribe(subscr_tgt,
                               "StatusChange",
-                              [=](DBus::Signals::Event::Ptr event)
+                              [this](DBus::Signals::Event::Ptr event)
                               {
                                   try
                                   {

@@ -42,7 +42,7 @@ class LogHandler
         logrecv = Signals::ReceiveLog::Create(
             subscrmgr,
             subscr_target,
-            [=](Events::Log logevent)
+            [this](Events::Log logevent)
             {
                 std::cout << "[" << tag << "] " << logevent << std::endl;
             });
