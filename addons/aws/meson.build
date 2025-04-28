@@ -5,7 +5,7 @@
 #  Copyright (C) 2024-  OpenVPN Inc <sales@openvpn.net>
 #  Copyright (C) 2024-  Lev Stipakov <lev@openvpn.net>
 
-bin_addon_aws = executable(
+executable(
     'openvpn3-service-aws',
     [
         'openvpn3-service-aws.cpp',
