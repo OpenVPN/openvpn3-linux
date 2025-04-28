@@ -160,16 +160,7 @@ struct Log
      * @param prefix              bool enabling/disabling log group/category prefix
      * @return const std::string  Returns a formatted string of the log event.
      */
-    const std::string str(unsigned short indent, bool prefix = true) const;
-
-    /**
-     *  Simple wrapper of the @str(unsigned short, bool) method.
-     *  This  will consider the indent level set via the indent_nl
-     *  member variable.
-     *
-     * @return const std::string  Returs a formatted string of the log event
-     */
-    const std::string str() const;
+    const std::string str(unsigned short indent = 0, bool prefix = true) const;
 
     bool operator==(const Log &compare) const;
     bool operator!=(const Log &compare) const;
@@ -197,7 +188,6 @@ struct Log
     DBus::Signals::Target::Ptr sender = nullptr;
     LogTag::Ptr logtag = nullptr;
     Format format = Format::AUTO;
-    unsigned short indent_nl = 0;
 
 
   private:
