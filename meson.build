@@ -166,7 +166,7 @@ fs = import('fs')
 if fs.exists(meson.project_source_root() / '.git')
     openvpn3_core_ver = get_option('openvpn3_core_version')
     if openvpn3_core_ver == ''
-       openvpn3_core_ver = run_command(openvpn3_core_inc / 'scripts/version', check: true).stdout().strip()
+       openvpn3_core_ver = run_command(['scripts/get-version','--core-version'], check: true).stdout().strip()
     endif
 
     version_header = configuration_data()
