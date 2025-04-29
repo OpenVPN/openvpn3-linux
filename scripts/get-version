@@ -8,13 +8,18 @@
 #
 
 if [ $# -lt 1 ]; then
-	echo "Usage: $0 <--version|--gui-version|--prod-version>"
+	echo "Usage: $0 <--version|--gui-version|--prod-version|--core-version>"
 	exit 1
 fi
 
 set -u
 
 PROJECT_ROOT="$(dirname $0)/.."
+VERSION_RE='^v[[:digit:]]+(|_[[:alnum:]]+)$'
+if [ $1 = "--core-version" ]; then
+    PROJECT_ROOT="$(dirname $0)/../openvpn3-core"
+    VERSION_RE='^release/3\.[[:digit:]]+(|\.[[:digit:]]+)$'
+fi
 VERSION="noversion"
 PRODVERSION="noversion"
 
@@ -25,16 +30,16 @@ if [ -e "${PROJECT_ROOT}/.git" ]; then
 	#  If a version tag is found (always prefixed with 'v'), this value
 	#  is used.  Otherwise compose a version string based on branch name
 	#  and commit reference
-	VERSION="$(git describe --always --tags)"
+	VERSION="$(git --git-dir ${PROJECT_ROOT}/.git describe --always --tags)"
 
 	#  Only accept explicit tag references, not a reference
 	#  derived from a tag reference, such as "v3_beta-36-gcd68aee"
-	echo ${VERSION} | grep -qE "^v[[:digit:]]+(|_[[:alnum:]]+)$"
+	echo ${VERSION} | grep -qE "${VERSION_RE}"
 	ec=$?
 	set -eu
 	if [ $ec -ne 0  ]; then
 		# Presume not a version tag, so use commit reference
-		VERSION="$(git rev-parse --symbolic-full-name HEAD | cut -d/ -f3-)_$(git rev-parse --short=16 HEAD)"
+		VERSION="$(git --git-dir ${PROJECT_ROOT}/.git rev-parse --symbolic-full-name HEAD | cut -d/ -f3-)_$(git rev-parse --short=16 HEAD)"
 		PRODVERSION="$(echo $VERSION | sed 's#/#_#g')"
 	else
 		# bash could use ${VERSION:1}, but we try to make it
@@ -44,9 +49,9 @@ if [ -e "${PROJECT_ROOT}/.git" ]; then
 	fi
 
         # Changed files from the index which are not staged gets the '+' flag
-        GIT_FLAGS="$(git diff-files --name-status -r --ignore-submodules --quiet || echo 'm')"
+        GIT_FLAGS="$(git --git-dir ${PROJECT_ROOT}/.git diff-files --name-status -r --ignore-submodules --quiet || echo 'm')"
         # Changed files which are staged gets the '*' flag
-        GIT_FLAGS="${GIT_FLAGS}$(git diff-index --cached  --quiet --ignore-submodules HEAD || echo 's')"
+        GIT_FLAGS="${GIT_FLAGS}$(git --git-dir ${PROJECT_ROOT}/.git diff-index --cached  --quiet --ignore-submodules HEAD || echo 's')"
         if [ -n "${GIT_FLAGS}" ]; then
             VERSION="${VERSION}__${GIT_FLAGS}"
             PRODVERSION="${PRODVERSION}__${GIT_FLAGS}"
@@ -64,6 +69,9 @@ case "$1" in
 	--gui-version)
 		echo "${VERSION}" | sed -e 's#/#-#g'
 		;;
+	--core-version)
+	        echo "${VERSION}" | sed -e 's#^release/##'
+	        ;;
 	--prod-version)
 		echo "${PRODVERSION}"
 		;;
