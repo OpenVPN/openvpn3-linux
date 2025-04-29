@@ -2,13 +2,13 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C)  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C)  David Sommerseth <davids@openvpn.net>
-//  Copyright (C)  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2018- OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2018- David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018- Arne Schwabe <arne@openvpn.net>
 //
 
 /**
- * @file   core-dbus-logbase.hpp
+ * @file   log/core-dbus-logger.hpp
  *
  * @brief  Core library log implementation facilitating
  *         the D-Bus logging infrastructure in the Linux client
@@ -89,14 +89,16 @@ class DBusLogger
             {
                 logger->Log(Events::Log(log_group,
                                         LogCategory::DEBUG,
-                                        "[Core] " + l));
+                                        "[Core] " + l,
+                                        false));
             }
             else
             {
                 logger->Log(Events::Log(log_group,
                                         LogCategory::DEBUG,
                                         session_token,
-                                        "[Core] " + l));
+                                        "[Core] " + l,
+                                        false));
             }
         }
         catch (const DBus::Signals::Exception &)
