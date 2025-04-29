@@ -314,17 +314,14 @@ RegisterParsedArgs::RegisterParsedArgs(const std::string &arg0)
 
 void RegisterParsedArgs::register_option(const std::string &k, const char *v)
 {
-    if (NULL != v)
+    if (nullptr != v)
     {
         key_value[k].push_back(std::string(v));
     }
-    for (auto const &e : present)
+    if (std::find(present.begin(), present.end(), k) != present.end())
     {
         // Don't register duplicates
-        if (e == k)
-        {
-            return;
-        }
+        return;
     }
     present.push_back(k);
 }
