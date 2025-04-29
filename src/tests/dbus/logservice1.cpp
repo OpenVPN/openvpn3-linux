@@ -96,7 +96,7 @@ int cmd_send(ParsedArgs::Ptr args)
         }
     }
 
-    Events::Log ev(lgrp, lctg, msg);
+    Events::Log ev(lgrp, lctg, msg, !args->Present("allow-newline"));
     std::cout << "     Path: " << path << std::endl;
     std::cout << "Interface: " << intf << std::endl;
     std::cout << "Log event: " << ev << std::endl;
@@ -156,6 +156,7 @@ int main(int argc, char **argv)
     send->AddOption("interface", 'i', "STRING", true, "Interface string to use when sending log events (default: net.openvpn.v3.logtest");
     send->AddOption("group", 'g', "INTEGER", true, "LogGroup value to use for the log event");
     send->AddOption("category", 'c', "INTEGER", true, "LogCategory value to use for the log event");
+    send->AddOption("allow-newline", 'n', "Allow newlines to be passed on");
     cmds.RegisterCommand(send);
 
     try
