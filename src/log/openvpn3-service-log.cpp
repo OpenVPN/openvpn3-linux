@@ -197,7 +197,7 @@ static int logger_service(ParsedArgs::Ptr args)
     {
         logwr->Write(Events::Log(LogGroup::LOGGER,
                                  LogCategory::INFO,
-                                 get_version(args->GetArgv0())));
+                                 get_version(args->GetArgv0()), false));
         logwr->Write(Events::Log(LogGroup::LOGGER,
                                  LogCategory::INFO,
                                  "Log method: " + logwr->GetLogWriterInfo()));
