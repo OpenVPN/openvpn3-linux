@@ -8,7 +8,7 @@
 //
 
 /**
- * @file   core-dbus-logbase.hpp
+ * @file   log/core-dbus-logger.hpp
  *
  * @brief  Core library log implementation facilitating
  *         the D-Bus logging infrastructure in the Linux client
