@@ -19,6 +19,7 @@
 #include <gdbuspp/glib2/utils.hpp>
 #include <gdbuspp/signals/group.hpp>
 
+#include "common/string-utils.hpp"
 #include "log.hpp"
 
 
@@ -52,9 +53,9 @@ Log::Log(const LogGroup grp,
          const LogCategory ctg,
          const std::string &msg,
          bool filter_nl)
-    : group(grp), category(ctg), message(msg)
+    : group(grp), category(ctg),
+      message(filter_ctrl_chars(msg, filter_nl))
 {
-    filter_log_message(filter_nl);
     format = Format::NORMAL;
 }
 
@@ -65,9 +66,9 @@ Log::Log(const LogGroup grp,
          const std::string &msg,
          bool filter_nl)
     : group(grp), category(ctg),
-      session_token(session_token), message(msg)
+      session_token(session_token),
+      message(filter_ctrl_chars(msg, filter_nl))
 {
-    filter_log_message(filter_nl);
     format = Format::SESSION_TOKEN;
 }
 
@@ -78,18 +79,18 @@ Log::Log(const LogGroup grp,
          const char *msg,
          bool filter_nl)
     : group(grp), category(ctg),
-      session_token(session_token), message(msg)
+      session_token(session_token),
+      message(filter_ctrl_chars(msg, filter_nl))
 {
-    filter_log_message(filter_nl);
     format = Format::SESSION_TOKEN;
 }
 
 
 Log::Log(const Log &logev, const std::string &session_token)
     : group(logev.group), category(logev.category),
-      session_token(session_token), message(logev.message)
+      session_token(session_token),
+      message(filter_ctrl_chars(logev.message, false))
 {
-    filter_log_message(false);
     format = Format::SESSION_TOKEN;
 }
 
@@ -252,30 +253,6 @@ bool Log::operator==(const Log &compare) const
 bool Log::operator!=(const Log &compare) const
 {
     return !(this->operator==(compare));
-}
-
-
-void Log::filter_log_message(bool filter_nl)
-{
-    // Remove trailing new lines
-    message.erase(message.find_last_not_of("\n") + 1);
-
-    // Remove all control characters (< 0x20) - except
-    // of preserving only newlines (\n) if requested.
-    message.erase(
-        std::remove_if(message.begin(),
-                       message.end(),
-                       [filter_nl](char c)
-                       {
-                           // We allow characters being 0x20 or higher
-                           // unless filter_nl is true, then we also allow
-                           // only \n.
-                           //
-                           // The inversion is due std::remove_if will
-                           // remove if we return true.
-                           return !(c > 0x19 || (!filter_nl && c == '\n'));
-                       }),
-        message.end());
 }
 
 

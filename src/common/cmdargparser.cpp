@@ -26,37 +26,10 @@
 #include <glib-unix.h>
 #include <json/json.h>
 
-#include "common/utils.hpp"
 #include "common/cmdargparser.hpp"
 #include "common/configfileparser.hpp"
-
-
-//
-//  Internal helper functions
-//
-namespace {
-
-/**
- *  Sanitize the input value provided by the end-user of the program.
- *  This removes all ASCII control characters from argument values.
- */
-std::string sanitize_user_value(const char *user_value)
-{
-    std::string value{user_value};
-    value.erase(
-        std::remove_if(value.begin(),
-                       value.end(),
-                       [](char c)
-                       {
-                           // We allow characters being 0x20 or higher.
-                           return (c < 0x20);
-                       }),
-        value.end());
-    return value;
-}
-
-} // Anonymous namespace
-
+#include "common/string-utils.hpp"
+#include "common/utils.hpp"
 
 
 //
@@ -344,7 +317,7 @@ void RegisterParsedArgs::register_option(const std::string &k, const char *v)
 {
     if (nullptr != v)
     {
-        key_value[k].push_back(sanitize_user_value(v));
+        key_value[k].push_back(filter_ctrl_chars(v, true));
     }
     if (std::find(present.begin(), present.end(), k) != present.end())
     {
@@ -357,7 +330,7 @@ void RegisterParsedArgs::register_option(const std::string &k, const char *v)
 
 void RegisterParsedArgs::register_extra_args(const char *e)
 {
-    extra_args.push_back(sanitize_user_value(e));
+    extra_args.push_back(filter_ctrl_chars(e, true));
 }
 
 

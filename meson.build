@@ -237,6 +237,7 @@ common_code = static_library(
             'src/common/open-uri.cpp',
             'src/common/platforminfo.cpp',
             'src/common/requiresqueue.cpp',
+            'src/common/string-utils.cpp',
             'src/common/timestamp.cpp',
             'src/common/utils.cpp',
             'src/dbus/object-ownership.cpp',

@@ -207,22 +207,6 @@ struct Log
     DBus::Signals::Target::Ptr sender = nullptr;
     LogTag::Ptr logtag = nullptr;
     Format format = Format::AUTO;
-
-
-  private:
-    /**
-     *  Internal helper function, removes NL characters at the end of the
-     *  log event message string
-     *  Internal helper function, filtering out unwanted characters
-     *  from log messages.  It will also remove any trailing newline
-     *  characters.
-     *
-     *  If filter_nl is false, it will remove any char values < 0x20.
-     *  If filter_nl is true, it will only allow \n below 0x20.
-     *
-     *  @param filter_nl  Filter out newline (\n) characters in log message
-     */
-    void filter_log_message(bool filter_nl);
 };
 
 
