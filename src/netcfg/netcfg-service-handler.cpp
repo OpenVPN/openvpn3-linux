@@ -17,6 +17,7 @@
 
 #include <gdbuspp/object/base.hpp>
 
+#include "common/string-utils.hpp"
 #include "log/core-dbus-logger.hpp"
 #include "netcfg-device.hpp"
 #include "netcfg-service-handler.hpp"
@@ -132,8 +133,8 @@ NetCfgServiceHandler::NetCfgServiceHandler(DBus::Connection::Ptr conn_,
     args_protect_socket->PassFileDescriptor(DBus::Object::Method::PassFDmode::RECEIVE);
     args_protect_socket->AddInput("remote", glib2::DataType::DBus<std::string>());
     args_protect_socket->AddInput("ipv6", glib2::DataType::DBus<bool>());
-    args_protect_socket->AddInput("device_path", "o");
-    args_protect_socket->AddOutput("succeded", glib2::DataType::DBus<bool>());
+    args_protect_socket->AddInput("device_path", glib2::DataType::DBus<DBus::Object::Path>());
+    args_protect_socket->AddOutput("succeeded", glib2::DataType::DBus<bool>());
 
     auto args_dco_avail = AddMethod(
         "DcoAvailable",
@@ -212,7 +213,9 @@ void NetCfgServiceHandler::method_create_virtual_interface(DBus::Object::Method:
 {
     GVariant *params = args->GetMethodParameters();
     glib2::Utils::checkParams(__func__, params, "(s)");
-    std::string device_name = glib2::Value::Extract<std::string>(params, 0);
+    std::string device_name = filter_ctrl_chars(
+        glib2::Value::Extract<std::string>(params, 0),
+        true);
 
     signals->Debug(std::string("CreateVirtualInterface(")
                    + "'" + device_name + "')");
@@ -273,9 +276,13 @@ void NetCfgServiceHandler::method_protect_socket(DBus::Object::Method::Arguments
     glib2::Utils::checkParams(__func__, params, "(sbo)", 3);
 
     pid_t creator_pid = creds_query->GetPID(args->GetCallerBusName());
-    std::string remote = glib2::Value::Extract<std::string>(params, 0);
+    std::string remote = filter_ctrl_chars(
+        glib2::Value::Extract<std::string>(params, 0),
+        true);
     bool ipv6 = glib2::Value::Extract<bool>(params, 1);
-    std::string dev_path = glib2::Value::Extract<std::string>(params, 2);
+    std::string dev_path = filter_ctrl_chars(
+        glib2::Value::Extract<std::string>(params, 2),
+        true);
 
 
     // Get the first FD from the fdlist list
