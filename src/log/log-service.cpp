@@ -15,6 +15,7 @@
 #include <string>
 
 #include "common/lookup.hpp"
+#include "common/string-utils.hpp"
 #include "log-internal.hpp"
 #include "log-service.hpp"
 #include "log-proxylog.hpp"
@@ -371,7 +372,9 @@ void ServiceHandler::method_attach(DBus::Object::Method::Arguments::Ptr args)
     }
 
     GVariant *params = args->GetMethodParameters();
-    auto interface = glib2::Value::Extract<std::string>(params, 0);
+    auto interface = filter_ctrl_chars(
+        glib2::Value::Extract<std::string>(params, 0),
+        true);
     auto tag = LogTag::Create(args->GetCallerBusName(), interface);
 
     if (log_attach_subscr.find(tag->hash) != log_attach_subscr.end())
@@ -443,7 +446,9 @@ void ServiceHandler::method_detach(DBus::Object::Method::Arguments::Ptr args)
     }
 
     GVariant *params = args->GetMethodParameters();
-    auto interface = glib2::Value::Extract<std::string>(params, 0);
+    auto interface = filter_ctrl_chars(
+        glib2::Value::Extract<std::string>(params, 0),
+        true);
     auto tag = LogTag::Create(args->GetCallerBusName(), interface);
 
     if (!check_detach_access(tag, args->GetCallerBusName()))
@@ -498,7 +503,7 @@ void ServiceHandler::method_get_subscr_list(DBus::Object::Method::Arguments::Ptr
 void ServiceHandler::method_proxy_log_events(DBus::Object::Method::Arguments::Ptr args)
 {
     GVariant *params = args->GetMethodParameters();
-    auto target = glib2::Value::Extract<std::string>(params, 0);
+    auto target = filter_ctrl_chars(glib2::Value::Extract<std::string>(params, 0), true);
     auto session_path = glib2::Value::Extract<DBus::Object::Path>(params, 1);
 
     try
