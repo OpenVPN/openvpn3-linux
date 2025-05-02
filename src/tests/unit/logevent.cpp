@@ -498,12 +498,25 @@ TEST(LogEvent, stringstream_grp_ctg_limits)
 TEST(LogEvent, message_filter)
 {
     // Checks that messages containing characters < 0x20 are filtered out
-    std::string orig{"This is a \1 test \x20with \b various \x0A\ncontrol "
-                     "\x19\x0E characters"};
-    Events::Log ev1(LogGroup::LOGGER, LogCategory::DEBUG, orig);
+    std::string below_0x20{"This is a \1 test \x20with \b various \x0A\n\rcontrol "
+                           "\x19\x0E\x1b[31m characters"};
+    std::string expected_below_0x20_wo_nl{"This is a  test  with  various control [31m characters"};
+    Events::Log ev_b0x20(LogGroup::LOGGER, LogCategory::DEBUG, below_0x20);
+    EXPECT_EQ(ev_b0x20.str(0, false), expected_below_0x20_wo_nl);
 
-    std::string expected{"This is a  test  with  various control  characters"};
-    EXPECT_EQ(ev1.str(0, false), expected);
+    std::string expected_below_0x20_with_nl{"This is a  test  with  various \n\ncontrol [31m characters"};
+    Events::Log ev_b0x20_w_nl(LogGroup::LOGGER, LogCategory::DEBUG, below_0x20, false);
+    EXPECT_EQ(ev_b0x20_w_nl.str(0, false), expected_below_0x20_with_nl);
+
+    std::string with_nl("This is line 1\nThis is line 2\nThis is line 3\n\n\n");
+    // Trailing \n is always removed
+    std::string expected_with_nl{"This is line 1\nThis is line 2\nThis is line 3"};
+    Events::Log ev_with_nl(LogGroup::LOGGER, LogCategory::DEBUG, with_nl, false);
+    EXPECT_EQ(ev_with_nl.str(0, false), expected_with_nl);
+
+    std::string expected_wo_nl{"This is line 1This is line 2This is line 3"};
+    Events::Log ev_wo_nl(LogGroup::LOGGER, LogCategory::DEBUG, with_nl, true);
+    EXPECT_EQ(ev_wo_nl.str(0, false), expected_wo_nl);
 }
 
 } // namespace unittest
