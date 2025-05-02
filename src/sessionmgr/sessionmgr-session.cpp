@@ -24,6 +24,7 @@
 
 #include "build-config.h"
 #include "common/lookup.hpp"
+#include "common/string-utils.hpp"
 #include "dbus/constants.hpp"
 #include "dbus/path.hpp"
 #include "log/logwriter.hpp"
@@ -137,7 +138,9 @@ Session::Session(DBus::Connection::Ptr dbuscon,
         [this](Object::Method::Arguments::Ptr args)
         {
             GVariant *params = args->GetMethodParameters();
-            auto reason = glib2::Value::Extract<std::string>(params, 0);
+            auto reason = filter_ctrl_chars(
+                glib2::Value::Extract<std::string>(params, 0),
+                true);
             method_proxy_be(args, "Pause", true);
             sig_session->LogVerb2("Session pausing " + GetPath()
                                   + ": " + reason);

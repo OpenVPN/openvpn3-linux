@@ -44,6 +44,7 @@
 
 #include "common/machineid.hpp"
 #include "common/requiresqueue.hpp"
+#include "common/string-utils.hpp"
 #include "common/utils.hpp"
 #include "common/cmdargparser.hpp"
 #include "common/platforminfo.hpp"
@@ -779,7 +780,9 @@ class BackendClientObject : public DBus::Object::Base
         }
 
         glib2::Utils::checkParams(__func__, params, "(s)", 1);
-        std::string reason = glib2::Value::Extract<std::string>(params, 0);
+        std::string reason = filter_ctrl_chars(
+            glib2::Value::Extract<std::string>(params, 0),
+            true);
 
         signal->LogInfo("Pausing connection");
         signal->StatusChange(Events::Status(StatusMajor::CONNECTION,
