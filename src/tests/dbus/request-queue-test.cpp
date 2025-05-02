@@ -193,7 +193,16 @@ int main(int argc, char **argv)
 
                     std::stringstream val;
                     uint32_t val_id = reqdata.id + chkval;
-                    val << "generated-data_" << reqdata.name << "_" + std::to_string(val_id);
+                    if (ClientAttentionGroup::CHALLENGE_AUTH_PENDING == reqdata.group)
+                    {
+                        // Inject some control characters which should be filtered
+                        // out at the service side receiving the value
+                        val << "generated-data_" << reqdata.name << "\x0a\x0b_\r\n" + std::to_string(val_id);
+                    }
+                    else
+                    {
+                        val << "generated-data_" << reqdata.name << "_" + std::to_string(val_id);
+                    }
                     reqdata.value = val.str();
                     queue.ProvideResponse(reqdata);
                     // std::cout << "Provided: " << reqdata.name << "=" << reqdata.value << std::endl;

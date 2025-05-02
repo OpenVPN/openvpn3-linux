@@ -31,6 +31,7 @@
 
 #include "build-config.h"
 #include "requiresqueue.hpp"
+#include "string-utils.hpp"
 
 using namespace DBus;
 
@@ -264,7 +265,7 @@ void RequiresQueue::UpdateEntry(ClientAttentionType type,
             if (!e.provided)
             {
                 e.provided = true;
-                e.value = newvalue;
+                e.value = filter_ctrl_chars(newvalue, true);
 
                 callbacks.RunCallback(CallbackType::PROVIDE_RESPONSE);
                 return;
