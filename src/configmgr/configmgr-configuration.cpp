@@ -14,6 +14,7 @@
 #include <set>
 
 #include "common/lookup.hpp"
+#include "common/string-utils.hpp"
 #include "common/utils.hpp"
 #include "configmgr-configuration.hpp"
 #include "constants.hpp"
@@ -36,7 +37,8 @@ Configuration::Configuration(DBus::Connection::Ptr dbuscon,
                              LogWriter::Ptr logwr)
     : DBus::Object::Base(config_path, INTERFACE_CONFIGMGR),
       object_manager_(object_manager), creds_qry_(creds_qry),
-      sig_configmgr_(sig_configmgr), state_dir_(state_dir), prop_name_(name),
+      sig_configmgr_(sig_configmgr), state_dir_(state_dir),
+      prop_name_(filter_ctrl_chars(name, true)),
       prop_persistent_(persistent), prop_single_use_(single_use),
       prop_import_timestamp_(std::time(nullptr))
 {
@@ -55,14 +57,15 @@ Configuration::Configuration(DBus::Connection::Ptr dbuscon,
     object_acl_ = GDBusPP::Object::Extension::ACL::Create(dbuscon, owner);
 
     // Parse the options from the imported configuration
+    std::string cfgcontent = filter_ctrl_chars(config_str, false);
     OptionList::Limits limits("profile is too large",
                               ProfileParseLimits::MAX_PROFILE_SIZE,
                               ProfileParseLimits::OPT_OVERHEAD,
                               ProfileParseLimits::TERM_OVERHEAD,
                               ProfileParseLimits::MAX_LINE_SIZE,
                               ProfileParseLimits::MAX_DIRECTIVE_SIZE);
-    options_.parse_from_config(config_str, &limits);
-    options_.parse_meta_from_config(config_str, "OVPN_ACCESS_SERVER", &limits);
+    options_.parse_from_config(cfgcontent, &limits);
+    options_.parse_meta_from_config(cfgcontent, "OVPN_ACCESS_SERVER", &limits);
     validate_profile();
 
     signals_->LogInfo("Parsed"s + (persistent ? " persistent" : "")
@@ -108,7 +111,7 @@ Configuration::Configuration(DBus::Connection::Ptr dbuscon,
     object_acl_ = GDBusPP::Object::Extension::ACL::Create(dbuscon,
                                                           profile["owner"].asUInt64());
 
-    prop_name_ = profile["name"].asString();
+    prop_name_ = filter_ctrl_chars(profile["name"].asString(), true);
     prop_import_timestamp_ = profile["import_timestamp"].asUInt64();
     prop_last_used_timestamp_ = profile["last_used_timestamp"].asUInt64();
     prop_locked_down_ = profile["locked_down"].asBool();
@@ -123,7 +126,7 @@ Configuration::Configuration(DBus::Connection::Ptr dbuscon,
     {
         for (const auto &tag : profile["tags"])
         {
-            prop_tags_.push_back(tag.asString());
+            prop_tags_.push_back(filter_ctrl_chars(tag.asString(), true));
         }
     }
 
@@ -140,11 +143,27 @@ Configuration::Configuration(DBus::Connection::Ptr dbuscon,
         switch (ov.type())
         {
         case Json::ValueType::booleanValue:
-            set_override(ovkey, ov.asBool());
+            try
+            {
+                set_override(ovkey, ov.asBool());
+            }
+            catch (const DBus::Object::Method::Exception &excp)
+            {
+                signals_->LogError("Incorrect override key: " + ovkey + ", ignoring");
+            }
             break;
+
         case Json::ValueType::stringValue:
-            set_override(ovkey, ov.asString());
+            try
+            {
+                set_override(ovkey, filter_ctrl_chars(ov.asString(), true));
+            }
+            catch (const DBus::Object::Method::Exception &excp)
+            {
+                signals_->LogError("Incorrect override key: " + ovkey + ", ignoring");
+            }
             break;
+
         default:
             throw DBus::Object::Method::Exception("Invalid data type for ...");
         }
@@ -566,13 +585,13 @@ Json::Value Configuration::Export() const
 
     ret["object_path"] = GetPath();
     ret["owner"] = (uint32_t)object_acl_->GetOwner();
-    ret["name"] = prop_name_;
+    ret["name"] = filter_ctrl_chars(prop_name_, true);
 
     if (prop_tags_.size() > 0)
     {
         for (const auto &tag : prop_tags_)
         {
-            ret["tags"].append(tag);
+            ret["tags"].append(filter_ctrl_chars(tag, true));
         }
     }
 
@@ -711,7 +730,7 @@ void Configuration::method_add_tag(DBus::Object::Method::Arguments::Ptr args)
 {
     GVariant *params = args->GetMethodParameters();
 
-    auto tag = glib2::Value::Extract<std::string>(params, 0);
+    auto tag = filter_ctrl_chars(glib2::Value::Extract<std::string>(params, 0), true);
 
     if (tag.empty())
     {
@@ -765,7 +784,7 @@ void Configuration::method_set_override(DBus::Object::Method::Arguments::Ptr arg
 {
     GVariant *params = args->GetMethodParameters();
 
-    auto name = glib2::Value::Extract<std::string>(params, 0);
+    auto name = filter_ctrl_chars(glib2::Value::Extract<std::string>(params, 0), true);
     GVariant *value = g_variant_get_variant(g_variant_get_child_value(params, 1));
 
     const Override o = set_override(name, value);
@@ -774,7 +793,7 @@ void Configuration::method_set_override(DBus::Object::Method::Arguments::Ptr arg
 
     if (std::holds_alternative<std::string>(o.value))
     {
-        new_value = std::get<std::string>(o.value);
+        new_value = filter_ctrl_chars(std::get<std::string>(o.value), true);
     }
     else
     {
@@ -794,7 +813,7 @@ void Configuration::method_unset_override(DBus::Object::Method::Arguments::Ptr a
 {
     GVariant *params = args->GetMethodParameters();
 
-    auto name = glib2::Value::Extract<std::string>(params, 0);
+    auto name = filter_ctrl_chars(glib2::Value::Extract<std::string>(params, 0), true);
 
     if (remove_override(name))
     {
@@ -902,7 +921,7 @@ Override Configuration::set_override(const std::string &key, GVariant *value)
                                                   + key + "': " + g_type);
         }
 
-        std::string v = glib2::Value::Get<std::string>(value);
+        std::string v = filter_ctrl_chars(glib2::Value::Get<std::string>(value), true);
         return set_override(key, v);
     }
     else if ("b" == g_type)
