@@ -18,6 +18,7 @@
 #include <gdbuspp/credentials/query.hpp>
 #include <gdbuspp/glib2/utils.hpp>
 
+#include "common/string-utils.hpp"
 #include "netcfg-exception.hpp"
 #include "netcfg-subscriptions.hpp"
 #include "netcfg-signals.hpp"
@@ -178,7 +179,8 @@ void NetCfgSubscriptions::method_name_unsubscribe(DBus::Object::Method::Argument
     {
         GVariant *params = args->GetMethodParameters();
         glib2::Utils::checkParams(__func__, params, "(s)");
-        std::string unsub_key = glib2::Value::Extract<std::string>(params, 0);
+        std::string unsub_key = filter_ctrl_chars(
+            glib2::Value::Extract<std::string>(params, 0), true);
 
         if (unsub_key.empty())
         {

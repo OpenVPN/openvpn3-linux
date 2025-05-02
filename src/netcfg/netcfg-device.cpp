@@ -18,6 +18,7 @@
 
 #include "build-config.h"
 
+#include "common/string-utils.hpp"
 #include "netcfg-device.hpp"
 
 #ifdef ENABLE_OVPNDCO
@@ -298,9 +299,9 @@ void NetCfgDevice::method_add_ip_address(GVariant *params)
 {
     glib2::Utils::checkParams(__func__, params, "(susb)", 4);
 
-    std::string ipaddr = glib2::Value::Extract<std::string>(params, 0);
+    std::string ipaddr = filter_ctrl_chars(glib2::Value::Extract<std::string>(params, 0), true);
     uint32_t prefix = glib2::Value::Extract<uint32_t>(params, 1);
-    std::string gateway = glib2::Value::Extract<std::string>(params, 2);
+    std::string gateway = filter_ctrl_chars(glib2::Value::Extract<std::string>(params, 2), true);
     bool ipv6 = glib2::Value::Extract<bool>(params, 3);
 
     signals->LogInfo(std::string("Adding IP Address ") + ipaddr
@@ -316,7 +317,7 @@ void NetCfgDevice::method_set_remote_addr(GVariant *params)
 
     glib2::Utils::checkParams(__func__, params, "(sb)", 2);
 
-    std::string ipaddr{glib2::Value::Extract<std::string>(params, 0)};
+    std::string ipaddr{filter_ctrl_chars(glib2::Value::Extract<std::string>(params, 0), true)};
     bool ipv6{glib2::Value::Extract<bool>(params, 1)};
 
     signals->LogInfo(std::string("Setting remote IP address to ")
@@ -336,7 +337,7 @@ void NetCfgDevice::method_add_networks(GVariant *params)
     {
         glib2::Utils::checkParams(__func__, network, "(subb)", 4);
 
-        std::string net{glib2::Value::Extract<std::string>(network, 0)};
+        std::string net{filter_ctrl_chars(glib2::Value::Extract<std::string>(network, 0), true)};
         uint32_t prefix{glib2::Value::Extract<uint32_t>(network, 1)};
         bool ipv6{glib2::Value::Extract<bool>(network, 2)};
         bool exclude{glib2::Value::Extract<bool>(network, 3)};
@@ -415,7 +416,9 @@ void NetCfgDevice::method_enable_dco(DBus::Object::Method::Arguments::Ptr args)
 {
     GVariant *params = args->GetMethodParameters();
     glib2::Utils::checkParams(__func__, params, "(s)", 1);
-    std::string dev_name = glib2::Value::Extract<std::string>(params, 0);
+    std::string dev_name = filter_ctrl_chars(
+        glib2::Value::Extract<std::string>(params, 0),
+        true);
     set_device_name(dev_name);
 
     try

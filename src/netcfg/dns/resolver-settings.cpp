@@ -21,6 +21,7 @@
 #include <gio/gio.h>
 #include <gdbuspp/glib2/utils.hpp>
 
+#include "common/string-utils.hpp"
 #include "netcfg/dns/resolver-settings.hpp"
 #include "netcfg/netcfg-exception.hpp"
 
@@ -245,7 +246,8 @@ const std::string ResolverSettings::SetDNSScope(GVariant *params)
         scope = DNS::Scope::TUNNEL;
         return recv_scope;
     }
-    throw NetCfgException("[SetDNSScope] Invalid DNS Scope value: " + recv_scope);
+    throw NetCfgException("[SetDNSScope] Invalid DNS Scope value: "
+        + filter_ctrl_chars(recv_scope, true));
 }
 
 
@@ -311,8 +313,9 @@ const std::string ResolverSettings::AddNameServers(GVariant *params)
 
     std::string ret{};
     g_variant_ref_sink(params);
-    for (const auto &srv : glib2::Value::ExtractVector<std::string>(params))
+    for (const auto &srventr : glib2::Value::ExtractVector<std::string>(params))
     {
+        auto srv = filter_ctrl_chars(srventr, true);
         auto needle = std::find(name_servers.begin(),
                                 name_servers.end(),
                                 srv);
@@ -335,8 +338,9 @@ void ResolverSettings::AddSearchDomains(GVariant *params)
     }
 
     g_variant_ref_sink(params);
-    for (const auto &dom : glib2::Value::ExtractVector<std::string>(params))
+    for (const auto &domentr : glib2::Value::ExtractVector<std::string>(params))
     {
+        auto dom = filter_ctrl_chars(domentr, true);
         auto needle = std::find(search_domains.begin(),
                                 search_domains.end(),
                                 dom);
@@ -371,7 +375,8 @@ openvpn::DnsServer::Security ResolverSettings::SetDNSSEC(GVariant *params)
     }
     else
     {
-        throw NetCfgException("[SetDNSSEC] Invalid DNSSEC mode: '" + mode + "'");
+        throw NetCfgException("[SetDNSSEC] Invalid DNSSEC mode: '"
+                              + filter_ctrl_chars(mode, true) + "'");
     }
     return dnssec_mode;
 }
@@ -401,7 +406,7 @@ openvpn::DnsServer::Transport ResolverSettings::SetDNSTransport(GVariant *params
     else
     {
         throw NetCfgException("[SetDNSTransport] Invalid DNS transport mode: '"
-                              + mode + "'");
+                              + filter_ctrl_chars(mode, true) + "'");
     }
     return dns_transport;
 }
