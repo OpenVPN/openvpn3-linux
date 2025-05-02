@@ -246,6 +246,32 @@ int main(int argc, char **argv)
         }
     }
 
+    std::cout << ".. Testing setting a string override with ASCII control chars (need to be removed by service) ... ";
+    try
+    {
+        const Override ov = {"server-override",
+                             true,
+                             "Value containing ctrl chars"};
+        cfgobj.SetOverride(ov, std::string("abc\x01\x02\x03\ndef\n\nghi\r\n"));
+        auto chk = cfgobj.GetOverrideValue(ov.key);
+        if (std::string("abcdefghi") == std::get<std::string>(chk.value))
+        {
+            std::cout << "PASS" << std::endl;
+        }
+        else
+        {
+        std::cout << "FAIL" << std::endl;
+        ++failed;
+        }
+        cfgobj.UnsetOverride(ov);
+    }
+    catch (const DBus::Exception &excp)
+    {
+        std::string e(excp.what());
+        std::cout << "EXCEPTION: " << excp.what() << std::endl;
+        ++failed;
+    }
+
 
     std::cout << ".. Checking all overrides are unset ... ";
     std::vector<Override> overrides = cfgobj.GetOverrides();
