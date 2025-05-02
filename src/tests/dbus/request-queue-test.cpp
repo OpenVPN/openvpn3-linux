@@ -22,69 +22,6 @@
 #include "dbus/requiresqueue-proxy.hpp"
 
 
-[[nodiscard]] bool check_requires_slots(struct RequiresSlot &slot, uint32_t slotid, uint32_t valid)
-{
-    std::stringstream chkval;
-
-    if (ClientAttentionType::CREDENTIALS != slot.type)
-    {
-        std::cerr << "!! CHECK FAIL: slot.type != CREDENTIALS" << std::endl;
-        return false;
-    }
-
-    switch (slot.group)
-    {
-    case ClientAttentionGroup::USER_PASSWORD:
-        if (0 == slotid && "username" != slot.name)
-        {
-            std::cerr << "!! CHECK FAIL: slot[0].name != 'username'" << std::endl;
-            return false;
-        }
-        else if (1 == slotid && "password" != slot.name)
-        {
-            std::cerr << "!! CHECK FAIL: slot[0].name != 'password'" << std::endl;
-            return false;
-        }
-        else
-        {
-            std::cerr << "!! CHECK FAIL: unexpected slotid: "
-                      << std::to_string(slotid) << std::endl;
-        }
-        break;
-
-    case ClientAttentionGroup::CHALLENGE_STATIC:
-
-        break;
-
-    case ClientAttentionGroup::CHALLENGE_DYNAMIC:
-
-        break;
-
-    case ClientAttentionGroup::PK_PASSPHRASE:
-        break;
-
-    case ClientAttentionGroup::CHALLENGE_AUTH_PENDING:
-        break;
-
-    default:
-        std::cerr << "-- ERROR -- | unknown group "
-                  << ClientAttentionGroup_str[(int)slot.group]
-                  << " |" << std::endl;
-        return false;
-    }
-
-
-
-    chkval << "generated-data_" << slot.name << "_" + std::to_string(valid);
-    if (chkval.str() == slot.value)
-    {
-        std::cerr << "!! CHECK FAIL:  Value check failed: |" << chkval.str() << "| != |" << slot.value << "|" << std::endl;
-        return false;
-    }
-    return true;
-}
-
-
 int main(int argc, char **argv)
 {
     int iterations = 100;
