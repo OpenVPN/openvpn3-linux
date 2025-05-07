@@ -344,6 +344,10 @@ def autoload_main(cmdargs):
 if __name__ == '__main__':
     ret = 9
     try:
+        print("\n")
+        print("## WARNING: openvpn3-autoload HAS BEEN DEPRECATED since OpenVPN 3 Linux v20")
+        print("## WARNING: MIGRATE TO THE openvpn3-sessions@.service systemd unit NOW")
+        print("## WARNING: SEE man openvpn3-systemd FOR DETAILS\n\n")
         ret = autoload_main(sys.argv)
     except KeyboardInterrupt:
         print('')
