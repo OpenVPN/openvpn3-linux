@@ -69,6 +69,16 @@ class AWSLog : public LogSender
 
 class AWSObject : public DBus::Object::Base
 {
+    struct Config
+    {
+        // those are read from config file
+        std::string role_name;
+        std::string route_table_name;
+
+        // this is obtained from AWS
+        std::string route_table_id;
+    };
+
   public:
     AWSObject(DBus::Connection::Ptr dbuscon,
               const std::string &config_file,
@@ -90,23 +100,44 @@ class AWSObject : public DBus::Object::Base
                                                        "",
                                                        Constants::GenServiceName("netcfg"));
         // Retrieve AWS role credentials and retrieve needed VPC info
-        role_name = read_role_name(config_file);
-        if (role_name.empty())
+        config = read_config(config_file);
+        if (config.role_name.empty())
         {
             throw DBus::Object::Exception("No role defined");
         }
 
-        log->LogInfo("Fetching credentials from role '" + role_name + "'");
+        log->LogInfo("Fetching credentials from role '" + config.role_name + "'");
 
-        auto route_context = prepare_route_context(role_name);
+        auto route_context = prepare_route_context(config.role_name);
         AWS::Route::Info route_info{*route_context};
-        route_table_id = route_info.route_table_id;
         network_interface_id = route_info.network_interface_id;
         AWS::Route::set_source_dest_check(*route_context,
                                           network_interface_id,
                                           false);
 
-        log->LogInfo("Running on instance " + route_context->instance_id() + ", route table " + route_table_id);
+        // do we need to create routing table, fetch existing one by name or use default?
+        std::ostringstream msg;
+        msg << "Route table name: " << (config.route_table_name.empty() ? "<default>" : config.route_table_name);
+        log->LogInfo(msg.str());
+
+        if (!config.route_table_name.empty())
+        {
+            // do we already have a route table with given name?
+            auto found_route_table_id = AWS::Route::get_route_table_by_name(*route_context, config.route_table_name);
+
+            // if not, create and name it
+            config.route_table_id = found_route_table_id.empty() ? AWS::Route::create_route_table(*route_context,
+                                                                                                  route_info.vpc_id,
+                                                                                                  config.route_table_name)
+                                                                 : found_route_table_id;
+        }
+        else
+        {
+            // use main route table
+            config.route_table_id = route_info.route_table_id;
+        }
+
+        log->LogInfo("Running on instance " + route_context->instance_id() + ", route table " + config.route_table_id);
 
         subscr_mgr->Subscribe(signals_target, "NetworkChange", [=](DBus::Signals::Event::Ptr &event)
                               {
@@ -127,14 +158,14 @@ class AWSObject : public DBus::Object::Base
 
         // Retrieve AWS credentials and remove routes we are responsible
         // for from VPC
-        auto route_context = prepare_route_context(role_name);
+        auto route_context = prepare_route_context(config.role_name);
 
         for (auto route : vpc_routes)
         {
             try
             {
                 AWS::Route::delete_route(*route_context,
-                                         route_table_id,
+                                         config.route_table_id,
                                          route.first,
                                          route.second);
 
@@ -176,12 +207,12 @@ class AWSObject : public DBus::Object::Base
         {
             const std::string cidr = ev.details["subnet"] + "/" + ev.details["prefix"];
             const bool ipv6 = ev.details["ip_version"] == "6";
-            auto route_context = prepare_route_context(role_name);
+            auto route_context = prepare_route_context(config.role_name);
 
             if (ev.type == NetCfgChangeType::ROUTE_ADDED)
             {
                 AWS::Route::replace_create_route(*route_context,
-                                                 route_table_id,
+                                                 config.route_table_id,
                                                  cidr,
                                                  AWS::Route::RouteTargetType::INSTANCE_ID,
                                                  route_context->instance_id(),
@@ -194,7 +225,7 @@ class AWSObject : public DBus::Object::Base
             else
             {
                 AWS::Route::delete_route(*route_context,
-                                         route_table_id,
+                                         config.route_table_id,
                                          cidr,
                                          ipv6);
 
@@ -218,26 +249,30 @@ class AWSObject : public DBus::Object::Base
     DBus::Signals::SubscriptionManager::Ptr subscr_mgr;
     DBus::Signals::Target::Ptr signals_target;
 
-    std::string role_name;
+    Config config;
     std::string network_interface_id;
-    std::string route_table_id;
+
     typedef std::pair<std::string, bool> VpcRoute;
     std::set<VpcRoute> vpc_routes;
 
     AWSLog::Ptr log;
 
-    std::string read_role_name(const std::string &config_file)
+    Config read_config(const std::string &config_file)
     {
+        Config config;
+
         try
         {
             auto json_content = json::read_fast(config_file);
-            return json::get_string(json_content, "role");
+            config.role_name = json::get_string(json_content, "role");
+            config.route_table_name = json::get_string_optional(json_content, "route-table-name", "");
         }
         catch (const std::exception &ex)
         {
             log->LogError("Error reading role name: " + std::string(ex.what()));
-            return "";
         }
+
+        return config;
     }
 
     std::unique_ptr<AWS::Route::Context> prepare_route_context(const std::string &role_name)
