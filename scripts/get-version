@@ -15,7 +15,7 @@ fi
 set -u
 
 PROJECT_ROOT="$(dirname $0)/.."
-VERSION_RE='^v[[:digit:]]+(|_[[:alnum:]]+)$'
+VERSION_RE='^v[[:digit:]]+(|\.[[:alnum:]]+)(|_[[:alnum:]]+)$'
 if [ $1 = "--core-version" ]; then
     PROJECT_ROOT="$(dirname $0)/../openvpn3-core"
     VERSION_RE='^release/3\.[[:digit:]]+(|\.[[:digit:]]+)$'
