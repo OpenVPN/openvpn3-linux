@@ -876,10 +876,11 @@ class OpenVPN3ConfigurationProxy
     {
         if ('v' == vs[0])
         {
-            unsigned int v = 0;
+            // Extract only the major version number, minor versions (if present)
+            // should not change features
+            const std::regex version_regex{R"(v(\d+)(|\.\d+)(_\w*)*)"};
             std::smatch m;
-            const std::regex version_regex{R"(v(\d+)(_\w*)*)"};
-
+            unsigned int v = 0;
             if (std::regex_match(vs, m, version_regex) && !m.empty())
             {
                 v = std::stoi(m[1]);
