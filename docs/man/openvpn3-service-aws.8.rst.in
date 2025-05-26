@@ -20,16 +20,16 @@ The ``openvpn3-service-aws`` is a backend service for OpenVPN 3 Linux,
 which enables hosts in VPN subnet to communicate to hosts in VPC subnet.
 Upon start, it reads its configuration file and subscribes to
 :code:`ROUTE_ADDED` and :code:`ROUTE_REMOVED` signals from
-``openvpn3-service-netcfg`` service.  On receiving those signals, service
-adds/deletes VPN routes to/from VPC subnet using Amazon EC2 API. The service is
-also able to add routes to another (not "main") route table, which might create on demand.
+``openvpn3-service-netcfg`` service.  On receiving those signals, this helper
+service will add and delete VPN routes to/from VPC subnet using Amazon EC2
+API. The service is able to add routes to a different route table (not "main"),
+which can be created on demand.
 
 This service is normally started automatically on boot, which is achieved by enabling it
-with provided **openvpn3-aws.service** *systemd* unit file.  Alternatively service could
-be started manually on the command line.  This process should run as the *@OPENVPN_USERNAME@* user
-and will automatically switch to this user account if it has the needed privileges to do so.
-Beware that changing this to another user account also requires updating the D-Bus policy
-for the ``net.openvpn.v3.aws`` service as well.
+with provided **openvpn3-aws.service** *systemd* unit file.  This process will run as the
+*@OPENVPN_USERNAME@* user and will automatically switch to this user account if it has the
+needed privileges to do so.  Beware that changing this to another user account will require
+updating the D-Bus policy for the ``net.openvpn.v3.aws`` service as well.
 
 CONFIGURATION
 =============
