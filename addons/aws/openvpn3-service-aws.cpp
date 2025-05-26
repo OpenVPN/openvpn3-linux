@@ -139,9 +139,9 @@ class AWSObject : public DBus::Object::Base
 
         log->LogInfo("Running on instance " + route_context->instance_id() + ", route table " + config.route_table_id);
 
-        subscr_mgr->Subscribe(signals_target, "NetworkChange", [=](DBus::Signals::Event::Ptr &event)
+        subscr_mgr->Subscribe(signals_target, "NetworkChange", [this](DBus::Signals::Event::Ptr &event)
                               {
-                                  process_network_change(event);
+                                  this->process_network_change(event);
                               });
 
         netcfg_mgr->NotificationSubscribe(NetCfgChangeType::ROUTE_ADDED | NetCfgChangeType::ROUTE_REMOVED);
