@@ -18,6 +18,20 @@
 
 
 #ifdef HAVE_SYSTEMD
+
+class JournalWriterException : public std::exception
+{
+  public:
+    JournalWriterException(const std::string &err) noexcept;
+    ~JournalWriterException() noexcept = default;
+
+    const char *what() const noexcept;
+
+  private:
+    const std::string error;
+};
+
+
 /**
  *  LogWriter implementation, writing to systemd journal
  */

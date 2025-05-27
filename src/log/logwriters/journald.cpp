@@ -28,6 +28,53 @@
 #include "log/logwriters/journald.hpp"
 
 
+namespace {
+/**
+ *  Helper method preparing struct iovec records to be passed to
+ *  via the sd_journal_sendv() function.
+ *
+ *  The JournaldWriter will prefix most of the log data with a tag.
+ *  This tag can be a "journald field name" or just prefixing the
+ *  already provided field name.
+ *
+ *  This function just receives these strings and returns a fresh
+ *  struct iovec with the needed data.
+ *
+ *  @param tag    std::string containing the tag - may be an empty string
+ *  @param data   std::string containing the data to be logged by journald
+ *  @returns struct iovec record with all fields set accordingly
+ *  @throws JournalWriterException if memory allocation fails
+ */
+static iovec prepare_journal_iov(const std::string &tag, const std::string &data)
+{
+    size_t buflen = tag.length() + data.length();
+    char *data_c = static_cast<char *>(calloc(buflen, 1));
+    if (data_c)
+    {
+        if (!tag.empty())
+        {
+            memcpy(data_c, tag.c_str(), tag.length());
+        }
+        memcpy(data_c + tag.length(), data.c_str(), data.length());
+        return iovec{data_c, buflen};
+    }
+    throw JournalWriterException("Error allocating memory for '" + tag + data + "'");
+}
+} // namespace
+
+
+
+JournalWriterException::JournalWriterException(const std::string &err) noexcept
+    : error(err)
+{
+}
+
+const char *JournalWriterException::what() const noexcept
+{
+    return error.c_str();
+}
+
+
 
 JournaldWriter::JournaldWriter(const std::string &logsndr)
     : LogWriter(), log_sender("O3_LOG_SENDER=" + logsndr)
@@ -77,52 +124,49 @@ void JournaldWriter::Write(const Events::Log &event)
     // O3_LOG_GROUP, O3_LOG_CATEGORY, MESSAGE and
     // the NULL termination
     size_t meta_size = (metadata ? metadata->size() : 0) + 8;
-    struct iovec *l = (struct iovec *)calloc(sizeof(struct iovec) + 2,
-                                             meta_size);
+    struct iovec *l = static_cast<struct iovec *>(calloc(sizeof(struct iovec) + 2,
+                                                         meta_size));
+    if (!l)
+    {
+        throw JournalWriterException("Failed to allocate data for log event: "
+                                     + event.str(10, true));
+    }
 
     // Add the fixed O3_LOG_SENDER data, to more easily identify
     // log events from this log service across all Linux distros in the journal
     size_t i = 0;
-    l[i++] = {(char *)strdup(log_sender.c_str()), log_sender.length()};
+    l[i++] = prepare_journal_iov("", log_sender);
 
     if (metadata)
     {
         for (const auto &mdr : metadata->GetMetaDataRecords(true, false))
         {
-            std::string md = std::string("O3_") + mdr;
-            l[i++] = {(char *)strdup(md.c_str()), md.length()};
+            l[i++] = prepare_journal_iov("O3_", mdr);
         }
     }
 
     auto logtag = event.GetLogTag();
-    std::string logtag_str("O3_LOGTAG=");
     if (logtag)
     {
-        logtag_str += logtag->str(false);
-        l[i++] = {(char *)strdup(logtag_str.c_str()), logtag_str.length()};
+        l[i++] = prepare_journal_iov("O3_LOGTAG=", logtag->str(false));
     }
 
-    std::string st("O3_SESSION_TOKEN=");
     if (!event.session_token.empty())
     {
-        st += event.session_token;
-        l[i++] = {(char *)strdup(st.c_str()), st.length()};
+        l[i++] = prepare_journal_iov("O3_SESSION_TOKEN=", event.session_token);
     }
 
-    std::string lg("O3_LOG_GROUP=" + event.GetLogGroupStr());
-    l[i++] = {(char *)strdup(lg.c_str()), lg.length()};
+    l[i++] = prepare_journal_iov("O3_LOG_GROUP=", event.GetLogGroupStr());
+    l[i++] = prepare_journal_iov("O3_LOG_CATEGORY=", event.GetLogCategoryStr());
 
-    std::string lc("O3_LOG_CATEGORY=" + event.GetLogCategoryStr());
-    l[i++] = {(char *)strdup(lc.c_str()), lc.length()};
-
-    std::string m("MESSAGE=");
+    std::string msg;
     if (prepend_prefix && logtag)
     {
-        m += logtag->str(true) + " ";
+        msg += logtag->str(true) + " ";
     }
+    msg += event.message;
+    l[i++] = prepare_journal_iov("MESSAGE=", msg);
 
-    m += event.message;
-    l[i++] = {(char *)strdup(m.c_str()), m.length()};
     l[i] = {NULL};
 
     int r = sd_journal_sendv(l, i);
