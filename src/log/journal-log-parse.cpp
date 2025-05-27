@@ -308,6 +308,7 @@ void Parse::AddFilter(const FilterType ft, const std::string &fval) const
         {
             std::tm t = {};
             auto ts = std::time(nullptr);
+            t = *std::localtime(&ts);
             if ("today" == fval || "yesterday" == fval)
             {
 
@@ -316,13 +317,20 @@ void Parse::AddFilter(const FilterType ft, const std::string &fval) const
                     // Shift the offset back 24 hours in seconds
                     ts -= 24 * 60 * 60;
                 }
-                t = *std::localtime(&ts);
                 t.tm_hour = 0;
                 t.tm_min = 0;
                 t.tm_sec = 0;
             }
             else
             {
+                // Clear the std::tm object, but preserve
+                // the isdst and gmtoff details
+                int gmtoff = t.tm_gmtoff;
+                int isdst = t.tm_isdst;
+                memset(&t, 0, sizeof(t));
+                t.tm_gmtoff = gmtoff;
+                t.tm_isdst = isdst;
+
                 match << fval;
                 match >> std::get_time(&t, "%Y-%m-%d %H:%M:%S");
             }
