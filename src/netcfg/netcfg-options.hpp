@@ -57,19 +57,6 @@ struct NetCfgOptions
 
     NetCfgOptions(ParsedArgs::Ptr args, NetCfgConfigFile::Ptr config)
     {
-        if (args->Present("log-file"))
-        {
-            log_file = args->GetLastValue("log-file");
-        }
-        if (args->Present("colour"))
-        {
-            log_colour = true;
-        }
-        if (args->Present("log-level"))
-        {
-            log_level = std::atoi(args->GetLastValue("log-level").c_str());
-        }
-
         if (config && args->Present("state-dir"))
         {
             config_file = args->GetLastValue("state-dir") + "/netcfg.json";
@@ -84,6 +71,19 @@ struct NetCfgOptions
             {
                 // Ignore errors related to configuration file
             }
+        }
+
+        if (args->Present("log-file"))
+        {
+            log_file = args->GetLastValue("log-file");
+        }
+        if (args->Present("colour"))
+        {
+            log_colour = true;
+        }
+        if (args->Present("log-level"))
+        {
+            log_level = std::atoi(args->GetLastValue("log-level").c_str());
         }
 
         try
