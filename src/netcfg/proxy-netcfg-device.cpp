@@ -255,32 +255,11 @@ void Device::AddDNS(const std::vector<std::string> &server_list) const
 }
 
 
-void Device::RemoveDNS(const std::vector<std::string> &server_list) const
-{
-    GVariant *list = glib2::Value::CreateTupleWrapped<std::string>(server_list);
-    GVariant *res = proxy->Call(prxtgt, "RemoveDNS", list);
-    if (res)
-    {
-        g_variant_unref(res);
-    }
-}
-
 
 void Device::AddDNSSearch(const std::vector<std::string> &domains) const
 {
     GVariant *list = glib2::Value::CreateTupleWrapped<std::string>(domains);
     GVariant *res = proxy->Call(prxtgt, "AddDNSSearch", list);
-    if (res)
-    {
-        g_variant_unref(res);
-    }
-}
-
-
-void Device::RemoveDNSSearch(const std::vector<std::string> &domains) const
-{
-    GVariant *list = glib2::Value::CreateTupleWrapped<std::string>(domains);
-    GVariant *res = proxy->Call(prxtgt, "RemoveDNSSearch", list);
     if (res)
     {
         g_variant_unref(res);

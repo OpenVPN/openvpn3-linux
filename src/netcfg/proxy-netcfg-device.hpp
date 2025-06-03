@@ -229,28 +229,12 @@ class Device
 
 
     /**
-     *  Takes a list of DNS server IP addresses to be removed from
-     *  the DNS resolver list
-     *
-     * @param server_list
-     */
-    void RemoveDNS(const std::vector<std::string> &server_list) const;
-
-
-    /**
      *  Takes a list of DNS search domains to be used on the system
      *
      * @param domains
      */
     void AddDNSSearch(const std::vector<std::string> &domains) const;
 
-
-    /**
-     *  Takes a list of DNS serach domains to be removed from the system
-     *
-     * @param domains
-     */
-    void RemoveDNSSearch(const std::vector<std::string> &domains) const;
 
     /**
      *  Set the DNSSEC mode for the interface
