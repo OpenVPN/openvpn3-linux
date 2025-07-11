@@ -434,6 +434,7 @@ class Manager
   private:
     DBus::Proxy::Client::Ptr proxy = nullptr;
     DBus::Proxy::TargetPreset::Ptr tgt_resolved = nullptr;
+    bool asio_keep_running = false;
     std::future<void> async_proxy_thread;
     asio::io_context asio_proxy;
     Error::Storage::Ptr asio_errors = nullptr;

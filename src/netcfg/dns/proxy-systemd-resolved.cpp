@@ -512,18 +512,34 @@ Manager::Manager(DBus::Connection::Ptr conn)
     //  background.  This is to avoid various potential timeouts in
     //  calls where there is little value to wait for a reply.
     asio_errors = Error::Storage::Create();
+    asio_keep_running = true;
     async_proxy_thread = std::async(
         std::launch::async,
         [&]()
         {
-            asio::io_context::work asio_proxy_work{asio_proxy};
-            asio_proxy.run();
+            asio::io_service::work asio_work{asio_proxy};
+
+            while (asio_keep_running)
+            {
+                try
+                {
+                    SD_RESOLVED_DEBUG("resolved::Manager() async_proxy_thread - asio::io_context::run() started - asio_keep_running=" << asio_keep_running);
+                    asio_proxy.run();
+                    SD_RESOLVED_DEBUG("resolved::Manager() async_proxy_thread - asio::io_context::run() completed - asio_keep_running=" << asio_keep_running);
+                }
+                catch (const std::exception &excp)
+                {
+                    SD_RESOLVED_BG_LOG("[resolved::Manager() async_proxy_thread] Exception:" << excp.what());
+                }
+            }
+            SD_RESOLVED_DEBUG("resolved::Manager() async_proxy_thread - stopping asio::io_context - asio_keep_running=" << asio_keep_running);
         });
 }
 
 
 Manager::~Manager() noexcept
 {
+    asio_keep_running = false;
     if (!asio_proxy.stopped())
     {
         asio_proxy.stop();
