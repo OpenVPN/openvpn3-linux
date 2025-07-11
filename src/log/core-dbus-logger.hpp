@@ -70,7 +70,7 @@ void SetLogLevel(const uint8_t log_level);
  *
  * @param logmsg  std::string of the log message to log
  */
-void ___core_log(const std::string &logmsg);
+void ___core_log(const std::string &prefix, const std::string &logmsg);
 
 
 //  Declares the global core logger object used by the Core logger
@@ -88,21 +88,21 @@ extern std::shared_ptr<DBusLogger> ___globalLog;
 //  openvpn3-core/openvpn/log/logsimple.hpp
 //
 
-#define OPENVPN_LOG(msg)                \
-    {                                   \
-        std::ostringstream ls;          \
-        ls << msg;                      \
-        CoreLog::___core_log(ls.str()); \
+#define OPENVPN_LOG(msg)                        \
+    {                                           \
+        std::ostringstream ls;                  \
+        ls << msg;                              \
+        CoreLog::___core_log("Core", ls.str()); \
     }
 
-#define OPENVPN_LOG_NTNL(msg)           \
-    {                                   \
-        std::ostringstream ls;          \
-        ls << msg;                      \
-        CoreLog::___core_log(ls.str()); \
+#define OPENVPN_LOG_NTNL(msg)                   \
+    {                                           \
+        std::ostringstream ls;                  \
+        ls << msg;                              \
+        CoreLog::___core_log("Core", ls.str()); \
     }
 
-#define OPENVPN_LOG_STRING(str) CoreLog::___core_log(str)
+#define OPENVPN_LOG_STRING(str) CoreLog::___core_log("Core", str)
 
 
 // no-op constructs normally used with logthread.hpp

@@ -78,7 +78,7 @@ class DBusLogger
     }
 
 
-    void log(const std::string &str) const noexcept
+    void log(const std::string &prefix, const std::string &str) const noexcept
     {
         std::string l(str);
         try
@@ -89,7 +89,7 @@ class DBusLogger
             {
                 logger->Log(Events::Log(log_group,
                                         LogCategory::DEBUG,
-                                        "[Core] " + l,
+                                        "[" + prefix + "] " + l,
                                         false));
             }
             else
@@ -97,14 +97,14 @@ class DBusLogger
                 logger->Log(Events::Log(log_group,
                                         LogCategory::DEBUG,
                                         session_token,
-                                        "[Core] " + l,
+                                        "[" + prefix + "] " + l,
                                         false));
             }
         }
         catch (const DBus::Signals::Exception &)
         {
             std::cout << "{ERROR: D-Bus Signal Sending Failed} "
-                      << "[Core] " << l << std::endl;
+                      << "[" << prefix << "] " << l << std::endl;
         }
     }
 
@@ -133,7 +133,7 @@ class DBusLogger
         auto qry = DBus::Proxy::Utils::DBusServiceQuery::Create(dbuscon);
         logger->AddTarget(qry->GetNameOwner(Constants::GenServiceName("log")));
         logger->SetLogLevel(6);
-        log("OpenVPN 3 Core library logging initialized");
+        log("DBusLogger", "OpenVPN 3 Core library logging initialized");
     }
 
     DBusLogger(LogSender::Ptr log_obj)
@@ -188,17 +188,17 @@ void SetLogLevel(const uint8_t log_level)
 }
 
 
-void ___core_log(const std::string &logmsg)
+void ___core_log(const std::string &prefix, const std::string &logmsg)
 {
     if (___globalLog)
     {
         std::ostringstream ls;
         ls << logmsg;
-        ___globalLog->log(ls.str());
+        ___globalLog->log(prefix, ls.str());
     }
     else
     {
-        std::cout << "[CoreLog (fallback)] " << logmsg << std::endl;
+        std::cout << "[" << prefix << " (fallback)] " << logmsg << std::endl;
     }
 }
 
