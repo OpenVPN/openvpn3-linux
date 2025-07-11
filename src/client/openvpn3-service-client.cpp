@@ -1154,6 +1154,11 @@ class BackendClientObject : public DBus::Object::Base
                                 + excp.GetError());
         }
 
+        // Enforce --dhcp-option DOMAIN{-SEARCH} to not be treated as split domains
+        // by default.  This can be overriden by setting the `--dns-scope` via
+        // openvpn3 config-manage.
+        vpnconfig.dhcpSearchDomainsAsSplitDomains = false;
+
         // We need to provide a copy of the vpnconfig object, as vpnclient
         // seems to take ownership
         cfgeval = vpnclient->eval_config(ClientAPI::Config(vpnconfig));
