@@ -11,8 +11,6 @@
 
 #pragma once
 
-#include "build-config.h"
-
 #ifdef ENABLE_OVPNDCO
 
 #include <gdbuspp/connection.hpp>

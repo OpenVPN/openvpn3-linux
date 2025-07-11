@@ -13,6 +13,7 @@
  *
  */
 
+#include "build-config.h"
 #include <iostream>
 #include "log/journal-log-parse.hpp"
 

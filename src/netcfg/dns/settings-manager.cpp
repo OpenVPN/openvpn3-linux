@@ -13,6 +13,8 @@
  * @brief  Main manager object for all DNS resolver settings (implementation)
  */
 
+#include "build-config.h"
+
 #include "netcfg/netcfg-exception.hpp"
 #include "netcfg/netcfg-signals.hpp"
 #include "netcfg/dns/resolver-backend-interface.hpp"

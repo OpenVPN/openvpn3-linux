@@ -13,6 +13,8 @@
  * @brief  Implementation of the openvpn3 config-import command
  */
 
+#include "build-config.h"
+
 #include <string>
 #include <vector>
 #include <gdbuspp/connection.hpp>

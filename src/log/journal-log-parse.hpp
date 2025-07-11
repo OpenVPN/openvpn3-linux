@@ -15,8 +15,6 @@
 
 #pragma once
 
-#include "build-config.h"
-
 #ifdef HAVE_SYSTEMD
 #include <systemd/sd-journal.h>
 #include <json/json.h>

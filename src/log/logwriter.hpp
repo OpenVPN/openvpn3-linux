@@ -21,7 +21,6 @@
 #include <string>
 #include <vector>
 
-#include "build-config.h"
 #include "events/log.hpp"
 #include "events/status.hpp"
 #include "logtag.hpp"

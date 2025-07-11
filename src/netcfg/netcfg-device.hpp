@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include "build-config.h"
-
 #include <functional>
 #include <gio/gunixfdlist.h>
 #include <gio/gunixconnection.h>

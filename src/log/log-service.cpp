@@ -14,6 +14,7 @@
 
 #include <string>
 
+#include "build-config.h"
 #include "common/lookup.hpp"
 #include "common/string-utils.hpp"
 #include "log-internal.hpp"

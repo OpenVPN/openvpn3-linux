@@ -15,6 +15,8 @@
  * @brief  Implementation of the NetCfgServiceHandler object
  */
 
+#include "build-config.h"
+
 #include <gdbuspp/object/base.hpp>
 
 #include "common/string-utils.hpp"

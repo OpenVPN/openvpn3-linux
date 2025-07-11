@@ -13,6 +13,8 @@
  *
  */
 
+#include "build-config.h"
+
 #include <iostream>
 #include <sstream>
 #include <gdbuspp/glib2/utils.hpp>

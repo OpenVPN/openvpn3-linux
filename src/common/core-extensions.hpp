@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include "build-config.h"
 #include <iostream>
 #include <json/json.h>
 

@@ -19,8 +19,6 @@
 #pragma once
 #define OPENVPN3_NETCFGPRX_DEVICE
 
-#include "build-config.h"
-
 #include <string>
 #include <vector>
 #include <gdbuspp/connection.hpp>

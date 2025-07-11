@@ -14,6 +14,8 @@
  *         resolver settings
  */
 
+#include "build-config.h"
+
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -247,7 +249,7 @@ const std::string ResolverSettings::SetDNSScope(GVariant *params)
         return recv_scope;
     }
     throw NetCfgException("[SetDNSScope] Invalid DNS Scope value: "
-        + filter_ctrl_chars(recv_scope, true));
+                          + filter_ctrl_chars(recv_scope, true));
 }
 
 

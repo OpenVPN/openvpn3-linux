@@ -12,6 +12,8 @@
  * @brief  Unit test for NetCfg::DNS::SettingsManager
  */
 
+#include "build-config.h"
+
 #include <algorithm>
 #include <iostream>
 #include <vector>

@@ -15,6 +15,8 @@
  *
  */
 
+ #include "build-config.h"
+
 #include <iostream>
 #include <vector>
 #include <gdbuspp/connection.hpp>

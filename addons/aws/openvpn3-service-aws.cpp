@@ -7,6 +7,8 @@
 //  Copyright (C) 2020-  David Sommerseth <davids@openvpn.net>
 //
 
+#include "build-config.h"
+
 #include <iostream>
 #include <iomanip>
 #include <gdbuspp/service.hpp>

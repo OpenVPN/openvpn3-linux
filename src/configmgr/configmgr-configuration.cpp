@@ -9,6 +9,8 @@
 //  Copyright (C) 2024-  Răzvan Cojocaru <razvan.cojocaru@openvpn.com>
 //
 
+#include "build-config.h"
+
 #include <cstdio>
 #include <ctime>
 #include <set>

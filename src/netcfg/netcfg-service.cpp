@@ -15,6 +15,8 @@
  * @brief  FIXME:
  */
 
+#include "build-config.h"
+
 #include <gdbuspp/connection.hpp>
 
 // This needs to be included before any of the OpenVPN 3 Core
