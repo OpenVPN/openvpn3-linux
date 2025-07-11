@@ -24,10 +24,43 @@
 
 #include <openvpn/common/split.hpp>
 
+#include "log/core-dbus-logger.hpp"
 #include "netcfg/dns/proxy-systemd-resolved.hpp"
 #include "netcfg/dns/systemd-resolved-exception.hpp"
 
 using namespace NetCfg::DNS::resolved;
+
+/**
+ *  Enable low-level debug logging.  This is not expected to
+ *  be needed to be enabled in production environments, thus
+ *  it is hard-coded in here.
+ */
+//#define DEBUG_RESOLVED_DBUS
+
+/**
+ *  Low-level debug logging for background D-Bus calls to
+ *  systemd-resolved.
+ *
+ *  This systemd-resolved proxy code does not have direct
+ *  access to the logging infrastructure used by other parts
+ *  of the NetCfg service.  Instead, we make use of the primitive
+ *  debug logging in the OpenVPN 3 Core library, with a little
+ *  adjustment to differentiate these log events from the Core
+ *  library.
+ *
+ */
+#define SD_RESOLVED_BG_LOG(msg)                                              \
+    {                                                                        \
+        std::ostringstream ls;                                               \
+        ls << msg;                                                           \
+        CoreLog::___core_log("systemd-resolved background proxy", ls.str()); \
+    }
+
+#ifdef DEBUG_RESOLVED_DBUS
+#define SD_RESOLVED_DEBUG(x) SD_RESOLVED_BG_LOG(x)
+#else
+#define SD_RESOLVED_DEBUG(x)
+#endif
 
 
 namespace NetCfg {
