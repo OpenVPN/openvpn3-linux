@@ -232,9 +232,9 @@ std::vector<std::string> Link::SetDNSServers(const IPAddress::List &servers)
         glib2::Builder::Add(b, srv.GetGVariant());
         applied.push_back(srv.str());
     }
-
-    BackgroundCall("SetDNS",
-                   glib2::Builder::FinishWrapped(b));
+    GVariant *params = glib2::Builder::FinishWrapped(b);
+    BackgroundCall("SetDNS", params);
+    g_variant_unref(params);
     return applied;
 }
 
@@ -297,9 +297,9 @@ std::vector<std::string> Link::SetDomains(const SearchDomain::List &doms)
             applied.push_back(dom.search);
         }
     }
-
-    BackgroundCall("SetDomains",
-                   glib2::Builder::FinishWrapped(b));
+    GVariant *params = glib2::Builder::FinishWrapped(b);
+    BackgroundCall("SetDomains", params);
+    g_variant_unref(params);
     return applied;
 }
 
@@ -365,8 +365,9 @@ void Link::SetDNSSEC(const std::string &mode)
         throw Exception("Invalid DNSSEC mode requested: " + mode);
     }
 
-    BackgroundCall("SetDNSSEC",
-                   glib2::Value::CreateTupleWrapped(mode));
+    GVariant *params = glib2::Value::CreateTupleWrapped(mode);
+    BackgroundCall("SetDNSSEC", params);
+    g_variant_unref(params);
 }
 
 
@@ -392,8 +393,9 @@ void Link::SetDNSOverTLS(const std::string &mode)
     {
         throw Exception("Invalid DNSOverTLS mode requested: " + mode);
     }
-    BackgroundCall("SetDNSOverTLS",
-                   glib2::Value::CreateTupleWrapped(mode));
+    GVariant *params = glib2::Value::CreateTupleWrapped(mode);
+    BackgroundCall("SetDNSOverTLS", params);
+    g_variant_unref(params);
 }
 
 
