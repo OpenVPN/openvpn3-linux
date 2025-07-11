@@ -410,58 +410,126 @@ Error::Message::List Link::GetErrors() const
     return errors->GetErrors(tgt_link->object_path);
 }
 
+namespace {
+/**
+ *  Simple hack to simplify passing data from BackgroundCall()
+ *  to the lambda function performing the operation
+ */
+struct background_call_data
+{
+    std::weak_ptr<DBus::Proxy::Client> proxy;
+    DBus::Object::Path path;
+    std::string interface;
+    std::string method;
+    GVariant *params;
+    Error::Storage::Ptr errors;
+};
+} // namespace
+
 
 void Link::BackgroundCall(const std::string &method, GVariant *params)
 {
     if (asio_proxy.stopped())
     {
+        SD_RESOLVED_DEBUG("Background ASIO thread not running");
         throw Exception("Background ASIO thread not running");
     }
 
-    // Increase the reference counter to the parameters to use
-    // in the asynchronous D-Bus call.  The async call itself can
-    // happen after the caller of this method has released the
-    // the params.
-    GVariant *post_params = g_variant_ref(params);
-    std::weak_ptr<DBus::Proxy::Client> prx{proxy};
-    std::weak_ptr<DBus::Proxy::TargetPreset> tgt{tgt_link};
-    std::weak_ptr<Error::Storage> errs{errors};
+    SD_RESOLVED_DEBUG("Preparing ASIO post lambda: "
+                      << " proxy=" << (proxy ? proxy->GetDestination() : "[invalid proxy object]")
+                      << " target=" << (tgt_link ? tgt_link->object_path : "[invalid target object]")
+                      << " errors-object=" << (errors ? "[valid]" : "[invalid]")
+                      << " method=" << method
+                      << " params=" << g_variant_print(params, true));
+
+    /*
+     *  // TODO: Improve this
+     *
+     *  This is an ugly hack.  For some odd reason, the tgt_link object
+     *  is often ending up invalid inside the lambda function, resulting
+     *  in failing updates sent to the systemd-resolved service because the
+     *  object path in the DBus::Proxy::TargetPreset object ends up invalid.
+     *  This happens despite the systemd-resolved D-Bus object existing and
+     *  can be configured.
+     *
+     *  The proxy object seems to be handled fine, so we keep the "old"
+     *  approach here.
+     *
+     *  This is then created as a raw pointer based object, which is
+     *  passed on to the lambda and deleted in the lambda function.  This
+     *  is to ensure the object does not disappear before the the lambda
+     *  function has had a chance to process the information.
+     */
+    background_call_data *bgdata = new background_call_data(
+        {.proxy = std::weak_ptr<DBus::Proxy::Client>(proxy),
+         .path = tgt_link->object_path,
+         .interface = tgt_link->interface,
+         .method = method,
+         .params = g_variant_ref(params)});
 
     asio_proxy.post(
-        [prx, tgt, method, post_params, errs]()
+        [bgdata]()
         {
-            auto proxy = prx.lock();
-            auto target = tgt.lock();
-            auto errors = errs.lock();
-            if (!proxy || !target || !errors)
+            try
             {
-                // If one of these are invalid, the Link object has been
-                // or is being destructed.  Then we just bail out.
-                g_variant_unref(post_params);
-                return;
-            }
-
-            // It might be the call to systemd-resolved times out,
-            // so we're being a bit more persistent in these background
-            // calls
-            for (uint8_t attempts = 3; attempts > 0; attempts--)
-            {
-                try
+                DBus::Proxy::Client::Ptr proxy = bgdata->proxy.lock();
+                if (!proxy)
                 {
-                    GVariant *r = proxy->Call(target, method, post_params);
-                    g_variant_unref(r);
-                    break;
+                    std::ostringstream msg;
+                    SD_RESOLVED_BG_LOG("Invalid background request:"
+                                       << " proxy=" << (proxy ? proxy->GetDestination() : "[invalid]")
+                                       << " target=" << (bgdata->path)
+                                       << " method=" << bgdata->method
+                                       << " params=" << g_variant_print(bgdata->params, true));
+                    //  If the proxy object is invalid, the Link object has been
+                    //  or is being destructed.  Then we just bail out.
+                    g_variant_unref(bgdata->params);
+                    delete bgdata;
+                    return;
                 }
-                catch (const DBus::Proxy::Exception &excp)
+
+                // It might be the call to systemd-resolved times out,
+                // so we're being a bit more persistent in these background
+                // calls
+                auto prxqry = DBus::Proxy::Utils::Query::Create(proxy);
+                for (uint8_t attempts = 3; attempts > 0; attempts--)
                 {
-                    std::string err = excp.what();
-                    if (!err.find("Timeout was reached") || attempts < 1)
+                    try
                     {
-                        errors->Add(target->object_path, method, excp.what());
+                        if (!prxqry->CheckObjectExists(bgdata->path, bgdata->interface))
+                        {
+                            SD_RESOLVED_BG_LOG("[LAMBDA] - object not found: " << bgdata->path);
+                            sleep(1);
+                            continue; // Retry again
+                        }
+
+                        SD_RESOLVED_DEBUG("[LAMBDA] Performing proxy call:"
+                                          << "  object_path=" << bgdata->path
+                                          << ", method=" << bgdata->method
+                                          << ", params=" << g_variant_print(bgdata->params, true));
+                        GVariant *r = proxy->Call(bgdata->path, bgdata->interface, bgdata->method, bgdata->params);
+                        g_variant_unref(r);
+                        break;
+                    }
+                    catch (const std::exception &excp)
+                    {
+                        SD_RESOLVED_DEBUG("[LAMBDA]  proxy call exception, "
+                                          << "object_path=" << bgdata->path
+                                          << ": " << excp.what());
+                        std::string err = excp.what();
+                        if (!err.find("Timeout was reached") || attempts < 1)
+                        {
+                            SD_RESOLVED_BG_LOG("Background systemd-resolved call failed: object_path=" << bgdata->path << ", method=" << bgdata->method << ": " << err);
+                        }
                     }
                 }
+                delete bgdata;
             }
-            g_variant_unref(post_params);
+            catch (const std::exception &excp)
+            {
+                SD_RESOLVED_BG_LOG("[NetCfg::DNS::resolved::Link::BackgroundCall - LAMBDA] Preparation EXCEPTION:" << excp.what());
+                return;
+            }
         });
 }
 
