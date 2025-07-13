@@ -267,6 +267,12 @@ class NetCfgTunBuilder : public T
 
     bool tun_builder_set_dns_options(const openvpn::DnsOptions &dns) override
     {
+        if (disabled_dns_config)
+        {
+            signals->LogVerb1("DNS configuration is disabled in the profile, skipping");
+            return true;
+        }
+
         return device->AddDnsOptions(signals, dns);
     }
 
