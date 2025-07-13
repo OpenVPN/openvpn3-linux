@@ -521,6 +521,7 @@ void Link::BackgroundCall(const std::string &method, GVariant *params)
                         {
                             SD_RESOLVED_BG_LOG("Background systemd-resolved call failed: object_path=" << bgdata->path << ", method=" << bgdata->method << ": " << err);
                         }
+                        sleep(1);
                     }
                 }
                 delete bgdata;
