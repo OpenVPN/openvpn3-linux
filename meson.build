@@ -26,12 +26,16 @@ dep_systemd = dependency('libsystemd', version: '>218', required: false)
 dep_tinyxml2 = dependency('tinyxml2')
 dep_jsoncpp = dependency('jsoncpp')
 
+libfmt = subproject('fmt', default_options: ['header-only=true'])
+dep_libfmt = libfmt.get_variable('fmt_header_only_dep')
+
 # This is not a link dependency for this project, but we need it
 # to get the proper paths for policy and service config installation
 dep_dbus = dependency('dbus-1')
 
 base_dependencies = [
     dep_jsoncpp,
+    dep_libfmt,
     dep_lz4,
     dep_selinux,
     dep_systemd,
