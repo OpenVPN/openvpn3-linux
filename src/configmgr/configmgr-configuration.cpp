@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <ctime>
 #include <set>
+#include <fmt/ranges.h>
 
 #include "common/lookup.hpp"
 #include "common/string-utils.hpp"
@@ -704,7 +705,26 @@ std::string Configuration::validate_profile() noexcept
     if (!client_configured || !dev_found || !remote_found || !ca_found)
     {
         prop_valid_ = false;
-        return "Configuration profile is missing required options";
+        std::vector<std::string> opts_missing;
+        if (!ca_found)
+        {
+            opts_missing.push_back("--ca");
+        }
+        if (!client_configured)
+        {
+            opts_missing.push_back("--client or --tls-client");
+        }
+        if (!dev_found)
+        {
+            opts_missing.push_back("--dev");
+        }
+        if (!remote_found)
+        {
+            opts_missing.push_back("--remote");
+        }
+
+        return fmt::format("Configuration profile is missing required options: {}",
+                           fmt::join(opts_missing, ", "));
     }
     prop_valid_ = true;
     return "";
