@@ -190,6 +190,19 @@ static int cmd_config_import(ParsedArgs::Ptr args)
         std::cout << "Configuration imported.  Configuration path: "
                   << path
                   << std::endl;
+
+        try
+        {
+            auto cfgprx = OpenVPN3ConfigurationProxy::Create(dbuscon, path, true);
+            cfgprx->Validate();
+        }
+        catch (const CfgMgrProxyException &excp)
+        {
+            std::cerr << std::endl
+                      << "WARNING:  " << excp.GetRawError() << std::endl
+                      << std::endl;
+        }
+
         return 0;
     }
     catch (const DBus::Exception &excp)
