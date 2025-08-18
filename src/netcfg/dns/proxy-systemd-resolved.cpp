@@ -507,7 +507,12 @@ void Link::BackgroundCall(const std::string &method, GVariant *params)
                                           << "  object_path=" << bgdata->path
                                           << ", method=" << bgdata->method
                                           << ", params=" << g_variant_print(bgdata->params, true));
-                        GVariant *r = proxy->Call(bgdata->path, bgdata->interface, bgdata->method, bgdata->params);
+
+                        // The proxy->Call(...) call might result in bgdata->params being released,
+                        // even if an exception happens.  We increase the GVariant refcounter to
+                        // avoid this object being deleted just yet.
+                        GVariant *params = g_variant_ref_sink(bgdata->params);
+                        GVariant *r = proxy->Call(bgdata->path, bgdata->interface, bgdata->method, params);
                         g_variant_unref(r);
                         break;
                     }
@@ -524,6 +529,8 @@ void Link::BackgroundCall(const std::string &method, GVariant *params)
                         sleep(1);
                     }
                 }
+                // Delete the GVariant object with the D-Bus method arguments; now it is no longer needed
+                g_variant_unref(bgdata->params);
                 delete bgdata;
             }
             catch (const std::exception &excp)
