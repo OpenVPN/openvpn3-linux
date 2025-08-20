@@ -9,6 +9,7 @@
 #pragma once
 
 #include <iostream>
+#include <unordered_set>
 #include <json/json.h>
 
 #include <openvpn/client/cliconstants.hpp>
@@ -17,42 +18,72 @@
 
 namespace openvpn {
 
-inline bool optparser_inline_file(std::string optname)
+namespace {
+/**
+ *  Check if an option is to be preserved as a "tag block"
+ *  instead of just a single option line.
+ *
+ *  This is used when recreating the configuration profile
+ *  as a plain-text file.
+ *
+ * @param optname std::string with option to look up
+ * @return bool, true if the option is to be handled as a "tag option".
+ */
+bool optparser_inline_file(const std::string &optname)
 {
-    return ((optname == "ca")
-            || (optname == "key")
-            || (optname == "extra-certs")
-            || (optname == "cert")
-            || (optname == "auth-user-pass")
-            || (optname == "http-proxy-user-pass")
-            || (optname == "dh")
-            || (optname == "pkcs12")
-            || (optname == "tls-auth")
-            || (optname == "tls-crypt")
-            || (optname == "tls-crypt-v2"))
-               ? true
-               : false;
+    static const std::unordered_set<std::string> tag_opts{
+        "ca",
+        "cert",
+        "dh",
+        "extra-certs",
+        "http-proxy-user-pass",
+        "key",
+        "pkcs12",
+        "tls-auth",
+        "tls-crypt",
+        "tls-crypt-v2"};
+
+    return tag_opts.find(optname) != tag_opts.end();
 }
 
 
-inline bool option_req_array(const std::string &optname)
+/**
+ *  Check if an option may require its values to be stored
+ *  in an array/vector.
+ *
+ *  This is required for options which can appear more times
+ *  in the same configuration file.
+ *
+ * @param optname std::string with option key to look up
+ * @return bool, true if value storage should be in an array
+ */
+bool option_req_array(const std::string &optname)
 {
-    return (("peer-fingerprint" == optname)
-            || ("pull-filter" == optname)
-            || ("remote" == optname)
-            || ("route" == optname)
-            || ("route-ipv6" == optname))
-               ? true
-               : false;
+    static const std::unordered_set<std::string> array_storage{
+        "peer-fingerprint",
+        "pull-filter",
+        "remote",
+        "route",
+        "route-ipv6"};
+
+    return array_storage.find(optname) != array_storage.end();
 }
 
 
-inline std::string optparser_mkline(std::string optname, std::string optvalue)
+/**
+ *  Compose a configuration string for a single option key/value
+ *  which follows the standard OpenVPN configuration file format
+ *
+ * @param optname    std::string of the option key
+ * @param optvalue   std::string with the option value to use
+ * @return std::string containing the properly formatted
+ *         configuration line
+ */
+std::string optparser_mkline(const std::string &optname, const std::string &optvalue)
 {
-    bool inlined_file = optparser_inline_file(optname);
     std::stringstream ret;
 
-    if (inlined_file && !optvalue.empty())
+    if (optparser_inline_file(optname) && !optvalue.empty())
     {
         ret << "<" << optname << ">" << std::endl
             << optvalue;
@@ -69,11 +100,12 @@ inline std::string optparser_mkline(std::string optname, std::string optvalue)
     }
     return ret.str();
 }
+} // anonymous local namespace
 
 
 
 /**
- *  This class extens the OptionList class with JSON import/export
+ *  This class extends the OptionList class with JSON import/export
  *  capabilities as well as a utility function to export the whole
  *  configuration file as a string.
  *
@@ -148,17 +180,14 @@ class OptionListJSON : public openvpn::OptionList
         {
             std::string optname(element.ref(0));
 
-            bool skip = false;
-            for (const auto &ignore : ignore_as_metaopts)
-            {
-                if (optname.find(ignore) == 0)
+            bool filter_metaopt = std::any_of(
+                ignore_as_metaopts.begin(),
+                ignore_as_metaopts.end(),
+                [&optname](const std::string &elem)
                 {
-                    // Skip Access Server meta-options which should be ignored
-                    skip = true;
-                    break;
-                }
-            }
-            if (skip)
+                    return !optname.compare(0, elem.length(), elem);
+                });
+            if (filter_metaopt)
             {
                 continue;
             }
@@ -283,13 +312,6 @@ class OptionListJSON : public openvpn::OptionList
     {
         std::stringstream cfgstr;
 
-        // These options will be prefixed with "setenv opt"
-        std::vector<std::string> rewrite_as_metaopts = {
-            "AUTOLOGIN",
-            "FRIENDLY_NAME",
-            "PROFILE",
-            "USERNAME"};
-
         // Iterate all the std::vector<Option> objects
         // OptionListJSON inherits OptionList which again inherits
         // std::vector<Option>, which is why we access the std::vector
@@ -298,30 +320,59 @@ class OptionListJSON : public openvpn::OptionList
         {
             std::string optname = element.ref(0);
 
-            // FIXME: Access Server hack
-            bool as_skip = false;
-            for (const auto &chk : ignore_as_metaopts)
-            {
-                if (optname.find(chk) == 0)
+            //
+            //  OPENVPN ACCESS SERVER HACK
+            //
+            //  OpenVPN Access Server profiles can contain meta-options
+            //  which are extracted by the OpenVPN 3 Core library from
+            //  commented-out lines as key/value pairs, when the key
+            //  is prefixed with "OVPN_ACCESS_SERVER_".  The option
+            //  parser will use the rest of that key as an option key
+            //  and what follows after the first '=' character as value
+            //
+            //  Due to earlier Access Server profiles would have a lot
+            //  of these meta options and most of them are now no longer
+            //  used or needed, we filter them out.
+            //
+            //  This is more or less a hack required when Access Server
+            //  is configured to do web authentication, until OpenVPN 3 Core
+            //  library handles this use case more similar to how OpenVPN 2.x
+            //  behaves, making proper use of the --auth-user-token in this
+            //  mode.
+            //
+            //  Since the list of meta-options to ignore is a list of
+            //  option /prefixes/, std::any_of with a lambda is used.
+            //
+            bool filter_metaopt = std::any_of(
+                ignore_as_metaopts.begin(),
+                ignore_as_metaopts.end(),
+                [&optname](const std::string &elem)
                 {
-                    as_skip = true;
-                    break;
-                }
-            }
-            if (as_skip)
+                    return !optname.compare(0, elem.length(), elem);
+                });
+            if (filter_metaopt)
             {
                 continue;
             }
 
-            bool setenv_rewrite = false;
-            for (const auto &chk : rewrite_as_metaopts)
-            {
-                if (optname.find(chk) == 0)
-                {
-                    setenv_rewrite = true;
-                    break;
-                }
-            }
+            //  A few of these meta-options from Access Server are used
+            //  by the OpenVPN 3 Core library when connecting, so we rewrite
+            //  them as "setenv opt KEY VALUE" instead.
+            //
+            //  This allows the OpenVPN 3 Core library to extract this
+            //  information and still not bail out with an error if it
+            //  doesn't understand it as a valid option.  This information
+            //  may still be used elsewhere in a client implementation.
+            //
+            static const std::unordered_set<std::string> rewrite_as_metaopts = {
+                "AUTOLOGIN",
+                "FRIENDLY_NAME",
+                "PROFILE",
+                "USERNAME"};
+            bool rewrite_meta = std::find(rewrite_as_metaopts.begin(),
+                                          rewrite_as_metaopts.end(),
+                                          optname)
+                                != rewrite_as_metaopts.end();
 
             // Inlined files needs special treatment, as they span
             // multiple lines.  Just retrieve the raw data directly here.
@@ -329,7 +380,7 @@ class OptionListJSON : public openvpn::OptionList
             {
                 cfgstr << optparser_mkline(optname, element.ref(1)) << std::endl;
             }
-            else if (setenv_rewrite)
+            else if (rewrite_meta)
             {
                 cfgstr << "setenv opt " << element.escape(false) << std::endl;
             }
@@ -348,15 +399,10 @@ class OptionListJSON : public openvpn::OptionList
 
   private:
     // FIXME: Hackish workaround for OpenVPN Access Server
-    //        configured to do web authentication.  This is
-    //        only needed until OpenVPN 3 Core library gets
-    //        updated to always preserve and send --auth-token,
-    //        similar to how OpenVPN 2.x behaves.
-    //
     //        The list of options here are more to be considered
     //        wildcard matches
     //
-    std::vector<std::string> ignore_as_metaopts = {
+    const std::unordered_set<std::string> ignore_as_metaopts = {
         "ALLOW_UNSIGNED",
         "APP_VERIFY",
         "AUTOLOGIN_SPEC",
