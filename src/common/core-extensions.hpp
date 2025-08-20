@@ -106,9 +106,9 @@ class OptionListJSON : public openvpn::OptionList
             }
 
             Json::Value optval{};
-            if (inline_file_option(optname))
+            if (is_tag_option(optname))
             {
-                // Inlined files needs to be rendered via the
+                // Option values inside tags needs to be rendered via the
                 // Option::render() method.  We remove the option name
                 // from Option object first, to avoid getting that into the
                 // option value we will store in the JSON dictionary.
@@ -287,9 +287,9 @@ class OptionListJSON : public openvpn::OptionList
                                           optname)
                                 != rewrite_as_metaopts.end();
 
-            // Inlined files needs special treatment, as they span
+            // Option values inside tags needs special treatment, as they span
             // multiple lines.  Just retrieve the raw data directly here.
-            if (inline_file_option(optname) && element.size() > 1)
+            if (is_tag_option(optname) && element.size() > 1)
             {
                 cfgstr << compose_cfg_line(optname, element.ref(1)) << std::endl;
             }
@@ -345,11 +345,12 @@ class OptionListJSON : public openvpn::OptionList
      * @param optname std::string with option to look up
      * @return bool, true if the option is to be handled as a "tag option".
      */
-    bool inline_file_option(const std::string &optname) const
+    bool is_tag_option(const std::string &optname) const
     {
         static const std::unordered_set<std::string> tag_opts{
             "ca",
             "cert",
+            "connection",
             "dh",
             "extra-certs",
             "http-proxy-user-pass",
@@ -377,6 +378,7 @@ class OptionListJSON : public openvpn::OptionList
     bool option_value_need_array(const std::string &optname) const
     {
         static const std::unordered_set<std::string> array_storage{
+            "connection",
             "peer-fingerprint",
             "pull-filter",
             "remote",
@@ -400,7 +402,7 @@ class OptionListJSON : public openvpn::OptionList
     {
         std::stringstream ret;
 
-        if (inline_file_option(optname) && !optvalue.empty())
+        if (is_tag_option(optname) && !optvalue.empty())
         {
             ret << "<" << optname << ">" << std::endl
                 << optvalue;
@@ -446,11 +448,11 @@ class OptionListJSON : public openvpn::OptionList
             return;
         }
 
-        if (inline_file_option(key))
+        if (is_tag_option(key))
         {
-            // Inline files needs a slightly different handling in the
-            // type 1) format.  The OptionList::parse_option_from_line()
-            // does not expect inline file.
+            // Option values inside tags needs a slightly different handling
+            // in the type 1) format.  The OptionList::parse_option_from_line()
+            // does not expect tag-formatted key/values.
             Option opt(key, data.asString());
             push_back(opt);
             return;
