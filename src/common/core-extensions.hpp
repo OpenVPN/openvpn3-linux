@@ -17,93 +17,6 @@
 #include <openvpn/options/merge.hpp>
 
 namespace openvpn {
-
-namespace {
-/**
- *  Check if an option is to be preserved as a "tag block"
- *  instead of just a single option line.
- *
- *  This is used when recreating the configuration profile
- *  as a plain-text file.
- *
- * @param optname std::string with option to look up
- * @return bool, true if the option is to be handled as a "tag option".
- */
-bool optparser_inline_file(const std::string &optname)
-{
-    static const std::unordered_set<std::string> tag_opts{
-        "ca",
-        "cert",
-        "dh",
-        "extra-certs",
-        "http-proxy-user-pass",
-        "key",
-        "pkcs12",
-        "tls-auth",
-        "tls-crypt",
-        "tls-crypt-v2"};
-
-    return tag_opts.find(optname) != tag_opts.end();
-}
-
-
-/**
- *  Check if an option may require its values to be stored
- *  in an array/vector.
- *
- *  This is required for options which can appear more times
- *  in the same configuration file.
- *
- * @param optname std::string with option key to look up
- * @return bool, true if value storage should be in an array
- */
-bool option_req_array(const std::string &optname)
-{
-    static const std::unordered_set<std::string> array_storage{
-        "peer-fingerprint",
-        "pull-filter",
-        "remote",
-        "route",
-        "route-ipv6"};
-
-    return array_storage.find(optname) != array_storage.end();
-}
-
-
-/**
- *  Compose a configuration string for a single option key/value
- *  which follows the standard OpenVPN configuration file format
- *
- * @param optname    std::string of the option key
- * @param optvalue   std::string with the option value to use
- * @return std::string containing the properly formatted
- *         configuration line
- */
-std::string optparser_mkline(const std::string &optname, const std::string &optvalue)
-{
-    std::stringstream ret;
-
-    if (optparser_inline_file(optname) && !optvalue.empty())
-    {
-        ret << "<" << optname << ">" << std::endl
-            << optvalue;
-        if ('\n' != optvalue.back())
-        {
-            ret << std::endl;
-        }
-        ret << "</" << optname << ">"
-            << std::endl;
-    }
-    else
-    {
-        ret << optname << " " << optvalue << std::endl;
-    }
-    return ret.str();
-}
-} // anonymous local namespace
-
-
-
 /**
  *  This class extends the OptionList class with JSON import/export
  *  capabilities as well as a utility function to export the whole
@@ -193,7 +106,7 @@ class OptionListJSON : public openvpn::OptionList
             }
 
             Json::Value optval{};
-            if (optparser_inline_file(optname))
+            if (inline_file_option(optname))
             {
                 // Inlined files needs to be rendered via the
                 // Option::render() method.  We remove the option name
@@ -215,7 +128,7 @@ class OptionListJSON : public openvpn::OptionList
                 }
             }
 
-            if (!option_req_array(optname))
+            if (!option_value_need_array(optname))
             {
                 // For options only expected to be used once, they get
                 // the value array directly.  This is format 3a) as
@@ -273,7 +186,7 @@ class OptionListJSON : public openvpn::OptionList
                 }
                 else
                 {
-                    if (option_req_array(optname) && data[optname].isArray())
+                    if (option_value_need_array(optname) && data[optname].isArray())
                     {
                         // Old JSON format - with a value array for selected
                         // options.  This is format 2)
@@ -376,9 +289,9 @@ class OptionListJSON : public openvpn::OptionList
 
             // Inlined files needs special treatment, as they span
             // multiple lines.  Just retrieve the raw data directly here.
-            if (optparser_inline_file(optname) && element.size() > 1)
+            if (inline_file_option(optname) && element.size() > 1)
             {
-                cfgstr << optparser_mkline(optname, element.ref(1)) << std::endl;
+                cfgstr << compose_cfg_line(optname, element.ref(1)) << std::endl;
             }
             else if (rewrite_meta)
             {
@@ -423,6 +336,90 @@ class OptionListJSON : public openvpn::OptionList
 
 
     /**
+     *  Check if an option is to be preserved as a "tag block"
+     *  instead of just a single option line.
+     *
+     *  This is used when recreating the configuration profile
+     *  as a plain-text file.
+     *
+     * @param optname std::string with option to look up
+     * @return bool, true if the option is to be handled as a "tag option".
+     */
+    bool inline_file_option(const std::string &optname) const
+    {
+        static const std::unordered_set<std::string> tag_opts{
+            "ca",
+            "cert",
+            "dh",
+            "extra-certs",
+            "http-proxy-user-pass",
+            "key",
+            "pkcs12",
+            "tls-auth",
+            "tls-crypt",
+            "tls-crypt-v2"};
+
+        return tag_opts.find(optname) != tag_opts.end();
+    }
+
+
+    /**
+     *  Check if an option may require its values to be stored
+     *  in an array/vector.
+     *
+     *  This is required for options which can appear more times
+     *  in the same configuration file, since key/value storages
+     *  (like dictionaries) cannot have duplicated keys.
+     *
+     * @param optname std::string with option key to look up
+     * @return bool, true if value storage should be in an array
+     */
+    bool option_value_need_array(const std::string &optname) const
+    {
+        static const std::unordered_set<std::string> array_storage{
+            "peer-fingerprint",
+            "pull-filter",
+            "remote",
+            "route",
+            "route-ipv6"};
+
+        return array_storage.find(optname) != array_storage.end();
+    }
+
+
+    /**
+     *  Compose a configuration string for a single option key/value
+     *  which follows the standard OpenVPN configuration file format
+     *
+     * @param optname    std::string of the option key
+     * @param optvalue   std::string with the option value to use
+     * @return std::string containing the properly formatted
+     *         configuration line
+     */
+    std::string compose_cfg_line(const std::string &optname, const std::string &optvalue) const
+    {
+        std::stringstream ret;
+
+        if (inline_file_option(optname) && !optvalue.empty())
+        {
+            ret << "<" << optname << ">" << std::endl
+                << optvalue;
+            if ('\n' != optvalue.back())
+            {
+                ret << std::endl;
+            }
+            ret << "</" << optname << ">"
+                << std::endl;
+        }
+        else
+        {
+            ret << optname << " " << optvalue << std::endl;
+        }
+        return ret.str();
+    }
+
+
+    /**
      * Parses a Json::Value object and adds it as an Option object to the
      * std::vector<Option> which is part of the OptionList object.
      *
@@ -449,7 +446,7 @@ class OptionListJSON : public openvpn::OptionList
             return;
         }
 
-        if (optparser_inline_file(key))
+        if (inline_file_option(key))
         {
             // Inline files needs a slightly different handling in the
             // type 1) format.  The OptionList::parse_option_from_line()
