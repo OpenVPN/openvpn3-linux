@@ -59,6 +59,7 @@ int main(int argc, char **argv)
                               ProfileParseLimits::MAX_DIRECTIVE_SIZE);
     OptionListJSON options;
     options.parse_from_config(pm.profile_content(), &limits);
+    options.parse_meta_from_config(pm.profile_content(), "OVPN_ACCESS_SERVER", &limits);
     std::cout << options.json_export() << std::endl;
     return 0;
 }
