@@ -18,6 +18,8 @@
 
 #include "build-config.h"
 
+#include <fmt/format.h>
+
 #include "common/string-utils.hpp"
 #include "netcfg-device.hpp"
 
@@ -472,8 +474,15 @@ void NetCfgDevice::method_establish(DBus::Object::Method::Arguments::Ptr args)
     }
     catch (const NetCfgException &excp)
     {
-        signals->LogCritical("Failed to setup a TUN interface: "
-                             + std::string(excp.what()));
+        signals->LogCritical(
+            fmt::format("Failed to setup a TUN interface: {}",
+                        excp.what()));
+    }
+    catch (const std::exception &excp)
+    {
+        signals->LogCritical(
+            fmt::format("Failed to setup TUN interface (Core Exception): {}",
+                        excp.what()));
     }
 
     try
