@@ -120,15 +120,24 @@ class DCO
 class Network
 {
   public:
-    Network(std::string networkAddress,
-            unsigned int prefix_sz,
-            bool ipv6,
-            bool exclude = false);
+    static Network IncludeRoute(const std::string &networkAddress,
+                                int prefix_size,
+                                bool ipv6);
+
+    static Network ExcludeRoute(const std::string &networkAddress,
+                                int prefix_size,
+                                bool ipv6);
 
     std::string address;
     uint32_t prefix_size;
     bool ipv6;
     bool exclude;
+
+  private:
+    Network(const std::string &networkAddress_,
+            uint32_t prefix_sz_,
+            bool ipv6_,
+            bool exclude_);
 };
 
 // FIXME: Migration hack - netcfg-device.hpp need refactoring

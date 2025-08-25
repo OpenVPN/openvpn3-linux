@@ -45,9 +45,24 @@ namespace NetCfgProxy {
 //  class NetCfgProxy::Network
 //
 
-Network::Network(std::string networkAddress, uint32_t prefix_sz, bool ipv6, bool exclude)
-    : address(std::move(networkAddress)),
-      prefix_size(prefix_sz), ipv6(ipv6), exclude(exclude)
+Network Network::IncludeRoute(const std::string &networkAddress, int prefix_size, bool ipv6)
+{
+    return Network(networkAddress, static_cast<uint32_t>(prefix_size), ipv6, false);
+}
+
+
+Network Network::ExcludeRoute(const std::string &networkAddress, int prefix_size, bool ipv6)
+{
+    return Network(networkAddress, static_cast<uint32_t>(prefix_size), ipv6, true);
+}
+
+
+Network::Network(const std::string &networkAddress_,
+                 uint32_t prefix_sz_,
+                 bool ipv6_,
+                 bool exclude_)
+    : address(networkAddress_),
+      prefix_size(prefix_sz_), ipv6(ipv6_), exclude(exclude_)
 {
 }
 

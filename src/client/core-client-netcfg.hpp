@@ -247,7 +247,8 @@ class NetCfgTunBuilder : public T
         /* We ignore metric */
         /* Instead calling the proxy for each network individually we collect them
          * to save context switching/rpc overhead */
-        networks.emplace_back(NetCfgProxy::Network(address, prefix_length, ipv6));
+        networks.push_back(
+            NetCfgProxy::Network::IncludeRoute(address, prefix_length, ipv6));
         return true;
     }
 
@@ -257,10 +258,8 @@ class NetCfgTunBuilder : public T
                                    int metric,
                                    bool ipv6) override
     {
-        networks.emplace_back(NetCfgProxy::Network(address,
-                                                   (unsigned int)prefix_length,
-                                                   ipv6,
-                                                   true));
+        networks.push_back(
+            NetCfgProxy::Network::ExcludeRoute(address, prefix_length, ipv6));
         return true;
     }
 
