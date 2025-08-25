@@ -82,14 +82,24 @@ TEST(NetCfgChangeEvent, reset)
 
 TEST(NetCfgChangeEvent, stringstream)
 {
+    // TODO: Simple compat-check - can be removed in v28+
     NetCfgChangeEvent event(NetCfgChangeType::IPADDR_ADDED,
                             "testdev",
-                            {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
+                            {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}, {"prefix_size", "64"}});
     std::stringstream chk;
     chk << event;
-    std::string expect("Device testdev - IP Address Added: ip_address='2001:db8:a050::1', prefix='64'");
+    std::string expect("Device testdev - IP Address Added: ip_address='2001:db8:a050::1', prefix='64', prefix_size='64'");
 
-    ASSERT_TRUE(chk.str() == expect);
+    EXPECT_TRUE(chk.str() == expect);
+
+    NetCfgChangeEvent event2(NetCfgChangeType::IPADDR_ADDED,
+                            "testdev",
+                            {{"ip_address", "2001:db8:a050::1"}, {"prefix_size", "64"}});
+    std::stringstream chk2;
+    chk2 << event2;
+    std::string expect2("Device testdev - IP Address Added: ip_address='2001:db8:a050::1', prefix_size='64'");
+
+    EXPECT_TRUE(chk2.str() == expect2);
 }
 
 
@@ -97,14 +107,14 @@ TEST(NetCfgChangeEvent, gvariant_GetVariant)
 {
     NetCfgChangeEvent g_state(NetCfgChangeType::ROUTE_ADDED,
                               "tun22",
-                              {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
+                              {{"ip_address", "2001:db8:a050::1"}, {"prefix_size", "64"}});
     GVariant *chk = g_state.GetGVariant();
     gchar *dmp = g_variant_print(chk, true);
     std::string dump_check(dmp);
     g_free(dmp);
     g_variant_unref(chk);
 
-    std::string expect = "(uint32 16, 'tun22', {'ip_address': '2001:db8:a050::1', 'prefix': '64'})";
+    std::string expect = "(uint32 16, 'tun22', {'ip_address': '2001:db8:a050::1', 'prefix_size': '64'})";
     ASSERT_EQ(dump_check, expect);
 }
 
@@ -113,7 +123,7 @@ TEST(NetCfgChangeEvent, gvariant_get)
 {
     NetCfgChangeEvent g_state(NetCfgChangeType::ROUTE_ADDED,
                               "tun22",
-                              {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
+                              {{"ip_address", "2001:db8:a050::1"}, {"prefix_size", "64"}});
     GVariant *chk = g_state.GetGVariant();
 
     guint type = 0;
@@ -148,7 +158,7 @@ TEST(NetCfgChangeEvent, parse_gvariant_valid_data)
 {
     NetCfgChangeEvent event(NetCfgChangeType::ROUTE_ADDED,
                             "tun33",
-                            {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
+                            {{"ip_address", "2001:db8:a050::1"}, {"prefix_size", "64"}});
 
     //
     // Build up an GVariant object similar to what we would retrieve
@@ -171,7 +181,7 @@ TEST(NetCfgChangeEvent, parse_gvariant_valid_data)
 
     // Add prefix
     glib2::Builder::OpenChild(b, "{ss}");
-    glib2::Builder::Add(b, std::string("prefix"));
+    glib2::Builder::Add(b, std::string("prefix_size"));
     glib2::Builder::Add(b, std::string("64"));
     glib2::Builder::CloseChild(b);
 
@@ -234,10 +244,10 @@ TEST(NetCfgChangeEvent, compare_eq)
 {
     NetCfgChangeEvent s1(NetCfgChangeType::ROUTE_ADDED,
                          "tun22",
-                         {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
+                         {{"ip_address", "2001:db8:a050::1"}, {"prefix_size", "64"}});
     NetCfgChangeEvent s2(NetCfgChangeType::ROUTE_ADDED,
                          "tun22",
-                         {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
+                         {{"ip_address", "2001:db8:a050::1"}, {"prefix_size", "64"}});
     std::string res = test_compare(s1, s2, true);
     ASSERT_TRUE(res.empty()) << res;
 }
@@ -247,10 +257,10 @@ TEST(NetCfgChangeEvent, operator_eq)
 {
     NetCfgChangeEvent s1(NetCfgChangeType::ROUTE_ADDED,
                          "tun22",
-                         {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
+                         {{"ip_address", "2001:db8:a050::1"}, {"prefix_size", "64"}});
     NetCfgChangeEvent s2(NetCfgChangeType::ROUTE_ADDED,
                          "tun22",
-                         {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
+                         {{"ip_address", "2001:db8:a050::1"}, {"prefix_size", "64"}});
     ASSERT_TRUE(s1 == s2);
 }
 
@@ -258,7 +268,7 @@ TEST(NetCfgChangeEvent, compare_neq)
 {
     NetCfgChangeEvent s1(NetCfgChangeType::ROUTE_ADDED,
                          "tun22",
-                         {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
+                         {{"ip_address", "2001:db8:a050::1"}, {"prefix_size", "64"}});
     NetCfgChangeEvent s2(NetCfgChangeType::DNS_SERVER_REMOVED,
                          "tun11",
                          {{"dns_server", "127.0.0.1"}});
@@ -271,7 +281,7 @@ TEST(NetCfgChangeEvent, operator_neq)
 {
     NetCfgChangeEvent s1(NetCfgChangeType::ROUTE_ADDED,
                          "tun22",
-                         {{"ip_address", "2001:db8:a050::1"}, {"prefix", "64"}});
+                         {{"ip_address", "2001:db8:a050::1"}, {"prefix_size", "64"}});
     NetCfgChangeEvent s2(NetCfgChangeType::DNS_SERVER_REMOVED,
                          "tun11",
                          {{"dns_server", "127.0.0.1"}});

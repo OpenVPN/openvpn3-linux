@@ -121,12 +121,12 @@ class Network
 {
   public:
     Network(std::string networkAddress,
-            unsigned int prefix,
+            unsigned int prefix_sz,
             bool ipv6,
             bool exclude = false);
 
     std::string address;
-    unsigned int prefix;
+    uint32_t prefix_size;
     bool ipv6;
     bool exclude;
 };
@@ -168,12 +168,12 @@ class Device
      *  Adds an IPv4 address to this network device
      *
      * @param ip_address String representation of the IP Address
-     * @param prefix Prefix length (CIDR)
+     * @param prefix_size Prefix size (CIDR notation, f.ex. /24, /27)
      * @param gateway Gateway for this network
      * @param ipv6 Is this Address an IPv6 address
      */
     void AddIPAddress(const std::string &ip_address,
-                      unsigned int prefix,
+                      uint32_t prefix_size,
                       const std::string &gateway,
                       bool ipv6) const;
 

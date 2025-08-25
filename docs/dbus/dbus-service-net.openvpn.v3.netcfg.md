@@ -200,7 +200,7 @@ node /net/openvpn/v3/netcfg/${UNIQUE_ID} {
 interface net.openvpn.v3.netcfg {
     methods:
       AddIPAddress(in  s ip_address,
-                   in  u prefix,
+                   in  u prefix_size,
                    in  s gateway,
                    in  b ipv6);
       SetRemoteAddress(in  s ip_address,
@@ -252,7 +252,7 @@ Adds a new local IP Address to the VPN configuration of the virtual interface
 | Direction | Name         | Type             | Description                                                                  |
 |-----------|--------------|------------------|------------------------------------------------------------------------------|
 | In        | ip_address   | string           | The IP address in string representation (e.g. 198.51.100.12 or 2001:db8::23) |
-| In        | prefix       | unsigned integer | The prefix length. (e.g. /24 or /64)                                         |
+| In        | prefix_size  | unsigned integer | The prefix size. (e.g. /24 or /64)                                           |
 | In        | gateway      | string           | The IP address in string representation of the remote gateway inside the VPN |
 | In        | ipv6         | ipv6             | Is the new IP address IPv6 or IPv4                                           |
 
@@ -286,7 +286,7 @@ A network is specified in the following way:
  | Name         | Type             | Description                                                                  |
  |--------------|------------------|------------------------------------------------------------------------------|
  | ip_address   | string           | The network IP address (the first IP in the network)                         |
- | prefix       | unsigned integer | The prefix of the network (e.g. /24 or /64)                                  |
+ | prefix_size  | unsigned integer | The prefix of the network (e.g. /24 or /64)                                  |
  | ipv6         | boolean          | Is this a IPv6 or IPv4 network specification                                 |
  | exclude      | boolean          | If true, exclude (do not route) otherwise include (do route) this network over the VPN |
 
@@ -414,7 +414,8 @@ not providing any details are not mentioned.
 |---------------|---------------------------------------------------------------------------|
 | ip_version    | Will be `4` or `6` which refers to IPv4 or IPv6                           |
 | ip_address    | The IP address added to/removed from the interface                        |
-| prefix        | The subnet prefix of the IP address                                       |
+| prefix        | The subnet prefix size of the subnet IP address (**DEPRECATED:** Will be removed in v28, replaced by `prefix_size`) |
+| prefix_size   | The subnet prefix size of the IP network address                          |
 
 #### NetworkChange type `ROUTE_ADDED`, `ROUTE_REMOVED` and `ROUTE_EXCLUDED`
 
@@ -422,7 +423,8 @@ not providing any details are not mentioned.
 |---------------|---------------------------------------------------------------------------|
 | ip_version    | Will be `4` or `6` which refers to IPv4 or IPv6                           |
 | subnet        | Network IP address for the route which was added/removed/excluded         |
-| prefix        | The subnet prefix of the subnet IP address                                |
+| prefix        | The subnet prefix size of the subnet IP address (**DEPRECATED:** Will be removed in v28, replaced by `prefix_size`) |
+| prefix_size   | The subnet prefix size of the IP network address                          |
 | gateway       | The gateway configured for this subnet (not present when removing routes) |
 
 #### NetworkChange type `DNS_SERVER_ADDED` and `DNS_SERVER_REMOVED`

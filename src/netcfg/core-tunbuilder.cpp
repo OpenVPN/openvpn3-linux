@@ -95,7 +95,7 @@ class CoreTunbuilderImpl : public CoreTunbuilder
 
         for (const auto &ipaddr : netCfgDevice.vpnips)
         {
-            tbc->tun_builder_add_address(ipaddr.address, ipaddr.prefix, ipaddr.gateway, ipaddr.ipv6, false);
+            tbc->tun_builder_add_address(ipaddr.address, ipaddr.prefix_size, ipaddr.gateway, ipaddr.ipv6, false);
         }
         tbc->tun_builder_set_remote_address(netCfgDevice.remote.address,
                                             netCfgDevice.remote.ipv6);
@@ -106,11 +106,11 @@ class CoreTunbuilderImpl : public CoreTunbuilder
             if (net.exclude)
             {
                 // -1 is "default/optional" value
-                tbc->tun_builder_exclude_route(net.address, net.prefix, -1, net.ipv6);
+                tbc->tun_builder_exclude_route(net.address, net.prefix_size, -1, net.ipv6);
             }
             else
             {
-                tbc->tun_builder_add_route(net.address, net.prefix, -1, net.ipv6);
+                tbc->tun_builder_add_route(net.address, net.prefix_size, -1, net.ipv6);
             }
         }
 
@@ -202,7 +202,8 @@ class CoreTunbuilderImpl : public CoreTunbuilder
             NetCfgChangeEvent chg_ev(NetCfgChangeType::IPADDR_ADDED,
                                      config.iface_name,
                                      {{"ip_address", ipaddr.address},
-                                      {"prefix", std::to_string(ipaddr.prefix)},
+                                      {"prefix", std::to_string(ipaddr.prefix_size)}, // TODO: Deprecated, remove in v28+
+                                      {"prefix_size", std::to_string(ipaddr.prefix_size)},
                                       {"ip_version", (ipaddr.ipv6 ? "6" : "4")}});
             netCfgDevice.signals->NetworkChange(chg_ev);
         }
@@ -239,7 +240,8 @@ class CoreTunbuilderImpl : public CoreTunbuilder
                                      config.iface_name,
                                      {{"ip_version", (net.ipv6 ? "6" : "4")},
                                       {"subnet", net.address},
-                                      {"prefix", std::to_string(net.prefix)},
+                                      {"prefix", std::to_string(net.prefix_size)}, // TODO: Deprecated, remove in v28+
+                                      {"prefix_size", std::to_string(net.prefix_size)},
                                       {"gateway", (net.ipv6 ? local6.gateway : local4.gateway)}});
             netCfgDevice.signals->NetworkChange(chg_ev);
         }
@@ -270,7 +272,8 @@ class CoreTunbuilderImpl : public CoreTunbuilder
                                      ncdev.get_device_name(),
                                      {{"ip_version", (net.ipv6 ? "6" : "4")},
                                       {"subnet", net.address},
-                                      {"prefix", std::to_string(net.prefix)}});
+                                      {"prefix", std::to_string(net.prefix_size)}, // TODO: Deprecated, remove in v28+
+                                      {"prefix_size", std::to_string(net.prefix_size)}});
             ncdev.signals->NetworkChange(chg_ev);
         }
 
@@ -280,7 +283,8 @@ class CoreTunbuilderImpl : public CoreTunbuilder
             NetCfgChangeEvent chg_ev(NetCfgChangeType::IPADDR_REMOVED,
                                      ncdev.get_device_name(),
                                      {{"ip_address", ipaddr.address},
-                                      {"prefix", std::to_string(ipaddr.prefix)},
+                                      {"prefix", std::to_string(ipaddr.prefix_size)}, // TODO: Deprecated, remove in v28+
+                                      {"prefix_size", std::to_string(ipaddr.prefix_size)},
                                       {"ip_version", (ipaddr.ipv6 ? "6" : "4")}});
             ncdev.signals->NetworkChange(chg_ev);
         }

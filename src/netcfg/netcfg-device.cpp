@@ -157,7 +157,7 @@ NetCfgDevice::NetCfgDevice(DBus::Connection::Ptr dbuscon_,
             args->SetMethodReturn(nullptr);
         });
     args_add_ipaddr->AddInput("ip_address", "s");
-    args_add_ipaddr->AddInput("prefix", glib2::DataType::DBus<unsigned int>());
+    args_add_ipaddr->AddInput("prefix_size", glib2::DataType::DBus<unsigned int>());
     args_add_ipaddr->AddInput("gateway", "s");
     args_add_ipaddr->AddInput("ipv6", glib2::DataType::DBus<bool>());
 
@@ -302,15 +302,15 @@ void NetCfgDevice::method_add_ip_address(GVariant *params)
     glib2::Utils::checkParams(__func__, params, "(susb)", 4);
 
     std::string ipaddr = filter_ctrl_chars(glib2::Value::Extract<std::string>(params, 0), true);
-    uint32_t prefix = glib2::Value::Extract<uint32_t>(params, 1);
+    uint32_t prefix_size = glib2::Value::Extract<uint32_t>(params, 1);
     std::string gateway = filter_ctrl_chars(glib2::Value::Extract<std::string>(params, 2), true);
     bool ipv6 = glib2::Value::Extract<bool>(params, 3);
 
     signals->LogInfo(std::string("Adding IP Address ") + ipaddr
-                     + "/" + std::to_string(prefix)
+                     + "/" + std::to_string(prefix_size)
                      + " gw " + gateway + " ipv6: " + (ipv6 ? "yes" : "no"));
 
-    vpnips.emplace_back(VPNAddress(std::string(ipaddr), prefix, std::string(gateway), ipv6));
+    vpnips.emplace_back(VPNAddress(std::string(ipaddr), prefix_size, std::string(gateway), ipv6));
 }
 
 
@@ -340,16 +340,16 @@ void NetCfgDevice::method_add_networks(GVariant *params)
         glib2::Utils::checkParams(__func__, network, "(subb)", 4);
 
         std::string net{filter_ctrl_chars(glib2::Value::Extract<std::string>(network, 0), true)};
-        uint32_t prefix{glib2::Value::Extract<uint32_t>(network, 1)};
+        uint32_t prefix_size{glib2::Value::Extract<uint32_t>(network, 1)};
         bool ipv6{glib2::Value::Extract<bool>(network, 2)};
         bool exclude{glib2::Value::Extract<bool>(network, 3)};
 
         signals->LogInfo(std::string("Adding network '") + net + "/"
-                         + std::to_string(prefix)
+                         + std::to_string(prefix_size)
                          + "' excl: " + (exclude ? "yes" : "no")
                          + " ipv6: " + (ipv6 ? "yes" : "no"));
 
-        networks.emplace_back(Network(std::string(net), prefix, ipv6, exclude));
+        networks.emplace_back(Network(std::string(net), prefix_size, ipv6, exclude));
     }
     // FIXME:  No need to unref GVariant *network ?
     g_variant_iter_free(network_iter);

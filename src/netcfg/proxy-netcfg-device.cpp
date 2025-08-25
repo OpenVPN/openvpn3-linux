@@ -45,9 +45,9 @@ namespace NetCfgProxy {
 //  class NetCfgProxy::Network
 //
 
-Network::Network(std::string networkAddress, unsigned int prefix, bool ipv6, bool exclude)
+Network::Network(std::string networkAddress, uint32_t prefix_sz, bool ipv6, bool exclude)
     : address(std::move(networkAddress)),
-      prefix(prefix), ipv6(ipv6), exclude(exclude)
+      prefix_size(prefix_sz), ipv6(ipv6), exclude(exclude)
 {
 }
 
@@ -93,7 +93,7 @@ bool Device::AddBypassRoute(const std::string &addr,
 
 
 void Device::AddIPAddress(const std::string &ip_address,
-                          const unsigned int prefix,
+                          const uint32_t prefix_size,
                           const std::string &gateway,
                           bool ipv6) const
 {
@@ -101,7 +101,7 @@ void Device::AddIPAddress(const std::string &ip_address,
                               "AddIPAddress",
                               g_variant_new("(susb)",
                                             ip_address.c_str(),
-                                            prefix,
+                                            prefix_size,
                                             gateway.c_str(),
                                             ipv6));
     if (r)
@@ -119,7 +119,7 @@ void Device::AddNetworks(const std::vector<Network> &networks) const
         g_variant_builder_add(bld,
                               "(subb)",
                               net.address.c_str(),
-                              net.prefix,
+                              net.prefix_size,
                               net.ipv6,
                               net.exclude);
     }

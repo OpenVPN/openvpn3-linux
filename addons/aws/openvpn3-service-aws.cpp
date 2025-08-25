@@ -207,7 +207,7 @@ class AWSObject : public DBus::Object::Base
 
         try
         {
-            const std::string cidr = ev.details["subnet"] + "/" + ev.details["prefix"];
+            const std::string cidr = ev.details["subnet"] + "/" + ev.details["prefix_size"];
             const bool ipv6 = ev.details["ip_version"] == "6";
             auto route_context = prepare_route_context(config.role_name);
 

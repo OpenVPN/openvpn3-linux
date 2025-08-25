@@ -87,20 +87,21 @@ class Network : public IPAddr
     }
 
     Network(const std::string &networkAddress,
-            const unsigned int prefix,
+            const uint32_t prefix_sz,
             const bool ipv6,
             const bool exclude = false)
         : IPAddr(networkAddress, ipv6),
-          prefix(prefix), exclude(exclude)
+          prefix_size(prefix_sz), exclude(exclude)
     {
     }
 
 
     std::string str() const
     {
-        return address + "/" + std::to_string(prefix);
+        return address + "/" + std::to_string(prefix_size);
     }
-    unsigned int prefix;
+
+    uint32_t prefix_size;
     bool exclude;
 };
 
