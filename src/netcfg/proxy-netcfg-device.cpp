@@ -45,24 +45,25 @@ namespace NetCfgProxy {
 //  class NetCfgProxy::Network
 //
 
-Network Network::IncludeRoute(const std::string &networkAddress, int prefix_size, bool ipv6)
+Network Network::IncludeRoute(const std::string &networkAddress, int prefix_size, int metric, bool ipv6)
 {
-    return Network(networkAddress, static_cast<uint32_t>(prefix_size), ipv6, false);
+    return Network(networkAddress, static_cast<uint32_t>(prefix_size), metric, ipv6, false);
 }
 
 
-Network Network::ExcludeRoute(const std::string &networkAddress, int prefix_size, bool ipv6)
+Network Network::ExcludeRoute(const std::string &networkAddress, int prefix_size, int metric, bool ipv6)
 {
-    return Network(networkAddress, static_cast<uint32_t>(prefix_size), ipv6, true);
+    return Network(networkAddress, static_cast<uint32_t>(prefix_size), metric, ipv6, true);
 }
 
 
 Network::Network(const std::string &networkAddress_,
                  uint32_t prefix_sz_,
+                 int metric_,
                  bool ipv6_,
                  bool exclude_)
-    : address(networkAddress_),
-      prefix_size(prefix_sz_), ipv6(ipv6_), exclude(exclude_)
+    : address(networkAddress_), prefix_size(prefix_sz_),
+      metric(metric_), ipv6(ipv6_), exclude(exclude_)
 {
 }
 
@@ -128,13 +129,15 @@ void Device::AddIPAddress(const std::string &ip_address,
 
 void Device::AddNetworks(const std::vector<Network> &networks) const
 {
-    GVariantBuilder *bld = glib2::Builder::Create("a(subb)");
+    // FIXME: Migrate into Network class
+    GVariantBuilder *bld = glib2::Builder::Create("a(suibb)");
     for (const auto &net : networks)
     {
         g_variant_builder_add(bld,
-                              "(subb)",
+                              "(suibb)",
                               net.address.c_str(),
                               net.prefix_size,
+                              net.metric,
                               net.ipv6,
                               net.exclude);
     }

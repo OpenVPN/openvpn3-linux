@@ -106,11 +106,11 @@ class CoreTunbuilderImpl : public CoreTunbuilder
             if (net.exclude)
             {
                 // -1 is "default/optional" value
-                tbc->tun_builder_exclude_route(net.address, net.prefix_size, -1, net.ipv6);
+                tbc->tun_builder_exclude_route(net.address, net.prefix_size, net.metric, net.ipv6);
             }
             else
             {
-                tbc->tun_builder_add_route(net.address, net.prefix_size, -1, net.ipv6);
+                tbc->tun_builder_add_route(net.address, net.prefix_size, net.metric, net.ipv6);
             }
         }
 

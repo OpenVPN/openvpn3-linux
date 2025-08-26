@@ -179,7 +179,7 @@ NetCfgDevice::NetCfgDevice(DBus::Connection::Ptr dbuscon_,
             this->method_add_networks(args->GetMethodParameters());
             args->SetMethodReturn(nullptr);
         });
-    args_add_networks->AddInput("networks", "a(subb)");
+    args_add_networks->AddInput("networks", "a(suibb)");
 
 
     auto args_add_dns = AddMethod(
@@ -330,26 +330,54 @@ void NetCfgDevice::method_set_remote_addr(GVariant *params)
 
 void NetCfgDevice::method_add_networks(GVariant *params)
 {
-    glib2::Utils::checkParams(__func__, params, "(a(subb))", 1);
+    /*
+     *  D-Bus Data type description
+     *
+     *  The argument given contains an array of networks to apply
+     *
+     *  s  -  string, contains the IPv4/IPv6 network address (without prefix length)
+     *  u  -  uint32_t, containing the network prefix length
+     *  i  -  int32_t, route metric value; if '-1', the Core library will use the default metric
+     *  b  -  bool, IPv6 address flag
+     *  b  -  bool, exclude flag.  Route is to be excluded if true
+     */
+    glib2::Utils::checkParams(__func__, params, "(a(suibb))", 1);
     GVariantIter *network_iter;
-    g_variant_get(params, "(a(subb))", &network_iter);
+    g_variant_get(params, "(a(suibb))", &network_iter);
 
-    GVariant *network = nullptr;
-    while ((network = g_variant_iter_next_value(network_iter)))
+    GVariant *network_descr = nullptr;
+    while ((network_descr = g_variant_iter_next_value(network_iter)))
     {
-        glib2::Utils::checkParams(__func__, network, "(subb)", 4);
+        try
+    {
+            glib2::Utils::checkParams(__func__, network_descr, "(suibb)", 5);
+        }
+        catch (const DBus::Exception &excp)
+        {
+            char *data = g_variant_print(network_descr, true);
+            std::string err = fmt::format("{} - Data: {}",
+                                          excp.GetRawError(),
+                                          std::string(data));
+            free(data);
+            throw NetCfgException(err);
+        }
 
-        std::string net{filter_ctrl_chars(glib2::Value::Extract<std::string>(network, 0), true)};
-        uint32_t prefix_size{glib2::Value::Extract<uint32_t>(network, 1)};
-        bool ipv6{glib2::Value::Extract<bool>(network, 2)};
-        bool exclude{glib2::Value::Extract<bool>(network, 3)};
+        // FIXME: migrate into Network class
+        auto netw_addr{filter_ctrl_chars(glib2::Value::Extract<std::string>(network_descr, 0), true)};
+        auto prefix_size{glib2::Value::Extract<uint32_t>(network_descr, 1)};
+        auto metric{glib2::Value::Extract<int32_t>(network_descr, 2)};
+        auto ipv6{glib2::Value::Extract<bool>(network_descr, 3)};
+        auto exclude{glib2::Value::Extract<bool>(network_descr, 4)};
 
-        signals->LogInfo(std::string("Adding network '") + net + "/"
-                         + std::to_string(prefix_size)
-                         + "' excl: " + (exclude ? "yes" : "no")
-                         + " ipv6: " + (ipv6 ? "yes" : "no"));
+        signals->LogInfo(fmt::format(
+            "Adding network {}/{}, metric: {}, exclude: {}, ipv6: {}",
+            netw_addr,
+            prefix_size,
+            metric,
+            (exclude ? "yes" : "no"),
+            (ipv6 ? "yes" : "no")));
 
-        networks.emplace_back(Network(std::string(net), prefix_size, ipv6, exclude));
+        networks.emplace_back(netw_addr, prefix_size, metric, ipv6, exclude);
     }
     // FIXME:  No need to unref GVariant *network ?
     g_variant_iter_free(network_iter);

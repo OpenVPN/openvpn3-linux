@@ -205,7 +205,7 @@ interface net.openvpn.v3.netcfg {
                    in  b ipv6);
       SetRemoteAddress(in  s ip_address,
                        in  b ipv6);
-      AddNetworks(in  a(subb) networks);
+      AddNetworks(in  a(suibb) networks);
       AddDNS(in  as server_list);
       AddDNSSearch(in  as domains);
       SetDNSSEC(in s mode);
@@ -287,6 +287,7 @@ A network is specified in the following way:
  |--------------|------------------|------------------------------------------------------------------------------|
  | ip_address   | string           | The network IP address (the first IP in the network)                         |
  | prefix_size  | unsigned integer | The prefix of the network (e.g. /24 or /64)                                  |
+ | metric       | integer          | Route metric to use for route. Use `-1` for default metric                   |
  | ipv6         | boolean          | Is this a IPv6 or IPv4 network specification                                 |
  | exclude      | boolean          | If true, exclude (do not route) otherwise include (do route) this network over the VPN |
 

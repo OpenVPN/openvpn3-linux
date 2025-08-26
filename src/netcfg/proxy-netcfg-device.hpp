@@ -122,20 +122,24 @@ class Network
   public:
     static Network IncludeRoute(const std::string &networkAddress,
                                 int prefix_size,
+                                int metric,
                                 bool ipv6);
 
     static Network ExcludeRoute(const std::string &networkAddress,
                                 int prefix_size,
+                                int metric_,
                                 bool ipv6);
 
     std::string address;
     uint32_t prefix_size;
+    int metric;
     bool ipv6;
     bool exclude;
 
   private:
     Network(const std::string &networkAddress_,
             uint32_t prefix_sz_,
+            int metric_,
             bool ipv6_,
             bool exclude_);
 };

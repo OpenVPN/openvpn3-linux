@@ -19,6 +19,7 @@
 #pragma once
 
 #include <functional>
+#include <fmt/format.h>
 #include <gio/gunixfdlist.h>
 #include <gio/gunixconnection.h>
 #include <gdbuspp/bus-watcher.hpp>
@@ -89,20 +90,22 @@ class Network : public IPAddr
 
     Network(const std::string &networkAddress,
             uint32_t prefix_sz_,
+            int32_t metric_,
             bool ipv6_,
             bool exclude_)
         : IPAddr(networkAddress, ipv6_),
-          prefix_size(prefix_sz_), exclude(exclude_)
+          prefix_size(prefix_sz_), metric(metric_), exclude(exclude_)
     {
     }
 
 
     std::string str() const
     {
-        return address + "/" + std::to_string(prefix_size);
+        return fmt::format("{}/{}", address, prefix_size);
     }
 
     uint32_t prefix_size;
+    int32_t metric;
     bool exclude;
 };
 
@@ -120,7 +123,7 @@ class VPNAddress : public Network
                uint32_t prefix_,
                const std::string &gateway_,
                bool ipv6_)
-        : Network(networkAddress_, prefix_, ipv6_, false),
+        : Network(networkAddress_, prefix_, -1, ipv6_, false),
           gateway(gateway_)
     {
     }
