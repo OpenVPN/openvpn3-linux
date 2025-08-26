@@ -63,7 +63,15 @@ def import_config(bus, opts):
                         opts.GenerateConfig(),                    # config_str
                         single_use,                               # single_use
                         False)                                    # persistent
-    cfg.Validate()
+    try:
+        cfg.Validate()
+    except Exception as e:
+        err = str(e)
+        pos = err.find('GDBus.Error:net.openvpn.gdbuspp:')
+        if pos > 67:
+            print("** WARNING **  " + str(err[pos+33:]))
+        else:
+            raise e
 
     if opts.GetPersistTun() is True:
         # If --persist-tun was provided, set the persist-tun override
