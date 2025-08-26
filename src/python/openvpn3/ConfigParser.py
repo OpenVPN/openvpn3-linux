@@ -93,23 +93,27 @@ class ConfigParser():
             if isinstance(opt_val, bool):
                 if opt_val is True:
                     cfg.append(key)
-            elif isinstance(opt_val, list):
-                for v in opt_val:
-                    cfg.append('%s %s' %(key, v))
-            elif opt_val is not None:
+            elif opt_val is not None and key in (
+                 'ca', 'cert', 'extra-certs', 'http-proxy-user-pass',
+                 'key', 'tls-auth', 'tls-crypt', 'tls-crypt-v2',
+                 'auth-user-pass', 'connection'):
                 processed = False
-                if key in ('ca', 'cert', 'extra-certs', 'http-proxy-user-pass',
-                           'key', 'tls-auth', 'tls-crypt', 'tls-crypt-v2',
-                           'auth-user-pass'):
-                    # Embedded files should not be prefixed by the key value
+                    # Options in tags should not be prefixed by the key value
                     #
                     # First, check if it is an embedded file here
-                    if len(opt_val) > 0 and opt_val[0] == '<' and opt_val[-1:] == '>':
-                        cfg.append(opt_val)
-                        processed = True
+
+                if isinstance(opt_val, list):
+                    cfg.append('\n'.join(opt_val))
+                    processed = True
+                elif len(opt_val) > 0 and opt_val[0] == '<' and opt_val[-1:] == '>':
+                    cfg.append(opt_val)
+                    processed = True
 
                 if not processed:
                     cfg.append('%s %s' % (key, opt_val))
+            elif isinstance(opt_val, list):
+                for v in opt_val:
+                    cfg.append('%s %s' %(key, v))
 
         return '\n'.join(cfg)
 
@@ -976,7 +980,7 @@ class ConfigParser():
                 # '</option-name>'.
                 if embedded_key is None and opt[0] == '<':
                     # Embedded blob found.  When embedded_key is _NOT_ None, we
-                    # are inside an embedded blob tag.
+                    # are inside a new embedded blob tag.
                     tmp = [opt,]
                     embedded_key = opt[1:len(opt)-1]
                 elif embedded_key is not None and '</' + embedded_key + '>' != opt:
@@ -986,7 +990,14 @@ class ConfigParser():
                     # On closure of the embedded blob, save it separately.  This
                     # should not be parsed by the argument parser further.
                     tmp.append(opt)
-                    embedded[embedded_key] = '\n'.join(tmp)
+                    if 'connection' == embedded_key:
+                        # The <connection/> tags may appear more times;
+                        # needs to be preserved as a list
+                        if not 'connection' in embedded.keys():
+                            embedded['connection'] = []
+                        embedded['connection'].append('\n'.join(tmp))
+                    else:
+                        embedded[embedded_key] = '\n'.join(tmp)
                     embedded_key = None
                 else:
                     # When outside an embedded blob, copy the option and its
@@ -1038,7 +1049,7 @@ class ConfigParser():
 
             def __call__(self, parser, namespace, values, option_string=None):
                 # Always presume that these types of options can be
-                # enslisted multiple times.  So we will always extend
+                # enlisted multiple times.  So we will always extend
                 # a list where self.dest matches an existing key
 
                 dst = getattr(namespace, self.dest)
@@ -1310,4 +1321,6 @@ class ConfigParser():
 
             # Ensure this option/argument is not preserved
             delattr(namespace, self.dest)
-    # ENDCLASS: ConfigParser
+    # ENDCLASS: IgnoreARg
+
+# ENDCLASS: ConfigParser
