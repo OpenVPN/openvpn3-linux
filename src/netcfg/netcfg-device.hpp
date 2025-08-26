@@ -64,8 +64,8 @@ class IPAddr
 {
   public:
     IPAddr() = default;
-    IPAddr(const std::string &ipaddr, const bool ipv6)
-        : address(ipaddr), ipv6(ipv6)
+    IPAddr(const std::string &ipaddr_, bool ipv6_)
+        : address(ipaddr_), ipv6(ipv6_)
     {
     }
 
@@ -80,6 +80,7 @@ class IPAddr
  */
 class Network : public IPAddr
 {
+    // FIXME : This need to be merged with NetCfgProxy::Network
   public:
     Network()
         : IPAddr()
@@ -87,11 +88,11 @@ class Network : public IPAddr
     }
 
     Network(const std::string &networkAddress,
-            const uint32_t prefix_sz,
-            const bool ipv6,
-            const bool exclude = false)
-        : IPAddr(networkAddress, ipv6),
-          prefix_size(prefix_sz), exclude(exclude)
+            uint32_t prefix_sz_,
+            bool ipv6_,
+            bool exclude_)
+        : IPAddr(networkAddress, ipv6_),
+          prefix_size(prefix_sz_), exclude(exclude_)
     {
     }
 
@@ -115,12 +116,12 @@ class VPNAddress : public Network
     {
     }
 
-    VPNAddress(const std::string &networkAddress,
-               const unsigned int prefix,
-               const std::string &gateway,
-               const bool ipv6)
-        : Network(networkAddress, prefix, ipv6, false),
-          gateway(gateway)
+    VPNAddress(const std::string &networkAddress_,
+               uint32_t prefix_,
+               const std::string &gateway_,
+               bool ipv6_)
+        : Network(networkAddress_, prefix_, ipv6_, false),
+          gateway(gateway_)
     {
     }
 
