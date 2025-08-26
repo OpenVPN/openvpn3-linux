@@ -421,6 +421,11 @@ def openvpn2_main(args):
         # configuration manager
         cfgobj = import_config(bus, opts)
 
+        if ('OPENVPN3_DEBUG' in os.environ
+            and 'IMPORT_ONLY' == os.environ['OPENVPN3_DEBUG']):
+            return 0
+
+
         # Start the tunnel, which his managed by the session manager
         ret = start_tunnel(bus, cfgobj, opts)
 
