@@ -75,7 +75,6 @@ def find_autoload_configs(srcdir):
                                                   '--config',
                                                   os.path.basename(cfgnam)],
                                                  'OpenVPN 3 autoloader')
-                    opts.SanityCheck()
 
                     # Save all parsed/loaded data into a dictionary
                     autoload_cfgs[os.path.basename(cfgnam)] = {

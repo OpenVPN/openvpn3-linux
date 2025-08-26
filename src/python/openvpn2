@@ -400,7 +400,6 @@ def openvpn2_main(args):
 
         # Parse provided provided on the command line
         opts = ConfigParser(args, 'OpenVPN 2.x wrapper for OpenVPN 3')
-        opts.SanityCheck()
         if ('OPENVPN3_DEBUG' in os.environ
            and 'DUMP_PARSE' == os.environ['OPENVPN3_DEBUG']):
             print (opts.GenerateConfig())

@@ -154,28 +154,16 @@ class ConfigParser():
 
 
     ##
-    #  Checks if we have at least the pure minimum of options and arguments
-    #  to establish a connection.
+    #  This check is now done by the net.openvpn.v3.configuration
+    #  service when importing the VPN profile.
     #
-    #  If not all required options are present, it will throw an execption
+    #  FIXME:  Remove this in v29+
     #
     def SanityCheck(self):
-        missing = []
-        required = ('client', 'remote', 'ca')
-        for req in required:
-            if req in self.__opts:
-                val = self.__opts[req]
-                if val is None or val is False:
-                    missing.append('--%s' % req)
-                elif isinstance(val, list):
-                    if 'remote' == req and len(val) < 1:
-                        missing.append('--%s' % req)
-                elif isinstance(val, str) and len(val) < 1:
-                    missing.append('--%s' % req)
+        import warnings
+        warnings.warn(f"openvpn3.ConfigParser.SanityCheck() - This call is now a NOOP and is handled during VPN profile import. This will be removed in a future release.",
+                        category=DeprecationWarning, stacklevel=2)
 
-        if len(missing) > 0:
-            raise Exception('The following options are missing to establish '
-                            +' a connection: %s' % ', '.join(missing))
 
 
     def __init_arguments(self):
