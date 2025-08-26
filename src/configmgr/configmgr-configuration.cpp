@@ -664,6 +664,7 @@ std::string Configuration::validate_profile() noexcept
 {
     bool client_configured = false;
     bool remote_found = false;
+    bool connection_found = false;
     bool ca_found = false;
     bool dev_found = false;
     for (const auto &opt : options_)
@@ -681,6 +682,10 @@ std::string Configuration::validate_profile() noexcept
             else if ("remote" == opt.get(0, 32))
             {
                 remote_found = true;
+            }
+            else if ("connection" == opt.get(0, 32))
+            {
+                connection_found = true;
             }
             else if ("ca" == opt.get(0, 32))
             {
@@ -702,7 +707,7 @@ std::string Configuration::validate_profile() noexcept
                                + std::string(excp.what()));
         }
     }
-    if (!client_configured || !dev_found || !remote_found || !ca_found)
+    if (!client_configured || !dev_found || !(remote_found || connection_found) || !ca_found)
     {
         prop_valid_ = false;
         std::vector<std::string> opts_missing;
@@ -718,7 +723,7 @@ std::string Configuration::validate_profile() noexcept
         {
             opts_missing.push_back("--dev");
         }
-        if (!remote_found)
+        if (!(remote_found || connection_found))
         {
             opts_missing.push_back("--remote");
         }
