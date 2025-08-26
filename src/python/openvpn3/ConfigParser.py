@@ -966,10 +966,10 @@ class ConfigParser():
                     if not meta_kv in ('USERNAME', 'PROFILE', 'AUTOLOGIN'):
                         continue
                     opt = 'setenv opt %s %s' % (meta_kv[0], " ".join(meta_kv[1:]))
-                elif len(rawopt.split('#')) > 1:
+                elif len(rawopt.split('#')) > 1 or len(rawopt.split(';')) > 1:
                     continue
                 else:
-                    opt = rawopt.split('# ')[0].strip()
+                    opt = rawopt.split('# ')[0].split(';')[0].strip()
                 if len(opt) == 0:
                     # Skip empty lines
                     continue
