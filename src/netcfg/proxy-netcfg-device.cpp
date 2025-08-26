@@ -18,8 +18,10 @@
 
 #include "build-config.h"
 
+#include <regex>
 #include <string>
 #include <vector>
+#include <fmt/format.h>
 #include <gdbuspp/glib2/utils.hpp>
 #include <gdbuspp/connection.hpp>
 #include <gdbuspp/proxy.hpp>
@@ -78,6 +80,27 @@ Device::Device(DBus::Connection::Ptr dbuscon_, const DBus::Object::Path &devpath
       proxy(DBus::Proxy::Client::Create(dbuscon, Constants::GenServiceName("netcfg"))),
       prxtgt(DBus::Proxy::TargetPreset::Create(devpath, Constants::GenInterface("netcfg")))
 {
+    try
+    {
+        auto srvqry = DBus::Proxy::Utils::Query::Create(proxy);
+        auto ver_str = srvqry->ServiceVersion(Constants::GenPath("netcfg"), Constants::GenInterface("netcfg"));
+
+        service_version = 99999;
+        if ('v' == ver_str[0])
+        {
+            // Extract only the major version number, minor versions (if present)
+            // should not change API or existing features
+            const std::regex version_regex{R"(v(\d+)(|\.\d+)(_\w*)*)"};
+            std::smatch m;
+            if (std::regex_match(ver_str, m, version_regex) && !m.empty())
+            {
+                service_version = std::stoi(m[1]);
+            }
+        }
+    }
+    catch (const DBus::Exception &excp)
+    {
+    }
 }
 
 
@@ -130,16 +153,31 @@ void Device::AddIPAddress(const std::string &ip_address,
 void Device::AddNetworks(const std::vector<Network> &networks) const
 {
     // FIXME: Migrate into Network class
-    GVariantBuilder *bld = glib2::Builder::Create("a(suibb)");
+    const char *data_type = (service_version > 25 ? "(suibb)" : "(subb)");
+    GVariantBuilder *bld = glib2::Builder::Create(fmt::format("a{}", data_type).c_str());
+
     for (const auto &net : networks)
     {
-        g_variant_builder_add(bld,
-                              "(suibb)",
-                              net.address.c_str(),
-                              net.prefix_size,
-                              net.metric,
-                              net.ipv6,
-                              net.exclude);
+        if (service_version > 25)
+        {
+            // Route metric was added after the v25 release
+            g_variant_builder_add(bld,
+                                  data_type,
+                                  net.address.c_str(),
+                                  net.prefix_size,
+                                  net.metric,
+                                  net.ipv6,
+                                  net.exclude);
+        }
+        else
+        {
+            g_variant_builder_add(bld,
+                                  data_type,
+                                  net.address.c_str(),
+                                  net.prefix_size,
+                                  net.ipv6,
+                                  net.exclude);
+        }
     }
 
     // DBus somehow wants this still wrapped being able to do this

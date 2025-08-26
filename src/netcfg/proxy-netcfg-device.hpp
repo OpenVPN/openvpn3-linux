@@ -422,6 +422,7 @@ class Device
     DBus::Connection::Ptr dbuscon = nullptr;
     DBus::Proxy::Client::Ptr proxy = nullptr;
     DBus::Proxy::TargetPreset::Ptr prxtgt = nullptr;
+    unsigned int service_version;
 };
 
 } // namespace NetCfgProxy
