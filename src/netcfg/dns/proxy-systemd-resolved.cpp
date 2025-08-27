@@ -35,7 +35,7 @@ using namespace NetCfg::DNS::resolved;
  *  be needed to be enabled in production environments, thus
  *  it is hard-coded in here.
  */
-//#define DEBUG_RESOLVED_DBUS
+// #define DEBUG_RESOLVED_DBUS
 
 /**
  *  Low-level debug logging for background D-Bus calls to
@@ -184,7 +184,6 @@ Link::Link(asio::io_context &asio_ctx,
 {
     tgt_link = DBus::Proxy::TargetPreset::Create(path,
                                                  "org.freedesktop.resolve1.Link");
-
 }
 
 
@@ -465,7 +464,7 @@ void Link::BackgroundCall(const std::string &method, GVariant *params)
          .path = tgt_link->object_path,
          .interface = tgt_link->interface,
          .method = method,
-         .params = g_variant_ref(params)});
+         .params = (params ? g_variant_ref(params) : nullptr)});
 
     asio_proxy.post(
         [bgdata]()
@@ -480,10 +479,13 @@ void Link::BackgroundCall(const std::string &method, GVariant *params)
                                        << " proxy=" << (proxy ? proxy->GetDestination() : "[invalid]")
                                        << " target=" << (bgdata->path)
                                        << " method=" << bgdata->method
-                                       << " params=" << g_variant_print(bgdata->params, true));
+                                       << " params=" << (bgdata->params ? g_variant_print(bgdata->params, true) : "[NULL]"));
                     //  If the proxy object is invalid, the Link object has been
                     //  or is being destructed.  Then we just bail out.
-                    g_variant_unref(bgdata->params);
+                    if (bgdata->params)
+                    {
+                        g_variant_unref(bgdata->params);
+                    }
                     delete bgdata;
                     return;
                 }
@@ -506,12 +508,12 @@ void Link::BackgroundCall(const std::string &method, GVariant *params)
                         SD_RESOLVED_DEBUG("[LAMBDA] Performing proxy call:"
                                           << "  object_path=" << bgdata->path
                                           << ", method=" << bgdata->method
-                                          << ", params=" << g_variant_print(bgdata->params, true));
+                                          << ", params=" << (bgdata->params ? g_variant_print(bgdata->params, true) : "[none]"));
 
                         // The proxy->Call(...) call might result in bgdata->params being released,
                         // even if an exception happens.  We increase the GVariant refcounter to
                         // avoid this object being deleted just yet.
-                        GVariant *params = g_variant_ref_sink(bgdata->params);
+                        GVariant *params = (bgdata->params ? g_variant_ref_sink(bgdata->params) : nullptr);
                         GVariant *r = proxy->Call(bgdata->path, bgdata->interface, bgdata->method, params);
                         g_variant_unref(r);
                         break;
@@ -530,7 +532,10 @@ void Link::BackgroundCall(const std::string &method, GVariant *params)
                     }
                 }
                 // Delete the GVariant object with the D-Bus method arguments; now it is no longer needed
-                g_variant_unref(bgdata->params);
+                if (bgdata->params)
+                {
+                    g_variant_unref(bgdata->params);
+                }
                 delete bgdata;
             }
             catch (const std::exception &excp)
