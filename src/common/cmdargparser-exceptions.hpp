@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2020 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2020 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2020 -       OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2020 -       David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -32,7 +32,7 @@ class CommandArgBaseException : public std::exception
      *
      * @param msg      std::string containing the message to present to the user
      */
-    CommandArgBaseException(const std::string msg) noexcept
+    CommandArgBaseException(const std::string &msg) noexcept
         : message(msg)
     {
     }
@@ -84,7 +84,7 @@ class CommandException : public CommandArgBaseException
      *
      * @param command  std::string containing the name of the current command
      */
-    CommandException(const std::string command) noexcept
+    CommandException(const std::string &command) noexcept
         : CommandArgBaseException(""),
           command(command)
     {
@@ -98,8 +98,8 @@ class CommandException : public CommandArgBaseException
      * @param command  std::string containing the name of the current command
      * @param msg      std::string containing the message to present to the user
      */
-    CommandException(const std::string command,
-                     const std::string msg) noexcept
+    CommandException(const std::string &command,
+                     const std::string &msg) noexcept
         : CommandArgBaseException(msg),
           command(command)
     {
@@ -136,7 +136,7 @@ class OptionException : public CommandArgBaseException
      *
      * @param option  std::string containing the name of the current option
      */
-    OptionException(const std::string option) noexcept
+    OptionException(const std::string &option) noexcept
         : CommandArgBaseException("--" + option),
           option(option)
     {
@@ -150,7 +150,7 @@ class OptionException : public CommandArgBaseException
      * @param option  std::string containing the name of the current option
      * @param msg     std::string containing the message to present to the user
      */
-    OptionException(const std::string option, const std::string msg) noexcept
+    OptionException(const std::string &option, const std::string &msg) noexcept
         : CommandArgBaseException("--" + option + ": " + msg),
           option(option)
     {
@@ -183,7 +183,7 @@ class OptionNotFound : public CommandArgBaseException
     {
     }
 
-    OptionNotFound(const std::string key) noexcept
+    OptionNotFound(const std::string &key) noexcept
         : CommandArgBaseException("Option '" + key + "' was not found")
     {
     }
@@ -192,7 +192,7 @@ class OptionNotFound : public CommandArgBaseException
 class OptionNotPresent : public CommandArgBaseException
 {
   public:
-    OptionNotPresent(const std::string key) noexcept
+    OptionNotPresent(const std::string &key) noexcept
         : CommandArgBaseException("Option '" + key + "' value is not present")
     {
     }
@@ -207,12 +207,12 @@ class ExclusiveOptionError : public CommandArgBaseException
 {
   public:
     ExclusiveOptionError(const std::string &opt,
-                         const std::vector<std::string> group)
+                         const std::vector<std::string> &group)
         : CommandArgBaseException(generate_error(opt, group))
     {
     }
 
-    ExclusiveOptionError(const std::vector<std::string> group)
+    ExclusiveOptionError(const std::vector<std::string> &group)
         : CommandArgBaseException(generate_error("", group))
     {
     }

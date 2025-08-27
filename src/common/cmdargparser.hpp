@@ -2,9 +2,9 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
-//  Copyright (C) 2018 - 2023  Arne Schwabe <arne@openvpn.net>
+//  Copyright (C) 2018 -       OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2018 -       David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 -       Arne Schwabe <arne@openvpn.net>
 //
 
 /**
@@ -158,8 +158,8 @@ class ParsedArgs
      * @return Returns std::string of the first matching option.
      * @throws OptionsNotFound if no option was found if no_throw is false.
      */
-    const std::string Present(const std::vector<std::string> optlist,
-                              const bool no_throw = false) const
+    const std::string Present(const std::vector<std::string> &optlist,
+                              bool no_throw = false) const
     {
         for (const auto &k : optlist)
         {
@@ -222,7 +222,7 @@ class ParsedArgs
      * @param idx  unsigned int of the value element to retrieve
      * @return  Returns a std::string with the collected value
      */
-    std::string GetValue(const std::string &k, const unsigned int idx) const
+    std::string GetValue(const std::string &k, unsigned int idx) const
     {
         return key_value.at(k).at(idx);
     }
@@ -251,7 +251,7 @@ class ParsedArgs
      * @param k    std::string containing the option name to look-up
      * @return  Returns a bool with the collected value
      */
-    bool GetBoolValue(const std::string &k, const unsigned int idx) const
+    bool GetBoolValue(const std::string &k, unsigned int idx) const
     {
         return parse_bool_value(k, key_value.at(k).at(idx));
     }
@@ -399,7 +399,7 @@ class SingleCommandOption
      *                   --help screen.
      */
     [[nodiscard]] static SingleCommandOption::Ptr Create(const std::string &longopt,
-                                                         const char shrtopt,
+                                                         char shrtopt,
                                                          const std::string &help_text);
 
     /**
@@ -419,9 +419,9 @@ class SingleCommandOption
      *                   --help screen.
      */
     [[nodiscard]] static SingleCommandOption::Ptr Create(const std::string &longopt,
-                                                         const char shrtopt,
+                                                         char shrtopt,
                                                          const std::string &metavar,
-                                                         const bool required,
+                                                         bool required,
                                                          const std::string &help_text,
                                                          const argHelperFunc arg_helper_func = nullptr);
 
@@ -474,10 +474,10 @@ class SingleCommandOption
      *  Checks if the provided short option matches the value of this
      *  object's registered short option.
      *
-     * @param o  const char containing the short option to check
+     * @param o  char containing the short option to check
      * @return   Returns true if it is a match, otherwise false
      */
-    bool check_short_option(const char o);
+    bool check_short_option(char o);
 
 
     /**
@@ -518,12 +518,12 @@ class SingleCommandOption
      * @return Returns a std::vector<std::string >containing one or more
      *         newline separated lines describing this specific option.
      */
-    std::vector<std::string> gen_help_line(const unsigned int width = 30);
+    std::vector<std::string> gen_help_line(unsigned int width = 30);
 
-    std::string gen_help_line_generator(const char opt_short,
+    std::string gen_help_line_generator(char opt_short,
                                         const std::string &opt_long,
                                         const std::string &opt_help,
-                                        const unsigned int width);
+                                        unsigned int width);
 
 
   private:
@@ -556,9 +556,9 @@ class SingleCommandOption
      *                   --help screen.
      */
     SingleCommandOption(const std::string &longopt,
-                        const char shrtopt,
+                        char shrtopt,
                         const std::string &metavar,
-                        const bool required,
+                        bool required,
                         const std::string &help_text,
                         const argHelperFunc arg_helper_func = nullptr);
 
@@ -567,11 +567,11 @@ class SingleCommandOption
      *  element.  This element is later on gathered and provided to
      *  getopt_long() before starting to parse the command line arguments.
      *
-     * @param longopt    const std::string containing the long option name,
+     * @param longopt    std::string containing the long option name,
      *                   represented in the struct option .name variable.
-     * @param shortopt   const char representing the short option name, which
+     * @param shortopt   char representing the short option name, which
      *                   is saved in struct option .val
-     * @param has_args   const int indicating various flags in use,
+     * @param has_args   int indicating various flags in use,
      *                   represented in the .flag variable.  Used to indicate
      *                   if this option has no argument (no_argument), an
      *                   optional argument (optional_argument) or required
@@ -579,8 +579,8 @@ class SingleCommandOption
      *
      */
     void update_getopt(const std::string &longopt,
-                       const char shortopt,
-                       const int has_args);
+                       char shortopt,
+                       int has_args);
 }; // class SingleCommandOption
 
 
@@ -684,7 +684,7 @@ class SingleCommand
      *
      */
     SingleCommandOption::Ptr AddOption(const std::string &longopt,
-                                       const char shortopt,
+                                       char shortopt,
                                        const std::string &help_text);
 
 
@@ -707,9 +707,9 @@ class SingleCommand
      *
      */
     SingleCommandOption::Ptr AddOption(const std::string &longopt,
-                                       const char shortopt,
+                                       char shortopt,
                                        const std::string &metavar,
-                                       const bool required,
+                                       bool required,
                                        const std::string &help_text,
                                        const argHelperFunc arg_helper = nullptr);
 
@@ -762,7 +762,7 @@ class SingleCommand
      *  by this class
      *
      */
-    void AddVersionOption(const char shortopt = 0);
+    void AddVersionOption(char shortopt = 0);
 
 
     /**
@@ -1079,7 +1079,7 @@ class Commands
      * @param arg0  std::string containing the binary name (typically argv[0])
      *
      */
-    void print_generic_help(std::string &arg0);
+    void print_generic_help(const std::string &arg0);
 
 
     const std::string progname;

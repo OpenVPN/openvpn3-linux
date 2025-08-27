@@ -2,8 +2,8 @@
 //
 //  SPDX-License-Identifier: AGPL-3.0-only
 //
-//  Copyright (C) 2018 - 2023  OpenVPN Inc <sales@openvpn.net>
-//  Copyright (C) 2018 - 2023  David Sommerseth <davids@openvpn.net>
+//  Copyright (C) 2018 -       OpenVPN Inc <sales@openvpn.net>
+//  Copyright (C) 2018 -       David Sommerseth <davids@openvpn.net>
 //
 
 /**
@@ -346,7 +346,7 @@ void RegisterParsedArgs::set_completed()
 //
 
 SingleCommandOption::Ptr SingleCommandOption::Create(const std::string &longopt,
-                                                     const char shrtopt,
+                                                     char shrtopt,
                                                      const std::string &help_text)
 {
     return Ptr(new SingleCommandOption(longopt,
@@ -358,9 +358,9 @@ SingleCommandOption::Ptr SingleCommandOption::Create(const std::string &longopt,
 }
 
 SingleCommandOption::Ptr SingleCommandOption::Create(const std::string &longopt,
-                                                     const char shrtopt,
+                                                     char shrtopt,
                                                      const std::string &metavar,
-                                                     const bool required,
+                                                     bool required,
                                                      const std::string &help_text,
                                                      const argHelperFunc arg_helper_func)
 {
@@ -374,9 +374,9 @@ SingleCommandOption::Ptr SingleCommandOption::Create(const std::string &longopt,
 
 
 SingleCommandOption::SingleCommandOption(const std::string &longopt,
-                                         const char shrtopt,
+                                         char shrtopt,
                                          const std::string &metavar,
-                                         const bool required,
+                                         bool required,
                                          const std::string &help_text,
                                          const argHelperFunc arg_helper_func)
     : longopt(longopt), shortopt(shrtopt),
@@ -504,7 +504,7 @@ std::string SingleCommandOption::getopt_optstring()
 }
 
 
-bool SingleCommandOption::check_short_option(const char o)
+bool SingleCommandOption::check_short_option(char o)
 {
     return o == shortopt;
 }
@@ -540,7 +540,7 @@ std::vector<struct option *> SingleCommandOption::get_struct_option()
 }
 
 
-std::vector<std::string> SingleCommandOption::gen_help_line(const unsigned int width)
+std::vector<std::string> SingleCommandOption::gen_help_line(unsigned int width)
 {
     std::vector<std::string> ret;
     ret.push_back(gen_help_line_generator(shortopt, longopt, help_text, width));
@@ -554,10 +554,10 @@ std::vector<std::string> SingleCommandOption::gen_help_line(const unsigned int w
 }
 
 
-std::string SingleCommandOption::gen_help_line_generator(const char opt_short,
+std::string SingleCommandOption::gen_help_line_generator(char opt_short,
                                                          const std::string &opt_long,
                                                          const std::string &opt_help,
-                                                         const unsigned int width)
+                                                         unsigned int width)
 {
     std::stringstream r;
 
@@ -614,8 +614,8 @@ std::string SingleCommandOption::gen_help_line_generator(const char opt_short,
 
 
 void SingleCommandOption::update_getopt(const std::string &longopt,
-                                        const char shortopt,
-                                        const int has_args)
+                                        char shortopt,
+                                        int has_args)
 {
     // We need a strdup() as the pointer longopt.c_str() returns on
     // some systems gets destroyed - rendering garbage in this
@@ -631,7 +631,7 @@ void SingleCommandOption::update_getopt(const std::string &longopt,
 
 
 SingleCommandOption::Ptr SingleCommand::AddOption(const std::string &longopt,
-                                                  const char shortopt,
+                                                  char shortopt,
                                                   const std::string &help_text)
 {
     auto opt = SingleCommandOption::Create(longopt,
@@ -643,9 +643,9 @@ SingleCommandOption::Ptr SingleCommand::AddOption(const std::string &longopt,
 
 
 SingleCommandOption::Ptr SingleCommand::AddOption(const std::string &longopt,
-                                                  const char shortopt,
+                                                  char shortopt,
                                                   const std::string &metavar,
-                                                  const bool required,
+                                                  bool required,
                                                   const std::string &help_text,
                                                   const argHelperFunc arg_helper)
 {
@@ -674,7 +674,7 @@ const std::string SingleCommand::GetAliasCommand() const
 }
 
 
-void SingleCommand::AddVersionOption(const char shortopt)
+void SingleCommand::AddVersionOption(char shortopt)
 {
     (void)AddOption("version", shortopt, "Show version information");
     opt_version_added = true;
@@ -1005,7 +1005,7 @@ std::vector<SingleCommand::Ptr> Commands::GetAllCommandObjects()
 }
 
 
-void Commands::print_generic_help(std::string &arg0)
+void Commands::print_generic_help(const std::string &arg0)
 {
     std::cout << arg0 << ": " << progname << std::endl;
     std::cout << std::setw(arg0.size() + 2) << " " << description;
