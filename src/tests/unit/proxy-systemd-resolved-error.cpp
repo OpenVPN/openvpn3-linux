@@ -12,7 +12,7 @@
  *  @brief  Unit test for NetCfg::DNS::resolved::Error
  */
 
- #include <gtest/gtest.h>
+#include <gtest/gtest.h>
 
 #include "netcfg/dns/proxy-systemd-resolved.hpp"
 

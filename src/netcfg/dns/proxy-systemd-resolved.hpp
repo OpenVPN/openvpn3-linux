@@ -35,7 +35,7 @@ namespace Error {
  */
 struct Message
 {
-  using List = std::vector<Message>;
+    using List = std::vector<Message>;
 
     /**
      *  Stores a new error message

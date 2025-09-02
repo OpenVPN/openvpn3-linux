@@ -349,7 +349,7 @@ void NetCfgDevice::method_add_networks(GVariant *params)
     while ((network_descr = g_variant_iter_next_value(network_iter)))
     {
         try
-    {
+        {
             glib2::Utils::checkParams(__func__, network_descr, "(suibb)", 5);
         }
         catch (const DBus::Exception &excp)

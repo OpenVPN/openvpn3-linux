@@ -260,8 +260,8 @@ int main(int argc, char **argv)
         }
         else
         {
-        std::cout << "FAIL" << std::endl;
-        ++failed;
+            std::cout << "FAIL" << std::endl;
+            ++failed;
         }
         cfgobj.UnsetOverride(ov);
     }

@@ -93,8 +93,8 @@ TEST(NetCfgChangeEvent, stringstream)
     EXPECT_TRUE(chk.str() == expect);
 
     NetCfgChangeEvent event2(NetCfgChangeType::IPADDR_ADDED,
-                            "testdev",
-                            {{"ip_address", "2001:db8:a050::1"}, {"prefix_size", "64"}});
+                             "testdev",
+                             {{"ip_address", "2001:db8:a050::1"}, {"prefix_size", "64"}});
     std::stringstream chk2;
     chk2 << event2;
     std::string expect2("Device testdev - IP Address Added: ip_address='2001:db8:a050::1', prefix_size='64'");
