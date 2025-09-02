@@ -21,9 +21,13 @@ a few minor tweaks.
 - Indenting is 4 spaces.
 - Line length less than 78 chars as much as possible.
 - Ensure readability, don't be worried adding spaces and blank lines.
-- Using the C++11 mandatory.  Do not use newer features if not available
-  or functional with compilers only supporting C++11.
-- Use C++11 features and constructs over older C++ and C standards.
+- Using the C++17 mandatory.  Do not use newer features if not available
+  or functional with compilers only supporting C++17.
+- Use C++17 features and constructs over older C++ and C standards.
+
+Please use `clang-format` using this project's `.clang-format` configuration.
+This ensures the formatting is quite consistent.  Currently clang-format
+version 19 is used for this project.
 
 
 Naming conventions
@@ -60,8 +64,8 @@ Variables being assigned with a value or being compared should always have
 spaces between the name, the operator and the value.
 
 ```cpp
-   int i = 0;
-   bool equal = (4 == i);
+   int some_value = 0;
+   bool equal = (4 == some_value);
 ```
 
 
@@ -101,15 +105,24 @@ Class declarations
 ```cpp
 /**
  *  Simple explanation in doxygen style clarifying what
- *  this class provides
+ *  this class provides and the purprose of it.
  */
 class ExampleWidget : public ParentClassOne,
                       public ParentClassTwo
 {
 public:
+    //  No documentation needed in such simple constructor
+    ExampleWidge()
+        : ParentClassOne(),
+          ParentClassTwo
+    {
+    }
+
     /**
-     *  (Optional) constructor documentation
-     *  explaining arguments and what it constructs
+     *  Constructor documentation explaining arguments and
+     *  what it constructs
+     *
+     *  @param name  What the 'name' content is used for
      */
     ExampleWidget(std::string name)
        : ParentClassOne(name),
@@ -152,7 +165,7 @@ public:
 
 
 private:
-    int val1 = 0;  ///< Doxygen comment describing a single member
+    int val1 = 0;  //< Doxygen comment describing a single member
 
 
     void do_some_magic()
@@ -165,7 +178,7 @@ private:
 int ExampleWidget::sum(int arg1, arg2)
 {
      // Do something clever with arg1 and arg2
-     do_some_magic();
+     do_some_magic(arg1, arg2);
 }
 ```
 
@@ -196,7 +209,7 @@ conditional statements.
 ```
 
 Also note that the left side of a comparison operator should be the one
-least likely to be modifiable.  This avoids errors like:
+least likely to be modified.  This avoids errors like:
 
 ```cpp
     if (i = 3)  // BAD BAD BAD
@@ -206,6 +219,10 @@ least likely to be modifiable.  This avoids errors like:
     }
 ```
 
+This is prefered even if compilers today may detect these situations
+and warn about it.  The reason is that there may still occur corner cases
+and these bugs can be harder to spot.
+
 
 For-loops
 ---------
@@ -213,3 +230,11 @@ For-loops should use C++ iterators as much as possible, wherever it makes
 sense.  The variable used to contain the iterated value should be declared
 as `const auto&`.
 
+```cpp
+
+    std::vector<std::string> array_of_strings{....};
+    for (const auto &value : array_of_strings)
+    {
+        // 'value' contains a single value from the array/vector
+    }
+```
