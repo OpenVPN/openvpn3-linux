@@ -47,7 +47,7 @@ void run_test_1(LogWriter &w)
 
 
 /**
- *  Tests the Write(LogGroup, LogCategoty, std::string) method and will
+ *  Tests the Write(LogGroup, LogCategory, std::string) method and will
  *  run a two loops ensuring all valid combinations of LogGroup and
  *  LogCategory are tested.
  *

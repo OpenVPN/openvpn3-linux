@@ -263,7 +263,7 @@ class Session : public DBusRequiresQueueProxy
      *
      * @return  Returns false if users can modify receive_log_events
      *          and the log_verbosity properties.  True means only the
-     *          session owner has access to the session log via the sesison
+     *          session owner has access to the session log via the session
      *          manager.
      */
     const bool GetRestrictLogAccess()
@@ -278,7 +278,7 @@ class Session : public DBusRequiresQueueProxy
      * @param enable  If false, users can modify receive_log_events
      *                and the log_verbosity properties.  True means only the
      *                session owner has access to the session log via the
-     *                sesison manager.
+     *                session manager.
      */
     void SetRestrictLogAccess(bool enable)
     {

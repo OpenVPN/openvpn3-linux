@@ -1021,7 +1021,7 @@ class ConfigParser():
             # has already been parsed and embedded.
             #
             # There is one exception though, the very first --config will be
-            # preserverd, and stored as config_name.
+            # preserved, and stored as config_name.
             if 'config' == self.dest:
                 try:
                     cfgname = getattr(parser, 'config_name')

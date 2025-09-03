@@ -227,7 +227,7 @@ def request_credentials(sessionobj):
 #  Starts a new VPN session for a specific configuration
 #
 #  This is the main entry point for establishing new tunnels and it
-#  handles both background and forground run modes
+#  handles both background and foreground run modes
 #
 def start_tunnel(bus, cfgobj, opts):
     # Main session manager object

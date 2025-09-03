@@ -62,7 +62,7 @@ class DCO
      *
      * @param peer_id      ID of the peer to create
      * @param transport_fd fd of transport socket, provided by client
-     * @param sa           sockaddr object indentifying the remote endpoint
+     * @param sa           sockaddr object identifying the remote endpoint
      * @param salen        the length of the 'sa' object
      * @param vpn4         IPv4 of this peer in the tunnel
      * @param vpn6         IPV6 of this peer in the tunnel

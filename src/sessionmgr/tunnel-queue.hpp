@@ -129,7 +129,7 @@ class NewTunnelQueue
     DBus::Signals::SubscriptionManager::Ptr signal_subscr = nullptr;
     DBus::Signals::Target::Ptr subscr_target = nullptr;
     QueuedTunnels queue{};
-    std::map<std::string, BusWatcher::Ptr> backend_watchers;
+    std::map<std::string, DBus::BusWatcher::Ptr> backend_watchers;
     std::set<std::string> expired_backend_watchers;
     asio::io_context io_context;
     std::future<void> io_context_future;

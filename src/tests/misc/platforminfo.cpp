@@ -9,7 +9,7 @@
 /**
  * @file   src/tests/misc/platforminfo.cpp
  *
- * @brief  Tests the PlatformInfo API impementation
+ * @brief  Tests the PlatformInfo API implementation
  */
 
 #include <iostream>

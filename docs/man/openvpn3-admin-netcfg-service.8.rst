@@ -63,7 +63,7 @@ OPTIONS
                         ``systemd-resolved``\(8).  See the
                         ``--systemd-resolved`` option in the man page to
                         ``openvpn3-service-netcfg``\(8) for details.  To
-                        activate this feature, the *COFIG-VALUE* must be
+                        activate this feature, the *CONFIG-VALUE* must be
                         :code:`1` or :code:`yes`.
 
                 :code:`redirect-method`

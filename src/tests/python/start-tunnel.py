@@ -42,7 +42,7 @@ bus = dbus.SystemBus()
 manager_object = bus.get_object('net.openvpn.v3.sessions',
                                 '/net/openvpn/v3/sessions')
 
-# Retireve access to the proper interface in the object
+# Retrieve access to the proper interface in the object
 sessmgr_interface = dbus.Interface(manager_object,
                                    dbus_interface='net.openvpn.v3.sessions')
 

@@ -32,7 +32,7 @@ namespace SessionManager {
 /**
  * Helper class to tackle signals sent by the session manager
  *
- * This mostly just wraps the LogSender class and predfines LogGroup to always
+ * This mostly just wraps the LogSender class and predefines LogGroup to always
  * be SESSIONMGR.
  */
 class Log : public LogSender

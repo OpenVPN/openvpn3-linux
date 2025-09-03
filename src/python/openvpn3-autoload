@@ -182,7 +182,7 @@ def parse_autoload_config(autoload):
                         if tpv in ('legacy', 'preferred', 'suiteb'):
                             autoloadcfg['override']['tls-cert-profile'] = tpv
                         else:
-                            print('WARNINIG: Invalid tls-params:cert-profile value: %s' % tpv)
+                            print('WARNING: Invalid tls-params:cert-profile value: %s' % tpv)
                     elif 'min-version' == tpk:
                         if tpv in ('tls_1_0', 'tls_1_1', 'tls_1_2', 'tls_1_3'):
                             autoloadcfg['override']['tls-version-min'] = tpv

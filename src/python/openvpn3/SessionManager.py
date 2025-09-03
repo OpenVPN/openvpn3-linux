@@ -103,11 +103,11 @@ class Session(object):
         self.__session = self.__dbuscon.get_object('net.openvpn.v3.sessions',
                                                    objpath)
 
-        # Retrive access to the session interface in the object
+        # Retrieve access to the session interface in the object
         self.__session_intf = dbus.Interface(self.__session,
                                              dbus_interface="net.openvpn.v3.sessions")
 
-        # Retrive access to the property interface in the object
+        # Retrieve access to the property interface in the object
         self.__prop_intf = dbus.Interface(self.__session,
                                           dbus_interface="org.freedesktop.DBus.Properties")
 
@@ -131,7 +131,7 @@ class Session(object):
 
 
     ##
-    #  Internal decorator, checkes whether the object has been deleted or not.
+    #  Internal decorator, checks whether the object has been deleted or not.
     #  If the object has been deleted, throw an exception instead.
     #
     #  For details, lookup how Python decorators work
@@ -232,7 +232,7 @@ class Session(object):
 
 
     ##
-    #  Retrive the session status
+    #  Retrieve the session status
     #
     #  @return  Returns a type of (StatusMajor, StatusMinor, Status message)
     #           The Status message is a plain string.
@@ -378,7 +378,7 @@ class Session(object):
 
 
     ##
-    #  Queries the VPN backend for query slots needing to be satisifed within
+    #  Queries the VPN backend for query slots needing to be satisfied within
     #  a queue type and group.
     #
     #  @param  qtype   Queue type to check
@@ -526,11 +526,11 @@ class SessionManager(object):
         self.__manager_object = dbuscon.get_object('net.openvpn.v3.sessions',
                                                    '/net/openvpn/v3/sessions')
 
-        # Retireve access to the session interface in the object
+        # Retrieve access to the session interface in the object
         self.__manager_intf = dbus.Interface(self.__manager_object,
                                              dbus_interface='net.openvpn.v3.sessions')
 
-        # Retrive access to the property interface in the object
+        # Retrieve access to the property interface in the object
         self.__prop_intf = dbus.Interface(self.__manager_object,
                                           dbus_interface="org.freedesktop.DBus.Properties")
 

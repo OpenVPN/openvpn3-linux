@@ -91,7 +91,7 @@ class NetCfgSubscriptions
 
 
     /**
-     *  Removes a subsriber from the subscription list.
+     *  Removes a subscriber from the subscription list.
      *
      * @param subscriber  std::string with the subscriber to remove
      *
@@ -123,7 +123,7 @@ class NetCfgSubscriptions
 
 
     /**
-     *  TODO: Crude and simplisitic way to extract the UID of the
+     *  TODO: Crude and simplistic way to extract the UID of the
      *  subscription owner
      *
      * @param sender   Unique D-Bus busname of a D-Bus method caller

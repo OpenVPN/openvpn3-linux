@@ -105,7 +105,7 @@ std::string ServiceProxy::GetBinaryName() const
     //  identifying the PID the process of the service is known by.
     //
     //  With the PID value, the /proc/$PID/cmdline file can be read
-    //  to retrive the information about the executable.
+    //  to retrieve the information about the executable.
     //
     pid_t srv_pid = credsqry->GetPID(proxy->GetDestination());
     std::string cmdfile = "/proc/" + std::to_string(srv_pid) + "/cmdline";

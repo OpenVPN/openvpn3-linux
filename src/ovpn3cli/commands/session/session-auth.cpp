@@ -10,7 +10,7 @@
  * @file   session-auth.cpp
  *
  * @brief  Command to pick-up VPN sessions running in the background
- *         requring user interaction for authentication
+ *         requiring user interaction for authentication
  */
 
 #include <string>
@@ -57,7 +57,7 @@ static std::string arghelper_auth_req()
  *   Initiate the authentication process for a given session, identified
  *   by the PID of the backend process - aka "Authentication Request ID"
  *
- * @param authid   PID of the backend porcess
+ * @param authid   PID of the backend process
  * @return int     The suggested exit code for the program; 0 is success
  */
 static int cmd_session_auth_complete(const pid_t authid)

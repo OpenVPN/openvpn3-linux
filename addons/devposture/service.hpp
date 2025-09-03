@@ -101,7 +101,7 @@ class Handler : public DBus::Object::Base
      *  D-Bus method: net.openvpn.v3.devposture.RunChecks
      *
      *  Runs a device posture check for a specific device posture protocol.
-     *  This method expects a JSON formated request object to be passed to
+     *  This method expects a JSON formatted request object to be passed to
      *  it, which contains an overview of which checks to perform and report
      *  back.
      *

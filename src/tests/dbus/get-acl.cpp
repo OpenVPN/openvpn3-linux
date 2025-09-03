@@ -41,7 +41,7 @@ class ProxyWrangler
         }
         else
         {
-            throw std::runtime_error("Unsuported object path");
+            throw std::runtime_error("Unsupported object path");
         }
     }
 

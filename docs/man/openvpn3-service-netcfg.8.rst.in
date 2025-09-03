@@ -121,7 +121,7 @@ multiple approaches, but only one of them can be enabled.
 
 --systemd-resolved
          This will enable integration with the `systemd-resolved`\(8)
-         service.  The system must be preconfigured to use this service
+         service.  The system must be pre-configured to use this service
          for OpenVPN's changes to fully take effect.  This is the
          preferred way, as the DNS resolver settings are fully managed
          by `systemd-resolved`\(8).  This approach will currently
@@ -175,7 +175,7 @@ integration.  See ``--resolv-conf``  for details.
 Attribute: systemd_resolved
 """""""""""""""""""""""""""
 This is used to enable the ``systemd-resolved``\(8) DNS resolver configuration
-integratoin.  See ``--systemd-resolved`` for details.
+integration.  See ``--systemd-resolved`` for details.
 
 Attribute: redirect_method
 """"""""""""""""""""""""""

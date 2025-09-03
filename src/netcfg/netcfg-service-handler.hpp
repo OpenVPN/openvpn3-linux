@@ -130,7 +130,7 @@ class NetCfgServiceHandler : public DBus::Object::Base
 
     /**
      * Clean up function that removes all objects that are still around from
-     * a process like registred virtual devices and socket protections
+     * a process like registered virtual devices and socket protections
      */
     void method_cleanup_process_resources(DBus::Object::Method::Arguments::Ptr args);
 };

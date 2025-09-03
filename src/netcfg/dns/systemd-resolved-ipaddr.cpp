@@ -80,7 +80,7 @@ IPAddress::IPAddress(const std::string &addr, int override_family)
                 // part of an address.  The systemd-resolved API need that to
                 // be fully expanded.  There are 8 address group in an IPv6
                 // address, so the '::' need to be expanded so it will be a
-                // total of 8 groups.  And since each group conains 2 bytes and
+                // total of 8 groups.  And since each group contains 2 bytes and
                 // the systemd-resolved API takes a single byte per per array
                 // element, it needs to be provided twice.
                 for (uint8_t gr = (9 - ip.size()); gr > 0; --gr)

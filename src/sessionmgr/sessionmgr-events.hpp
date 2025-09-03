@@ -75,7 +75,7 @@ class Event
 
 
     /**
-     *  Retrieve a prepeared Glib2 GVariant object containing a
+     *  Retrieve a prepared Glib2 GVariant object containing a
      *  prepared D-Bus signal response based on the content of this
      *  object
      *

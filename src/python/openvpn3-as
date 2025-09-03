@@ -90,7 +90,7 @@ class CRV1Authentication(Exception):
     #  CRV1 protocol.  This response is expected to be passed
     #  in the password field in the next connection to the server.
     #
-    #  @return Retuns a properly formatted CRV1 response string
+    #  @return Returns a properly formatted CRV1 response string
     #
     def GetResponse(self):
         if 'R' not in self.__flags or self.__response is None:

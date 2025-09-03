@@ -163,21 +163,21 @@ TEST_F(MachineIDTest, get_systemd_api)
             {
                 expect_src = MachineID::SourceType::SYSTEM;
                 note = std::string("/etc/machine-id was empty, ")
-                       + "expecing SourceType::SYSTEM";
+                       + "expecting SourceType::SYSTEM";
             }
         }
         else
         {
             expect_src = MachineID::SourceType::SYSTEM;
             note = std::string("/etc/machine-id was inaccessible, ")
-                   + "expecing SourceType::SYSTEM";
+                   + "expecting SourceType::SYSTEM";
         }
     }
     else
     {
         expect_src = MachineID::SourceType::SYSTEM;
         note = std::string("/etc/machine-id was inaccessible, ")
-               + "expecing SourceType::SYSTEM";
+               + "expecting SourceType::SYSTEM";
     }
 
     MachineID machid;
@@ -189,7 +189,7 @@ TEST_F(MachineIDTest, get_systemd_api)
     }
 #else
     {
-        GTEST_SKIP() << "Needed systemd API not available or unsuable";
+        GTEST_SKIP() << "Needed systemd API not available or unusable";
     }
 #endif
 }

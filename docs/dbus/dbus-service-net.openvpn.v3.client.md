@@ -236,7 +236,7 @@ All of these references are declared in `src/dbus/constants.hpp`.
 ### Method: `net.openvpn.v3.backends.UserInputQueueCheck`
 
 This is used to get the proper index values of information requests
-the backend has asked for and which is not yet satsified.  The index
+the backend has asked for and which is not yet satisfied.  The index
 list is tied to a specific `(ClientAttentionType,
 ClientAttentionGroup)` tuple.
 
@@ -272,7 +272,7 @@ the backend process.
 ### Method: `net.openvpn.v3.backends.UserInputProvide`
 
 This method is used to return information from the front-end
-application to the backend serivce.
+application to the backend service.
 
 #### Arguments
 

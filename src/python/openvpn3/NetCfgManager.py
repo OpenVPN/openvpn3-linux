@@ -50,11 +50,11 @@ class NetCfgDevice(object):
         self.__device = self.__dbuscon.get_object('net.openvpn.v3.netcfg',
                                                   objpath)
 
-        # Retrive access to the configuration interface in the object
+        # Retrieve access to the configuration interface in the object
         self.__device_intf = dbus.Interface(self.__device,
                                             dbus_interface="net.openvpn.v3.netcfg")
 
-        # Retrive access to the property interface in the object
+        # Retrieve access to the property interface in the object
         self.__prop_intf = dbus.Interface(self.__device,
                                           dbus_interface="org.freedesktop.DBus.Properties")
 
@@ -63,7 +63,7 @@ class NetCfgDevice(object):
 
 
     ##
-    #  Internal decorator, checkes whether the object has been deleted or not.
+    #  Internal decorator, checks whether the object has been deleted or not.
     #  If the object has been deleted, throw an exception instead.
     #
     #  For details, lookup how Python decorators work
@@ -105,11 +105,11 @@ class NetCfgManager(object):
         self.__manager_object = dbuscon.get_object('net.openvpn.v3.netcfg',
                                                    '/net/openvpn/v3/netcfg')
 
-        # Retireve access to the configuration interface in the object
+        # Retrieve access to the configuration interface in the object
         self.__manager_intf = dbus.Interface(self.__manager_object,
                                           dbus_interface='net.openvpn.v3.netcfg')
 
-        # Retrive access to the property interface in the object
+        # Retrieve access to the property interface in the object
         self.__prop_intf = dbus.Interface(self.__manager_object,
                                           dbus_interface="org.freedesktop.DBus.Properties")
 

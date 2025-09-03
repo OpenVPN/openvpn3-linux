@@ -25,7 +25,7 @@
 
 
 /**
- *   Container used to synchronise the execution between
+ *   Container used to synchronize the execution between
  *   an async thread running the glib2 mainloop and the main thread
  *   running main().
  */

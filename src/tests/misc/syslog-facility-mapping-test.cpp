@@ -97,7 +97,7 @@ int main()
                 {
                     test_passed = false;
                     std::cout << "FAIL: Syslog facility \"" << fac.name
-                              << "\" returned an excpetion  "
+                              << "\" returned an exception  "
                               << " but SHOULD have passed: " << excp.what()
                               << std::endl;
                     continue;

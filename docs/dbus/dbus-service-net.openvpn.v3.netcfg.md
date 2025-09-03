@@ -316,7 +316,7 @@ of DNS search to the network.
 
 ### Method: `net.openvpn.v3.netcfg.SetDNSSEC`
 
-Changes the DNSSEC validation behavior for DNS queries done via the DNS server configured for this
+Changes the DNSSEC validation behaviour for DNS queries done via the DNS server configured for this
 virtual interface.
 
 #### Arguments

@@ -9,7 +9,7 @@
 /**
  *  @file  journal-log-parse.cpp
  *
- *  @brief Implementation for retreiving OpenVPN 3 Linux related
+ *  @brief Implementation for retrieving OpenVPN 3 Linux related
  *         log lines from the systemd-journald
  */
 

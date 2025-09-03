@@ -52,7 +52,7 @@ allow openvpn3_netcfg_t self:process setcap;
 kernel_request_load_module(openvpn3_netcfg_t)
 corenet_rw_tun_tap_dev(openvpn3_netcfg_t)
 
-# Allow generic D-Bus access and D-Bus communcation from
+# Allow generic D-Bus access and D-Bus communication from
 # openvpn3-service-netcfg to openvpn3-service-client.  In addition
 # D-Bus daemon needs privileges to do some read/write ops on sockets
 # passed via D-Bus from openvpn3-service-client to openvpn3-service-netcfg.

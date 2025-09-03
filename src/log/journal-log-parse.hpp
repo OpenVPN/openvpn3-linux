@@ -169,7 +169,7 @@ class Parse
 {
   public:
     /**
-     *  Supported filter types to narrow down the log entry retrival
+     *  Supported filter types to narrow down the log entry retrieval
      */
     enum class FilterType : uint8_t
     {

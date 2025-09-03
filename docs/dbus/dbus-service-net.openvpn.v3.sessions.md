@@ -3,7 +3,7 @@ OpenVPN 3 D-Bus API: Session manager
 
 The session manager keeps track of all the currently running VPN
 tunnels.  This is the primary front-end interface for managing VPN
-tunnels.  This manager will also proxy metod calls and signals from the
+tunnels.  This manager will also proxy method calls and signals from the
 independent VPN backend client processes to listening user front-end
 processes.
 

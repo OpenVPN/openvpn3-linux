@@ -97,7 +97,7 @@ non-persistent data, they will automatically shutdown
 | Running as   | openvpn                                    |
 | Process name | openvpn3-service-netcfg                 |
 | Started by   | net.openvpn.v3.backends                 |
-|   | This is the process which is responsible for setting up the priviliged network configuration for the openvpn session client. It allows the session client to run unpriviledges and also provides a generic interface to open a tun device and configure the VPN configuration of (IP, routes, DNS).  This process must be started as root. |
+|   | This is the process which is responsible for setting up the privileged network configuration for the openvpn session client. It allows the session client to run unprivileged and also provides a generic interface to open a tun device and configure the VPN configuration of (IP, routes, DNS).  This process must be started as root. |
 |              |                                         |
 
 |              |                                         |
@@ -302,7 +302,7 @@ any `AttentionRequired` signal by calling the
 In situations where the server requires more authentication
 credentials (dynamic challenge), the backend client will disconnect
 from the server and issue the `AttentionRequired` signal.  By calling
-the `Ready` method, it will also throw an approriate exception if the
+the `Ready` method, it will also throw an appropriate exception if the
 authentication was not satisfied.
 
 

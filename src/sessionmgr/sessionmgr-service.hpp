@@ -63,7 +63,7 @@ class SrvHandler : public Object::Base
     /**
      *  Authorization callback for D-Bus object access.
      *
-     *  The service handler does not have any authorziation checks, so
+     *  The service handler does not have any authorization checks, so
      *  it will always return true.
      *
      * @param request   Authz::Request object
@@ -196,7 +196,7 @@ class SrvHandler : public Object::Base
      *                            @fn_search_filter for more details
      *
      * @return SessionCollection  A std::vector<Session> of all session
-     *         objects qualified by the search criterias (caller and
+     *         objects qualified by the search criteria (caller and
      *         search filter)
      */
     SessionCollection helper_retrieve_sessions(const std::string &caller,

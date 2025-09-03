@@ -105,14 +105,14 @@ Class declarations
 ```cpp
 /**
  *  Simple explanation in doxygen style clarifying what
- *  this class provides and the purprose of it.
+ *  this class provides and the purpose of it.
  */
 class ExampleWidget : public ParentClassOne,
                       public ParentClassTwo
 {
 public:
     //  No documentation needed in such simple constructor
-    ExampleWidge()
+    ExampleWidget()
         : ParentClassOne(),
           ParentClassTwo
     {
@@ -219,7 +219,7 @@ least likely to be modified.  This avoids errors like:
     }
 ```
 
-This is prefered even if compilers today may detect these situations
+This is preferred even if compilers today may detect these situations
 and warn about it.  The reason is that there may still occur corner cases
 and these bugs can be harder to spot.
 

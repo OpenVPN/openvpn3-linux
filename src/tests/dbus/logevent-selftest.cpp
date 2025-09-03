@@ -534,7 +534,7 @@ int main(int argc, char **argv)
 
     std::cout << std::endl
               << std::endl
-              << ">> OVERAL TEST RESULT: " << (failed ? "FAILED" : "PASSED")
+              << ">> OVERALL TEST RESULT: " << (failed ? "FAILED" : "PASSED")
               << std::endl
               << std::endl;
     return (failed ? 2 : 0);

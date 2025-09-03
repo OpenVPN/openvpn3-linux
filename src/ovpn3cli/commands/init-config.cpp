@@ -723,6 +723,6 @@ SingleCommand::Ptr prepare_command_initcfg()
     initcfg->AddOption("write-configs", "Write configuration files to disk");
     initcfg->AddOption("force", "Force overwriting existing configuration files");
     initcfg->AddOption("state-dir", "DIRNAME", true, "Main OpenVPN 3 Linux state directory (Default: '" OPENVPN3_STATEDIR "')");
-    initcfg->AddOption("debug", "Print debug details in error situtations");
+    initcfg->AddOption("debug", "Print debug details in error situations");
     return initcfg;
 }

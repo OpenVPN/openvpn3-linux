@@ -104,7 +104,7 @@ if __name__ == '__main__':
     ovpn3parser = importlib.import_module('ConfigParser')
     cfgparser = ovpn3parser.ConfigParser([sys.argv[0],], argp.description)
 
-    # Retriee the shell completion data from the openvpn3.ConfigParser
+    # Retrieve the shell completion data from the openvpn3.ConfigParser
     completion_data = cfgparser.RetrieveShellCompletionData()
 
     # Prepare a list containing all valid options

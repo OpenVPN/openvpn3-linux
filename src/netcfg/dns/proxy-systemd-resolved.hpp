@@ -96,7 +96,7 @@ class Storage
     size_t NumErrors(const std::string &link) const;
 
     /**
-     *  Retrieves all the error messages for a specitic link.
+     *  Retrieves all the error messages for a specific link.
      *
      *  Calling this will clear the error messages stored for
      *  that link

@@ -202,7 +202,7 @@ void NewTunnelQueue::process_registration(DBus::Signals::Event::Ptr event)
         if (!session)
         {
             // Create the session object which will be used to manage the
-            // VPN session.  This is the bridge point betweeen the
+            // VPN session.  This is the bridge point between the
             // end-users managing their session and the backend VPN client process
             session = object_mgr->CreateObject<Session>(dbuscon,
                                                         object_mgr,

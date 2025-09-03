@@ -96,7 +96,7 @@ AttachedService::AttachedService(DBus::Connection::Ptr conn,
 
 AttachedService::~AttachedService() noexcept
 {
-    // Remove all the ProxyLogEevents child objects explictly
+    // Remove all the ProxyLogEevents child objects explicitly
     log->Debug("Removing AttachedService object for " + logtag->str());
     for (auto &[key, obj] : proxies)
     {
@@ -405,7 +405,7 @@ void ServiceHandler::method_attach(DBus::Object::Method::Arguments::Ptr args)
     // this object's presence when checking if the service is idle or not.
     // Normally this is not needed, since the service creates child objects.
     // This does not happen in this case.  The call below reverses the
-    // idle detector setting done in the contructor.
+    // idle detector setting done in the constructor.
     DisableIdleDetector(false);
 }
 

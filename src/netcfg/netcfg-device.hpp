@@ -55,7 +55,7 @@ enum NetCfgDeviceType : unsigned int
     UNSET = 0, // Primarily to avoid 0 but still have 0 defined
     TAP = 2,
     TUN = 3
-    // Expliclity use 3 for tun and 2 for tap as 2==TUN would be very
+    // Explicitly use 3 for tun and 2 for tap as 2==TUN would be very
     // confusing
 };
 

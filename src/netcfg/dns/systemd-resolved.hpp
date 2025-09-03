@@ -120,7 +120,7 @@ class SystemdResolved : public ResolverBackendInterface
      *  in the order it will be processed by the resolver backend.
      *
      * @param settings  A ResolverSettings::Ptr object containing the
-     *                  DNS resolver configuraiton data
+     *                  DNS resolver configuration data
      */
     void Apply(const ResolverSettings::Ptr settings) override;
 

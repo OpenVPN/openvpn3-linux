@@ -25,7 +25,7 @@ using namespace ovpn3cli::session;
 
 
 /**
- *  Similiar to statistics_plain(), but returns a JSON string blob with the
+ *  Similar to statistics_plain(), but returns a JSON string blob with the
  *  statistics data
  *
  * @param stats  The ConnectionStats object returned by fetch_stats()

@@ -10,7 +10,7 @@
  * @file   fetch-config2.cpp
  *
  * @brief  Dumps a specific configuration stored in the configuration manager.
- *         This variant uses the Configuration Manager Proxy object to acheive
+ *         This variant uses the Configuration Manager Proxy object to achieve
  *         this task.  Input to the program is just the D-Bus configuration path
  */
 

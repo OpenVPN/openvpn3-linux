@@ -155,7 +155,7 @@ TEST_F(AccessServerMetaOpts, parse_meta)
         EXPECT_STREQ(tc.value.c_str(), opt.get(1, 64).c_str());
     }
 
-    // All meta variabibles will be visible in the openvpn::OptionList
+    // All meta variables will be visible in the openvpn::OptionList
     // class (which OptionListJSON extends).  Check that all of them
     // are present
     for (const auto &key : GetIgnoredOptions())
@@ -236,7 +236,7 @@ TEST_F(AccessServerMetaOpts, string_export)
         EXPECT_NE(mh, must_have.end())
             << "Option '" << o << "' was found unexpectedly in string_export() data";
 
-        // Look up the option keyworkd in the list of ignored options;
+        // Look up the option keyword in the list of ignored options;
         // It should not appear here at all
         const auto ign = std::find(ignored.begin(), ignored.end(), o);
         EXPECT_EQ(ign, ignored.end())

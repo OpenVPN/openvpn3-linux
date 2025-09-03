@@ -100,7 +100,7 @@ OPTIONS
                 This option is only effective together with ``--journald``.  The
                 default is to prefix each log line (``MESSAGE=``) with a tag value
                 unique to the sender (see ``openvpn3-admin log-service --list-subscriptions``).
-                With jorunald logging, this log tag is already preserved as a journal
+                With journald logging, this log tag is already preserved as a journal
                 meta filed (``O3_LOGTAG``).  By enabling this option, this log tag
                 prefixing to the log message line will not happen.
 

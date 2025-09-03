@@ -402,7 +402,7 @@ class LogServiceProxy
      *  being processed by another log processing which already adds this
      *  information.
      *
-     * @param tstamp  Boolean flag wheter to enable (true) or disable (false)
+     * @param tstamp  Boolean flag whether to enable (true) or disable (false)
      *                the log timestamp.
      */
     void SetTimestampFlag(bool tstamp)
@@ -442,7 +442,7 @@ class LogServiceProxy
      *  Flips the D-Bus details log flag.  This is more useful for debugging
      *  to better understand who sends the D-Bus Log signals.
      *
-     * @param tstamp  Boolean flag wheter to enable (true) or disable (false)
+     * @param tstamp  Boolean flag whether to enable (true) or disable (false)
      *                the D-Bus details logging
      */
     void SetDBusDetailsLogging(bool dbus_details)

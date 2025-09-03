@@ -30,7 +30,7 @@ using namespace ovpn3cli::session;
 /**
  *  openvpn3 session-start command
  *
- *  This command is used to initate and start a new VPN session
+ *  This command is used to initiate and start a new VPN session
  *
  * @param args
  * @return

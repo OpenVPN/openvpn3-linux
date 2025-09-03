@@ -29,7 +29,7 @@
  *  All operations related to granting, revoking, public-access are handled
  *  by this command.
  *
- *  Also note that you can run multiple operarations in a single command line.
+ *  Also note that you can run multiple operations in a single command line.
  *  It is fully possible to use --grant, --revoke and --show in a single
  *  command line.  In addition, both --grant and --revoke can be used multiple
  *  times to grant/revoke several users in a single operation.

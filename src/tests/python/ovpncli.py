@@ -23,7 +23,7 @@ from getpass import getpass
 # Parse the command line arguments
 cmdparser = openvpn3.ConfigParser(sys.argv, 'OpenVPN 3 module test program')
 
-# Get a configuration name, if avialable
+# Get a configuration name, if available
 cfgname = cmdparser.GetConfigName() and cmdparser.GetConfigName() or '(unknown)'
 
 # Get connected to the D-Bus system bus

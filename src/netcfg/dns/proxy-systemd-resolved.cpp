@@ -588,7 +588,7 @@ Manager::Manager(DBus::Connection::Ptr conn)
                         + "Cannot configure systemd-resolved integration");
     }
 
-    //  Start the a background thread responisble for executing
+    //  Start the a background thread responsible for executing
     //  some selected D-Bus calls to the systemd-resolved in the
     //  background.  This is to avoid various potential timeouts in
     //  calls where there is little value to wait for a reply.

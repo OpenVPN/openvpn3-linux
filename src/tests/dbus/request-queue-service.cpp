@@ -416,7 +416,7 @@ void selftest(std::ostream &log)
         try
         {
             queue->GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, 99);
-            throw std::runtime_error("Did not fail when calling GetResponse(CREDENTIALS, USER_PASSEORD, 99)");
+            throw std::runtime_error("Did not fail when calling GetResponse(CREDENTIALS, USER_PASSWORD, 99)");
         }
         catch (const RequiresQueueException &excp)
         {
@@ -427,7 +427,7 @@ void selftest(std::ostream &log)
         try
         {
             queue->GetResponse(ClientAttentionType::CREDENTIALS, ClientAttentionGroup::USER_PASSWORD, "this_variable_name_does_not_exist");
-            throw std::runtime_error("Did not fail when calling GetResponse(CREDENTIALS, USER_PASSEORD, 'this_variable_name_does_not_exist')");
+            throw std::runtime_error("Did not fail when calling GetResponse(CREDENTIALS, USER_PASSWORD, 'this_variable_name_does_not_exist')");
         }
         catch (const RequiresQueueException &excp)
         {

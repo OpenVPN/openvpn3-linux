@@ -567,7 +567,7 @@ void Session::Connect()
 
 const bool Session::Authorize(DBus::Authz::Request::Ptr authzreq)
 {
-    // Early sanity check to see if the backend VPN process is accesible or not
+    // Early sanity check to see if the backend VPN process is accessible or not
     if (be_prx && be_target)
     {
         // Check if the backend is still alive

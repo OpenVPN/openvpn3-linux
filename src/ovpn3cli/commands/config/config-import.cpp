@@ -154,7 +154,7 @@ std::string import_config(DBus::Connection::Ptr dbuscon,
  *  openvpn3 config-import command
  *
  *  Imports a configuration file into the Configuration Manager.  This
- *  import operation will also embedd all external files into the imported
+ *  import operation will also embed all external files into the imported
  *  profile as well.
  *
  * @param args  ParsedArgs object containing all related options and arguments

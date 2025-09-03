@@ -47,7 +47,7 @@ process.
 | Out       | pid          | uint        | The initial process ID (PID) of the VPN backend client. *2 |
 
 *1 This token is used by the VPN backend process to identify itself
- for a specific session object within the sessin manager.
+ for a specific session object within the session manager.
 
 *2 This initial PID will change, as the VPN backend process will do a
  double fork() to become its own process session leader.

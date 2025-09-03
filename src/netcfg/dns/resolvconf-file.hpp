@@ -171,7 +171,7 @@ class ResolvConfFile : public FileGenerator,
      *  but some backends may need information about the device to
      *  complete the configuration.
      *
-     *  For the ResolvConfFile implementaion, this will always return
+     *  For the ResolvConfFile implementation, this will always return
      *  MODE_PRE, where resolver settings will be applied before the
      *  tun interface is configured.
      *
@@ -184,7 +184,7 @@ class ResolvConfFile : public FileGenerator,
      *  in the order it will be processed by the resolver backend.
      *
      * @param settings  A ResolverSettings::Ptr object containing the
-     *                  DNS resolver configuraiton data
+     *                  DNS resolver configuration data
      */
     void Apply(const ResolverSettings::Ptr settings) override;
 

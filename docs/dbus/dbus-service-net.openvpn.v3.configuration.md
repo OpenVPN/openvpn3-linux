@@ -62,7 +62,7 @@ caller is granted access to.
 #### Arguments
 | Direction | Name        | Type         | Description                                                           |
 |-----------|-------------|--------------|-----------------------------------------------------------------------|
-| Out       | paths       | object paths | An array of object paths to accessbile configuration objects          |
+| Out       | paths       | object paths | An array of object paths to accessible configuration objects          |
 
 
 ### Method: `net.openvpn.v3.configuration.LookupConfigName`
@@ -252,7 +252,7 @@ are defined in `src/configmgr/overrides.hpp`.
 
 ### Method: `net.openvpn.v3.configuration.UnsetOverride`
 
-Unsets an override setting, restoring the behaviour to the configuration default.  The overrides
+Removes an override setting, restoring the behaviour to the configuration default.  The overrides
 available are defined in `src/configmgr/overrides.hpp`.
 
 #### Arguments
@@ -351,7 +351,7 @@ success. If an error occurs, a D-Bus error is returned.
 | tags          | array(string)    | Read-only  | Array of strings with tag values assigned to the profile |
 | transfer_owner_session | boolean | Read/Write | If set to true, another user granted access to this profile will transfer the VPN session ownership back to the profile owner at start up |
 | used_count    | unsigned integer | Read-only  | Number of times Fetch has been called [1]           |
-| dco           | boolean          | Read/Write | If set to true, the VPN tunnel will make use of the kernel accellerated Data Channel Offload feature (requires kernel support) |
+| dco           | boolean          | Read/Write | If set to true, the VPN tunnel will make use of the kernel accelerated Data Channel Offload feature (requires kernel support) |
 | valid         | boolean          | Read-only  | Contains an indication if the configuration profile is considered functional for a VPN session |
 
   [1] It will track/count ``Fetch`` usage only if the calling user is ``openvpn``

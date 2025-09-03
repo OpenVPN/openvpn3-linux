@@ -346,7 +346,7 @@ int main(int argc, char **argv)
 #ifdef OPENVPN_DEBUG
     argparser.AddOption("disable-capabilities",
                         0,
-                        "Do not restrcit any process capabilties (INSECURE)");
+                        "Do not restrcit any process capabilities (INSECURE)");
     argparser.AddOption("run-as-root",
                         0,
                         "Keep running as root and do not drop privileges (INSECURE)");

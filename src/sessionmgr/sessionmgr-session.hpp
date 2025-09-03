@@ -172,11 +172,11 @@ class Session : public DBus::Object::Base
      *
      *  D-Bus method: net.openvpn.v3.sessions.Pause
      *      Pauses a VPN session, which results in a stateful disconnect.
-     *      The VPN backend client disconnects competely and closes the session
+     *      The VPN backend client disconnects completely and closes the session
      *      but the client process can be resumed later on to re-establish the
      *      tunnel quickly
      *  Input:   (s)
-     *      s - reason: A brief explantion of why the session was paused
+     *      s - reason: A brief explanation of why the session was paused
      *  Output:  n/a
      *
      *  D-Bus method: net.openvpn.v3.sessions.Resume
