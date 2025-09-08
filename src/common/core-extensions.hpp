@@ -348,6 +348,7 @@ class OptionListJSON : public openvpn::OptionList
     bool is_tag_option(const std::string &optname) const
     {
         static const std::unordered_set<std::string> tag_opts{
+            "auth-user-pass",
             "ca",
             "cert",
             "connection",
