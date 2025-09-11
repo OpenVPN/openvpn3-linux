@@ -369,11 +369,12 @@ void NetCfgDevice::method_add_networks(GVariant *params)
         auto ipv6{glib2::Value::Extract<bool>(network_descr, 3)};
         auto exclude{glib2::Value::Extract<bool>(network_descr, 4)};
 
+        std::string metric_str = (metric > 0 ? std::to_string(metric) : "(default)");
         signals->LogInfo(fmt::format(
             "Adding network {}/{}, metric: {}, exclude: {}, ipv6: {}",
             netw_addr,
             prefix_size,
-            metric,
+            metric_str,
             (exclude ? "yes" : "no"),
             (ipv6 ? "yes" : "no")));
 
