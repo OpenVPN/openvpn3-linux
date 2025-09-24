@@ -132,14 +132,13 @@ static int cmd_config_dump(ParsedArgs::Ptr args)
 SingleCommand::Ptr prepare_command_config_dump()
 {
     //
-    //  config-show command
+    //  config-dump command
     //
     SingleCommand::Ptr cmd;
     cmd.reset(new SingleCommand("config-dump",
                                 "Show/dump a configuration profile",
                                 cmd_config_dump));
-    cmd->SetAliasCommand("config-show",
-                         "**\n** This is command deprecated, use config-dump instead\n**");
+
     auto path_opt = cmd->AddOption("path",
                                    'o',
                                    "OBJ-PATH",

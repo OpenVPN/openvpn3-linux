@@ -52,6 +52,6 @@ SEE ALSO
 ``openvpn3-config-manage``\(1)
 ``openvpn3-config-acl``\(1)
 ``openvpn3-config-remove``\(1)
-``openvpn3-config-show``\(1)
+``openvpn3-config-dump``\(1)
 ``openvpn3-configs-list``\(1)
 ``openvpn3-session-start``\(1)

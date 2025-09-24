@@ -13,8 +13,6 @@ SYNOPSIS
 ========
 | ``openvpn3 config-dump`` ``-o DBUS-PATH`` | ``--path DBUS-PATH`` | ``--config CONFIG-NAME`` ``[--json]``
 | ``openvpn3 config-dump`` ``-h`` | ``--help``
-| ``openvpn3 config-show`` ``-o DBUS-PATH`` | ``--path DBUS-PATH`` | ``--config CONFIG-NAME`` ``[--json]``
-| ``openvpn3 config-show`` ``-h`` | ``--help``
 
 
 DESCRIPTION
@@ -26,9 +24,6 @@ imported to the terminal.  It will not carry any information added via
 If the configuration profile has been locked down
 via ``openvpn3 config-acl`` users granted access to this configuration profile
 will not be able to see the contents of the configuration profile.
-
-This command used to be ``openvpn3 config-show`` but that has been deprecated
-in favour of ``openvpn config-dump``.
 
 
 OPTIONS
