@@ -157,7 +157,7 @@ class ServiceHandler : public DBus::Object::Base
     /**
      *  D-Bus method: net.openvpn.v3.log.AssignSession
      *
-     *  Used by the net.openpvn.v3.backends.be$PID services to inform
+     *  Used by the net.openvpn.v3.backends.be$PID services to inform
      *  the log service about the session path it is assigned to use.
      *
      *  When end-users are requesting (via net.openvpn.v3.sessions) to

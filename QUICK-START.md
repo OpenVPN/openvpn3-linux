@@ -8,7 +8,7 @@ This guide expects OpenVPN 3 Linux to be already installed.
 Initial setup
 -------------
 
-If you are installing OpenPVN 3 from source code, it is recommended to
+If you are installing OpenVPN 3 from source code, it is recommended to
 run this command first as `root`:
 
       # openvpn3-admin init-config  --write-configs
