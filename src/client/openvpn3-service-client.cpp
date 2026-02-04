@@ -514,6 +514,7 @@ class BackendClientObject : public DBus::Object::Base
     void SetMainLoop(DBus::MainLoop::Ptr ml)
     {
         mainloop = std::move(ml);
+        signal->AssignMainLoop(mainloop);
     }
 
 
