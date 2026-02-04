@@ -211,6 +211,17 @@ class BackendSignals : public LogSender
     }
 
 
+    void QuitMainloop()
+    {
+        if (!mainloop)
+        {
+            LogSender::Debug("Cannot quit main loop - not defined");
+            return;
+        }
+        mainloop->Stop();
+    }
+
+
     /**
      * Sends an AttentionRequired signal, which tells a front-end that this
      * VPN backend client needs some input or feedback.

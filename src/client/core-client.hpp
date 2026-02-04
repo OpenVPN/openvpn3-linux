@@ -606,11 +606,13 @@ class CoreVPNClient : public CLIENTBASECLASS
         }
         else if ("INACTIVE_TIMEOUT" == ev.name)
         {
-            signals->LogInfo("Connection closing due to inactivity");
+            signals->LogInfo("Connection closing due to tunnel inactivity");
             signals->StatusChange(StatusMajor::CONNECTION,
-                                  StatusMinor::CONN_DISCONNECTING,
-                                  "Connection inactivity");
-            run_status = StatusMinor::CONN_DISCONNECTING;
+                                  StatusMinor::CONN_DONE,
+                                  "Inactive tunnel, disconnected");
+            run_status = StatusMinor::CONN_DONE;
+            failed_signal_sent = true;
+            signals->QuitMainloop();
         }
         else if ("PROXY_ERROR" == ev.name)
         {
