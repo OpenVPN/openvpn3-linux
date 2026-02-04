@@ -100,6 +100,20 @@ Session::Session(DBus::Connection::Ptr dbuscon,
                                                                               sigsubscr);
 
     sig_statuschg = sig_session->CreateSignal<::Signals::StatusChange>(sigsubscr);
+    sig_statuschg->AttachCallback([this](const Events::Status &event)
+                                  {
+                                      if (event.Check(StatusMajor::CONNECTION,
+                                                      {
+                                                          StatusMinor::CFG_ERROR,
+                                                          StatusMinor::CONN_DONE,
+                                                          StatusMinor::CONN_FAILED,
+                                                          StatusMinor::PROC_KILLED,
+                                                      }))
+                                      {
+                                          this->sig_session->LogVerb2("Backend VPN client closed the session");
+                                          this->close_session(false);
+                                      }
+                                  });
 
     ResetBackend(be_pid, be_busname);
 
