@@ -1057,7 +1057,7 @@ class BackendClientObject : public DBus::Object::Base
 
         // Create a new VPN client object, which is handling the
         // tunnel itself.
-        vpnclient.reset(new CoreVPNClient(dbusconn, signal, userinputq, session_token, enterprise_id));
+        vpnclient = std::make_shared<CoreVPNClient>(dbusconn, signal, userinputq, session_token, enterprise_id);
         vpnclient->disable_socket_protect(disabled_socket_protect);
         vpnclient->disable_dns_config(ignore_dns_cfg);
 
