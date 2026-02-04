@@ -459,7 +459,7 @@ class NetCfgTunBuilder : public T
 
     DBus::Object::Path netcfg_get_device_path()
     {
-        return (device ? device->GetDevicePath() : "");
+        return (device ? device->GetDevicePath() : "/");
     }
 
 

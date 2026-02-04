@@ -274,7 +274,7 @@ class BackendClientObject : public DBus::Object::Base
         {
             if (!self->vpnclient)
             {
-                return glib2::Value::Create(DBus::Object::Path());
+                return glib2::Value::Create(DBus::Object::Path("/"));
             }
             return glib2::Value::Create(self->vpnclient->netcfg_get_device_path());
         };
