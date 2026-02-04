@@ -853,7 +853,7 @@ class BackendClientObject : public DBus::Object::Base
             signal->StatusChange(Events::Status(StatusMajor::CONNECTION,
                                                 StatusMinor::CONN_DISCONNECTING));
             vpncli_ptr->stop();
-            if (client_thread)
+            if (client_thread && client_thread->joinable())
             {
                 client_thread->join();
             }
