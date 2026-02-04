@@ -51,10 +51,19 @@ class StatusChange : public DBus::Signals::Signal
     Events::Status LastEvent() const;
     GVariant *LastStatusChange() const;
 
+    /**
+     *  Attach a callback function to be called on each status change
+     *
+     * @param callback   Function to be executed.  It receives an Event::Status
+     *                   object containing the parsed event as an argument.
+     */
+    void AttachCallback(std::function<void (const Events::Status &event)> callback);
+
   private:
     Events::Status last_ev{};
     DBus::Signals::Target::Ptr target{};
     DBus::Signals::SubscriptionManager::Ptr subscr_mgr;
+    std::function<void (const Events::Status &event)> callback_fnc;
 };
 
 /**

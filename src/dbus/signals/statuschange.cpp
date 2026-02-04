@@ -48,6 +48,10 @@ void StatusChange::Subscribe(DBus::Signals::Target::Ptr subscr_tgt)
                                   {
                                       Events::Status ev(event->params);
                                       (void)Send(ev);
+                                      if (this->callback_fnc)
+                                      {
+                                          this->callback_fnc(ev);
+                                      }
                                   }
                                   catch (const DBus::Exception &ex)
                                   {
@@ -100,6 +104,11 @@ GVariant *StatusChange::LastStatusChange() const
     return last_ev.GetGVariantTuple();
 }
 
+
+void StatusChange::AttachCallback(std::function<void(const Events::Status &event)> callback)
+{
+    callback_fnc = std::move(callback);
+}
 
 
 ReceiveStatusChange::Ptr ReceiveStatusChange::Create(DBus::Signals::SubscriptionManager::Ptr subscr,
