@@ -294,6 +294,38 @@ TEST(StatusEvent, operator_neq_3)
 }
 
 
+TEST(StatusEvent, CheckSingle)
+{
+    Events::Status ev(StatusMajor::CONFIG, StatusMinor::CFG_INLINE_MISSING);
+    EXPECT_TRUE(ev.Check(StatusMajor::CONFIG, StatusMinor::CFG_INLINE_MISSING));
+    EXPECT_FALSE(ev.Check(StatusMajor::CONFIG, StatusMinor::CONN_CONNECTED));
+    EXPECT_FALSE(ev.Check(StatusMajor::SESSION, StatusMinor::CFG_INLINE_MISSING));
+    EXPECT_FALSE(ev.Check(StatusMajor::CONNECTION, StatusMinor::CONN_DONE));
+}
+
+
+TEST(StatusEvent, CheckVector)
+{
+    Events::Status ev(StatusMajor::CONFIG, StatusMinor::CFG_OK);
+    std::vector<StatusMinor> status_checks_true = {
+        StatusMinor::CFG_ERROR,
+        StatusMinor::CFG_INLINE_MISSING,
+        StatusMinor::CFG_OK,
+        StatusMinor::CFG_REQUIRE_USER
+    };
+    EXPECT_TRUE(ev.Check(StatusMajor::CONFIG, status_checks_true));
+
+    std::vector<StatusMinor> status_checks_false = {
+        StatusMinor::CFG_ERROR,
+        StatusMinor::CFG_INLINE_MISSING,
+        StatusMinor::CFG_REQUIRE_USER};
+    EXPECT_FALSE(ev.Check(StatusMajor::CONFIG, status_checks_false));
+    EXPECT_FALSE(ev.Check(StatusMajor::SESSION, status_checks_false));
+    EXPECT_FALSE(ev.Check(StatusMajor::CONNECTION, status_checks_false));
+    EXPECT_FALSE(ev.Check(StatusMajor::CONNECTION, status_checks_true));
+}
+
+
 TEST(StatusEvent, stringstream)
 {
     Events::Status status(StatusMajor::CONFIG, StatusMinor::CONN_CONNECTING, "In progress");

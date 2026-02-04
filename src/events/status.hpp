@@ -82,12 +82,24 @@ struct Status
      *  Compares the saved status against a specific state
      *
      * @param maj  StatusMajor to compare against the saved state
-     * @param min  StatisMinro to compare
+     * @param min  StatusMinor to compare
      *
      * @return Returns true if both maj and min matches the saved
      *         state
      */
     bool Check(StatusMajor maj, StatusMinor min) const;
+
+    /**
+     *  Compares the saved status against more minor status
+     *  codes.
+     *
+     * @param maj  StatusMajor to compare against the saved state
+     * @param min  std::vector<StatusMinor> codes to compare
+     *
+     * @return Returns true if both maj and min matches the saved
+     *         state
+     */
+    bool Check(StatusMajor maj, std::vector<StatusMinor> min) const;
 
     /**
      *  Create a D-Bus compliant GVariant object with the status information

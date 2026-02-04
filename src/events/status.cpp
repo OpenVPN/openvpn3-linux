@@ -13,6 +13,7 @@
  *         value parser
  */
 
+#include <algorithm>
 #include <cstdint>
 #include <sstream>
 #include <glib.h>
@@ -101,6 +102,16 @@ void Status::SetPrintMode(Status::PrintMode m)
 bool Status::Check(const StatusMajor maj, const StatusMinor min) const
 {
     return (maj == major) && (min == minor);
+}
+
+
+bool Status::Check(StatusMajor maj, std::vector<StatusMinor> min) const
+{
+    if (maj != major)
+    {
+        return false;
+    }
+    return std::find(min.begin(), min.end(), minor) != min.end();
 }
 
 
