@@ -186,22 +186,43 @@ class OptionListJSON : public openvpn::OptionList
                 }
                 else
                 {
-                    if (option_value_need_array(optname) && data[optname].isArray())
+                    if (option_value_need_array(optname))
                     {
                         // Old JSON format - with a value array for selected
                         // options.  This is format 2)
-                        for (const auto &v : data[optname])
+
+                        // Special handling previously stored dhcp-option and dns
+                        // options, which listed all the sub-options in a single
+                        // dimension array.  Settings for the sub-options would
+                        // otherwise be misinterpreted and split over multiple
+                        // 'dhcp-option' or 'dns' lines.  This
+                        // enables all the sub-options and the related values to
+                        // be kept together as a single sub-option statement.
+                        if ("dhcp-option" == optname || "dns" == optname)
                         {
-                            // We need to iterate each element
-                            // independently when calling add_option()
-                            // otherwise all the elements is preserved in
-                            // the same Option object.  We want separate
-                            // Option object per element.
-                            //
-                            // This is similar to the 3b->3a unwrapping
-                            // above, just that we do the 2a->1 unwrapping
-                            // here.
-                            add_option(optname, v);
+                            std::string values;
+                            for (const auto &v : data[optname])
+                            {
+                                values.append(" ");
+                                values.append(v.asString());
+                            }
+                            add_option(optname, values);
+                        }
+                        else
+                        {
+                            for (const auto &v : data[optname])
+                            {
+                                // We need to iterate each element
+                                // independently when calling add_option()
+                                // otherwise all the elements is preserved in
+                                // the same Option object.  We want separate
+                                // Option object per element.
+                                //
+                                // This is similar to the 3b->3a unwrapping
+                                // above, just that we do the 2a->1 unwrapping
+                                // here.
+                                add_option(optname, v);
+                            }
                         }
                     }
                     else
@@ -380,6 +401,8 @@ class OptionListJSON : public openvpn::OptionList
     {
         static const std::unordered_set<std::string> array_storage{
             "connection",
+            "dhcp-option",
+            "dns",
             "peer-fingerprint",
             "pull-filter",
             "remote",
