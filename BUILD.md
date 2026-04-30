@@ -13,7 +13,7 @@ on all other distributions with recent enough dependencies.
 
 The following dependencies are needed:
 
-* A C++ compiler capable of at least ``-std=c++17``
+* A C++ compiler capable of at least ``-std=c++20``
 
 * Meson Build System 0.58 or newer
 
