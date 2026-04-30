@@ -3,10 +3,10 @@ How to build openvpn3-linux locally
 
 The primary Linux distributions targeted and regularly tested are:
 
-  - Debian 11 and newer
+  - Debian 12 and newer
   - Fedora 38 and newer
   - Red Hat Enterprise Linux (RHEL) 8 and newer
-  - Ubuntu 20.04 and newer
+  - Ubuntu 22.04 and newer
 
 This list is not an exclusive list, and it will most likely work
 on all other distributions with recent enough dependencies.
@@ -129,7 +129,7 @@ First install the package dependencies needed to run the build.
 
 - Generic build requirements:
 
-      # yum install gcc-c++ git meson pkgconfig glib2-devel jsoncpp-devel    \
+      # dnf install gcc-c++ git meson pkgconfig glib2-devel jsoncpp-devel    \
                     libuuid-devel libcap-ng-devel selinux-policy-devel       \
                     lz4-devel zlib-devel libxml2 tinyxml2-devel python3-dbus \
                     python3-gobject python3-pyOpenSSL python3-jinja2         \
@@ -138,7 +138,7 @@ First install the package dependencies needed to run the build.
 
 - Dependencies to build with DCO support:
 
-      # yum install libnl3-devel protobuf-compiler protobuf protobuf-devel
+      # dnf install libnl3-devel protobuf-compiler protobuf protobuf-devel
 
 
 ### Preparations building from git
@@ -154,6 +154,8 @@ The default configuration for the services assumes a service account
     # groupadd -r openvpn
     # useradd -r -s /sbin/nologin -g openvpn openvpn
 
+*NOTE* Some distrubutions uses different usernames in the packaging; Debian
+uses now `_openvpn`.
 
 ### Building OpenVPN 3 Linux client
 If you already have a `./configure` script or have retrieved an
@@ -174,12 +176,6 @@ but occasionally a manual operation is needed:
 With everything built and installed, it should be possible to run both the
 ``openvpn2`` and ``openvpn3`` command line tools - even as an unprivileged
 user.
-
-
-#### AWS-VPC integration
-
-The OpenVPN 3 Linux AWS-VPC add-on is currently unavailable. This will be
-reintroduced in a later release.
 
 
 #### Auto-completion helper for bash/zsh
