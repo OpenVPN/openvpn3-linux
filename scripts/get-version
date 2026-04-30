@@ -39,7 +39,7 @@ if [ -e "${PROJECT_ROOT}/.git" ]; then
 	set -eu
 	if [ $ec -ne 0  ]; then
 		# Presume not a version tag, so use commit reference
-		VERSION="$(git --git-dir ${PROJECT_ROOT}/.git rev-parse --symbolic-full-name HEAD | cut -d/ -f3-)_$(git rev-parse --short=16 HEAD)"
+		VERSION="$(git --git-dir ${PROJECT_ROOT}/.git rev-parse --symbolic-full-name HEAD | cut -d/ -f3-)_$(git --git-dir ${PROJECT_ROOT}/.git rev-parse --short=16 HEAD)"
 		PRODVERSION="$(echo $VERSION | sed 's#/#_#g')"
 	else
 		# bash could use ${VERSION:1}, but we try to make it
