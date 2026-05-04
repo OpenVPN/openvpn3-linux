@@ -69,10 +69,12 @@ class NetCfgTunBuilder : public T
         // Explicitly call cleanup
         try
         {
+#ifdef ENABLE_OVPNDCO
             if (dco)
             {
                 dco.reset();
             }
+#endif
             if (device)
             {
                 device->Destroy();
