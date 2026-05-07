@@ -265,7 +265,10 @@ void NetCfgDCO::method_new_key(GVariant *params)
     std::string key_config = glib2::Value::Extract<std::string>(params, 1);
 
     DcoKeyConfig dco_kc;
-    dco_kc.ParseFromString(base64->decode(key_config));
+    if (!dco_kc.ParseFromString(base64->decode(key_config)))
+    {
+        throw NetCfgException("Failed to parse DCO key configuration");
+    }
 
     auto copyKeyDirection = [](const DcoKeyConfig_KeyDirection &src, KoRekey::KeyDirection &dst)
     {
