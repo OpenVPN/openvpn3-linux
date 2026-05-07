@@ -19,4 +19,6 @@
 #include "build-config.h"
 #include <openvpn/log/logsimple.hpp>
 #include "../client/backend-signals.hpp"
+#include <openvpn/tun/tunmtu.hpp>
+#include <openvpn/tun/linux/client/tunnetlink.hpp>
 #include <test/ovpncli/cli.cpp>

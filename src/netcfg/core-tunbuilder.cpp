@@ -39,6 +39,8 @@
 #include "netcfg-signals.hpp"
 
 
+// FIXME: Cleanup these macros
+#define TUN_LINUX TunNetlink::TunMethods
 #define TUN_CLASS_SETUP TunLinuxSetup::Setup<TUN_LINUX>
 
 namespace openvpn {

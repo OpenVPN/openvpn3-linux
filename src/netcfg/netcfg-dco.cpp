@@ -35,7 +35,6 @@
 #include <openvpn/common/base64.hpp>
 #include <openvpn/tun/tunmtu.hpp>
 #include <openvpn/tun/linux/client/tunnetlink.hpp>
-#include <openvpn/tun/linux/client/tunmethods.hpp>
 #include <openvpn/buffer/buffer.hpp>
 
 

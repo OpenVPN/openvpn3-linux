@@ -424,12 +424,12 @@ class CoreVPNClient : public CLIENTBASECLASS
         }
         else if ("INFO" == ev.name)
         {
-            if (string::starts_with(ev.info, "OPEN_URL:"))
+            if (ev.info.starts_with("OPEN_URL:"))
             {
                 std::string url = ev.info.substr(9);
                 open_url(url, "");
             }
-            else if (string::starts_with(ev.info, "WEB_AUTH:"))
+            else if (ev.info.starts_with("WEB_AUTH:"))
             {
                 std::string extra = ev.info.substr(9);
                 size_t flags_end = extra.find(':');
@@ -440,7 +440,7 @@ class CoreVPNClient : public CLIENTBASECLASS
                     open_url(url, flags);
                 }
             }
-            else if (auth_pending_timeout && string::starts_with(ev.info, "CR_TEXT:"))
+            else if (auth_pending_timeout && ev.info.starts_with("CR_TEXT:"))
             {
                 signals->Debug("Parsing CR_TEXT");
                 ParseCR_TEXT crtext(ev.info);
