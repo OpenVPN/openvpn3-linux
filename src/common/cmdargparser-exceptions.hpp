@@ -219,8 +219,8 @@ class ExclusiveOptionError : public CommandArgBaseException
 
 
   private:
-    std::string generate_error(const std::string &opt,
-                               const std::vector<std::string> &group) const
+    static std::string generate_error(const std::string &opt,
+                                      const std::vector<std::string> &group)
     {
         std::stringstream msg;
         if (!opt.empty())
@@ -272,8 +272,8 @@ class ConfigFileException : public CommandArgBaseException
 
 
   private:
-    std::string generate_error(const std::string &cfgfile,
-                               const std::string &msg)
+    static std::string generate_error(const std::string &cfgfile,
+                                      const std::string &msg)
     {
         if (!cfgfile.empty())
         {
