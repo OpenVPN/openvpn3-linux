@@ -29,33 +29,33 @@ if (get_option('selinux_policy').enabled() and not build_selinux)
 endif
 if (build_selinux)
     message('SELinux policy development dir:' + selinux_devel_path)
+
+    policy_builder = find_program(meson.project_source_root() / 'scripts/build-selinux-policy')
+    builder_args = [
+            policy_builder,
+            '@CURRENT_SOURCE_DIR@',
+            '@PRIVATE_DIR@',
+            selinux_makefile,
+            '@OUTPUT@'
+    ]
+
+    custom_target(
+        'openvpn3.pp.bz2',
+        input: ['openvpn3.te','openvpn3.fc','openvpn3.if'],
+        output: 'openvpn3.pp.bz2',
+        command: builder_args,
+        build_by_default: build_selinux,
+        install: true,
+        install_dir: get_option('prefix') / get_option('datadir') / 'selinux/packages',
+    )
+
+    custom_target(
+        'openvpn3_service.pp.bz2',
+        input: ['openvpn3_service.te','openvpn3_service.fc', 'openvpn3_service.if'],
+        output: 'openvpn3_service.pp.bz2',
+        command: builder_args,
+        build_by_default: build_selinux,
+        install: true,
+        install_dir: get_option('prefix') / get_option('datadir') / 'selinux/packages',
+    )
 endif
-
-policy_builder = find_program(meson.project_source_root() / 'scripts/build-selinux-policy')
-builder_args = [
-        policy_builder,
-        '@CURRENT_SOURCE_DIR@',
-        '@PRIVATE_DIR@',
-        selinux_makefile,
-        '@OUTPUT@'
-]
-
-custom_target(
-    'openvpn3.pp.bz2',
-    input: ['openvpn3.te','openvpn3.fc','openvpn3.if'],
-    output: 'openvpn3.pp.bz2',
-    command: builder_args,
-    build_by_default: build_selinux,
-    install: true,
-    install_dir: get_option('prefix') / get_option('datadir') / 'selinux/packages',
-)
-
-custom_target(
-    'openvpn3_service.pp.bz2',
-    input: ['openvpn3_service.te','openvpn3_service.fc', 'openvpn3_service.if'],
-    output: 'openvpn3_service.pp.bz2',
-    command: builder_args,
-    build_by_default: build_selinux,
-    install: true,
-    install_dir: get_option('prefix') / get_option('datadir') / 'selinux/packages',
-)
