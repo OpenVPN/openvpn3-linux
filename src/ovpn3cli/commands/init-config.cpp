@@ -443,10 +443,10 @@ void get_openvpn_uid_gid(setup_config &setupcfg)
     try
     {
         setupcfg.openvpn_uid = lookup_uid(OPENVPN_USERNAME);
-        std::cout << "    Found:  openvpn user - uid " << std::to_string(setupcfg.openvpn_uid) << std::endl;
+        std::cout << "    Found:  " << OPENVPN_USERNAME << "  user - uid " << std::to_string(setupcfg.openvpn_uid) << std::endl;
 
         setupcfg.openvpn_gid = lookup_gid(OPENVPN_GROUP);
-        std::cout << "    Found:  openvpn group - gid " << std::to_string(setupcfg.openvpn_gid) << std::endl;
+        std::cout << "    Found:  " << OPENVPN_GROUP << " group - gid " << std::to_string(setupcfg.openvpn_gid) << std::endl;
     }
     catch (const LookupException &err)
     {
