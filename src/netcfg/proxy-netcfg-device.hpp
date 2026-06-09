@@ -107,6 +107,18 @@ class DCO
                  int keepalive_interval,
                  int keepalive_timeout) const;
 
+
+    /**
+     * @brief Requests the current statistics of a peer from the
+     *        ovpn-dco kernel module.
+     *
+     * This only triggers the query; the kernel reply is delivered
+     * asynchronously over the DCO pipe and parsed by the client side.
+     *
+     * @param peer_id ID of the peer to query
+     */
+    void GetPeer(unsigned int peer_id) const;
+
   private:
     DBus::Proxy::Client::Ptr proxy = nullptr;
     DBus::Proxy::TargetPreset::Ptr dcotgt = nullptr;

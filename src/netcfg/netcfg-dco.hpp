@@ -80,6 +80,7 @@ class NetCfgDCO : public DBus::Object::Base
     void method_new_key(GVariant *params);
     void method_swap_keys(GVariant *params);
     void method_set_peer(GVariant *params);
+    void method_get_peer(GVariant *params);
 
     struct PacketFrom
     {

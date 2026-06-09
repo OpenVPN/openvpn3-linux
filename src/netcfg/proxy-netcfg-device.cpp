@@ -708,5 +708,15 @@ void DCO::SetPeer(unsigned int peer_id,
         g_variant_unref(res);
     }
 }
+
+
+void DCO::GetPeer(unsigned int peer_id) const
+{
+    GVariant *res = proxy->Call(dcotgt, "GetPeer", glib2::Value::CreateTupleWrapped<uint32_t>(peer_id));
+    if (res)
+    {
+        g_variant_unref(res);
+    }
+}
 #endif // ENABLE_OVPNDCO
 } // namespace NetCfgProxy

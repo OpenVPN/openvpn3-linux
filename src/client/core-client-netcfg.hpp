@@ -555,6 +555,21 @@ class NetCfgTunBuilder : public T
 
         dco->SetPeer(peer_id, keepalive_interval, keepalive_timeout);
     }
+
+
+    void tun_builder_dco_get_peer(uint32_t peer_id, bool /*sync*/) override
+    {
+        if (!dco)
+        {
+            throw NetCfgProxyException(__func__, "Lost link to DCO device");
+        }
+
+        // The 'sync' flag is intentionally ignored: in the privilege
+        // separated architecture the kernel reply always arrives
+        // asynchronously over the DCO pipe and is parsed by the Core
+        // OvpnDcoClient::tun_read_handler() OVPN_CMD_PEER_GET case.
+        dco->GetPeer(peer_id);
+    }
 #endif // ENABLE_OVPNDCO
 
 

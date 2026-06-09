@@ -101,6 +101,14 @@ NetCfgDCO::NetCfgDCO(DBus::Connection::Ptr dbuscon,
     set_peer->AddInput("keepalive_interval", glib2::DataType::DBus<uint32_t>());
     set_peer->AddInput("keepalive_timeout", glib2::DataType::DBus<uint32_t>());
 
+    auto get_peer = AddMethod("GetPeer",
+                              [this](DBus::Object::Method::Arguments::Ptr args)
+                              {
+                                  this->method_get_peer(args->GetMethodParameters());
+                                  args->SetMethodReturn(nullptr);
+                              });
+    get_peer->AddInput("peer_id", glib2::DataType::DBus<uint32_t>());
+
     backend_bus_name = Constants::GenServiceName("backends.be")
                        + std::to_string(backend_pid);
 
@@ -321,6 +329,26 @@ void NetCfgDCO::method_set_peer(GVariant *params)
                          this->genl->set_peer(peer_id,
                                               keepalive_interval,
                                               keepalive_timeout);
+                     });
+}
+
+
+void NetCfgDCO::method_get_peer(GVariant *params)
+{
+    glib2::Utils::checkParams(__func__, params, "(u)", 1);
+
+    unsigned int peer_id = glib2::Value::Extract<unsigned int>(params, 0);
+
+    // Issue the peer query asynchronously.  The kernel reply is delivered
+    // by the GeNL async read loop running on this same io_context worker
+    // thread and forwarded to the client over the pipe via
+    // tun_read_handler().  Using the synchronous variant here would block
+    // the worker thread on its own netlink socket and race with that
+    // queued async read.
+    openvpn_io::post(io_context,
+                     [this, peer_id]()
+                     {
+                         this->genl->get_peer(peer_id, false);
                      });
 }
 #endif // ENABLE_OVPNDCO
