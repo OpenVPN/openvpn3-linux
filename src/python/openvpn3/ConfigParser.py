@@ -291,6 +291,18 @@ class ConfigParser():
                                    + 'or tap. Not needed if --dev starts with'
                                    + 'tun or tap')
 
+        self.__parser.add_argument('--disable-dco',
+                                   action='store_false',
+                                   dest='dco',
+                                   help='Disable Data Channel Offload kernel '
+                                   + 'acceleration.')
+
+        self.__parser.add_argument('--enable-dco',
+                                   action='store_true',
+                                   dest='dco',
+                                   help='Enable Data Channel Offload kernel '
+                                   + 'acceleration.')
+
         self.__parser.add_argument('--dhcp-option', metavar='OPTION [...]',
                                    action=ConfigParser.OpenVPNvarArgs,
                                    min_args=1,
@@ -704,20 +716,10 @@ class ConfigParser():
                                    + 'string.')
 
 
-        techprev_descr = 'Options in this group may change, disappear or change '\
-        + 'behaviour.  These options are not production ready.'
-        techpreview = self.__parser.add_argument_group('Tech-Preview options',
-                                                       techprev_descr)
-        techpreview.add_argument('--enable-dco',
-                                 action='store_true',
-                                 dest='dco',
-                                 help='Enable Data Channel Offload kernel '
-                                 + 'acceleration.')
-        techpreview.add_argument('--disable-dco',
-                                 action='store_false',
-                                 dest='dco',
-                                 help='Disable Data Channel Offload kernel '
-                                 + 'acceleration.')
+        # techprev_descr = 'Options in this group may change, disappear or change '\
+        # + 'behaviour.  These options are not production ready.'
+        # techpreview = self.__parser.add_argument_group('Tech-Preview options',
+        #                                                techprev_descr)
 
 
         descr = 'The following options are ignored and not processed.  These ' \

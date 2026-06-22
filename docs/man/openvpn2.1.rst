@@ -83,6 +83,12 @@ OPTIONS
 --dhcp-option OPTION  Set DHCP options which can be picked up by the OS
                       configuring DNS, etc.
 
+--enable-dco | --disable-dco
+                      Enable or disabled the Data Channel Offload (DCO) kernel
+                      acceleration module support.  The default is disabled, but
+                      this option is present for compatibility with OpenVPN 2.6.
+                      The :code:`--enable-dco` option is OpenVPN 3 Linux specific.
+
 --extra-certs FILE    Specify a file containing one or more PEM certs
                       (concatenated together) that complete the local
                       certificate chain.
@@ -406,20 +412,6 @@ OPTIONS
                      :code:`subject`
                        The MATCH value must be the full and complete
                        X.509 Subject field.  This is the default behaviour.
-
-TECH-PREVIEW OPTIONS
-====================
-These options are only present for testing new bleeding edge features. There are
-no guarantees they will work, will not change or will not change behaviour in
-the future.  These options are *NOT* ready for production environments.
-
---enable-dco | --disable-dco
-                     Enable or disabled the Data Channel Offload (DCO) kernel
-                     acceleration module support.  The default is disabled, but
-                     this option is present for compatibility with OpenVPN 2.6.
-                     The :code:`--enable-dco` option is OpenVPN 3 Linux specific
-                     as this project does currently not automatically detect and
-                     enable the DCO capability of the host.
 
 
 IGNORED OPTIONS
