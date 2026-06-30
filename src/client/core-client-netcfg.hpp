@@ -109,9 +109,27 @@ class NetCfgTunBuilder : public T
 
     bool tun_builder_new() override
     {
+        networks.clear();
+
+#ifdef ENABLE_OVPNDCO
+        if (dco)
+        {
+            // A DCO session is already active. Re-creating the virtual
+            // device here would tear down the ovpn-dco interface together
+            // with its peer and encryption keys, which must survive a mere
+            // reconfiguration such as a PUSH_UPDATE. Keep the device and only
+            // drop the addresses/routes captured during the previous setup so
+            // the upcoming configuration round starts from a clean snapshot.
+            if (device)
+            {
+                device->ClearConfig();
+            }
+            return true;
+        }
+#endif
+
         // Cleanup the old things
         tun_builder_teardown(true);
-        networks.clear();
 
         return create_device();
     }

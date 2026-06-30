@@ -192,6 +192,16 @@ void Device::AddNetworks(const std::vector<Network> &networks) const
 }
 
 
+void Device::ClearConfig() const
+{
+    GVariant *res = proxy->Call(prxtgt, "ClearConfig");
+    if (res)
+    {
+        g_variant_unref(res);
+    }
+}
+
+
 void Device::SetDNSscope(const std::string &scope) const
 {
     proxy->SetProperty(prxtgt, "dns_scope", scope);

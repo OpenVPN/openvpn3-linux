@@ -214,6 +214,15 @@ class Device
 
 
     /**
+     *  Drops the IP addresses and routes captured for this device without
+     *  destroying the virtual interface.  Used to reset the configuration
+     *  snapshot before re-applying it (e.g. on a PUSH_UPDATE) while keeping
+     *  an active DCO session -- its device, peer and keys -- intact.
+     */
+    void ClearConfig() const;
+
+
+    /**
      *  Changes the DNS query scope for the virtual interface
      *
      *  Valid values are:

@@ -181,6 +181,13 @@ NetCfgDevice::NetCfgDevice(DBus::Connection::Ptr dbuscon_,
         });
     args_add_networks->AddInput("networks", "a(suibb)");
 
+    AddMethod("ClearConfig",
+              [this](DBus::Object::Method::Arguments::Ptr args)
+              {
+                  this->method_clear_config();
+                  args->SetMethodReturn(nullptr);
+              });
+
 
     auto args_add_dns = AddMethod(
         "AddDNS",
@@ -376,6 +383,33 @@ void NetCfgDevice::method_add_networks(GVariant *params)
     }
     // FIXME:  No need to unref GVariant *network ?
     g_variant_iter_free(network_iter);
+}
+
+
+void NetCfgDevice::method_clear_config()
+{
+    // The client calls this before re-applying the configuration (e.g. on a
+    // PUSH_UPDATE) so the new snapshot fully replaces the previous one.
+    signals->LogVerb2("Resetting applied and captured IP addresses and routes");
+
+    // Tear down the addresses/routes currently applied to the interface and
+    // drop the tun setup so the next Establish() re-applies the new snapshot
+    // from a clean state.  Re-establishing on top of the existing setup would
+    // first add the new config and then run the previous round's removal
+    // commands, deleting the addresses/routes shared between the old and new
+    // configuration -- leaving the interface unconfigured (see
+    // CoreTunbuilderImpl::establish()).  The ovpn-dco device, its peer and
+    // its encryption keys are managed by NetCfgDCO and survive this reset.
+    if (tunimpl)
+    {
+        tunimpl->teardown(*this, true);
+        tunimpl.reset();
+    }
+
+    // Captured addresses/routes are re-populated by the client before the
+    // next Establish().  DNS settings are managed separately and left as-is.
+    vpnips.clear();
+    networks.clear();
 }
 
 

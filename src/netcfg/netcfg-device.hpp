@@ -200,6 +200,7 @@ class NetCfgDevice : public DBus::Object::Base
     void method_add_ip_address(GVariant *params);
     void method_set_remote_addr(GVariant *params);
     void method_add_networks(GVariant *params);
+    void method_clear_config();
     void method_add_dns(GVariant *params);
     void method_add_dns_search(GVariant *params);
     void method_set_dnssec(GVariant *params);
