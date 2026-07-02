@@ -23,6 +23,7 @@ endif
 dep_lz4 = dependency('liblz4', required: false)
 dep_selinux = dependency('libselinux', required: false)
 dep_systemd = dependency('libsystemd', version: '>218', required: false)
+systemd_service_cfg = dependency('systemd', required: false)
 dep_tinyxml2 = dependency('tinyxml2')
 dep_jsoncpp = dependency('jsoncpp')
 

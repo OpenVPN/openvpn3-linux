@@ -7,24 +7,23 @@
 
 
 systemd_cfg = configuration_data({
-        'BINDIR': get_option('prefix') / get_option('bindir')
-    }
-)
+    'BINDIR': get_option('prefix') / get_option('bindir')
+})
 
-systemd_service_cfg = dependency('systemd')
+if systemd_service_cfg.found()
+    systemd_user_unit_dir = get_option('systemd_user_unit_dir')
+    if systemd_user_unit_dir == ''
+        systemd_user_unit_dir = systemd_service_cfg.get_variable('systemduserunitdir')
+    endif
 
-systemd_user_unit_dir = get_option('systemd_user_unit_dir')
-if systemd_user_unit_dir == ''
-  systemd_user_unit_dir = systemd_service_cfg.get_variable('systemduserunitdir')
+    configure_file(
+        input: 'openvpn3-desktop-session-watcher.service.in',
+        output: 'openvpn3-desktop-session-watcher.service',
+        configuration: systemd_cfg,
+        install: true,
+        install_dir: systemd_user_unit_dir,
+    )
 endif
-
-configure_file(
-    input: 'openvpn3-desktop-session-watcher.service.in',
-    output: 'openvpn3-desktop-session-watcher.service',
-    configuration: systemd_cfg,
-    install: true,
-    install_dir: systemd_user_unit_dir,
-)
 
 custom_target('openvpn3-desktop-session-watcher',
     input: 'openvpn3-desktop-session-watcher.py',
