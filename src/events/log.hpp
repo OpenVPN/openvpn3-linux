@@ -121,7 +121,7 @@ struct Log
 
     /**
      *  Create a GVariant object containing a tuple formatted object for
-     *  a Log signal of the current LogEvent.
+     *  a Log signal of the current Events::Log.
      *
      * @return  Returns a pointer to a GVariant object with the formatted
      *          data
@@ -130,7 +130,7 @@ struct Log
 
     /**
      *  Create a GVariant object containing a dictionary formatted object
-     *  for a Log a signal of the current LogEvent.
+     *  for a Log a signal of the current Events::Log.
      *
      * @return  Returns a pointer to a GVariant object with the formatted
      *          data
@@ -138,21 +138,21 @@ struct Log
     GVariant *GetGVariantDict() const;
 
     /**
-     *  Retrieve a string describing the Log Group of this LogEvent
+     *  Retrieve a string describing the Log Group of this Events::Log
      *
      * @return std::string with the log group description
      */
     std::string GetLogGroupStr() const;
 
     /**
-     *  Retrieve a string describing the Log Category of this LogEvent
+     *  Retrieve a string describing the Log Category of this Events::Log
      *
      * @return std::string with the log category description
      */
     std::string GetLogCategoryStr() const;
 
     /**
-     *  Resets the LogEvent struct to a known and empty state
+     *  Resets the Events::Log struct to a known and empty state
      */
     void reset();
 
@@ -187,13 +187,12 @@ struct Log
     /**
      *  Makes it possible to write LogEvents in a readable format
      *  via iostreams, such as 'std::cout << event', where event is a
-     *  LogEvent object.
+     *  Events::Log object.
      *
      * @param os  std::ostream where to write the data
-     * @param ev  LogEvent to write to the stream
+     * @param ev  Events::Log to write to the stream
      *
-     * @return  Returns the provided std::ostream together with the
-     *          decoded LogEvent information
+     * @return  std::ostream
      */
     friend std::ostream &operator<<(std::ostream &os, const Log &ev)
     {
