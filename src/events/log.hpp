@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <string>
+#include <fmt/ostream.h>
 #include <gdbuspp/signals/group.hpp>
 
 #include "log/log-helpers.hpp"
