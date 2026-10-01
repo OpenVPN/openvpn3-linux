@@ -537,7 +537,7 @@ with ovpn kernel module
 
 Pass a new symmetric encryption key, along with the cipher to use and its NONCE
 (if needed). This is used when encrypting and decrypting the tunneled network
-traffic. See src/netcfg/dco-keyconfig.proto for DcoKeyConfig protobuf object
+traffic. See src/dco/dco-keyconfig.proto for DcoKeyConfig protobuf object
 specification.
 
 #### Arguments
