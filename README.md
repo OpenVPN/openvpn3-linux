@@ -133,7 +133,7 @@ for a while with no data to maintain, they will shut-down automatically.
 * `openvpn3-service-backendstart`
   ([man page](docs/man/openvpn3-service-backendstart.8.rst) | [D-Bus documentation](docs/dbus/dbus-service-net.openvpn.v3.backends.md))
 
-  This is a helper service and is only availble for the session manager.
+  This is a helper service and is only available for the session manager.
   The only task this service has is to start a new VPN client backend
   processes (the VPN tunnel instances).  By default this is also started
   as the `openvpn` user.
@@ -163,7 +163,7 @@ for a while with no data to maintain, they will shut-down automatically.
 
   Currently DNS configuration is done by manipulating `/etc/resolv.conf`
   directly.  Support for `systemd-resolved` has been added.  On Linux
-  distrubutions expected to be pre-configured with `systemd-resolved`,
+  distributions expected to be pre-configured with `systemd-resolved`,
   OpenVPN 3 Linux will use this service.  On other distributions this need
   to be enabled manually by running the following command as `root`:
 
@@ -259,7 +259,7 @@ This log service is managed via
 [`openvpn3-admin log-service`](docs/man/openvpn3-admin-log-service.8.rst.in).
 For systems using `systemd-journald`, the
 [`openvpn3-admin journal`](docs/man/openvpn3-admin-journal.8.rst) command
-provides a convenient approach to retrive only OpenVPN 3 Linux related log
+provides a convenient approach to retrieve only OpenVPN 3 Linux related log
 entries from the systemd journal.
 
 For more information about logging, see the

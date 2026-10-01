@@ -154,7 +154,7 @@ The default configuration for the services assumes a service account
     # groupadd -r openvpn
     # useradd -r -s /sbin/nologin -g openvpn openvpn
 
-*NOTE* Some distrubutions uses different usernames in the packaging; Debian
+*NOTE* Some distributions uses different usernames in the packaging; Debian
 uses now `_openvpn`.
 
 ### Building OpenVPN 3 Linux client
