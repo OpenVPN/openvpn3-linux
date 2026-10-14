@@ -8,6 +8,8 @@
 #
 #  Various debugging features
 #
+option('development_dependencies', type: 'boolean', value: false,
+       description: 'Skip version checks for dependencies in development, known to cause version checks to fail')
 option('debug_disable_security_checks', type: 'boolean', value: false,
        description: 'Disables some security checks restricting D-Bus service access')
 

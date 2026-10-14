@@ -34,6 +34,13 @@ dep_libfmt = libfmt.get_variable('fmt_header_only_dep')
 # to get the proper paths for policy and service config installation
 dep_dbus = dependency('dbus-1')
 
+if get_option('development_dependencies')
+    warning('** Dependency version checks disabled. Do NOT use for normal production builds.')
+    dep_gdbuspp = dependency('gdbuspp')
+else
+    dep_gdbuspp = dependency('gdbuspp', version: '>= 4')
+endif
+
 base_dependencies = [
     dep_jsoncpp,
     dep_libfmt,
@@ -41,7 +48,7 @@ base_dependencies = [
     dep_selinux,
     dep_systemd,
     dep_tinyxml2,
-    dependency('gdbuspp', version: '>= 4'),
+    dep_gdbuspp,
     dependency('glib-2.0'),
     dependency('gio-2.0'),
     dependency('gio-unix-2.0'),
