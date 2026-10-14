@@ -63,8 +63,7 @@ base_dependencies = [
 # Check Python version
 pymod = import('python')
 python = pymod.find_installation('python3', required: false)
-if python.found()
-    python.language_version().version_compare('>= 3.6')
+if python.found() and python.language_version().version_compare('>= 3.6')
     message('Python 3 version: ' + python.language_version())
 else
     message('Python 3 version: (not found)')
