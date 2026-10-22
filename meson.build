@@ -41,7 +41,7 @@ base_dependencies = [
     dep_selinux,
     dep_systemd,
     dep_tinyxml2,
-    dependency('gdbuspp'),
+    dependency('gdbuspp', version: '< 4'),
     dependency('glib-2.0'),
     dependency('gio-2.0'),
     dependency('gio-unix-2.0'),
