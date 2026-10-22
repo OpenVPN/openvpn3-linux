@@ -4,7 +4,7 @@ How to build openvpn3-linux locally
 The primary Linux distributions targeted and regularly tested are:
 
   - Debian 12 and newer
-  - Fedora 38 and newer
+  - Fedora 44 and newer
   - Red Hat Enterprise Linux (RHEL) 8 and newer
   - Ubuntu 22.04 and newer
 
@@ -23,8 +23,9 @@ The following dependencies are needed:
 
   https://www.openssl.org/
 
-* GDBus++ v3 or newer
+* GDBus++ v3
 
+  https://radicle.network/nodes/radicle.eurephia.org/gdbuspp
   https://codeberg.org/OpenVPN/gdbuspp/
 
 * GLib2 2.56 or newer
@@ -72,7 +73,7 @@ The following dependencies are needed:
 
 * (optional) Python 3.6 or newer
 
-  If Python 3.6 or newer is found, the openvpn2, openvpn3-autoload utilities
+  If Python 3.6 or newer is found, the openvpn2, openvpn3-as utilities
   and the openvpn3 Python module will be built and installed.
 
 * (optional) Python docutils
@@ -91,10 +92,10 @@ The following dependencies are needed:
   For Linux distributions running with SELinux in enforced mode (like Red Hat
   Enterprise Linux and Fedora), this is required.
 
-**NOTE**:  This project has recently switched to use Meson.  The documentation
+**NOTE**:  This project has switched to use Meson.  The documentation
            migth not be 100% up-to-date on all details.
 
-           In addition, the GDBus++ library is also very new.  This is
+           In addition, the GDBus++ library is also new.  This is
            currently not available in upstream repositories.  Install the
            OpenVPN provided package repositories first to get the needed
            packages - or build it from source
